@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "scalapb/scalapb.proto";
+
+package pl.ostrzyciel.jelly.core.proto;
+
+option (scalapb.options) = {
+  scope: PACKAGE
+  flat_package: true
+  package_name: "pl.ostrzyciel.jelly.core.proto"
+  // Disabling lenses and getters makes the generated code a bit smaller
+  lenses: false
+  getters: false
+  // Disabling this can substantially improve performance
+  preserve_unknown_fields: false
+};
+
+option java_package = "pl.ostrzyciel.jelly.core.proto";
+
+// Optimize for speed
+option optimize_for = SPEED;
+option java_multiple_files = true;

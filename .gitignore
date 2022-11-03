@@ -1,2 +1,4 @@
+target
 *.class
 *.log
+/.idea
