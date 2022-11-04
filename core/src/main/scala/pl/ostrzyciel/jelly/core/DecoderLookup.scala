@@ -4,6 +4,11 @@ import pl.ostrzyciel.jelly.core.RDFProtobufDeserializationError
 
 import scala.reflect.ClassTag
 
+/**
+ * Simple, array-based lookup for the protobuf decoder.
+ * @param maxEntries size of the pre-allocated lookup array
+ * @tparam T type of the objects that will be stored in the lookup
+ */
 class DecoderLookup[T : ClassTag](maxEntries: Int):
   private val lookup = new Array[T](maxEntries)
 

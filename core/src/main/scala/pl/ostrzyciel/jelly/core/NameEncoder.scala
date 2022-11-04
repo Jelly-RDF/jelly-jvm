@@ -1,0 +1,78 @@
+package pl.ostrzyciel.jelly.core
+
+import pl.ostrzyciel.jelly.core.proto.*
+
+import scala.collection.mutable
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.jdk.CollectionConverters.*
+
+class NameEncoder(opt: StreamOptions, rowsBuffer: ListBuffer[RdfStreamRow]):
+  private val nameLookup = new EncoderLookup(opt.maxNameTableSize)
+  private val prefixLookup = new EncoderLookup(opt.maxPrefixTableSize)
+  private val dtLookup = new EncoderLookup(opt.maxDatatypeTableSize)
+  private val dtTable = new DecoderLookup[RdfLiteral.LiteralKind.Datatype](opt.maxDatatypeTableSize)
+
+  /**
+   * Try to extract the prefix out of the IRI.
+   *
+   * Somewhat based on [[org.apache.jena.riot.system.PrefixMapStd.getPossibleKey]]
+   * @param iri IRI
+   * @return prefix or null (micro-op, don't hit me)
+   */
+  private def getIriPrefix(iri: String): String =
+    iri.lastIndexOf('#') match
+      case i if i > -1 => iri.substring(0, i + 1)
+      case _ =>
+        iri.lastIndexOf('/') match
+          case i if i > -1 => iri.substring(0, i + 1)
+          case _ => null
+
+  def encodeIri(iri: String): RdfIri =
+    def plainIriEncode: RdfIri =
+      nameLookup.addEntry(iri) match
+        case EncoderValue(id, false) =>
+          RdfIri(nameId = id)
+        case EncoderValue(id, true) =>
+          rowsBuffer.append(
+            RdfStreamRow(RdfStreamRow.Row.Name(
+              RdfNameEntry(id = id, value = iri)
+            ))
+          )
+          RdfIri(nameId = id)
+
+    if opt.maxPrefixTableSize == 0 then
+      // Use a lighter algorithm if the prefix table is disabled
+      return plainIriEncode
+
+    getIriPrefix(iri) match
+      case null => plainIriEncode
+      case prefix =>
+        val postfix = iri.substring(prefix.length)
+        val pVal = prefixLookup.addEntry(prefix)
+        val iVal = if postfix.nonEmpty then nameLookup.addEntry(postfix) else EncoderValue(0, false)
+
+        if pVal.newEntry then rowsBuffer.append(
+          RdfStreamRow(RdfStreamRow.Row.Prefix(
+            RdfPrefixEntry(pVal.id, prefix)
+          ))
+        )
+        if iVal.newEntry then rowsBuffer.append(
+          RdfStreamRow(RdfStreamRow.Row.Name(
+            RdfNameEntry(iVal.id, postfix)
+          ))
+        )
+        RdfIri(prefixId = pVal.id, nameId = iVal.id)
+
+  def encodeDatatype(dt: String): RdfLiteral.LiteralKind.Datatype =
+    val dtVal = dtLookup.addEntry(dt)
+    if dtVal.newEntry then
+      dtTable.update(
+        dtVal.id,
+        RdfLiteral.LiteralKind.Datatype(RdfDatatype(dtVal.id))
+      )
+      rowsBuffer.append(
+        RdfStreamRow(RdfStreamRow.Row.Datatype(
+          RdfDatatypeEntry(id = dtVal.id, value = dt)
+        ))
+      )
+    dtTable.get(dtVal.id)
