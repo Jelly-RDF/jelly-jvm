@@ -2,9 +2,9 @@ package pl.ostrzyciel.jelly.core
 
 import java.util
 
-case class EncoderValue(id: Int, newEntry: Boolean)
+private[core] final case class EncoderValue(id: Int, newEntry: Boolean)
 
-class EncoderLookup(maxEntries: Int)
+private[core] final class EncoderLookup(maxEntries: Int)
   extends util.LinkedHashMap[String, EncoderValue](maxEntries + 2, 1, true):
 
   override def removeEldestEntry(eldest: util.Map.Entry[String, EncoderValue]): Boolean =

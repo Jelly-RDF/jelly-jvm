@@ -2,6 +2,7 @@ name := "jelly-jvm"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "3.2.1"
 
+lazy val jenaV = "4.6.1"
 lazy val scalapbV = "0.11.12"
 
 // !!! 2.1.x is the last release with the Apache license. Do not upgrade to Akka gRPC 2.2.0.
@@ -27,3 +28,14 @@ lazy val core = (project in file("core"))
     Compile / PB.protoSources ++= Seq(baseDirectory.value / "src" / "main" / "protobuf_shared"),
     commonSettings,
   )
+
+lazy val jena = (project in file("jena"))
+  .settings(
+    name := "jena",
+    libraryDependencies ++= Seq(
+      "org.apache.jena" % "jena-core" % jenaV,
+      "org.apache.jena" % "jena-arq" % jenaV,
+    ),
+    commonSettings,
+  )
+  .dependsOn(core)

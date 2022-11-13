@@ -18,8 +18,8 @@ object StreamOptions:
  * @param maxDatatypeTableSize maximum size of the datatype table
  * @param useRepeat whether or not to use RDF_REPEAT terms
  */
-case class StreamOptions(maxNameTableSize: Int = 4000, maxPrefixTableSize: Int = 150, maxDatatypeTableSize: Int = 32,
-                         useRepeat: Boolean = true):
+final case class StreamOptions(maxNameTableSize: Int = 4000, maxPrefixTableSize: Int = 150,
+                               maxDatatypeTableSize: Int = 32, useRepeat: Boolean = true):
   /**
    * @return a stream options row to be included as a header in the stream
    */

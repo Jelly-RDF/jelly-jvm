@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
  * @param maxEntries size of the pre-allocated lookup array
  * @tparam T type of the objects that will be stored in the lookup
  */
-class DecoderLookup[T : ClassTag](maxEntries: Int):
+private[core] final class DecoderLookup[T : ClassTag](maxEntries: Int):
   private val lookup = new Array[T](maxEntries)
 
   /**

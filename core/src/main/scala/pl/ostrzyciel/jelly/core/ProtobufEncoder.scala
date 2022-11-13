@@ -20,7 +20,7 @@ abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val opti
    * @param triple triple to add
    * @return iterable of stream rows
    */
-  def addTriple(triple: TTriple): Iterable[RdfStreamRow] =
+  final def addTriple(triple: TTriple): Iterable[RdfStreamRow] =
     handleHeader()
     val mainRow = RdfStreamRow(RdfStreamRow.Row.Triple(
       tripleToProto(triple)
@@ -32,7 +32,7 @@ abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val opti
    * @param quad quad to add
    * @return iterable of stream rows
    */
-  def addQuad(quad: TQuad): Iterable[RdfStreamRow] =
+  final def addQuad(quad: TQuad): Iterable[RdfStreamRow] =
     handleHeader()
     val mainRow = RdfStreamRow(RdfStreamRow.Row.Quad(
       quadToProto(quad)
@@ -58,7 +58,7 @@ abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val opti
   /**
    * Turn an RDF node into its protobuf representation (or None in case of error)
    *
-   * Use the protected inline make* methods in this class to create the nodes.
+   * Use the protected final inline make* methods in this class to create the nodes.
    *
    * @param node RDF node
    * @return option of RdfTerm
@@ -68,29 +68,29 @@ abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val opti
 
   // *** 3. THE PROTECTED INTERFACE ***
   // **********************************
-  protected inline def makeIriNode(iri: String): Some[RdfTerm] =
+  protected final inline def makeIriNode(iri: String): Some[RdfTerm] =
     val iriEnc = iriEncoder.encodeIri(iri)
     Some(RdfTerm(RdfTerm.Term.Iri(iriEnc)))
 
-  protected inline def makeBlankNode(label: String): Some[RdfTerm] =
+  protected final inline def makeBlankNode(label: String): Some[RdfTerm] =
     Some(RdfTerm(RdfTerm.Term.Bnode(RdfBnode(label))))
 
-  protected inline def makeSimpleLiteral(lex: String): Some[RdfTerm] =
+  protected final inline def makeSimpleLiteral(lex: String): Some[RdfTerm] =
     Some(RdfTerm(RdfTerm.Term.Literal(
       RdfLiteral(lex, simpleLiteral)
     )))
 
-  protected inline def makeLangLiteral(lex: String, lang: String): Some[RdfTerm] =
+  protected final inline def makeLangLiteral(lex: String, lang: String): Some[RdfTerm] =
     Some(RdfTerm(RdfTerm.Term.Literal(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
     )))
 
-  protected inline def makeDtLiteral(lex: String, dt: String): Some[RdfTerm] =
+  protected final inline def makeDtLiteral(lex: String, dt: String): Some[RdfTerm] =
     Some(RdfTerm(RdfTerm.Term.Literal(
       RdfLiteral(lex, iriEncoder.encodeDatatype(dt))
     )))
 
-  protected inline def makeTripleNode(triple: TTriple): Some[RdfTerm] =
+  protected final inline def makeTripleNode(triple: TTriple): Some[RdfTerm] =
     Some(RdfTerm(RdfTerm.Term.TripleTerm(tripleToProto(triple))))
 
 

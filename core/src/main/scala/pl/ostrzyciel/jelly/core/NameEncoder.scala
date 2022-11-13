@@ -6,7 +6,7 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.jdk.CollectionConverters.*
 
-class NameEncoder(opt: StreamOptions, rowsBuffer: ListBuffer[RdfStreamRow]):
+private[core] final class NameEncoder(opt: StreamOptions, rowsBuffer: ListBuffer[RdfStreamRow]):
   private val nameLookup = new EncoderLookup(opt.maxNameTableSize)
   private val prefixLookup = new EncoderLookup(opt.maxPrefixTableSize)
   private val dtLookup = new EncoderLookup(opt.maxDatatypeTableSize)

@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
  * Stateful decoder of a protobuf RDF stream.
  */
 abstract class ProtobufDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad]:
-  type TripleOrQuad = TTriple | TQuad
+  final type TripleOrQuad = TTriple | TQuad
 
   // Methods to implement
   protected def makeSimpleLiteral(lex: String): TNode
@@ -22,9 +22,9 @@ abstract class ProtobufDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TT
   protected def makeTriple(s: TNode, p: TNode, o: TNode): TTriple
   protected def makeQuad(s: TNode, p: TNode, o: TNode, g: TNode): TQuad
 
-  var streamOpt: Option[StreamOptions] = None
-  lazy val nameDecoder = new NameDecoder(streamOpt getOrElse StreamOptions())
-  lazy val dtLookup = new DecoderLookup[TDatatype](streamOpt.map(o => o.maxDatatypeTableSize) getOrElse 20)
+  private var streamOpt: Option[StreamOptions] = None
+  private lazy val nameDecoder = new NameDecoder(streamOpt getOrElse StreamOptions())
+  private lazy val dtLookup = new DecoderLookup[TDatatype](streamOpt.map(o => o.maxDatatypeTableSize) getOrElse 20)
 
   private val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
@@ -81,7 +81,7 @@ abstract class ProtobufDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TT
       convertTermWrapped(quad.o, lastObject),
     )
 
-  def ingestRow(row: RdfStreamRow): Option[TripleOrQuad] = row.row match
+  final def ingestRow(row: RdfStreamRow): Option[TripleOrQuad] = row.row match
     case RdfStreamRow.Row.Options(opts) =>
       streamOpt = Some(StreamOptions(opts))
       None
