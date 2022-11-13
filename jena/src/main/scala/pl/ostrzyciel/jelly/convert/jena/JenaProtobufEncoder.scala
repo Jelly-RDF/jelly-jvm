@@ -8,29 +8,28 @@ import org.apache.jena.sparql.core.Quad
 import pl.ostrzyciel.jelly.core.{ProtobufEncoder, StreamOptions}
 import pl.ostrzyciel.jelly.core.proto.RdfTerm
 
-import scala.annotation.targetName
-
 final class JenaProtobufEncoder(override val options: StreamOptions)
-  extends ProtobufEncoder[Node, Triple, Quad](options):
+  extends ProtobufEncoder[Node, Triple, Quad, Triple](options):
 
-  protected inline def getS (triple: Triple): Node = triple.getSubject
-  protected inline def getP (triple: Triple): Node = triple.getPredicate
-  protected inline def getO (triple: Triple): Node = triple.getObject
+  protected inline def getTstS(triple: Triple) = triple.getSubject
+  protected inline def getTstP(triple: Triple) = triple.getPredicate
+  protected inline def getTstO(triple: Triple) = triple.getObject
 
-  @targetName("getQuadS")
-  protected inline def getS(quad: Quad): Node = quad.getSubject
-  @targetName("getQuadP")
-  protected inline def getP(quad: Quad): Node = quad.getPredicate
-  @targetName("getQuadO")
-  protected inline def getO(quad: Quad): Node = quad.getObject
-  protected inline def getG(quad: Quad): Node = quad.getGraph
+  protected inline def getQstS(quad: Quad) = quad.getSubject
+  protected inline def getQstP(quad: Quad) = quad.getPredicate
+  protected inline def getQstO(quad: Quad) = quad.getObject
+  protected inline def getQstG(quad: Quad) = quad.getGraph
+
+  protected inline def getQuotedS(triple: Triple) = triple.getSubject
+  protected inline def getQuotedP(triple: Triple) = triple.getPredicate
+  protected inline def getQuotedO(triple: Triple) = triple.getObject
 
   /**
    * TODO: try the NodeVisitor? might be faster, but there would be extra overhead on casting
    * @param node RDF node
    *  @return option of RdfTerm
    */
-  protected def nodeToProto (node: Node): Option[RdfTerm] = node match
+  protected def nodeToProto(node: Node): Option[RdfTerm] = node match
     // URI/IRI
     case _: Node_URI => makeIriNode(node.getURI)
     // Blank node

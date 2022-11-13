@@ -18,7 +18,7 @@ abstract class ProtobufDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TT
   protected def makeDatatype(dt: String): TDatatype
   protected def makeBlankNode(label: String): TNode
   protected def makeIriNode(iri: String): TNode
-  protected def makeTripleNode(triple: TTriple): TNode
+  protected def makeTripleNode(s: TNode, p: TNode, o: TNode): TNode
   protected def makeTriple(s: TNode, p: TNode, o: TNode): TTriple
   protected def makeQuad(s: TNode, p: TNode, o: TNode, g: TNode): TQuad
 
@@ -47,7 +47,12 @@ abstract class ProtobufDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TT
         case RdfLiteral.LiteralKind.Empty =>
           throw new RDFProtobufDeserializationError("Literal kind not set.")
     case RdfTerm.Term.TripleTerm(triple) =>
-      makeTripleNode(convertTriple(triple))
+      // ! No support for RdfRepeat in quoted triples
+      makeTripleNode(
+        convertQuotedTerm(triple.s),
+        convertQuotedTerm(triple.p),
+        convertQuotedTerm(triple.o),
+      )
     case _: RdfTerm.Term.Repeat =>
       throw new RDFProtobufDeserializationError("Use convertedTermWrapped.")
     case RdfTerm.Term.Empty =>
@@ -58,12 +63,16 @@ abstract class ProtobufDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TT
       case _: RdfTerm.Term.Repeat =>
         lastNodeHolder.node match
           case null =>
-            throw new RDFProtobufDeserializationError("RDF_REPEAT without previous term")
+            throw new RDFProtobufDeserializationError("RdfRepeat without previous term")
           case n => n
       case _ =>
         val node = convertTerm(t)
         lastNodeHolder.node = node
         node
+    case None => throw new RDFProtobufDeserializationError("Term not set.")
+
+  private def convertQuotedTerm(term: Option[RdfTerm]): TNode = term match
+    case Some(t) => convertTerm(t)
     case None => throw new RDFProtobufDeserializationError("Term not set.")
 
   private def convertTriple(triple: RdfTriple): TTriple =

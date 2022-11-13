@@ -3,16 +3,13 @@ package pl.ostrzyciel.jelly.core
 import pl.ostrzyciel.jelly.core.proto.*
 
 import java.math.BigInteger
-import scala.annotation.targetName
 import scala.collection.mutable.ListBuffer
 
 /**
  * Stateful encoder of a protobuf RDF stream.
  * @param options options for this stream
  */
-abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val options: StreamOptions):
-  type TripleOrQuad = TTriple | TQuad
-
+abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](val options: StreamOptions):
   // *** 1. THE PUBLIC INTERFACE ***
   // *******************************
   /**
@@ -20,7 +17,7 @@ abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val opti
    * @param triple triple to add
    * @return iterable of stream rows
    */
-  final def addTriple(triple: TTriple): Iterable[RdfStreamRow] =
+  final def addTripleStatement(triple: TTriple): Iterable[RdfStreamRow] =
     handleHeader()
     val mainRow = RdfStreamRow(RdfStreamRow.Row.Triple(
       tripleToProto(triple)
@@ -32,7 +29,7 @@ abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val opti
    * @param quad quad to add
    * @return iterable of stream rows
    */
-  final def addQuad(quad: TQuad): Iterable[RdfStreamRow] =
+  final def addQuadStatement(quad: TQuad): Iterable[RdfStreamRow] =
     handleHeader()
     val mainRow = RdfStreamRow(RdfStreamRow.Row.Quad(
       quadToProto(quad)
@@ -42,18 +39,21 @@ abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val opti
 
   // *** 2. METHODS TO IMPLEMENT ***
   // *******************************
-  protected def getS(triple: TTriple): TNode
-  protected def getP(triple: TTriple): TNode
-  protected def getO(triple: TTriple): TNode
+  // Triple statement deconstruction
+  protected def getTstS(triple: TTriple): TNode
+  protected def getTstP(triple: TTriple): TNode
+  protected def getTstO(triple: TTriple): TNode
 
-  // @targetName used to get around method overloading with type erasure
-  @targetName("getQuadS")
-  protected def getS(quad: TQuad): TNode
-  @targetName("getQuadP")
-  protected def getP(quad: TQuad): TNode
-  @targetName("getQuadO")
-  protected def getO(quad: TQuad): TNode
-  protected def getG(quad: TQuad): TNode
+  // Quad statement deconstruction
+  protected def getQstS(quad: TQuad): TNode
+  protected def getQstP(quad: TQuad): TNode
+  protected def getQstO(quad: TQuad): TNode
+  protected def getQstG(quad: TQuad): TNode
+
+  // Quoted triple term deconstruction
+  protected def getQuotedS(triple: TQuoted): TNode
+  protected def getQuotedP(triple: TQuoted): TNode
+  protected def getQuotedO(triple: TQuoted): TNode
 
   /**
    * Turn an RDF node into its protobuf representation (or None in case of error)
@@ -90,8 +90,8 @@ abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val opti
       RdfLiteral(lex, iriEncoder.encodeDatatype(dt))
     )))
 
-  protected final inline def makeTripleNode(triple: TTriple): Some[RdfTerm] =
-    Some(RdfTerm(RdfTerm.Term.TripleTerm(tripleToProto(triple))))
+  protected final inline def makeTripleNode(triple: TQuoted): Some[RdfTerm] =
+    Some(RdfTerm(RdfTerm.Term.TripleTerm(quotedToProto(triple))))
 
 
   // *** 4. PRIVATE FIELDS AND METHODS ***
@@ -120,17 +120,25 @@ abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad](val opti
 
   private def tripleToProto(triple: TTriple): RdfTriple =
     RdfTriple(
-      s = nodeToProtoWrapped(getS(triple), lastSubject),
-      p = nodeToProtoWrapped(getP(triple), lastPredicate),
-      o = nodeToProtoWrapped(getO(triple), lastObject),
+      s = nodeToProtoWrapped(getTstS(triple), lastSubject),
+      p = nodeToProtoWrapped(getTstP(triple), lastPredicate),
+      o = nodeToProtoWrapped(getTstO(triple), lastObject),
     )
 
   private def quadToProto(quad: TQuad): RdfQuad =
     RdfQuad(
-      s = nodeToProtoWrapped(getS(quad), lastSubject),
-      p = nodeToProtoWrapped(getP(quad), lastPredicate),
-      o = nodeToProtoWrapped(getO(quad), lastObject),
-      g = nodeToProtoWrapped(getG(quad), lastGraph),
+      s = nodeToProtoWrapped(getQstS(quad), lastSubject),
+      p = nodeToProtoWrapped(getQstP(quad), lastPredicate),
+      o = nodeToProtoWrapped(getQstO(quad), lastObject),
+      g = nodeToProtoWrapped(getQstG(quad), lastGraph),
+    )
+
+  private def quotedToProto(quoted: TQuoted): RdfTriple =
+    // ! No RdfRepeat support for quoted triples.
+    RdfTriple(
+      s = nodeToProto(getQuotedS(quoted)),
+      p = nodeToProto(getQuotedP(quoted)),
+      o = nodeToProto(getQuotedO(quoted)),
     )
 
   private def handleHeader(): Unit =

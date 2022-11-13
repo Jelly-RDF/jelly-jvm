@@ -39,3 +39,13 @@ lazy val jena = (project in file("jena"))
     commonSettings,
   )
   .dependsOn(core)
+
+lazy val rdf4j = (project in file("rdf4j"))
+  .settings(
+    name := "rdf4j",
+    libraryDependencies ++= Seq(
+      "org.eclipse.rdf4j" % "rdf4j-model" % "4.2.1",
+    ),
+    commonSettings,
+  )
+  .dependsOn(core)

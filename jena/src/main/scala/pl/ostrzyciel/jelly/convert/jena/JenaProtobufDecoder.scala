@@ -20,7 +20,7 @@ final class JenaProtobufDecoder extends ProtobufDecoder[Node, RDFDatatype, Tripl
 
   override inline protected def makeIriNode(iri: String) = NodeFactory.createURI(iri)
 
-  override inline protected def makeTripleNode(triple: Triple) = NodeFactory.createTripleNode(triple)
+  override inline protected def makeTripleNode(s: Node, p: Node, o: Node) = NodeFactory.createTripleNode(s, p, o)
 
   override inline protected def makeTriple(s: Node, p: Node, o: Node) = Triple.create(s, p, o)
 
