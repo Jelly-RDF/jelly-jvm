@@ -8,7 +8,9 @@ lazy val jenaV = "4.6.1"
 lazy val scalapbV = "0.11.12"
 
 lazy val commonSettings = Seq(
-
+  libraryDependencies ++= Seq(
+    "org.scalatest" %% "scalatest" % "3.2.14" % Test,
+  )
 )
 
 lazy val core = (project in file("core"))

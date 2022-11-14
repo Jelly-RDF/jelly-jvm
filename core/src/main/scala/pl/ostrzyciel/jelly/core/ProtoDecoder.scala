@@ -45,7 +45,7 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
         case RdfLiteral.LiteralKind.Datatype(dt) =>
           makeDtLiteral(literal.lex, dtLookup.get(dt.dtId))
         case RdfLiteral.LiteralKind.Empty =>
-          throw new RDFProtobufDeserializationError("Literal kind not set.")
+          throw new RdfProtoDeserializationError("Literal kind not set.")
     case RdfTerm.Term.TripleTerm(triple) =>
       // ! No support for RdfRepeat in quoted triples
       makeTripleNode(
@@ -54,26 +54,26 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
         convertQuotedTerm(triple.o),
       )
     case _: RdfTerm.Term.Repeat =>
-      throw new RDFProtobufDeserializationError("Use convertedTermWrapped.")
+      throw new RdfProtoDeserializationError("Use convertedTermWrapped.")
     case RdfTerm.Term.Empty =>
-      throw new RDFProtobufDeserializationError("Term kind is not set.")
+      throw new RdfProtoDeserializationError("Term kind is not set.")
 
   private def convertTermWrapped(term: Option[RdfTerm], lastNodeHolder: LastNodeHolder[TNode]): TNode = term match
     case Some(t) => t.term match
       case _: RdfTerm.Term.Repeat =>
         lastNodeHolder.node match
           case null =>
-            throw new RDFProtobufDeserializationError("RdfRepeat without previous term")
+            throw new RdfProtoDeserializationError("RdfRepeat without previous term")
           case n => n
       case _ =>
         val node = convertTerm(t)
         lastNodeHolder.node = node
         node
-    case None => throw new RDFProtobufDeserializationError("Term not set.")
+    case None => throw new RdfProtoDeserializationError("Term not set.")
 
   private def convertQuotedTerm(term: Option[RdfTerm]): TNode = term match
     case Some(t) => convertTerm(t)
-    case None => throw new RDFProtobufDeserializationError("Term not set.")
+    case None => throw new RdfProtoDeserializationError("Term not set.")
 
   private def convertTriple(triple: RdfTriple): TTriple =
     makeTriple(
@@ -108,4 +108,4 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
     case RdfStreamRow.Row.Quad(quad) =>
       Some(convertQuad(quad))
     case RdfStreamRow.Row.Empty =>
-      throw new RDFProtobufDeserializationError("Row is not set.")
+      throw new RdfProtoDeserializationError("Row is not set.")

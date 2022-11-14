@@ -1,6 +1,12 @@
 package pl.ostrzyciel.jelly
 
 package object core:
-  final class RDFProtobufDeserializationError(msg: String) extends Error(msg)
+  sealed class RdfProtoDeserializationError(msg: String) extends Error(msg)
+  final class MissingPrefixEntryError(val prefixId: Int) extends RdfProtoDeserializationError(
+    s"Missing entry in prefix table at ID: $prefixId"
+  )
+  final class MissingNameEntryError(val nameId: Int) extends RdfProtoDeserializationError(
+    s"Missing entry in name table at ID: $nameId"
+  )
 
-  final class RDFProtobufSerializationError(msg: String) extends Error(msg)
+  final class RdfProtoSerializationError(msg: String) extends Error(msg)

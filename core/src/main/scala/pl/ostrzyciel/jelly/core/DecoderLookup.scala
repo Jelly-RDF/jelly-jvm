@@ -1,7 +1,5 @@
 package pl.ostrzyciel.jelly.core
 
-import pl.ostrzyciel.jelly.core.RDFProtobufDeserializationError
-
 import scala.reflect.ClassTag
 
 /**
@@ -15,11 +13,13 @@ private[core] final class DecoderLookup[T : ClassTag](maxEntries: Int):
   /**
    * @param id 1-based
    * @param v value
+   * @throws ArrayIndexOutOfBoundsException if id < 1 or id > maxEntries
    */
   inline def update(id: Int, v: T): Unit = lookup(id - 1) = v
 
   /**
    * @param id 1-based
    * @return value
+   * @throws ArrayIndexOutOfBoundsException if id < 1 or id > maxEntries
    */
   inline def get(id: Int): T = lookup(id - 1)
