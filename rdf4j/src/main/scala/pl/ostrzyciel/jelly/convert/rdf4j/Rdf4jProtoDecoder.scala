@@ -3,9 +3,9 @@ package pl.ostrzyciel.jelly.convert.rdf4j
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.base.CoreDatatype
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
-import pl.ostrzyciel.jelly.core.ProtobufDecoder
+import pl.ostrzyciel.jelly.core.ProtoDecoder
 
-final class Rdf4jProtobufDecoder extends ProtobufDecoder[Value, Rdf4jDatatype, Statement, Statement]:
+final class Rdf4jProtoDecoder extends ProtoDecoder[Value, Rdf4jDatatype, Statement, Statement]:
   private val vf = SimpleValueFactory.getInstance()
 
   override inline protected def makeSimpleLiteral(lex: String) = vf.createLiteral(lex)

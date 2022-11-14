@@ -5,11 +5,11 @@ import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.datatypes.xsd.impl.RDFLangString
 import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
-import pl.ostrzyciel.jelly.core.{ProtobufEncoder, StreamOptions}
+import pl.ostrzyciel.jelly.core.{ProtoEncoder, JellyOptions}
 import pl.ostrzyciel.jelly.core.proto.RdfTerm
 
-final class JenaProtobufEncoder(override val options: StreamOptions)
-  extends ProtobufEncoder[Node, Triple, Quad, Triple](options):
+final class JenaProtoEncoder(override val options: JellyOptions)
+  extends ProtoEncoder[Node, Triple, Quad, Triple](options):
 
   protected inline def getTstS(triple: Triple) = triple.getSubject
   protected inline def getTstP(triple: Triple) = triple.getPredicate

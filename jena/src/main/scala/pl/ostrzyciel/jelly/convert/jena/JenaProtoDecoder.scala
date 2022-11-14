@@ -5,9 +5,9 @@ import org.apache.jena.datatypes.RDFDatatype
 import org.apache.jena.datatypes.xsd.impl.RDFLangString
 import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
-import pl.ostrzyciel.jelly.core.ProtobufDecoder
+import pl.ostrzyciel.jelly.core.ProtoDecoder
 
-final class JenaProtobufDecoder extends ProtobufDecoder[Node, RDFDatatype, Triple, Quad]:
+final class JenaProtoDecoder extends ProtoDecoder[Node, RDFDatatype, Triple, Quad]:
   override inline protected def makeSimpleLiteral(lex: String) = NodeFactory.createLiteral(lex)
 
   override inline protected def makeLangLiteral(lex: String, lang: String) = NodeFactory.createLiteral(lex, lang)

@@ -2,11 +2,10 @@ name := "jelly-jvm"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "3.2.1"
 
+// !!! 2.6.x is the last release with the Apache license. Do not upgrade to Akka 2.7.x
+lazy val akkaV = "2.6.20"
 lazy val jenaV = "4.6.1"
 lazy val scalapbV = "0.11.12"
-
-// !!! 2.1.x is the last release with the Apache license. Do not upgrade to Akka gRPC 2.2.0.
-// addSbtPlugin("com.lightbend.akka.grpc" % "sbt-akka-grpc" % "2.1.6")
 
 lazy val commonSettings = Seq(
 
@@ -14,7 +13,7 @@ lazy val commonSettings = Seq(
 
 lazy val core = (project in file("core"))
   .settings(
-    name := "core",
+    name := "jelly-core",
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbV,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV % "protobuf",
@@ -31,7 +30,7 @@ lazy val core = (project in file("core"))
 
 lazy val jena = (project in file("jena"))
   .settings(
-    name := "jena",
+    name := "jelly-jena",
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-core" % jenaV,
       "org.apache.jena" % "jena-arq" % jenaV,
@@ -42,9 +41,21 @@ lazy val jena = (project in file("jena"))
 
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
-    name := "rdf4j",
+    name := "jelly-rdf4j",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-model" % "4.2.1",
+    ),
+    commonSettings,
+  )
+  .dependsOn(core)
+
+lazy val stream = (project in file("stream"))
+  .settings(
+    name := "jelly-stream",
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor-typed" % akkaV,
+      "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
+      "com.typesafe.akka" %% "akka-stream-testkit" % akkaV % Test,
     ),
     commonSettings,
   )

@@ -9,7 +9,7 @@ import scala.collection.mutable.ListBuffer
  * Stateful encoder of a protobuf RDF stream.
  * @param options options for this stream
  */
-abstract class ProtobufEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](val options: StreamOptions):
+abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](val options: JellyOptions):
   // *** 1. THE PUBLIC INTERFACE ***
   // *******************************
   /**

@@ -8,7 +8,7 @@ import scala.reflect.ClassTag
 /**
  * Stateful decoder of a protobuf RDF stream.
  */
-abstract class ProtobufDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad]:
+abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad]:
   final type TripleOrQuad = TTriple | TQuad
 
   // Methods to implement
@@ -22,8 +22,8 @@ abstract class ProtobufDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TT
   protected def makeTriple(s: TNode, p: TNode, o: TNode): TTriple
   protected def makeQuad(s: TNode, p: TNode, o: TNode, g: TNode): TQuad
 
-  private var streamOpt: Option[StreamOptions] = None
-  private lazy val nameDecoder = new NameDecoder(streamOpt getOrElse StreamOptions())
+  private var streamOpt: Option[JellyOptions] = None
+  private lazy val nameDecoder = new NameDecoder(streamOpt getOrElse JellyOptions())
   private lazy val dtLookup = new DecoderLookup[TDatatype](streamOpt.map(o => o.maxDatatypeTableSize) getOrElse 20)
 
   private val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
@@ -92,7 +92,7 @@ abstract class ProtobufDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TT
 
   final def ingestRow(row: RdfStreamRow): Option[TripleOrQuad] = row.row match
     case RdfStreamRow.Row.Options(opts) =>
-      streamOpt = Some(StreamOptions(opts))
+      streamOpt = Some(JellyOptions(opts))
       None
     case RdfStreamRow.Row.Name(nameRow) =>
       nameDecoder.updateNames(nameRow)

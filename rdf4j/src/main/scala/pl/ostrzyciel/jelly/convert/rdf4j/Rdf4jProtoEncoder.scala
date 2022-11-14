@@ -2,11 +2,11 @@ package pl.ostrzyciel.jelly.convert.rdf4j
 
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.vocabulary.XSD
-import pl.ostrzyciel.jelly.core.{ProtobufEncoder, StreamOptions}
+import pl.ostrzyciel.jelly.core.{ProtoEncoder, JellyOptions}
 import pl.ostrzyciel.jelly.core.proto.RdfTerm
 
-class Rdf4jProtobufEncoder(override val options: StreamOptions)
-  extends ProtobufEncoder[Value, Statement, Statement, Triple](options):
+class Rdf4jProtoEncoder(override val options: JellyOptions)
+  extends ProtoEncoder[Value, Statement, Statement, Triple](options):
 
   protected inline def getTstS(triple: Statement) = triple.getSubject
   protected inline def getTstP(triple: Statement) = triple.getPredicate

@@ -3,7 +3,7 @@ package pl.ostrzyciel.jelly.core
 import pl.ostrzyciel.jelly.core.RDFProtobufDeserializationError
 import pl.ostrzyciel.jelly.core.proto.*
 
-private[core] final class NameDecoder(opt: StreamOptions):
+private[core] final class NameDecoder(opt: JellyOptions):
   private val prefixLookup = new DecoderLookup[String](opt.maxPrefixTableSize)
   private val nameLookup = new DecoderLookup[String](opt.maxNameTableSize)
 
