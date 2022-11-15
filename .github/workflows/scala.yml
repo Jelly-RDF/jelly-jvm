@@ -19,8 +19,6 @@ jobs:
             java: 8
           - os: ubuntu-latest
             java: 17
-          - os: windows-latest
-            java: 17
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
@@ -32,6 +30,8 @@ jobs:
         java-version: ${{ matrix.java }}
     - name: Build and test
       shell: bash
-      run: sbt -v +test
+      run:
+        - sbt -v compile
+        - sbt -v +test
     - name: Upload dependency graph
       uses: scalacenter/sbt-dependency-submission@v2
