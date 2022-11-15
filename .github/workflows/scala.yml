@@ -30,8 +30,8 @@ jobs:
         java-version: ${{ matrix.java }}
     - name: Build and test
       shell: bash
-      run:
-        - sbt -v compile
-        - sbt -v +test
+      run: |
+        sbt -v compile
+        sbt -v +test
     - name: Upload dependency graph
       uses: scalacenter/sbt-dependency-submission@v2
