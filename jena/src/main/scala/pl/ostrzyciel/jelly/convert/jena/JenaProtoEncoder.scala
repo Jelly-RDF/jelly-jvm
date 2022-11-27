@@ -5,7 +5,7 @@ import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.datatypes.xsd.impl.RDFLangString
 import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
-import pl.ostrzyciel.jelly.core.{ProtoEncoder, JellyOptions}
+import pl.ostrzyciel.jelly.core.{ProtoEncoder, JellyOptions, RdfProtoSerializationError}
 import pl.ostrzyciel.jelly.core.proto.RdfTerm
 
 final class JenaProtoEncoder(override val options: JellyOptions)
@@ -29,7 +29,7 @@ final class JenaProtoEncoder(override val options: JellyOptions)
    * @param node RDF node
    *  @return option of RdfTerm
    */
-  protected def nodeToProto(node: Node): Option[RdfTerm] = node match
+  protected def nodeToProto(node: Node): RdfTerm = node match
     // URI/IRI
     case _: Node_URI => makeIriNode(node.getURI)
     // Blank node
@@ -53,4 +53,4 @@ final class JenaProtoEncoder(override val options: JellyOptions)
         case _ => makeLangLiteral(lex, lang)
     // RDF-star node
     case _: Node_Triple => makeTripleNode(node.getTriple)
-    case _ => None
+    case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")

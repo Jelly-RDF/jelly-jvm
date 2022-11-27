@@ -27,7 +27,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
     protected inline def getQuotedP(triple: Triple) = triple.p
     protected inline def getQuotedO(triple: Triple) = triple.o
 
-    protected def nodeToProto(node: Node): Option[RdfTerm] = node match
+    protected def nodeToProto(node: Node): RdfTerm = node match
       case Iri(iri) => makeIriNode(iri)
       case SimpleLiteral(lex) => makeSimpleLiteral(lex)
       case LangLiteral(lex, lang) => makeLangLiteral(lex, lang)
@@ -69,9 +69,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
           RdfPrefixEntry(2, "https://test.org/ns2/"),
           RdfNameEntry(3, "object"),
           RdfTriple(
-            Some(RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1)))),
-            Some(RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2)))),
-            Some(RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3)))),
+            RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
+            RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+            RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
           ),
         ))
       }

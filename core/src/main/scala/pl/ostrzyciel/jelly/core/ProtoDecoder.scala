@@ -49,31 +49,25 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
     case RdfTerm.Term.TripleTerm(triple) =>
       // ! No support for RdfRepeat in quoted triples
       makeTripleNode(
-        convertQuotedTerm(triple.s),
-        convertQuotedTerm(triple.p),
-        convertQuotedTerm(triple.o),
+        convertTerm(triple.s),
+        convertTerm(triple.p),
+        convertTerm(triple.o),
       )
     case _: RdfTerm.Term.Repeat =>
       throw new RdfProtoDeserializationError("Use convertedTermWrapped.")
     case RdfTerm.Term.Empty =>
       throw new RdfProtoDeserializationError("Term kind is not set.")
 
-  private def convertTermWrapped(term: Option[RdfTerm], lastNodeHolder: LastNodeHolder[TNode]): TNode = term match
-    case Some(t) => t.term match
-      case _: RdfTerm.Term.Repeat =>
-        lastNodeHolder.node match
-          case null =>
-            throw new RdfProtoDeserializationError("RdfRepeat without previous term")
-          case n => n
-      case _ =>
-        val node = convertTerm(t)
-        lastNodeHolder.node = node
-        node
-    case None => throw new RdfProtoDeserializationError("Term not set.")
-
-  private def convertQuotedTerm(term: Option[RdfTerm]): TNode = term match
-    case Some(t) => convertTerm(t)
-    case None => throw new RdfProtoDeserializationError("Term not set.")
+  private def convertTermWrapped(term: RdfTerm, lastNodeHolder: LastNodeHolder[TNode]): TNode = term.term match
+    case _: RdfTerm.Term.Repeat =>
+      lastNodeHolder.node match
+        case null =>
+          throw new RdfProtoDeserializationError("RdfRepeat without previous term")
+        case n => n
+    case _ =>
+      val node = convertTerm(term)
+      lastNodeHolder.node = node
+      node
 
   private def convertTriple(triple: RdfTriple): TTriple =
     makeTriple(

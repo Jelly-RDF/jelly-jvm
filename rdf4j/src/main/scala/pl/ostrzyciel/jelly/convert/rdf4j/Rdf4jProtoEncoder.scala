@@ -2,7 +2,7 @@ package pl.ostrzyciel.jelly.convert.rdf4j
 
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.vocabulary.XSD
-import pl.ostrzyciel.jelly.core.{ProtoEncoder, JellyOptions}
+import pl.ostrzyciel.jelly.core.{ProtoEncoder, JellyOptions, RdfProtoSerializationError}
 import pl.ostrzyciel.jelly.core.proto.RdfTerm
 
 class Rdf4jProtoEncoder(override val options: JellyOptions)
@@ -21,7 +21,7 @@ class Rdf4jProtoEncoder(override val options: JellyOptions)
   protected inline def getQuotedP(triple: Triple) = triple.getPredicate
   protected inline def getQuotedO(triple: Triple) = triple.getObject
 
-  protected def nodeToProto(node: Value): Option[RdfTerm] = node match
+  protected def nodeToProto(node: Value): RdfTerm = node match
     // URI/IRI
     case iri: IRI => makeIriNode(iri.stringValue)
     // Blank node
@@ -39,4 +39,4 @@ class Rdf4jProtoEncoder(override val options: JellyOptions)
         else
           makeSimpleLiteral(lex)
     case triple: Triple => makeTripleNode(triple)
-    case _ => None
+    case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")

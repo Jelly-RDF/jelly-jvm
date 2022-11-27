@@ -56,42 +56,43 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
   protected def getQuotedO(triple: TQuoted): TNode
 
   /**
-   * Turn an RDF node into its protobuf representation (or None in case of error)
+   * Turn an RDF node into its protobuf representation.
    *
    * Use the protected final inline make* methods in this class to create the nodes.
    *
    * @param node RDF node
    * @return option of RdfTerm
+   * @throws RdfProtoSerializationError if node cannot be encoded
    */
-  protected def nodeToProto(node: TNode): Option[RdfTerm]
+  protected def nodeToProto(node: TNode): RdfTerm
 
 
   // *** 3. THE PROTECTED INTERFACE ***
   // **********************************
-  protected final inline def makeIriNode(iri: String): Some[RdfTerm] =
+  protected final inline def makeIriNode(iri: String): RdfTerm =
     val iriEnc = iriEncoder.encodeIri(iri)
-    Some(RdfTerm(RdfTerm.Term.Iri(iriEnc)))
+    RdfTerm(RdfTerm.Term.Iri(iriEnc))
 
-  protected final inline def makeBlankNode(label: String): Some[RdfTerm] =
-    Some(RdfTerm(RdfTerm.Term.Bnode(RdfBnode(label))))
+  protected final inline def makeBlankNode(label: String): RdfTerm =
+    RdfTerm(RdfTerm.Term.Bnode(RdfBnode(label)))
 
-  protected final inline def makeSimpleLiteral(lex: String): Some[RdfTerm] =
-    Some(RdfTerm(RdfTerm.Term.Literal(
+  protected final inline def makeSimpleLiteral(lex: String): RdfTerm =
+    RdfTerm(RdfTerm.Term.Literal(
       RdfLiteral(lex, simpleLiteral)
-    )))
+    ))
 
-  protected final inline def makeLangLiteral(lex: String, lang: String): Some[RdfTerm] =
-    Some(RdfTerm(RdfTerm.Term.Literal(
+  protected final inline def makeLangLiteral(lex: String, lang: String): RdfTerm =
+    RdfTerm(RdfTerm.Term.Literal(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
-    )))
+    ))
 
-  protected final inline def makeDtLiteral(lex: String, dt: String): Some[RdfTerm] =
-    Some(RdfTerm(RdfTerm.Term.Literal(
+  protected final inline def makeDtLiteral(lex: String, dt: String): RdfTerm =
+    RdfTerm(RdfTerm.Term.Literal(
       RdfLiteral(lex, iriEncoder.encodeDatatype(dt))
-    )))
+    ))
 
-  protected final inline def makeTripleNode(triple: TQuoted): Some[RdfTerm] =
-    Some(RdfTerm(RdfTerm.Term.TripleTerm(quotedToProto(triple))))
+  protected final inline def makeTripleNode(triple: TQuoted): RdfTerm =
+    RdfTerm(RdfTerm.Term.TripleTerm(quotedToProto(triple)))
 
 
   // *** 4. PRIVATE FIELDS AND METHODS ***
@@ -105,10 +106,10 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
 
-  private val termRepeat = Some(RdfTerm(RdfTerm.Term.Repeat(RdfRepeat())))
+  private val termRepeat = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat()))
   private val simpleLiteral = RdfLiteral.LiteralKind.Simple(true)
 
-  private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): Option[RdfTerm] =
+  private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): RdfTerm =
     if options.useRepeat then
       lastNodeHolder.node match
         case oldNode if node == oldNode => termRepeat
