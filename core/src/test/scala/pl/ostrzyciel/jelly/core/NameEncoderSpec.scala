@@ -145,6 +145,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           ("https://test.org/other/Cake4", 3, 4),
           ("https://test.org/other/Cake5", 3, 1),
           ("https://test.org#Cake2", 2, 2),
+          ("Cake2", 0, 2),
         )
 
         for (sIri, ePrefix, eName) <- data do

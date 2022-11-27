@@ -8,7 +8,7 @@ import pl.ostrzyciel.jelly.core.proto.*
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 
 class ProtoEncoderSpec extends AnyWordSpec, Matchers:
-  type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad
+  import ProtoTestCases.*
 
   // Mock implementation of ProtoEncoder
   class MockProtoEncoder(override val options: JellyOptions)
@@ -33,65 +33,33 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       case LangLiteral(lex, lang) => makeLangLiteral(lex, lang)
       case DtLiteral(lex, dt) => makeDtLiteral(lex, dt.dt)
       case TripleNode(t) => makeTripleNode(t)
+      case BlankNode(label) => makeBlankNode(label)
 
-
-  def assertEncoded(observed: Seq[RdfStreamRow], expected: Seq[RowValue]): Unit =
-    val expectedRows: Seq[RdfStreamRow.Row] = expected map {
-      case v: RdfStreamOptions => RdfStreamRow.Row.Options(v)
-      case v: RdfDatatypeEntry => RdfStreamRow.Row.Datatype(v)
-      case v: RdfPrefixEntry => RdfStreamRow.Row.Prefix(v)
-      case v: RdfNameEntry => RdfStreamRow.Row.Name(v)
-      case v: RdfTriple => RdfStreamRow.Row.Triple(v)
-      case v: RdfQuad => RdfStreamRow.Row.Quad(v)
-    }
-
-    observed.size should be (expected.size)
-    var ix = 0
-    for obsRow <- observed do
-      withClue(s"Row $ix ${obsRow.row}") {
-        obsRow.row should be (expectedRows(ix))
+  // Helper method
+  def assertEncoded(observed: Seq[RdfStreamRow], expected: Seq[RdfStreamRow.Row]): Unit =
+    for ix <- 0 until observed.size.max(expected.size) do
+      val obsRow = observed.applyOrElse(ix, null)
+      withClue(s"Row $ix:") {
+        obsRow.row should be (expected.applyOrElse(ix, null))
       }
-      ix += 1
 
   // Test body
-  "a ProtoEncoder" when {
-    "using default settings" should {
-      lazy val encoder = MockProtoEncoder(JellyOptions())
+  "a ProtoEncoder" should {
+    "encode triple statements" in {
+      val encoder = MockProtoEncoder(JellyOptions())
+      val encoded = Triples1.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
+      assertEncoded(encoded, Triples1.encoded(encoder.options))
+    }
 
-      "encode triple statements" in {
-        val encoded = encoder.addTripleStatement(Triple(
-          Iri("https://test.org/test/subject"),
-          Iri("https://test.org/test/predicate"),
-          Iri("https://test.org/ns2/object"),
-        )).toSeq ++ encoder.addTripleStatement(Triple(
-          Iri("https://test.org/test/subject"),
-          Iri("https://test.org/test/predicate"),
-          DtLiteral("123", Datatype("https://test.org/xsd/integer")),
-        )).toSeq
+    "encode triple statements (norepeat)" in {
+      val encoder = MockProtoEncoder(JellyOptions(useRepeat = false))
+      val encoded = Triples2NoRepeat.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
+      assertEncoded(encoded, Triples2NoRepeat.encoded(encoder.options))
+    }
 
-        assertEncoded(encoded, Seq(
-          encoder.options.toProto,
-          RdfPrefixEntry(1, "https://test.org/test/"),
-          RdfNameEntry(1, "subject"),
-          RdfNameEntry(2, "predicate"),
-          RdfPrefixEntry(2, "https://test.org/ns2/"),
-          RdfNameEntry(3, "object"),
-          RdfTriple(
-            RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-            RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
-            RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
-          ),
-          RdfDatatypeEntry(1, "https://test.org/xsd/integer"),
-          RdfTriple(
-            RdfTerm(RdfTerm.Term.Repeat(RdfRepeat())),
-            RdfTerm(RdfTerm.Term.Repeat(RdfRepeat())),
-            RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
-          ),
-        ))
-      }
-
-      "encode quad statements" in {
-
-      }
+    "encode quad statements" in {
+      val encoder = MockProtoEncoder(JellyOptions())
+      val encoded = Quads1.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
+      assertEncoded(encoded, Quads1.encoded(encoder.options))
     }
   }

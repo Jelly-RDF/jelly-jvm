@@ -45,7 +45,7 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
         case RdfLiteral.LiteralKind.Datatype(dtId) =>
           makeDtLiteral(literal.lex, dtLookup.get(dtId))
         case RdfLiteral.LiteralKind.Empty =>
-          throw new RdfProtoDeserializationError("Literal kind not set.")
+          throw new RdfProtoDeserializationError("Literal kind is not set.")
     case RdfTerm.Term.TripleTerm(triple) =>
       // ! No support for RdfRepeat in quoted triples
       makeTripleNode(
@@ -54,7 +54,7 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
         convertTerm(triple.o),
       )
     case _: RdfTerm.Term.Repeat =>
-      throw new RdfProtoDeserializationError("Use convertedTermWrapped.")
+      throw new RdfProtoDeserializationError("RdfRepeat used inside a quoted triple.")
     case RdfTerm.Term.Empty =>
       throw new RdfProtoDeserializationError("Term kind is not set.")
 
@@ -62,7 +62,7 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
     case _: RdfTerm.Term.Repeat =>
       lastNodeHolder.node match
         case null =>
-          throw new RdfProtoDeserializationError("RdfRepeat without previous term")
+          throw new RdfProtoDeserializationError("RdfRepeat without previous term.")
         case n => n
     case _ =>
       val node = convertTerm(term)
@@ -78,10 +78,10 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
 
   private def convertQuad(quad: RdfQuad): TQuad =
     makeQuad(
-      convertTermWrapped(quad.g, lastGraph),
       convertTermWrapped(quad.s, lastSubject),
       convertTermWrapped(quad.p, lastPredicate),
       convertTermWrapped(quad.o, lastObject),
+      convertTermWrapped(quad.g, lastGraph),
     )
 
   final def ingestRow(row: RdfStreamRow): Option[TripleOrQuad] = row.row match
@@ -102,4 +102,4 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
     case RdfStreamRow.Row.Quad(quad) =>
       Some(convertQuad(quad))
     case RdfStreamRow.Row.Empty =>
-      throw new RdfProtoDeserializationError("Row is not set.")
+      throw new RdfProtoDeserializationError("Row kind is not set.")

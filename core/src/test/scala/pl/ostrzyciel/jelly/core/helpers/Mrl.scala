@@ -12,6 +12,8 @@ object Mrl:
   case class LangLiteral(lex: String, lang: String) extends Node
   case class DtLiteral(lex: String, dt: Datatype) extends Node
   case class TripleNode(t: Triple) extends Node
+  case class BlankNode(label: String) extends Node
 
-  case class Triple(s: Node, p: Node, o: Node)
-  case class Quad(s: Node, p: Node, o: Node, g: Node)
+  sealed trait Statement
+  case class Triple(s: Node, p: Node, o: Node) extends Statement
+  case class Quad(s: Node, p: Node, o: Node, g: Node) extends Statement

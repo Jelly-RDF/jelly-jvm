@@ -135,7 +135,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
     )
 
   private def quotedToProto(quoted: TQuoted): RdfTriple =
-    // ! No RdfRepeat support for quoted triples.
+    // ! No RdfRepeat support for inside of quoted triples.
     RdfTriple(
       s = nodeToProto(getQuotedS(quoted)),
       p = nodeToProto(getQuotedP(quoted)),
