@@ -87,7 +87,7 @@ private[core] final class NameEncoder(opt: JellyOptions, rowsBuffer: ListBuffer[
     if dtVal.newEntry then
       dtTable.update(
         dtVal.id,
-        RdfLiteral.LiteralKind.Datatype(RdfDatatype(dtVal.id))
+        RdfLiteral.LiteralKind.Datatype(dtVal.id)
       )
       rowsBuffer.append(
         RdfStreamRow(RdfStreamRow.Row.Datatype(

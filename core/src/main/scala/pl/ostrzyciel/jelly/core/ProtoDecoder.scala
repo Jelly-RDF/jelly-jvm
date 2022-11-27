@@ -34,16 +34,16 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
   private def convertTerm(term: RdfTerm): TNode = term.term match
     case RdfTerm.Term.Iri(iri) =>
       makeIriNode(nameDecoder.decode(iri))
-    case RdfTerm.Term.Bnode(bnode) =>
-      makeBlankNode(bnode.label)
+    case RdfTerm.Term.Bnode(label) =>
+      makeBlankNode(label)
     case RdfTerm.Term.Literal(literal) =>
       literal.literalKind match
         case RdfLiteral.LiteralKind.Simple(_) =>
           makeSimpleLiteral(literal.lex)
         case RdfLiteral.LiteralKind.Langtag(lang) =>
           makeLangLiteral(literal.lex, lang)
-        case RdfLiteral.LiteralKind.Datatype(dt) =>
-          makeDtLiteral(literal.lex, dtLookup.get(dt.dtId))
+        case RdfLiteral.LiteralKind.Datatype(dtId) =>
+          makeDtLiteral(literal.lex, dtLookup.get(dtId))
         case RdfLiteral.LiteralKind.Empty =>
           throw new RdfProtoDeserializationError("Literal kind not set.")
     case RdfTerm.Term.TripleTerm(triple) =>

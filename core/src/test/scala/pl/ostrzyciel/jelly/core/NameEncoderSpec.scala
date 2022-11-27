@@ -23,7 +23,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "add a datatype" in {
         val (encoder, buffer) = getEncoder()
         val dt = encoder.encodeDatatype("dt1")
-        dt.value.dtId should be (1)
+        dt.value should be (1)
         buffer.size should be (1)
         val dtEntry = buffer.head.row.datatype.get
         dtEntry.value should be ("dt1")
@@ -34,11 +34,11 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 4 do
           val dt = encoder.encodeDatatype(s"dt$i")
-          dt.value.dtId should be (i)
+          dt.value should be (i)
 
         // "dt3" should be reused
         val dt = encoder.encodeDatatype("dt3")
-        dt.value.dtId should be (3)
+        dt.value should be (3)
 
         buffer.size should be (4)
         buffer.map(_.row.datatype.get) should contain only (
@@ -54,20 +54,20 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 1 to 12 do
           val dt = encoder.encodeDatatype(s"dt$i")
           // first 4 should be evicted
-          dt.value.dtId should be ((i - 1) % 8 + 1)
+          dt.value should be ((i - 1) % 8 + 1)
 
         for i <- 9 to 12 do
           val dt = encoder.encodeDatatype(s"dt$i")
-          dt.value.dtId should be (i - 8)
+          dt.value should be (i - 8)
 
         for i <- 5 to 8 do
           val dt = encoder.encodeDatatype(s"dt$i")
-          dt.value.dtId should be (i)
+          dt.value should be (i)
 
         // 5–8 were used last, so they should be evicted last
         for i <- 13 to 16 do
           val dt = encoder.encodeDatatype(s"dt$i")
-          dt.value.dtId should be (i - 12) // 1–4
+          dt.value should be (i - 12) // 1–4
 
         buffer.size should be (16)
         val expectedIds = Array.from((1 to 8) ++ (1 to 4) ++ (1 to 4))

@@ -74,7 +74,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
     RdfTerm(RdfTerm.Term.Iri(iriEnc))
 
   protected final inline def makeBlankNode(label: String): RdfTerm =
-    RdfTerm(RdfTerm.Term.Bnode(RdfBnode(label)))
+    RdfTerm(RdfTerm.Term.Bnode(label))
 
   protected final inline def makeSimpleLiteral(lex: String): RdfTerm =
     RdfTerm(RdfTerm.Term.Literal(

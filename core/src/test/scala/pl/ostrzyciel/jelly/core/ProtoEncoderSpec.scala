@@ -35,7 +35,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       case TripleNode(t) => makeTripleNode(t)
 
 
-  def assertEncoded(observed: Iterable[RdfStreamRow], expected: Seq[RowValue]): Unit =
+  def assertEncoded(observed: Seq[RdfStreamRow], expected: Seq[RowValue]): Unit =
     val expectedRows: Seq[RdfStreamRow.Row] = expected map {
       case v: RdfStreamOptions => RdfStreamRow.Row.Options(v)
       case v: RdfDatatypeEntry => RdfStreamRow.Row.Datatype(v)
@@ -44,10 +44,13 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       case v: RdfTriple => RdfStreamRow.Row.Triple(v)
       case v: RdfQuad => RdfStreamRow.Row.Quad(v)
     }
+
+    observed.size should be (expected.size)
     var ix = 0
     for obsRow <- observed do
-      ix should be < expectedRows.size
-      obsRow.row should be (expectedRows(ix))
+      withClue(s"Row $ix ${obsRow.row}") {
+        obsRow.row should be (expectedRows(ix))
+      }
       ix += 1
 
   // Test body
@@ -55,12 +58,17 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
     "using default settings" should {
       lazy val encoder = MockProtoEncoder(JellyOptions())
 
-      "encode a triple statement" in {
+      "encode triple statements" in {
         val encoded = encoder.addTripleStatement(Triple(
           Iri("https://test.org/test/subject"),
           Iri("https://test.org/test/predicate"),
           Iri("https://test.org/ns2/object"),
-        ))
+        )).toSeq ++ encoder.addTripleStatement(Triple(
+          Iri("https://test.org/test/subject"),
+          Iri("https://test.org/test/predicate"),
+          DtLiteral("123", Datatype("https://test.org/xsd/integer")),
+        )).toSeq
+
         assertEncoded(encoded, Seq(
           encoder.options.toProto,
           RdfPrefixEntry(1, "https://test.org/test/"),
@@ -73,7 +81,17 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
             RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
             RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
           ),
+          RdfDatatypeEntry(1, "https://test.org/xsd/integer"),
+          RdfTriple(
+            RdfTerm(RdfTerm.Term.Repeat(RdfRepeat())),
+            RdfTerm(RdfTerm.Term.Repeat(RdfRepeat())),
+            RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
+          ),
         ))
+      }
+
+      "encode quad statements" in {
+
       }
     }
   }
