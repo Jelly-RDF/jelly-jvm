@@ -57,8 +57,17 @@ lazy val stream = (project in file("stream"))
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % akkaV,
       "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
-      "com.typesafe.akka" %% "akka-stream-testkit" % akkaV % Test,
     ),
     commonSettings,
   )
   .dependsOn(core)
+
+lazy val integrationTests = (project in file("integration-tests"))
+  .settings(
+    name := "jelly-integration-tests",
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-stream-testkit" % akkaV % Test,
+    ),
+    commonSettings,
+  )
+  .dependsOn(stream, rdf4j, jena)
