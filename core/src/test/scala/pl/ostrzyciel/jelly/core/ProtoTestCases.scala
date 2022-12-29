@@ -22,7 +22,7 @@ object ProtoTestCases:
 
   trait TestCase[TStatement]:
     def mrl: Seq[TStatement]
-    def encoded(opt: JellyOptions): Seq[RdfStreamRow.Row]
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow.Row]
 
   object Triples1 extends TestCase[Triple]:
     val mrl = Seq(
@@ -48,7 +48,7 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: JellyOptions) = wrapEncoded(Seq(
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt.toProto,
       RdfPrefixEntry(1, "https://test.org/test/"),
       RdfNameEntry(1, "subject"),
@@ -98,7 +98,7 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: JellyOptions) = wrapEncoded(Seq(
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt.toProto,
       RdfPrefixEntry(1, "https://test.org/test/"),
       RdfNameEntry(1, "subject"),
@@ -134,7 +134,7 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: JellyOptions) = wrapEncoded(Seq(
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt.toProto,
       RdfPrefixEntry(1, "https://test.org/test/"),
       RdfNameEntry(1, "subject"),

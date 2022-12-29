@@ -26,7 +26,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers:
         .via(EncoderFlow.fromFlatTriples(
           JenaConverterFactory,
           EncoderFlow.Options(16, false),
-          JellyOptions()
+          RdfStreamOptions()
         ))
 
   // TODO: getQuadFlow, same but for decoding, RDF4J impl, pass encoder options and wiggle them

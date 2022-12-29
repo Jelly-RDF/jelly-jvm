@@ -32,21 +32,21 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   "a ProtoDecoder" should {
     "decode triple statements" in {
       val decoder = MockProtoDecoder()
-      val decoded = Triples1.encoded(JellyOptions())
+      val decoded = Triples1.encoded(RdfStreamOptions())
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Triples1.mrl)
     }
 
     "decode triple statements (norepeat)" in {
       val decoder = MockProtoDecoder()
-      val decoded = Triples2NoRepeat.encoded(JellyOptions(useRepeat = false))
+      val decoded = Triples2NoRepeat.encoded(RdfStreamOptions(useRepeat = false))
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Triples2NoRepeat.mrl)
     }
 
     "decode quad statements" in {
       val decoder = MockProtoDecoder()
-      val decoded = Quads1.encoded(JellyOptions())
+      val decoded = Quads1.encoded(RdfStreamOptions())
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Quads1.mrl)
     }
@@ -54,7 +54,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on RdfRepeat without preceding value" in {
       val decoder = MockProtoDecoder()
       val data = wrapEncodedFull(Seq(
-        JellyOptions().toProto,
+        RdfStreamOptions().toProto,
         RdfTriple(REPEAT, REPEAT, REPEAT),
       ))
       decoder.ingestRow(data.head)
@@ -67,7 +67,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on RdfRepeat in a quoted triple" in {
       val decoder = MockProtoDecoder()
       val data = wrapEncodedFull(Seq(
-        JellyOptions().toProto,
+        RdfStreamOptions().toProto,
         RdfTriple(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -94,7 +94,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on unset term kind" in {
       val decoder = MockProtoDecoder()
       val data = wrapEncodedFull(Seq(
-        JellyOptions().toProto,
+        RdfStreamOptions().toProto,
         RdfTriple(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -111,7 +111,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on unset literal kind" in {
       val decoder = MockProtoDecoder()
       val data = wrapEncodedFull(Seq(
-        JellyOptions().toProto,
+        RdfStreamOptions().toProto,
         RdfTriple(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),

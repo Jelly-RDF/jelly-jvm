@@ -5,7 +5,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import pl.ostrzyciel.jelly.core.proto.{RdfIri, RdfNameEntry, RdfPrefixEntry}
 
 class NameDecoderSpec extends AnyWordSpec, Matchers:
-  val smallOptions = JellyOptions(maxNameTableSize = 16, maxPrefixTableSize = 8)
+  val smallOptions = RdfStreamOptions(maxNameTableSize = 16, maxPrefixTableSize = 8)
 
   "A NameDecoder" when {
     "empty" should {

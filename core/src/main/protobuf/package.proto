@@ -14,13 +14,20 @@ option (scalapb.options) = {
   // Disabling this can substantially improve performance
   preserve_unknown_fields: false
   field_transformations: [
-    // Don't box RdfTerm in Option[] to reduce heap pressure and speed things up a bit
+    // Don't box RdfTerm and RdfGraph in Option[] to reduce heap pressure and speed things up a bit
     {
       when: {
         type: TYPE_MESSAGE
         type_name: ".pl.ostrzyciel.jelly.core.proto.RdfTerm"
       }
       // TODO: check if it would be faster to use required instead of no_box
+      set: {[scalapb.field] {no_box: true}}
+    },
+    {
+      when: {
+        type: TYPE_MESSAGE
+        type_name: ".pl.ostrzyciel.jelly.core.proto.RdfGraph"
+      }
       set: {[scalapb.field] {no_box: true}}
     }
   ]
