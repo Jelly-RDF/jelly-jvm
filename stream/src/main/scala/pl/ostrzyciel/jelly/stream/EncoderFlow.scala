@@ -113,6 +113,20 @@ object EncoderFlow:
     )
     groupedFlow(Flow[TQuad].mapConcat(e => encoder.addQuadStatement(e)), opt)
 
+  /**
+   * A flow converting a stream of named graphs (node as graph name + iterable of triple statements) into a stream
+   * of [[RdfStreamFrame]]s.
+   * RDF stream type: GRAPHS.
+   *
+   * After this flow finishes processing a single graph in the input stream, it is guaranteed to output an
+   * [[RdfStreamFrame]], which allows to maintain low latency.
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+   * @param opt Streaming options.
+   * @param streamOpt Jelly serialization options.
+   * @tparam TNode Type of nodes.
+   * @tparam TTriple Type of triple statements.
+   * @return Akka Streams flow.
+   */
   final def fromGraphs[TNode >: Null <: AnyRef, TTriple]
   (factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?], opt: Options, streamOpt: RdfStreamOptions):
   Flow[(TNode, IterableOnce[TTriple]), RdfStreamFrame, NotUsed] =
