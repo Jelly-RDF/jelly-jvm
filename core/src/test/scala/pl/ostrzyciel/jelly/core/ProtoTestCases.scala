@@ -4,9 +4,11 @@ import pl.ostrzyciel.jelly.core.helpers.Mrl.*
 import pl.ostrzyciel.jelly.core.proto.*
 
 object ProtoTestCases:
-  type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad
+  type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad |
+    RdfGraphStart | RdfGraphEnd
   
-  val REPEAT = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat()))
+  val TERM_REPEAT: RdfTerm = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat()))
+  val GRAPH_REPEAT: RdfGraph = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))
 
   def wrapEncoded(rows: Seq[RowValue]): Seq[RdfStreamRow.Row] = rows map {
     case v: RdfStreamOptions => RdfStreamRow.Row.Options(v)
@@ -15,6 +17,8 @@ object ProtoTestCases:
     case v: RdfNameEntry => RdfStreamRow.Row.Name(v)
     case v: RdfTriple => RdfStreamRow.Row.Triple(v)
     case v: RdfQuad => RdfStreamRow.Row.Quad(v)
+    case v: RdfGraphStart => RdfStreamRow.Row.GraphStart(v)
+    case v: RdfGraphEnd => RdfStreamRow.Row.GraphEnd(v)
   }
 
   def wrapEncodedFull(rows: Seq[RowValue]): Seq[RdfStreamRow] =
@@ -49,7 +53,7 @@ object ProtoTestCases:
     )
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
-      opt.toProto,
+      opt,
       RdfPrefixEntry(1, "https://test.org/test/"),
       RdfNameEntry(1, "subject"),
       RdfNameEntry(2, "predicate"),
@@ -62,15 +66,15 @@ object ProtoTestCases:
       ),
       RdfDatatypeEntry(1, "https://test.org/xsd/integer"),
       RdfTriple(
-        REPEAT,
-        REPEAT,
+        TERM_REPEAT,
+        TERM_REPEAT,
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
       ),
       RdfNameEntry(4, "b"),
       RdfNameEntry(5, "c"),
       RdfTriple(
-        REPEAT,
-        REPEAT,
+        TERM_REPEAT,
+        TERM_REPEAT,
         RdfTerm(RdfTerm.Term.TripleTerm(RdfTriple(
           RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
           RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 4))),
@@ -80,7 +84,7 @@ object ProtoTestCases:
       RdfTriple(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        REPEAT,
+        TERM_REPEAT,
       ),
     ))
 
@@ -99,7 +103,7 @@ object ProtoTestCases:
     )
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
-      opt.toProto,
+      opt,
       RdfPrefixEntry(1, "https://test.org/test/"),
       RdfNameEntry(1, "subject"),
       RdfNameEntry(2, "predicate"),
@@ -135,7 +139,7 @@ object ProtoTestCases:
     )
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
-      opt.toProto,
+      opt,
       RdfPrefixEntry(1, "https://test.org/test/"),
       RdfNameEntry(1, "subject"),
       RdfNameEntry(2, "predicate"),
@@ -145,12 +149,12 @@ object ProtoTestCases:
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
       ),
       RdfQuad(
-        REPEAT,
+        TERM_REPEAT,
         RdfTerm(RdfTerm.Term.Bnode("blank")),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Simple(true)))),
-        REPEAT,
+        GRAPH_REPEAT,
       ),
     ))

@@ -2,7 +2,7 @@ package pl.ostrzyciel.jelly.core
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import pl.ostrzyciel.jelly.core.proto.{RdfIri, RdfNameEntry, RdfPrefixEntry}
+import pl.ostrzyciel.jelly.core.proto.{RdfIri, RdfNameEntry, RdfPrefixEntry, RdfStreamOptions}
 
 class NameDecoderSpec extends AnyWordSpec, Matchers:
   val smallOptions = RdfStreamOptions(maxNameTableSize = 16, maxPrefixTableSize = 8)

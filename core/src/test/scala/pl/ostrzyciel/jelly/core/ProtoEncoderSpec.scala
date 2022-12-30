@@ -46,19 +46,27 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
   // Test body
   "a ProtoEncoder" should {
     "encode triple statements" in {
-      val encoder = MockProtoEncoder(RdfStreamOptions())
+      val encoder = MockProtoEncoder(
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+      )
       val encoded = Triples1.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
       assertEncoded(encoded, Triples1.encoded(encoder.options))
     }
 
     "encode triple statements (norepeat)" in {
-      val encoder = MockProtoEncoder(RdfStreamOptions(useRepeat = false))
+      val encoder = MockProtoEncoder(
+        JellyOptions.smallGeneralized
+          .withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+          .withUseRepeat(false)
+      )
       val encoded = Triples2NoRepeat.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
       assertEncoded(encoded, Triples2NoRepeat.encoded(encoder.options))
     }
 
     "encode quad statements" in {
-      val encoder = MockProtoEncoder(RdfStreamOptions())
+      val encoder = MockProtoEncoder(
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+      )
       val encoded = Quads1.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
       assertEncoded(encoded, Quads1.encoded(encoder.options))
     }

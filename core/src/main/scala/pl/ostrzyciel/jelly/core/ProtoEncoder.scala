@@ -62,7 +62,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
    */
   final def startDefaultGraph(): Iterable[RdfStreamRow] =
     handleHeader()
-    val graphNode = RdfGraph(RdfGraph.Graph.DefaultGraph(true))
+    val graphNode = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))
     val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
       RdfGraphStart(graphNode)
     ))
@@ -75,7 +75,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
   final def endGraph(): Iterable[RdfStreamRow] =
     if !emittedCompressionOptions then
       throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one")
-    Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(true)))
+    Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd())))
 
   // *** 2. METHODS TO IMPLEMENT ***
   // *******************************
@@ -165,7 +165,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
       case RdfTerm.Term.Iri(iri) => RdfGraph(RdfGraph.Graph.Iri(iri))
       case RdfTerm.Term.Literal(literal) => RdfGraph(RdfGraph.Graph.Literal(literal))
       case RdfTerm.Term.Bnode(bNode) => RdfGraph(RdfGraph.Graph.Bnode(bNode))
-      case RdfTerm.Term.Empty => RdfGraph(RdfGraph.Graph.DefaultGraph(true))
+      case RdfTerm.Term.Empty => RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))
       case _ => throw new RdfProtoSerializationError("Cannot encode node as a graph term")
 
   private def graphNodeToProtoWrapped(node: TNode): RdfGraph =
