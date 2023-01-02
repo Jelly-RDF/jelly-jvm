@@ -135,7 +135,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
     RdfTerm(RdfTerm.Term.TripleTerm(quotedToProto(triple)))
 
 
-  // *** 4. PRIVATE FIELDS AND METHODS ***
+  // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
   private val extraRowsBuffer = new ListBuffer[RdfStreamRow]()
   private val iriEncoder = new NameEncoder(options, extraRowsBuffer)

@@ -136,6 +136,19 @@ object ProtoTestCases:
         SimpleLiteral("test"),
         Iri("https://test.org/ns3/graph"),
       ),
+      // Generalized quads
+      Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        BlankNode("blank"),
+      ),
+      Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        SimpleLiteral("test"),
+      ),
     )
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
@@ -157,4 +170,134 @@ object ProtoTestCases:
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Simple(true)))),
         GRAPH_REPEAT,
       ),
+      RdfQuad(
+        TERM_REPEAT,
+        TERM_REPEAT,
+        TERM_REPEAT,
+        RdfGraph(RdfGraph.Graph.Bnode("blank")),
+      ),
+      RdfQuad(
+        TERM_REPEAT,
+        TERM_REPEAT,
+        TERM_REPEAT,
+        RdfGraph(RdfGraph.Graph.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Simple(true)))),
+      ),
+    ))
+
+  object Quads2NoRepeat extends TestCase[Quad]:
+    val mrl = Seq(
+      Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        LangLiteral("test", "en-gb"),
+        Iri("https://test.org/ns3/graph"),
+      ),
+      Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        Iri("https://test.org/ns3/graph"),
+      ),
+    )
+
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
+      RdfPrefixEntry(1, "https://test.org/test/"),
+      RdfNameEntry(1, "subject"),
+      RdfNameEntry(2, "predicate"),
+      RdfPrefixEntry(2, "https://test.org/ns3/"),
+      RdfNameEntry(3, "graph"),
+      RdfQuad(
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
+        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
+      ),
+      RdfQuad(
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
+        RdfTerm(RdfTerm.Term.Bnode("blank")),
+        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Simple(true)))),
+        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
+      ),
+    ))
+
+  object Graphs1 extends TestCase[(Node, Iterable[Triple])]:
+    val mrl = Seq(
+      (
+        null,
+        Seq(
+          Triple(
+            Iri("https://test.org/test/subject"),
+            Iri("https://test.org/test/predicate"),
+            Iri("https://test.org/ns2/object"),
+          ),
+          Triple(
+            Iri("https://test.org/test/subject"),
+            Iri("https://test.org/test/predicate"),
+            DtLiteral("123", Datatype("https://test.org/xsd/integer")),
+          ),
+        )
+      ),
+      (
+        Iri("https://test.org/ns3/graph"),
+        Seq(
+          Triple(
+            Iri("https://test.org/test/subject"),
+            Iri("https://test.org/test/predicate"),
+            Iri("https://test.org/ns2/object"),
+          ),
+        )
+      ),
+    )
+
+    val mrlQuads = Seq(
+      Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        Iri("https://test.org/ns2/object"),
+        null
+      ),
+      Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        DtLiteral("123", Datatype("https://test.org/xsd/integer")),
+        null
+      ),
+      Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        Iri("https://test.org/ns2/object"),
+        Iri("https://test.org/ns3/graph"),
+      ),
+    )
+
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
+      RdfGraphStart(RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))),
+      RdfPrefixEntry(1, "https://test.org/test/"),
+      RdfNameEntry(1, "subject"),
+      RdfNameEntry(2, "predicate"),
+      RdfPrefixEntry(2, "https://test.org/ns2/"),
+      RdfNameEntry(3, "object"),
+      RdfTriple(
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+      ),
+      RdfDatatypeEntry(1, "https://test.org/xsd/integer"),
+      RdfTriple(
+        TERM_REPEAT,
+        TERM_REPEAT,
+        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
+      ),
+      RdfGraphEnd(),
+      RdfPrefixEntry(3, "https://test.org/ns3/"),
+      RdfNameEntry(4, "graph"),
+      RdfGraphStart(RdfGraph(RdfGraph.Graph.Iri(RdfIri(3, 4)))),
+      RdfTriple(
+        TERM_REPEAT,
+        TERM_REPEAT,
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+      ),
+      RdfGraphEnd(),
     ))

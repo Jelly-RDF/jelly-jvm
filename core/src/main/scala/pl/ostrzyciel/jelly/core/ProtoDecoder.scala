@@ -7,7 +7,9 @@ import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
 /**
- * Stateful decoder of a protobuf RDF stream.
+ * Base class for stateful decoders of protobuf RDF streams.
+ *
+ * See the implementations in [[ProtoDecoderImpl]].
  */
 abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad, TOut]
 (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad]):
@@ -20,12 +22,19 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
   protected final val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   protected final val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
 
-  protected final def getStreamOpt: Option[RdfStreamOptions] = streamOpt
+  /**
+   * Returns the received stream options from the producer.
+   * @return
+   */
+  final def getStreamOpt: Option[RdfStreamOptions] = streamOpt
 
+  /**
+   * Set the stream options.
+   * @param opt Jelly stream options
+   */
   protected final def setStreamOpt(opt: RdfStreamOptions): Unit =
-    if streamOpt.isDefined then
-      throw new RdfProtoDeserializationError("Duplicate stream options")
-    streamOpt = Some(opt)
+    if streamOpt.isEmpty then
+      streamOpt = Some(opt)
 
   protected final def convertLiteral(literal: RdfLiteral): TNode = literal.literalKind match
     case RdfLiteral.LiteralKind.Simple(_) =>
@@ -63,7 +72,7 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
     case Graph.Literal(literal) => convertLiteral(literal)
     case Graph.DefaultGraph(_) => converter.makeDefaultGraphNode()
     case Graph.Repeat(_) =>
-      throw new RdfProtoDeserializationError("Repeat used in an invalid position.")
+      throw new RdfProtoDeserializationError("Invalid usage of graph term repeat in a GRAPHS stream.")
     case Graph.Empty =>
       throw new RdfProtoDeserializationError("Graph term kind is not set.")
 

@@ -10,6 +10,8 @@ import scala.reflect.ClassTag
  * Exposes factory methods for building protobuf encoders and decoders.
  * @tparam TEncoder Implementation of [[ProtoEncoder]] for a given RDF library.
  * @tparam TDecConv Implementation of [[ProtoDecoderConverter]] for a given RDF library.
+ * @tparam TNode Type of RDF nodes in the RDF library
+ * @tparam TDatatype Type of RDF datatypes in the RDF library
  * @tparam TTriple Type of triple statements in the RDF library.
  * @tparam TQuad Type of quad statements in the RDF library.
  */

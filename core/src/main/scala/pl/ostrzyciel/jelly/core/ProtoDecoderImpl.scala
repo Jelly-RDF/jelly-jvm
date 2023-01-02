@@ -5,6 +5,9 @@ import pl.ostrzyciel.jelly.core.proto.*
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
+/**
+ * Implementations of the [[ProtoDecoder]] trait.
+ */
 object ProtoDecoderImpl:
 
   /**
