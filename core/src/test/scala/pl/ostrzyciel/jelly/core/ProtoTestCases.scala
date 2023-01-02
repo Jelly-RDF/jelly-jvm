@@ -4,9 +4,11 @@ import pl.ostrzyciel.jelly.core.helpers.Mrl.*
 import pl.ostrzyciel.jelly.core.proto.*
 
 object ProtoTestCases:
-  type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad
+  type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad |
+    RdfGraphStart | RdfGraphEnd
   
-  val REPEAT = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat()))
+  val TERM_REPEAT: RdfTerm = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat()))
+  val GRAPH_REPEAT: RdfGraph = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))
 
   def wrapEncoded(rows: Seq[RowValue]): Seq[RdfStreamRow.Row] = rows map {
     case v: RdfStreamOptions => RdfStreamRow.Row.Options(v)
@@ -15,6 +17,8 @@ object ProtoTestCases:
     case v: RdfNameEntry => RdfStreamRow.Row.Name(v)
     case v: RdfTriple => RdfStreamRow.Row.Triple(v)
     case v: RdfQuad => RdfStreamRow.Row.Quad(v)
+    case v: RdfGraphStart => RdfStreamRow.Row.GraphStart(v)
+    case v: RdfGraphEnd => RdfStreamRow.Row.GraphEnd(v)
   }
 
   def wrapEncodedFull(rows: Seq[RowValue]): Seq[RdfStreamRow] =
@@ -22,7 +26,7 @@ object ProtoTestCases:
 
   trait TestCase[TStatement]:
     def mrl: Seq[TStatement]
-    def encoded(opt: JellyOptions): Seq[RdfStreamRow.Row]
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow.Row]
 
   object Triples1 extends TestCase[Triple]:
     val mrl = Seq(
@@ -48,8 +52,8 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: JellyOptions) = wrapEncoded(Seq(
-      opt.toProto,
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
       RdfPrefixEntry(1, "https://test.org/test/"),
       RdfNameEntry(1, "subject"),
       RdfNameEntry(2, "predicate"),
@@ -62,15 +66,15 @@ object ProtoTestCases:
       ),
       RdfDatatypeEntry(1, "https://test.org/xsd/integer"),
       RdfTriple(
-        REPEAT,
-        REPEAT,
+        TERM_REPEAT,
+        TERM_REPEAT,
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
       ),
       RdfNameEntry(4, "b"),
       RdfNameEntry(5, "c"),
       RdfTriple(
-        REPEAT,
-        REPEAT,
+        TERM_REPEAT,
+        TERM_REPEAT,
         RdfTerm(RdfTerm.Term.TripleTerm(RdfTriple(
           RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
           RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 4))),
@@ -80,7 +84,7 @@ object ProtoTestCases:
       RdfTriple(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        REPEAT,
+        TERM_REPEAT,
       ),
     ))
 
@@ -98,8 +102,8 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: JellyOptions) = wrapEncoded(Seq(
-      opt.toProto,
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
       RdfPrefixEntry(1, "https://test.org/test/"),
       RdfNameEntry(1, "subject"),
       RdfNameEntry(2, "predicate"),
@@ -132,10 +136,23 @@ object ProtoTestCases:
         SimpleLiteral("test"),
         Iri("https://test.org/ns3/graph"),
       ),
+      // Generalized quads
+      Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        BlankNode("blank"),
+      ),
+      Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        SimpleLiteral("test"),
+      ),
     )
 
-    def encoded(opt: JellyOptions) = wrapEncoded(Seq(
-      opt.toProto,
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
       RdfPrefixEntry(1, "https://test.org/test/"),
       RdfNameEntry(1, "subject"),
       RdfNameEntry(2, "predicate"),
@@ -145,12 +162,142 @@ object ProtoTestCases:
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
       ),
       RdfQuad(
-        REPEAT,
+        TERM_REPEAT,
         RdfTerm(RdfTerm.Term.Bnode("blank")),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Simple(true)))),
-        REPEAT,
+        GRAPH_REPEAT,
       ),
+      RdfQuad(
+        TERM_REPEAT,
+        TERM_REPEAT,
+        TERM_REPEAT,
+        RdfGraph(RdfGraph.Graph.Bnode("blank")),
+      ),
+      RdfQuad(
+        TERM_REPEAT,
+        TERM_REPEAT,
+        TERM_REPEAT,
+        RdfGraph(RdfGraph.Graph.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Simple(true)))),
+      ),
+    ))
+
+  object Quads2NoRepeat extends TestCase[Quad]:
+    val mrl = Seq(
+      Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        LangLiteral("test", "en-gb"),
+        Iri("https://test.org/ns3/graph"),
+      ),
+      Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        Iri("https://test.org/ns3/graph"),
+      ),
+    )
+
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
+      RdfPrefixEntry(1, "https://test.org/test/"),
+      RdfNameEntry(1, "subject"),
+      RdfNameEntry(2, "predicate"),
+      RdfPrefixEntry(2, "https://test.org/ns3/"),
+      RdfNameEntry(3, "graph"),
+      RdfQuad(
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
+        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
+      ),
+      RdfQuad(
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
+        RdfTerm(RdfTerm.Term.Bnode("blank")),
+        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Simple(true)))),
+        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
+      ),
+    ))
+
+  object Graphs1 extends TestCase[(Node, Iterable[Triple])]:
+    val mrl = Seq(
+      (
+        null,
+        Seq(
+          Triple(
+            Iri("https://test.org/test/subject"),
+            Iri("https://test.org/test/predicate"),
+            Iri("https://test.org/ns2/object"),
+          ),
+          Triple(
+            Iri("https://test.org/test/subject"),
+            Iri("https://test.org/test/predicate"),
+            DtLiteral("123", Datatype("https://test.org/xsd/integer")),
+          ),
+        )
+      ),
+      (
+        Iri("https://test.org/ns3/graph"),
+        Seq(
+          Triple(
+            Iri("https://test.org/test/subject"),
+            Iri("https://test.org/test/predicate"),
+            Iri("https://test.org/ns2/object"),
+          ),
+        )
+      ),
+    )
+
+    val mrlQuads = Seq(
+      Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        Iri("https://test.org/ns2/object"),
+        null
+      ),
+      Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        DtLiteral("123", Datatype("https://test.org/xsd/integer")),
+        null
+      ),
+      Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        Iri("https://test.org/ns2/object"),
+        Iri("https://test.org/ns3/graph"),
+      ),
+    )
+
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
+      RdfGraphStart(RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))),
+      RdfPrefixEntry(1, "https://test.org/test/"),
+      RdfNameEntry(1, "subject"),
+      RdfNameEntry(2, "predicate"),
+      RdfPrefixEntry(2, "https://test.org/ns2/"),
+      RdfNameEntry(3, "object"),
+      RdfTriple(
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+      ),
+      RdfDatatypeEntry(1, "https://test.org/xsd/integer"),
+      RdfTriple(
+        TERM_REPEAT,
+        TERM_REPEAT,
+        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
+      ),
+      RdfGraphEnd(),
+      RdfPrefixEntry(3, "https://test.org/ns3/"),
+      RdfNameEntry(4, "graph"),
+      RdfGraphStart(RdfGraph(RdfGraph.Graph.Iri(RdfIri(3, 4)))),
+      RdfTriple(
+        TERM_REPEAT,
+        TERM_REPEAT,
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+      ),
+      RdfGraphEnd(),
     ))

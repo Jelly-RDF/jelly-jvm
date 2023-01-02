@@ -2,7 +2,7 @@ package pl.ostrzyciel.jelly.core
 
 import pl.ostrzyciel.jelly.core.proto.*
 
-private[core] final class NameDecoder(opt: JellyOptions):
+private[core] final class NameDecoder(opt: RdfStreamOptions):
   private val prefixLookup = new DecoderLookup[String](opt.maxPrefixTableSize)
   private val nameLookup = new DecoderLookup[String](opt.maxNameTableSize)
 

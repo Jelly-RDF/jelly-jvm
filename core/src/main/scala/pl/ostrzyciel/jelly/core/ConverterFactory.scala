@@ -1,27 +1,58 @@
 package pl.ostrzyciel.jelly.core
 
+import ProtoDecoderImpl.*
+import pl.ostrzyciel.jelly.core.proto.RdfStreamOptions
+
+import scala.reflect.ClassTag
+
 /**
  * "Main" trait to be implemented by RDF conversion modules (e.g., for Jena and RDF4J).
  * Exposes factory methods for building protobuf encoders and decoders.
  * @tparam TEncoder Implementation of [[ProtoEncoder]] for a given RDF library.
- * @tparam TDecoder Implementation of [[ProtoDecoder]] for a given RDF library.
+ * @tparam TDecConv Implementation of [[ProtoDecoderConverter]] for a given RDF library.
+ * @tparam TNode Type of RDF nodes in the RDF library
+ * @tparam TDatatype Type of RDF datatypes in the RDF library
  * @tparam TTriple Type of triple statements in the RDF library.
  * @tparam TQuad Type of quad statements in the RDF library.
  */
 trait ConverterFactory[
-  TEncoder <: ProtoEncoder[?, TTriple, TQuad, ?],
-  TDecoder <: ProtoDecoder[?, ?, TTriple, TQuad],
-  TTriple, TQuad
+  TEncoder <: ProtoEncoder[TNode, TTriple, TQuad, ?],
+  TDecConv <: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
+  TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad
 ]:
+  protected def decoderConverter: TDecConv
+
   /**
-   * Create a new [[ProtoDecoder]].
+   * Create a new [[TriplesDecoder]].
    * @return
    */
-  def decoder: TDecoder
+  final def triplesDecoder: TriplesDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new TriplesDecoder(decoderConverter)
+
+  /**
+   * Create a new [[QuadsDecoder]].
+   * @return
+   */
+  final def quadsDecoder: QuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new QuadsDecoder(decoderConverter)
+
+  /**
+   * Create a new [[GraphsAsQuadsDecoder]].
+   * @return
+   */
+  final def graphsAsQuadsDecoder: GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new GraphsAsQuadsDecoder(decoderConverter)
+
+  /**
+   * Create a new [[GraphsDecoder]].
+   * @return
+   */
+  final def graphsDecoder: GraphsDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new GraphsDecoder(decoderConverter)
 
   /**
    * Create a new [[ProtoEncoder]].
    * @param options Jelly serialization options.
    * @return
    */
-  def encoder(options: JellyOptions): TEncoder
+  def encoder(options: RdfStreamOptions): TEncoder

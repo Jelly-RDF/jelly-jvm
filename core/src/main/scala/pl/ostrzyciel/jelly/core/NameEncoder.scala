@@ -13,7 +13,7 @@ import scala.jdk.CollectionConverters.*
  * @param opt Jelly options
  * @param rowsBuffer buffer to which the new lookup entries should be appended
  */
-private[core] final class NameEncoder(opt: JellyOptions, rowsBuffer: ListBuffer[RdfStreamRow]):
+private[core] final class NameEncoder(opt: RdfStreamOptions, rowsBuffer: ListBuffer[RdfStreamRow]):
   private val nameLookup = new EncoderLookup(opt.maxNameTableSize)
   private val prefixLookup = new EncoderLookup(opt.maxPrefixTableSize)
   private val dtLookup = new EncoderLookup(opt.maxDatatypeTableSize)

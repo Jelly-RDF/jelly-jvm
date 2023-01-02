@@ -7,9 +7,13 @@ import scala.collection.mutable.ListBuffer
 
 /**
  * Stateful encoder of a protobuf RDF stream.
+ *
+ * This class supports all stream types and options, but usually does not check if the user is conforming to them.
+ * It will, for example, allow the user to send generalized triples in a stream that should not have them.
+ * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
  * @param options options for this stream
  */
-abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](val options: JellyOptions):
+abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](val options: RdfStreamOptions):
   // *** 1. THE PUBLIC INTERFACE ***
   // *******************************
   /**
@@ -36,6 +40,42 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
     ))
     extraRowsBuffer.append(mainRow)
 
+  /**
+   * Signal the start of a new (named) delimited graph in a GRAPHS stream.
+   * @param graph graph node
+   * @return iterable of stream rows
+   */
+  final def startGraph(graph: TNode): Iterable[RdfStreamRow] =
+    if graph == null then
+      startDefaultGraph()
+    else
+      handleHeader()
+      val graphNode = graphNodeToProto(graph)
+      val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
+        RdfGraphStart(graphNode)
+      ))
+      extraRowsBuffer.append(mainRow)
+
+  /**
+   * Signal the start of the default delimited graph in a GRAPHS stream.
+   * @return iterable of stream rows
+   */
+  final def startDefaultGraph(): Iterable[RdfStreamRow] =
+    handleHeader()
+    val graphNode = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))
+    val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
+      RdfGraphStart(graphNode)
+    ))
+    extraRowsBuffer.append(mainRow)
+
+  /**
+   * Signal the end of a delimited graph in a GRAPHS stream.
+   * @return iterable of stream rows (always of length 1)
+   */
+  final def endGraph(): Iterable[RdfStreamRow] =
+    if !emittedCompressionOptions then
+      throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one")
+    Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd())))
 
   // *** 2. METHODS TO IMPLEMENT ***
   // *******************************
@@ -95,7 +135,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
     RdfTerm(RdfTerm.Term.TripleTerm(quotedToProto(triple)))
 
 
-  // *** 4. PRIVATE FIELDS AND METHODS ***
+  // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
   private val extraRowsBuffer = new ListBuffer[RdfStreamRow]()
   private val iriEncoder = new NameEncoder(options, extraRowsBuffer)
@@ -106,18 +146,37 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
 
-  private val termRepeat = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat()))
+  private val nodeTermRepeat = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat()))
+  private val graphTermRepeat = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))
   private val simpleLiteral = RdfLiteral.LiteralKind.Simple(true)
 
   private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): RdfTerm =
     if options.useRepeat then
       lastNodeHolder.node match
-        case oldNode if node == oldNode => termRepeat
+        case oldNode if node == oldNode => nodeTermRepeat
         case _ =>
           lastNodeHolder.node = node
           nodeToProto(node)
     else
       nodeToProto(node)
+
+  private def graphNodeToProto(node: TNode): RdfGraph =
+    nodeToProto(node).term match
+      case RdfTerm.Term.Iri(iri) => RdfGraph(RdfGraph.Graph.Iri(iri))
+      case RdfTerm.Term.Literal(literal) => RdfGraph(RdfGraph.Graph.Literal(literal))
+      case RdfTerm.Term.Bnode(bNode) => RdfGraph(RdfGraph.Graph.Bnode(bNode))
+      case RdfTerm.Term.Empty => RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))
+      case _ => throw new RdfProtoSerializationError("Cannot encode node as a graph term")
+
+  private def graphNodeToProtoWrapped(node: TNode): RdfGraph =
+    if options.useRepeat then
+      lastGraph.node match
+        case oldNode if node == oldNode => graphTermRepeat
+        case _ =>
+          lastGraph.node = node
+          graphNodeToProto(node)
+    else
+      graphNodeToProto(node)
 
   private def tripleToProto(triple: TTriple): RdfTriple =
     RdfTriple(
@@ -131,7 +190,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
       s = nodeToProtoWrapped(getQstS(quad), lastSubject),
       p = nodeToProtoWrapped(getQstP(quad), lastPredicate),
       o = nodeToProtoWrapped(getQstO(quad), lastObject),
-      g = nodeToProtoWrapped(getQstG(quad), lastGraph),
+      g = graphNodeToProtoWrapped(getQstG(quad)),
     )
 
   private def quotedToProto(quoted: TQuoted): RdfTriple =
@@ -147,7 +206,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
     if !emittedCompressionOptions then
       emittedCompressionOptions = true
       extraRowsBuffer.append(
-        RdfStreamRow(RdfStreamRow.Row.Options(options.toProto))
+        RdfStreamRow(RdfStreamRow.Row.Options(options))
       )
 
 

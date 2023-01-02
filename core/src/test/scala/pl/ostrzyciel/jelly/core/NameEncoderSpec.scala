@@ -8,7 +8,7 @@ import pl.ostrzyciel.jelly.core.proto.*
 import scala.collection.mutable.ListBuffer
 
 class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
-  def smallOptions(prefixTableSize: Int) = JellyOptions(
+  def smallOptions(prefixTableSize: Int) = RdfStreamOptions(
     maxNameTableSize = 4,
     maxPrefixTableSize = prefixTableSize,
     maxDatatypeTableSize = 8,

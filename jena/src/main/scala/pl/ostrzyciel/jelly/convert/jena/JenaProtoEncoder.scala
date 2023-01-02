@@ -5,10 +5,10 @@ import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.datatypes.xsd.impl.RDFLangString
 import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
-import pl.ostrzyciel.jelly.core.{ProtoEncoder, JellyOptions, RdfProtoSerializationError}
-import pl.ostrzyciel.jelly.core.proto.RdfTerm
+import pl.ostrzyciel.jelly.core.{ProtoEncoder, RdfProtoSerializationError}
+import pl.ostrzyciel.jelly.core.proto.{RdfStreamOptions, RdfTerm}
 
-final class JenaProtoEncoder(override val options: JellyOptions)
+final class JenaProtoEncoder(override val options: RdfStreamOptions)
   extends ProtoEncoder[Node, Triple, Quad, Triple](options):
 
   protected inline def getTstS(triple: Triple) = triple.getSubject
@@ -27,7 +27,7 @@ final class JenaProtoEncoder(override val options: JellyOptions)
   /**
    * TODO: try the NodeVisitor? might be faster, but there would be extra overhead on casting
    * @param node RDF node
-   *  @return option of RdfTerm
+   * @return option of RdfTerm
    */
   protected def nodeToProto(node: Node): RdfTerm = node match
     // URI/IRI
