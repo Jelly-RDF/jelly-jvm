@@ -20,18 +20,14 @@ object EncoderFlow:
      * @return stream options
      */
     def apply(config: Config): Options =
-      // TODO: document config options
       Options(
         config.getInt("jelly.stream.target-message-size"),
-        config.getBoolean("jelly.stream.async-encode"),
       )
 
   /**
    * @param targetMessageSize After the message gets bigger than the target, it gets sent.
-   * @param asyncEncoding Whether to make this flow asynchronous.
    */
-  case class Options(targetMessageSize: Int, asyncEncoding: Boolean):
-    def withAsyncEncoding(v: Boolean) = Options(targetMessageSize, v)
+  case class Options(targetMessageSize: Int = 32_000)
 
   /**
    * A flow converting a flat stream of triple statements into a stream of [[RdfStreamFrame]]s.
@@ -39,14 +35,14 @@ object EncoderFlow:
    *
    * This flow will wait for enough items to fill the whole gRPC message, which increases latency. To mitigate that,
    * use the [[fromGroupedTriples]] method instead.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @param opt Streaming options.
    * @param streamOpt Jelly serialization options.
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TTriple Type of triple statements.
    * @return Akka Streams flow.
    */
   final def fromFlatTriples[TTriple]
-  (factory: ConverterFactory[?, ?, ?, ?, TTriple, ?], opt: Options, streamOpt: RdfStreamOptions):
+  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[TTriple, RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
       streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
@@ -59,14 +55,14 @@ object EncoderFlow:
    *
    * This flow will wait for enough items to fill the whole gRPC message, which increases latency. To mitigate that,
    * use the [[fromGroupedQuads]] method instead.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @param opt Streaming options.
    * @param streamOpt Jelly serialization options.
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
    * @return Akka Streams flow.
    */
   final def fromFlatQuads[TQuad]
-  (factory: ConverterFactory[?, ?, ?, ?, ?, TQuad], opt: Options, streamOpt: RdfStreamOptions):
+  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[TQuad, RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
       streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
@@ -79,14 +75,14 @@ object EncoderFlow:
    *
    * After this flow finishes processing an iterable in the input stream, it is guaranteed to output an
    * [[RdfStreamFrame]], which allows to maintain low latency.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @param opt Streaming options.
    * @param streamOpt Jelly serialization options.
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TTriple Type of triple statements.
    * @return Akka Streams flow.
    */
   final def fromGroupedTriples[TTriple]
-  (factory: ConverterFactory[?, ?, ?, ?, TTriple, ?], opt: Options, streamOpt: RdfStreamOptions):
+  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
       streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
@@ -99,14 +95,14 @@ object EncoderFlow:
    *
    * After this flow finishes processing an iterable in the input stream, it is guaranteed to output an
    * [[RdfStreamFrame]], which allows to maintain low latency.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @param opt Streaming options.
    * @param streamOpt Jelly serialization options.
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
    * @return Akka Streams flow.
    */
   final def fromGroupedQuads[TQuad]
-  (factory: ConverterFactory[?, ?, ?, ?, ?, TQuad], opt: Options, streamOpt: RdfStreamOptions):
+  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
       streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
@@ -120,45 +116,40 @@ object EncoderFlow:
    *
    * After this flow finishes processing a single graph in the input stream, it is guaranteed to output an
    * [[RdfStreamFrame]], which allows to maintain low latency.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @param opt Streaming options.
    * @param streamOpt Jelly serialization options.
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TNode Type of nodes.
    * @tparam TTriple Type of triple statements.
    * @return Akka Streams flow.
    */
   final def fromGraphs[TNode >: Null <: AnyRef, TTriple]
-  (factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?], opt: Options, streamOpt: RdfStreamOptions):
-  Flow[(TNode, IterableOnce[TTriple]), RdfStreamFrame, NotUsed] =
+  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+  Flow[(TNode, Iterable[TTriple]), RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
       streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS)
     )
-    val flow = Flow[(TNode, IterableOnce[TTriple])]
-      .flatMapConcat { (graphName: TNode, triples: IterableOnce[TTriple]) =>
 
-        val innerFlow: Source[RdfStreamRow, NotUsed] = Source.fromIterator(() => triples.iterator)
-          .mapConcat(e => encoder.addTripleStatement(e))
-          .concat(Source.fromIterator(() => encoder.endGraph().iterator))
-
-        Source.fromIterator(() => encoder.startGraph(graphName).iterator)
-          .concat(innerFlow)
+    Flow[(TNode, Iterable[TTriple])]
+      .flatMapConcat { (graphName: TNode, triples: Iterable[TTriple]) =>
+        val it: Iterable[RdfStreamRow] = encoder.startGraph(graphName)
+          .concat(triples.flatMap(triple => encoder.addTripleStatement(triple)))
+          .concat(encoder.endGraph())
+        Source.fromIterator(() => it.iterator)
           .groupedWeighted(opt.targetMessageSize)(row => row.serializedSize)
           .map(rows => RdfStreamFrame(rows))
       }
-    if opt.asyncEncoding then flow.async else flow
 
   private def flatFlow[TIn](encoderFlow: Flow[TIn, RdfStreamRow, NotUsed], opt: Options):
   Flow[TIn, RdfStreamFrame, NotUsed] =
-    val flow = encoderFlow
+    encoderFlow
       .groupedWeighted(opt.targetMessageSize)(row => row.serializedSize)
       .map(rows => RdfStreamFrame(rows))
-    if opt.asyncEncoding then flow.async else flow
 
   private def groupedFlow[TIn](encoderFlow: Flow[TIn, RdfStreamRow, NotUsed], opt: Options):
   Flow[IterableOnce[TIn], RdfStreamFrame, NotUsed] =
-    val flow = Flow[IterableOnce[TIn]]
+    Flow[IterableOnce[TIn]]
       .flatMapConcat { elems =>
         Source.fromIterator(() => elems.iterator)
-          .via(flatFlow(encoderFlow, opt.withAsyncEncoding(false)))
+          .via(flatFlow(encoderFlow, opt))
       }
-    if opt.asyncEncoding then flow.async else flow

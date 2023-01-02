@@ -8,6 +8,10 @@ import scala.reflect.ClassTag
 /**
  * "Main" trait to be implemented by RDF conversion modules (e.g., for Jena and RDF4J).
  * Exposes factory methods for building protobuf encoders and decoders.
+ *
+ * This should typically be implemented as an object. You should also provide a package-scoped implicit for your
+ * implementation so that users can easily make use of the connector in the stream package.
+ *
  * @tparam TEncoder Implementation of [[ProtoEncoder]] for a given RDF library.
  * @tparam TDecConv Implementation of [[ProtoDecoderConverter]] for a given RDF library.
  * @tparam TNode Type of RDF nodes in the RDF library

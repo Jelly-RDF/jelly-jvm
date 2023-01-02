@@ -16,13 +16,13 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
   private def getEncoder(prefixTableSize: Int = 8): (NameEncoder, ListBuffer[RdfStreamRow]) =
     val buffer = new ListBuffer[RdfStreamRow]()
-    (NameEncoder(smallOptions(prefixTableSize), buffer), buffer)
+    (NameEncoder(smallOptions(prefixTableSize)), buffer)
 
   "A NameEncoder" when {
     "encoding datatypes" should {
       "add a datatype" in {
         val (encoder, buffer) = getEncoder()
-        val dt = encoder.encodeDatatype("dt1")
+        val dt = encoder.encodeDatatype("dt1", buffer)
         dt.value should be (1)
         buffer.size should be (1)
         val dtEntry = buffer.head.row.datatype.get
@@ -33,11 +33,11 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "add multiple datatypes and reuse existing ones" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 4 do
-          val dt = encoder.encodeDatatype(s"dt$i")
+          val dt = encoder.encodeDatatype(s"dt$i", buffer)
           dt.value should be (i)
 
         // "dt3" should be reused
-        val dt = encoder.encodeDatatype("dt3")
+        val dt = encoder.encodeDatatype("dt3", buffer)
         dt.value should be (3)
 
         buffer.size should be (4)
@@ -52,21 +52,21 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "add datatypes evicting old ones" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 12 do
-          val dt = encoder.encodeDatatype(s"dt$i")
+          val dt = encoder.encodeDatatype(s"dt$i", buffer)
           // first 4 should be evicted
           dt.value should be ((i - 1) % 8 + 1)
 
         for i <- 9 to 12 do
-          val dt = encoder.encodeDatatype(s"dt$i")
+          val dt = encoder.encodeDatatype(s"dt$i", buffer)
           dt.value should be (i - 8)
 
         for i <- 5 to 8 do
-          val dt = encoder.encodeDatatype(s"dt$i")
+          val dt = encoder.encodeDatatype(s"dt$i", buffer)
           dt.value should be (i)
 
         // 5–8 were used last, so they should be evicted last
         for i <- 13 to 16 do
-          val dt = encoder.encodeDatatype(s"dt$i")
+          val dt = encoder.encodeDatatype(s"dt$i", buffer)
           dt.value should be (i - 12) // 1–4
 
         buffer.size should be (16)
@@ -81,7 +81,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "encoding IRIs" should {
       "add a full IRI" in {
         val (encoder, buffer) = getEncoder()
-        val iri = encoder.encodeIri("https://test.org/Cake")
+        val iri = encoder.encodeIri("https://test.org/Cake", buffer)
         iri.nameId should be (1)
         iri.prefixId should be (1)
 
@@ -96,7 +96,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "add a prefix-only IRI" in {
         val (encoder, buffer) = getEncoder()
-        val iri = encoder.encodeIri("https://test.org/test/")
+        val iri = encoder.encodeIri("https://test.org/test/", buffer)
         iri.nameId should be (0)
         iri.prefixId should be (1)
 
@@ -108,7 +108,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "add a name-only IRI" in {
         val (encoder, buffer) = getEncoder()
-        val iri = encoder.encodeIri("testTestTest")
+        val iri = encoder.encodeIri("testTestTest", buffer)
         iri.nameId should be (1)
         iri.prefixId should be (0)
 
@@ -120,7 +120,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "add a full IRI in no-prefix table mode" in {
         val (encoder, buffer) = getEncoder(0)
-        val iri = encoder.encodeIri("https://test.org/Cake")
+        val iri = encoder.encodeIri("https://test.org/Cake", buffer)
         iri.nameId should be (1)
         iri.prefixId should be (0)
 
@@ -149,7 +149,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         for (sIri, ePrefix, eName) <- data do
-          val iri = encoder.encodeIri(sIri)
+          val iri = encoder.encodeIri(sIri, buffer)
           iri.prefixId should be (ePrefix)
           iri.nameId should be (eName)
 

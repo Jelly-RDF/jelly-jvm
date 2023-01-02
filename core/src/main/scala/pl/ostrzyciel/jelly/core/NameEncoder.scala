@@ -11,9 +11,8 @@ import scala.jdk.CollectionConverters.*
  * Maintains internal lookups for prefixes, names, and datatypes. Uses the LRU strategy for eviction.
  *
  * @param opt Jelly options
- * @param rowsBuffer buffer to which the new lookup entries should be appended
  */
-private[core] final class NameEncoder(opt: RdfStreamOptions, rowsBuffer: ListBuffer[RdfStreamRow]):
+private[core] final class NameEncoder(opt: RdfStreamOptions):
   private val nameLookup = new EncoderLookup(opt.maxNameTableSize)
   private val prefixLookup = new EncoderLookup(opt.maxPrefixTableSize)
   private val dtLookup = new EncoderLookup(opt.maxDatatypeTableSize)
@@ -38,9 +37,10 @@ private[core] final class NameEncoder(opt: RdfStreamOptions, rowsBuffer: ListBuf
    * Encodes an IRI to a protobuf representation.
    * Also adds the necessary prefix and name lookup entries to the buffer.
    * @param iri IRI to be encoded
+   * @param rowsBuffer buffer to which the new lookup entries should be appended
    * @return protobuf representation of the IRI
    */
-  def encodeIri(iri: String): RdfIri =
+  def encodeIri(iri: String, rowsBuffer: ListBuffer[RdfStreamRow]): RdfIri =
     def plainIriEncode: RdfIri =
       nameLookup.addEntry(iri) match
         case EncoderValue(id, false) =>
@@ -80,9 +80,10 @@ private[core] final class NameEncoder(opt: RdfStreamOptions, rowsBuffer: ListBuf
    * Encodes a datatype IRI to a protobuf representation.
    * Also adds the necessary datatype lookup entries to the buffer.
    * @param dt datatype IRI
+   * @param rowsBuffer buffer to which the new lookup entries should be appended
    * @return datatype representation for a literal
    */
-  def encodeDatatype(dt: String): RdfLiteral.LiteralKind.Datatype =
+  def encodeDatatype(dt: String, rowsBuffer: ListBuffer[RdfStreamRow]): RdfLiteral.LiteralKind.Datatype =
     val dtVal = dtLookup.addEntry(dt)
     if dtVal.newEntry then
       dtTable.update(
