@@ -60,7 +60,7 @@ lazy val stream = (project in file("stream"))
     ),
     commonSettings,
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val integrationTests = (project in file("integration-tests"))
   .settings(
