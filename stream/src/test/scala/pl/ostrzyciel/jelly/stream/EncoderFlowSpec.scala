@@ -8,7 +8,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import pl.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
 import pl.ostrzyciel.jelly.core.helpers.Assertions.*
 import pl.ostrzyciel.jelly.core.helpers.MockConverterFactory
-import pl.ostrzyciel.jelly.core.proto.{RdfStreamFrame, RdfStreamOptions, RdfStreamType}
+import pl.ostrzyciel.jelly.core.proto.*
 
 class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   import ProtoTestCases.*

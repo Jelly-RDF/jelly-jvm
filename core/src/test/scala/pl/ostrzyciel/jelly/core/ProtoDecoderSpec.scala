@@ -2,6 +2,7 @@ package pl.ostrzyciel.jelly.core
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import pl.ostrzyciel.jelly.core.helpers.Assertions.*
 import pl.ostrzyciel.jelly.core.helpers.MockConverterFactory
 import pl.ostrzyciel.jelly.core.helpers.Mrl.*
 import pl.ostrzyciel.jelly.core.proto.*
@@ -9,14 +10,6 @@ import pl.ostrzyciel.jelly.core.proto.*
 class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   import ProtoDecoderImpl.*
   import ProtoTestCases.*
-
-  // Helper method
-  def assertDecoded(observed: Seq[Statement], expected: Seq[Statement]): Unit =
-    for ix <- 0 until observed.size.max(expected.size) do
-      val obsRow = observed.applyOrElse(ix, null)
-      withClue(s"Row $ix:") {
-        obsRow should be (expected.applyOrElse(ix, null))
-      }
 
   // Test body
   "a TriplesDecoder" should {

@@ -27,6 +27,12 @@ object ProtoTestCases:
   trait TestCase[TStatement]:
     def mrl: Seq[TStatement]
     def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow.Row]
+    def encodedFull(opt: RdfStreamOptions, groupByN: Int) =
+      encoded(opt)
+        .map(row => RdfStreamRow(row))
+        .grouped(groupByN)
+        .map(rows => RdfStreamFrame(rows))
+        .toSeq
 
   object Triples1 extends TestCase[Triple]:
     val mrl = Seq(
