@@ -5,8 +5,6 @@ import akka.stream.scaladsl.Flow
 import pl.ostrzyciel.jelly.core.{ConverterFactory, ProtoDecoder}
 import pl.ostrzyciel.jelly.core.proto.RdfStreamFrame
 
-import scala.collection.mutable.ArrayBuffer
-
 /**
  * Methods for creating Akka Streams flows for decoding protobuf into RDF statements.
  */
@@ -19,7 +17,7 @@ object DecoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Akka Streams flow
    */
-  def triplesToFlat[TTriple](factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
+  def triplesToFlat[TTriple](implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[RdfStreamFrame, TTriple, NotUsed] =
     flatStream(factory.triplesDecoder)
 
@@ -31,7 +29,7 @@ object DecoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Akka Streams flow
    */
-  def triplesToGrouped[TTriple](factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
+  def triplesToGrouped[TTriple](implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed] =
     groupedStream(factory.triplesDecoder)
 
@@ -42,7 +40,7 @@ object DecoderFlow:
    * @tparam TQuad Type of quad statements.
    * @return Akka Streams flow
    */
-  def quadsToFlat[TQuad](factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+  def quadsToFlat[TQuad](implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[RdfStreamFrame, TQuad, NotUsed] =
     flatStream(factory.quadsDecoder)
 
@@ -54,7 +52,7 @@ object DecoderFlow:
    * @tparam TQuad Type of quad statements.
    * @return Akka Streams flow
    */
-  def quadsToGrouped[TQuad](factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+  def quadsToGrouped[TQuad](implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
     groupedStream(factory.quadsDecoder)
 
@@ -65,24 +63,34 @@ object DecoderFlow:
    * @tparam TQuad Type of quad statements.
    * @return Akka Streams flow
    */
-  def graphsAsQuadsToFlat[TQuad](factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+  def graphsAsQuadsToFlat[TQuad](implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[RdfStreamFrame, TQuad, NotUsed] =
     flatStream(factory.graphsAsQuadsDecoder)
 
   /**
    * A flow converting a graphs stream of [[RdfStreamFrame]]s into a stream of iterables with RDF quad statements.
    * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
+   * If you need each element in the stream to correspond to one graph, use [[graphsToFlat]] instead.
    * RDF stream type: GRAPHS.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
    * @return Akka Streams flow
    */
-  def graphsAsQuadsToGrouped[TQuad](factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+  def graphsAsQuadsToGrouped[TQuad](implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
     groupedStream(factory.graphsAsQuadsDecoder)
 
-  def graphsToFlat[TNode >: Null <: AnyRef, TTriple](factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
-  Flow[RdfStreamFrame, (TNode, ArrayBuffer[TTriple]), NotUsed] =
+  /**
+   * A flow converting a graphs stream of [[RdfStreamFrame]]s into a stream of tuples (graph name; triples).
+   * Each element in the stream corresponds to exactly one RDF graph.
+   * RDF stream type: GRAPHS.
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+   * @tparam TNode Type of RDF nodes.
+   * @tparam TTriple Type of triple statements.
+   * @return Akka Streams flow
+   */
+  def graphsToFlat[TNode >: Null <: AnyRef, TTriple](implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+  Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] =
     flatStream(factory.graphsDecoder)
 
   private def flatStream[TOut](decoder: ProtoDecoder[?, ?, ?, ?, TOut]): Flow[RdfStreamFrame, TOut, NotUsed] =

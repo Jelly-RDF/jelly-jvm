@@ -2,7 +2,7 @@ package pl.ostrzyciel.jelly.core
 
 import pl.ostrzyciel.jelly.core.proto.*
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect.ClassTag
 
 /**
@@ -77,34 +77,34 @@ object ProtoDecoderImpl:
    */
   class GraphsDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad]
   (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoder[TNode, TDatatype, TTriple, TQuad, (TNode, ArrayBuffer[TTriple])](converter):
+    extends ProtoDecoder[TNode, TDatatype, TTriple, TQuad, (TNode, Iterable[TTriple])](converter):
     private var currentGraph: Option[TNode] = None
-    private var buffer: ArrayBuffer[TTriple] = new ArrayBuffer[TTriple]()
+    private var buffer: ListBuffer[TTriple] = new ListBuffer[TTriple]()
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
       if !opts.streamType.isRdfStreamTypeGraphs then
         throw new RdfProtoDeserializationError("Incoming stream type is not GRAPHS.")
       super.handleOptions(opts)
 
-    private def emitBuffer(): Option[(TNode, ArrayBuffer[TTriple])] =
+    private inline def emitBuffer(): Option[(TNode, Iterable[TTriple])] =
       if buffer.isEmpty then None
       else if currentGraph.isEmpty then
         throw new RdfProtoDeserializationError("End of graph encountered before a start.")
       else
         Some((currentGraph.get, buffer))
 
-    override protected def handleGraphStart(graph: RdfGraphStart): Option[(TNode, ArrayBuffer[TTriple])] =
+    override protected def handleGraphStart(graph: RdfGraphStart): Option[(TNode, Iterable[TTriple])] =
       val toEmit = emitBuffer()
-      buffer = new ArrayBuffer[TTriple]()
+      buffer = new ListBuffer[TTriple]()
       currentGraph = Some(convertGraphTerm(graph.graph))
       toEmit
 
-    override protected def handleGraphEnd(): Option[(TNode, ArrayBuffer[TTriple])] =
+    override protected def handleGraphEnd(): Option[(TNode, Iterable[TTriple])] =
       val toEmit = emitBuffer()
-      buffer = new ArrayBuffer[TTriple]()
+      buffer = new ListBuffer[TTriple]()
       currentGraph = None
       toEmit
 
-    override protected def handleTriple(triple: RdfTriple): Option[(TNode, ArrayBuffer[TTriple])] =
+    override protected def handleTriple(triple: RdfTriple): Option[(TNode, Iterable[TTriple])] =
       buffer.addOne(convertTriple(triple))
       None

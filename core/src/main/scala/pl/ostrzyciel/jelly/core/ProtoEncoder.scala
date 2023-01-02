@@ -110,7 +110,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
   // *** 3. THE PROTECTED INTERFACE ***
   // **********************************
   protected final inline def makeIriNode(iri: String): RdfTerm =
-    val iriEnc = iriEncoder.encodeIri(iri)
+    val iriEnc = iriEncoder.encodeIri(iri, extraRowsBuffer)
     RdfTerm(RdfTerm.Term.Iri(iriEnc))
 
   protected final inline def makeBlankNode(label: String): RdfTerm =
@@ -128,7 +128,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
 
   protected final inline def makeDtLiteral(lex: String, dt: String): RdfTerm =
     RdfTerm(RdfTerm.Term.Literal(
-      RdfLiteral(lex, iriEncoder.encodeDatatype(dt))
+      RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
     ))
 
   protected final inline def makeTripleNode(triple: TQuoted): RdfTerm =
@@ -137,8 +137,8 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
-  private val extraRowsBuffer = new ListBuffer[RdfStreamRow]()
-  private val iriEncoder = new NameEncoder(options, extraRowsBuffer)
+  private var extraRowsBuffer = new ListBuffer[RdfStreamRow]()
+  private val iriEncoder = new NameEncoder(options)
   private var emittedCompressionOptions = false
 
   private val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
@@ -202,7 +202,7 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
     )
 
   private def handleHeader(): Unit =
-    extraRowsBuffer.clear()
+    extraRowsBuffer = new ListBuffer[RdfStreamRow]()
     if !emittedCompressionOptions then
       emittedCompressionOptions = true
       extraRowsBuffer.append(
