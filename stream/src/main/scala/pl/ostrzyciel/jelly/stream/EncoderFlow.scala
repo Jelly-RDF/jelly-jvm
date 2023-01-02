@@ -25,7 +25,8 @@ object EncoderFlow:
       )
 
   /**
-   * @param targetMessageSize After the message gets bigger than the target, it gets sent.
+   * @param targetMessageSize Target message size in bytes.
+   *                          After the message gets bigger than the target, it gets sent.
    */
   case class Options(targetMessageSize: Int = 32_000)
 
