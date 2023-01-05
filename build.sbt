@@ -69,6 +69,7 @@ lazy val integrationTests = (project in file("integration-tests"))
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-ntriples" % rdf4jV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
     ),
     commonSettings,
   )
