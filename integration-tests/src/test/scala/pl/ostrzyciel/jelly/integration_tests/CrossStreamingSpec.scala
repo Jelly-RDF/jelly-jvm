@@ -41,7 +41,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     val files: Seq[(String, File)] = Seq(
       "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt",
     ).map(name => (
-      name, File(getClass.getResource("/" + name).toURI)
+      name, File(getClass.getResource("/triples/" + name).toURI)
     ))
     val graphs: Map[String, Graph] = Map.from(
       files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString)))
@@ -49,9 +49,9 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   private object QuadTests:
     val files: Seq[(String, File)] = Seq(
-      "nq-syntax-tests.nq",
+      "nq-syntax-tests.nq", "weather-quads.nq"
     ).map(name => (
-      name, File(getClass.getResource("/" + name).toURI)
+      name, File(getClass.getResource("/quads/" + name).toURI)
     ))
     val datasets: Map[String, DatasetGraph] = Map.from(
       files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString)))
