@@ -17,7 +17,8 @@ case object Rdf4jTestStream extends TestStream:
 
   override def tripleSource(is: InputStream, streamOpt: EncoderFlow.Options, jellyOpt: RdfStreamOptions) =
     // This buffers everything in memory... but I'm too lazy to implement my own RDFHandler for this
-    val parser = Rio.createParser(RDFFormat.NTRIPLES)
+    // RDF4J at the moment only has two formats with RDF-star support – Turtle and Trig.
+    val parser = Rio.createParser(RDFFormat.TURTLESTAR)
     val collector = new StatementCollector()
     parser.setRDFHandler(collector)
     parser.parse(is)
@@ -43,7 +44,7 @@ case object Rdf4jTestStream extends TestStream:
       .via(EncoderFlow.fromGraphs(streamOpt, jellyOpt))
 
   override def tripleSink(os: OutputStream)(implicit ec: ExecutionContext) =
-    val writer = Rio.createWriter(RDFFormat.NTRIPLES, os)
+    val writer = Rio.createWriter(RDFFormat.TURTLESTAR, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
       .via(DecoderFlow.triplesToFlat)

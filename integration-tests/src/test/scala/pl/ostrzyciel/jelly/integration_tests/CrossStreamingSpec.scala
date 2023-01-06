@@ -4,9 +4,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.*
 import org.apache.jena.graph.Graph
-import org.apache.jena.query.Dataset
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
-import org.apache.jena.riot.system.{AsyncParser, StreamRDFLib}
 import org.apache.jena.sparql.core.DatasetGraph
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
@@ -15,7 +13,7 @@ import pl.ostrzyciel.jelly.core.*
 import pl.ostrzyciel.jelly.core.proto.{RdfStreamFrame, RdfStreamOptions}
 import pl.ostrzyciel.jelly.stream.*
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream, FileOutputStream, InputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream, InputStream}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
@@ -24,10 +22,7 @@ import scala.jdk.CollectionConverters.*
 class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
   implicit val actorSystem: ActorSystem = ActorSystem()
   implicit val ec: ExecutionContext = actorSystem.getDispatcher
-
   implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
-
-  // TODO test cases: RDF-star, weird RDF-star
 
   private val implementations: Seq[(String, TestStream)] = Seq(
     ("Jena", JenaTestStream),
@@ -36,7 +31,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   private object TripleTests:
     val files: Seq[(String, File)] = Seq[String](
-      "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt",
+      "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.nt", "rdf-star-blanks.nt"
     ).map(name => (
       name, File(getClass.getResource("/triples/" + name).toURI)
     ))
@@ -116,11 +111,13 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
               val ck = CaseKey("triples", encName, jOptName, sOptName, caseName)
               encodedSizes(ck) = encSize
               val resultGraph = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
-                .lang(Lang.NT)
+                .lang(Lang.TURTLE)
                 .toGraph
 
               sourceGraph.size() should be (resultGraph.size())
-              sourceGraph.isIsomorphicWith(resultGraph) should be (true)
+              if caseName != "rdf-star-blanks.nt" then
+                // Isomorphism checks don't work in Jena on quoted triples with blank nodes
+                sourceGraph.isIsomorphicWith(resultGraph) should be (true)
             }
 
           // Quads and graphs
