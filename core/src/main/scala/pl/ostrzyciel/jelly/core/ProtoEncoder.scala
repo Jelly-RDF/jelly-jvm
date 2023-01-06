@@ -200,8 +200,7 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
         case oldNode if node == oldNode => graphTermRepeat
         case _ =>
           lastGraph.node = node
-          val enc = graphNodeToProto(node)
-          enc
+          graphNodeToProto(node)
     else
       graphNodeToProto(node)
 

@@ -15,7 +15,7 @@ import pl.ostrzyciel.jelly.core.*
 import pl.ostrzyciel.jelly.core.proto.{RdfStreamFrame, RdfStreamOptions}
 import pl.ostrzyciel.jelly.stream.*
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream, InputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream, FileOutputStream, InputStream}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
@@ -27,10 +27,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
 
-  // TODO: getQuadFlow, same but for decoding, RDF4J impl, pass encoder options and wiggle them
-  // TODO: graph streams
-  // TODO tests: check end-to-end, check if both RDF4J and Jena encode it the same way
-  // TODO test cases: triples, quads, literals, bnodes (ughhh), RDF-star, weird RDF-star
+  // TODO test cases: RDF-star, weird RDF-star
 
   private val implementations: Seq[(String, TestStream)] = Seq(
     ("Jena", JenaTestStream),
@@ -70,9 +67,32 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     ("message size: 2_000_000", EncoderFlow.Options(2_000_000)),
   )
 
-  case class CaseKey(encoder: String, jOpt: String, sOpt: String, caseName: String)
+  case class CaseKey(streamType: String, encoder: String, jOpt: String, sOpt: String, caseName: String)
 
   private val encodedSizes: mutable.Map[CaseKey, Long] = mutable.Map()
+
+  private def compareDatasets(resultDataset: DatasetGraph, sourceDataset: DatasetGraph): Unit =
+    resultDataset.size() should be (sourceDataset.size())
+    resultDataset.getDefaultGraph.isIsomorphicWith(sourceDataset.getDefaultGraph) should be (true)
+    // I have absolutely no idea why, but the .asScala extension method is not working here.
+    // Made the conversion explicit and it's fine.
+    for graphNode <- IteratorHasAsScala(sourceDataset.listGraphNodes).asScala do
+      val otherGraphNode = if graphNode.isBlank then
+      // Take any blank node graph. This will only work if there is at most one blank node graph
+      // in the dataset. This happens to cover our test cases.
+        IteratorHasAsScala(resultDataset.listGraphNodes)
+          .asScala
+          .filter(_.isBlank)
+          .next()
+      else graphNode
+
+      withClue(s"result dataset should have graph $graphNode") {
+        resultDataset.containsGraph(otherGraphNode) should be (true)
+      }
+      withClue(s"graph $graphNode should be isomorphic") {
+        sourceDataset.getGraph(graphNode)
+          .isIsomorphicWith(resultDataset.getGraph(otherGraphNode)) should be (true)
+      }
 
   for (encName, encFlow) <- implementations do
     s"$encName encoder" when {
@@ -86,12 +106,15 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
             s"stream triples – file $caseName" in {
               val is = new FileInputStream(sourceFile)
               val os = new ByteArrayOutputStream()
+              var encSize = 0
               encFlow.tripleSource(is, sOpt, jOpt)
+                .wireTap(f => encSize += f.serializedSize)
                 .toMat(decFlow.tripleSink(os))(Keep.right)
                 .run()
                 .futureValue
 
-              encodedSizes(CaseKey(encName, jOptName, sOptName, caseName)) = os.size
+              val ck = CaseKey("triples", encName, jOptName, sOptName, caseName)
+              encodedSizes(ck) = encSize
               val resultGraph = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
                 .lang(Lang.NT)
                 .toGraph
@@ -100,24 +123,43 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
               sourceGraph.isIsomorphicWith(resultGraph) should be (true)
             }
 
-          // Quads
+          // Quads and graphs
           for (caseName, sourceFile) <- QuadTests.files do
             val sourceDataset = QuadTests.datasets(caseName)
             s"stream quads – file $caseName" in {
               val is = new FileInputStream(sourceFile)
               val os = new ByteArrayOutputStream()
+              var encSize = 0
               encFlow.quadSource(is, sOpt, jOpt)
+                .wireTap(f => encSize += f.serializedSize)
                 .toMat(decFlow.quadSink(os))(Keep.right)
                 .run()
                 .futureValue
 
-              encodedSizes(CaseKey(encName, jOptName, sOptName, caseName)) = os.size
+              val ck = CaseKey("quads", encName, jOptName, sOptName, caseName)
+              encodedSizes(ck) = encSize
               val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
                 .lang(Lang.NQ)
                 .toDatasetGraph
+              compareDatasets(resultDataset, sourceDataset)
+            }
 
-              sourceDataset.size() should be (resultDataset.size())
-              // sourceGraph.isIsomorphicWith(resultDataset) should be(true)
+            s"stream graphs – file $caseName" in {
+              val is = new FileInputStream(sourceFile)
+              val os = new ByteArrayOutputStream()
+              var encSize = 0
+              encFlow.graphSource(is, sOpt, jOpt)
+                .wireTap(f => encSize += f.serializedSize)
+                .toMat(decFlow.graphSink(os))(Keep.right)
+                .run()
+                .futureValue
+
+              val ck = CaseKey("graphs", encName, jOptName, sOptName, caseName)
+              encodedSizes(ck) = encSize
+              val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
+                .lang(Lang.NQ)
+                .toDatasetGraph
+              compareDatasets(resultDataset, sourceDataset)
             }
         }
     }

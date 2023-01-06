@@ -48,13 +48,8 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
   override protected def graphNodeToProto(node: Node) = node match
     // URI/IRI
     case _: Node_URI =>
-      val uri = node.getURI
-      uri match
-        // Jena internals magic – it internally stores default graph nodes as such.
-        // See [[org.apache.jena.sparql.core.Quad]]
-        case "urn:x-arq:DefaultGraphNode" => makeDefaultGraph
-        case "urn:x-arq:DefaultGraph" => makeDefaultGraph
-        case _ => makeIriNodeGraph(uri)
+      if Quad.isDefaultGraph(node) then makeDefaultGraph
+      else makeIriNodeGraph(node.getURI)
     // Blank node
     case _: Node_Blank => makeBlankNodeGraph(node.getBlankNodeLabel)
     // Literal
