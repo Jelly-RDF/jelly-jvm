@@ -13,7 +13,7 @@ import scala.collection.mutable.ListBuffer
  * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
  * @param options options for this stream
  */
-abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](val options: RdfStreamOptions):
+abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStreamOptions):
   // *** 1. THE PUBLIC INTERFACE ***
   // *******************************
   /**
@@ -96,15 +96,26 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
   protected def getQuotedO(triple: TQuoted): TNode
 
   /**
-   * Turn an RDF node into its protobuf representation.
+   * Turn an RDF node (S, P, or O) into its protobuf representation.
    *
    * Use the protected final inline make* methods in this class to create the nodes.
    *
    * @param node RDF node
-   * @return option of RdfTerm
+   * @return RdfTerm
    * @throws RdfProtoSerializationError if node cannot be encoded
    */
   protected def nodeToProto(node: TNode): RdfTerm
+
+  /**
+   * Turn an RDF graph node into its protobuf representation.
+   *
+   * Use the protected final inline make*Graph methods in this class to create the nodes.
+   *
+   * @param node RDF graph node
+   * @return RdfTerm
+   * @throws RdfProtoSerializationError if node cannot be encoded
+   */
+  protected def graphNodeToProto(node: TNode): RdfGraph
 
 
   // *** 3. THE PROTECTED INTERFACE ***
@@ -134,6 +145,29 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
   protected final inline def makeTripleNode(triple: TQuoted): RdfTerm =
     RdfTerm(RdfTerm.Term.TripleTerm(quotedToProto(triple)))
 
+  protected final inline def makeIriNodeGraph(iri: String): RdfGraph =
+    val iriEnc = iriEncoder.encodeIri(iri, extraRowsBuffer)
+    RdfGraph(RdfGraph.Graph.Iri(iriEnc))
+
+  protected final inline def makeBlankNodeGraph(label: String): RdfGraph =
+    RdfGraph(RdfGraph.Graph.Bnode(label))
+
+  protected final inline def makeSimpleLiteralGraph(lex: String): RdfGraph =
+    RdfGraph(RdfGraph.Graph.Literal(
+      RdfLiteral(lex, simpleLiteral)
+    ))
+
+  protected final inline def makeLangLiteralGraph(lex: String, lang: String): RdfGraph =
+    RdfGraph(RdfGraph.Graph.Literal(
+      RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
+    ))
+
+  protected final inline def makeDtLiteralGraph(lex: String, dt: String): RdfGraph =
+    RdfGraph(RdfGraph.Graph.Literal(
+      RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
+    ))
+
+  protected final val makeDefaultGraph: RdfGraph = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
@@ -160,21 +194,14 @@ abstract class ProtoEncoder[TNode >: Null <: AnyRef, TTriple, TQuad, TQuoted](va
     else
       nodeToProto(node)
 
-  private def graphNodeToProto(node: TNode): RdfGraph =
-    nodeToProto(node).term match
-      case RdfTerm.Term.Iri(iri) => RdfGraph(RdfGraph.Graph.Iri(iri))
-      case RdfTerm.Term.Literal(literal) => RdfGraph(RdfGraph.Graph.Literal(literal))
-      case RdfTerm.Term.Bnode(bNode) => RdfGraph(RdfGraph.Graph.Bnode(bNode))
-      case RdfTerm.Term.Empty => RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))
-      case _ => throw new RdfProtoSerializationError("Cannot encode node as a graph term")
-
   private def graphNodeToProtoWrapped(node: TNode): RdfGraph =
     if options.useRepeat then
       lastGraph.node match
         case oldNode if node == oldNode => graphTermRepeat
         case _ =>
           lastGraph.node = node
-          graphNodeToProto(node)
+          val enc = graphNodeToProto(node)
+          enc
     else
       graphNodeToProto(node)
 

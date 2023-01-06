@@ -227,6 +227,41 @@ object ProtoTestCases:
       ),
     ))
 
+  object Quads3RepeatDefault extends TestCase[Quad]:
+    val mrl = Seq(
+      Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        LangLiteral("test", "en-gb"),
+        null,
+      ),
+      Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        null,
+      ),
+    )
+
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
+      RdfPrefixEntry(1, "https://test.org/test/"),
+      RdfNameEntry(1, "subject"),
+      RdfNameEntry(2, "predicate"),
+      RdfQuad(
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
+        RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph())),
+      ),
+      RdfQuad(
+        TERM_REPEAT,
+        RdfTerm(RdfTerm.Term.Bnode("blank")),
+        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Simple(true)))),
+        GRAPH_REPEAT,
+      ),
+    ))
+
   object Graphs1 extends TestCase[(Node, Iterable[Triple])]:
     val mrl = Seq(
       (

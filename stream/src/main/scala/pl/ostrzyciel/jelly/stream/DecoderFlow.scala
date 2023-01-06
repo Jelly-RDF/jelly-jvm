@@ -89,7 +89,7 @@ object DecoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Akka Streams flow
    */
-  def graphsToFlat[TNode >: Null <: AnyRef, TTriple](implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+  def graphsToFlat[TNode, TTriple](implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] =
     flatStream(factory.graphsDecoder)
 

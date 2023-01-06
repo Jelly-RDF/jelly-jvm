@@ -166,6 +166,16 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       assertDecoded(decoded, Quads2NoRepeat.mrl)
     }
 
+    "decode quad statements (repeated default graph)" in {
+      val decoder = MockConverterFactory.quadsDecoder
+      val decoded = Quads3RepeatDefault
+        .encoded(
+          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+        )
+        .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
+      assertDecoded(decoded, Quads3RepeatDefault.mrl)
+    }
+
     "throw exception on a triple in a QUADS stream" in {
       val decoder = MockConverterFactory.quadsDecoder
       val data = wrapEncodedFull(Seq(

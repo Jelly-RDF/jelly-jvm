@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
  *
  * See the implementations in [[ProtoDecoderImpl]].
  */
-abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad, TOut]
+abstract class ProtoDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad, TOut]
 (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad]):
   private var streamOpt: Option[RdfStreamOptions] = None
   private lazy val nameDecoder = new NameDecoder(streamOpt getOrElse RdfStreamOptions())
@@ -80,8 +80,8 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
   protected final def convertTermWrapped(term: RdfTerm, lastNodeHolder: LastNodeHolder[TNode]): TNode = term.term match
     case _: RdfTerm.Term.Repeat =>
       lastNodeHolder.node match
-        case null => throw new RdfProtoDeserializationError("RdfRepeat without previous term.")
-        case n => n
+        case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("RdfRepeat without previous term.")
+        case n => n.asInstanceOf[TNode]
     case _ =>
       val node = convertTerm(term)
       lastNodeHolder.node = node
@@ -90,8 +90,8 @@ abstract class ProtoDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTrip
   protected final def convertGraphTermWrapped(graph: RdfGraph): TNode = graph.graph match
     case _: Graph.Repeat =>
       lastGraph.node match
-        case null => throw new RdfProtoDeserializationError("RdfRepeat without previous term.")
-        case n => n
+        case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("RdfRepeat without previous graph term.")
+        case n => n.asInstanceOf[TNode]
     case _ =>
       val node = convertGraphTerm(graph)
       lastGraph.node = node

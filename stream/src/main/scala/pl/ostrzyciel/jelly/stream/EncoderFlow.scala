@@ -124,7 +124,7 @@ object EncoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Akka Streams flow.
    */
-  final def fromGraphs[TNode >: Null <: AnyRef, TTriple]
+  final def fromGraphs[TNode, TTriple]
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[(TNode, Iterable[TTriple]), RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(

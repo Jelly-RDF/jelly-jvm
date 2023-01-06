@@ -50,6 +50,14 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       assertEncoded(encoded, Quads2NoRepeat.encoded(encoder.options))
     }
 
+    "encode quad statements (repeated default graph)" in {
+      val encoder = MockProtoEncoder(
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+      )
+      val encoded = Quads3RepeatDefault.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
+      assertEncoded(encoded, Quads3RepeatDefault.encoded(encoder.options))
+    }
+
     "encode graphs" in {
       val encoder = MockProtoEncoder(
         JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS)
@@ -81,6 +89,6 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
           Triple(BlankNode("S"), BlankNode("P"), BlankNode("O"))
         ))
       }
-      error.getMessage should include ("Cannot encode node as a graph term")
+      error.getMessage should include ("Cannot encode graph node")
     }
   }

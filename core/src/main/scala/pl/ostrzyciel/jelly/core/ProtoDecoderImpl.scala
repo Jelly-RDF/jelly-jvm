@@ -13,7 +13,7 @@ object ProtoDecoderImpl:
   /**
    * A decoder that reads TRIPLES streams and outputs a sequence of triples.
    */
-  class TriplesDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad]
+  class TriplesDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
   (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
     extends ProtoDecoder[TNode, TDatatype, TTriple, TQuad, TTriple](converter):
 
@@ -28,7 +28,7 @@ object ProtoDecoderImpl:
   /**
    * A decoder that reads QUADS streams and outputs a sequence of quads.
    */
-  class QuadsDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad]
+  class QuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
   (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
     extends ProtoDecoder[TNode, TDatatype, TTriple, TQuad, TQuad](converter):
 
@@ -43,7 +43,7 @@ object ProtoDecoderImpl:
   /**
    * A decoder that reads GRAPHS streams and outputs a flat sequence of quads.
    */
-  class GraphsAsQuadsDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad]
+  class GraphsAsQuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
   (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
     extends ProtoDecoder[TNode, TDatatype, TTriple, TQuad, TQuad](converter):
     private var currentGraph: Option[TNode] = None
@@ -75,7 +75,7 @@ object ProtoDecoderImpl:
    * A decoder that reads GRAPHS streams and outputs a sequence of graphs.
    * Each graph is emitted as soon as the producer signals that it's complete.
    */
-  class GraphsDecoder[TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad]
+  class GraphsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
   (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
     extends ProtoDecoder[TNode, TDatatype, TTriple, TQuad, (TNode, Iterable[TTriple])](converter):
     private var currentGraph: Option[TNode] = None
