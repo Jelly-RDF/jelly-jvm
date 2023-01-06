@@ -16,7 +16,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            java: 8
+            java: 11
           - os: ubuntu-latest
             java: 17
     runs-on: ${{ matrix.os }}

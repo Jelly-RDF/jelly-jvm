@@ -23,14 +23,6 @@ case object JenaTestStream extends TestStream:
     Source.fromIterator(() => AsyncParser.asyncParseQuads(is, Lang.NQUADS, "").asScala)
       .via(EncoderFlow.fromFlatQuads(streamOpt, jellyOpt))
 
-  private def getGraphs(is: InputStream): Iterator[(Node, Graph)] =
-    val ds = RDFParser.source(is)
-      .lang(Lang.NQ)
-      .toDatasetGraph
-    val graphs: Iterator[(Node, Graph)] = ds.listGraphNodes().asScala.map(gNode => (gNode, ds.getGraph(gNode))) ++
-      Iterator((null, ds.getDefaultGraph))
-    graphs.filter((_, g) => g.size > 0)
-
   override def graphSource(is: InputStream, streamOpt: EncoderFlow.Options, jellyOpt: RdfStreamOptions) =
     val ds = RDFParser.source(is)
       .lang(Lang.NQ)
@@ -39,7 +31,6 @@ case object JenaTestStream extends TestStream:
       ds.listGraphNodes().asScala.map(gNode => (gNode, Iterable.from(ds.getGraph(gNode).find.asScala))) ++
         Iterator((null, Iterable.from(ds.getDefaultGraph.find.asScala)))
     ).filter((_, g) => g.size > 0)
-
     Source.fromIterator(() => graphs)
       .via(EncoderFlow.fromGraphs(streamOpt, jellyOpt))
 

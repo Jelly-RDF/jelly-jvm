@@ -1,6 +1,9 @@
 package pl.ostrzyciel.jelly.core
 
 private[core] object LastNodeHolder:
+  /**
+   * Indicates that there was no value for this node yet.
+   */
   case object NoValue
 
 /**

@@ -8,4 +8,4 @@
 
 ### Quads
 - `nq-syntax-tests.nq` – N-Quads test cases taken from the [N-Quads test suite](https://www.w3.org/2013/N-QuadsReports/index.html). The file includes tests named `nq-syntax-uri-*` and `nq-syntax-bnode-*`. It also includes all tests from `nt-syntax-subm-01.nt`.
-- `weather-quads.nq` – several named graph and a default graph describing mock measurements from a weather station.
+- `weather-quads.nq` – several named graphs and a default graph describing mock measurements from a weather station.
