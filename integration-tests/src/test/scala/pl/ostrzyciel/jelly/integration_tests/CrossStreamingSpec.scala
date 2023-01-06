@@ -117,6 +117,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
               sourceGraph.size() should be (resultGraph.size())
               if caseName != "rdf-star-blanks.nt" then
                 // Isomorphism checks don't work in Jena on quoted triples with blank nodes
+                // https://github.com/apache/jena/issues/1710
                 sourceGraph.isIsomorphicWith(resultGraph) should be (true)
             }
 
