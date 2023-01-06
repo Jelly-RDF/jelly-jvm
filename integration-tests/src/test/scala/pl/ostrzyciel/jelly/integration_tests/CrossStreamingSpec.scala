@@ -1,70 +1,170 @@
 package pl.ostrzyciel.jelly.integration_tests
 
-/*
 import akka.NotUsed
-import akka.stream.scaladsl.{Flow, Sink, Source, StreamConverters}
-import org.apache.jena.riot.Lang
-import org.apache.jena.riot.system.{AsyncParser, StreamRDFLib}
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.*
+import org.apache.jena.graph.Graph
+import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
+import org.apache.jena.sparql.core.DatasetGraph
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import pl.ostrzyciel.jelly.convert.jena.JenaConverterFactory
-import pl.ostrzyciel.jelly.convert.rdf4j.Rdf4jConverterFactory
 import pl.ostrzyciel.jelly.core.*
-import pl.ostrzyciel.jelly.core.proto.RdfStreamFrame
+import pl.ostrzyciel.jelly.core.proto.{RdfStreamFrame, RdfStreamOptions}
 import pl.ostrzyciel.jelly.stream.*
 
-import java.io.InputStream
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream, InputStream}
+import scala.collection.mutable
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 
-class CrossStreamingSpec extends AnyWordSpec, Matchers:
-  sealed trait TestEncoderFlow:
-    def getTripleFlow(in: InputStream): Source[RdfStreamFrame, NotUsed]
+class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
+  implicit val actorSystem: ActorSystem = ActorSystem()
+  implicit val ec: ExecutionContext = actorSystem.getDispatcher
+  implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
 
-  case object JenaTestEncoderFlow extends TestEncoderFlow:
-    override def getTripleFlow(in: InputStream) =
-      Source.fromIterator(() => AsyncParser.asyncParseTriples(in, Lang.NT, "").asScala)
-        .via(EncoderFlow.fromFlatTriples(
-          JenaConverterFactory,
-          EncoderFlow.Options(16, false),
-          RdfStreamOptions()
-        ))
-
-  // TODO: getQuadFlow, same but for decoding, RDF4J impl, pass encoder options and wiggle them
-  // TODO: grouped flows
-  // TODO tests: check end-to-end, check if both RDF4J and Jena encode it the same way
-  // TODO test cases: triples, quads, literals, bnodes (ughhh), RDF-star, weird RDF-star
-
-  sealed trait TestDecoderFlow:
-    def getFlow: Flow[RdfStreamFrame, String, NotUsed]
-
-  case object JenaTestDecoderFlow extends TestDecoderFlow:
-    override def getFlow =
-      ???
-
-  val encoders: Seq[(String, TestEncoderFlow)] = Seq(
-    ("Jena", JenaTestEncoderFlow),
+  private val implementations: Seq[(String, TestStream)] = Seq(
+    ("Jena", JenaTestStream),
+    ("RDF4J", Rdf4jTestStream),
   )
 
-  val decoders: Seq[(String, TestDecoderFlow)] = Seq(
-    ("Jena", JenaTestDecoderFlow),
+  private object TripleTests:
+    val files: Seq[(String, File)] = Seq[String](
+      "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.nt", "rdf-star-blanks.nt"
+    ).map(name => (
+      name, File(getClass.getResource("/triples/" + name).toURI)
+    ))
+    val graphs: Map[String, Graph] = Map.from(
+      files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString)))
+    )
+
+  private object QuadTests:
+    val files: Seq[(String, File)] = Seq(
+      "nq-syntax-tests.nq", "weather-quads.nq"
+    ).map(name => (
+      name, File(getClass.getResource("/quads/" + name).toURI)
+    ))
+    val datasets: Map[String, DatasetGraph] = Map.from(
+      files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString)))
+    )
+
+  private val jellyOptions: Seq[(String, RdfStreamOptions)] = Seq(
+    ("small default", JellyOptions.smallGeneralized),
+    ("small, no repeat", JellyOptions.smallGeneralized.withUseRepeat(false)),
+    ("small, no prefix table", JellyOptions.smallGeneralized.withMaxPrefixTableSize(0)),
+    ("big default", JellyOptions.bigGeneralized),
   )
 
-  for (encName, encFlow) <- encoders do
-    for (decName, decFlow) <- decoders do
-      s"$encName encoder" when {
-        s"streaming to $decName decoding" should {
-          "bep" in {
-            encFlow.getTripleFlow
-          }
-        }
+  private val streamingOptions: Seq[(String, EncoderFlow.Options)] = Seq(
+    ("message size: 32_000", EncoderFlow.Options(32_000)),
+    ("message size: 500", EncoderFlow.Options(500)),
+    ("message size: 2_000_000", EncoderFlow.Options(2_000_000)),
+  )
+
+  case class CaseKey(streamType: String, encoder: String, jOpt: String, sOpt: String, caseName: String)
+
+  private val encodedSizes: mutable.Map[CaseKey, Long] = mutable.Map()
+
+  private def compareDatasets(resultDataset: DatasetGraph, sourceDataset: DatasetGraph): Unit =
+    resultDataset.size() should be (sourceDataset.size())
+    resultDataset.getDefaultGraph.isIsomorphicWith(sourceDataset.getDefaultGraph) should be (true)
+    // I have absolutely no idea why, but the .asScala extension method is not working here.
+    // Made the conversion explicit and it's fine.
+    for graphNode <- IteratorHasAsScala(sourceDataset.listGraphNodes).asScala do
+      val otherGraphNode = if graphNode.isBlank then
+      // Take any blank node graph. This will only work if there is at most one blank node graph
+      // in the dataset. This happens to cover our test cases.
+        IteratorHasAsScala(resultDataset.listGraphNodes)
+          .asScala
+          .filter(_.isBlank)
+          .next()
+      else graphNode
+
+      withClue(s"result dataset should have graph $graphNode") {
+        resultDataset.containsGraph(otherGraphNode) should be (true)
+      }
+      withClue(s"graph $graphNode should be isomorphic") {
+        sourceDataset.getGraph(graphNode)
+          .isIsomorphicWith(resultDataset.getGraph(otherGraphNode)) should be (true)
       }
 
-*/
+  for (encName, encFlow) <- implementations do
+    s"$encName encoder" when {
+      for (decName, decFlow) <- implementations do
+      for (jOptName, jOpt) <- jellyOptions do
+      for (sOptName, sOpt) <- streamingOptions do
+        s"streaming to a $decName decoder, $jOptName, $sOptName" should {
+          // Triples
+          for (caseName, sourceFile) <- TripleTests.files do
+            val sourceGraph = TripleTests.graphs(caseName)
+            s"stream triples – file $caseName" in {
+              val is = new FileInputStream(sourceFile)
+              val os = new ByteArrayOutputStream()
+              var encSize = 0
+              encFlow.tripleSource(is, sOpt, jOpt)
+                .wireTap(f => encSize += f.serializedSize)
+                .toMat(decFlow.tripleSink(os))(Keep.right)
+                .run()
+                .futureValue
 
-//  def getEncoderFlow[TEncoder <: ProtoEncoder[?, TTriple, TQuad, ?], TTriple, TQuad]
-//  (factory: ConverterFactory[TEncoder, ?, TTriple, TQuad]): Flow[String, RdfStreamFrame, NotUsed] =
-//    ???
+              val ck = CaseKey("triples", encName, jOptName, sOptName, caseName)
+              encodedSizes(ck) = encSize
+              val resultGraph = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
+                .lang(Lang.TURTLE)
+                .toGraph
 
-//  def runTest[TEncoder <: ProtoEncoder[?, ?, ?, ?], TDecoder <: ProtoDecoder[?, ?, ?, ?]]
-//  (encFactory: ConverterFactory[TEncoder, ?, ?, ?], decFactory: ConverterFactory[?, TDecoder, ?, ?]) =
-//    ???
+              sourceGraph.size() should be (resultGraph.size())
+              if caseName != "rdf-star-blanks.nt" then
+                // Isomorphism checks don't work in Jena on quoted triples with blank nodes
+                // https://github.com/apache/jena/issues/1710
+                sourceGraph.isIsomorphicWith(resultGraph) should be (true)
+            }
+
+          // Quads and graphs
+          for (caseName, sourceFile) <- QuadTests.files do
+            val sourceDataset = QuadTests.datasets(caseName)
+            s"stream quads – file $caseName" in {
+              val is = new FileInputStream(sourceFile)
+              val os = new ByteArrayOutputStream()
+              var encSize = 0
+              encFlow.quadSource(is, sOpt, jOpt)
+                .wireTap(f => encSize += f.serializedSize)
+                .toMat(decFlow.quadSink(os))(Keep.right)
+                .run()
+                .futureValue
+
+              val ck = CaseKey("quads", encName, jOptName, sOptName, caseName)
+              encodedSizes(ck) = encSize
+              val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
+                .lang(Lang.NQ)
+                .toDatasetGraph
+              compareDatasets(resultDataset, sourceDataset)
+            }
+
+            s"stream graphs – file $caseName" in {
+              val is = new FileInputStream(sourceFile)
+              val os = new ByteArrayOutputStream()
+              var encSize = 0
+              encFlow.graphSource(is, sOpt, jOpt)
+                .wireTap(f => encSize += f.serializedSize)
+                .toMat(decFlow.graphSink(os))(Keep.right)
+                .run()
+                .futureValue
+
+              val ck = CaseKey("graphs", encName, jOptName, sOptName, caseName)
+              encodedSizes(ck) = encSize
+              val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
+                .lang(Lang.NQ)
+                .toDatasetGraph
+              compareDatasets(resultDataset, sourceDataset)
+            }
+        }
+    }
+
+  "test suite" should {
+    "print encoded RDF sizes" in {
+      for (key, value) <- encodedSizes do
+        print(s"$key size: $value\n")
+    }
+  }

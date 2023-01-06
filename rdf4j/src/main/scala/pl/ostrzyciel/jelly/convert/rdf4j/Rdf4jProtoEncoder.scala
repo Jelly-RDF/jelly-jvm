@@ -21,7 +21,7 @@ class Rdf4jProtoEncoder(override val options: RdfStreamOptions)
   protected inline def getQuotedP(triple: Triple) = triple.getPredicate
   protected inline def getQuotedO(triple: Triple) = triple.getObject
 
-  protected def nodeToProto(node: Value): RdfTerm = node match
+  override protected def nodeToProto(node: Value): RdfTerm = node match
     // URI/IRI
     case iri: IRI => makeIriNode(iri.stringValue)
     // Blank node
@@ -39,4 +39,27 @@ class Rdf4jProtoEncoder(override val options: RdfStreamOptions)
         else
           makeSimpleLiteral(lex)
     case triple: Triple => makeTripleNode(triple)
-    case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")
+    case _ =>
+      throw RdfProtoSerializationError(s"Cannot encode node: $node")
+
+  override protected def graphNodeToProto(node: Value) = node match
+    // URI/IRI
+    case iri: IRI => makeIriNodeGraph(iri.stringValue)
+    // Blank node
+    case bnode: BNode => makeBlankNodeGraph(bnode.getID)
+    // Literal
+    case literal: Literal =>
+      val lex = literal.getLabel
+      val lang = literal.getLanguage
+      if lang.isPresent then
+        makeLangLiteralGraph(lex, lang.get)
+      else
+        val dt = literal.getDatatype
+        if dt != XSD.STRING then
+          makeDtLiteralGraph(lex, dt.stringValue)
+        else
+          makeSimpleLiteralGraph(lex)
+    // Default graph
+    case null => makeDefaultGraph
+    case _ =>
+      throw RdfProtoSerializationError(s"Cannot encode graph node: $node")

@@ -22,7 +22,7 @@ import scala.reflect.ClassTag
 trait ConverterFactory[
   TEncoder <: ProtoEncoder[TNode, TTriple, TQuad, ?],
   TDecConv <: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
-  TNode >: Null <: AnyRef, TDatatype : ClassTag, TTriple, TQuad
+  TNode, TDatatype : ClassTag, TTriple, TQuad
 ]:
   protected def decoderConverter: TDecConv
 

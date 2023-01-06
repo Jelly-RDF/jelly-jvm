@@ -25,7 +25,8 @@ object EncoderFlow:
       )
 
   /**
-   * @param targetMessageSize After the message gets bigger than the target, it gets sent.
+   * @param targetMessageSize Target message size in bytes.
+   *                          After the message gets bigger than the target, it gets sent.
    */
   case class Options(targetMessageSize: Int = 32_000)
 
@@ -123,7 +124,7 @@ object EncoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Akka Streams flow.
    */
-  final def fromGraphs[TNode >: Null <: AnyRef, TTriple]
+  final def fromGraphs[TNode, TTriple]
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[(TNode, Iterable[TTriple]), RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(

@@ -5,6 +5,7 @@ ThisBuild / scalaVersion := "3.2.1"
 // !!! 2.6.x is the last release with the Apache license. Do not upgrade to Akka 2.7.x
 lazy val akkaV = "2.6.20"
 lazy val jenaV = "4.6.1"
+lazy val rdf4jV = "4.2.2"
 lazy val scalapbV = "0.11.12"
 
 lazy val commonSettings = Seq(
@@ -45,7 +46,7 @@ lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
     libraryDependencies ++= Seq(
-      "org.eclipse.rdf4j" % "rdf4j-model" % "4.2.1",
+      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
     ),
     commonSettings,
   )
@@ -67,6 +68,8 @@ lazy val integrationTests = (project in file("integration-tests"))
     name := "jelly-integration-tests",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
     ),
     commonSettings,
   )
