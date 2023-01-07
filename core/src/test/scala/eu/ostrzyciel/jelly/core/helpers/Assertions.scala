@@ -1,10 +1,9 @@
 package eu.ostrzyciel.jelly.core.helpers
 
-import eu.ostrzyciel.jelly.core.proto.RdfStreamRow
+import eu.ostrzyciel.jelly.core.helpers.Mrl.Statement
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import eu.ostrzyciel.jelly.core.helpers.Mrl.Statement
-import eu.ostrzyciel.jelly.core.proto.RdfStreamRow
 
 object Assertions extends AnyWordSpec, Matchers:
   def assertEncoded(observed: Seq[RdfStreamRow], expected: Seq[RdfStreamRow.Row]): Unit =

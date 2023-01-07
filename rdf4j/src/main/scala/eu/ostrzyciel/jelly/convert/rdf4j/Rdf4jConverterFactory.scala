@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.convert.rdf4j
 
-import eu.ostrzyciel.jelly.core.proto.RdfStreamOptions
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import eu.ostrzyciel.jelly.core.ConverterFactory
 import org.eclipse.rdf4j.model.{Statement, Value}
 

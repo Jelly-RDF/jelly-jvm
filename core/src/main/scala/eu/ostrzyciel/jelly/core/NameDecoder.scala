@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
-import eu.ostrzyciel.jelly.core.proto.*
+import eu.ostrzyciel.jelly.core.proto.v1.*
 
 private[core] final class NameDecoder(opt: RdfStreamOptions):
   private val prefixLookup = new DecoderLookup[String](opt.maxPrefixTableSize)

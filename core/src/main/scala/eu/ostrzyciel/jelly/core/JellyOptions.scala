@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
-import eu.ostrzyciel.jelly.core.proto.RdfStreamOptions
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 
 /**
  * A collection of convenient streaming option presets.

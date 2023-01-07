@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.convert.jena
 
 import eu.ostrzyciel.jelly.core.{ProtoEncoder, RdfProtoSerializationError}
-import eu.ostrzyciel.jelly.core.proto.{RdfStreamOptions, RdfTerm}
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfTerm}
 import org.apache.jena.JenaRuntime
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.datatypes.xsd.impl.RDFLangString

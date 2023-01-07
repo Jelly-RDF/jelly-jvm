@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.integration_tests
 
 import akka.{Done, NotUsed}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import eu.ostrzyciel.jelly.core.proto.{RdfStreamFrame, RdfStreamOptions}
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.ostrzyciel.jelly.stream.{DecoderFlow, EncoderFlow}
 import org.apache.jena.graph.{Graph, Node, Triple}
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}

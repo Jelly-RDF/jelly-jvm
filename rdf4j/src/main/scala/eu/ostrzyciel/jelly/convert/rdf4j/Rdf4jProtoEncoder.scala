@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.convert.rdf4j
 
 import eu.ostrzyciel.jelly.core.{ProtoEncoder, RdfProtoSerializationError}
-import eu.ostrzyciel.jelly.core.proto.{RdfStreamOptions, RdfTerm}
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfTerm}
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.vocabulary.XSD
 

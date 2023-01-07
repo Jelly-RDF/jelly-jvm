@@ -1,9 +1,9 @@
 package eu.ostrzyciel.jelly.core.helpers
 
-import eu.ostrzyciel.jelly.core.proto.RdfGraph
+import eu.ostrzyciel.jelly.core.proto.v1.RdfGraph
 import eu.ostrzyciel.jelly.core.{ProtoEncoder, RdfProtoSerializationError}
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
-import eu.ostrzyciel.jelly.core.proto.*
+import eu.ostrzyciel.jelly.core.proto.v1.*
 
 /**
  * Mock implementation of ProtoEncoder

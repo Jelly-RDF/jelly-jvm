@@ -5,7 +5,7 @@ import akka.stream.scaladsl.*
 import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
 import eu.ostrzyciel.jelly.core.helpers.Assertions.*
 import eu.ostrzyciel.jelly.core.helpers.MockConverterFactory
-import eu.ostrzyciel.jelly.core.proto.*
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

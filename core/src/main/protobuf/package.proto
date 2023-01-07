@@ -7,7 +7,7 @@ package eu.ostrzyciel.jelly.core.proto;
 option (scalapb.options) = {
   scope: PACKAGE
   flat_package: true
-  package_name: "eu.ostrzyciel.jelly.core.proto"
+  package_name: "eu.ostrzyciel.jelly.core.proto.v1"
   // Disabling lenses and getters makes the generated code a bit smaller
   lenses: false
   getters: false
@@ -18,7 +18,7 @@ option (scalapb.options) = {
     {
       when: {
         type: TYPE_MESSAGE
-        type_name: ".eu.ostrzyciel.jelly.core.proto.RdfTerm"
+        type_name: ".eu.ostrzyciel.jelly.core.proto.v1.RdfTerm"
       }
       // TODO: check if it would be faster to use required instead of no_box
       set: {[scalapb.field] {no_box: true}}
@@ -26,14 +26,14 @@ option (scalapb.options) = {
     {
       when: {
         type: TYPE_MESSAGE
-        type_name: ".eu.ostrzyciel.jelly.core.proto.RdfGraph"
+        type_name: ".eu.ostrzyciel.jelly.core.proto.v1.RdfGraph"
       }
       set: {[scalapb.field] {no_box: true}}
     }
   ]
 };
 
-option java_package = "eu.ostrzyciel.jelly.core.proto";
+option java_package = "eu.ostrzyciel.jelly.core.proto.v1";
 
 // Optimize for speed
 option optimize_for = SPEED;
