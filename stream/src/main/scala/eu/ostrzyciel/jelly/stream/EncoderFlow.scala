@@ -4,7 +4,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Source}
 import com.typesafe.config.Config
 import eu.ostrzyciel.jelly.core.ConverterFactory
-import eu.ostrzyciel.jelly.core.proto.*
+import eu.ostrzyciel.jelly.core.proto.v1.*
 
 /**
  * Factory of encoder flows for Jelly streams.

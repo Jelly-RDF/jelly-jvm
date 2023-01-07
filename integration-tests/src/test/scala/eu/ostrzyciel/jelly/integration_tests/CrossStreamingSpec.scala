@@ -4,7 +4,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.*
 import eu.ostrzyciel.jelly.core.*
-import eu.ostrzyciel.jelly.core.proto.{RdfStreamFrame, RdfStreamOptions}
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.ostrzyciel.jelly.stream.*
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}

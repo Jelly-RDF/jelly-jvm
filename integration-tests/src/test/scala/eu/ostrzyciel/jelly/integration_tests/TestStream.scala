@@ -3,7 +3,7 @@ package eu.ostrzyciel.jelly.integration_tests
 import akka.{Done, NotUsed}
 import akka.stream.scaladsl.*
 import eu.ostrzyciel.jelly.stream.EncoderFlow
-import eu.ostrzyciel.jelly.core.proto.{RdfStreamFrame, RdfStreamOptions}
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 
 import java.io.{InputStream, OutputStream}
 import scala.concurrent.{ExecutionContext, Future}

@@ -3,7 +3,7 @@ package eu.ostrzyciel.jelly.stream
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoDecoder}
-import eu.ostrzyciel.jelly.core.proto.RdfStreamFrame
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame
 
 /**
  * Methods for creating Akka Streams flows for decoding protobuf into RDF statements.

@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core
 
-import eu.ostrzyciel.jelly.core.proto.*
-import eu.ostrzyciel.jelly.core.proto.RdfGraph.Graph
+import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.core.proto.v1.RdfGraph.Graph
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
