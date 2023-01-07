@@ -59,7 +59,7 @@ lazy val stream = (project in file("stream"))
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % akkaV,
       "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
-    ),
+    ).map(_.cross(CrossVersion.for3Use2_13)),
     commonSettings,
   )
   .dependsOn(core % "compile->compile;test->test")
@@ -69,30 +69,43 @@ lazy val grpc = (project in file("grpc"))
   .settings(
     name := "jelly-grpc",
     libraryDependencies ++= Seq(
+      /*"com.typesafe.akka" %% "akka-actor-typed" % akkaV,
+      "com.typesafe.akka" %% "akka-discovery" % akkaV,
+      "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
+      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaV % Test,*/
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+    ),
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor-typed" % akkaV,
+      "com.typesafe.akka" %% "akka-discovery" % akkaV,
+      "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
+      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaV % Test,
       // 2.1.x is the last release with the Apache license
       "com.lightbend.akka.grpc" %% "akka-grpc-runtime" % "2.1.6",
     ).map(_.cross(CrossVersion.for3Use2_13)),
     excludeDependencies ++= Seq(
       "com.thesamet.scalapb" % "scalapb-runtime_2.13",
-      "com.typesafe.akka" % "akka-actor_2.13",
-      "com.typesafe.akka" % "akka-stream_2.13",
-      "com.typesafe.akka" % "akka-protobuf-v3_2.13",
+      // "com.typesafe.akka" % "akka-actor_2.13",
+      // "com.typesafe.akka" % "akka-discovery_2.13",
+      // "com.typesafe.akka" % "akka-stream_2.13",
+      // "com.typesafe.akka" % "akka-protobuf-v3_2.13",
     ),
-    /*Compile / PB.targets := Seq(
-      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
-    ),*/
     // Add the shared proto sources
-    Compile / PB.protoSources ++= Seq((core / baseDirectory).value / "src" / "main" / "protobuf_shared"),
+    Compile / PB.protoSources ++= Seq(
+      (core / baseDirectory).value / "src" / "main" / "protobuf_shared",
+      (core / baseDirectory).value / "src" / "main" / "protobuf",
+    ),
     Compile / PB.generate / excludeFilter := "rdf.proto",
     commonSettings,
   )
-  .dependsOn(stream % "compile->compile;protobuf->protobuf")
+  .dependsOn(stream % "test->compile")
+  .dependsOn(core % "compile->compile;test->test;protobuf->protobuf")
 
 lazy val integrationTests = (project in file("integration-tests"))
   .settings(
     name := "jelly-integration-tests",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-stream-testkit" % akkaV % Test,
+      // "com.typesafe.akka" %% "akka-actor-testkit" % akkaV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
     ),
