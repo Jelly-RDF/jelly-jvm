@@ -6,6 +6,7 @@ import akka.stream.scaladsl.*
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
 import org.apache.jena.sparql.core.DatasetGraph
+import org.apache.jena.sparql.util.IsoMatcher
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -115,9 +116,10 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
                 .toGraph
 
               sourceGraph.size() should be (resultGraph.size())
-              if caseName != "rdf-star-blanks.nt" then
-                // Isomorphism checks don't work in Jena on quoted triples with blank nodes
-                // https://github.com/apache/jena/issues/1710
+              if caseName == "rdf-star-blanks.nt" then
+                // For blank nodes in quoted triples, we need to use a slower isomorphism algorithm
+                IsoMatcher.isomorphic(sourceGraph, resultGraph) should be (true)
+              else
                 sourceGraph.isIsomorphicWith(resultGraph) should be (true)
             }
 
