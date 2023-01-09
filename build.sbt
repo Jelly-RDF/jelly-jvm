@@ -1,8 +1,8 @@
-name := "jelly-jvm"
 ThisBuild / scalaVersion := "3.2.1"
 ThisBuild / organization := "eu.ostrzyciel.jelly"
 ThisBuild / homepage := Some(url("https://github.com/Jelly-RDF/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
+ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / developers := List(
   Developer(
     "Ostrzyciel",
