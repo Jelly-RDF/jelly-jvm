@@ -13,18 +13,45 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.*
 import scala.util.{Failure, Success}
 
-class RdfStreamServer(config: Config, streamService: RdfStreamService)(implicit system: ActorSystem[_])
-  extends LazyLogging:
+object RdfStreamServer:
+  object Options:
+    /**
+     * Create an Options instance from a [[Config]].
+     * @param config a Config with keys: "host", "port", "enable-gzip".
+     * @return
+     */
+    def fromConfig(config: Config): Options =
+      Options(config.getString("host"), config.getInt("port"), config.getBoolean("enable-gzip"))
 
+  /**
+   * Options for [[RdfStreamServer]]
+   * @param host host to bind to
+   * @param port port to bind to
+   * @param enableGzip whether to enable gzip compression
+   */
+  case class Options(host: String = "0.0.0.0", port: Int = 8080, enableGzip: Boolean = true)
+
+
+/**
+ * Simple implementation of an Akka gRPC server for streaming Jelly RDF data.
+ * @param options options for this server
+ * @param streamService the service implementing the methods of the API
+ * @param system actor system
+ */
+class RdfStreamServer(options: RdfStreamServer.Options, streamService: RdfStreamService)
+                     (implicit system: ActorSystem[_]) extends LazyLogging:
   implicit val ec: ExecutionContext = system.executionContext
   private var binding: Option[ServerBinding] = _
 
+  /**
+   * Start this server.
+   * @return future of the server binding
+   */
   def run(): Future[ServerBinding] =
-    val config = ConfigFactory.load()
     val service: HttpRequest => Future[HttpResponse] =
       RdfStreamServiceHandler(streamService)
 
-    val handler: HttpRequest => Future[HttpResponse] = if config.getBoolean("jelly.server.enable-gzip") then
+    val handler: HttpRequest => Future[HttpResponse] = if options.enableGzip then
       service
     else
       { request =>
@@ -34,10 +61,7 @@ class RdfStreamServer(config: Config, streamService: RdfStreamService)(implicit 
       }
 
     val bound: Future[ServerBinding] = Http()
-      .newServerAt(
-        config.getString("jelly.server.host"),
-        config.getInt("jelly.server.port"),
-      )
+      .newServerAt(options.host, options.port)
       .bind(handler)
       .map(_.addToCoordinatedShutdown(hardTerminationDeadline = 10.seconds))
 
@@ -52,6 +76,10 @@ class RdfStreamServer(config: Config, streamService: RdfStreamService)(implicit 
     }
     bound
 
+  /**
+   * Terminate this server.
+   * @return future of the termination being done
+   */
   def terminate(): Future[Done] = binding match
     case Some(b) =>
       b.terminate(2.seconds) map { _ =>

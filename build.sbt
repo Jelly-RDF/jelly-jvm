@@ -11,7 +11,10 @@ lazy val scalapbV = "0.11.12"
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.14" % Test,
-  )
+  ),
+  excludeDependencies ++= Seq(
+    "com.thesamet.scalapb" % "scalapb-runtime_2.13",
+  ),
 )
 
 lazy val core = (project in file("core"))
@@ -69,10 +72,6 @@ lazy val grpc = (project in file("grpc"))
   .settings(
     name := "jelly-grpc",
     libraryDependencies ++= Seq(
-      /*"com.typesafe.akka" %% "akka-actor-typed" % akkaV,
-      "com.typesafe.akka" %% "akka-discovery" % akkaV,
-      "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
-      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaV % Test,*/
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
     ),
     libraryDependencies ++= Seq(
@@ -83,13 +82,6 @@ lazy val grpc = (project in file("grpc"))
       // 2.1.x is the last release with the Apache license
       "com.lightbend.akka.grpc" %% "akka-grpc-runtime" % "2.1.6",
     ).map(_.cross(CrossVersion.for3Use2_13)),
-    excludeDependencies ++= Seq(
-      "com.thesamet.scalapb" % "scalapb-runtime_2.13",
-      // "com.typesafe.akka" % "akka-actor_2.13",
-      // "com.typesafe.akka" % "akka-discovery_2.13",
-      // "com.typesafe.akka" % "akka-stream_2.13",
-      // "com.typesafe.akka" % "akka-protobuf-v3_2.13",
-    ),
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(
       (core / baseDirectory).value / "src" / "main" / "protobuf_shared",
@@ -105,7 +97,6 @@ lazy val integrationTests = (project in file("integration-tests"))
   .settings(
     name := "jelly-integration-tests",
     libraryDependencies ++= Seq(
-      // "com.typesafe.akka" %% "akka-actor-testkit" % akkaV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
     ),
