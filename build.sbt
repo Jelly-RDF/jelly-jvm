@@ -1,8 +1,10 @@
+name := "jelly-jvm"
 ThisBuild / scalaVersion := "3.2.1"
 ThisBuild / organization := "eu.ostrzyciel.jelly"
 ThisBuild / homepage := Some(url("https://github.com/Jelly-RDF/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
 ThisBuild / versionScheme := Some("semver-spec")
+ThisBuild / autoAPIMappings := true
 ThisBuild / developers := List(
   Developer(
     "Ostrzyciel",
@@ -109,6 +111,7 @@ lazy val grpc = (project in file("grpc"))
 
 lazy val integrationTests = (project in file("integration-tests"))
   .settings(
+    publishArtifact := false,
     name := "jelly-integration-tests",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
@@ -117,3 +120,6 @@ lazy val integrationTests = (project in file("integration-tests"))
     commonSettings,
   )
   .dependsOn(stream, rdf4j, jena)
+
+lazy val root = (project in file("."))
+  .aggregate(core, jena, rdf4j, stream, grpc)
