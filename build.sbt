@@ -1,6 +1,19 @@
 name := "jelly-jvm"
-ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "3.2.1"
+ThisBuild / organization := "eu.ostrzyciel.jelly"
+ThisBuild / homepage := Some(url("https://github.com/Jelly-RDF/jelly-jvm"))
+ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
+ThisBuild / developers := List(
+  Developer(
+    "Ostrzyciel",
+    "Piotr Sowiński",
+    "psowinski17@gmail.com",
+    url("https://github.com/Ostrzyciel"),
+  ),
+)
+
+sonatypeCredentialHost := "s01.oss.sonatype.org"
+sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 // !!! 2.6.x is the last release with the Apache license. Do not upgrade to Akka 2.7.x
 lazy val akkaV = "2.6.20"
