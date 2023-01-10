@@ -10,6 +10,7 @@ object ProtoEncoder:
   private val nodeTermRepeat = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat.defaultInstance))
   private val graphTermRepeat = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat.defaultInstance))
   private val graphTermDefault = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph.defaultInstance))
+  private val simpleLiteral = RdfLiteral.LiteralKind.Simple(RdfLiteralSimple.defaultInstance)
 
 /**
  * Stateful encoder of a protobuf RDF stream.
@@ -70,9 +71,8 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
    */
   final def startDefaultGraph(): Iterable[RdfStreamRow] =
     handleHeader()
-    val graphNode = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))
     val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
-      RdfGraphStart(graphNode)
+      RdfGraphStart(graphTermDefault)
     ))
     extraRowsBuffer.append(mainRow)
 
@@ -187,8 +187,6 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
   private val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
-
-  private val simpleLiteral = RdfLiteral.LiteralKind.Simple(true)
 
   private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): RdfTerm =
     if options.useRepeat then

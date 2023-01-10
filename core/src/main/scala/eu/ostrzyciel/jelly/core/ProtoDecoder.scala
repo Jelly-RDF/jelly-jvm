@@ -14,7 +14,7 @@ import scala.reflect.ClassTag
 abstract class ProtoDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad, TOut]
 (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad]):
   private var streamOpt: Option[RdfStreamOptions] = None
-  private lazy val nameDecoder = new NameDecoder(streamOpt getOrElse RdfStreamOptions())
+  private lazy val nameDecoder = new NameDecoder(streamOpt getOrElse RdfStreamOptions.defaultInstance)
   private lazy val dtLookup = new DecoderLookup[TDatatype](streamOpt.map(o => o.maxDatatypeTableSize) getOrElse 20)
 
   protected final val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
