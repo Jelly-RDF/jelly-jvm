@@ -5,6 +5,13 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import java.math.BigInteger
 import scala.collection.mutable.ListBuffer
 
+object ProtoEncoder:
+  private val graphEnd = Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd.defaultInstance)))
+  private val nodeTermRepeat = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat.defaultInstance))
+  private val graphTermRepeat = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat.defaultInstance))
+  private val graphTermDefault = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph.defaultInstance))
+  private val simpleLiteral = RdfLiteral.LiteralKind.Simple(RdfLiteralSimple.defaultInstance)
+
 /**
  * Stateful encoder of a protobuf RDF stream.
  *
@@ -14,6 +21,8 @@ import scala.collection.mutable.ListBuffer
  * @param options options for this stream
  */
 abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStreamOptions):
+  import ProtoEncoder.*
+
   // *** 1. THE PUBLIC INTERFACE ***
   // *******************************
   /**
@@ -62,9 +71,8 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
    */
   final def startDefaultGraph(): Iterable[RdfStreamRow] =
     handleHeader()
-    val graphNode = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))
     val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
-      RdfGraphStart(graphNode)
+      RdfGraphStart(graphTermDefault)
     ))
     extraRowsBuffer.append(mainRow)
 
@@ -75,7 +83,7 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
   final def endGraph(): Iterable[RdfStreamRow] =
     if !emittedCompressionOptions then
       throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one")
-    Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd())))
+    ProtoEncoder.graphEnd
 
   // *** 2. METHODS TO IMPLEMENT ***
   // *******************************
@@ -167,7 +175,7 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
       RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
     ))
 
-  protected final val makeDefaultGraph: RdfGraph = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))
+  protected final inline def makeDefaultGraph: RdfGraph = graphTermDefault
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
@@ -179,10 +187,6 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
   private val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
-
-  private val nodeTermRepeat = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat()))
-  private val graphTermRepeat = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))
-  private val simpleLiteral = RdfLiteral.LiteralKind.Simple(true)
 
   private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): RdfTerm =
     if options.useRepeat then
