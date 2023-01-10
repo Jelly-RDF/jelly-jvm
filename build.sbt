@@ -12,9 +12,9 @@ ThisBuild / developers := List(
     url("https://github.com/Ostrzyciel"),
   ),
 )
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 
 sonatypeProfileName := "eu.ostrzyciel"
-sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 // !!! 2.6.x is the last release with the Apache license. Do not upgrade to Akka 2.7.x
