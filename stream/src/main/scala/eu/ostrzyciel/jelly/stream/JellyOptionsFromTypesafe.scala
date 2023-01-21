@@ -3,7 +3,12 @@ package eu.ostrzyciel.jelly.stream
 import com.typesafe.config.{Config, ConfigFactory}
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamType}
 
-object JellyConfigFromTypesafe:
+/**
+ * Convenience methods for building Jelly's options ([[RdfStreamOptions]]) from [[com.typesafe.Config]].
+ *
+ * See also [[eu.ostrzyciel.jelly.core.JellyOptions]]
+ */
+object JellyOptionsFromTypesafe:
   private val defaultConfig = ConfigFactory.parseString("""
     |stream-type = UNSPECIFIED
     |generalized-statements = false

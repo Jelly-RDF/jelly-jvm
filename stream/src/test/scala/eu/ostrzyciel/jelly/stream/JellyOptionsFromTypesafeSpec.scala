@@ -5,10 +5,10 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamType
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class ConfigSpec extends AnyWordSpec, Matchers:
-  "JellyConfigFromTypesafe" should {
+class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
+  "JellyOptionsFromTypesafe" should {
     "produce defaults for empty input" in {
-      val opt = JellyConfigFromTypesafe.fromTypesafeConfig(ConfigFactory.empty())
+      val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(ConfigFactory.empty())
       opt.streamType should be (RdfStreamType.RDF_STREAM_TYPE_UNSPECIFIED)
       opt.generalizedStatements should be (false)
       opt.useRepeat should be (true)
@@ -26,7 +26,7 @@ class ConfigSpec extends AnyWordSpec, Matchers:
         |jelly.prefix-table-size = 64
         |jelly.dt-table-size = 8
         |""".stripMargin)
-      val opt = JellyConfigFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
+      val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
       opt.streamType should be (RdfStreamType.RDF_STREAM_TYPE_GRAPHS)
       opt.generalizedStatements should be (true)
       opt.useRepeat should be (false)
@@ -41,7 +41,7 @@ class ConfigSpec extends AnyWordSpec, Matchers:
         |jelly.name-table-size = 1024
         |jelly.prefix-table-size = 64
         |""".stripMargin)
-      val opt = JellyConfigFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
+      val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
       opt.streamType should be (RdfStreamType.RDF_STREAM_TYPE_QUADS)
       opt.generalizedStatements should be (false)
       opt.useRepeat should be (true)
