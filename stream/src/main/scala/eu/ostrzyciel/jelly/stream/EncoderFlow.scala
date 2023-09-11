@@ -40,7 +40,7 @@ object EncoderFlow:
    * @param streamOpt Jelly serialization options.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TTriple Type of triple statements.
-   * @return Akka Streams flow.
+   * @return Pekko Streams flow.
    */
   final def fromFlatTriples[TTriple]
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
@@ -60,7 +60,7 @@ object EncoderFlow:
    * @param streamOpt Jelly serialization options.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
-   * @return Akka Streams flow.
+   * @return Pekko Streams flow.
    */
   final def fromFlatQuads[TQuad]
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
@@ -80,7 +80,7 @@ object EncoderFlow:
    * @param streamOpt Jelly serialization options.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TTriple Type of triple statements.
-   * @return Akka Streams flow.
+   * @return Pekko Streams flow.
    */
   final def fromGroupedTriples[TTriple]
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
@@ -100,7 +100,7 @@ object EncoderFlow:
    * @param streamOpt Jelly serialization options.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
-   * @return Akka Streams flow.
+   * @return Pekko Streams flow.
    */
   final def fromGroupedQuads[TQuad]
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
@@ -122,7 +122,7 @@ object EncoderFlow:
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TNode Type of nodes.
    * @tparam TTriple Type of triple statements.
-   * @return Akka Streams flow.
+   * @return Pekko Streams flow.
    */
   final def fromGraphs[TNode, TTriple]
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
