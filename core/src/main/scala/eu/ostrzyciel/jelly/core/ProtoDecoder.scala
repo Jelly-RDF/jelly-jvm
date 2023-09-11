@@ -10,7 +10,7 @@ import scala.reflect.ClassTag
 /**
  * Base class for stateful decoders of protobuf RDF streams.
  *
- * See the implementations in [[ProtoDecoderImpl]].
+ * See the implementations in the [[ProtoDecoder]] object.
  */
 sealed abstract class ProtoDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad, TOut]
 (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad]):
