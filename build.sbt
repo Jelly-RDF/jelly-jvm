@@ -26,9 +26,6 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.15" % Test,
   ),
-  excludeDependencies ++= Seq(
-    "com.thesamet.scalapb" % "scalapb-runtime_2.13",
-  ),
 )
 
 lazy val core = (project in file("core"))
