@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "3.2.1"
+ThisBuild / scalaVersion := "3.3.0"
 ThisBuild / organization := "eu.ostrzyciel.jelly"
 ThisBuild / homepage := Some(url("https://github.com/Jelly-RDF/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
@@ -17,15 +17,14 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeProfileName := "eu.ostrzyciel"
 sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
-// !!! 2.6.x is the last release with the Apache license. Do not upgrade to Akka 2.7.x
-lazy val akkaV = "2.6.20"
+lazy val pekkoV = "1.0.1"
 lazy val jenaV = "4.6.1"
-lazy val rdf4jV = "4.2.2"
-lazy val scalapbV = "0.11.12"
+lazy val rdf4jV = "4.3.0"
+lazy val scalapbV = "0.11.13"
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.2.14" % Test,
+    "org.scalatest" %% "scalatest" % "3.2.15" % Test,
   ),
   excludeDependencies ++= Seq(
     "com.thesamet.scalapb" % "scalapb-runtime_2.13",
@@ -75,28 +74,25 @@ lazy val stream = (project in file("stream"))
   .settings(
     name := "jelly-stream",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor-typed" % akkaV,
-      "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
-    ).map(_.cross(CrossVersion.for3Use2_13)),
+      "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
+    ),
     commonSettings,
   )
   .dependsOn(core % "compile->compile;test->test")
 
 lazy val grpc = (project in file("grpc"))
-  .enablePlugins(AkkaGrpcPlugin)
+  .enablePlugins(PekkoGrpcPlugin)
   .settings(
     name := "jelly-grpc",
     libraryDependencies ++= Seq(
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+      "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-discovery" % pekkoV,
+      "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
+      "org.apache.pekko" %% "pekko-grpc-runtime" % "1.0.0",
     ),
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor-typed" % akkaV,
-      "com.typesafe.akka" %% "akka-discovery" % akkaV,
-      "com.typesafe.akka" %% "akka-stream-typed" % akkaV,
-      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaV % Test,
-      // 2.1.x is the last release with the Apache license
-      "com.lightbend.akka.grpc" %% "akka-grpc-runtime" % "2.1.6",
-    ).map(_.cross(CrossVersion.for3Use2_13)),
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(
       (core / baseDirectory).value / "src" / "main" / "protobuf_shared",

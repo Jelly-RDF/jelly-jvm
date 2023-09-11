@@ -1,8 +1,8 @@
 package eu.ostrzyciel.jelly.integration_tests
 
-import akka.NotUsed
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.*
+import org.apache.pekko.NotUsed
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl.*
 import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.ostrzyciel.jelly.stream.*

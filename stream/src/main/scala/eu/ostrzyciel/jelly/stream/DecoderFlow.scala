@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.stream
 
-import akka.NotUsed
-import akka.stream.scaladsl.Flow
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.scaladsl.Flow
 import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoDecoder}
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame
 

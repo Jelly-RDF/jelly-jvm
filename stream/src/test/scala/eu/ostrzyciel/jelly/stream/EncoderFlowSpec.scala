@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.stream
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.*
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl.*
 import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
 import eu.ostrzyciel.jelly.core.helpers.Assertions.*
 import eu.ostrzyciel.jelly.core.helpers.MockConverterFactory
