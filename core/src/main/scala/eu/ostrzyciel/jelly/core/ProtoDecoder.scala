@@ -10,6 +10,8 @@ import scala.reflect.ClassTag
  * Base class for stateful decoders of protobuf RDF streams.
  *
  * See the implementations in [[ProtoDecoderImpl]].
+ *
+ * @note This trait is not stable for extension.
  */
 abstract class ProtoDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad, TOut]
 (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad]):
@@ -32,11 +34,11 @@ abstract class ProtoDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad, TOut]
    * Set the stream options.
    * @param opt Jelly stream options
    */
-  protected final def setStreamOpt(opt: RdfStreamOptions): Unit =
+  private final def setStreamOpt(opt: RdfStreamOptions): Unit =
     if streamOpt.isEmpty then
       streamOpt = Some(opt)
 
-  protected final def convertLiteral(literal: RdfLiteral): TNode = literal.literalKind match
+  private final def convertLiteral(literal: RdfLiteral): TNode = literal.literalKind match
     case RdfLiteral.LiteralKind.Simple(_) =>
       converter.makeSimpleLiteral(literal.lex)
     case RdfLiteral.LiteralKind.Langtag(lang) =>
@@ -47,7 +49,7 @@ abstract class ProtoDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad, TOut]
       throw new RdfProtoDeserializationError("Literal kind is not set.")
 
 
-  protected final def convertTerm(term: RdfTerm): TNode = term.term match
+  private final def convertTerm(term: RdfTerm): TNode = term.term match
     case RdfTerm.Term.Iri(iri) =>
       converter.makeIriNode(nameDecoder.decode(iri))
     case RdfTerm.Term.Bnode(label) =>

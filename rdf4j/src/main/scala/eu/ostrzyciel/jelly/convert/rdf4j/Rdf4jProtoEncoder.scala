@@ -5,7 +5,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfTerm}
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.vocabulary.XSD
 
-class Rdf4jProtoEncoder(override val options: RdfStreamOptions)
+final class Rdf4jProtoEncoder(override val options: RdfStreamOptions)
   extends ProtoEncoder[Value, Statement, Statement, Triple](options):
 
   protected inline def getTstS(triple: Statement) = triple.getSubject

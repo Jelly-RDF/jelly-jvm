@@ -28,7 +28,7 @@ object EncoderFlow:
    * @param targetMessageSize Target message size in bytes.
    *                          After the message gets bigger than the target, it gets sent.
    */
-  case class Options(targetMessageSize: Int = 32_000)
+  final case class Options(targetMessageSize: Int = 32_000)
 
   /**
    * A flow converting a flat stream of triple statements into a stream of [[RdfStreamFrame]]s.

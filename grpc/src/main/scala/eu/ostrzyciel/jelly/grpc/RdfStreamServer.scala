@@ -29,7 +29,7 @@ object RdfStreamServer:
    * @param port port to bind to
    * @param enableGzip whether to enable gzip compression
    */
-  case class Options(host: String = "0.0.0.0", port: Int = 8080, enableGzip: Boolean = true)
+  final case class Options(host: String = "0.0.0.0", port: Int = 8080, enableGzip: Boolean = true)
 
 
 /**
@@ -38,7 +38,7 @@ object RdfStreamServer:
  * @param streamService the service implementing the methods of the API
  * @param system actor system
  */
-class RdfStreamServer(options: RdfStreamServer.Options, streamService: RdfStreamService)
+final class RdfStreamServer(options: RdfStreamServer.Options, streamService: RdfStreamService)
                      (implicit system: ActorSystem[_]) extends LazyLogging:
   implicit val ec: ExecutionContext = system.executionContext
   private var binding: Option[ServerBinding] = _

@@ -63,7 +63,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     ("message size: 2_000_000", EncoderFlow.Options(2_000_000)),
   )
 
-  case class CaseKey(streamType: String, encoder: String, jOpt: String, sOpt: String, caseName: String)
+  final case class CaseKey(streamType: String, encoder: String, jOpt: String, sOpt: String, caseName: String)
 
   private val encodedSizes: mutable.Map[CaseKey, Long] = mutable.Map()
 

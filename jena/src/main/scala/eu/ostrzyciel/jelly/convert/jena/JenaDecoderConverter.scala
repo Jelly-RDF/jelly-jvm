@@ -22,7 +22,7 @@ final class JenaDecoderConverter extends ProtoDecoderConverter[Node, RDFDatatype
 
   override inline def makeTripleNode(s: Node, p: Node, o: Node) = NodeFactory.createTripleNode(s, p, o)
 
-  override inline def makeDefaultGraphNode() = null
+  override inline def makeDefaultGraphNode(): Node = null
 
   override inline def makeTriple(s: Node, p: Node, o: Node) = Triple.create(s, p, o)
 
