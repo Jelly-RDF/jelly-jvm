@@ -1,17 +1,15 @@
 package eu.ostrzyciel.jelly.convert.jena.riot
 
+import eu.ostrzyciel.jelly.core.Constants.*
 import org.apache.jena.riot.*
 
 /**
  * Definition of the Jelly serialization language in Jena.
  */
 object JellyLanguage:
-  val contentTypeJelly = "application/x-jelly-rdf"
-  val strLangJelly = "Jelly"
-
-  val JELLY = LangBuilder.create(strLangJelly, contentTypeJelly)
+  val JELLY = LangBuilder.create(jellyName, jellyContentType)
     .addAltNames("JELLY")
-    .addFileExtensions("jelly")
+    .addFileExtensions(jellyFileExtension)
     .build
 
   // Register the language

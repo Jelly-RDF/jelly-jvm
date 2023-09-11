@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.convert.jena.riot
 
 import eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory
+import eu.ostrzyciel.jelly.core.Constants.*
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamType}
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.adapters.RDFWriterRIOT
@@ -61,4 +62,4 @@ class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIOTBase:
 
   override def getLang = JellyLanguage.JELLY
 
-object RDFWriterJelly extends RDFWriterRIOT(JellyLanguage.strLangJelly)
+object RDFWriterJelly extends RDFWriterRIOT(jellyName)

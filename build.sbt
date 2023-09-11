@@ -62,6 +62,7 @@ lazy val rdf4j = (project in file("rdf4j"))
     name := "jelly-rdf4j",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
     ),
     commonSettings,
   )

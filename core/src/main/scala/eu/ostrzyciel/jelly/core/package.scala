@@ -10,3 +10,10 @@ package object core:
   )
 
   final class RdfProtoSerializationError(msg: String) extends Error(msg)
+
+  // Constants
+  object Constants:
+    val jellyName = "Jelly"
+    val jellyFileExtension = "jelly"
+    val jellyFileExtensionWithDot = s".$jellyFileExtension"
+    val jellyContentType = "application/x-jelly-rdf"
