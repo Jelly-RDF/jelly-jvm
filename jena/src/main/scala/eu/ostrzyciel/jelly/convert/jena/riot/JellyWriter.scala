@@ -4,7 +4,7 @@ import eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamType}
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.adapters.RDFWriterRIOT
-import org.apache.jena.riot.{RDFFormat, RiotException, WriterDatasetRIOTFactory, WriterGraphRIOTFactory}
+import org.apache.jena.riot.*
 import org.apache.jena.riot.system.PrefixMap
 import org.apache.jena.riot.writer.{WriterDatasetRIOTBase, WriterGraphRIOTBase}
 import org.apache.jena.sparql.core.DatasetGraph

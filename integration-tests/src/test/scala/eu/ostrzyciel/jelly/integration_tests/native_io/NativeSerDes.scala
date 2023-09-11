@@ -4,6 +4,10 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 
 import java.io.{InputStream, OutputStream}
 
+/**
+ * A thing that can measure how many statements a model or dataset has.
+ * @tparam T type of the thing to measure
+ */
 trait Measure[T]:
   def size(x: T): Long
 

@@ -1,7 +1,10 @@
 package eu.ostrzyciel.jelly.convert.jena.riot
 
-import org.apache.jena.riot.{LangBuilder, RDFFormat, RDFLanguages, RDFParserRegistry, RDFWriterRegistry}
+import org.apache.jena.riot.*
 
+/**
+ * Definition of the Jelly serialization language in Jena.
+ */
 object JellyLanguage:
   val contentTypeJelly = "application/x-jelly-rdf"
   val strLangJelly = "Jelly"

@@ -5,11 +5,19 @@ import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import org.apache.jena.riot.{RDFFormat, RDFFormatVariant}
 
+/**
+ * Subclass of [[RDFFormatVariant]] to pass Jelly's options to the encoder.
+ * @param opt Jelly options
+ * @param frameSize size of each RdfStreamFrame, in rows
+ */
 class JellyFormatVariant(
   val opt: RdfStreamOptions = RdfStreamOptions.defaultInstance,
   val frameSize: Int = 256
 ) extends RDFFormatVariant(opt.toString) { }
 
+/**
+ * Pre-defined serialization format variants for Jelly.
+ */
 object JellyFormat:
   val JELLY_SMALL_STRICT = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.smallStrict))
   val JELLY_SMALL_GENERALIZED = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.smallGeneralized))
