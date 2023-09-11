@@ -1,11 +1,11 @@
 package eu.ostrzyciel.jelly.grpc
 
-import akka.NotUsed
-import akka.actor.testkit.typed.scaladsl.ActorTestKit
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.grpc.GrpcClientSettings
-import akka.stream.scaladsl.*
+import org.apache.pekko.NotUsed
+import org.apache.pekko.actor.testkit.typed.scaladsl.ActorTestKit
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.grpc.GrpcClientSettings
+import org.apache.pekko.stream.scaladsl.*
 import com.typesafe.config.ConfigFactory
 import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
 import eu.ostrzyciel.jelly.core.proto.v1.*

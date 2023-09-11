@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.integration_tests
 
-import akka.{Done, NotUsed}
-import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import org.apache.pekko.{Done, NotUsed}
+import org.apache.pekko.stream.scaladsl.{Flow, Keep, Sink, Source}
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.ostrzyciel.jelly.stream.{DecoderFlow, EncoderFlow}
 import org.apache.jena.graph.{Graph, Node, Triple}
