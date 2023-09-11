@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class ProtoDecoderSpec extends AnyWordSpec, Matchers:
-  import ProtoDecoder.*
+  import ProtoDecoderImpl.*
   import ProtoTestCases.*
 
   // Test body
@@ -335,11 +335,64 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     }
   }
 
+  "an AnyStatementDecoder" should {
+    val cases = Seq(
+      (Triples1, RdfStreamType.RDF_STREAM_TYPE_TRIPLES, "triples", Triples1.mrl),
+      (Quads1, RdfStreamType.RDF_STREAM_TYPE_QUADS, "quads", Quads1.mrl),
+      (Graphs1, RdfStreamType.RDF_STREAM_TYPE_GRAPHS, "graphs", Graphs1.mrlQuads),
+    )
+
+    for ((testCase, streamType, streamName, expected) <- cases) do
+      s"decode $streamName" in {
+        val opts = JellyOptions.smallGeneralized.withStreamType(streamType)
+        val decoder = MockConverterFactory.anyStatementDecoder
+        val decoded = testCase
+          .encoded(opts)
+          .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
+        assertDecoded(decoded, expected)
+        decoder.getStreamOpt should be (Some(opts))
+      }
+
+    "should return None when retrieving stream options on an empty stream" in {
+      val decoder = MockConverterFactory.anyStatementDecoder
+      decoder.getStreamOpt should be (None)
+    }
+
+    "should throw when decoding a row without preceding options" in {
+      val decoder = MockConverterFactory.anyStatementDecoder
+      val data = wrapEncodedFull(Seq(
+        RdfTriple(
+          RdfTerm(RdfTerm.Term.Bnode("1")),
+          RdfTerm(RdfTerm.Term.Bnode("2")),
+          RdfTerm(RdfTerm.Term.Bnode("3")),
+        ),
+      ))
+      val error = intercept[RdfProtoDeserializationError] {
+        decoder.ingestRow(data.head)
+      }
+      error.getMessage should include ("Stream options are not set")
+    }
+
+    "should throw when encountering stream options twice" in {
+      val decoder = MockConverterFactory.anyStatementDecoder
+      val data = wrapEncodedFull(Seq(
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+      ))
+      decoder.ingestRow(data.head)
+      val error = intercept[RdfProtoDeserializationError] {
+        decoder.ingestRow(data(1))
+      }
+      error.getMessage should include ("Stream options are already set")
+    }
+  }
+
   val streamTypeCases = Seq(
     (MockConverterFactory.triplesDecoder, "Triples", RdfStreamType.RDF_STREAM_TYPE_QUADS),
     (MockConverterFactory.quadsDecoder, "Quads", RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
     (MockConverterFactory.graphsDecoder, "Graphs", RdfStreamType.RDF_STREAM_TYPE_QUADS),
     (MockConverterFactory.graphsAsQuadsDecoder, "GraphsAsQuads", RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+    (MockConverterFactory.anyStatementDecoder, "AnyStatement", RdfStreamType.RDF_STREAM_TYPE_UNSPECIFIED),
   )
 
   for (decoder, decName, streamType) <- streamTypeCases do
@@ -362,4 +415,3 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         error.getMessage should include ("stream type is not")
       }
     }
-

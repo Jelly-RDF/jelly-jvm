@@ -153,3 +153,45 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         decoded(1)._2.size should be (1)
       }
   }
+
+  val anyCases = Seq(
+    (Triples1, Triples1.mrl, RdfStreamType.RDF_STREAM_TYPE_TRIPLES, "triples"),
+    (Quads1, Quads1.mrl, RdfStreamType.RDF_STREAM_TYPE_QUADS, "quads"),
+    (Graphs1, Graphs1.mrlQuads, RdfStreamType.RDF_STREAM_TYPE_GRAPHS, "graphs"),
+  )
+
+  "anyToFlat" should {
+    for (testCase, mrl, streamType, name) <- anyCases do
+      for n <- Seq(1, 2, 100) do
+        s"decode $name stream to flat, frame size: $n" in {
+          val encoded = testCase.encodedFull(
+            JellyOptions.smallGeneralized.withStreamType(streamType),
+            n,
+          )
+          val decoded = Source(encoded)
+            .via(DecoderFlow.anyToFlat)
+            .toMat(Sink.seq)(Keep.right)
+            .run().futureValue
+
+          assertDecoded(decoded, mrl)
+        }
+  }
+
+  "anyToGrouped" should {
+    for (testCase, mrl, streamType, name) <- anyCases do
+      for n <- Seq(1, 2, 100) do
+        s"decode $name stream to grouped, frame size: $n" in {
+          val encoded = testCase.encodedFull(
+            JellyOptions.smallGeneralized.withStreamType(streamType),
+            n,
+          )
+          val decoded = Source(encoded)
+            .via(DecoderFlow.anyToGrouped)
+            .map(_.iterator.toSeq)
+            .toMat(Sink.seq)(Keep.right)
+            .run().futureValue
+
+          assertDecoded(decoded.flatten, mrl)
+          decoded.size should be (encoded.size)
+        }
+  }
