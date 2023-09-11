@@ -93,12 +93,30 @@ object DecoderFlow:
   Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] =
     flatStream(factory.graphsDecoder)
 
-  private def flatStream[TOut](decoder: ProtoDecoder[?, ?, ?, ?, TOut]): Flow[RdfStreamFrame, TOut, NotUsed] =
+  /**
+   * A flow converting any Jelly stream of [[RdfStreamFrame]]s into a flat stream of RDF statements (triples or quads).
+   * The type of RDF statements is determined by the stream type.
+   * The stream must have a set stream type (UNSPECIFIED is not allowed) and the stream type must not change
+   * during the stream.
+   * RDF stream type: TRIPLES, QUADS, GRAPHS.
+   *
+   * TODO: test!
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+   * @tparam TNode Type of RDF nodes.
+   * @tparam TTriple Type of triple statements.
+   * @tparam TQuad Type of quad statements.
+   * @return Pekko Streams flow
+   */
+  def anyToFlat[TNode, TTriple, TQuad](implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
+  Flow[RdfStreamFrame, TTriple | TQuad, NotUsed] =
+    flatStream(factory.anyStatementDecoder)
+
+  private def flatStream[TOut](decoder: ProtoDecoder[TOut]): Flow[RdfStreamFrame, TOut, NotUsed] =
     Flow[RdfStreamFrame]
       .mapConcat(frame => frame.rows)
       .mapConcat(row => decoder.ingestRow(row))
 
-  private def groupedStream[TOut](decoder: ProtoDecoder[?, ?, ?, ?, TOut]):
+  private def groupedStream[TOut](decoder: ProtoDecoder[TOut]):
   Flow[RdfStreamFrame, IterableOnce[TOut], NotUsed] =
     Flow[RdfStreamFrame]
       .map(frame => {

@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
-import ProtoDecoder.*
+import ProtoDecoderImpl.*
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 
 import scala.reflect.ClassTag
@@ -53,6 +53,13 @@ trait ConverterFactory[
    */
   final def graphsDecoder: GraphsDecoder[TNode, TDatatype, TTriple, TQuad] =
     new GraphsDecoder(decoderConverter)
+
+  /**
+   * Create a new [[AnyStatementDecoder]].
+   * @return
+   */
+  final def anyStatementDecoder: AnyStatementDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new AnyStatementDecoder(decoderConverter)
 
   /**
    * Create a new [[ProtoEncoder]].
