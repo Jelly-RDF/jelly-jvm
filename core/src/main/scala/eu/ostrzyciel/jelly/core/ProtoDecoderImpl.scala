@@ -219,67 +219,6 @@ object ProtoDecoderImpl:
       ))
 
   /**
-   * A decoder that reads streams of any type and outputs a sequence of triples or quads.
-   * 
-   * The type of the stream is detected automatically based on the options row, 
-   * which must be at the start of the stream. If the options row is not present or the stream changes its type
-   * in the middle, an error is thrown.
-   * 
-   * TODO: tests!
-   */
-  final class AnyStatementDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple | TQuad](converter):
-    private var inner: Option[Either[
-      ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple],
-      ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad]
-    ]] = None
-
-    override protected def handleOptions(opts: RdfStreamOptions): Unit =
-      if inner.isDefined then
-        throw new RdfProtoDeserializationError("Stream options encountered twice." +
-          "The type of the stream cannot be inferred.")
-      opts.streamType match
-        case RdfStreamType.RDF_STREAM_TYPE_TRIPLES =>
-          inner = Some(Left(new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter)))
-        case RdfStreamType.RDF_STREAM_TYPE_QUADS =>
-          inner = Some(Right(new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)))
-        case RdfStreamType.RDF_STREAM_TYPE_GRAPHS =>
-          inner = Some(Right(new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)))
-        case RdfStreamType.RDF_STREAM_TYPE_UNSPECIFIED =>
-          throw new RdfProtoDeserializationError("Stream type is not set.")
-        case _ =>
-          throw new RdfProtoDeserializationError("Unrecognized stream type.")
-
-    private inline def throwOnUninitialized(): Unit =
-      if inner.isEmpty then
-        throw new RdfProtoDeserializationError("Stream type is not set.")
-
-    override protected def handleTriple(triple: RdfTriple): Option[TTriple | TQuad] =
-      throwOnUninitialized()
-      inner.get match
-        case Left(decoder) => decoder.handleTriple(triple)
-        case Right(_) => throw new RdfProtoDeserializationError("Unexpected triple row in stream.")
-
-    override protected def handleQuad(quad: RdfQuad): Option[TTriple | TQuad] =
-      throwOnUninitialized()
-      inner.get match
-        case Left(_) => throw new RdfProtoDeserializationError("Unexpected quad row in stream.")
-        case Right(decoder) => decoder.handleQuad(quad)
-
-    override protected def handleGraphStart(graph: RdfGraphStart): Option[TTriple | TQuad] =
-      throwOnUninitialized()
-      inner.get match
-        case Left(_) => throw new RdfProtoDeserializationError("Unexpected start of graph in stream.")
-        case Right(decoder) => decoder.handleGraphStart(graph)
-
-    override protected def handleGraphEnd(): Option[TTriple | TQuad] =
-      throwOnUninitialized()
-      inner.get match
-        case Left(_) => throw new RdfProtoDeserializationError("Unexpected end of graph in stream.")
-        case Right(decoder) => decoder.handleGraphEnd()
-
-  /**
    * A decoder that reads GRAPHS streams and outputs a sequence of graphs.
    * Each graph is emitted as soon as the producer signals that it's complete.
    */
@@ -316,3 +255,46 @@ object ProtoDecoderImpl:
     override protected def handleTriple(triple: RdfTriple): Option[(TNode, Iterable[TTriple])] =
       buffer.addOne(convertTriple(triple))
       None
+
+  /**
+   * A decoder that reads streams of any type and outputs a sequence of triples or quads.
+   *
+   * The type of the stream is detected automatically based on the options row, 
+   * which must be at the start of the stream. If the options row is not present or the stream changes its type
+   * in the middle, an error is thrown.
+   */
+  final class AnyStatementDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
+    extends ProtoDecoder[TTriple | TQuad]:
+    private var inner: Option[ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple | TQuad]] = None
+
+    override def getStreamOpt: Option[RdfStreamOptions] =
+      inner.flatMap(_.getStreamOpt)
+
+    override def ingestRow(row: RdfStreamRow): Option[TTriple | TQuad] =
+      row.row match
+        case RdfStreamRow.Row.Options(opts) =>
+          handleOptions(opts)
+          inner.get.ingestRow(row)
+        case _ =>
+          if inner.isEmpty then
+            throw new RdfProtoDeserializationError("Stream options are not set.")
+          inner.get.ingestRow(row)
+
+    private def handleOptions(opts: RdfStreamOptions): Unit =
+      if inner.isDefined then
+        throw new RdfProtoDeserializationError("Stream options are already set." +
+          "The type of the stream cannot be inferred.")
+      val dec = opts.streamType match
+        case RdfStreamType.RDF_STREAM_TYPE_TRIPLES =>
+          new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter)
+        case RdfStreamType.RDF_STREAM_TYPE_QUADS =>
+          new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)
+        case RdfStreamType.RDF_STREAM_TYPE_GRAPHS =>
+          new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)
+        case RdfStreamType.RDF_STREAM_TYPE_UNSPECIFIED =>
+          throw new RdfProtoDeserializationError("Incoming stream type is not set.")
+        case _ =>
+          throw new RdfProtoDeserializationError("Incoming stream type is not recognized.")
+
+      inner = Some(dec.asInstanceOf[ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple | TQuad]])
