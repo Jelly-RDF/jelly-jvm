@@ -33,7 +33,7 @@ object RdfStreamServer:
 
 
 /**
- * Simple implementation of an Akka gRPC server for streaming Jelly RDF data.
+ * Simple implementation of a Pekko gRPC server for streaming Jelly RDF data.
  * @param options options for this server
  * @param streamService the service implementing the methods of the API
  * @param system actor system
