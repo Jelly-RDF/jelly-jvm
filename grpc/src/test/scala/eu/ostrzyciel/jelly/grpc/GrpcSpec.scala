@@ -24,18 +24,18 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
   val conf = ConfigFactory.parseString(
     """
-      |akka.http.server.preview.enable-http2 = on
-      |akka.grpc.client.jelly-no-gzip.host = 127.0.0.1
-      |akka.grpc.client.jelly-no-gzip.port = 8080
-      |akka.grpc.client.jelly-no-gzip.enable-gzip = false
-      |akka.grpc.client.jelly-no-gzip.use-tls = false
-      |akka.grpc.client.jelly-no-gzip.backend = netty
+      |pekko.http.server.preview.enable-http2 = on
+      |pekko.grpc.client.jelly-no-gzip.host = 127.0.0.1
+      |pekko.grpc.client.jelly-no-gzip.port = 8080
+      |pekko.grpc.client.jelly-no-gzip.enable-gzip = false
+      |pekko.grpc.client.jelly-no-gzip.use-tls = false
+      |pekko.grpc.client.jelly-no-gzip.backend = netty
       |
-      |akka.grpc.client.jelly-gzip.host = 127.0.0.1
-      |akka.grpc.client.jelly-gzip.port = 8081
-      |akka.grpc.client.jelly-gzip.enable-gzip = true
-      |akka.grpc.client.jelly-gzip.use-tls = false
-      |akka.grpc.client.jelly-gzip.backend = netty
+      |pekko.grpc.client.jelly-gzip.host = 127.0.0.1
+      |pekko.grpc.client.jelly-gzip.port = 8081
+      |pekko.grpc.client.jelly-gzip.enable-gzip = true
+      |pekko.grpc.client.jelly-gzip.use-tls = false
+      |pekko.grpc.client.jelly-gzip.backend = netty
       |""".stripMargin)
     .withFallback(ConfigFactory.defaultApplication())
 
@@ -92,7 +92,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   ).map((name, confKey) => {
     val service = new TestService(data)
     val bound = new RdfStreamServer(
-      RdfStreamServer.Options.fromConfig(conf.getConfig(s"akka.grpc.client.$confKey")),
+      RdfStreamServer.Options.fromConfig(conf.getConfig(s"pekko.grpc.client.$confKey")),
       service
     )(serverSystem).run().futureValue
     (name, confKey, service, bound)
