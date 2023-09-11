@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
-import ProtoDecoderImpl.*
+import ProtoDecoder.*
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 
 import scala.reflect.ClassTag

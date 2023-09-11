@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class ProtoDecoderSpec extends AnyWordSpec, Matchers:
-  import ProtoDecoderImpl.*
+  import ProtoDecoder.*
   import ProtoTestCases.*
 
   // Test body

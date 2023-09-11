@@ -51,6 +51,7 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
 
   /**
    * Signal the start of a new (named) delimited graph in a GRAPHS stream.
+   * Null value is interpreted as the default graph.
    * @param graph graph node
    * @return iterable of stream rows
    */
