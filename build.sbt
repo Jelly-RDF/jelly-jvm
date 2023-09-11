@@ -19,12 +19,12 @@ sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 lazy val pekkoV = "1.0.1"
 lazy val jenaV = "4.6.1"
-lazy val rdf4jV = "4.2.2"
-lazy val scalapbV = "0.11.12"
+lazy val rdf4jV = "4.3.0"
+lazy val scalapbV = "0.11.13"
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.2.14" % Test,
+    "org.scalatest" %% "scalatest" % "3.2.15" % Test,
   ),
   excludeDependencies ++= Seq(
     "com.thesamet.scalapb" % "scalapb-runtime_2.13",
