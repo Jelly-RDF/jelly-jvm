@@ -1,4 +1,4 @@
-package eu.ostrzyciel.jelly.integration_tests.native_io
+package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.rdf4j.rio
 import eu.ostrzyciel.jelly.convert.rdf4j.rio.JellyWriterSettings
@@ -10,7 +10,7 @@ import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 import java.io.{InputStream, OutputStream}
 import scala.jdk.CollectionConverters.*
 
-implicit val rdf4jMeasure: Measure[Seq[Statement]] = (seq: Seq[Statement]) => seq.size
+implicit def seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
 
 object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
   val name = "RDF4J"
