@@ -33,10 +33,10 @@ class NativeSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures:
     (JellyOptions.bigStrict, 3, "big strict"),
   )
 
-  val implementations = Seq(JenaSerDes)
-
-  for ser <- implementations; des <- implementations do
-    runTest(ser, des)
+  runTest(JenaSerDes, JenaSerDes)
+  runTest(JenaSerDes, Rdf4jSerDes)
+  runTest(Rdf4jSerDes, JenaSerDes)
+  runTest(Rdf4jSerDes, Rdf4jSerDes)
 
   private def runTest[TMSer : Measure, TDSer : Measure, TMDes : Measure, TDDes : Measure](
     ser: NativeSerDes[TMSer, TDSer],
@@ -59,7 +59,9 @@ class NativeSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
             val model2 = des.readTriplesJelly(ByteArrayInputStream(data))
             val deserializedSize = implicitly[Measure[TMDes]].size(model2)
-            deserializedSize should be (originalSize)
+            // Add -1 to account for the different statement counting of RDF4J and Jena
+            deserializedSize should be <= originalSize
+            deserializedSize should be >= originalSize - 1
           }
 
         for (name, file) <- casesQuads do
@@ -77,6 +79,8 @@ class NativeSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
             val ds2 = des.readQuadsJelly(ByteArrayInputStream(data))
             val deserializedSize = implicitly[Measure[TDDes]].size(ds2)
-            deserializedSize should be (originalSize)
+            // Add -2 to account for the different statement counting of RDF4J and Jena
+            deserializedSize should be <= originalSize
+            deserializedSize should be >= originalSize - 2
           }
     }
