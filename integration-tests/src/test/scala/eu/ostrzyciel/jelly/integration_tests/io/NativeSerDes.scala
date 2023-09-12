@@ -1,4 +1,4 @@
-package eu.ostrzyciel.jelly.integration_tests.native_io
+package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 

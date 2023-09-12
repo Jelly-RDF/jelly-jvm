@@ -1,7 +1,8 @@
-package eu.ostrzyciel.jelly.integration_tests.native_io
+package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import org.apache.pekko.actor.ActorSystem
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -9,9 +10,10 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream}
 
 /**
- * Tests for library-native ser/des (Jena RIOT and RDF4J Rio).
+ * Tests for IO ser/des (Jena RIOT, RDF4J Rio, and semi-reactive IO over Pekko Streams).
  */
-class NativeSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures:
+class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures:
+  implicit val as: ActorSystem = ActorSystem("test")
 
   val casesTriples: Seq[(String, File)] = Seq[String](
     "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.nt", "rdf-star-blanks.nt"
@@ -37,6 +39,12 @@ class NativeSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures:
   runTest(JenaSerDes, Rdf4jSerDes)
   runTest(Rdf4jSerDes, JenaSerDes)
   runTest(Rdf4jSerDes, Rdf4jSerDes)
+
+  runTest(ReactiveSerDes(), ReactiveSerDes())
+  runTest(ReactiveSerDes(), JenaSerDes)
+  runTest(ReactiveSerDes(), Rdf4jSerDes)
+  runTest(JenaSerDes, ReactiveSerDes())
+  runTest(Rdf4jSerDes, ReactiveSerDes())
 
   private def runTest[TMSer : Measure, TDSer : Measure, TMDes : Measure, TDDes : Measure](
     ser: NativeSerDes[TMSer, TDSer],
