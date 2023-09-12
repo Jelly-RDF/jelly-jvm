@@ -1,15 +1,14 @@
 package eu.ostrzyciel.jelly.integration_tests
 
-import org.apache.pekko.{Done, NotUsed}
-import org.apache.pekko.stream.scaladsl.{Flow, Keep, Sink, Source}
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.ostrzyciel.jelly.stream.{DecoderFlow, EncoderFlow}
-import org.apache.jena.graph.{Graph, Node, Triple}
-import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
+import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.system.AsyncParser
+import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
+import org.apache.pekko.stream.scaladsl.{Flow, Keep, Sink, Source}
 
 import java.io.{InputStream, OutputStream}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.*
 
 case object JenaTestStream extends TestStream:
@@ -30,7 +29,7 @@ case object JenaTestStream extends TestStream:
     val graphs: Iterator[(Node, Iterable[Triple])] = (
       ds.listGraphNodes().asScala.map(gNode => (gNode, Iterable.from(ds.getGraph(gNode).find.asScala))) ++
         Iterator((null, Iterable.from(ds.getDefaultGraph.find.asScala)))
-    ).filter((_, g) => g.size > 0)
+    ).filter((_, g) => g.nonEmpty)
     Source.fromIterator(() => graphs)
       .via(EncoderFlow.fromGraphs(streamOpt, jellyOpt))
 

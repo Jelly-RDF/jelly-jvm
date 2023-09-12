@@ -15,5 +15,4 @@ package object core:
   object Constants:
     val jellyName = "Jelly"
     val jellyFileExtension = "jelly"
-    val jellyFileExtensionWithDot = s".$jellyFileExtension"
     val jellyContentType = "application/x-jelly-rdf"

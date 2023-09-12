@@ -1,10 +1,10 @@
 package eu.ostrzyciel.jelly.stream
 
-import org.apache.pekko.NotUsed
-import org.apache.pekko.stream.scaladsl.{Flow, Source}
 import com.typesafe.config.Config
 import eu.ostrzyciel.jelly.core.ConverterFactory
 import eu.ostrzyciel.jelly.core.proto.v1.*
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.scaladsl.{Flow, Source}
 
 /**
  * Factory of encoder flows for Jelly streams.

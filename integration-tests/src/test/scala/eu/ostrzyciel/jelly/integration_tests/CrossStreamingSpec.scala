@@ -1,7 +1,5 @@
 package eu.ostrzyciel.jelly.integration_tests
 
-import org.apache.pekko.actor.ActorSystem
-import org.apache.pekko.stream.scaladsl.*
 import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import eu.ostrzyciel.jelly.stream.*
@@ -9,6 +7,8 @@ import org.apache.jena.graph.Graph
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
 import org.apache.jena.sparql.core.DatasetGraph
 import org.apache.jena.sparql.util.IsoMatcher
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

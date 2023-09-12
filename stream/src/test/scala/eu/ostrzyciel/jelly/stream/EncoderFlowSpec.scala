@@ -1,11 +1,11 @@
 package eu.ostrzyciel.jelly.stream
 
-import org.apache.pekko.actor.ActorSystem
-import org.apache.pekko.stream.scaladsl.*
-import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
 import eu.ostrzyciel.jelly.core.helpers.Assertions.*
 import eu.ostrzyciel.jelly.core.helpers.MockConverterFactory
 import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

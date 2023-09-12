@@ -2,7 +2,6 @@ package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
-import java.math.BigInteger
 import scala.collection.mutable.ListBuffer
 
 object ProtoEncoder:
