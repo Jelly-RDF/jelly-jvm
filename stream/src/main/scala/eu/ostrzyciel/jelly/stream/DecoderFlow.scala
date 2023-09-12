@@ -1,9 +1,9 @@
 package eu.ostrzyciel.jelly.stream
 
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame
+import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoDecoder}
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Flow
-import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoDecoder}
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame
 
 /**
  * Methods for creating Pekko Streams flows for decoding protobuf into RDF statements.

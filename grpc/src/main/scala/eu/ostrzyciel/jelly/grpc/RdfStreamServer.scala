@@ -1,16 +1,16 @@
 package eu.ostrzyciel.jelly.grpc
 
+import com.typesafe.config.Config
+import com.typesafe.scalalogging.LazyLogging
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.pekko.Done
 import org.apache.pekko.actor.typed.ActorSystem
 import org.apache.pekko.http.scaladsl.Http
 import org.apache.pekko.http.scaladsl.Http.ServerBinding
 import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
-import com.typesafe.config.{Config, ConfigFactory}
-import com.typesafe.scalalogging.LazyLogging
-import eu.ostrzyciel.jelly.core.proto.v1.*
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.*
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 object RdfStreamServer:

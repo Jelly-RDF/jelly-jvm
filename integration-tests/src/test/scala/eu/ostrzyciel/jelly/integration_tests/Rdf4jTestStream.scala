@@ -1,15 +1,14 @@
 package eu.ostrzyciel.jelly.integration_tests
 
-import org.apache.pekko.{Done, NotUsed}
-import org.apache.pekko.stream.scaladsl.*
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.ostrzyciel.jelly.stream.{DecoderFlow, EncoderFlow}
-import org.eclipse.rdf4j.model.Model
+import org.apache.pekko.Done
+import org.apache.pekko.stream.scaladsl.*
 import org.eclipse.rdf4j.rio.*
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 
 import java.io.{InputStream, OutputStream}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.*
 
 case object Rdf4jTestStream extends TestStream:

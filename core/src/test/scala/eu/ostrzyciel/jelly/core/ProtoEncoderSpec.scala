@@ -7,8 +7,6 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.collection.immutable.{AbstractSeq, LinearSeq}
-
 class ProtoEncoderSpec extends AnyWordSpec, Matchers:
   import ProtoTestCases.*
 

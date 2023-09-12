@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.stream
 
-import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamType
+import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures

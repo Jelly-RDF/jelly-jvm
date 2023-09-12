@@ -2,9 +2,7 @@ package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
-import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.jdk.CollectionConverters.*
+import scala.collection.mutable.ListBuffer
 
 /**
  * IRI and datatype encoder.
