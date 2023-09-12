@@ -81,7 +81,7 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
    * @return iterable of stream rows (always of length 1)
    */
   final def endGraph(): Iterable[RdfStreamRow] =
-    if !emittedCompressionOptions then
+    if !emittedOptions then
       throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one")
     ProtoEncoder.graphEnd
 
@@ -181,7 +181,7 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
   // *************************************
   private var extraRowsBuffer = new ListBuffer[RdfStreamRow]()
   private val iriEncoder = new NameEncoder(options)
-  private var emittedCompressionOptions = false
+  private var emittedOptions = false
 
   private val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
@@ -231,12 +231,14 @@ abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStre
       o = nodeToProto(getQuotedO(quoted)),
     )
 
-  private def handleHeader(): Unit =
+  private inline def handleHeader(): Unit =
     extraRowsBuffer = new ListBuffer[RdfStreamRow]()
-    if !emittedCompressionOptions then
-      emittedCompressionOptions = true
-      extraRowsBuffer.append(
-        RdfStreamRow(RdfStreamRow.Row.Options(options))
-      )
+    if !emittedOptions then emitOptions()
+
+  private def emitOptions(): Unit =
+    emittedOptions = true
+    extraRowsBuffer.append(
+      RdfStreamRow(RdfStreamRow.Row.Options(options))
+    )
 
 
