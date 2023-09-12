@@ -1,9 +1,22 @@
 package eu.ostrzyciel.jelly.convert.rdf4j.rio
 
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamType
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamType}
+import org.eclipse.rdf4j.rio.WriterConfig
 import org.eclipse.rdf4j.rio.helpers.*
 
 object JellyWriterSettings:
+  def configFromOptions(opt: RdfStreamOptions, frameSize: Long = 256L): WriterConfig =
+    val c = new WriterConfig()
+    c.set(FRAME_SIZE, frameSize)
+    c.set(STREAM_NAME, opt.streamName)
+    c.set(STREAM_TYPE, opt.streamType)
+    c.set(ALLOW_GENERALIZED_STATEMENTS, opt.generalizedStatements)
+    c.set(USE_REPEAT, opt.useRepeat)
+    c.set(MAX_NAME_TABLE_SIZE, opt.maxNameTableSize.toLong)
+    c.set(MAX_PREFIX_TABLE_SIZE, opt.maxPrefixTableSize.toLong)
+    c.set(MAX_DATATYPE_TABLE_SIZE, opt.maxDatatypeTableSize.toLong)
+    c
+  
   val FRAME_SIZE = new LongRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.frameSize",
     "Target RDF frame size",

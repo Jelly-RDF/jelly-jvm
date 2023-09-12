@@ -26,7 +26,7 @@ object JellyDatasetWriterFactory extends WriterDatasetRIOTFactory:
       case opt: JellyFormatVariant => new JellyDatasetWriter(opt)
       case _ => new JellyDatasetWriter(JellyFormatVariant())
 
-class JellyGraphWriter(opt: JellyFormatVariant) extends WriterGraphRIOTBase:
+final class JellyGraphWriter(opt: JellyFormatVariant) extends WriterGraphRIOTBase:
   override def write(out: Writer, graph: Graph, prefixMap: PrefixMap, baseURI: String, context: Context): Unit =
     throw new RiotException("RDF Jelly: Writing binary data to a java.io.Writer is not supported. " +
       "Please use an OutputStream.")
@@ -42,7 +42,7 @@ class JellyGraphWriter(opt: JellyFormatVariant) extends WriterGraphRIOTBase:
 
   override def getLang = JellyLanguage.JELLY
 
-class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIOTBase:
+final class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIOTBase:
   override def write(
     out: Writer, dataset: DatasetGraph, prefixMap: PrefixMap, baseURI: String, context: Context
   ): Unit =

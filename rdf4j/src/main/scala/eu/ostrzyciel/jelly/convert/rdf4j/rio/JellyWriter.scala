@@ -12,6 +12,8 @@ import scala.collection.mutable.ArrayBuffer
 
 //noinspection ConvertNullInitializerToUnderscore
 final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
+  import JellyWriterSettings.*
+
   // We should use Option[] here, but it's Java interop code anyway... and why bother with boxing?
   private var options: RdfStreamOptions = null
   private var encoder: Rdf4jProtoEncoder = null
@@ -22,10 +24,17 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
 
   override def getSupportedSettings =
     val s = new util.HashSet[RioSetting[_]](super.getSupportedSettings)
+    s.add(STREAM_NAME)
+    s.add(STREAM_TYPE)
+    s.add(ALLOW_GENERALIZED_STATEMENTS)
+    s.add(USE_REPEAT)
+    s.add(MAX_NAME_TABLE_SIZE)
+    s.add(MAX_PREFIX_TABLE_SIZE)
+    s.add(MAX_DATATYPE_TABLE_SIZE)
+    s.add(FRAME_SIZE)
     s
 
   override def startRDF(): Unit =
-    import JellyWriterSettings.*
     super.startRDF()
     val c = getWriterConfig
     options = RdfStreamOptions(
