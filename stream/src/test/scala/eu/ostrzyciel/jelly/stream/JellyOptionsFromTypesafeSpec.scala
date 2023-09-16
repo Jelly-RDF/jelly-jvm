@@ -22,6 +22,7 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
         |jelly.stream-type = GRAPHS
         |jelly.generalized-statements = true
         |jelly.use-repeat = false
+        |jelly.rdf-star = true
         |jelly.name-table-size = 1024
         |jelly.prefix-table-size = 64
         |jelly.dt-table-size = 8
@@ -30,6 +31,7 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
       opt.streamType should be (RdfStreamType.RDF_STREAM_TYPE_GRAPHS)
       opt.generalizedStatements should be (true)
       opt.useRepeat should be (false)
+      opt.rdfStar should be (true)
       opt.maxNameTableSize should be (1024)
       opt.maxPrefixTableSize should be (64)
       opt.maxDatatypeTableSize should be (8)
@@ -45,6 +47,7 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
       opt.streamType should be (RdfStreamType.RDF_STREAM_TYPE_QUADS)
       opt.generalizedStatements should be (false)
       opt.useRepeat should be (true)
+      opt.rdfStar should be (false)
       opt.maxNameTableSize should be (1024)
       opt.maxPrefixTableSize should be (64)
       opt.maxDatatypeTableSize should be (16)

@@ -29,9 +29,10 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   val presets: Seq[(RdfStreamOptions, Int, String)] = Seq(
     (JellyOptions.smallGeneralized, 1, "small generalized"),
-    (JellyOptions.smallGeneralized, 1_000_000, "small generalized"),
+    (JellyOptions.smallRdfStar, 1_000_000, "small RDF-star"),
     (JellyOptions.smallStrict, 30, "small strict"),
     (JellyOptions.bigGeneralized, 256, "big generalized"),
+    (JellyOptions.bigRdfStar, 10_000, "big RDF-star"),
     (JellyOptions.bigStrict, 3, "big strict"),
   )
 

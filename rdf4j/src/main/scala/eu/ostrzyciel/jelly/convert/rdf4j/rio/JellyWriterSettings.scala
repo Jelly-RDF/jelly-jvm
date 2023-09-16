@@ -46,6 +46,12 @@ object JellyWriterSettings:
     "Whether to compress repeating values (recommended)",
     true
   )
+  
+  val ALLOW_RDF_STAR = new BooleanRioSetting(
+    "eu.ostrzyciel.jelly.convert.rdf4j.rio.allowRdfStar",
+    "Allow RDF-star statements",
+    false
+  )
 
   val MAX_NAME_TABLE_SIZE = new LongRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.maxNameTableSize",

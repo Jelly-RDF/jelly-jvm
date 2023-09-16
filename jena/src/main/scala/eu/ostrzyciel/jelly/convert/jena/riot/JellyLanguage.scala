@@ -16,7 +16,7 @@ object JellyLanguage:
   RDFLanguages.register(JELLY)
 
   // Default serialization format
-  RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_GENERALIZED)
+  RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_STRICT)
   // Register the writers
   for format <- JellyFormat.allFormats do
     RDFWriterRegistry.register(format, JellyGraphWriterFactory)
