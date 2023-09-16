@@ -21,12 +21,16 @@ final class JellyFormatVariant(
 object JellyFormat:
   val JELLY_SMALL_STRICT = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.smallStrict))
   val JELLY_SMALL_GENERALIZED = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.smallGeneralized))
+  val JELLY_SMALL_RDF_STAR = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.smallRdfStar))
   val JELLY_BIG_STRICT = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.bigStrict))
   val JELLY_BIG_GENERALIZED = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.bigGeneralized))
+  val JELLY_BIG_RDF_STAR = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.bigRdfStar))
   
   val allFormats = List(
     JELLY_SMALL_STRICT,
     JELLY_SMALL_GENERALIZED,
+    JELLY_SMALL_RDF_STAR,
     JELLY_BIG_STRICT,
-    JELLY_BIG_GENERALIZED
+    JELLY_BIG_GENERALIZED,
+    JELLY_BIG_RDF_STAR
   )
