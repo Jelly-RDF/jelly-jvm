@@ -43,18 +43,6 @@ object JellyIo:
     })
 
   /**
-   * Convert a stream of DELIMITED bytes into a stream of Jelly frames.
-   *
-   * You can safely use this method to read from a file or socket.
-   * @return Pekko Flow
-   */
-  def fromBytesDelimited: Flow[Array[Byte], RdfStreamFrame, NotUsed] =
-    Flow[Array[Byte]].mapConcat(b => {
-      val is = ByteArrayInputStream(b)
-      RdfStreamFrame.parseDelimitedFrom(is)
-    })
-
-  /**
    * Write a stream of Jelly frames to an output stream. The frames will be delimited.
    *
    * You can safely use this method to write to a file or socket.

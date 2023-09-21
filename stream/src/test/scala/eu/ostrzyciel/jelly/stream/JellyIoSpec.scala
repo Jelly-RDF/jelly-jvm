@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.stream
 
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamType
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamType}
 import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
@@ -50,12 +50,15 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
-  "toBytesDelimited and fromBytesDelimited" should {
+  "toBytesDelimited" should {
     for (name, testCase) <- cases do
       s"work for $name" in {
         val decoded = Source.fromIterator(() => testCase.iterator)
           .via(JellyIo.toBytesDelimited)
-          .via(JellyIo.fromBytesDelimited)
+          .mapConcat(b => {
+            val is = ByteArrayInputStream(b)
+            RdfStreamFrame.parseDelimitedFrom(is)
+          })
           .runWith(Sink.seq)
           .futureValue
 
