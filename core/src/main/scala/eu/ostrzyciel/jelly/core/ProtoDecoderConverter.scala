@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
  * @tparam TTriple type of triple statements (not quoted triples) in the library
  * @tparam TQuad type of quad statements in the library
  */
-trait ProtoDecoderConverter[TNode, TDatatype : ClassTag, TTriple, TQuad]:
+trait ProtoDecoderConverter[TNode, TDatatype : ClassTag, +TTriple, +TQuad]:
   def makeSimpleLiteral(lex: String): TNode
   def makeLangLiteral(lex: String, lang: String): TNode
   def makeDtLiteral(lex: String, dt: TDatatype): TNode

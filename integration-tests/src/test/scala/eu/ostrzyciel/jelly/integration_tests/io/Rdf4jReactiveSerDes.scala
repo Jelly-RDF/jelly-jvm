@@ -11,7 +11,7 @@ import java.io.{InputStream, OutputStream}
 import scala.concurrent.Await
 import scala.concurrent.duration.*
 
-class ReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Seq[Statement], Seq[Statement]]:
+class Rdf4jReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Seq[Statement], Seq[Statement]]:
   implicit val rdf4jConverter: Rdf4jConverterFactory.type = Rdf4jConverterFactory
 
   override def name: String = "Reactive (RDF4J)"

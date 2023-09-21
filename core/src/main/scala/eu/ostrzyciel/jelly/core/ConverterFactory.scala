@@ -20,8 +20,8 @@ import scala.reflect.ClassTag
  * @tparam TQuad Type of quad statements in the RDF library.
  */
 trait ConverterFactory[
-  TEncoder <: ProtoEncoder[TNode, TTriple, TQuad, ?],
-  TDecConv <: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
+  +TEncoder <: ProtoEncoder[TNode, TTriple, TQuad, ?],
+  +TDecConv <: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
   TNode, TDatatype : ClassTag, TTriple, TQuad
 ]:
   protected def decoderConverter: TDecConv

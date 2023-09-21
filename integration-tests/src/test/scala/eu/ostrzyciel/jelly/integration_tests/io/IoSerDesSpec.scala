@@ -41,11 +41,16 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures:
   runTest(Rdf4jSerDes, JenaSerDes)
   runTest(Rdf4jSerDes, Rdf4jSerDes)
 
-  runTest(ReactiveSerDes(), ReactiveSerDes())
-  runTest(ReactiveSerDes(), JenaSerDes)
-  runTest(ReactiveSerDes(), Rdf4jSerDes)
-  runTest(JenaSerDes, ReactiveSerDes())
-  runTest(Rdf4jSerDes, ReactiveSerDes())
+  runTest(Rdf4jReactiveSerDes(), Rdf4jReactiveSerDes())
+  runTest(Rdf4jReactiveSerDes(), JenaSerDes)
+  runTest(Rdf4jReactiveSerDes(), Rdf4jSerDes)
+  runTest(JenaSerDes, Rdf4jReactiveSerDes())
+  runTest(Rdf4jSerDes, Rdf4jReactiveSerDes())
+
+  // the Jena reactive implementation only has a serializer
+  runTest(JenaReactiveSerDes(), Rdf4jReactiveSerDes())
+  runTest(JenaReactiveSerDes(), Rdf4jSerDes)
+  runTest(JenaReactiveSerDes(), JenaSerDes)
 
   private def runTest[TMSer : Measure, TDSer : Measure, TMDes : Measure, TDDes : Measure](
     ser: NativeSerDes[TMSer, TDSer],

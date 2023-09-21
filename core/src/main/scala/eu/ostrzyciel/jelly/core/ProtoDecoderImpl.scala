@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
  *
  * See the base (extendable) trait: [[ProtoDecoder]].
  */
-sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, TTriple, TQuad, TOut]
+sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +TQuad, +TOut]
 (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
   extends ProtoDecoder[TOut]:
 
