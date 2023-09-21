@@ -19,7 +19,7 @@ object ProtoEncoder:
  * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
  * @param options options for this stream
  */
-abstract class ProtoEncoder[TNode, TTriple, TQuad, TQuoted](val options: RdfStreamOptions):
+abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfStreamOptions):
   import ProtoEncoder.*
 
   // *** 1. THE PUBLIC INTERFACE ***

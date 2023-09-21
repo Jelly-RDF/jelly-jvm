@@ -9,7 +9,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamRow}
  * 
  * @tparam TOut Type of the output of the decoder.
  */
-trait ProtoDecoder[TOut]:
+trait ProtoDecoder[+TOut]:
   def getStreamOpt: Option[RdfStreamOptions]
   
   def ingestRow(row: RdfStreamRow): Option[TOut]
