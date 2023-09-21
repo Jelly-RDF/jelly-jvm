@@ -4,7 +4,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame
 import org.apache.pekko.{Done, NotUsed}
 import org.apache.pekko.stream.scaladsl.*
 
-import java.io.OutputStream
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 import scala.concurrent.Future
 
 /**
@@ -28,6 +28,31 @@ object JellyIo:
    */
   def fromBytes: Flow[Array[Byte], RdfStreamFrame, NotUsed] =
     Flow[Array[Byte]].map(RdfStreamFrame.parseFrom)
+
+  /**
+   * Convert a stream of Jelly frames into a stream of DELIMITED bytes.
+   *
+   * You can safely use this method to write to a file or socket.
+   * @return Pekko Flow
+   */
+  def toBytesDelimited: Flow[RdfStreamFrame, Array[Byte], NotUsed] =
+    Flow[RdfStreamFrame].map(f => {
+      val os = ByteArrayOutputStream()
+      f.writeDelimitedTo(os)
+      os.toByteArray
+    })
+
+  /**
+   * Convert a stream of DELIMITED bytes into a stream of Jelly frames.
+   *
+   * You can safely use this method to read from a file or socket.
+   * @return Pekko Flow
+   */
+  def fromBytesDelimited: Flow[Array[Byte], RdfStreamFrame, NotUsed] =
+    Flow[Array[Byte]].mapConcat(b => {
+      val is = ByteArrayInputStream(b)
+      RdfStreamFrame.parseDelimitedFrom(is)
+    })
 
   /**
    * Write a stream of Jelly frames to an output stream. The frames will be delimited.
