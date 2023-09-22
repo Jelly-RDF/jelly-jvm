@@ -14,7 +14,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
   "a ProtoEncoder" should {
     "encode triple statements" in {
       val encoder = MockProtoEncoder(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES)
       )
       val encoded = Triples1.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
       assertEncoded(encoded, Triples1.encoded(encoder.options))
@@ -23,7 +23,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
     "encode triple statements (norepeat)" in {
       val encoder = MockProtoEncoder(
         JellyOptions.smallGeneralized
-          .withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+          .withStreamType(RdfStreamType.TRIPLES)
           .withUseRepeat(false)
       )
       val encoded = Triples2NoRepeat.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
@@ -32,7 +32,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode quad statements" in {
       val encoder = MockProtoEncoder(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS)
       )
       val encoded = Quads1.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
       assertEncoded(encoded, Quads1.encoded(encoder.options))
@@ -41,7 +41,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
     "encode quad statements (norepeat)" in {
       val encoder = MockProtoEncoder(
         JellyOptions.smallGeneralized
-          .withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+          .withStreamType(RdfStreamType.QUADS)
           .withUseRepeat(false)
       )
       val encoded = Quads2NoRepeat.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
@@ -50,7 +50,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode quad statements (repeated default graph)" in {
       val encoder = MockProtoEncoder(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS)
       )
       val encoded = Quads3RepeatDefault.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
       assertEncoded(encoded, Quads3RepeatDefault.encoded(encoder.options))
@@ -58,7 +58,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode graphs" in {
       val encoder = MockProtoEncoder(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS)
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS)
       )
       val encoded = Graphs1.mrl.flatMap((graphName, triples) => Seq(
         encoder.startGraph(graphName).toSeq,
@@ -70,7 +70,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "not allow to end a graph before starting one" in {
       val encoder = MockProtoEncoder(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS)
       )
       val error = intercept[RdfProtoSerializationError] {
         encoder.endGraph()
@@ -80,7 +80,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "not allow to use quoted triples as the graph name" in {
       val encoder = MockProtoEncoder(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS)
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS)
       )
       val error = intercept[RdfProtoSerializationError] {
         encoder.startGraph(TripleNode(

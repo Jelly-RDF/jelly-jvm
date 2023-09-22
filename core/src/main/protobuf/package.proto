@@ -13,6 +13,7 @@ option (scalapb.options) = {
   getters: false
   // Disabling this can substantially improve performance
   preserve_unknown_fields: false
+  enum_strip_prefix: true
   field_transformations: [
     // Don't box RdfTerm and RdfGraph in Option[] to reduce heap pressure and speed things up a bit
     {
@@ -20,7 +21,6 @@ option (scalapb.options) = {
         type: TYPE_MESSAGE
         type_name: ".eu.ostrzyciel.jelly.core.proto.v1.RdfTerm"
       }
-      // TODO: check if it would be faster to use required instead of no_box
       set: {[scalapb.field] {no_box: true}}
     },
     {

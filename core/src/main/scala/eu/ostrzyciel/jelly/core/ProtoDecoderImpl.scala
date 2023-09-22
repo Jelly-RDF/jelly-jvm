@@ -164,7 +164,7 @@ object ProtoDecoderImpl:
     extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple](converter):
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
-      if !opts.streamType.isRdfStreamTypeTriples then
+      if !opts.streamType.isTriples then
         throw new RdfProtoDeserializationError("Incoming stream type is not TRIPLES.")
       super.handleOptions(opts)
 
@@ -179,7 +179,7 @@ object ProtoDecoderImpl:
     extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter):
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
-      if !opts.streamType.isRdfStreamTypeQuads then
+      if !opts.streamType.isQuads then
         throw new RdfProtoDeserializationError("Incoming stream type is not QUADS.")
       super.handleOptions(opts)
 
@@ -195,7 +195,7 @@ object ProtoDecoderImpl:
     private var currentGraph: Option[TNode] = None
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
-      if !opts.streamType.isRdfStreamTypeGraphs then
+      if !opts.streamType.isGraphs then
         throw new RdfProtoDeserializationError("Incoming stream type is not GRAPHS.")
       super.handleOptions(opts)
 
@@ -228,7 +228,7 @@ object ProtoDecoderImpl:
     private var buffer: ListBuffer[TTriple] = new ListBuffer[TTriple]()
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
-      if !opts.streamType.isRdfStreamTypeGraphs then
+      if !opts.streamType.isGraphs then
         throw new RdfProtoDeserializationError("Incoming stream type is not GRAPHS.")
       super.handleOptions(opts)
 
@@ -285,13 +285,13 @@ object ProtoDecoderImpl:
         throw new RdfProtoDeserializationError("Stream options are already set." +
           "The type of the stream cannot be inferred.")
       val dec = opts.streamType match
-        case RdfStreamType.RDF_STREAM_TYPE_TRIPLES =>
+        case RdfStreamType.TRIPLES =>
           new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter)
-        case RdfStreamType.RDF_STREAM_TYPE_QUADS =>
+        case RdfStreamType.QUADS =>
           new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)
-        case RdfStreamType.RDF_STREAM_TYPE_GRAPHS =>
+        case RdfStreamType.GRAPHS =>
           new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)
-        case RdfStreamType.RDF_STREAM_TYPE_UNSPECIFIED =>
+        case RdfStreamType.UNSPECIFIED =>
           throw new RdfProtoDeserializationError("Incoming stream type is not set.")
         case _ =>
           throw new RdfProtoDeserializationError("Incoming stream type is not recognized.")
