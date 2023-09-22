@@ -10,8 +10,12 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import scala.concurrent.duration.*
+
 class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   import ProtoTestCases.*
+
+  implicit val patience: PatienceConfig = PatienceConfig(5.seconds, 100.millis)
   implicit val converterFactory: MockConverterFactory.type = MockConverterFactory
   implicit val actorSystem: ActorSystem = ActorSystem()
 
