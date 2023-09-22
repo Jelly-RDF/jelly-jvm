@@ -13,26 +13,42 @@ object JellyLanguage:
     .addFileExtensions(jellyFileExtension)
     .build
 
-  // Register the language
-  RDFLanguages.register(JELLY)
+  private var registered = false
 
-  // Default serialization format
-  RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_STRICT)
+  register()
 
-  // Register the writers
-  private val allFormats = List(
-    JELLY_SMALL_STRICT,
-    JELLY_SMALL_GENERALIZED,
-    JELLY_SMALL_RDF_STAR,
-    JELLY_BIG_STRICT,
-    JELLY_BIG_GENERALIZED,
-    JELLY_BIG_RDF_STAR
-  )
+  /**
+   * Register the Jelly language and formats in Jena.
+   *
+   * This method is idempotent and should be called automatically when the class is loaded.
+   * However, you may also want to call this manually if Jena doesn't load the language automatically.
+   */
+  def register(): Unit = this.synchronized {
+    if registered then ()
+    else
+      // Register the language
+      RDFLanguages.register(JELLY)
 
-  for format <- allFormats do
-    RDFWriterRegistry.register(format, JellyGraphWriterFactory)
-    RDFWriterRegistry.register(format, JellyDatasetWriterFactory)
+      // Default serialization format
+      RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_STRICT)
 
-  // Register the parser factory
-  RDFParserRegistry.registerLangTriples(JELLY, JellyReaderFactory)
-  RDFParserRegistry.registerLangQuads(JELLY, JellyReaderFactory)
+      // Register the writers
+      val allFormats = List(
+        JELLY_SMALL_STRICT,
+        JELLY_SMALL_GENERALIZED,
+        JELLY_SMALL_RDF_STAR,
+        JELLY_BIG_STRICT,
+        JELLY_BIG_GENERALIZED,
+        JELLY_BIG_RDF_STAR
+      )
+
+      for format <- allFormats do
+        RDFWriterRegistry.register(format, JellyGraphWriterFactory)
+        RDFWriterRegistry.register(format, JellyDatasetWriterFactory)
+
+      // Register the parser factory
+      RDFParserRegistry.registerLangTriples(JELLY, JellyReaderFactory)
+      RDFParserRegistry.registerLangQuads(JELLY, JellyReaderFactory)
+
+      registered = true
+  }
