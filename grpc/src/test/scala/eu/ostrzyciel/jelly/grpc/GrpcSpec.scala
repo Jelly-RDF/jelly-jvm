@@ -62,26 +62,26 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     "triples" -> Triples1.encodedFull(
       JellyOptions.smallGeneralized
         .withStreamName("triples")
-        .withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+        .withStreamType(RdfStreamType.TRIPLES),
       1
     ),
     "triples_norepeat" -> Triples2NoRepeat.encodedFull(
       JellyOptions.smallGeneralized
         .withStreamName("triples_norepeat")
-        .withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+        .withStreamType(RdfStreamType.TRIPLES)
         .withUseRepeat(false),
       2
     ),
     "quads" -> Quads1.encodedFull(
       JellyOptions.smallGeneralized
         .withStreamName("quads")
-        .withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS),
+        .withStreamType(RdfStreamType.QUADS),
       3
     ),
     "graphs" -> Graphs1.encodedFull(
       JellyOptions.smallGeneralized
         .withStreamName("graphs")
-        .withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS),
+        .withStreamType(RdfStreamType.GRAPHS),
       1
     ),
   )

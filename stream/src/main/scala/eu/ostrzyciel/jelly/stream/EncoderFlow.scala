@@ -46,7 +46,7 @@ object EncoderFlow:
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[TTriple, RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+      streamOpt.withStreamType(RdfStreamType.TRIPLES)
     )
     flatFlow(Flow[TTriple].mapConcat(e => encoder.addTripleStatement(e)), opt)
 
@@ -66,7 +66,7 @@ object EncoderFlow:
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[TQuad, RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+      streamOpt.withStreamType(RdfStreamType.QUADS)
     )
     flatFlow(Flow[TQuad].mapConcat(e => encoder.addQuadStatement(e)), opt)
 
@@ -86,7 +86,7 @@ object EncoderFlow:
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+      streamOpt.withStreamType(RdfStreamType.TRIPLES)
     )
     groupedFlow(Flow[TTriple].mapConcat(e => encoder.addTripleStatement(e)), opt)
 
@@ -106,7 +106,7 @@ object EncoderFlow:
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+      streamOpt.withStreamType(RdfStreamType.QUADS)
     )
     groupedFlow(Flow[TQuad].mapConcat(e => encoder.addQuadStatement(e)), opt)
 
@@ -128,7 +128,7 @@ object EncoderFlow:
   (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[(TNode, Iterable[TTriple]), RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS)
+      streamOpt.withStreamType(RdfStreamType.GRAPHS)
     )
 
     Flow[(TNode, Iterable[TTriple])]

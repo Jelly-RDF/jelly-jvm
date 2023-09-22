@@ -37,10 +37,10 @@ object JellyOptionsFromTypesafe:
     RdfStreamOptions(
       streamType = (
         merged.getString("stream-type") match
-          case "UNSPECIFIED" => RdfStreamType.RDF_STREAM_TYPE_UNSPECIFIED
-          case "TRIPLES" => RdfStreamType.RDF_STREAM_TYPE_TRIPLES
-          case "QUADS" => RdfStreamType.RDF_STREAM_TYPE_QUADS
-          case "GRAPHS" => RdfStreamType.RDF_STREAM_TYPE_GRAPHS
+          case "UNSPECIFIED" => RdfStreamType.UNSPECIFIED
+          case "TRIPLES" => RdfStreamType.TRIPLES
+          case "QUADS" => RdfStreamType.QUADS
+          case "GRAPHS" => RdfStreamType.GRAPHS
           case _ => throw IllegalArgumentException()
         ),
       generalizedStatements = merged.getBoolean("generalized-statements"),

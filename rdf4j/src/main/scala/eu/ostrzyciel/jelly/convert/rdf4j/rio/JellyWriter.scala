@@ -53,9 +53,9 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
 
   override def consumeStatement(st: Statement): Unit =
     checkWritingStarted()
-    val rows = if options.streamType.isRdfStreamTypeTriples then
+    val rows = if options.streamType.isTriples then
       encoder.addTripleStatement(st)
-    else if options.streamType.isRdfStreamTypeQuads then
+    else if options.streamType.isQuads then
       encoder.addQuadStatement(st)
     else
       throw new IllegalStateException(s"Unsupported stream type: ${options.streamType}")

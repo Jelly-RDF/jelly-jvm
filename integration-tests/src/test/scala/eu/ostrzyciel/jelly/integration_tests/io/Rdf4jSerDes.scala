@@ -39,10 +39,10 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
     writer.endRDF()
 
   override def writeTriplesJelly(os: OutputStream, model: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
-    write(os, model, opt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES), frameSize)
+    write(os, model, opt.withStreamType(RdfStreamType.TRIPLES), frameSize)
 
   override def writeQuadsJelly(os: OutputStream, dataset: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
-    write(os, dataset, opt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS), frameSize)
+    write(os, dataset, opt.withStreamType(RdfStreamType.QUADS), frameSize)
 
 
 

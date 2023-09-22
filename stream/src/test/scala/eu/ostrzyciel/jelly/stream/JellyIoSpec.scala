@@ -16,23 +16,23 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   val cases = Seq(
     ("triples, frame size 1", Triples1.encodedFull(
-      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
       1,
     )),
     ("triples, frame size 20", Triples1.encodedFull(
-      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
       20,
     )),
     ("triples (norepeat), frame size 5", Triples2NoRepeat.encodedFull(
-      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
       5
     )),
     ("quads, frame size 6", Quads1.encodedFull(
-      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS),
+      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS),
       6,
     )),
     ("graphs, frame size 3", Graphs1.encodedFull(
-      JellyOptions.bigGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS),
+      JellyOptions.bigGeneralized.withStreamType(RdfStreamType.GRAPHS),
       3,
     ))
   )

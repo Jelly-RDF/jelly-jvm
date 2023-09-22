@@ -16,7 +16,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "decode triple statements" in {
       val decoder = MockConverterFactory.triplesDecoder
       val decoded = Triples1
-        .encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES))
+        .encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Triples1.mrl)
     }
@@ -25,7 +25,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.triplesDecoder
       val decoded = Triples2NoRepeat
         .encoded(JellyOptions.smallGeneralized
-          .withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+          .withStreamType(RdfStreamType.TRIPLES)
           .withUseRepeat(false)
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
@@ -35,7 +35,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a quad in a TRIPLES stream" in {
       val decoder = MockConverterFactory.triplesDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
         RdfQuad(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -56,9 +56,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "ignore duplicate stream options" in {
       val decoder = MockConverterFactory.triplesDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
         JellyOptions.smallGeneralized
-          .withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+          .withStreamType(RdfStreamType.TRIPLES)
           .withUseRepeat(false),
       ))
 
@@ -71,7 +71,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on RdfRepeat without preceding value" in {
       val decoder = MockConverterFactory.triplesDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
         RdfTriple(TERM_REPEAT, TERM_REPEAT, TERM_REPEAT),
       ))
       decoder.ingestRow(data.head)
@@ -84,7 +84,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on RdfRepeat in a quoted triple" in {
       val decoder = MockConverterFactory.triplesDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
         RdfTriple(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -111,7 +111,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on unset term kind" in {
       val decoder = MockConverterFactory.triplesDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
         RdfTriple(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -128,7 +128,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on unset literal kind" in {
       val decoder = MockConverterFactory.triplesDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
         RdfTriple(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -148,7 +148,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.quadsDecoder
       val decoded = Quads1
         .encoded(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS)
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Quads1.mrl)
@@ -159,7 +159,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoded = Quads2NoRepeat
         .encoded(
           JellyOptions.smallGeneralized
-            .withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+            .withStreamType(RdfStreamType.QUADS)
             .withUseRepeat(false)
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
@@ -170,7 +170,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.quadsDecoder
       val decoded = Quads3RepeatDefault
         .encoded(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS)
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Quads3RepeatDefault.mrl)
@@ -179,7 +179,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a triple in a QUADS stream" in {
       val decoder = MockConverterFactory.quadsDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS),
         RdfTriple(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -196,7 +196,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a graph start in a QUADS stream" in {
       val decoder = MockConverterFactory.quadsDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS),
         RdfGraphStart(RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))),
       ))
       decoder.ingestRow(data.head)
@@ -209,7 +209,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a graph end in a QUADS stream" in {
       val decoder = MockConverterFactory.quadsDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS),
         RdfGraphEnd(),
       ))
       decoder.ingestRow(data.head)
@@ -225,7 +225,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.graphsDecoder
       val decoded = Graphs1
         .encoded(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS)
+          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS)
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
 
@@ -244,7 +244,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a quad in a GRAPHS stream" in {
       val decoder = MockConverterFactory.graphsDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
         RdfQuad(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -262,7 +262,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a graph end before a graph start" in {
       val decoder = MockConverterFactory.graphsDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
         RdfTriple(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -282,7 +282,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on graph term repeat in graph name" in {
       val decoder = MockConverterFactory.graphsDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
         RdfGraphStart(RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))),
       ))
       decoder.ingestRow(data.head)
@@ -295,7 +295,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on unset graph term type" in {
       val decoder = MockConverterFactory.graphsDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
         RdfGraphStart(),
       ))
       decoder.ingestRow(data.head)
@@ -311,7 +311,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.graphsAsQuadsDecoder
       val decoded = Graphs1
         .encoded(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS)
+          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS)
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Graphs1.mrlQuads)
@@ -320,7 +320,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a triple before a graph start" in {
       val decoder = MockConverterFactory.graphsAsQuadsDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
         RdfTriple(
           RdfTerm(RdfTerm.Term.Bnode("1")),
           RdfTerm(RdfTerm.Term.Bnode("2")),
@@ -337,9 +337,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
 
   "an AnyStatementDecoder" should {
     val cases = Seq(
-      (Triples1, RdfStreamType.RDF_STREAM_TYPE_TRIPLES, "triples", Triples1.mrl),
-      (Quads1, RdfStreamType.RDF_STREAM_TYPE_QUADS, "quads", Quads1.mrl),
-      (Graphs1, RdfStreamType.RDF_STREAM_TYPE_GRAPHS, "graphs", Graphs1.mrlQuads),
+      (Triples1, RdfStreamType.TRIPLES, "triples", Triples1.mrl),
+      (Quads1, RdfStreamType.QUADS, "quads", Quads1.mrl),
+      (Graphs1, RdfStreamType.GRAPHS, "graphs", Graphs1.mrlQuads),
     )
 
     for ((testCase, streamType, streamName, expected) <- cases) do
@@ -376,8 +376,8 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "should throw when encountering stream options twice" in {
       val decoder = MockConverterFactory.anyStatementDecoder
       val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
-        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
+        JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
       ))
       decoder.ingestRow(data.head)
       val error = intercept[RdfProtoDeserializationError] {
@@ -388,11 +388,11 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   }
 
   val streamTypeCases = Seq(
-    (MockConverterFactory.triplesDecoder, "Triples", RdfStreamType.RDF_STREAM_TYPE_QUADS),
-    (MockConverterFactory.quadsDecoder, "Quads", RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
-    (MockConverterFactory.graphsDecoder, "Graphs", RdfStreamType.RDF_STREAM_TYPE_QUADS),
-    (MockConverterFactory.graphsAsQuadsDecoder, "GraphsAsQuads", RdfStreamType.RDF_STREAM_TYPE_TRIPLES),
-    (MockConverterFactory.anyStatementDecoder, "AnyStatement", RdfStreamType.RDF_STREAM_TYPE_UNSPECIFIED),
+    (MockConverterFactory.triplesDecoder, "Triples", RdfStreamType.QUADS),
+    (MockConverterFactory.quadsDecoder, "Quads", RdfStreamType.TRIPLES),
+    (MockConverterFactory.graphsDecoder, "Graphs", RdfStreamType.QUADS),
+    (MockConverterFactory.graphsAsQuadsDecoder, "GraphsAsQuads", RdfStreamType.TRIPLES),
+    (MockConverterFactory.anyStatementDecoder, "AnyStatement", RdfStreamType.UNSPECIFIED),
   )
 
   for (decoder, decName, streamType) <- streamTypeCases do

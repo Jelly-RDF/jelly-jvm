@@ -32,7 +32,7 @@ object JellyWriterSettings:
   val STREAM_TYPE = new ClassRioSetting[RdfStreamType](
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.streamType",
     "Stream type",
-    RdfStreamType.RDF_STREAM_TYPE_TRIPLES
+    RdfStreamType.TRIPLES
   )
 
   val ALLOW_GENERALIZED_STATEMENTS = new BooleanRioSetting(

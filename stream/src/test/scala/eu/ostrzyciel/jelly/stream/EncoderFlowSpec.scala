@@ -10,8 +10,12 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import scala.concurrent.duration.*
+
 class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   import ProtoTestCases.*
+
+  implicit val patience: PatienceConfig = PatienceConfig(5.seconds, 100.millis)
   implicit val converterFactory: MockConverterFactory.type = MockConverterFactory
   implicit val actorSystem: ActorSystem = ActorSystem()
 
@@ -24,7 +28,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
       )
       encoded.size should be (1)
     }
@@ -37,7 +41,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
       )
       encoded.size should be (3)
     }
@@ -51,7 +55,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples2NoRepeat.encoded(jOptions.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES))
+        Triples2NoRepeat.encoded(jOptions.withStreamType(RdfStreamType.TRIPLES))
       )
       encoded.size should be (1)
     }
@@ -67,7 +71,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
       )
       encoded.size should be (2)
       encoded.head.rows.count(_.row.isTriple) should be (2)
@@ -84,7 +88,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Quads1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS))
+        Quads1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS))
       )
       encoded.size should be (1)
     }
@@ -100,7 +104,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Quads1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS))
+        Quads1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS))
       )
       encoded.size should be (2)
       encoded.head.rows.count(_.row.isQuad) should be (2)
@@ -117,7 +121,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Graphs1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.RDF_STREAM_TYPE_GRAPHS))
+        Graphs1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS))
       )
       encoded.size should be (2)
     }

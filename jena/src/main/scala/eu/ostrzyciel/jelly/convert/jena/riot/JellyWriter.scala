@@ -33,7 +33,7 @@ final class JellyGraphWriter(opt: JellyFormatVariant) extends WriterGraphRIOTBas
 
   override def write(out: OutputStream, graph: Graph, prefixMap: PrefixMap, baseURI: String, context: Context): Unit =
     val encoder = JenaConverterFactory.encoder(
-      opt.opt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_TRIPLES)
+      opt.opt.withStreamType(RdfStreamType.TRIPLES)
     )
     graph.find().asScala
       .flatMap(triple => encoder.addTripleStatement(triple))
@@ -53,7 +53,7 @@ final class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIO
     out: OutputStream, dataset: DatasetGraph, prefixMap: PrefixMap, baseURI: String, context: Context
   ): Unit =
     val encoder = JenaConverterFactory.encoder(
-      opt.opt.withStreamType(RdfStreamType.RDF_STREAM_TYPE_QUADS)
+      opt.opt.withStreamType(RdfStreamType.QUADS)
     )
     dataset.find().asScala
       .flatMap(quad => encoder.addQuadStatement(quad))
