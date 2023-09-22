@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.convert.jena.riot
 
+import eu.ostrzyciel.jelly.convert.jena.riot.JellyFormat.*
 import eu.ostrzyciel.jelly.core.Constants.*
 import org.apache.jena.riot.*
 
@@ -17,8 +18,18 @@ object JellyLanguage:
 
   // Default serialization format
   RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_STRICT)
+
   // Register the writers
-  for format <- JellyFormat.allFormats do
+  private val allFormats = List(
+    JELLY_SMALL_STRICT,
+    JELLY_SMALL_GENERALIZED,
+    JELLY_SMALL_RDF_STAR,
+    JELLY_BIG_STRICT,
+    JELLY_BIG_GENERALIZED,
+    JELLY_BIG_RDF_STAR
+  )
+
+  for format <- allFormats do
     RDFWriterRegistry.register(format, JellyGraphWriterFactory)
     RDFWriterRegistry.register(format, JellyDatasetWriterFactory)
 
