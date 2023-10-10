@@ -344,7 +344,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
 
     for ((testCase, streamType, streamName, expected) <- cases) do
       s"decode $streamName" in {
-        val opts = JellyOptions.smallGeneralized.withStreamType(streamType)
+        val opts = JellyOptions.smallGeneralized
+          .withStreamType(streamType)
+          .withVersion(Constants.protoVersion)
         val decoder = MockConverterFactory.anyStatementDecoder
         val decoded = testCase
           .encoded(opts)
@@ -388,30 +390,42 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   }
 
   val streamTypeCases = Seq(
-    (MockConverterFactory.triplesDecoder, "Triples", RdfStreamType.QUADS),
-    (MockConverterFactory.quadsDecoder, "Quads", RdfStreamType.TRIPLES),
-    (MockConverterFactory.graphsDecoder, "Graphs", RdfStreamType.QUADS),
-    (MockConverterFactory.graphsAsQuadsDecoder, "GraphsAsQuads", RdfStreamType.TRIPLES),
-    (MockConverterFactory.anyStatementDecoder, "AnyStatement", RdfStreamType.UNSPECIFIED),
+    (() => MockConverterFactory.triplesDecoder, "Triples", RdfStreamType.TRIPLES, RdfStreamType.QUADS),
+    (() => MockConverterFactory.quadsDecoder, "Quads", RdfStreamType.QUADS, RdfStreamType.GRAPHS),
+    (() => MockConverterFactory.graphsDecoder, "Graphs", RdfStreamType.GRAPHS, RdfStreamType.QUADS),
+    (() => MockConverterFactory.graphsAsQuadsDecoder, "GraphsAsQuads", RdfStreamType.GRAPHS, RdfStreamType.TRIPLES),
+    (() => MockConverterFactory.anyStatementDecoder, "AnyStatement", RdfStreamType.TRIPLES, RdfStreamType.UNSPECIFIED),
   )
 
-  for (decoder, decName, streamType) <- streamTypeCases do
+  for (decoderFactory, decName, streamType, invalidStreamType) <- streamTypeCases do
     s"a ${decName}Decoder" should {
       "throw exception on an empty stream type" in {
         val data = wrapEncodedFull(Seq(JellyOptions.smallGeneralized))
         val error = intercept[RdfProtoDeserializationError] {
-          decoder.ingestRow(data.head)
+          decoderFactory().ingestRow(data.head)
         }
         error.getMessage should include ("stream type is not")
       }
 
       "throw exception on an invalid stream type" in {
         val data = wrapEncodedFull(Seq(
-          JellyOptions.smallGeneralized.withStreamType(streamType),
+          JellyOptions.smallGeneralized.withStreamType(invalidStreamType),
         ))
         val error = intercept[RdfProtoDeserializationError] {
-          decoder.ingestRow(data.head)
+          decoderFactory().ingestRow(data.head)
         }
         error.getMessage should include ("stream type is not")
+      }
+
+      "throw exception on an unsupported proto version" in {
+        val data = wrapEncodedFull(Seq(
+          JellyOptions.smallGeneralized
+            .withStreamType(streamType)
+            .withVersion(Constants.protoVersion + 1)
+        ))
+        val error = intercept[RdfProtoDeserializationError] {
+          decoderFactory().ingestRow(data.head)
+        }
+        error.getMessage should include("Unsupported proto version")
       }
     }

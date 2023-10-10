@@ -11,7 +11,11 @@ object ProtoTestCases:
   val GRAPH_REPEAT: RdfGraph = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))
 
   def wrapEncoded(rows: Seq[RowValue]): Seq[RdfStreamRow.Row] = rows map {
-    case v: RdfStreamOptions => RdfStreamRow.Row.Options(v)
+    case v: RdfStreamOptions => v.version match
+      // If the version is not set, set it to the current version
+      case 0 => RdfStreamRow.Row.Options(v.withVersion(Constants.protoVersion))
+      // Otherwise assume we are checking version compatibility
+      case _ => RdfStreamRow.Row.Options(v)
     case v: RdfDatatypeEntry => RdfStreamRow.Row.Datatype(v)
     case v: RdfPrefixEntry => RdfStreamRow.Row.Prefix(v)
     case v: RdfNameEntry => RdfStreamRow.Row.Name(v)
