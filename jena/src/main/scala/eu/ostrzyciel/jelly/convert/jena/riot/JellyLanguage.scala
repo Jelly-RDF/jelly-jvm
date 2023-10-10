@@ -20,7 +20,8 @@ object JellyLanguage:
   /**
    * Register the Jelly language and formats in Jena.
    *
-   * This method is idempotent and should be called automatically when the class is loaded.
+   * This method is idempotent and should be called automatically when Jena is initialized.
+   * See: https://jena.apache.org/documentation/notes/system-initialization.html
    * However, you may also want to call this manually if Jena doesn't load the language automatically.
    */
   def register(): Unit = this.synchronized {
