@@ -238,7 +238,10 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   private def emitOptions(): Unit =
     emittedOptions = true
     extraRowsBuffer.append(
-      RdfStreamRow(RdfStreamRow.Row.Options(options))
+      RdfStreamRow(RdfStreamRow.Row.Options(
+        // Override whatever the user set in the options.
+        options.withVersion(Constants.protoVersion)
+      ))
     )
 
 

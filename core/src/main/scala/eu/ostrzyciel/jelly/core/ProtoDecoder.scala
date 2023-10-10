@@ -13,3 +13,12 @@ trait ProtoDecoder[+TOut]:
   def getStreamOpt: Option[RdfStreamOptions]
   
   def ingestRow(row: RdfStreamRow): Option[TOut]
+
+  /**
+   * Checks if the version of the stream is supported.
+   * Throws an exception if not.
+   * @param options Options of the stream.
+   */
+  protected final def checkVersion(options: RdfStreamOptions): Unit =
+    if options.version > Constants.protoVersion then
+      throw new RdfProtoDeserializationError(s"Unsupported proto version: ${options.version}")

@@ -136,6 +136,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
         throw new RdfProtoDeserializationError("Row kind is not set.")
 
   protected def handleOptions(opts: RdfStreamOptions): Unit =
+    checkVersion(opts)
     setStreamOpt(opts)
 
   protected def handleTriple(triple: RdfTriple): Option[TOut] =
@@ -281,6 +282,7 @@ object ProtoDecoderImpl:
           inner.get.ingestRow(row)
 
     private def handleOptions(opts: RdfStreamOptions): Unit =
+      checkVersion(opts)
       if inner.isDefined then
         throw new RdfProtoDeserializationError("Stream options are already set." +
           "The type of the stream cannot be inferred.")
