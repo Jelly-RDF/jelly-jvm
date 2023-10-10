@@ -19,6 +19,10 @@ jobs:
             java: 11
           - os: ubuntu-latest
             java: 17
+          - os: ubuntu-latest
+            # Temurin 21 is not yet available – use early access
+            # https://adoptium.net/en-GB/blog/2023/09/temurin21-delay/
+            java: 21-ea
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
