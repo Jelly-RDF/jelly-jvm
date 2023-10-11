@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.rdf4j.Rdf4jConverterFactory
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
-import eu.ostrzyciel.jelly.stream.{DecoderFlow, EncoderFlow, JellyIo}
+import eu.ostrzyciel.jelly.stream.*
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.*
 import org.eclipse.rdf4j.model.Statement
@@ -32,12 +32,12 @@ class Rdf4jReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Seq[S
 
   override def writeTriplesJelly(os: OutputStream, model: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
     val f = Source.fromIterator(() => model.iterator)
-      .via(EncoderFlow.fromFlatTriples(EncoderFlow.Options(frameSize * 10), opt))
+      .via(EncoderFlow.fromFlatTriples(StreamRowCountLimiter(frameSize), opt))
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)
 
   override def writeQuadsJelly(os: OutputStream, dataset: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
     val f = Source.fromIterator(() => dataset.iterator)
-      .via(EncoderFlow.fromFlatQuads(EncoderFlow.Options(frameSize * 10), opt))
+      .via(EncoderFlow.fromFlatQuads(StreamRowCountLimiter(frameSize), opt))
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)

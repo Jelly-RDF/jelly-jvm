@@ -22,7 +22,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   "fromFlatTriples" should {
     "encode triples" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
-        .via(EncoderFlow.fromFlatTriples(EncoderFlow.Options(), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.fromFlatTriples(StreamRowCountLimiter(1000), JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -35,7 +35,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
     "encode triples with max message size" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
-        .via(EncoderFlow.fromFlatTriples(EncoderFlow.Options(80), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.fromFlatTriples(ByteSizeLimiter(80), JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -46,10 +46,23 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       encoded.size should be (3)
     }
 
+    "encode triples with max row count" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
+        .via(EncoderFlow.fromFlatTriples(StreamRowCountLimiter(4), JellyOptions.smallGeneralized))
+        .toMat(Sink.seq)(Keep.right)
+        .run().futureValue
+
+      assertEncoded(
+        encoded.flatMap(_.rows),
+        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
+      )
+      encoded.size should be (4)
+    }
+
     "encode triples (norepeat)" in {
       val jOptions = JellyOptions.smallGeneralized.withUseRepeat(false)
       val encoded: Seq[RdfStreamFrame] = Source(Triples2NoRepeat.mrl)
-        .via(EncoderFlow.fromFlatTriples(EncoderFlow.Options(), jOptions))
+        .via(EncoderFlow.fromFlatTriples(StreamRowCountLimiter(1000), jOptions))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -65,7 +78,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode grouped triples" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .grouped(2)
-        .via(EncoderFlow.fromGroupedTriples(EncoderFlow.Options(), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.fromGroupedTriples(None, JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -77,12 +90,30 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       encoded.head.rows.count(_.row.isTriple) should be (2)
       encoded(1).rows.count(_.row.isTriple) should be (2)
     }
+
+    "encode grouped triples with max row count" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
+        .grouped(2)
+        .via(EncoderFlow.fromGroupedTriples(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
+        .toMat(Sink.seq)(Keep.right)
+        .run().futureValue
+
+      assertEncoded(
+        encoded.flatMap(_.rows),
+        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
+      )
+      encoded.size should be (4)
+      encoded.head.rows.count(_.row.isTriple) should be (0)
+      encoded(1).rows.count(_.row.isTriple) should be (1)
+      encoded(2).rows.count(_.row.isTriple) should be (1)
+      encoded(3).rows.count(_.row.isTriple) should be (2)
+    }
   }
 
   "fromFlatQuads" should {
     "encode quads" in {
       val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
-        .via(EncoderFlow.fromFlatQuads(EncoderFlow.Options(), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.fromFlatQuads(StreamRowCountLimiter(1000), JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -98,7 +129,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode grouped quads" in {
       val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
         .grouped(2)
-        .via(EncoderFlow.fromGroupedQuads(EncoderFlow.Options(), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.fromGroupedQuads(None, JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -115,7 +146,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   "fromGraphs" should {
     "encode graphs" in {
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
-        .via(EncoderFlow.fromGraphs(EncoderFlow.Options(), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.fromGraphs(None, JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 

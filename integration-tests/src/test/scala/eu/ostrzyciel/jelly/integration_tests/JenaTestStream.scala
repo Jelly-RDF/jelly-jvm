@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.integration_tests
 
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
-import eu.ostrzyciel.jelly.stream.{DecoderFlow, EncoderFlow}
+import eu.ostrzyciel.jelly.stream.*
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.system.AsyncParser
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
@@ -14,15 +14,15 @@ import scala.jdk.CollectionConverters.*
 case object JenaTestStream extends TestStream:
   import eu.ostrzyciel.jelly.convert.jena.*
 
-  override def tripleSource(is: InputStream, streamOpt: EncoderFlow.Options, jellyOpt: RdfStreamOptions) =
+  override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     Source.fromIterator(() => AsyncParser.asyncParseTriples(is, Lang.NT, "").asScala)
-      .via(EncoderFlow.fromFlatTriples(streamOpt, jellyOpt))
+      .via(EncoderFlow.fromFlatTriples(limiter, jellyOpt))
 
-  override def quadSource(is: InputStream, streamOpt: EncoderFlow.Options, jellyOpt: RdfStreamOptions) =
+  override def quadSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     Source.fromIterator(() => AsyncParser.asyncParseQuads(is, Lang.NQUADS, "").asScala)
-      .via(EncoderFlow.fromFlatQuads(streamOpt, jellyOpt))
+      .via(EncoderFlow.fromFlatQuads(limiter, jellyOpt))
 
-  override def graphSource(is: InputStream, streamOpt: EncoderFlow.Options, jellyOpt: RdfStreamOptions) =
+  override def graphSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     val ds = RDFParser.source(is)
       .lang(Lang.NQ)
       .toDatasetGraph
@@ -31,7 +31,7 @@ case object JenaTestStream extends TestStream:
         Iterator((null, Iterable.from(ds.getDefaultGraph.find.asScala)))
     ).filter((_, g) => g.nonEmpty)
     Source.fromIterator(() => graphs)
-      .via(EncoderFlow.fromGraphs(streamOpt, jellyOpt))
+      .via(EncoderFlow.fromGraphs(Some(limiter), jellyOpt))
 
   override def tripleSink(os: OutputStream)(implicit ec: ExecutionContext) =
     Flow[RdfStreamFrame]
