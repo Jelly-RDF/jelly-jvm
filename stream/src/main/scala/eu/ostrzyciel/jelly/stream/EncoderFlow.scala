@@ -13,22 +13,6 @@ import org.apache.pekko.stream.scaladsl.{Flow, Source}
  * (that it adheres to the appropriate stream type).
  */
 object EncoderFlow:
-  object Options:
-    /**
-     * Build streaming options from the application's config.
-     * @param config app config
-     * @return stream options
-     */
-    def apply(config: Config): Options =
-      Options(
-        config.getInt("jelly.stream.target-message-size"),
-      )
-
-  /**
-   * @param targetMessageSize Target message size in bytes.
-   *                          After the message gets bigger than the target, it gets sent.
-   */
-  final case class Options(targetMessageSize: Int = 32_000)
 
   /**
    * A flow converting a flat stream of triple statements into a stream of [[RdfStreamFrame]]s.
@@ -36,19 +20,19 @@ object EncoderFlow:
    *
    * This flow will wait for enough items to fill the whole gRPC message, which increases latency. To mitigate that,
    * use the [[fromGroupedTriples]] method instead.
-   * @param opt Streaming options.
-   * @param streamOpt Jelly serialization options.
+   * @param limiter frame size limiter (see [[SizeLimiter]]).
+   * @param opt Jelly serialization options.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow.
    */
-  final def fromFlatTriples[TTriple]
-  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
+  final def fromFlatTriples[TTriple](limiter: SizeLimiter, opt: RdfStreamOptions)
+    (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[TTriple, RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.TRIPLES)
+      opt.withStreamType(RdfStreamType.TRIPLES)
     )
-    flatFlow(Flow[TTriple].mapConcat(e => encoder.addTripleStatement(e)), opt)
+    flatFlow(e => encoder.addTripleStatement(e), limiter)
 
   /**
    * A flow converting a flat stream of quad statements into a stream of [[RdfStreamFrame]]s.
@@ -56,19 +40,19 @@ object EncoderFlow:
    *
    * This flow will wait for enough items to fill the whole gRPC message, which increases latency. To mitigate that,
    * use the [[fromGroupedQuads]] method instead.
-   * @param opt Streaming options.
-   * @param streamOpt Jelly serialization options.
+   * @param limiter frame size limiter (see [[SizeLimiter]])
+   * @param opt Jelly serialization options.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
    * @return Pekko Streams flow.
    */
-  final def fromFlatQuads[TQuad]
-  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+  final def fromFlatQuads[TQuad](limiter: SizeLimiter, opt: RdfStreamOptions)
+    (implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[TQuad, RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.QUADS)
+      opt.withStreamType(RdfStreamType.QUADS)
     )
-    flatFlow(Flow[TQuad].mapConcat(e => encoder.addQuadStatement(e)), opt)
+    flatFlow(e => encoder.addQuadStatement(e), limiter)
 
   /**
    * A flow converting a stream of iterables with triple statements into a stream of [[RdfStreamFrame]]s.
@@ -76,19 +60,21 @@ object EncoderFlow:
    *
    * After this flow finishes processing an iterable in the input stream, it is guaranteed to output an
    * [[RdfStreamFrame]], which allows to maintain low latency.
-   * @param opt Streaming options.
-   * @param streamOpt Jelly serialization options.
+   *
+   * @param maybeLimiter frame size limiter (see [[SizeLimiter]]).
+   *                     If None, no size limit is applied (frames are only split by groups).
+   * @param opt Jelly serialization options.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow.
    */
-  final def fromGroupedTriples[TTriple]
-  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
+  final def fromGroupedTriples[TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
+    (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.TRIPLES)
+      opt.withStreamType(RdfStreamType.TRIPLES)
     )
-    groupedFlow(Flow[TTriple].mapConcat(e => encoder.addTripleStatement(e)), opt)
+    groupedFlow(e => encoder.addTripleStatement(e), maybeLimiter)
 
   /**
    * A flow converting a stream of iterables with quad statements into a stream of [[RdfStreamFrame]]s.
@@ -96,61 +82,85 @@ object EncoderFlow:
    *
    * After this flow finishes processing an iterable in the input stream, it is guaranteed to output an
    * [[RdfStreamFrame]], which allows to maintain low latency.
-   * @param opt Streaming options.
-   * @param streamOpt Jelly serialization options.
+   *
+   * @param maybeLimiter frame size limiter (see [[SizeLimiter]]).
+   *                     If None, no size limit is applied (frames are only split by groups).
+   * @param opt Jelly serialization options.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
    * @return Pekko Streams flow.
    */
-  final def fromGroupedQuads[TQuad]
-  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+  final def fromGroupedQuads[TQuad](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
+    (implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.QUADS)
+      opt.withStreamType(RdfStreamType.QUADS)
     )
-    groupedFlow(Flow[TQuad].mapConcat(e => encoder.addQuadStatement(e)), opt)
+    groupedFlow(e => encoder.addQuadStatement(e), maybeLimiter)
 
   /**
-   * A flow converting a stream of named graphs (node as graph name + iterable of triple statements) into a stream
-   * of [[RdfStreamFrame]]s.
+   * A flow converting a stream of named or unnamed graphs (node as graph name + iterable of triple statements)
+   * into a stream of [[RdfStreamFrame]]s.
    * RDF stream type: GRAPHS.
    *
    * After this flow finishes processing a single graph in the input stream, it is guaranteed to output an
    * [[RdfStreamFrame]], which allows to maintain low latency.
-   * @param opt Streaming options.
-   * @param streamOpt Jelly serialization options.
+   *
+   * @param maybeLimiter frame size limiter (see [[SizeLimiter]]).
+   *                     If None, no size limit is applied (frames are only split by graphs).
+   * @param opt Jelly serialization options.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TNode Type of nodes.
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow.
    */
-  final def fromGraphs[TNode, TTriple]
-  (opt: Options, streamOpt: RdfStreamOptions)(implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+  final def fromGraphs[TNode, TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
+    (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[(TNode, Iterable[TTriple]), RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      streamOpt.withStreamType(RdfStreamType.GRAPHS)
+      opt.withStreamType(RdfStreamType.GRAPHS)
     )
 
-    Flow[(TNode, Iterable[TTriple])]
-      .flatMapConcat { (graphName: TNode, triples: Iterable[TTriple]) =>
-        val it: Iterable[RdfStreamRow] = encoder.startGraph(graphName)
-          .concat(triples.flatMap(triple => encoder.addTripleStatement(triple)))
-          .concat(encoder.endGraph())
-        Source.fromIterator(() => it.iterator)
-          .groupedWeighted(opt.targetMessageSize)(row => row.serializedSize)
-          .map(rows => RdfStreamFrame(rows))
-      }
+    inline def graphAsIterable(graphName: TNode, triples: Iterable[TTriple]): Iterable[RdfStreamRow] =
+      encoder.startGraph(graphName)
+        .concat(triples.flatMap(triple => encoder.addTripleStatement(triple)))
+        .concat(encoder.endGraph())
 
-  private def flatFlow[TIn](encoderFlow: Flow[TIn, RdfStreamRow, NotUsed], opt: Options):
+    maybeLimiter match
+      case Some(limiter) =>
+        Flow[(TNode, Iterable[TTriple])]
+          .flatMapConcat { (graphName: TNode, triples: Iterable[TTriple]) =>
+            Source.fromIterator(() => graphAsIterable(graphName, triples).iterator)
+              .via(limiter.flow)
+              .map(rows => RdfStreamFrame(rows))
+          }
+      case None =>
+        Flow[(TNode, Iterable[TTriple])]
+          .map { (graphName: TNode, triples: Iterable[TTriple]) =>
+            val rows = graphAsIterable(graphName, triples).toSeq
+            RdfStreamFrame(rows)
+          }
+
+
+  private def flatFlow[TIn](transform: TIn => Iterable[RdfStreamRow], limiter: SizeLimiter):
   Flow[TIn, RdfStreamFrame, NotUsed] =
-    encoderFlow
-      .groupedWeighted(opt.targetMessageSize)(row => row.serializedSize)
+    Flow[TIn]
+      .mapConcat(transform)
+      .via(limiter.flow)
       .map(rows => RdfStreamFrame(rows))
 
-  private def groupedFlow[TIn](encoderFlow: Flow[TIn, RdfStreamRow, NotUsed], opt: Options):
+  private def groupedFlow[TIn](transform: TIn => Iterable[RdfStreamRow], maybeLimiter: Option[SizeLimiter]):
   Flow[IterableOnce[TIn], RdfStreamFrame, NotUsed] =
-    Flow[IterableOnce[TIn]]
-      .flatMapConcat { elems =>
-        Source.fromIterator(() => elems.iterator)
-          .via(flatFlow(encoderFlow, opt))
-      }
+    maybeLimiter match
+      case Some(limiter) =>
+        Flow[IterableOnce[TIn]].flatMapConcat(elems => {
+          Source.fromIterator(() => elems.iterator)
+            .via(flatFlow(transform, limiter))
+        })
+      case None =>
+        Flow[IterableOnce[TIn]].map(elems => {
+          val rows = elems.iterator
+            .flatMap(transform)
+            .toSeq
+          RdfStreamFrame(rows)
+        })

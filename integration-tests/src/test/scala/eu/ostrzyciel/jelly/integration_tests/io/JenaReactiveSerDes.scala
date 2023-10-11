@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.jena.*
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
-import eu.ostrzyciel.jelly.stream.{EncoderFlow, EncoderSource, JellyIo}
+import eu.ostrzyciel.jelly.stream.*
 import org.apache.jena.query.Dataset
 import org.apache.jena.rdf.model.Model
 import org.apache.pekko.stream.Materializer
@@ -25,12 +25,14 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
 
   def writeQuadsJelly
   (os: OutputStream, dataset: Dataset, opt: RdfStreamOptions, frameSize: Int): Unit =
-    val f = EncoderSource.fromDatasetAsQuads(dataset, EncoderFlow.Options(), opt)(jenaIterableAdapter, jenaConverterFactory)
+    val f = EncoderSource.fromDatasetAsQuads(dataset, ByteSizeLimiter(32_000), opt)
+      (jenaIterableAdapter, jenaConverterFactory)
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)
 
   def writeTriplesJelly
   (os: OutputStream, model: Model, opt: RdfStreamOptions, frameSize: Int): Unit =
-    val f = EncoderSource.fromGraph(model, EncoderFlow.Options(), opt)(jenaIterableAdapter, jenaConverterFactory)
+    val f = EncoderSource.fromGraph(model, ByteSizeLimiter(32_000), opt)
+      (jenaIterableAdapter, jenaConverterFactory)
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)

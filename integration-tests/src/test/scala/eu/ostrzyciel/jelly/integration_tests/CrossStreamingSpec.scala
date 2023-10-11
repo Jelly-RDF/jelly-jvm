@@ -56,10 +56,12 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     ("big default", JellyOptions.bigGeneralized),
   )
 
-  private val streamingOptions: Seq[(String, EncoderFlow.Options)] = Seq(
-    ("message size: 32_000", EncoderFlow.Options(32_000)),
-    ("message size: 500", EncoderFlow.Options(500)),
-    ("message size: 2_000_000", EncoderFlow.Options(2_000_000)),
+  private val sizeLimiters: Seq[(String, SizeLimiter)] = Seq(
+    ("message byte size: 32_000", ByteSizeLimiter(32_000)),
+    ("message byte size: 500", ByteSizeLimiter(500)),
+    ("message byte size: 2_000_000", ByteSizeLimiter(2_000_000)),
+    ("stream row count: 5", StreamRowCountLimiter(5)),
+    ("stream row count: 200", StreamRowCountLimiter(200)),
   )
 
   final case class CaseKey(streamType: String, encoder: String, jOpt: String, sOpt: String, caseName: String)
@@ -93,8 +95,8 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     s"$encName encoder" when {
       for (decName, decFlow) <- implementations do
       for (jOptName, jOpt) <- jellyOptions do
-      for (sOptName, sOpt) <- streamingOptions do
-        s"streaming to a $decName decoder, $jOptName, $sOptName" should {
+      for (limiterName, limiter) <- sizeLimiters do
+        s"streaming to a $decName decoder, $jOptName, $limiterName" should {
           // Triples
           for (caseName, sourceFile) <- TripleTests.files do
             val sourceGraph = TripleTests.graphs(caseName)
@@ -102,13 +104,13 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
               val is = new FileInputStream(sourceFile)
               val os = new ByteArrayOutputStream()
               var encSize = 0
-              encFlow.tripleSource(is, sOpt, jOpt)
+              encFlow.tripleSource(is, limiter, jOpt)
                 .wireTap(f => encSize += f.serializedSize)
                 .toMat(decFlow.tripleSink(os))(Keep.right)
                 .run()
                 .futureValue
 
-              val ck = CaseKey("triples", encName, jOptName, sOptName, caseName)
+              val ck = CaseKey("triples", encName, jOptName, limiterName, caseName)
               encodedSizes(ck) = encSize
               val resultGraph = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
                 .lang(Lang.TURTLE)
@@ -129,13 +131,13 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
               val is = new FileInputStream(sourceFile)
               val os = new ByteArrayOutputStream()
               var encSize = 0
-              encFlow.quadSource(is, sOpt, jOpt)
+              encFlow.quadSource(is, limiter, jOpt)
                 .wireTap(f => encSize += f.serializedSize)
                 .toMat(decFlow.quadSink(os))(Keep.right)
                 .run()
                 .futureValue
 
-              val ck = CaseKey("quads", encName, jOptName, sOptName, caseName)
+              val ck = CaseKey("quads", encName, jOptName, limiterName, caseName)
               encodedSizes(ck) = encSize
               val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
                 .lang(Lang.NQ)
@@ -147,13 +149,13 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
               val is = new FileInputStream(sourceFile)
               val os = new ByteArrayOutputStream()
               var encSize = 0
-              encFlow.graphSource(is, sOpt, jOpt)
+              encFlow.graphSource(is, limiter, jOpt)
                 .wireTap(f => encSize += f.serializedSize)
                 .toMat(decFlow.graphSink(os))(Keep.right)
                 .run()
                 .futureValue
 
-              val ck = CaseKey("graphs", encName, jOptName, sOptName, caseName)
+              val ck = CaseKey("graphs", encName, jOptName, limiterName, caseName)
               encodedSizes(ck) = encSize
               val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
                 .lang(Lang.NQ)

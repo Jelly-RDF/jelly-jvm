@@ -13,46 +13,47 @@ object EncoderSource:
    * RDF stream type: TRIPLES.
    *
    * @param graph the RDF graph to be streamed
-   * @param opt streaming options
-   * @param streamOpt Jelly serialization options
+   * @param limiter frame size limiter (see [[SizeLimiter]])
+   * @param opt Jelly serialization options
    * @param adapter graph -> triples adapter (see implementations of [[IterableAdapter]])
    * @param factory implementation of [[ConverterFactory]] (e.g., JenaConverterFactory)
    * @tparam TGraph type of the RDF graph
    * @tparam TTriple type of the RDF triple
    * @return Pekko Streams source of RDF stream frames
    */
-  def fromGraph[TGraph, TTriple](graph: TGraph, opt: Options, streamOpt: RdfStreamOptions)
+  def fromGraph[TGraph, TTriple](graph: TGraph, limiter: SizeLimiter, opt: RdfStreamOptions)
     (implicit adapter: IterableAdapter[?, TTriple, ?, TGraph, ?], factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asTriples(graph))
-      .via(fromFlatTriples(opt, streamOpt))
+      .via(fromFlatTriples(limiter, opt))
 
   /**
    * A source of RDF stream frames from an RDF dataset implementation (quads format).
    * RDF stream type: QUADS.
    *
    * @param dataset the RDF dataset to be streamed
-   * @param opt streaming options
-   * @param streamOpt Jelly serialization options
+   * @param limiter frame size limiter (see [[SizeLimiter]])
+   * @param opt Jelly serialization options
    * @param adapter dataset -> quads adapter (see implementations of [[IterableAdapter]])
    * @param factory implementation of [[ConverterFactory]] (e.g., JenaConverterFactory)
    * @tparam TDataset type of the RDF dataset
    * @tparam TQuad type of the RDF quad
    * @return Pekko Streams source of RDF stream frames
    */
-  def fromDatasetAsQuads[TDataset, TQuad](dataset: TDataset, opt: Options, streamOpt: RdfStreamOptions)
+  def fromDatasetAsQuads[TDataset, TQuad](dataset: TDataset, limiter: SizeLimiter, opt: RdfStreamOptions)
     (implicit adapter: IterableAdapter[?, ?, TQuad, ?, TDataset], factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asQuads(dataset))
-      .via(fromFlatQuads(opt, streamOpt))
+      .via(fromFlatQuads(limiter, opt))
 
   /**
    * A source of RDF stream frames from an RDF dataset implementation (graphs format).
    * RDF stream type: GRAPHS.
    *
    * @param dataset the RDF dataset to be streamed
-   * @param opt streaming options
-   * @param streamOpt Jelly serialization options
+   * @param maybeLimiter frame size limiter (see [[SizeLimiter]]).
+   *                     If None, no size limit is applied (frames are only split by graphs).
+   * @param opt Jelly serialization options
    * @param adapter dataset -> graphs adapter (see implementations of [[IterableAdapter]])
    * @param factory implementation of [[ConverterFactory]] (e.g., JenaConverterFactory)
    * @tparam TDataset type of the RDF dataset
@@ -60,9 +61,10 @@ object EncoderSource:
    * @tparam TTriple type of the RDF triple
    * @return
    */
-  def fromDatasetAsGraphs[TDataset, TNode, TTriple](dataset: TDataset, opt: Options, streamOpt: RdfStreamOptions)
+  def fromDatasetAsGraphs[TDataset, TNode, TTriple]
+  (dataset: TDataset, maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (implicit adapter: IterableAdapter[TNode, TTriple, ?, ?, TDataset],
       factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asGraphs(dataset))
-      .via(fromGraphs(opt, streamOpt))
+      .via(fromGraphs(maybeLimiter, opt))
