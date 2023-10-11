@@ -7,6 +7,7 @@ import org.apache.jena.graph.Graph
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
 import org.apache.jena.sparql.core.DatasetGraph
 import org.apache.jena.sparql.util.IsoMatcher
+import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures
@@ -23,6 +24,8 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
   implicit val actorSystem: ActorSystem = ActorSystem()
   implicit val ec: ExecutionContext = actorSystem.getDispatcher
   implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
+  
+  JenaSystem.init()
 
   private val implementations: Seq[(String, TestStream)] = Seq(
     ("Jena", JenaTestStream),
