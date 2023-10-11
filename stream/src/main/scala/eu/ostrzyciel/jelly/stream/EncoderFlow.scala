@@ -1,7 +1,6 @@
 package eu.ostrzyciel.jelly.stream
 
-import com.typesafe.config.Config
-import eu.ostrzyciel.jelly.core.ConverterFactory
+import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoEncoder}
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.{Flow, Source}
@@ -100,7 +99,8 @@ object EncoderFlow:
 
   /**
    * A flow converting a stream of named or unnamed graphs (node as graph name + iterable of triple statements)
-   * into a stream of [[RdfStreamFrame]]s.
+   * into a stream of [[RdfStreamFrame]]s. Each element in the output stream may contain one graph or a part of
+   * a graph (if the frame size limiter is used). Two different graphs will never occur in the same frame.
    * RDF stream type: GRAPHS.
    *
    * After this flow finishes processing a single graph in the input stream, it is guaranteed to output an
@@ -120,27 +120,40 @@ object EncoderFlow:
     val encoder = factory.encoder(
       opt.withStreamType(RdfStreamType.GRAPHS)
     )
+    Flow[(TNode, Iterable[TTriple])]
+      // Make each graph into a 1-element "group"
+      .map(Seq(_))
+      .via(groupedFlow[(TNode, Iterable[TTriple])](graphAsIterable(encoder), maybeLimiter))
 
-    inline def graphAsIterable(graphName: TNode, triples: Iterable[TTriple]): Iterable[RdfStreamRow] =
+  /**
+   * A flow converting a stream of iterables with named or unnamed graphs (node as graph name + iterable of triple
+   * statements) into a stream of [[RdfStreamFrame]]s. Each element in the output stream may contain multiple graphs,
+   * a single graph, or a part of a graph (if the frame size limiter is used).
+   *
+   * After this flow finishes processing an iterable in the input stream, it is guaranteed to output an
+   * [[RdfStreamFrame]], which allows to maintain low latency.
+   * @param maybeLimiter frame size limiter (see [[SizeLimiter]]).
+   *                     If None, no size limit is applied (frames are only split by groups).
+   * @param opt Jelly serialization options.
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+   * @tparam TNode Type of nodes.
+   * @tparam TTriple Type of triple statements.
+   * @return Pekko Streams flow.
+   */
+  final def fromGroupedGraphs[TNode, TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
+    (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+  Flow[IterableOnce[(TNode, Iterable[TTriple])], RdfStreamFrame, NotUsed] =
+    val encoder = factory.encoder(
+      opt.withStreamType(RdfStreamType.GRAPHS)
+    )
+    groupedFlow[(TNode, Iterable[TTriple])](graphAsIterable(encoder), maybeLimiter)
+
+  private def graphAsIterable[TEncoder <: ProtoEncoder[TNode, TTriple, ?, ?], TNode, TTriple](encoder: TEncoder):
+  ((TNode, Iterable[TTriple])) => Iterable[RdfStreamRow] =
+    (graphName: TNode, triples: Iterable[TTriple]) =>
       encoder.startGraph(graphName)
         .concat(triples.flatMap(triple => encoder.addTripleStatement(triple)))
         .concat(encoder.endGraph())
-
-    maybeLimiter match
-      case Some(limiter) =>
-        Flow[(TNode, Iterable[TTriple])]
-          .flatMapConcat { (graphName: TNode, triples: Iterable[TTriple]) =>
-            Source.fromIterator(() => graphAsIterable(graphName, triples).iterator)
-              .via(limiter.flow)
-              .map(rows => RdfStreamFrame(rows))
-          }
-      case None =>
-        Flow[(TNode, Iterable[TTriple])]
-          .map { (graphName: TNode, triples: Iterable[TTriple]) =>
-            val rows = graphAsIterable(graphName, triples).toSeq
-            RdfStreamFrame(rows)
-          }
-
 
   private def flatFlow[TIn](transform: TIn => Iterable[RdfStreamRow], limiter: SizeLimiter):
   Flow[TIn, RdfStreamFrame, NotUsed] =

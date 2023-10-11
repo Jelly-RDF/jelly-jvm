@@ -156,4 +156,48 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       )
       encoded.size should be (2)
     }
+
+    "encode graphs with max row count" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
+        .via(EncoderFlow.fromGraphs(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
+        .toMat(Sink.seq)(Keep.right)
+        .run().futureValue
+
+      assertEncoded(
+        encoded.flatMap(_.rows),
+        Graphs1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS))
+      )
+      // 1 additional split due to split by graph
+      encoded.size should be (5)
+    }
+  }
+
+  "fromGroupedGraphs" should {
+    "encode grouped graphs" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
+        .grouped(2)
+        .via(EncoderFlow.fromGroupedGraphs(None, JellyOptions.smallGeneralized))
+        .toMat(Sink.seq)(Keep.right)
+        .run().futureValue
+
+      assertEncoded(
+        encoded.flatMap(_.rows),
+        Graphs1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS))
+      )
+      encoded.size should be (1)
+    }
+
+    "encode grouped graphs with max row count" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
+        .grouped(2)
+        .via(EncoderFlow.fromGroupedGraphs(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
+        .toMat(Sink.seq)(Keep.right)
+        .run().futureValue
+
+      assertEncoded(
+        encoded.flatMap(_.rows),
+        Graphs1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS))
+      )
+      encoded.size should be (4)
+    }
   }
