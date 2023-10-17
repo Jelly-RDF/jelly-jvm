@@ -4,6 +4,7 @@ import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -13,10 +14,11 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStre
 /**
  * Tests for IO ser/des (Jena RIOT, RDF4J Rio, and semi-reactive IO over Pekko Streams).
  */
-class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures:
+class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   implicit val as: ActorSystem = ActorSystem("test")
 
-  JenaSystem.init()
+  override def beforeAll(): Unit =
+    JenaSystem.init()
 
   val casesTriples: Seq[(String, File)] = Seq[String](
     "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.nt", "rdf-star-blanks.nt"
