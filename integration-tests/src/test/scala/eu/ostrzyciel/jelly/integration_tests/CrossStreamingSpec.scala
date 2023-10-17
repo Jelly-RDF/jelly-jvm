@@ -10,6 +10,7 @@ import org.apache.jena.sparql.util.IsoMatcher
 import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -20,12 +21,13 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 
-class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures:
+class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   implicit val actorSystem: ActorSystem = ActorSystem()
   implicit val ec: ExecutionContext = actorSystem.getDispatcher
   implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
-  
-  JenaSystem.init()
+
+  override def beforeAll(): Unit =
+    JenaSystem.init()
 
   private val implementations: Seq[(String, TestStream)] = Seq(
     ("Jena", JenaTestStream),
