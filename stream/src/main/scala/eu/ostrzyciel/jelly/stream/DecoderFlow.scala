@@ -94,6 +94,20 @@ object DecoderFlow:
     flatStream(factory.graphsDecoder)
 
   /**
+   * A flow converting a graphs stream of [[RdfStreamFrame]]s into a stream of iterables with tuples 
+   * (graph name; triples).
+   * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
+   * RDF stream type: GRAPHS.
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+   * @tparam TNode Type of RDF nodes.
+   * @tparam TTriple Type of triple statements.
+   * @return Pekko Streams flow
+   */
+  def graphsToGrouped[TNode, TTriple](implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+  Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] =
+    groupedStream(factory.graphsDecoder)
+
+  /**
    * A flow converting any Jelly stream of [[RdfStreamFrame]]s into a flat stream of RDF statements (triples or quads).
    * The type of RDF statements is determined by the stream type.
    * The stream must have a set stream type (UNSPECIFIED is not allowed) and the stream type must not change

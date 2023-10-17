@@ -152,6 +152,24 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
+  "graphsToGrouped" should {
+    for n <- Seq(1, 2, 100) do
+      s"decode graphs as groups, frame size: $n" in {
+        val encoded = Graphs1.encodedFull(
+          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
+          n,
+        )
+        val decoded: Seq[Seq[(Node, Iterable[Triple])]] = Source(encoded)
+          .via(DecoderFlow.graphsToGrouped)
+          .map(_.iterator.toSeq)
+          .toMat(Sink.seq)(Keep.right)
+          .run().futureValue
+
+        assertDecoded(decoded.flatten.flatMap(_._2), Graphs1.mrl.flatMap(_._2))
+        decoded.size should be (encoded.size)
+      }
+  }
+
   val anyCases = Seq(
     (Triples1, Triples1.mrl, RdfStreamType.TRIPLES, "triples"),
     (Quads1, Quads1.mrl, RdfStreamType.QUADS, "quads"),
