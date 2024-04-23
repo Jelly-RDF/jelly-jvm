@@ -11,21 +11,136 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   import ProtoDecoderImpl.*
   import ProtoTestCases.*
 
+  "checkLogicalStreamType" should {
+    val decoderFactories = Seq(
+      ("TriplesDecoder", (MockConverterFactory.triplesDecoder, PhysicalStreamType.TRIPLES)),
+      ("QuadsDecoder", (MockConverterFactory.quadsDecoder, PhysicalStreamType.QUADS)),
+      ("GraphsAsQuadsDecoder", (MockConverterFactory.graphsAsQuadsDecoder, PhysicalStreamType.GRAPHS)),
+      ("GraphsDecoder", (MockConverterFactory.graphsDecoder, PhysicalStreamType.GRAPHS)),
+    ).toMap
+    val logicalStreamTypeSets = Seq(
+      (
+        Seq(LogicalStreamType.FLAT_TRIPLES),
+        Seq("TriplesDecoder")
+      ),
+      (
+        Seq(LogicalStreamType.FLAT_QUADS),
+        Seq("QuadsDecoder", "GraphsAsQuadsDecoder")
+      ),
+      (
+        Seq(
+          LogicalStreamType.GRAPHS,
+          LogicalStreamType.SUBJECT_GRAPHS,
+        ),
+        Seq("TriplesDecoder")
+      ),
+      (
+        Seq(
+          LogicalStreamType.DATASETS,
+          LogicalStreamType.NAMED_GRAPHS,
+          LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS,
+        ),
+        Seq("QuadsDecoder", "GraphsDecoder", "GraphsAsQuadsDecoder")
+      )
+    )
+
+    for
+      (logicalStreamTypeSet, decoders) <- logicalStreamTypeSets
+      decoderName <- decoders
+    do
+      val lst = logicalStreamTypeSet.head
+      val (decoderF, pst) = decoderFactories(decoderName)
+
+      f"throw exception when expecting logical type $lst on a stream with no logical type, with $decoderName" in {
+        val decoder = decoderF(Some(lst))
+        val data = wrapEncodedFull(Seq(
+          JellyOptions.smallGeneralized
+            .withPhysicalType(pst)
+            .withLogicalType(LogicalStreamType.UNSPECIFIED)
+        ))
+        val error = intercept[RdfProtoDeserializationError] {
+          decoder.ingestRow(data.head)
+        }
+        error.getMessage should include("Expected logical stream type")
+      }
+
+      for lstOfStream <- logicalStreamTypeSet do
+        f"accept stream with logical type $lstOfStream when expecting $lst, with $decoderName" in {
+          val decoder = decoderF(Some(lst))
+          val data = wrapEncodedFull(Seq(
+            JellyOptions.smallGeneralized
+              .withPhysicalType(pst)
+              .withLogicalType(lstOfStream)
+          ))
+          decoder.ingestRow(data.head)
+          decoder.getStreamOpt.get.logicalType should be (lstOfStream)
+        }
+
+    val xd = decoderFactories.groupBy(_._2._2)
+
+    for
+      (pst, decs) <- decoderFactories.groupBy(_._2._2)
+      (decoderName, (decoderF, _)) <- decs
+      (lstSet, _) <- logicalStreamTypeSets.filterNot(x => x._2.exists(y => decs.exists(z => z._1 == y)))
+      lstOfStream <- lstSet
+    do
+      f"throw exception that a stream with logical type $lstOfStream is incompatible with $pst, with $decoderName" in {
+        val decoder = decoderF(None)
+        val data = wrapEncodedFull(Seq(
+          JellyOptions.smallGeneralized
+            .withPhysicalType(pst)
+            .withLogicalType(lstOfStream)
+        ))
+        val error = intercept[RdfProtoDeserializationError] {
+          decoder.ingestRow(data.head)
+        }
+        error.getMessage should include("is incompatible with physical stream type")
+      }
+  }
+
   // Test body
   "a TriplesDecoder" should {
     "decode triple statements" in {
-      val decoder = MockConverterFactory.triplesDecoder(None)
+      val decoder = MockConverterFactory.triplesDecoder(Some(LogicalStreamType.FLAT_TRIPLES))
       val decoded = Triples1
-        .encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
+        .encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Triples1.mrl)
     }
 
-    "decode triple statements (norepeat)" in {
+    "decode triple statements with unset expected logical stream type" in {
       val decoder = MockConverterFactory.triplesDecoder(None)
+      val decoded = Triples1
+        .encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
+        .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
+      assertDecoded(decoded, Triples1.mrl)
+    }
+
+    "throw exception on unset logical stream type" in {
+      val decoder = MockConverterFactory.triplesDecoder(Some(LogicalStreamType.FLAT_TRIPLES))
+      val data = wrapEncodedFull(Seq(
+        JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.UNSPECIFIED)
+      ))
+      val error = intercept[RdfProtoDeserializationError] {
+        decoder.ingestRow(data.head)
+      }
+      error.getMessage should include ("Expected logical stream type")
+    }
+
+    "decode triple statements (norepeat)" in {
+      val decoder = MockConverterFactory.triplesDecoder(Some(LogicalStreamType.FLAT_TRIPLES))
       val decoded = Triples2NoRepeat
         .encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
           .withUseRepeat(false)
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))

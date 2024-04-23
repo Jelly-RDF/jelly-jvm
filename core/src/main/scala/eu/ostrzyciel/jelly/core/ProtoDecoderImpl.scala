@@ -137,6 +137,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
 
   protected def handleOptions(opts: RdfStreamOptions): Unit =
     checkVersion(opts)
+    checkLogicalStreamType(opts, expLogicalType)
     setStreamOpt(opts)
 
   protected def handleTriple(triple: RdfTriple): Option[TOut] =
@@ -283,6 +284,7 @@ object ProtoDecoderImpl:
 
     private def handleOptions(opts: RdfStreamOptions): Unit =
       checkVersion(opts)
+      checkLogicalStreamType(opts, None)
       if inner.isDefined then
         throw new RdfProtoDeserializationError("Stream options are already set." +
           "The type of the stream cannot be inferred.")
