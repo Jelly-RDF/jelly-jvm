@@ -19,42 +19,51 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   implicit val converterFactory: MockConverterFactory.type = MockConverterFactory
   implicit val actorSystem: ActorSystem = ActorSystem()
 
-  "fromFlatTriples" should {
+  "flatTripleStream" should {
     "encode triples" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
-        .via(EncoderFlow.fromFlatTriples(StreamRowCountLimiter(1000), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.flatTripleStream(StreamRowCountLimiter(1000), JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
       )
       encoded.size should be (1)
     }
 
     "encode triples with max message size" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
-        .via(EncoderFlow.fromFlatTriples(ByteSizeLimiter(80), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.flatTripleStream(ByteSizeLimiter(80), JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
       )
       encoded.size should be (3)
     }
 
     "encode triples with max row count" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
-        .via(EncoderFlow.fromFlatTriples(StreamRowCountLimiter(4), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.flatTripleStream(StreamRowCountLimiter(4), JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
       )
       encoded.size should be (4)
     }
@@ -62,29 +71,35 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode triples (norepeat)" in {
       val jOptions = JellyOptions.smallGeneralized.withUseRepeat(false)
       val encoded: Seq[RdfStreamFrame] = Source(Triples2NoRepeat.mrl)
-        .via(EncoderFlow.fromFlatTriples(StreamRowCountLimiter(1000), jOptions))
+        .via(EncoderFlow.flatTripleStream(StreamRowCountLimiter(1000), jOptions))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples2NoRepeat.encoded(jOptions.withPhysicalType(PhysicalStreamType.TRIPLES))
+        Triples2NoRepeat.encoded(jOptions
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
       )
       encoded.size should be (1)
     }
   }
 
-  "fromGroupedTriples" should {
+  "flatTripleStreamGrouped" should {
     "encode grouped triples" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .grouped(2)
-        .via(EncoderFlow.fromGroupedTriples(None, JellyOptions.smallGeneralized))
+        .via(EncoderFlow.flatTripleStreamGrouped(None, JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
       )
       encoded.size should be (2)
       encoded.head.rows.count(_.row.isTriple) should be (2)
@@ -94,13 +109,16 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode grouped triples with max row count" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .grouped(2)
-        .via(EncoderFlow.fromGroupedTriples(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.flatTripleStreamGrouped(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
       )
       encoded.size should be (4)
       encoded.head.rows.count(_.row.isTriple) should be (0)
@@ -110,32 +128,59 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     }
   }
 
-  "fromFlatQuads" should {
-    "encode quads" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
-        .via(EncoderFlow.fromFlatQuads(StreamRowCountLimiter(1000), JellyOptions.smallGeneralized))
+  "graphStream" should {
+    "encode graphs" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
+        .grouped(2)
+        .via(EncoderFlow.graphStream(None, JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Quads1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS))
+        Triples1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.GRAPHS)
+        )
+      )
+      encoded.size should be(2)
+      encoded.head.rows.count(_.row.isTriple) should be(2)
+      encoded(1).rows.count(_.row.isTriple) should be(2)
+    }
+  }
+
+  "flatQuadStream" should {
+    "encode quads" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
+        .via(EncoderFlow.flatQuadStream(StreamRowCountLimiter(1000), JellyOptions.smallGeneralized))
+        .toMat(Sink.seq)(Keep.right)
+        .run().futureValue
+
+      assertEncoded(
+        encoded.flatMap(_.rows),
+        Quads1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.QUADS)
+          .withLogicalType(LogicalStreamType.FLAT_QUADS)
+        )
       )
       encoded.size should be (1)
     }
   }
 
-  "fromGroupedQuads" should {
+  "flatQuadStreamGrouped" should {
     "encode grouped quads" in {
       val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
         .grouped(2)
-        .via(EncoderFlow.fromGroupedQuads(None, JellyOptions.smallGeneralized))
+        .via(EncoderFlow.flatQuadStreamGrouped(None, JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Quads1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS))
+        Quads1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.QUADS)
+          .withLogicalType(LogicalStreamType.FLAT_QUADS)
+        )
       )
       encoded.size should be (2)
       encoded.head.rows.count(_.row.isQuad) should be (2)
@@ -143,60 +188,93 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     }
   }
 
-  "fromGraphs" should {
-    "encode graphs" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
-        .via(EncoderFlow.fromGraphs(None, JellyOptions.smallGeneralized))
+  "datasetStreamFromQuads" should {
+    "encode datasets" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
+        .grouped(2)
+        .via(EncoderFlow.datasetStreamFromQuads(None, JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Graphs1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS))
+        Quads1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.QUADS)
+          .withLogicalType(LogicalStreamType.DATASETS)
+        )
+      )
+      encoded.size should be(2)
+      encoded.head.rows.count(_.row.isQuad) should be(2)
+      encoded(1).rows.count(_.row.isQuad) should be(2)
+    }
+  }
+
+  "namedGraphStream" should {
+    "encode named graphs" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
+        .via(EncoderFlow.namedGraphStream(None, JellyOptions.smallGeneralized))
+        .toMat(Sink.seq)(Keep.right)
+        .run().futureValue
+
+      assertEncoded(
+        encoded.flatMap(_.rows),
+        Graphs1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.GRAPHS)
+          .withLogicalType(LogicalStreamType.NAMED_GRAPHS)
+        )
       )
       encoded.size should be (2)
     }
 
-    "encode graphs with max row count" in {
+    "encode named graphs with max row count" in {
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
-        .via(EncoderFlow.fromGraphs(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.namedGraphStream(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Graphs1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS))
+        Graphs1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.GRAPHS)
+          .withLogicalType(LogicalStreamType.NAMED_GRAPHS)
+        )
       )
       // 1 additional split due to split by graph
       encoded.size should be (5)
     }
   }
 
-  "fromGroupedGraphs" should {
-    "encode grouped graphs" in {
+  "datasetStream" should {
+    "encode datasets" in {
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
         .grouped(2)
-        .via(EncoderFlow.fromGroupedGraphs(None, JellyOptions.smallGeneralized))
+        .via(EncoderFlow.datasetStream(None, JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Graphs1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS))
+        Graphs1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.GRAPHS)
+          .withLogicalType(LogicalStreamType.DATASETS)
+        )
       )
       encoded.size should be (1)
     }
 
-    "encode grouped graphs with max row count" in {
+    "encode datasets with max row count" in {
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
         .grouped(2)
-        .via(EncoderFlow.fromGroupedGraphs(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.datasetStream(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Graphs1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS))
+        Graphs1.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.GRAPHS)
+          .withLogicalType(LogicalStreamType.DATASETS)
+        )
       )
       encoded.size should be (4)
     }

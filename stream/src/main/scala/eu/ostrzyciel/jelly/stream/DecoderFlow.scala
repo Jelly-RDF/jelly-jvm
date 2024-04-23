@@ -58,7 +58,7 @@ object DecoderFlow:
         frame.rows.flatMap(decoder.ingestRow)
       })
 
-  private sealed abstract class DecoderIngestFlowOps(streamType: PhysicalStreamType):
+  private sealed trait DecoderIngestFlowOps:
     protected final inline def s(strict: Boolean, logicalType: LogicalStreamType): Option[LogicalStreamType] =
       if strict then Some(logicalType) else None
 
@@ -67,7 +67,7 @@ object DecoderFlow:
    */
   private object DecoderIngestFlowOps:
     case object TriplesIngestFlowOps extends
-      DecoderIngestFlowOps(PhysicalStreamType.TRIPLES),
+      DecoderIngestFlowOps,
       InterpretableAs.FlatTripleStream,
       InterpretableAs.GraphStream:
 
@@ -87,7 +87,7 @@ object DecoderFlow:
      * Flow operations for decoding Jelly streams of physical type QUADS.
      */
     case object QuadsIngestFlowOps extends
-      DecoderIngestFlowOps(PhysicalStreamType.QUADS),
+      DecoderIngestFlowOps,
       InterpretableAs.FlatQuadStream,
       InterpretableAs.DatasetStreamOfQuads:
 
@@ -107,7 +107,7 @@ object DecoderFlow:
      * Flow operations for decoding Jelly streams of physical type GRAPHS.
      */
     case object GraphsIngestFlowOps extends
-      DecoderIngestFlowOps(PhysicalStreamType.GRAPHS),
+      DecoderIngestFlowOps,
       InterpretableAs.FlatQuadStream,
       InterpretableAs.DatasetStreamOfQuads,
       InterpretableAs.DatasetStream:
@@ -127,10 +127,10 @@ object DecoderFlow:
       Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] =
         groupedStream(factory.graphsDecoder(s(strict, LogicalStreamType.DATASETS)))
 
-      override def asDatasetStreamFlat[TNode, TTriple](strict: Boolean = false)
+      override def asNamedGraphStream[TNode, TTriple](strict: Boolean = false)
         (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
       Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] =
-        flatStream(factory.graphsDecoder(s(strict, LogicalStreamType.DATASETS)))
+        flatStream(factory.graphsDecoder(s(strict, LogicalStreamType.NAMED_GRAPHS)))
 
     end GraphsIngestFlowOps
 
@@ -138,7 +138,7 @@ object DecoderFlow:
      * Flow operations for decoding Jelly streams of any physical type.
      */
     case object AnyIngestFlowOps extends
-      DecoderIngestFlowOps(PhysicalStreamType.UNSPECIFIED),
+      DecoderIngestFlowOps,
       InterpretableAs.AnyStream:
 
       override def asGroupedStream[TNode, TTriple, TQuad]
@@ -237,7 +237,7 @@ object DecoderFlow:
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      def asDatasetStreamFlat[TNode, TTriple](strict: Boolean = false)
+      def asNamedGraphStream[TNode, TTriple](strict: Boolean = false)
         (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
       Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed]
 

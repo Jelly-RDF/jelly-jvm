@@ -22,7 +22,7 @@ case object Rdf4jTestStream extends TestStream:
     parser.setRDFHandler(collector)
     parser.parse(is)
     Source.fromIterator(() => collector.getStatements.asScala.iterator)
-      .via(EncoderFlow.fromFlatTriples(limiter, jellyOpt))
+      .via(EncoderFlow.flatTripleStream(limiter, jellyOpt))
 
   override def quadSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     val parser = Rio.createParser(RDFFormat.NQUADS)
@@ -30,7 +30,7 @@ case object Rdf4jTestStream extends TestStream:
     parser.setRDFHandler(collector)
     parser.parse(is)
     Source.fromIterator(() => collector.getStatements.asScala.iterator)
-      .via(EncoderFlow.fromFlatQuads(limiter, jellyOpt))
+      .via(EncoderFlow.flatQuadStream(limiter, jellyOpt))
 
   override def graphSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     val parser = Rio.createParser(RDFFormat.NQUADS)
@@ -40,7 +40,7 @@ case object Rdf4jTestStream extends TestStream:
     val graphs = collector.getStatements.asScala.toSeq
       .groupBy(_.getContext)
     Source.fromIterator(() => graphs.iterator)
-      .via(EncoderFlow.fromGraphs(Some(limiter), jellyOpt))
+      .via(EncoderFlow.namedGraphStream(Some(limiter), jellyOpt))
 
   override def tripleSink(os: OutputStream)(implicit ec: ExecutionContext) =
     val writer = Rio.createWriter(RDFFormat.TURTLESTAR, os)

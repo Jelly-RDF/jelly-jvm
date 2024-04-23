@@ -133,7 +133,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
-  "decodeGraphs.asDatasetStreamFlat" should {
+  "decodeGraphs.asNamedGraphStream" should {
     for n <- Seq(1, 2, 100) do
       s"decode graphs, frame size: $n" in {
         val encoded = Graphs1.encodedFull(
@@ -141,7 +141,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           n,
         )
         val decoded: Seq[(Node, Iterable[Triple])] = Source(encoded)
-          .via(DecoderFlow.decodeGraphs.asDatasetStreamFlat())
+          .via(DecoderFlow.decodeGraphs.asNamedGraphStream())
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
 
@@ -176,7 +176,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     (Graphs1, Graphs1.mrlQuads, PhysicalStreamType.GRAPHS, "graphs"),
   )
 
-  "decodeAny.asAnyFlatStream" should {
+  "decodeAny.asFlatStream" should {
     for (testCase, mrl, streamType, name) <- anyCases do
       for n <- Seq(1, 2, 100) do
         s"decode $name stream to flat, frame size: $n" in {
@@ -193,7 +193,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         }
   }
 
-  "decodeAny.asAnyGroupedStream" should {
+  "decodeAny.asGroupedStream" should {
     for (testCase, mrl, streamType, name) <- anyCases do
       for n <- Seq(1, 2, 100) do
         s"decode $name stream to grouped, frame size: $n" in {

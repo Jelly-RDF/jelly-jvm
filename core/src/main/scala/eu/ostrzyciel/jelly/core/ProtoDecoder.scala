@@ -23,6 +23,12 @@ trait ProtoDecoder[+TOut]:
     if options.version > Constants.protoVersion then
       throw new RdfProtoDeserializationError(s"Unsupported proto version: ${options.version}")
 
+  /**
+   * Checks if the logical and physical stream types are compatible. Additionally, if the expected logical stream type
+   * is provided, checks if the actual logical stream type is a subtype of the expected one.
+   * @param options Options of the stream.
+   * @param expLogicalType Expected logical stream type.
+   */
   protected final def checkLogicalStreamType(options: RdfStreamOptions, expLogicalType: Option[LogicalStreamType]):
   Unit =
     val baseLogicalType = options.logicalType.toBaseType
@@ -51,7 +57,9 @@ trait ProtoDecoder[+TOut]:
 
     expLogicalType match
       case Some(v) =>
-        if baseLogicalType != v then
+        val ot = options.logicalType.value
+        val vt = v.value
+        if ot != vt && !ot.toString.endsWith(vt.toString) then
           throw new RdfProtoDeserializationError(s"Expected logical stream type $v, got ${options.logicalType}. " +
             s"${options.logicalType} is not a subtype of $v.")
       case None =>

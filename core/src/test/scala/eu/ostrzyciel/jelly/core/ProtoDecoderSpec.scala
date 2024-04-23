@@ -41,6 +41,13 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS,
         ),
         Seq("QuadsDecoder", "GraphsDecoder", "GraphsAsQuadsDecoder")
+      ),
+      (
+        Seq(
+          LogicalStreamType.NAMED_GRAPHS,
+          LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS,
+        ),
+        Seq("GraphsDecoder")
       )
     )
 
@@ -76,12 +83,10 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           decoder.getStreamOpt.get.logicalType should be (lstOfStream)
         }
 
-    val xd = decoderFactories.groupBy(_._2._2)
-
     for
       (pst, decs) <- decoderFactories.groupBy(_._2._2)
       (decoderName, (decoderF, _)) <- decs
-      (lstSet, _) <- logicalStreamTypeSets.filterNot(x => x._2.exists(y => decs.exists(z => z._1 == y)))
+      (lstSet, _) <- logicalStreamTypeSets.take(4).filterNot(x => x._2.exists(y => decs.exists(z => z._1 == y)))
       lstOfStream <- lstSet
     do
       f"throw exception that a stream with logical type $lstOfStream is incompatible with $pst, with $decoderName" in {

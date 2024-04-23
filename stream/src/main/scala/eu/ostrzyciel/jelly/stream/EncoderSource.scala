@@ -25,7 +25,7 @@ object EncoderSource:
     (implicit adapter: IterableAdapter[?, TTriple, ?, TGraph, ?], factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asTriples(graph))
-      .via(fromFlatTriples(limiter, opt))
+      .via(flatTripleStream(limiter, opt))
 
   /**
    * A source of RDF stream frames from an RDF dataset implementation (quads format).
@@ -44,7 +44,7 @@ object EncoderSource:
     (implicit adapter: IterableAdapter[?, ?, TQuad, ?, TDataset], factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asQuads(dataset))
-      .via(fromFlatQuads(limiter, opt))
+      .via(flatQuadStream(limiter, opt))
 
   /**
    * A source of RDF stream frames from an RDF dataset implementation (graphs format).
@@ -67,4 +67,4 @@ object EncoderSource:
       factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asGraphs(dataset))
-      .via(fromGraphs(maybeLimiter, opt))
+      .via(namedGraphStream(maybeLimiter, opt))
