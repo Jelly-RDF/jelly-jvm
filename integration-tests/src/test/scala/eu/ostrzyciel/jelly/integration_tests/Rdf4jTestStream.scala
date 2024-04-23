@@ -46,7 +46,7 @@ case object Rdf4jTestStream extends TestStream:
     val writer = Rio.createWriter(RDFFormat.TURTLESTAR, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.triplesToFlat)
+      .via(DecoderFlow.decodeTriples.asFlatTripleStream())
       .toMat(Sink.foreach(st => writer.handleStatement(st)))(Keep.right)
       .mapMaterializedValue(f => f.map(_ => {
         writer.endRDF()
@@ -57,7 +57,7 @@ case object Rdf4jTestStream extends TestStream:
     val writer = Rio.createWriter(RDFFormat.NQUADS, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.quadsToFlat)
+      .via(DecoderFlow.decodeQuads.asFlatQuadStream())
       .toMat(Sink.foreach(st => writer.handleStatement(st)))(Keep.right)
       .mapMaterializedValue(f => f.map(_ => {
         writer.endRDF()
@@ -68,7 +68,7 @@ case object Rdf4jTestStream extends TestStream:
     val writer = Rio.createWriter(RDFFormat.NQUADS, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.graphsAsQuadsToFlat)
+      .via(DecoderFlow.decodeGraphs.asFlatQuadStream())
       .toMat(Sink.foreach(st => writer.handleStatement(st)))(Keep.right)
       .mapMaterializedValue(f => f.map(_ => {
         writer.endRDF()

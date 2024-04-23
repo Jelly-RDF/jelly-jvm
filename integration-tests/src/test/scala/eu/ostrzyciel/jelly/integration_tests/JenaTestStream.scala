@@ -35,18 +35,18 @@ case object JenaTestStream extends TestStream:
 
   override def tripleSink(os: OutputStream)(implicit ec: ExecutionContext) =
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.triplesToFlat)
+      .via(DecoderFlow.decodeTriples.asFlatTripleStream())
       // buffer the triples to avoid OOMs and keep some perf
       .grouped(32)
       .toMat(Sink.foreach(triples => RDFDataMgr.writeTriples(os, triples.iterator.asJava)))(Keep.right)
 
   override def quadSink(os: OutputStream)(implicit ec: ExecutionContext) =
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.quadsToFlat)
+      .via(DecoderFlow.decodeQuads.asFlatQuadStream())
       .grouped(32)
       .toMat(Sink.foreach(quads => RDFDataMgr.writeQuads(os, quads.iterator.asJava)))(Keep.right)
 
   override def graphSink(os: OutputStream)(implicit ec: ExecutionContext) =
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.graphsAsQuadsToGrouped)
+      .via(DecoderFlow.decodeGraphs.asDatasetStreamOfQuads())
       .toMat(Sink.foreach(quads => RDFDataMgr.writeQuads(os, quads.iterator.asJava)))(Keep.right)

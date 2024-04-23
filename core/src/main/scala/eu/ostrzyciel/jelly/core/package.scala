@@ -1,5 +1,7 @@
 package eu.ostrzyciel.jelly
 
+import eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType
+
 package object core:
   sealed class RdfProtoDeserializationError(msg: String) extends Error(msg)
   final class MissingPrefixEntryError(val prefixId: Int) extends RdfProtoDeserializationError(
@@ -18,3 +20,14 @@ package object core:
     val jellyContentType = "application/x-jelly-rdf"
     val protoVersion = 1
     val protoSemanticVersion = "1.0.0"
+
+  extension (logicalType: LogicalStreamType)
+    /**
+     * Converts the logical stream type to its base concrete stream type in RDF-STaX.
+     * For example, [[LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS]] will be converted to [[LogicalStreamType.DATASETS]].
+     * UNSPECIFIED values will be left as-is.
+     *
+     * @return base stream type
+     */
+    def toBaseType: LogicalStreamType =
+      LogicalStreamType.fromValue(logicalType.value % 10)

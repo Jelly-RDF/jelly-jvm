@@ -16,7 +16,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   implicit val converterFactory: MockConverterFactory.type = MockConverterFactory
   implicit val actorSystem: ActorSystem = ActorSystem()
 
-  "triplesToFlat" should {
+  "decodeTriples.asFlatTripleStream" should {
     for n <- Seq(1, 2, 100) do
       s"decode triples, frame size: $n" in {
         val encoded = Triples1.encodedFull(
@@ -24,7 +24,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           n,
         )
         val decoded: Seq[Triple] = Source(encoded)
-          .via(DecoderFlow.triplesToFlat)
+          .via(DecoderFlow.decodeTriples.asFlatTripleStream())
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
 
@@ -39,7 +39,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         100,
       )
       val decoded: Seq[Triple] = Source(encoded)
-        .via(DecoderFlow.triplesToFlat)
+        .via(DecoderFlow.decodeTriples.asFlatTripleStream())
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -47,7 +47,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     }
   }
 
-  "triplesToGrouped" should {
+  "decodeTriples.asGraphStream" should {
     for n <- Seq(1, 2, 100) do
       s"decode triples as groups, frame size: $n" in {
         val encoded = Triples1.encodedFull(
@@ -55,7 +55,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           n,
         )
         val decoded: Seq[Seq[Triple]] = Source(encoded)
-          .via(DecoderFlow.triplesToGrouped)
+          .via(DecoderFlow.decodeTriples.asGraphStream())
           .map(_.iterator.toSeq)
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
@@ -65,7 +65,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
-  "quadsToFlat" should {
+  "decodeQuads.asFlatQuadStream" should {
     for n <- Seq(1, 2, 100) do
       s"decode quads, frame size: $n" in {
         val encoded = Quads1.encodedFull(
@@ -73,7 +73,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           n,
         )
         val decoded: Seq[Quad] = Source(encoded)
-          .via(DecoderFlow.quadsToFlat)
+          .via(DecoderFlow.decodeQuads.asFlatQuadStream())
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
 
@@ -81,7 +81,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
-  "quadsToGrouped" should {
+  "decodeQuads.asDatasetStreamOfQuads" should {
     for n <- Seq(1, 2, 100) do
       s"decode quads as groups, frame size: $n" in {
         val encoded = Quads1.encodedFull(
@@ -89,7 +89,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           n,
         )
         val decoded: Seq[Seq[Quad]] = Source(encoded)
-          .via(DecoderFlow.quadsToGrouped)
+          .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuads())
           .map(_.iterator.toSeq)
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
@@ -99,7 +99,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
-  "graphsAsQuadsToFlat" should {
+  "decodeGraphs.asFlatQuadStream" should {
     for n <- Seq(1, 2, 100) do
       s"decode graphs as quads, frame size: $n" in {
         val encoded = Graphs1.encodedFull(
@@ -107,7 +107,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           n,
         )
         val decoded: Seq[Quad] = Source(encoded)
-          .via(DecoderFlow.graphsAsQuadsToFlat)
+          .via(DecoderFlow.decodeGraphs.asFlatQuadStream())
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
 
@@ -115,7 +115,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
-  "graphsAsQuadsToGrouped" should {
+  "decodeGraphs.asDatasetStreamOfQuads" should {
     for n <- Seq(1, 2, 100) do
       s"decode graphs as quads (grouped), frame size: $n" in {
         val encoded = Graphs1.encodedFull(
@@ -123,7 +123,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           n,
         )
         val decoded: Seq[Seq[Quad]] = Source(encoded)
-          .via(DecoderFlow.graphsAsQuadsToGrouped)
+          .via(DecoderFlow.decodeGraphs.asDatasetStreamOfQuads())
           .map(_.iterator.toSeq)
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
@@ -133,7 +133,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
-  "graphsToFlat" should {
+  "decodeGraphs.asDatasetStreamFlat" should {
     for n <- Seq(1, 2, 100) do
       s"decode graphs, frame size: $n" in {
         val encoded = Graphs1.encodedFull(
@@ -141,7 +141,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           n,
         )
         val decoded: Seq[(Node, Iterable[Triple])] = Source(encoded)
-          .via(DecoderFlow.graphsToFlat)
+          .via(DecoderFlow.decodeGraphs.asDatasetStreamFlat())
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
 
@@ -152,7 +152,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
-  "graphsToGrouped" should {
+  "decodeGraphs.asDatasetStream" should {
     for n <- Seq(1, 2, 100) do
       s"decode graphs as groups, frame size: $n" in {
         val encoded = Graphs1.encodedFull(
@@ -160,7 +160,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           n,
         )
         val decoded: Seq[Seq[(Node, Iterable[Triple])]] = Source(encoded)
-          .via(DecoderFlow.graphsToGrouped)
+          .via(DecoderFlow.decodeGraphs.asDatasetStream())
           .map(_.iterator.toSeq)
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
@@ -176,7 +176,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     (Graphs1, Graphs1.mrlQuads, PhysicalStreamType.GRAPHS, "graphs"),
   )
 
-  "anyToFlat" should {
+  "decodeAny.asAnyFlatStream" should {
     for (testCase, mrl, streamType, name) <- anyCases do
       for n <- Seq(1, 2, 100) do
         s"decode $name stream to flat, frame size: $n" in {
@@ -185,7 +185,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
             n,
           )
           val decoded = Source(encoded)
-            .via(DecoderFlow.anyToFlat)
+            .via(DecoderFlow.decodeAny.asFlatStream)
             .toMat(Sink.seq)(Keep.right)
             .run().futureValue
 
@@ -193,7 +193,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         }
   }
 
-  "anyToGrouped" should {
+  "decodeAny.asAnyGroupedStream" should {
     for (testCase, mrl, streamType, name) <- anyCases do
       for n <- Seq(1, 2, 100) do
         s"decode $name stream to grouped, frame size: $n" in {
@@ -202,7 +202,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
             n,
           )
           val decoded = Source(encoded)
-            .via(DecoderFlow.anyToGrouped)
+            .via(DecoderFlow.decodeAny.asGroupedStream)
             .map(_.iterator.toSeq)
             .toMat(Sink.seq)(Keep.right)
             .run().futureValue

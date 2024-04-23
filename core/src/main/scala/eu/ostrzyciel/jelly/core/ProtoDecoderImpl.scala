@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
  * See the base (extendable) trait: [[ProtoDecoder]].
  */
 sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +TQuad, +TOut]
-(converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
+(converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
   extends ProtoDecoder[TOut]:
 
   private var streamOpt: Option[RdfStreamOptions] = None
@@ -161,8 +161,8 @@ object ProtoDecoderImpl:
    * A decoder that reads TRIPLES streams and outputs a sequence of triples.
    */
   final class TriplesDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple](converter):
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple](converter, expLogicalType):
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
       if !opts.physicalType.isTriples then
@@ -176,8 +176,8 @@ object ProtoDecoderImpl:
    * A decoder that reads QUADS streams and outputs a sequence of quads.
    */
   final class QuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter):
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter, expLogicalType):
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
       if !opts.physicalType.isQuads then
@@ -191,8 +191,8 @@ object ProtoDecoderImpl:
    * A decoder that reads GRAPHS streams and outputs a flat sequence of quads.
    */
   final class GraphsAsQuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter):
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter, expLogicalType):
     private var currentGraph: Option[TNode] = None
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
@@ -223,8 +223,8 @@ object ProtoDecoderImpl:
    * Each graph is emitted as soon as the producer signals that it's complete.
    */
   final class GraphsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, (TNode, Iterable[TTriple])](converter):
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, (TNode, Iterable[TTriple])](converter, expLogicalType):
     private var currentGraph: Option[TNode] = None
     private var buffer: ListBuffer[TTriple] = new ListBuffer[TTriple]()
 
@@ -288,11 +288,11 @@ object ProtoDecoderImpl:
           "The type of the stream cannot be inferred.")
       val dec = opts.physicalType match
         case PhysicalStreamType.TRIPLES =>
-          new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter)
+          new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
         case PhysicalStreamType.QUADS =>
-          new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)
+          new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
         case PhysicalStreamType.GRAPHS =>
-          new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)
+          new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
         case PhysicalStreamType.UNSPECIFIED =>
           throw new RdfProtoDeserializationError("Incoming stream type is not set.")
         case _ =>

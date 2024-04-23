@@ -22,7 +22,7 @@ class Rdf4jReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Seq[S
 
   private def read(is: InputStream): Seq[Statement] =
     val f = JellyIo.fromIoStream(is)
-      .via(DecoderFlow.anyToFlat)
+      .via(DecoderFlow.decodeAny.asFlatStream)
       .runWith(Sink.seq)
     Await.result(f, 10.seconds)
 
