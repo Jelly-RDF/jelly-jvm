@@ -28,7 +28,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
       )
       encoded.size should be (1)
     }
@@ -41,7 +41,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
       )
       encoded.size should be (3)
     }
@@ -54,7 +54,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
       )
       encoded.size should be (4)
     }
@@ -68,7 +68,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples2NoRepeat.encoded(jOptions.withStreamType(RdfStreamType.TRIPLES))
+        Triples2NoRepeat.encoded(jOptions.withPhysicalType(PhysicalStreamType.TRIPLES))
       )
       encoded.size should be (1)
     }
@@ -84,7 +84,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
       )
       encoded.size should be (2)
       encoded.head.rows.count(_.row.isTriple) should be (2)
@@ -100,7 +100,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Triples1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES))
+        Triples1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES))
       )
       encoded.size should be (4)
       encoded.head.rows.count(_.row.isTriple) should be (0)
@@ -119,7 +119,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Quads1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS))
+        Quads1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS))
       )
       encoded.size should be (1)
     }
@@ -135,7 +135,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Quads1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS))
+        Quads1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS))
       )
       encoded.size should be (2)
       encoded.head.rows.count(_.row.isQuad) should be (2)
@@ -152,7 +152,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Graphs1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS))
+        Graphs1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS))
       )
       encoded.size should be (2)
     }
@@ -165,7 +165,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Graphs1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS))
+        Graphs1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS))
       )
       // 1 additional split due to split by graph
       encoded.size should be (5)
@@ -182,7 +182,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Graphs1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS))
+        Graphs1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS))
       )
       encoded.size should be (1)
     }
@@ -196,7 +196,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.rows),
-        Graphs1.encoded(JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS))
+        Graphs1.encoded(JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS))
       )
       encoded.size should be (4)
     }

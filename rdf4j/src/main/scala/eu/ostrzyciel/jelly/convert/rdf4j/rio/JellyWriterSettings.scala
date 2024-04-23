@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.convert.rdf4j.rio
 
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamType}
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, PhysicalStreamType}
 import org.eclipse.rdf4j.rio.WriterConfig
 import org.eclipse.rdf4j.rio.helpers.*
 
@@ -9,7 +9,7 @@ object JellyWriterSettings:
     val c = new WriterConfig()
     c.set(FRAME_SIZE, frameSize)
     c.set(STREAM_NAME, opt.streamName)
-    c.set(STREAM_TYPE, opt.streamType)
+    c.set(PHYSICAL_TYPE, opt.physicalType)
     c.set(ALLOW_GENERALIZED_STATEMENTS, opt.generalizedStatements)
     c.set(USE_REPEAT, opt.useRepeat)
     c.set(MAX_NAME_TABLE_SIZE, opt.maxNameTableSize.toLong)
@@ -29,10 +29,10 @@ object JellyWriterSettings:
     ""
   )
 
-  val STREAM_TYPE = new ClassRioSetting[RdfStreamType](
+  val PHYSICAL_TYPE = new ClassRioSetting[PhysicalStreamType](
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.streamType",
     "Stream type",
-    RdfStreamType.TRIPLES
+    PhysicalStreamType.TRIPLES
   )
 
   val ALLOW_GENERALIZED_STATEMENTS = new BooleanRioSetting(

@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.stream
 
 import com.typesafe.config.ConfigFactory
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamType
+import eu.ostrzyciel.jelly.core.proto.v1.PhysicalStreamType
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -9,7 +9,7 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
   "JellyOptionsFromTypesafe" should {
     "produce defaults for empty input" in {
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(ConfigFactory.empty())
-      opt.streamType should be (RdfStreamType.UNSPECIFIED)
+      opt.physicalType should be (PhysicalStreamType.UNSPECIFIED)
       opt.generalizedStatements should be (false)
       opt.useRepeat should be (true)
       opt.maxNameTableSize should be (128)
@@ -28,7 +28,7 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
         |jelly.dt-table-size = 8
         |""".stripMargin)
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
-      opt.streamType should be (RdfStreamType.GRAPHS)
+      opt.physicalType should be (PhysicalStreamType.GRAPHS)
       opt.generalizedStatements should be (true)
       opt.useRepeat should be (false)
       opt.rdfStar should be (true)
@@ -44,7 +44,7 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
         |jelly.prefix-table-size = 64
         |""".stripMargin)
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
-      opt.streamType should be (RdfStreamType.QUADS)
+      opt.physicalType should be (PhysicalStreamType.QUADS)
       opt.generalizedStatements should be (false)
       opt.useRepeat should be (true)
       opt.rdfStar should be (false)

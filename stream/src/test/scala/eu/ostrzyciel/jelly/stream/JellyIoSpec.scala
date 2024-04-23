@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.stream
 
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamType}
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, PhysicalStreamType}
 import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
@@ -16,23 +16,23 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   val cases = Seq(
     ("triples, frame size 1", Triples1.encodedFull(
-      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
+      JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
       1,
     )),
     ("triples, frame size 20", Triples1.encodedFull(
-      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
+      JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
       20,
     )),
     ("triples (norepeat), frame size 5", Triples2NoRepeat.encodedFull(
-      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
+      JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
       5
     )),
     ("quads, frame size 6", Quads1.encodedFull(
-      JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS),
+      JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
       6,
     )),
     ("graphs, frame size 3", Graphs1.encodedFull(
-      JellyOptions.bigGeneralized.withStreamType(RdfStreamType.GRAPHS),
+      JellyOptions.bigGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
       3,
     ))
   )

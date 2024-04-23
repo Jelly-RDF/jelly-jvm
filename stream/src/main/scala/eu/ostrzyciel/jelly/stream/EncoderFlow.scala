@@ -29,7 +29,7 @@ object EncoderFlow:
     (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[TTriple, RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      opt.withStreamType(RdfStreamType.TRIPLES)
+      opt.withPhysicalType(PhysicalStreamType.TRIPLES)
     )
     flatFlow(e => encoder.addTripleStatement(e), limiter)
 
@@ -49,7 +49,7 @@ object EncoderFlow:
     (implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[TQuad, RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      opt.withStreamType(RdfStreamType.QUADS)
+      opt.withPhysicalType(PhysicalStreamType.QUADS)
     )
     flatFlow(e => encoder.addQuadStatement(e), limiter)
 
@@ -71,7 +71,7 @@ object EncoderFlow:
     (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      opt.withStreamType(RdfStreamType.TRIPLES)
+      opt.withPhysicalType(PhysicalStreamType.TRIPLES)
     )
     groupedFlow(e => encoder.addTripleStatement(e), maybeLimiter)
 
@@ -93,7 +93,7 @@ object EncoderFlow:
     (implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      opt.withStreamType(RdfStreamType.QUADS)
+      opt.withPhysicalType(PhysicalStreamType.QUADS)
     )
     groupedFlow(e => encoder.addQuadStatement(e), maybeLimiter)
 
@@ -118,7 +118,7 @@ object EncoderFlow:
     (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[(TNode, Iterable[TTriple]), RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      opt.withStreamType(RdfStreamType.GRAPHS)
+      opt.withPhysicalType(PhysicalStreamType.GRAPHS)
     )
     Flow[(TNode, Iterable[TTriple])]
       // Make each graph into a 1-element "group"
@@ -144,7 +144,7 @@ object EncoderFlow:
     (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[IterableOnce[(TNode, Iterable[TTriple])], RdfStreamFrame, NotUsed] =
     val encoder = factory.encoder(
-      opt.withStreamType(RdfStreamType.GRAPHS)
+      opt.withPhysicalType(PhysicalStreamType.GRAPHS)
     )
     groupedFlow[(TNode, Iterable[TTriple])](graphAsIterable(encoder), maybeLimiter)
 

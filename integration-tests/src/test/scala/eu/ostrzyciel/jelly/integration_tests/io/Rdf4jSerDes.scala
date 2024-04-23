@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.rdf4j.rio
 import eu.ostrzyciel.jelly.convert.rdf4j.rio.JellyWriterSettings
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamType}
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, PhysicalStreamType}
 import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
@@ -39,10 +39,10 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
     writer.endRDF()
 
   override def writeTriplesJelly(os: OutputStream, model: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
-    write(os, model, opt.withStreamType(RdfStreamType.TRIPLES), frameSize)
+    write(os, model, opt.withPhysicalType(PhysicalStreamType.TRIPLES), frameSize)
 
   override def writeQuadsJelly(os: OutputStream, dataset: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
-    write(os, dataset, opt.withStreamType(RdfStreamType.QUADS), frameSize)
+    write(os, dataset, opt.withPhysicalType(PhysicalStreamType.QUADS), frameSize)
 
 
 

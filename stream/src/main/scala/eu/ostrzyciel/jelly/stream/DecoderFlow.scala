@@ -1,147 +1,50 @@
 package eu.ostrzyciel.jelly.stream
 
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame
 import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoDecoder}
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.pekko.NotUsed
-import org.apache.pekko.stream.scaladsl.Flow
+import org.apache.pekko.stream.scaladsl.*
 
-/**
- * Methods for creating Pekko Streams flows for decoding protobuf into RDF statements.
- */
 object DecoderFlow:
 
-  /**
-   * A flow converting a stream of [[RdfStreamFrame]]s into a flat stream of RDF triple statements.
-   * Physical stream type: TRIPLES.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TTriple Type of triple statements.
-   * @return Pekko Streams flow
-   */
-  def triplesToFlat[TTriple](implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
-  Flow[RdfStreamFrame, TTriple, NotUsed] =
-    flatStream(factory.triplesDecoder)
+  // *** Public API ***
 
   /**
-   * A flow converting a stream of [[RdfStreamFrame]]s into a stream of iterables with RDF triple statements.
-   * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
-   * Physical stream type: TRIPLES.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TTriple Type of triple statements.
-   * @return Pekko Streams flow
+   * Decode the incoming [[RdfStreamFrame]]s as a Jelly stream of physical type TRIPLES.
+   * If the stream is not a TRIPLES stream, the decoding will fail.
+   *
+   * @return intermediate builder object for further configuration
    */
-  def triplesToGrouped[TTriple](implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
-  Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed] =
-    groupedStream(factory.triplesDecoder)
+  def decodeTriples: DecoderIngestFlowOps.TriplesIngestFlowOps.type = DecoderIngestFlowOps.TriplesIngestFlowOps
 
   /**
-   * A flow converting a stream of [[RdfStreamFrame]]s into a flat stream of RDF quad statements.
-   * Physical stream type: QUADS.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TQuad Type of quad statements.
-   * @return Pekko Streams flow
+   * Decode the incoming [[RdfStreamFrame]]s as a Jelly stream of physical type QUADS.
+   * If the stream is not a QUADS stream, the decoding will fail.
+   *
+   * @return intermediate builder object for further configuration
    */
-  def quadsToFlat[TQuad](implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
-  Flow[RdfStreamFrame, TQuad, NotUsed] =
-    flatStream(factory.quadsDecoder)
+  def decodeQuads: DecoderIngestFlowOps.QuadsIngestFlowOps.type = DecoderIngestFlowOps.QuadsIngestFlowOps
 
   /**
-   * A flow converting a stream of [[RdfStreamFrame]]s into a stream of iterables with RDF quad statements.
-   * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
-   * Physical stream type: QUADS.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TQuad Type of quad statements.
-   * @return Pekko Streams flow
+   * Decode the incoming [[RdfStreamFrame]]s as a Jelly stream of physical type GRAPHS.
+   * If the stream is not a GRAPHS stream, the decoding will fail.
+   *
+   * @return intermediate builder object for further configuration
    */
-  def quadsToGrouped[TQuad](implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
-  Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
-    groupedStream(factory.quadsDecoder)
+  def decodeGraphs: DecoderIngestFlowOps.GraphsIngestFlowOps.type = DecoderIngestFlowOps.GraphsIngestFlowOps
 
   /**
-   * A flow converting a graph stream of [[RdfStreamFrame]]s into a flat stream of RDF quad statements.
-   * Physical stream type: GRAPHS.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TQuad Type of quad statements.
-   * @return Pekko Streams flow
-   */
-  def graphsAsQuadsToFlat[TQuad](implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
-  Flow[RdfStreamFrame, TQuad, NotUsed] =
-    flatStream(factory.graphsAsQuadsDecoder)
-
-  /**
-   * A flow converting a graphs stream of [[RdfStreamFrame]]s into a stream of iterables with RDF quad statements.
-   * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
-   * If you need each element in the stream to correspond to one graph, use [[graphsToFlat]] instead.
-   * Physical stream type: GRAPHS.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TQuad Type of quad statements.
-   * @return Pekko Streams flow
-   */
-  def graphsAsQuadsToGrouped[TQuad](implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
-  Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
-    groupedStream(factory.graphsAsQuadsDecoder)
-
-  /**
-   * A flow converting a graphs stream of [[RdfStreamFrame]]s into a stream of tuples (graph name; triples).
-   * Each element in the stream corresponds to exactly one RDF graph.
-   * Physical stream type: GRAPHS.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TNode Type of RDF nodes.
-   * @tparam TTriple Type of triple statements.
-   * @return Pekko Streams flow
-   */
-  def graphsToFlat[TNode, TTriple](implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
-  Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] =
-    flatStream(factory.graphsDecoder)
-
-  /**
-   * A flow converting a graphs stream of [[RdfStreamFrame]]s into a stream of iterables with tuples 
-   * (graph name; triples).
-   * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
-   * Physical stream type: GRAPHS.
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TNode Type of RDF nodes.
-   * @tparam TTriple Type of triple statements.
-   * @return Pekko Streams flow
-   */
-  def graphsToGrouped[TNode, TTriple](implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
-  Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] =
-    groupedStream(factory.graphsDecoder)
-
-  /**
-   * A flow converting any Jelly stream of [[RdfStreamFrame]]s into a flat stream of RDF statements (triples or quads).
-   * The type of RDF statements is determined by the stream type.
+   * Decode the incoming [[RdfStreamFrame]]s as a Jelly stream of any physical type.
+   * The type of RDF statements is determined by the stream type specified in the stream options header.
    * The stream must have a set stream type (UNSPECIFIED is not allowed) and the stream type must not change
    * during the stream.
-   * Physical stream type: TRIPLES, QUADS, GRAPHS.
    *
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TNode Type of RDF nodes.
-   * @tparam TTriple Type of triple statements.
-   * @tparam TQuad Type of quad statements.
-   * @return Pekko Streams flow
+   * @return intermediate builder object for further configuration
    */
-  def anyToFlat[TNode, TTriple, TQuad](implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
-  Flow[RdfStreamFrame, TTriple | TQuad, NotUsed] =
-    flatStream(factory.anyStatementDecoder)
+  def decodeAny: DecoderIngestFlowOps.AnyIngestFlowOps.type = DecoderIngestFlowOps.AnyIngestFlowOps
 
 
-  /**
-   * A flow converting any Jelly stream of [[RdfStreamFrame]]s into a stream of iterables with RDF statements
-   * (triples or quads). Each iterable in the stream corresponds to one [[RdfStreamFrame]].
-   * The type of RDF statements is determined by the stream type.
-   * The stream must have a set stream type (UNSPECIFIED is not allowed) and the stream type must not change
-   * during the stream.
-   * Physical stream type: TRIPLES, QUADS, GRAPHS.
-   *
-   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-   * @tparam TNode   Type of RDF nodes.
-   * @tparam TTriple Type of triple statements.
-   * @tparam TQuad   Type of quad statements.
-   * @return Pekko Streams flow
-   */
-  def anyToGrouped[TNode, TTriple, TQuad](implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
-  Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed] =
-    groupedStream(factory.anyStatementDecoder)
+  // *** Private API ***
 
   private def flatStream[TOut](decoder: ProtoDecoder[TOut]): Flow[RdfStreamFrame, TOut, NotUsed] =
     Flow[RdfStreamFrame]
@@ -154,3 +57,130 @@ object DecoderFlow:
       .map(frame => {
         frame.rows.flatMap(decoder.ingestRow)
       })
+
+  private sealed abstract class DecoderIngestFlowOps(streamType: PhysicalStreamType)
+
+  /**
+   * Flow operations for decoding Jelly streams of physical type TRIPLES.
+   */
+  private object DecoderIngestFlowOps:
+    case object TriplesIngestFlowOps extends
+      DecoderIngestFlowOps(PhysicalStreamType.TRIPLES),
+      InterpretableAs.FlatTripleStream,
+      InterpretableAs.GraphStream:
+
+      override def asFlatTripleStream[TTriple](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
+      Flow[RdfStreamFrame, TTriple, NotUsed] =
+        flatStream(factory.triplesDecoder)
+
+      override def asGraphStream[TTriple](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
+      Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed] =
+        groupedStream(factory.triplesDecoder)
+
+    end TriplesIngestFlowOps
+
+    /**
+     * Flow operations for decoding Jelly streams of physical type QUADS.
+     */
+    case object QuadsIngestFlowOps extends
+      DecoderIngestFlowOps(PhysicalStreamType.QUADS),
+      InterpretableAs.FlatQuadStream,
+      InterpretableAs.DatasetStreamOfQuads:
+
+      override def asFlatQuadStream[TQuad](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+      Flow[RdfStreamFrame, TQuad, NotUsed] =
+        flatStream(factory.quadsDecoder)
+
+      override def asDatasetStreamOfQuads[TQuad](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+      Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
+        groupedStream(factory.quadsDecoder)
+
+    end QuadsIngestFlowOps
+
+    /**
+     * Flow operations for decoding Jelly streams of physical type GRAPHS.
+     */
+    case object GraphsIngestFlowOps extends
+      DecoderIngestFlowOps(PhysicalStreamType.GRAPHS),
+      InterpretableAs.FlatQuadStream,
+      InterpretableAs.DatasetStreamOfQuads,
+      InterpretableAs.DatasetStream:
+
+      override def asFlatQuadStream[TQuad](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+      Flow[RdfStreamFrame, TQuad, NotUsed] =
+        flatStream(factory.graphsAsQuadsDecoder)
+
+      override def asDatasetStreamOfQuads[TQuad](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+      Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
+        groupedStream(factory.graphsAsQuadsDecoder)
+
+      override def asDatasetStream[TNode, TTriple](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+      Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] =
+        groupedStream(factory.graphsDecoder)
+
+      override def asDatasetStreamFlat[TNode, TTriple](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+      Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] =
+        flatStream(factory.graphsDecoder)
+
+    end GraphsIngestFlowOps
+
+    /**
+     * Flow operations for decoding Jelly streams of any physical type.
+     */
+    case object AnyIngestFlowOps extends
+      DecoderIngestFlowOps(PhysicalStreamType.UNSPECIFIED),
+      InterpretableAs.AnyStream:
+
+      override def asAnyGroupedStream[TNode, TTriple, TQuad](strict: Boolean = false)
+        (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
+      Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed] =
+        groupedStream(factory.anyStatementDecoder)
+
+      override def asAnyFlatStream[TTriple, TQuad](strict: Boolean = false)
+        (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, TQuad]):
+      Flow[RdfStreamFrame, TTriple | TQuad, NotUsed] =
+        flatStream(factory.anyStatementDecoder)
+
+
+  private object InterpretableAs:
+    trait FlatTripleStream:
+      def asFlatTripleStream[TTriple](strict: Boolean = false)(using factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
+        Flow[RdfStreamFrame, TTriple, NotUsed]
+
+    trait FlatQuadStream:
+      def asFlatQuadStream[TQuad](strict: Boolean = false)(using factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+        Flow[RdfStreamFrame, TQuad, NotUsed]
+
+    trait GraphStream:
+      def asGraphStream[TTriple](strict: Boolean = false)(using factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
+        Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed]
+
+    trait DatasetStreamOfQuads:
+      def asDatasetStreamOfQuads[TQuad](strict: Boolean = false)(using factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+        Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed]
+
+    trait DatasetStream:
+      def asDatasetStream[TNode, TTriple](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+      Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed]
+
+      def asDatasetStreamFlat[TNode, TTriple](strict: Boolean = false)
+        (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
+      Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed]
+
+    trait AnyStream:
+      def asAnyGroupedStream[TNode, TTriple, TQuad](strict: Boolean = false)
+        (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
+      Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed]
+
+      def asAnyFlatStream[TTriple, TQuad](strict: Boolean = false)
+        (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, TQuad]):
+      Flow[RdfStreamFrame, TTriple | TQuad, NotUsed]

@@ -20,7 +20,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     for n <- Seq(1, 2, 100) do
       s"decode triples, frame size: $n" in {
         val encoded = Triples1.encodedFull(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
+          JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
           n,
         )
         val decoded: Seq[Triple] = Source(encoded)
@@ -34,7 +34,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "decode triples (norepeat)" in {
       val encoded = Triples2NoRepeat.encodedFull(
         JellyOptions.smallGeneralized
-          .withStreamType(RdfStreamType.TRIPLES)
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
           .withUseRepeat(false),
         100,
       )
@@ -51,7 +51,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     for n <- Seq(1, 2, 100) do
       s"decode triples as groups, frame size: $n" in {
         val encoded = Triples1.encodedFull(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.TRIPLES),
+          JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
           n,
         )
         val decoded: Seq[Seq[Triple]] = Source(encoded)
@@ -69,7 +69,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     for n <- Seq(1, 2, 100) do
       s"decode quads, frame size: $n" in {
         val encoded = Quads1.encodedFull(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS),
+          JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
           n,
         )
         val decoded: Seq[Quad] = Source(encoded)
@@ -85,7 +85,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     for n <- Seq(1, 2, 100) do
       s"decode quads as groups, frame size: $n" in {
         val encoded = Quads1.encodedFull(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.QUADS),
+          JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
           n,
         )
         val decoded: Seq[Seq[Quad]] = Source(encoded)
@@ -103,7 +103,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     for n <- Seq(1, 2, 100) do
       s"decode graphs as quads, frame size: $n" in {
         val encoded = Graphs1.encodedFull(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
+          JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
           n,
         )
         val decoded: Seq[Quad] = Source(encoded)
@@ -119,7 +119,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     for n <- Seq(1, 2, 100) do
       s"decode graphs as quads (grouped), frame size: $n" in {
         val encoded = Graphs1.encodedFull(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
+          JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
           n,
         )
         val decoded: Seq[Seq[Quad]] = Source(encoded)
@@ -137,7 +137,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     for n <- Seq(1, 2, 100) do
       s"decode graphs, frame size: $n" in {
         val encoded = Graphs1.encodedFull(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
+          JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
           n,
         )
         val decoded: Seq[(Node, Iterable[Triple])] = Source(encoded)
@@ -156,7 +156,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     for n <- Seq(1, 2, 100) do
       s"decode graphs as groups, frame size: $n" in {
         val encoded = Graphs1.encodedFull(
-          JellyOptions.smallGeneralized.withStreamType(RdfStreamType.GRAPHS),
+          JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
           n,
         )
         val decoded: Seq[Seq[(Node, Iterable[Triple])]] = Source(encoded)
@@ -171,9 +171,9 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   }
 
   val anyCases = Seq(
-    (Triples1, Triples1.mrl, RdfStreamType.TRIPLES, "triples"),
-    (Quads1, Quads1.mrl, RdfStreamType.QUADS, "quads"),
-    (Graphs1, Graphs1.mrlQuads, RdfStreamType.GRAPHS, "graphs"),
+    (Triples1, Triples1.mrl, PhysicalStreamType.TRIPLES, "triples"),
+    (Quads1, Quads1.mrl, PhysicalStreamType.QUADS, "quads"),
+    (Graphs1, Graphs1.mrlQuads, PhysicalStreamType.GRAPHS, "graphs"),
   )
 
   "anyToFlat" should {
@@ -181,7 +181,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       for n <- Seq(1, 2, 100) do
         s"decode $name stream to flat, frame size: $n" in {
           val encoded = testCase.encodedFull(
-            JellyOptions.smallGeneralized.withStreamType(streamType),
+            JellyOptions.smallGeneralized.withPhysicalType(streamType),
             n,
           )
           val decoded = Source(encoded)
@@ -198,7 +198,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       for n <- Seq(1, 2, 100) do
         s"decode $name stream to grouped, frame size: $n" in {
           val encoded = testCase.encodedFull(
-            JellyOptions.smallGeneralized.withStreamType(streamType),
+            JellyOptions.smallGeneralized.withPhysicalType(streamType),
             n,
           )
           val decoded = Source(encoded)

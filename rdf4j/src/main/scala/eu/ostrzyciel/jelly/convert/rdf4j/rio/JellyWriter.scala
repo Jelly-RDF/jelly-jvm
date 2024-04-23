@@ -25,7 +25,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
   override def getSupportedSettings =
     val s = new util.HashSet[RioSetting[_]](super.getSupportedSettings)
     s.add(STREAM_NAME)
-    s.add(STREAM_TYPE)
+    s.add(PHYSICAL_TYPE)
     s.add(ALLOW_GENERALIZED_STATEMENTS)
     s.add(USE_REPEAT)
     s.add(ALLOW_RDF_STAR)
@@ -40,7 +40,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     val c = getWriterConfig
     options = RdfStreamOptions(
       streamName = c.get(STREAM_NAME),
-      streamType = c.get(STREAM_TYPE),
+      physicalType = c.get(PHYSICAL_TYPE),
       generalizedStatements = c.get(ALLOW_GENERALIZED_STATEMENTS).booleanValue(),
       useRepeat = c.get(USE_REPEAT).booleanValue(),
       rdfStar = c.get(ALLOW_RDF_STAR).booleanValue(),
@@ -53,12 +53,12 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
 
   override def consumeStatement(st: Statement): Unit =
     checkWritingStarted()
-    val rows = if options.streamType.isTriples then
+    val rows = if options.physicalType.isTriples then
       encoder.addTripleStatement(st)
-    else if options.streamType.isQuads then
+    else if options.physicalType.isQuads then
       encoder.addQuadStatement(st)
     else
-      throw new IllegalStateException(s"Unsupported stream type: ${options.streamType}")
+      throw new IllegalStateException(s"Unsupported stream type: ${options.physicalType}")
 
     buffer ++= rows
     if buffer.size >= frameSize then
