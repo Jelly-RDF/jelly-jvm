@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.convert.rdf4j.rio
 
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, PhysicalStreamType}
+import eu.ostrzyciel.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import org.eclipse.rdf4j.rio.WriterConfig
 import org.eclipse.rdf4j.rio.helpers.*
 
@@ -30,8 +30,8 @@ object JellyWriterSettings:
   )
 
   val PHYSICAL_TYPE = new ClassRioSetting[PhysicalStreamType](
-    "eu.ostrzyciel.jelly.convert.rdf4j.rio.streamType",
-    "Stream type",
+    "eu.ostrzyciel.jelly.convert.rdf4j.rio.physicalType",
+    "Physical stream type",
     PhysicalStreamType.TRIPLES
   )
 

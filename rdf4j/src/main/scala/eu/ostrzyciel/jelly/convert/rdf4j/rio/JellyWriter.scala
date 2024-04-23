@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.convert.rdf4j.rio
 
 import eu.ostrzyciel.jelly.convert.rdf4j.Rdf4jProtoEncoder
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions, RdfStreamRow}
+import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, RdfStreamFrame, RdfStreamOptions, RdfStreamRow}
 import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.rio.RioSetting
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter
@@ -37,7 +37,16 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
 
   override def startRDF(): Unit =
     super.startRDF()
+
     val c = getWriterConfig
+    val pType = c.get(PHYSICAL_TYPE)
+    val lType = if pType.isTriples then
+      LogicalStreamType.FLAT_TRIPLES
+    else if pType.isQuads then
+      LogicalStreamType.FLAT_QUADS
+    else
+      throw new IllegalStateException(s"Unsupported stream type: ${options.physicalType}")
+
     options = RdfStreamOptions(
       streamName = c.get(STREAM_NAME),
       physicalType = c.get(PHYSICAL_TYPE),
@@ -47,6 +56,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
       maxNameTableSize = c.get(MAX_NAME_TABLE_SIZE).toInt,
       maxPrefixTableSize = c.get(MAX_PREFIX_TABLE_SIZE).toInt,
       maxDatatypeTableSize = c.get(MAX_DATATYPE_TABLE_SIZE).toInt,
+      logicalType = lType,
     )
     frameSize = c.get(FRAME_SIZE).toLong
     encoder = Rdf4jProtoEncoder(options)
@@ -55,10 +65,8 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     checkWritingStarted()
     val rows = if options.physicalType.isTriples then
       encoder.addTripleStatement(st)
-    else if options.physicalType.isQuads then
-      encoder.addQuadStatement(st)
     else
-      throw new IllegalStateException(s"Unsupported stream type: ${options.physicalType}")
+      encoder.addQuadStatement(st)
 
     buffer ++= rows
     if buffer.size >= frameSize then
