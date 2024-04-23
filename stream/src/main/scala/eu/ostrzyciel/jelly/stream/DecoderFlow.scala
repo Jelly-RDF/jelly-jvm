@@ -12,7 +12,7 @@ object DecoderFlow:
 
   /**
    * A flow converting a stream of [[RdfStreamFrame]]s into a flat stream of RDF triple statements.
-   * RDF stream type: TRIPLES.
+   * Physical stream type: TRIPLES.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow
@@ -24,7 +24,7 @@ object DecoderFlow:
   /**
    * A flow converting a stream of [[RdfStreamFrame]]s into a stream of iterables with RDF triple statements.
    * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
-   * RDF stream type: TRIPLES.
+   * Physical stream type: TRIPLES.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow
@@ -35,7 +35,7 @@ object DecoderFlow:
 
   /**
    * A flow converting a stream of [[RdfStreamFrame]]s into a flat stream of RDF quad statements.
-   * RDF stream type: QUADS.
+   * Physical stream type: QUADS.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
    * @return Pekko Streams flow
@@ -47,7 +47,7 @@ object DecoderFlow:
   /**
    * A flow converting a stream of [[RdfStreamFrame]]s into a stream of iterables with RDF quad statements.
    * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
-   * RDF stream type: QUADS.
+   * Physical stream type: QUADS.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
    * @return Pekko Streams flow
@@ -58,7 +58,7 @@ object DecoderFlow:
 
   /**
    * A flow converting a graph stream of [[RdfStreamFrame]]s into a flat stream of RDF quad statements.
-   * RDF stream type: GRAPHS.
+   * Physical stream type: GRAPHS.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
    * @return Pekko Streams flow
@@ -71,7 +71,7 @@ object DecoderFlow:
    * A flow converting a graphs stream of [[RdfStreamFrame]]s into a stream of iterables with RDF quad statements.
    * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
    * If you need each element in the stream to correspond to one graph, use [[graphsToFlat]] instead.
-   * RDF stream type: GRAPHS.
+   * Physical stream type: GRAPHS.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TQuad Type of quad statements.
    * @return Pekko Streams flow
@@ -83,7 +83,7 @@ object DecoderFlow:
   /**
    * A flow converting a graphs stream of [[RdfStreamFrame]]s into a stream of tuples (graph name; triples).
    * Each element in the stream corresponds to exactly one RDF graph.
-   * RDF stream type: GRAPHS.
+   * Physical stream type: GRAPHS.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TNode Type of RDF nodes.
    * @tparam TTriple Type of triple statements.
@@ -97,7 +97,7 @@ object DecoderFlow:
    * A flow converting a graphs stream of [[RdfStreamFrame]]s into a stream of iterables with tuples 
    * (graph name; triples).
    * Each iterable in the stream corresponds to one [[RdfStreamFrame]].
-   * RDF stream type: GRAPHS.
+   * Physical stream type: GRAPHS.
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TNode Type of RDF nodes.
    * @tparam TTriple Type of triple statements.
@@ -112,7 +112,7 @@ object DecoderFlow:
    * The type of RDF statements is determined by the stream type.
    * The stream must have a set stream type (UNSPECIFIED is not allowed) and the stream type must not change
    * during the stream.
-   * RDF stream type: TRIPLES, QUADS, GRAPHS.
+   * Physical stream type: TRIPLES, QUADS, GRAPHS.
    *
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TNode Type of RDF nodes.
@@ -131,7 +131,7 @@ object DecoderFlow:
    * The type of RDF statements is determined by the stream type.
    * The stream must have a set stream type (UNSPECIFIED is not allowed) and the stream type must not change
    * during the stream.
-   * RDF stream type: TRIPLES, QUADS, GRAPHS.
+   * Physical stream type: TRIPLES, QUADS, GRAPHS.
    *
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TNode   Type of RDF nodes.
