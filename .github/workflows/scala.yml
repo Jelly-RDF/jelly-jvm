@@ -1,4 +1,4 @@
-name: Scala
+name: Scala build and test
 
 on:
   push:
@@ -20,9 +20,7 @@ jobs:
           - os: ubuntu-latest
             java: 17
           - os: ubuntu-latest
-            # Temurin 21 is not yet available – use early access
-            # https://adoptium.net/en-GB/blog/2023/09/temurin21-delay/
-            java: 21-ea
+            java: 21
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
