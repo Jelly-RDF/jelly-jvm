@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.integration_tests.io
 
-import eu.ostrzyciel.jelly.convert.jena.*
+import eu.ostrzyciel.jelly.convert.jena.given
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import eu.ostrzyciel.jelly.stream.*
 import org.apache.jena.query.Dataset

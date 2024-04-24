@@ -15,7 +15,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStre
  * Tests for IO ser/des (Jena RIOT, RDF4J Rio, and semi-reactive IO over Pekko Streams).
  */
 class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
-  implicit val as: ActorSystem = ActorSystem("test")
+  given ActorSystem = ActorSystem("test")
 
   override def beforeAll(): Unit =
     JenaSystem.init()

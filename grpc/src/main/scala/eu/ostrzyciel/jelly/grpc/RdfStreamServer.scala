@@ -39,8 +39,8 @@ object RdfStreamServer:
  * @param system actor system
  */
 final class RdfStreamServer(options: RdfStreamServer.Options, streamService: RdfStreamService)
-                     (implicit system: ActorSystem[_]) extends LazyLogging:
-  implicit val ec: ExecutionContext = system.executionContext
+                     (using system: ActorSystem[_]) extends LazyLogging:
+  given ExecutionContext = system.executionContext
   private var binding: Option[ServerBinding] = _
 
   /**

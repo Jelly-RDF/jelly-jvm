@@ -14,8 +14,8 @@ import org.scalatest.wordspec.AnyWordSpec
 class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   import ProtoTestCases.*
   import eu.ostrzyciel.jelly.core.helpers.Mrl.*
-  implicit val converterFactory: MockConverterFactory.type = MockConverterFactory
-  implicit val actorSystem: ActorSystem = ActorSystem()
+  given MockConverterFactory.type = MockConverterFactory
+  given ActorSystem = ActorSystem()
 
   "decodeTriples.asFlatTripleStream" should {
     for n <- Seq(1, 2, 100) do
@@ -75,7 +75,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       // Basic tests on logical stream type extensions
       options.get.logicalType.getRdfStaxType.isDefined should be (true)
-      options.get.logicalType.getRdfStaxAnnotation(null)(using converterFactory).size should be (3)
+      options.get.logicalType.getRdfStaxAnnotation[Node, Triple](null).size should be (3)
     }
   }
 

@@ -158,12 +158,12 @@ object DecoderFlow:
       InterpretableAs.AnyStream:
 
       override def asGroupedStream[TNode, TTriple, TQuad]
-        (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
+        (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
       Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed] =
         groupedStream(factory.anyStatementDecoder)
 
       override def asFlatStream[TTriple, TQuad]
-        (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, TQuad]):
+        (using factory: ConverterFactory[?, ?, ?, ?, TTriple, TQuad]):
       Flow[RdfStreamFrame, TTriple | TQuad, NotUsed] =
         flatStream(factory.anyStatementDecoder)
 
@@ -271,7 +271,7 @@ object DecoderFlow:
        * @return Pekko Streams flow
        */
       def asGroupedStream[TNode, TTriple, TQuad]
-        (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
+        (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
       Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed]
 
       /**
@@ -286,5 +286,5 @@ object DecoderFlow:
        * @return Pekko Streams flow
        */
       def asFlatStream[TTriple, TQuad]
-        (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, TQuad]):
+        (using factory: ConverterFactory[?, ?, ?, ?, TTriple, TQuad]):
       Flow[RdfStreamFrame, TTriple | TQuad, NotUsed]

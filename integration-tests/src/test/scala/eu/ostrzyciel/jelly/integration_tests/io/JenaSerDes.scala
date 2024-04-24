@@ -9,8 +9,8 @@ import org.apache.jena.riot.{RDFDataMgr, RDFFormat, RDFLanguages}
 import java.io.{InputStream, OutputStream}
 import scala.jdk.CollectionConverters._
 
-implicit val modelMeasure: Measure[Model] = (m: Model) => m.size()
-implicit val datasetMeasure: Measure[Dataset] = (ds: Dataset) => ds.asDatasetGraph().find().asScala.size
+given Measure[Model] = (m: Model) => m.size()
+given Measure[Dataset] = (ds: Dataset) => ds.asDatasetGraph().find().asScala.size
 
 object JenaSerDes extends NativeSerDes[Model, Dataset]:
   val name = "Jena"
