@@ -69,7 +69,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndA
     ("stream row count: 200", StreamRowCountLimiter(200)),
   )
 
-  final case class CaseKey(streamType: String, encoder: String, jOpt: String, sOpt: String, caseName: String)
+  final case class CaseKey(physicalType: String, encoder: String, jOpt: String, sOpt: String, caseName: String)
 
   private val encodedSizes: mutable.Map[CaseKey, Long] = mutable.Map()
 

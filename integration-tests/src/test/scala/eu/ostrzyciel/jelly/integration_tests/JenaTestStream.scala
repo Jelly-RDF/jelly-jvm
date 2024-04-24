@@ -16,11 +16,11 @@ case object JenaTestStream extends TestStream:
 
   override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     Source.fromIterator(() => AsyncParser.asyncParseTriples(is, Lang.NT, "").asScala)
-      .via(EncoderFlow.fromFlatTriples(limiter, jellyOpt))
+      .via(EncoderFlow.flatTripleStream(limiter, jellyOpt))
 
   override def quadSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     Source.fromIterator(() => AsyncParser.asyncParseQuads(is, Lang.NQUADS, "").asScala)
-      .via(EncoderFlow.fromFlatQuads(limiter, jellyOpt))
+      .via(EncoderFlow.flatQuadStream(limiter, jellyOpt))
 
   override def graphSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     val ds = RDFParser.source(is)
@@ -31,22 +31,22 @@ case object JenaTestStream extends TestStream:
         Iterator((null, Iterable.from(ds.getDefaultGraph.find.asScala)))
     ).filter((_, g) => g.nonEmpty)
     Source.fromIterator(() => graphs)
-      .via(EncoderFlow.fromGraphs(Some(limiter), jellyOpt))
+      .via(EncoderFlow.namedGraphStream(Some(limiter), jellyOpt))
 
   override def tripleSink(os: OutputStream)(implicit ec: ExecutionContext) =
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.triplesToFlat)
+      .via(DecoderFlow.decodeTriples.asFlatTripleStream())
       // buffer the triples to avoid OOMs and keep some perf
       .grouped(32)
       .toMat(Sink.foreach(triples => RDFDataMgr.writeTriples(os, triples.iterator.asJava)))(Keep.right)
 
   override def quadSink(os: OutputStream)(implicit ec: ExecutionContext) =
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.quadsToFlat)
+      .via(DecoderFlow.decodeQuads.asFlatQuadStream())
       .grouped(32)
       .toMat(Sink.foreach(quads => RDFDataMgr.writeQuads(os, quads.iterator.asJava)))(Keep.right)
 
   override def graphSink(os: OutputStream)(implicit ec: ExecutionContext) =
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.graphsAsQuadsToGrouped)
+      .via(DecoderFlow.decodeGraphs.asDatasetStreamOfQuads())
       .toMat(Sink.foreach(quads => RDFDataMgr.writeQuads(os, quads.iterator.asJava)))(Keep.right)

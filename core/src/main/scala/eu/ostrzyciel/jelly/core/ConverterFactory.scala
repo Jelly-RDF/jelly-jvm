@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core
 
 import ProtoDecoderImpl.*
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, RdfStreamOptions}
 
 import scala.reflect.ClassTag
 
@@ -24,35 +24,39 @@ trait ConverterFactory[
   +TDecConv <: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
   TNode, TDatatype : ClassTag, TTriple, TQuad
 ]:
-  protected def decoderConverter: TDecConv
+  def decoderConverter: TDecConv
 
   /**
    * Create a new [[TriplesDecoder]].
    * @return
    */
-  final def triplesDecoder: TriplesDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new TriplesDecoder(decoderConverter)
+  final def triplesDecoder(expLogicalType: Option[LogicalStreamType]): 
+  TriplesDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new TriplesDecoder(decoderConverter, expLogicalType)
 
   /**
    * Create a new [[QuadsDecoder]].
    * @return
    */
-  final def quadsDecoder: QuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new QuadsDecoder(decoderConverter)
+  final def quadsDecoder(expLogicalType: Option[LogicalStreamType]): 
+  QuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new QuadsDecoder(decoderConverter, expLogicalType)
 
   /**
    * Create a new [[GraphsAsQuadsDecoder]].
    * @return
    */
-  final def graphsAsQuadsDecoder: GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsAsQuadsDecoder(decoderConverter)
+  final def graphsAsQuadsDecoder(expLogicalType: Option[LogicalStreamType]): 
+  GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new GraphsAsQuadsDecoder(decoderConverter, expLogicalType)
 
   /**
    * Create a new [[GraphsDecoder]].
    * @return
    */
-  final def graphsDecoder: GraphsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsDecoder(decoderConverter)
+  final def graphsDecoder(expLogicalType: Option[LogicalStreamType]): 
+  GraphsDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new GraphsDecoder(decoderConverter, expLogicalType)
 
   /**
    * Create a new [[AnyStatementDecoder]].

@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.stream
 
 import com.typesafe.config.{Config, ConfigFactory}
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamType}
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, PhysicalStreamType}
 
 /**
  * Convenience methods for building Jelly's options ([[RdfStreamOptions]]) from [[com.typesafe.Config]].
@@ -35,12 +35,12 @@ object JellyOptionsFromTypesafe:
   def fromTypesafeConfig(config: Config): RdfStreamOptions =
     val merged = config.withFallback(defaultConfig)
     RdfStreamOptions(
-      streamType = (
+      physicalType = (
         merged.getString("stream-type") match
-          case "UNSPECIFIED" => RdfStreamType.UNSPECIFIED
-          case "TRIPLES" => RdfStreamType.TRIPLES
-          case "QUADS" => RdfStreamType.QUADS
-          case "GRAPHS" => RdfStreamType.GRAPHS
+          case "UNSPECIFIED" => PhysicalStreamType.UNSPECIFIED
+          case "TRIPLES" => PhysicalStreamType.TRIPLES
+          case "QUADS" => PhysicalStreamType.QUADS
+          case "GRAPHS" => PhysicalStreamType.GRAPHS
           case _ => throw IllegalArgumentException()
         ),
       generalizedStatements = merged.getBoolean("generalized-statements"),

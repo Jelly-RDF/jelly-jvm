@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.convert.rdf4j.rio
 
 import eu.ostrzyciel.jelly.convert.rdf4j.Rdf4jProtoEncoder
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions, RdfStreamRow}
+import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, RdfStreamFrame, RdfStreamOptions, RdfStreamRow}
 import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.rio.RioSetting
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter
@@ -25,7 +25,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
   override def getSupportedSettings =
     val s = new util.HashSet[RioSetting[_]](super.getSupportedSettings)
     s.add(STREAM_NAME)
-    s.add(STREAM_TYPE)
+    s.add(PHYSICAL_TYPE)
     s.add(ALLOW_GENERALIZED_STATEMENTS)
     s.add(USE_REPEAT)
     s.add(ALLOW_RDF_STAR)
@@ -37,28 +37,36 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
 
   override def startRDF(): Unit =
     super.startRDF()
+
     val c = getWriterConfig
+    val pType = c.get(PHYSICAL_TYPE)
+    val lType = if pType.isTriples then
+      LogicalStreamType.FLAT_TRIPLES
+    else if pType.isQuads then
+      LogicalStreamType.FLAT_QUADS
+    else
+      throw new IllegalStateException(s"Unsupported stream type: ${options.physicalType}")
+
     options = RdfStreamOptions(
       streamName = c.get(STREAM_NAME),
-      streamType = c.get(STREAM_TYPE),
+      physicalType = c.get(PHYSICAL_TYPE),
       generalizedStatements = c.get(ALLOW_GENERALIZED_STATEMENTS).booleanValue(),
       useRepeat = c.get(USE_REPEAT).booleanValue(),
       rdfStar = c.get(ALLOW_RDF_STAR).booleanValue(),
       maxNameTableSize = c.get(MAX_NAME_TABLE_SIZE).toInt,
       maxPrefixTableSize = c.get(MAX_PREFIX_TABLE_SIZE).toInt,
       maxDatatypeTableSize = c.get(MAX_DATATYPE_TABLE_SIZE).toInt,
+      logicalType = lType,
     )
     frameSize = c.get(FRAME_SIZE).toLong
     encoder = Rdf4jProtoEncoder(options)
 
   override def consumeStatement(st: Statement): Unit =
     checkWritingStarted()
-    val rows = if options.streamType.isTriples then
+    val rows = if options.physicalType.isTriples then
       encoder.addTripleStatement(st)
-    else if options.streamType.isQuads then
-      encoder.addQuadStatement(st)
     else
-      throw new IllegalStateException(s"Unsupported stream type: ${options.streamType}")
+      encoder.addQuadStatement(st)
 
     buffer ++= rows
     if buffer.size >= frameSize then

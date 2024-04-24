@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
  * See the base (extendable) trait: [[ProtoDecoder]].
  */
 sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +TQuad, +TOut]
-(converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
+(converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
   extends ProtoDecoder[TOut]:
 
   private var streamOpt: Option[RdfStreamOptions] = None
@@ -137,6 +137,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
 
   protected def handleOptions(opts: RdfStreamOptions): Unit =
     checkVersion(opts)
+    checkLogicalStreamType(opts, expLogicalType)
     setStreamOpt(opts)
 
   protected def handleTriple(triple: RdfTriple): Option[TOut] =
@@ -161,11 +162,11 @@ object ProtoDecoderImpl:
    * A decoder that reads TRIPLES streams and outputs a sequence of triples.
    */
   final class TriplesDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple](converter):
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple](converter, expLogicalType):
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
-      if !opts.streamType.isTriples then
+      if !opts.physicalType.isTriples then
         throw new RdfProtoDeserializationError("Incoming stream type is not TRIPLES.")
       super.handleOptions(opts)
 
@@ -176,11 +177,11 @@ object ProtoDecoderImpl:
    * A decoder that reads QUADS streams and outputs a sequence of quads.
    */
   final class QuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter):
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter, expLogicalType):
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
-      if !opts.streamType.isQuads then
+      if !opts.physicalType.isQuads then
         throw new RdfProtoDeserializationError("Incoming stream type is not QUADS.")
       super.handleOptions(opts)
 
@@ -191,12 +192,12 @@ object ProtoDecoderImpl:
    * A decoder that reads GRAPHS streams and outputs a flat sequence of quads.
    */
   final class GraphsAsQuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter):
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter, expLogicalType):
     private var currentGraph: Option[TNode] = None
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
-      if !opts.streamType.isGraphs then
+      if !opts.physicalType.isGraphs then
         throw new RdfProtoDeserializationError("Incoming stream type is not GRAPHS.")
       super.handleOptions(opts)
 
@@ -223,13 +224,13 @@ object ProtoDecoderImpl:
    * Each graph is emitted as soon as the producer signals that it's complete.
    */
   final class GraphsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, (TNode, Iterable[TTriple])](converter):
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, (TNode, Iterable[TTriple])](converter, expLogicalType):
     private var currentGraph: Option[TNode] = None
     private var buffer: ListBuffer[TTriple] = new ListBuffer[TTriple]()
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
-      if !opts.streamType.isGraphs then
+      if !opts.physicalType.isGraphs then
         throw new RdfProtoDeserializationError("Incoming stream type is not GRAPHS.")
       super.handleOptions(opts)
 
@@ -283,17 +284,18 @@ object ProtoDecoderImpl:
 
     private def handleOptions(opts: RdfStreamOptions): Unit =
       checkVersion(opts)
+      checkLogicalStreamType(opts, None)
       if inner.isDefined then
         throw new RdfProtoDeserializationError("Stream options are already set." +
           "The type of the stream cannot be inferred.")
-      val dec = opts.streamType match
-        case RdfStreamType.TRIPLES =>
-          new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter)
-        case RdfStreamType.QUADS =>
-          new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)
-        case RdfStreamType.GRAPHS =>
-          new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter)
-        case RdfStreamType.UNSPECIFIED =>
+      val dec = opts.physicalType match
+        case PhysicalStreamType.TRIPLES =>
+          new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
+        case PhysicalStreamType.QUADS =>
+          new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
+        case PhysicalStreamType.GRAPHS =>
+          new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
+        case PhysicalStreamType.UNSPECIFIED =>
           throw new RdfProtoDeserializationError("Incoming stream type is not set.")
         case _ =>
           throw new RdfProtoDeserializationError("Incoming stream type is not recognized.")

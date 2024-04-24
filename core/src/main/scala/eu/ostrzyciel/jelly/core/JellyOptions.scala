@@ -4,7 +4,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 
 /**
  * A collection of convenient streaming option presets.
- * None of the presets specifies the stream type – do that with the .withStreamType method.
+ * None of the presets specifies the stream type – do that with the .withPhysicalType method.
  */
 object JellyOptions:
 

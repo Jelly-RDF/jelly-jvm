@@ -6,6 +6,6 @@ import org.eclipse.rdf4j.model.{Statement, Value}
 
 object Rdf4jConverterFactory
   extends ConverterFactory[Rdf4jProtoEncoder, Rdf4jDecoderConverter, Value, Rdf4jDatatype, Statement, Statement]:
-  override protected def decoderConverter: Rdf4jDecoderConverter = new Rdf4jDecoderConverter()
+  override final def decoderConverter: Rdf4jDecoderConverter = new Rdf4jDecoderConverter()
 
-  override def encoder(options: RdfStreamOptions): Rdf4jProtoEncoder = Rdf4jProtoEncoder(options)
+  override final def encoder(options: RdfStreamOptions): Rdf4jProtoEncoder = Rdf4jProtoEncoder(options)

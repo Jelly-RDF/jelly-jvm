@@ -10,7 +10,8 @@ object EncoderSource:
 
   /**
    * A source of RDF stream frames from an RDF graph implementation.
-   * RDF stream type: TRIPLES.
+   * Physical stream type: TRIPLES.
+   * Logical stream type (RDF-STaX): flat RDF triple stream (FLAT_TRIPLES).
    *
    * @param graph the RDF graph to be streamed
    * @param limiter frame size limiter (see [[SizeLimiter]])
@@ -25,11 +26,12 @@ object EncoderSource:
     (implicit adapter: IterableAdapter[?, TTriple, ?, TGraph, ?], factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asTriples(graph))
-      .via(fromFlatTriples(limiter, opt))
+      .via(flatTripleStream(limiter, opt))
 
   /**
    * A source of RDF stream frames from an RDF dataset implementation (quads format).
-   * RDF stream type: QUADS.
+   * Physical stream type: QUADS.
+   * Logical stream type (RDF-STaX): flat RDF quad stream (FLAT_QUADS).
    *
    * @param dataset the RDF dataset to be streamed
    * @param limiter frame size limiter (see [[SizeLimiter]])
@@ -44,11 +46,12 @@ object EncoderSource:
     (implicit adapter: IterableAdapter[?, ?, TQuad, ?, TDataset], factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asQuads(dataset))
-      .via(fromFlatQuads(limiter, opt))
+      .via(flatQuadStream(limiter, opt))
 
   /**
    * A source of RDF stream frames from an RDF dataset implementation (graphs format).
    * RDF stream type: GRAPHS.
+   * Logical stream type (RDF-STaX): flat RDF quad stream (FLAT_QUADS).
    *
    * @param dataset the RDF dataset to be streamed
    * @param maybeLimiter frame size limiter (see [[SizeLimiter]]).
@@ -67,4 +70,4 @@ object EncoderSource:
       factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asGraphs(dataset))
-      .via(fromGraphs(maybeLimiter, opt))
+      .via(namedGraphStream(maybeLimiter, opt))
