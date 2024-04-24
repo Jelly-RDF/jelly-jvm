@@ -90,3 +90,25 @@ private trait LogicalStreamTypeExtensions:
 private object LogicalStreamTypeExtensions extends LogicalStreamTypeExtensions
 
 export LogicalStreamTypeExtensions.*
+
+object LogicalStreamTypeFactory:
+
+  /**
+   * Creates a logical stream type from an RDF-STaX stream type individual IRI.
+   *
+   * @param iri the IRI of the RDF-STaX stream type individual
+   * @return the logical stream type, or None if the IRI is not a valid RDF-STaX stream type individual
+   */
+  def fromOntologyIri(iri: String): Option[LogicalStreamType] =
+    if !iri.startsWith(staxPrefix) then
+      return None
+
+    iri.substring(staxPrefix.length) match
+      case "flatTripleStream" => Some(LogicalStreamType.FLAT_TRIPLES)
+      case "flatQuadStream" => Some(LogicalStreamType.FLAT_QUADS)
+      case "graphStream" => Some(LogicalStreamType.GRAPHS)
+      case "subjectGraphStream" => Some(LogicalStreamType.SUBJECT_GRAPHS)
+      case "datasetStream" => Some(LogicalStreamType.DATASETS)
+      case "namedGraphStream" => Some(LogicalStreamType.NAMED_GRAPHS)
+      case "timestampedNamedGraphStream" => Some(LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS)
+      case _ => None
