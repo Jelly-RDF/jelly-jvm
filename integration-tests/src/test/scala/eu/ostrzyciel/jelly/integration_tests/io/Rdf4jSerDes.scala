@@ -10,7 +10,7 @@ import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 import java.io.{InputStream, OutputStream}
 import scala.jdk.CollectionConverters.*
 
-implicit def seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
+given seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
 
 object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
   val name = "RDF4J"

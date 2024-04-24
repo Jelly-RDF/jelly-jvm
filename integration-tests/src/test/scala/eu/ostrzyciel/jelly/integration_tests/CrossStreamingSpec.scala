@@ -22,9 +22,9 @@ import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 
 class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
-  implicit val actorSystem: ActorSystem = ActorSystem()
-  implicit val ec: ExecutionContext = actorSystem.getDispatcher
-  implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
+  given actorSystem: ActorSystem = ActorSystem()
+  given ExecutionContext = actorSystem.getDispatcher
+  given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
 
   override def beforeAll(): Unit =
     JenaSystem.init()

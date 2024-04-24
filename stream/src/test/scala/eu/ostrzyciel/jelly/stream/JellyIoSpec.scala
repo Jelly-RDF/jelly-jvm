@@ -11,7 +11,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
-  implicit val actorSystem: ActorSystem = ActorSystem()
+  given ActorSystem = ActorSystem()
   import ProtoTestCases.*
 
   val cases = Seq(

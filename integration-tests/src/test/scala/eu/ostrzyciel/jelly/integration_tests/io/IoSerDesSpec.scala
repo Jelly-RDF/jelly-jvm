@@ -66,7 +66,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
         for (name, file) <- casesTriples do
           s"ser/des file $name with preset $presetName, frame size $size" in {
             val model = ser.readTriplesW3C(FileInputStream(file))
-            val originalSize = implicitly[Measure[TMSer]].size(model)
+            val originalSize = summon[Measure[TMSer]].size(model)
             originalSize should be > 0L
 
             val os = ByteArrayOutputStream()
@@ -77,7 +77,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
             data.size should be > 0
 
             val model2 = des.readTriplesJelly(ByteArrayInputStream(data))
-            val deserializedSize = implicitly[Measure[TMDes]].size(model2)
+            val deserializedSize = summon[Measure[TMDes]].size(model2)
             // Add -1 to account for the different statement counting of RDF4J and Jena
             deserializedSize should be <= originalSize
             deserializedSize should be >= originalSize - 1
@@ -86,7 +86,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
         for (name, file) <- casesQuads do
           s"ser/des file $name with preset $presetName, frame size $size" in {
             val ds = ser.readQuadsW3C(FileInputStream(file))
-            val originalSize = implicitly[Measure[TDSer]].size(ds)
+            val originalSize = summon[Measure[TDSer]].size(ds)
             originalSize should be > 0L
 
             val os = ByteArrayOutputStream()
@@ -97,7 +97,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
             data.size should be > 0
 
             val ds2 = des.readQuadsJelly(ByteArrayInputStream(data))
-            val deserializedSize = implicitly[Measure[TDDes]].size(ds2)
+            val deserializedSize = summon[Measure[TDDes]].size(ds2)
             // Add -2 to account for the different statement counting of RDF4J and Jena
             deserializedSize should be <= originalSize
             deserializedSize should be >= originalSize - 2
