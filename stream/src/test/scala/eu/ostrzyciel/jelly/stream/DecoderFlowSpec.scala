@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.stream
 
+import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.helpers.Assertions.*
 import eu.ostrzyciel.jelly.core.helpers.MockConverterFactory
 import eu.ostrzyciel.jelly.core.proto.v1.*
@@ -33,7 +34,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         assertDecoded(decoded, Triples1.mrl)
       }
 
-    "decode triples (norepeat)" in {
+    "decode triples (norepeat), with options snooping" in {
       val encoded = Triples2NoRepeat.encodedFull(
         JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
@@ -47,6 +48,34 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .run().futureValue
 
       assertDecoded(decoded, Triples2NoRepeat.mrl)
+    }
+  }
+
+  "snoopStreamOptions with decodeTriples.asFlatTripleStream" should {
+    "decode triples (norepeat), with options snooping" in {
+      val encoded = Triples2NoRepeat.encodedFull(
+        JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .withUseRepeat(false),
+        100,
+      )
+      val (optionsF, decodedF) = Source(encoded)
+        .viaMat(DecoderFlow.snoopStreamOptions)(Keep.right)
+        .via(DecoderFlow.decodeTriples.asFlatTripleStream(true))
+        .toMat(Sink.seq)(Keep.both)
+        .run()
+
+      assertDecoded(decodedF.futureValue, Triples2NoRepeat.mrl)
+      val options = optionsF.futureValue
+      options.isDefined should be (true)
+      options.get.useRepeat should be (false)
+      options.get.logicalType should be (LogicalStreamType.FLAT_TRIPLES)
+      options.get.physicalType should be (PhysicalStreamType.TRIPLES)
+
+      // Basic tests on logical stream type extensions
+      options.get.logicalType.getRdfStaxType.isDefined should be (true)
+      options.get.logicalType.getRdfStaxAnnotation(null)(using converterFactory).size should be (3)
     }
   }
 

@@ -5,6 +5,8 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.*
 
+import scala.concurrent.Future
+
 object DecoderFlow:
 
   // *** Public API ***
@@ -43,6 +45,20 @@ object DecoderFlow:
    */
   def decodeAny: DecoderIngestFlowOps.AnyIngestFlowOps.type = DecoderIngestFlowOps.AnyIngestFlowOps
 
+  /**
+   * Snoop the incoming stream for stream options and extract them to the materialized value.
+   * 
+   * @return the materialized value is a future that will return the stream options when first encountered, or
+   *         when the stream completes.
+   */
+  def snoopStreamOptions: Flow[RdfStreamFrame, RdfStreamFrame, Future[Option[RdfStreamOptions]]] =
+    Flow[RdfStreamFrame].alsoToMat(
+      Flow[RdfStreamFrame]
+        .mapConcat(frame => {
+          frame.rows.filter(_.row.isOptions).map(_.row.options.get)
+        })
+        .toMat(Sink.headOption)(Keep.right)
+    )(Keep.right)
 
   // *** Private API ***
 

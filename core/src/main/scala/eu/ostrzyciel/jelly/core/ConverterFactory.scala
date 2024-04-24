@@ -24,7 +24,7 @@ trait ConverterFactory[
   +TDecConv <: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
   TNode, TDatatype : ClassTag, TTriple, TQuad
 ]:
-  protected def decoderConverter: TDecConv
+  def decoderConverter: TDecConv
 
   /**
    * Create a new [[TriplesDecoder]].
