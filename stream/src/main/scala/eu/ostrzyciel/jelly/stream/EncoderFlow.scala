@@ -8,7 +8,9 @@ import org.apache.pekko.stream.scaladsl.{Flow, Source}
 /**
  * Factory of encoder flows for Jelly streams.
  * When using these methods, you don't have to set the physicalType and logicalType properties of [[RdfStreamOptions]].
- * They will be set automatically. These methods will also ensure that the produced stream is more-or-less valid
+ * They will be set automatically. You can set the logical stream type manually, though. 
+ * 
+ * These methods will also ensure that the produced stream is more-or-less valid
  * (that it adheres to the appropriate physical and logical stream type).
  */
 object EncoderFlow:
@@ -30,10 +32,7 @@ object EncoderFlow:
   final def flatTripleStream[TTriple](limiter: SizeLimiter, opt: RdfStreamOptions)
     (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[TTriple, RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(
-      opt.withPhysicalType(PhysicalStreamType.TRIPLES)
-        .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
-    )
+    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.TRIPLES, LogicalStreamType.FLAT_TRIPLES))
     flatFlow(e => encoder.addTripleStatement(e), limiter)
 
   /**
@@ -53,10 +52,7 @@ object EncoderFlow:
   final def flatQuadStream[TQuad](limiter: SizeLimiter, opt: RdfStreamOptions)
     (implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[TQuad, RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(
-      opt.withPhysicalType(PhysicalStreamType.QUADS)
-        .withLogicalType(LogicalStreamType.FLAT_QUADS)
-    )
+    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.QUADS, LogicalStreamType.FLAT_QUADS))
     flatFlow(e => encoder.addQuadStatement(e), limiter)
 
   /**
@@ -77,10 +73,7 @@ object EncoderFlow:
   final def flatTripleStreamGrouped[TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(
-      opt.withPhysicalType(PhysicalStreamType.TRIPLES)
-        .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
-    )
+    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.TRIPLES, LogicalStreamType.FLAT_TRIPLES))
     groupedFlow(e => encoder.addTripleStatement(e), maybeLimiter)
 
   /**
@@ -101,10 +94,7 @@ object EncoderFlow:
   final def graphStream[TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (implicit factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(
-      opt.withPhysicalType(PhysicalStreamType.TRIPLES)
-        .withLogicalType(LogicalStreamType.GRAPHS)
-    )
+    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.TRIPLES, LogicalStreamType.GRAPHS))
     groupedFlow(e => encoder.addTripleStatement(e), maybeLimiter)
 
   /**
@@ -125,10 +115,7 @@ object EncoderFlow:
   final def flatQuadStreamGrouped[TQuad](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(
-      opt.withPhysicalType(PhysicalStreamType.QUADS)
-        .withLogicalType(LogicalStreamType.FLAT_QUADS)
-    )
+    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.QUADS, LogicalStreamType.FLAT_QUADS))
     groupedFlow(e => encoder.addQuadStatement(e), maybeLimiter)
 
   /**
@@ -149,10 +136,7 @@ object EncoderFlow:
   final def datasetStreamFromQuads[TQuad](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (implicit factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(
-      opt.withPhysicalType(PhysicalStreamType.QUADS)
-        .withLogicalType(LogicalStreamType.DATASETS)
-    )
+    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.QUADS, LogicalStreamType.DATASETS))
     groupedFlow(e => encoder.addQuadStatement(e), maybeLimiter)
 
   /**
@@ -176,10 +160,7 @@ object EncoderFlow:
   final def namedGraphStream[TNode, TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[(TNode, Iterable[TTriple]), RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(
-      opt.withPhysicalType(PhysicalStreamType.GRAPHS)
-        .withLogicalType(LogicalStreamType.NAMED_GRAPHS)
-    )
+    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.NAMED_GRAPHS))
     Flow[(TNode, Iterable[TTriple])]
       // Make each graph into a 1-element "group"
       .map(Seq(_))
@@ -206,14 +187,20 @@ object EncoderFlow:
   final def datasetStream[TNode, TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (implicit factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[IterableOnce[(TNode, Iterable[TTriple])], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(
-      opt.withPhysicalType(PhysicalStreamType.GRAPHS)
-        .withLogicalType(LogicalStreamType.DATASETS)
-    )
+    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.DATASETS))
     groupedFlow[(TNode, Iterable[TTriple])](graphAsIterable(encoder), maybeLimiter)
 
 
   // PRIVATE API
+
+  /**
+   * Make Jelly options while preserving the user-set logical stream type.
+   */
+  private def makeOptions(opt: RdfStreamOptions, pst: PhysicalStreamType, lst: LogicalStreamType): RdfStreamOptions =
+    opt.copy(
+      physicalType = pst,
+      logicalType = if opt.logicalType.isUnspecified then lst else opt.logicalType
+    )
 
   private def graphAsIterable[TEncoder <: ProtoEncoder[TNode, TTriple, ?, ?], TNode, TTriple](encoder: TEncoder):
   ((TNode, Iterable[TTriple])) => Iterable[RdfStreamRow] =

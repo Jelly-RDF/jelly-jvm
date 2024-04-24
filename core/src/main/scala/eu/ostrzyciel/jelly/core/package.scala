@@ -31,3 +31,13 @@ package object core:
      */
     def toBaseType: LogicalStreamType =
       LogicalStreamType.fromValue(logicalType.value % 10)
+
+    /**
+     * Checks if the logical stream type is equal to or a subtype of the other logical stream type.
+     * For example, [[LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS]] is a subtype of [[LogicalStreamType.DATASETS]].
+     *
+     * @param other the other logical stream type
+     * @return true if the logical stream type is equal to or a subtype of the other logical stream type
+     */
+    def isEqualOrSubtypeOf(other: LogicalStreamType): Boolean =
+      logicalType == other || logicalType.value.toString.endsWith(other.value.toString)

@@ -57,9 +57,7 @@ trait ProtoDecoder[+TOut]:
 
     expLogicalType match
       case Some(v) =>
-        val ot = options.logicalType.value
-        val vt = v.value
-        if ot != vt && !ot.toString.endsWith(vt.toString) then
+        if !options.logicalType.isEqualOrSubtypeOf(v) then
           throw new RdfProtoDeserializationError(s"Expected logical stream type $v, got ${options.logicalType}. " +
             s"${options.logicalType} is not a subtype of $v.")
       case None =>
