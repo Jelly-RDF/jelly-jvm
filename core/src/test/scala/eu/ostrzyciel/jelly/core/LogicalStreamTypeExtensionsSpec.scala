@@ -54,6 +54,12 @@ class LogicalStreamTypeExtensionsSpec extends AnyWordSpec, Matchers:
         t.get should startWith ("https://w3id.org/stax/ontology#")
       }
 
+      s"return a type that can be parsed by LogicalStreamTypeFactory for $streamType" in {
+        val t = streamType.getRdfStaxType
+        val newType = LogicalStreamTypeFactory.fromOntologyIri(t.get)
+        newType should be (Some(streamType))
+      }
+
     "not return RDF STaX type for UNSPECIFIED" in {
       LogicalStreamType.UNSPECIFIED.getRdfStaxType should be (None)
     }
@@ -86,4 +92,14 @@ class LogicalStreamTypeExtensionsSpec extends AnyWordSpec, Matchers:
         error.getMessage should include ("Unsupported logical stream type")
         error.getMessage should include ("UNSPECIFIED")
       }
+  }
+
+  "LogicalStreamTypeFactory.fromOntologyIri" should {
+    "return None for a non-STaX IRI" in {
+      LogicalStreamTypeFactory.fromOntologyIri("https://example.org/stream") should be (None)
+    }
+
+    "return None for an invalid STaX IRI" in {
+      LogicalStreamTypeFactory.fromOntologyIri("https://w3id.org/stax/ontology#doesNotExist") should be (None)
+    }
   }
