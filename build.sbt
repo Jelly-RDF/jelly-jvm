@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "3.3.1"
+ThisBuild / scalaVersion := "3.3.3"
 ThisBuild / organization := "eu.ostrzyciel.jelly"
 ThisBuild / homepage := Some(url("https://github.com/Jelly-RDF/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
