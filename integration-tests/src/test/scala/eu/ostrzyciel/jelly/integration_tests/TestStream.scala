@@ -18,8 +18,8 @@ trait TestStream:
   def graphSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions):
   Source[RdfStreamFrame, NotUsed]
 
-  def tripleSink(os: OutputStream)(implicit ec: ExecutionContext): Sink[RdfStreamFrame, Future[Done]]
+  def tripleSink(os: OutputStream)(using ExecutionContext): Sink[RdfStreamFrame, Future[Done]]
 
-  def quadSink(os: OutputStream)(implicit ec: ExecutionContext): Sink[RdfStreamFrame, Future[Done]]
+  def quadSink(os: OutputStream)(using ExecutionContext): Sink[RdfStreamFrame, Future[Done]]
 
-  def graphSink(os: OutputStream)(implicit ec: ExecutionContext): Sink[RdfStreamFrame, Future[Done]]
+  def graphSink(os: OutputStream)(using ExecutionContext): Sink[RdfStreamFrame, Future[Done]]

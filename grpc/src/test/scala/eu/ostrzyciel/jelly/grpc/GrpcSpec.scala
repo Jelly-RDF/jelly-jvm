@@ -21,7 +21,7 @@ import scala.concurrent.duration.*
 class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   import ProtoTestCases.*
 
-  implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
+  given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
   val conf = ConfigFactory.parseString(
     """
       |pekko.http.server.preview.enable-http2 = on
@@ -43,8 +43,8 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   val serverSystem: ActorSystem[_] = testKit.system
 
   class TestService(storedData: Map[String, Seq[RdfStreamFrame]]) extends RdfStreamService:
-    implicit val system: ActorSystem[_] = serverSystem
-    implicit val ec: ExecutionContext = system.executionContext
+    given system: ActorSystem[_] = serverSystem
+    given ExecutionContext = system.executionContext
     var receivedData: mutable.Map[String, Seq[RdfStreamFrame]] = mutable.Map()
 
     override def publishRdf(in: Source[RdfStreamFrame, NotUsed]) =
@@ -94,11 +94,11 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     val bound = new RdfStreamServer(
       RdfStreamServer.Options.fromConfig(conf.getConfig(s"pekko.grpc.client.$confKey")),
       service
-    )(serverSystem).run().futureValue
+    )(using serverSystem).run().futureValue
     (name, confKey, service, bound)
   })
 
-  implicit val clientSystem: ActorSystem[_] = ActorSystem(Behaviors.empty, "TestClient", conf)
+  given clientSystem: ActorSystem[_] = ActorSystem(Behaviors.empty, "TestClient", conf)
 
   override def afterAll(): Unit =
     ActorTestKit.shutdown(clientSystem)

@@ -23,7 +23,7 @@ object EncoderSource:
    * @return Pekko Streams source of RDF stream frames
    */
   def fromGraph[TGraph, TTriple](graph: TGraph, limiter: SizeLimiter, opt: RdfStreamOptions)
-    (implicit adapter: IterableAdapter[?, TTriple, ?, TGraph, ?], factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
+    (using adapter: IterableAdapter[?, TTriple, ?, TGraph, ?], factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asTriples(graph))
       .via(flatTripleStream(limiter, opt))
@@ -43,7 +43,7 @@ object EncoderSource:
    * @return Pekko Streams source of RDF stream frames
    */
   def fromDatasetAsQuads[TDataset, TQuad](dataset: TDataset, limiter: SizeLimiter, opt: RdfStreamOptions)
-    (implicit adapter: IterableAdapter[?, ?, TQuad, ?, TDataset], factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
+    (using adapter: IterableAdapter[?, ?, TQuad, ?, TDataset], factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asQuads(dataset))
       .via(flatQuadStream(limiter, opt))
@@ -66,7 +66,7 @@ object EncoderSource:
    */
   def fromDatasetAsGraphs[TDataset, TNode, TTriple]
   (dataset: TDataset, maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
-    (implicit adapter: IterableAdapter[TNode, TTriple, ?, ?, TDataset],
+    (using adapter: IterableAdapter[TNode, TTriple, ?, ?, TDataset],
       factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
     Source(adapter.asGraphs(dataset))

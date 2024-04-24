@@ -15,9 +15,9 @@ import scala.concurrent.duration.*
 class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   import ProtoTestCases.*
 
-  implicit val patience: PatienceConfig = PatienceConfig(5.seconds, 100.millis)
-  implicit val converterFactory: MockConverterFactory.type = MockConverterFactory
-  implicit val actorSystem: ActorSystem = ActorSystem()
+  given PatienceConfig = PatienceConfig(5.seconds, 100.millis)
+  given MockConverterFactory.type = MockConverterFactory
+  given ActorSystem = ActorSystem()
 
   "flatTripleStream" should {
     "encode triples" in {

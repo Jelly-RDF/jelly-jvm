@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.*
 
 case object Rdf4jTestStream extends TestStream:
-  import eu.ostrzyciel.jelly.convert.rdf4j.*
+  import eu.ostrzyciel.jelly.convert.rdf4j.given
 
   override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     // This buffers everything in memory... but I'm too lazy to implement my own RDFHandler for this
@@ -42,7 +42,7 @@ case object Rdf4jTestStream extends TestStream:
     Source.fromIterator(() => graphs.iterator)
       .via(EncoderFlow.namedGraphStream(Some(limiter), jellyOpt))
 
-  override def tripleSink(os: OutputStream)(implicit ec: ExecutionContext) =
+  override def tripleSink(os: OutputStream)(using ExecutionContext) =
     val writer = Rio.createWriter(RDFFormat.TURTLESTAR, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
@@ -53,7 +53,7 @@ case object Rdf4jTestStream extends TestStream:
         Done
       }))
 
-  override def quadSink(os: OutputStream)(implicit ec: ExecutionContext) =
+  override def quadSink(os: OutputStream)(using ExecutionContext) =
     val writer = Rio.createWriter(RDFFormat.NQUADS, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
@@ -64,7 +64,7 @@ case object Rdf4jTestStream extends TestStream:
         Done
       }))
 
-  override def graphSink(os: OutputStream)(implicit ec: ExecutionContext) =
+  override def graphSink(os: OutputStream)(using ExecutionContext) =
     val writer = Rio.createWriter(RDFFormat.NQUADS, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
