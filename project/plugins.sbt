@@ -3,4 +3,4 @@ addSbtPlugin("org.apache.pekko" % "pekko-grpc-sbt-plugin" % "1.0.0")
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.11")
 addDependencyTreePlugin
 
-libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.12"
+libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.15"
