@@ -89,7 +89,7 @@ lazy val grpc = (project in file("grpc"))
       "org.apache.pekko" %% "pekko-discovery" % pekkoV,
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
       "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
-      "org.apache.pekko" %% "pekko-grpc-runtime" % "1.0.0",
+      "org.apache.pekko" %% "pekko-grpc-runtime" % "1.0.2",
     ),
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(
