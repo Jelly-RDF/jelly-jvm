@@ -19,7 +19,7 @@ sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 lazy val pekkoV = "1.0.1"
 lazy val jenaV = "4.6.1"
-lazy val rdf4jV = "4.3.0"
+lazy val rdf4jV = "4.3.11"
 lazy val scalapbV = "0.11.13"
 
 lazy val commonSettings = Seq(
