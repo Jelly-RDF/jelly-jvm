@@ -17,9 +17,12 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeProfileName := "eu.ostrzyciel"
 sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
-lazy val pekkoV = "1.0.1"
+lazy val pekkoV = "1.0.2"
 lazy val jenaV = "4.10.0"
 lazy val rdf4jV = "4.3.0"
+// Must be synchronized to the version used by Pekko gRPC
+// See: https://mvnrepository.com/artifact/org.apache.pekko/pekko-grpc-runtime_3
+// When updating also change the version in plugins.sbt
 lazy val scalapbV = "0.11.13"
 
 lazy val commonSettings = Seq(
@@ -89,7 +92,7 @@ lazy val grpc = (project in file("grpc"))
       "org.apache.pekko" %% "pekko-discovery" % pekkoV,
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
       "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
-      "org.apache.pekko" %% "pekko-grpc-runtime" % "1.0.0",
+      "org.apache.pekko" %% "pekko-grpc-runtime" % pekkoV,
     ),
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(
