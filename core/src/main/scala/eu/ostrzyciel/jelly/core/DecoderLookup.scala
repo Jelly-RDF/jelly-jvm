@@ -18,7 +18,7 @@ private[core] final class DecoderLookup[T : ClassTag](maxEntries: Int):
    * @param v value
    * @throws ArrayIndexOutOfBoundsException if id < 0 or id > maxEntries
    */
-  inline def update(id: Int, v: T): Unit =
+  def update(id: Int, v: T): Unit =
     if id == 0 then
       lastSetId += 1
       lookup(lastSetId) = v
