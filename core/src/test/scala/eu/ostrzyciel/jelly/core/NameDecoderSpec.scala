@@ -32,6 +32,23 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         dec.decode(RdfIri(0, 0)) should be ("")
       }
 
+      "accept new prefixes with default IDs" in {
+        val dec = NameDecoder(smallOptions)
+        dec.updatePrefixes(RdfPrefixEntry(0, "https://test.org/"))
+        dec.updatePrefixes(RdfPrefixEntry(0, "https://test.org/2/"))
+        dec.decode(RdfIri(1, 0)) should be("https://test.org/")
+        dec.decode(RdfIri(2, 0)) should be("https://test.org/2/")
+      }
+
+      "accept a new prefix with default ID after explicitly numbered prefix" in {
+        val dec = NameDecoder(smallOptions)
+        dec.updatePrefixes(RdfPrefixEntry(4, "https://test.org/"))
+        // This ID will resolve to 5
+        dec.updatePrefixes(RdfPrefixEntry(0, "https://test.org/2/"))
+        dec.decode(RdfIri(4, 0)) should be("https://test.org/")
+        dec.decode(RdfIri(5, 0)) should be("https://test.org/2/")
+      }
+
       "accept a new prefix and return it (IRI with no name part)" in {
         val dec = NameDecoder(smallOptions)
         dec.updatePrefixes(RdfPrefixEntry(3, "https://test.org/"))
@@ -59,10 +76,10 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         }
       }
 
-      "not accept a new prefix ID lower than 1" in {
+      "not accept a new prefix ID lower than 0" in {
         val dec = NameDecoder(smallOptions)
         intercept[ArrayIndexOutOfBoundsException] {
-          dec.updatePrefixes(RdfPrefixEntry(0, "https://test.org/"))
+          dec.updatePrefixes(RdfPrefixEntry(-1, "https://test.org/"))
         }
       }
 
@@ -80,10 +97,18 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         }
       }
 
-      "not accept a new name ID lower than 1" in {
+      "not accept a default ID going beyond the table size" in {
+        val dec = NameDecoder(smallOptions)
+        dec.updateNames(RdfNameEntry(16, "Cake"))
+        intercept[ArrayIndexOutOfBoundsException] {
+          dec.updateNames(RdfNameEntry(0, "Cake 2"))
+        }
+      }
+
+      "not accept a new name ID lower than 0" in {
         val dec = NameDecoder(smallOptions)
         intercept[ArrayIndexOutOfBoundsException] {
-          dec.updateNames(RdfNameEntry(0, "Cake"))
+          dec.updateNames(RdfNameEntry(-1, "Cake"))
         }
       }
 

@@ -2,10 +2,17 @@ package eu.ostrzyciel.jelly.core
 
 import java.util
 
-private[core] final case class EncoderValue(id: Int, newEntry: Boolean)
+private[core] object EncoderValue:
+  // Empty default value to slightly reduce heap pressure
+  val Empty = EncoderValue(0, 0, false)
+
+private[core] final case class EncoderValue(getId: Int, setId: Int, newEntry: Boolean)
 
 private[core] final class EncoderLookup(maxEntries: Int)
   extends util.LinkedHashMap[String, EncoderValue](maxEntries + 2, 1, true):
+
+  // 1-based index of the last assigned new value in the lookup table
+  private var lastSetId: Int = 0
 
   override def removeEldestEntry(eldest: util.Map.Entry[String, EncoderValue]): Boolean =
     size > maxEntries
@@ -24,10 +31,15 @@ private[core] final class EncoderLookup(maxEntries: Int)
     val s = this.size
     if s < maxEntries then
       // case 2: we still have free IDs, add it to the map
-      this.put(v, EncoderValue(s + 1, false))
-      return EncoderValue(s + 1, true)
+      lastSetId = s + 1
+      this.put(v, EncoderValue(lastSetId, lastSetId, false))
+      // the setId is always 0, because we haven't filled in the table yet
+      return EncoderValue(lastSetId, 0, true)
 
     // case 3: no free IDs, reuse an old one
     val next = this.values.iterator.next
     this.put(v, next)
-    EncoderValue(next.id, true)
+    val getId = next.getId
+    val setId = if lastSetId + 1 == getId then 0 else getId
+    lastSetId = getId
+    EncoderValue(getId, setId, true)
