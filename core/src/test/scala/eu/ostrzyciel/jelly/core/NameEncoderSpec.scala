@@ -27,7 +27,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         buffer.size should be (1)
         val dtEntry = buffer.head.row.datatype.get
         dtEntry.value should be ("dt1")
-        dtEntry.id should be (1)
+        dtEntry.id should be (0)
       }
 
       "add multiple datatypes and reuse existing ones" in {
@@ -42,10 +42,10 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         buffer.size should be (4)
         buffer.map(_.row.datatype.get) should contain only (
-          RdfDatatypeEntry(1, "dt1"),
-          RdfDatatypeEntry(2, "dt2"),
-          RdfDatatypeEntry(3, "dt3"),
-          RdfDatatypeEntry(4, "dt4"),
+          RdfDatatypeEntry(0, "dt1"),
+          RdfDatatypeEntry(0, "dt2"),
+          RdfDatatypeEntry(0, "dt3"),
+          RdfDatatypeEntry(0, "dt4"),
         )
       }
 
@@ -70,7 +70,9 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           dt.value should be (i - 12) // 1–4
 
         buffer.size should be (16)
-        val expectedIds = Array.from((1 to 8) ++ (1 to 4) ++ (1 to 4))
+        val expectedIds = Array.from(
+          Iterable.fill(8)(0) ++ Seq(1) ++ Iterable.fill(3)(0) ++ Seq(1) ++ Iterable.fill(3)(0)
+        )
         for (r, i) <- buffer.zipWithIndex do
           val dt = r.row.datatype.get
           dt.id should be (expectedIds(i))
@@ -87,10 +89,10 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         buffer.size should be (2)
         buffer should contain (RdfStreamRow(RdfStreamRow.Row.Prefix(
-          RdfPrefixEntry(id = 1, value = "https://test.org/")
+          RdfPrefixEntry(id = 0, value = "https://test.org/")
         )))
         buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
-          RdfNameEntry(id = 1, value = "Cake")
+          RdfNameEntry(id = 0, value = "Cake")
         )))
       }
 
@@ -102,7 +104,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         buffer.size should be (1)
         buffer should contain (RdfStreamRow(RdfStreamRow.Row.Prefix(
-          RdfPrefixEntry(id = 1, value = "https://test.org/test/")
+          RdfPrefixEntry(id = 0, value = "https://test.org/test/")
         )))
       }
 
@@ -114,7 +116,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         buffer.size should be (1)
         buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
-          RdfNameEntry(id = 1, value = "testTestTest")
+          RdfNameEntry(id = 0, value = "testTestTest")
         )))
       }
 
@@ -126,7 +128,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         buffer.size should be (1)
         buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
-          RdfNameEntry(id = 1, value = "https://test.org/Cake")
+          RdfNameEntry(id = 0, value = "https://test.org/Cake")
         )))
       }
 
@@ -155,14 +157,14 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         val expectedBuffer = Seq(
           // Prefix? (name otherwise), ID, value
-          (true, 1, "https://test.org/"),
-          (false, 1, "Cake1"),
-          (true, 2, "https://test.org#"),
-          (true, 3, "https://test.org/test/"),
-          (false, 2, "Cake2"),
+          (true, 0, "https://test.org/"),
+          (false, 0, "Cake1"),
+          (true, 0, "https://test.org#"),
+          (true, 0, "https://test.org/test/"),
+          (false, 0, "Cake2"),
           (true, 3, "https://test.org/other/"),
-          (false, 3, "Cake3"),
-          (false, 4, "Cake4"),
+          (false, 0, "Cake3"),
+          (false, 0, "Cake4"),
           (false, 1, "Cake5"),
         )
 

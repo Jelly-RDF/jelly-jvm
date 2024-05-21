@@ -64,24 +64,24 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(1, "https://test.org/test/"),
-      RdfNameEntry(1, "subject"),
-      RdfNameEntry(2, "predicate"),
-      RdfPrefixEntry(2, "https://test.org/ns2/"),
-      RdfNameEntry(3, "object"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
+      RdfNameEntry(0, "predicate"),
+      RdfPrefixEntry(0, "https://test.org/ns2/"),
+      RdfNameEntry(0, "object"),
       RdfTriple(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
       ),
-      RdfDatatypeEntry(1, "https://test.org/xsd/integer"),
+      RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
         TERM_REPEAT,
         TERM_REPEAT,
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
       ),
-      RdfNameEntry(4, "b"),
-      RdfNameEntry(5, "c"),
+      RdfNameEntry(0, "b"),
+      RdfNameEntry(0, "c"),
       RdfTriple(
         TERM_REPEAT,
         TERM_REPEAT,
@@ -114,17 +114,17 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(1, "https://test.org/test/"),
-      RdfNameEntry(1, "subject"),
-      RdfNameEntry(2, "predicate"),
-      RdfPrefixEntry(2, "https://test.org/ns2/"),
-      RdfNameEntry(3, "object"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
+      RdfNameEntry(0, "predicate"),
+      RdfPrefixEntry(0, "https://test.org/ns2/"),
+      RdfNameEntry(0, "object"),
       RdfTriple(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
       ),
-      RdfDatatypeEntry(1, "https://test.org/xsd/integer"),
+      RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
@@ -163,11 +163,11 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(1, "https://test.org/test/"),
-      RdfNameEntry(1, "subject"),
-      RdfNameEntry(2, "predicate"),
-      RdfPrefixEntry(2, "https://test.org/ns3/"),
-      RdfNameEntry(3, "graph"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
+      RdfNameEntry(0, "predicate"),
+      RdfPrefixEntry(0, "https://test.org/ns3/"),
+      RdfNameEntry(0, "graph"),
       RdfQuad(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
@@ -216,11 +216,11 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(1, "https://test.org/test/"),
-      RdfNameEntry(1, "subject"),
-      RdfNameEntry(2, "predicate"),
-      RdfPrefixEntry(2, "https://test.org/ns3/"),
-      RdfNameEntry(3, "graph"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
+      RdfNameEntry(0, "predicate"),
+      RdfPrefixEntry(0, "https://test.org/ns3/"),
+      RdfNameEntry(0, "graph"),
       RdfQuad(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
@@ -255,9 +255,9 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(1, "https://test.org/test/"),
-      RdfNameEntry(1, "subject"),
-      RdfNameEntry(2, "predicate"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
+      RdfNameEntry(0, "predicate"),
       RdfQuad(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
@@ -327,25 +327,25 @@ object ProtoTestCases:
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
       RdfGraphStart(RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))),
-      RdfPrefixEntry(1, "https://test.org/test/"),
-      RdfNameEntry(1, "subject"),
-      RdfNameEntry(2, "predicate"),
-      RdfPrefixEntry(2, "https://test.org/ns2/"),
-      RdfNameEntry(3, "object"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
+      RdfNameEntry(0, "predicate"),
+      RdfPrefixEntry(0, "https://test.org/ns2/"),
+      RdfNameEntry(0, "object"),
       RdfTriple(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
         RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
       ),
-      RdfDatatypeEntry(1, "https://test.org/xsd/integer"),
+      RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
         TERM_REPEAT,
         TERM_REPEAT,
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
       ),
       RdfGraphEnd(),
-      RdfPrefixEntry(3, "https://test.org/ns3/"),
-      RdfNameEntry(4, "graph"),
+      RdfPrefixEntry(0, "https://test.org/ns3/"),
+      RdfNameEntry(0, "graph"),
       RdfGraphStart(RdfGraph(RdfGraph.Graph.Iri(RdfIri(3, 4)))),
       RdfTriple(
         TERM_REPEAT,
