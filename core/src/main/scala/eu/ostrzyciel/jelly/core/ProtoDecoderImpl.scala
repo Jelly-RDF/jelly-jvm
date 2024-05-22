@@ -23,6 +23,8 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
   protected final val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
   protected final val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   protected final val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
+  
+  private var lastDatatypeId: Int = 0
 
   /**
    * Returns the received stream options from the producer.
@@ -44,7 +46,9 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
     case RdfLiteral.LiteralKind.Langtag(lang) =>
       converter.makeLangLiteral(literal.lex, lang)
     case RdfLiteral.LiteralKind.Datatype(dtId) =>
-      converter.makeDtLiteral(literal.lex, dtLookup.get(dtId))
+      if dtId != 0 then
+        lastDatatypeId = dtId
+      converter.makeDtLiteral(literal.lex, dtLookup.get(lastDatatypeId))
     case RdfLiteral.LiteralKind.Empty =>
       throw new RdfProtoDeserializationError("Literal kind is not set.")
 

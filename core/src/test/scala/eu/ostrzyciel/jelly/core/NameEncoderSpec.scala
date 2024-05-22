@@ -49,6 +49,27 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
       }
 
+      "add multiple datatypes using 0 for repeated instances" in {
+        val (encoder, buffer) = getEncoder()
+        for i <- 1 to 2 do
+          val dt = encoder.encodeDatatype(s"dt$i", buffer)
+          dt.value should be (i)
+
+        for i <- 1 to 4 do
+          val dt = encoder.encodeDatatype(s"dt2", buffer)
+          dt.value should be (0)
+
+        // no repeat this time
+        val dt = encoder.encodeDatatype("dt1", buffer)
+        dt.value should be(1)
+
+        buffer.size should be (2)
+        buffer.map(_.row.datatype.get) should contain only (
+          RdfDatatypeEntry(0, "dt1"),
+          RdfDatatypeEntry(0, "dt2"),
+        )
+      }
+
       "add datatypes evicting old ones" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 12 do
@@ -84,7 +105,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "add a full IRI" in {
         val (encoder, buffer) = getEncoder()
         val iri = encoder.encodeIri("https://test.org/Cake", buffer)
-        iri.nameId should be (1)
+        iri.nameId should be (0)
         iri.prefixId should be (1)
 
         buffer.size should be (2)
@@ -102,19 +123,27 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         iri.nameId should be (0)
         iri.prefixId should be (1)
 
-        buffer.size should be (1)
+        // an empty name entry still has to be allocated
+        buffer.size should be (2)
         buffer should contain (RdfStreamRow(RdfStreamRow.Row.Prefix(
           RdfPrefixEntry(id = 0, value = "https://test.org/test/")
+        )))
+        buffer should contain(RdfStreamRow(RdfStreamRow.Row.Name(
+          RdfNameEntry(id = 0, value = "")
         )))
       }
 
       "add a name-only IRI" in {
         val (encoder, buffer) = getEncoder()
         val iri = encoder.encodeIri("testTestTest", buffer)
-        iri.nameId should be (1)
-        iri.prefixId should be (0)
+        iri.nameId should be (0)
+        iri.prefixId should be (1)
 
-        buffer.size should be (1)
+        // in the mode with the prefix table enabled, an empty prefix entry still has to be allocated
+        buffer.size should be (2)
+        buffer should contain(RdfStreamRow(RdfStreamRow.Row.Prefix(
+          RdfPrefixEntry(id = 0, value = "")
+        )))
         buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
           RdfNameEntry(id = 0, value = "testTestTest")
         )))
@@ -123,9 +152,10 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "add a full IRI in no-prefix table mode" in {
         val (encoder, buffer) = getEncoder(0)
         val iri = encoder.encodeIri("https://test.org/Cake", buffer)
-        iri.nameId should be (1)
+        iri.nameId should be (0)
         iri.prefixId should be (0)
 
+        // in the no prefix mode, there must be no prefix entries
         buffer.size should be (1)
         buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
           RdfNameEntry(id = 0, value = "https://test.org/Cake")
@@ -136,18 +166,19 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         val (encoder, buffer) = getEncoder(3)
         val data = Seq(
           // IRI, expected prefix ID, expected name ID
-          ("https://test.org/Cake1", 1, 1),
+          ("https://test.org/Cake1", 1, 0),
           ("https://test.org#Cake1", 2, 1),
           ("https://test.org/test/Cake1", 3, 1),
-          ("https://test.org/Cake2", 1, 2),
+          ("https://test.org/Cake2", 1, 0),
           ("https://test.org#Cake2", 2, 2),
           ("https://test.org/other/Cake1", 3, 1),
-          ("https://test.org/other/Cake2", 3, 2),
-          ("https://test.org/other/Cake3", 3, 3),
-          ("https://test.org/other/Cake4", 3, 4),
-          ("https://test.org/other/Cake5", 3, 1),
-          ("https://test.org#Cake2", 2, 2),
-          ("Cake2", 0, 2),
+          ("https://test.org/other/Cake2", 0, 0),
+          ("https://test.org/other/Cake3", 0, 0),
+          ("https://test.org/other/Cake4", 0, 0),
+          ("https://test.org/other/Cake5", 0, 1),
+          ("https://test.org#Cake2", 2, 0),
+          // prefix "" evicts the previous number #1
+          ("Cake2", 1, 2),
         )
 
         for (sIri, ePrefix, eName) <- data do
@@ -166,6 +197,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           (false, 0, "Cake3"),
           (false, 0, "Cake4"),
           (false, 1, "Cake5"),
+          (true, 1, ""),
         )
 
         buffer.size should be (expectedBuffer.size)

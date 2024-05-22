@@ -70,9 +70,9 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
       RdfTriple(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 0))),
       ),
       RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
@@ -80,6 +80,7 @@ object ProtoTestCases:
         TERM_REPEAT,
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
       ),
+      RdfPrefixEntry(0, ""),
       RdfNameEntry(0, "b"),
       RdfNameEntry(0, "c"),
       RdfTriple(
@@ -87,13 +88,13 @@ object ProtoTestCases:
         TERM_REPEAT,
         RdfTerm(RdfTerm.Term.TripleTerm(RdfTriple(
           RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-          RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 4))),
-          RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 5))),
+          RdfTerm(RdfTerm.Term.Iri(RdfIri(3, 4))),
+          RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
         )))
       ),
       RdfTriple(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 1))),
         TERM_REPEAT,
       ),
     ))
@@ -120,14 +121,14 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
       RdfTriple(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 0))),
       ),
       RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
       ),
     ))
@@ -169,10 +170,10 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
       RdfQuad(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
-        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
+        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 0))),
       ),
       RdfQuad(
         TERM_REPEAT,
@@ -222,10 +223,10 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
       RdfQuad(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
-        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
+        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 0))),
       ),
       RdfQuad(
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
@@ -259,8 +260,8 @@ object ProtoTestCases:
       RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
       RdfQuad(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
         RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph())),
       ),
@@ -333,9 +334,9 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
       RdfTriple(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
+        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 0))),
       ),
       RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
@@ -346,7 +347,7 @@ object ProtoTestCases:
       RdfGraphEnd(),
       RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
-      RdfGraphStart(RdfGraph(RdfGraph.Graph.Iri(RdfIri(3, 4)))),
+      RdfGraphStart(RdfGraph(RdfGraph.Graph.Iri(RdfIri(3, 0)))),
       RdfTriple(
         TERM_REPEAT,
         TERM_REPEAT,
