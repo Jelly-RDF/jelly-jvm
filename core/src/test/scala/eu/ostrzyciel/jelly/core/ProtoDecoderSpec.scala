@@ -245,7 +245,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       error.getMessage should include ("Term kind is not set")
     }
 
-    "throw exception on unset literal kind" in {
+    "interpret unset literal kind as a simple literal" in {
       val decoder = MockConverterFactory.triplesDecoder(None)
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
@@ -256,10 +256,8 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         ),
       ))
       decoder.ingestRow(data.head)
-      val error = intercept[RdfProtoDeserializationError] {
-        decoder.ingestRow(data(1))
-      }
-      error.getMessage should include ("Literal kind is not set")
+      val r = decoder.ingestRow(data(1))
+      r.get.o should be (a[SimpleLiteral])
     }
   }
 
