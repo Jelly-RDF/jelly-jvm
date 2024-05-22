@@ -179,7 +179,7 @@ object ProtoTestCases:
         TERM_REPEAT,
         RdfTerm(RdfTerm.Term.Bnode("blank")),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral(
-          "test", RdfLiteral.LiteralKind.Simple(RdfLiteralSimple.defaultInstance)
+          "test", RdfLiteral.LiteralKind.Empty
         ))),
         GRAPH_REPEAT,
       ),
@@ -194,7 +194,7 @@ object ProtoTestCases:
         TERM_REPEAT,
         TERM_REPEAT,
         RdfGraph(RdfGraph.Graph.Literal(RdfLiteral(
-          "test", RdfLiteral.LiteralKind.Simple(RdfLiteralSimple.defaultInstance)
+          "test", RdfLiteral.LiteralKind.Empty
         ))),
       ),
     ))
@@ -232,7 +232,7 @@ object ProtoTestCases:
         RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
         RdfTerm(RdfTerm.Term.Bnode("blank")),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral(
-          "test", RdfLiteral.LiteralKind.Simple(RdfLiteralSimple.defaultInstance)
+          "test", RdfLiteral.LiteralKind.Empty
         ))),
         RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
       ),
@@ -269,7 +269,7 @@ object ProtoTestCases:
         TERM_REPEAT,
         RdfTerm(RdfTerm.Term.Bnode("blank")),
         RdfTerm(RdfTerm.Term.Literal(RdfLiteral(
-          "test", RdfLiteral.LiteralKind.Simple(RdfLiteralSimple.defaultInstance)
+          "test", RdfLiteral.LiteralKind.Empty
         ))),
         GRAPH_REPEAT,
       ),

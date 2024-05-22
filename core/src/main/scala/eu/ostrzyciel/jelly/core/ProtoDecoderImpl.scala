@@ -39,14 +39,12 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
       streamOpt = Some(opt)
 
   private final def convertLiteral(literal: RdfLiteral): TNode = literal.literalKind match
-    case RdfLiteral.LiteralKind.Simple(_) =>
+    case RdfLiteral.LiteralKind.Empty =>
       converter.makeSimpleLiteral(literal.lex)
     case RdfLiteral.LiteralKind.Langtag(lang) =>
       converter.makeLangLiteral(literal.lex, lang)
     case RdfLiteral.LiteralKind.Datatype(dtId) =>
       converter.makeDtLiteral(literal.lex, dtLookup.get(dtId))
-    case RdfLiteral.LiteralKind.Empty =>
-      throw new RdfProtoDeserializationError("Literal kind is not set.")
 
 
   private final def convertTerm(term: RdfTerm): TNode = term.term match

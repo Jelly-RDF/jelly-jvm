@@ -9,7 +9,6 @@ object ProtoEncoder:
   private val nodeTermRepeat = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat.defaultInstance))
   private val graphTermRepeat = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat.defaultInstance))
   private val graphTermDefault = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph.defaultInstance))
-  private val simpleLiteral = RdfLiteral.LiteralKind.Simple(RdfLiteralSimple.defaultInstance)
 
 /**
  * Stateful encoder of a protobuf RDF stream.
@@ -137,7 +136,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
 
   protected final inline def makeSimpleLiteral(lex: String): RdfTerm =
     RdfTerm(RdfTerm.Term.Literal(
-      RdfLiteral(lex, simpleLiteral)
+      RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
     ))
 
   protected final inline def makeLangLiteral(lex: String, lang: String): RdfTerm =
@@ -162,7 +161,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
 
   protected final inline def makeSimpleLiteralGraph(lex: String): RdfGraph =
     RdfGraph(RdfGraph.Graph.Literal(
-      RdfLiteral(lex, simpleLiteral)
+      RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
     ))
 
   protected final inline def makeLangLiteralGraph(lex: String, lang: String): RdfGraph =
