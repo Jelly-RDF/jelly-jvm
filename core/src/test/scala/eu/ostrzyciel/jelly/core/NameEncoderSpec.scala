@@ -49,27 +49,6 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
       }
 
-      "add multiple datatypes using 0 for repeated instances" in {
-        val (encoder, buffer) = getEncoder()
-        for i <- 1 to 2 do
-          val dt = encoder.encodeDatatype(s"dt$i", buffer)
-          dt.value should be (i)
-
-        for i <- 1 to 4 do
-          val dt = encoder.encodeDatatype(s"dt2", buffer)
-          dt.value should be (0)
-
-        // no repeat this time
-        val dt = encoder.encodeDatatype("dt1", buffer)
-        dt.value should be(1)
-
-        buffer.size should be (2)
-        buffer.map(_.row.datatype.get) should contain only (
-          RdfDatatypeEntry(0, "dt1"),
-          RdfDatatypeEntry(0, "dt2"),
-        )
-      }
-
       "add datatypes evicting old ones" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 12 do

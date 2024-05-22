@@ -21,7 +21,6 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
   private val dtLookup = new EncoderLookup(opt.maxDatatypeTableSize)
   private val dtTable = new DecoderLookup[RdfLiteral.LiteralKind.Datatype](opt.maxDatatypeTableSize)
 
-  private val lastDatatype = LastNodeHolder[RdfLiteral.LiteralKind.Datatype]()
   private var lastIriPrefixId: Int = -1000
   private var lastIriNameId: Int = 0
 
@@ -43,7 +42,7 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
   /**
    * Obtain the id for the name lookup table to be communicated to the consumer.
    * This method checks if new id = last_id + 1, and if so, it returns 0.
-   * 
+   *
    * @param getId the getId from the EncoderLookup
    * @return the id to be communicated to the consumer
    */
@@ -81,7 +80,7 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
       val postfix = iri.substring(prefix.length)
       val prefixLookupEntry = prefixLookup.addEntry(prefix)
       val nameLookupEntry = nameLookup.addEntry(postfix)
-  
+
       if prefixLookupEntry.newEntry then rowsBuffer.append(
         RdfStreamRow(RdfStreamRow.Row.Prefix(
           RdfPrefixEntry(prefixLookupEntry.setId, prefix)
@@ -92,7 +91,7 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
           RdfNameEntry(nameLookupEntry.setId, postfix)
         ))
       )
-  
+
       val nameIdWithRepeat = getNameIdWithRepeat(nameLookupEntry.getId)
       if lastIriPrefixId == prefixLookupEntry.getId then
         // If the last IRI had the same prefix, we can tell the consumer to reuse it.
@@ -126,14 +125,6 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
           RdfDatatypeEntry(id = dtVal.setId, value = dtIri)
         ))
       )
-      lastDatatype.node = datatype
       datatype
-    else lastDatatype.node match
-      case lastDtVal: RdfLiteral.LiteralKind.Datatype if lastDtVal.value == dtVal.getId =>
-        // The last datatype was the same, so we can tell the consumer to reuse it
-        repeatDatatype
-      case _ =>
-        // The last datatype was different, specify it explicitly
-        val datatype = dtTable.get(dtVal.getId)
-        lastDatatype.node = datatype
-        datatype
+    else
+      dtTable.get(dtVal.getId)
