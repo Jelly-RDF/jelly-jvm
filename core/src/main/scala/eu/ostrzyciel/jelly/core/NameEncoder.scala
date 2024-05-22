@@ -46,7 +46,7 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
    * @param getId the getId from the EncoderLookup
    * @return the id to be communicated to the consumer
    */
-  private inline def getNameIdWithRepeat(getId: Int): Int =
+  private def getNameIdWithRepeat(getId: Int): Int =
     if lastIriNameId + 1 == getId then
       // If the last node had id - 1, we can tell it to the consumer in a shorthand manner
       lastIriNameId = getId
@@ -74,7 +74,7 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
         )
       // We set the prefixId to 0, but it's a special case, because the prefix table is disabled.
       // The consumer will interpret this as no prefix.
-      RdfIri(nameId = getNameIdWithRepeat(nameLookupEntry.getId))
+      RdfIri(prefixId = 0, nameId = getNameIdWithRepeat(nameLookupEntry.getId))
     else
       val prefix = getIriPrefix(iri)
       val postfix = iri.substring(prefix.length)
@@ -95,9 +95,8 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
       val nameIdWithRepeat = getNameIdWithRepeat(nameLookupEntry.getId)
       if lastIriPrefixId == prefixLookupEntry.getId then
         // If the last IRI had the same prefix, we can tell the consumer to reuse it.
-        // prefixId = 0 by default in this constructor.
         // No need to update lastIriPrefixId, because it's the same.
-        RdfIri(nameId = nameIdWithRepeat)
+        RdfIri(prefixId = 0, nameId = nameIdWithRepeat)
       else
         lastIriPrefixId = prefixLookupEntry.getId
         RdfIri(
