@@ -1,9 +1,9 @@
 package eu.ostrzyciel.jelly.core.helpers
 
-import eu.ostrzyciel.jelly.core.proto.v1.RdfGraph
 import eu.ostrzyciel.jelly.core.{ProtoEncoder, RdfProtoSerializationError}
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
-import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import eu.ostrzyciel.jelly.core.proto_adapters.*
 
 /**
  * Mock implementation of ProtoEncoder
@@ -25,7 +25,7 @@ class MockProtoEncoder(override val options: RdfStreamOptions)
   protected inline def getQuotedP(triple: Triple) = triple.p
   protected inline def getQuotedO(triple: Triple) = triple.o
 
-  override protected def nodeToProto(node: Node): RdfTerm = node match
+  override protected def nodeToProto[TTerm : RdfTermAdapter](node: Node): TTerm = node match
     case Iri(iri) => makeIriNode(iri)
     case SimpleLiteral(lex) => makeSimpleLiteral(lex)
     case LangLiteral(lex, lang) => makeLangLiteral(lex, lang)
@@ -33,7 +33,7 @@ class MockProtoEncoder(override val options: RdfStreamOptions)
     case TripleNode(t) => makeTripleNode(t)
     case BlankNode(label) => makeBlankNode(label)
 
-  override protected def graphNodeToProto(node: Node): RdfGraph = node match
+  override protected def graphNodeToProto[TGraph : RdfGraphAdapter](node: Node): TGraph = node match
     case Iri(iri) => makeIriNodeGraph(iri)
     case SimpleLiteral(lex) => makeSimpleLiteralGraph(lex)
     case LangLiteral(lex, lang) => makeLangLiteralGraph(lex, lang)

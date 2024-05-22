@@ -157,10 +157,10 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         RdfQuad(
-          RdfTerm(RdfTerm.Term.Bnode("1")),
-          RdfTerm(RdfTerm.Term.Bnode("2")),
-          RdfTerm(RdfTerm.Term.Bnode("3")),
-          RdfGraph(RdfGraph.Graph.Bnode("4")),
+          RdfQuad.Subject.SBnode("1"),
+          RdfQuad.Predicate.PBnode("2"),
+          RdfQuad.Object.OBnode("3"),
+          RdfQuad.Graph.GBnode("4"),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -188,36 +188,38 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       decoder.getStreamOpt.get.useRepeat should be (true)
     }
 
-    "throw exception on RdfRepeat without preceding value" in {
+    "throw exception on unset term without preceding value" in {
       val decoder = MockConverterFactory.triplesDecoder(None)
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
-        RdfTriple(TERM_REPEAT, TERM_REPEAT, TERM_REPEAT),
+        RdfTriple(
+          RdfTriple.Subject.Empty, RdfTriple.Predicate.Empty, RdfTriple.Object.Empty
+        ),
       ))
       decoder.ingestRow(data.head)
       val error = intercept[RdfProtoDeserializationError] {
         decoder.ingestRow(data(1))
       }
-      error.getMessage should include ("RdfRepeat without previous term")
+      error.getMessage should include ("Empty term without previous term")
     }
 
-    "throw exception on RdfRepeat in a quoted triple" in {
+    "throw exception on an empty term in a quoted triple" in {
       val decoder = MockConverterFactory.triplesDecoder(None)
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         RdfTriple(
-          RdfTerm(RdfTerm.Term.Bnode("1")),
-          RdfTerm(RdfTerm.Term.Bnode("2")),
-          RdfTerm(RdfTerm.Term.TripleTerm(RdfTriple(
-            TERM_REPEAT, TERM_REPEAT, TERM_REPEAT
-          ))),
+          RdfTriple.Subject.SBnode("1"),
+          RdfTriple.Predicate.PBnode("2"),
+          RdfTriple.Object.OTripleTerm(RdfTriple(
+            RdfTriple.Subject.Empty, RdfTriple.Predicate.Empty, RdfTriple.Object.Empty
+          )),
         )
       ))
       decoder.ingestRow(data.head)
       val error = intercept[RdfProtoDeserializationError] {
         decoder.ingestRow(data(1))
       }
-      error.getMessage should include ("RdfRepeat used inside a quoted triple")
+      error.getMessage should include ("Term value is not set inside a quoted triple")
     }
 
     "throw exception on unset row kind" in {
@@ -228,31 +230,14 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       error.getMessage should include ("Row kind is not set")
     }
 
-    "throw exception on unset term kind" in {
-      val decoder = MockConverterFactory.triplesDecoder(None)
-      val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
-        RdfTriple(
-          RdfTerm(RdfTerm.Term.Bnode("1")),
-          RdfTerm(RdfTerm.Term.Bnode("2")),
-          RdfTerm(RdfTerm.Term.Empty)
-        ),
-      ))
-      decoder.ingestRow(data.head)
-      val error = intercept[RdfProtoDeserializationError] {
-        decoder.ingestRow(data(1))
-      }
-      error.getMessage should include ("Term kind is not set")
-    }
-
     "interpret unset literal kind as a simple literal" in {
       val decoder = MockConverterFactory.triplesDecoder(None)
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         RdfTriple(
-          RdfTerm(RdfTerm.Term.Bnode("1")),
-          RdfTerm(RdfTerm.Term.Bnode("2")),
-          RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Empty))),
+          RdfTriple.Subject.SBnode("1"),
+          RdfTriple.Predicate.PBnode("2"),
+          RdfTriple.Object.OLiteral(RdfLiteral("test", RdfLiteral.LiteralKind.Empty)),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -299,9 +284,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
         RdfTriple(
-          RdfTerm(RdfTerm.Term.Bnode("1")),
-          RdfTerm(RdfTerm.Term.Bnode("2")),
-          RdfTerm(RdfTerm.Term.Bnode("3")),
+          RdfTriple.Subject.SBnode("1"),
+          RdfTriple.Predicate.PBnode("2"),
+          RdfTriple.Object.OBnode("3"),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -315,7 +300,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.quadsDecoder(None)
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
-        RdfGraphStart(RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))),
+        RdfGraphStart(
+          RdfGraphStart.Graph.GDefaultGraph(RdfDefaultGraph.defaultInstance)
+        ),
       ))
       decoder.ingestRow(data.head)
       val error = intercept[RdfProtoDeserializationError] {
@@ -364,10 +351,10 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
         RdfQuad(
-          RdfTerm(RdfTerm.Term.Bnode("1")),
-          RdfTerm(RdfTerm.Term.Bnode("2")),
-          RdfTerm(RdfTerm.Term.Bnode("3")),
-          RdfGraph(RdfGraph.Graph.Bnode("4")),
+          RdfQuad.Subject.SBnode("1"),
+          RdfQuad.Predicate.PBnode("2"),
+          RdfQuad.Object.OBnode("3"),
+          RdfQuad.Graph.GBnode("4"),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -382,9 +369,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
         RdfTriple(
-          RdfTerm(RdfTerm.Term.Bnode("1")),
-          RdfTerm(RdfTerm.Term.Bnode("2")),
-          RdfTerm(RdfTerm.Term.Bnode("3")),
+          RdfTriple.Subject.SBnode("1"),
+          RdfTriple.Predicate.PBnode("2"),
+          RdfTriple.Object.OBnode("3"),
         ),
         RdfGraphEnd(),
       ))
@@ -397,20 +384,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     }
 
     // The following cases are for the [[ProtoDecoder]] base class – but tested on the child.
-    "throw exception on graph term repeat in graph name" in {
-      val decoder = MockConverterFactory.graphsDecoder(None)
-      val data = wrapEncodedFull(Seq(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
-        RdfGraphStart(RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))),
-      ))
-      decoder.ingestRow(data.head)
-      val error = intercept[RdfProtoDeserializationError] {
-        decoder.ingestRow(data(1))
-      }
-      error.getMessage should include ("Invalid usage of graph term repeat in a GRAPHS stream")
-    }
-
-    "throw exception on unset graph term type" in {
+    "throw exception on unset graph term in a GRAPHS stream" in {
       val decoder = MockConverterFactory.graphsDecoder(None)
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
@@ -420,7 +394,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val error = intercept[RdfProtoDeserializationError] {
         decoder.ingestRow(data(1))
       }
-      error.getMessage should include ("Graph term kind is not set")
+      error.getMessage should include ("Empty graph term encountered")
     }
   }
 
@@ -440,9 +414,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
         RdfTriple(
-          RdfTerm(RdfTerm.Term.Bnode("1")),
-          RdfTerm(RdfTerm.Term.Bnode("2")),
-          RdfTerm(RdfTerm.Term.Bnode("3")),
+          RdfTriple.Subject.SBnode("1"),
+          RdfTriple.Predicate.PBnode("2"),
+          RdfTriple.Object.OBnode("3"),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -482,9 +456,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.anyStatementDecoder
       val data = wrapEncodedFull(Seq(
         RdfTriple(
-          RdfTerm(RdfTerm.Term.Bnode("1")),
-          RdfTerm(RdfTerm.Term.Bnode("2")),
-          RdfTerm(RdfTerm.Term.Bnode("3")),
+          RdfTriple.Subject.SBnode("1"),
+          RdfTriple.Predicate.PBnode("2"),
+          RdfTriple.Object.OBnode("3"),
         ),
       ))
       val error = intercept[RdfProtoDeserializationError] {

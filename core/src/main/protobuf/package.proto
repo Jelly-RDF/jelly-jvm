@@ -16,20 +16,13 @@ option (scalapb.options) = {
   enum_strip_prefix: true
   field_transformations: [
     // Don't box RdfTerm and RdfGraph in Option[] to reduce heap pressure and speed things up a bit
-    {
-      when: {
-        type: TYPE_MESSAGE
-        type_name: ".eu.ostrzyciel.jelly.core.proto.v1.RdfTerm"
-      }
-      set: {[scalapb.field] {no_box: true}}
-    },
-    {
-      when: {
-        type: TYPE_MESSAGE
-        type_name: ".eu.ostrzyciel.jelly.core.proto.v1.RdfGraph"
-      }
-      set: {[scalapb.field] {no_box: true}}
-    }
+//    {
+//      when: {
+//        type: TYPE_MESSAGE
+//        type_name: ".eu.ostrzyciel.jelly.core.proto.v1.RdfTriple"
+//      }
+//      set: {[scalapb.field] {no_box: true}}
+//    }
   ]
 };
 
