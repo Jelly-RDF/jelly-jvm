@@ -4,6 +4,9 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.collection.mutable.ListBuffer
 
+private[core] object NameEncoder:
+  private val repeatDatatype = RdfLiteral.LiteralKind.Datatype(0)
+
 /**
  * IRI and datatype encoder.
  * Maintains internal lookups for prefixes, names, and datatypes. Uses the LRU strategy for eviction.
@@ -11,17 +14,22 @@ import scala.collection.mutable.ListBuffer
  * @param opt Jelly options
  */
 private[core] final class NameEncoder(opt: RdfStreamOptions):
+  import NameEncoder.*
+
   private val nameLookup = new EncoderLookup(opt.maxNameTableSize)
   private val prefixLookup = new EncoderLookup(opt.maxPrefixTableSize)
   private val dtLookup = new EncoderLookup(opt.maxDatatypeTableSize)
   private val dtTable = new DecoderLookup[RdfLiteral.LiteralKind.Datatype](opt.maxDatatypeTableSize)
+
+  private var lastIriPrefixId: Int = -1000
+  private var lastIriNameId: Int = 0
 
   /**
    * Try to extract the prefix out of the IRI.
    *
    * Somewhat based on [[org.apache.jena.riot.system.PrefixMapStd.getPossibleKey]]
    * @param iri IRI
-   * @return prefix or null (micro-optimization, don't hit me)
+   * @return prefix which can be empty, never null
    */
   private def getIriPrefix(iri: String): String =
     iri.lastIndexOf('#') match
@@ -29,7 +37,23 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
       case _ =>
         iri.lastIndexOf('/') match
           case i if i > -1 => iri.substring(0, i + 1)
-          case _ => null
+          case _ => ""
+
+  /**
+   * Obtain the id for the name lookup table to be communicated to the consumer.
+   * This method checks if new id = last_id + 1, and if so, it returns 0.
+   *
+   * @param getId the getId from the EncoderLookup
+   * @return the id to be communicated to the consumer
+   */
+  private inline def getNameIdWithRepeat(getId: Int): Int =
+    if lastIriNameId + 1 == getId then
+      // If the last node had id - 1, we can tell it to the consumer in a shorthand manner
+      lastIriNameId = getId
+      0
+    else
+      lastIriNameId = getId
+      getId
 
   /**
    * Encodes an IRI to a protobuf representation.
@@ -39,40 +63,47 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
    * @return protobuf representation of the IRI
    */
   def encodeIri(iri: String, rowsBuffer: ListBuffer[RdfStreamRow]): RdfIri =
-    def plainIriEncode: RdfIri =
-      nameLookup.addEntry(iri) match
-        case EncoderValue(getId, _, false) =>
-          RdfIri(nameId = getId)
-        case EncoderValue(getId, setId, true) =>
-          rowsBuffer.append(
-            RdfStreamRow(RdfStreamRow.Row.Name(
-              RdfNameEntry(id = setId, value = iri)
-            ))
-          )
-          RdfIri(nameId = getId)
-
     if opt.maxPrefixTableSize == 0 then
       // Use a lighter algorithm if the prefix table is disabled
-      return plainIriEncode
-
-    getIriPrefix(iri) match
-      case null => plainIriEncode
-      case prefix =>
-        val postfix = iri.substring(prefix.length)
-        val pVal = prefixLookup.addEntry(prefix)
-        val iVal = if postfix.nonEmpty then nameLookup.addEntry(postfix) else EncoderValue.Empty
-
-        if pVal.newEntry then rowsBuffer.append(
-          RdfStreamRow(RdfStreamRow.Row.Prefix(
-            RdfPrefixEntry(pVal.setId, prefix)
-          ))
-        )
-        if iVal.newEntry then rowsBuffer.append(
+      val nameLookupEntry = nameLookup.addEntry(iri)
+      if nameLookupEntry.newEntry then
+        rowsBuffer.append(
           RdfStreamRow(RdfStreamRow.Row.Name(
-            RdfNameEntry(iVal.setId, postfix)
+            RdfNameEntry(id = nameLookupEntry.setId, value = iri)
           ))
         )
-        RdfIri(prefixId = pVal.getId, nameId = iVal.getId)
+      // We set the prefixId to 0, but it's a special case, because the prefix table is disabled.
+      // The consumer will interpret this as no prefix.
+      RdfIri(nameId = getNameIdWithRepeat(nameLookupEntry.getId))
+    else
+      val prefix = getIriPrefix(iri)
+      val postfix = iri.substring(prefix.length)
+      val prefixLookupEntry = prefixLookup.addEntry(prefix)
+      val nameLookupEntry = nameLookup.addEntry(postfix)
+
+      if prefixLookupEntry.newEntry then rowsBuffer.append(
+        RdfStreamRow(RdfStreamRow.Row.Prefix(
+          RdfPrefixEntry(prefixLookupEntry.setId, prefix)
+        ))
+      )
+      if nameLookupEntry.newEntry then rowsBuffer.append(
+        RdfStreamRow(RdfStreamRow.Row.Name(
+          RdfNameEntry(nameLookupEntry.setId, postfix)
+        ))
+      )
+
+      val nameIdWithRepeat = getNameIdWithRepeat(nameLookupEntry.getId)
+      if lastIriPrefixId == prefixLookupEntry.getId then
+        // If the last IRI had the same prefix, we can tell the consumer to reuse it.
+        // prefixId = 0 by default in this constructor.
+        // No need to update lastIriPrefixId, because it's the same.
+        RdfIri(nameId = nameIdWithRepeat)
+      else
+        lastIriPrefixId = prefixLookupEntry.getId
+        RdfIri(
+          prefixId = prefixLookupEntry.getId,
+          nameId = nameIdWithRepeat
+        )
 
   /**
    * Encodes a datatype IRI to a protobuf representation.

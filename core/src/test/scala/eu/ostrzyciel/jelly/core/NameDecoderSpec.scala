@@ -27,8 +27,18 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         error.nameId should be (5)
       }
 
-      "return empty string for no prefix and no name" in {
+      "throw MissingNameEntryError when trying to retrieve a name with empty LUT" in {
         val dec = NameDecoder(smallOptions)
+        val error = intercept[MissingNameEntryError] {
+          dec.decode(RdfIri(0, 0))
+        }
+        error.getMessage should include ("name table at ID: 1")
+        error.nameId should be (1)
+      }
+
+      "return empty string for no prefix and empty name" in {
+        val dec = NameDecoder(smallOptions)
+        dec.updateNames(RdfNameEntry(0, ""))
         dec.decode(RdfIri(0, 0)) should be ("")
       }
 
@@ -36,6 +46,8 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         val dec = NameDecoder(smallOptions)
         dec.updatePrefixes(RdfPrefixEntry(0, "https://test.org/"))
         dec.updatePrefixes(RdfPrefixEntry(0, "https://test.org/2/"))
+        dec.updateNames(RdfNameEntry(0, ""))
+        dec.updateNames(RdfNameEntry(0, ""))
         dec.decode(RdfIri(1, 0)) should be("https://test.org/")
         dec.decode(RdfIri(2, 0)) should be("https://test.org/2/")
       }
@@ -45,6 +57,8 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         dec.updatePrefixes(RdfPrefixEntry(4, "https://test.org/"))
         // This ID will resolve to 5
         dec.updatePrefixes(RdfPrefixEntry(0, "https://test.org/2/"))
+        dec.updateNames(RdfNameEntry(0, ""))
+        dec.updateNames(RdfNameEntry(0, ""))
         dec.decode(RdfIri(4, 0)) should be("https://test.org/")
         dec.decode(RdfIri(5, 0)) should be("https://test.org/2/")
       }
@@ -52,6 +66,7 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
       "accept a new prefix and return it (IRI with no name part)" in {
         val dec = NameDecoder(smallOptions)
         dec.updatePrefixes(RdfPrefixEntry(3, "https://test.org/"))
+        dec.updateNames(RdfNameEntry(0, ""))
         dec.decode(RdfIri(3, 0)) should be ("https://test.org/")
       }
 

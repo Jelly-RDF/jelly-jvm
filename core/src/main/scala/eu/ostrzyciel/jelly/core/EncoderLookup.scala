@@ -2,10 +2,6 @@ package eu.ostrzyciel.jelly.core
 
 import java.util
 
-private[core] object EncoderValue:
-  // Empty default value to slightly reduce heap pressure
-  val Empty = EncoderValue(0, 0, false)
-
 private[core] final case class EncoderValue(getId: Int, setId: Int, newEntry: Boolean)
 
 private[core] final class EncoderLookup(maxEntries: Int)

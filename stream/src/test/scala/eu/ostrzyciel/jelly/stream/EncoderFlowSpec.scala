@@ -120,11 +120,12 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
         )
       )
-      encoded.size should be (4)
+      encoded.size should be (5)
       encoded.head.rows.count(_.row.isTriple) should be (0)
       encoded(1).rows.count(_.row.isTriple) should be (1)
       encoded(2).rows.count(_.row.isTriple) should be (1)
-      encoded(3).rows.count(_.row.isTriple) should be (2)
+      encoded(3).rows.count(_.row.isTriple) should be (1)
+      encoded(4).rows.count(_.row.isTriple) should be (1)
     }
   }
 
