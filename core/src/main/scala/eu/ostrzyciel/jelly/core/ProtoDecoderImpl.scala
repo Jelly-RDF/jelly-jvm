@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core
 
+import eu.ostrzyciel.jelly.core.proto_adapters.{given, *}
 import eu.ostrzyciel.jelly.core.proto.v1.*
-import eu.ostrzyciel.jelly.core.proto.v1.RdfGraph.Graph
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -47,69 +47,76 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
       converter.makeDtLiteral(literal.lex, dtLookup.get(dtId))
 
 
-  private final def convertTerm(term: RdfTerm): TNode = term.term match
-    case RdfTerm.Term.Iri(iri) =>
-      converter.makeIriNode(nameDecoder.decode(iri))
-    case RdfTerm.Term.Bnode(label) =>
-      converter.makeBlankNode(label)
-    case RdfTerm.Term.Literal(literal) =>
-      convertLiteral(literal)
-    case RdfTerm.Term.TripleTerm(triple) =>
+  private final def convertTerm[TTerm : RdfTermAdapter](term: TTerm): TNode =
+    val a = summon[RdfTermAdapter[TTerm]]
+    if a.isIri(term) then
+      converter.makeIriNode(nameDecoder.decode(a.iri(term)))
+    else if a.isBnode(term) then
+      converter.makeBlankNode(a.bnode(term))
+    else if a.isLiteral(term) then
+      convertLiteral(a.literal(term))
+    else if a.isTripleTerm(term) then
       // ! No support for RdfRepeat in quoted triples
+      val inner = a.tripleTerm(term)
       converter.makeTripleNode(
-        convertTerm(triple.s),
-        convertTerm(triple.p),
-        convertTerm(triple.o),
+        convertTerm(inner.subject),
+        convertTerm(inner.predicate),
+        convertTerm(inner.`object`),
       )
-    case _: RdfTerm.Term.Repeat =>
-      throw new RdfProtoDeserializationError("RdfRepeat used inside a quoted triple.")
-    case RdfTerm.Term.Empty =>
-      throw new RdfProtoDeserializationError("Term kind is not set.")
-
-  protected final def convertGraphTerm(graph: RdfGraph): TNode = graph.graph match
-    case Graph.Iri(iri) => converter.makeIriNode(nameDecoder.decode(iri))
-    case Graph.Bnode(label) => converter.makeBlankNode(label)
-    case Graph.Literal(literal) => convertLiteral(literal)
-    case Graph.DefaultGraph(_) => converter.makeDefaultGraphNode()
-    case Graph.Repeat(_) =>
-      throw new RdfProtoDeserializationError("Invalid usage of graph term repeat in a GRAPHS stream.")
-    case Graph.Empty =>
-      throw new RdfProtoDeserializationError("Graph term kind is not set.")
+    else if a.isEmpty(term) then
+      throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.")
+    else
+      throw new RdfProtoDeserializationError("Unknown term type.")
 
 
-  protected final def convertTermWrapped(term: RdfTerm, lastNodeHolder: LastNodeHolder[TNode]): TNode = term.term match
-    case _: RdfTerm.Term.Repeat =>
+  protected final def convertGraphTerm[TGraph](graph: TGraph)(using a: RdfGraphAdapter[TGraph]): TNode =
+    if a.isIri(graph) then
+      converter.makeIriNode(nameDecoder.decode(a.iri(graph)))
+    else if a.isDefaultGraph(graph) then
+      converter.makeDefaultGraphNode()
+    else if a.isBnode(graph) then
+      converter.makeBlankNode(a.bnode(graph))
+    else if a.isLiteral(graph) then
+      convertLiteral(a.literal(graph))
+    else if a.isEmpty(graph) then
+      throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.")
+    else
+      throw new RdfProtoDeserializationError("Unknown graph term type.")
+
+  protected final def convertTermWrapped[TTerm]
+  (term: TTerm, lastNodeHolder: LastNodeHolder[TNode])(using a: RdfTermAdapter[TTerm]): TNode =
+    if a.isEmpty(term) then
       lastNodeHolder.node match
-        case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("RdfRepeat without previous term.")
+        case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("Empty term without previous term.")
         case n => n.asInstanceOf[TNode]
-    case _ =>
+    else
       val node = convertTerm(term)
       lastNodeHolder.node = node
       node
 
-  protected final def convertGraphTermWrapped(graph: RdfGraph): TNode = graph.graph match
-    case _: Graph.Repeat =>
+  protected final def convertGraphTermWrapped[TGraph](graph: TGraph)(using a: RdfGraphAdapter[TGraph]): TNode =
+    if a.isEmpty(graph) then
       lastGraph.node match
-        case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("RdfRepeat without previous graph term.")
+        case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("Empty term without previous graph term.")
         case n => n.asInstanceOf[TNode]
-    case _ =>
+    else
       val node = convertGraphTerm(graph)
       lastGraph.node = node
       node
 
   protected final def convertTriple(triple: RdfTriple): TTriple =
     converter.makeTriple(
-      convertTermWrapped(triple.s, lastSubject),
-      convertTermWrapped(triple.p, lastPredicate),
-      convertTermWrapped(triple.o, lastObject),
+      convertTermWrapped(triple.subject, lastSubject),
+      convertTermWrapped(triple.predicate, lastPredicate),
+      convertTermWrapped(triple.`object`, lastObject),
     )
 
   protected final def convertQuad(quad: RdfQuad): TQuad =
     converter.makeQuad(
-      convertTermWrapped(quad.s, lastSubject),
-      convertTermWrapped(quad.p, lastPredicate),
-      convertTermWrapped(quad.o, lastObject),
-      convertGraphTermWrapped(quad.g),
+      convertTermWrapped(quad.subject, lastSubject),
+      convertTermWrapped(quad.predicate, lastPredicate),
+      convertTermWrapped(quad.`object`, lastObject),
+      convertGraphTermWrapped(quad.graph),
     )
 
   final override def ingestRow(row: RdfStreamRow): Option[TOut] =
@@ -211,9 +218,9 @@ object ProtoDecoderImpl:
       if currentGraph.isEmpty then
         throw new RdfProtoDeserializationError("Triple in stream without preceding graph start.")
       Some(converter.makeQuad(
-        convertTermWrapped(triple.s, lastSubject),
-        convertTermWrapped(triple.p, lastPredicate),
-        convertTermWrapped(triple.o, lastObject),
+        convertTermWrapped(triple.subject, lastSubject),
+        convertTermWrapped(triple.predicate, lastPredicate),
+        convertTermWrapped(triple.`object`, lastObject),
         currentGraph.get,
       ))
 

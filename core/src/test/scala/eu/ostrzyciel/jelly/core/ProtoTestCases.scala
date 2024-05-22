@@ -6,9 +6,8 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 object ProtoTestCases:
   type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad |
     RdfGraphStart | RdfGraphEnd
-  
-  val TERM_REPEAT: RdfTerm = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat()))
-  val GRAPH_REPEAT: RdfGraph = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))
+
+  // val GRAPH_REPEAT: RdfGraph = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))
 
   def wrapEncoded(rows: Seq[RowValue]): Seq[RdfStreamRow.Row] = rows map {
     case v: RdfStreamOptions => v.version match
@@ -70,32 +69,32 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
       RdfTriple(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 0))),
+        RdfTriple.Subject.SIri(RdfIri(1, 0)),
+        RdfTriple.Predicate.PIri(RdfIri(0, 0)),
+        RdfTriple.Object.OIri(RdfIri(2, 0)),
       ),
       RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
-        TERM_REPEAT,
-        TERM_REPEAT,
-        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
+        RdfTriple.Subject.Empty,
+        RdfTriple.Predicate.Empty,
+        RdfTriple.Object.OLiteral(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
       ),
       RdfPrefixEntry(0, ""),
       RdfNameEntry(0, "b"),
       RdfNameEntry(0, "c"),
       RdfTriple(
-        TERM_REPEAT,
-        TERM_REPEAT,
-        RdfTerm(RdfTerm.Term.TripleTerm(RdfTriple(
-          RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-          RdfTerm(RdfTerm.Term.Iri(RdfIri(3, 4))),
-          RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
-        )))
+        RdfTriple.Subject.Empty,
+        RdfTriple.Predicate.Empty,
+        RdfTriple.Object.OTripleTerm(RdfTriple(
+          RdfTriple.Subject.SIri(RdfIri(1, 1)),
+          RdfTriple.Predicate.PIri(RdfIri(3, 4)),
+          RdfTriple.Object.OIri(RdfIri(0, 0)),
+        ))
       ),
       RdfTriple(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 2))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 1))),
-        TERM_REPEAT,
+        RdfTriple.Subject.SIri(RdfIri(1, 2)),
+        RdfTriple.Predicate.PIri(RdfIri(0, 1)),
+        RdfTriple.Object.Empty,
       ),
     ))
 
@@ -121,15 +120,15 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
       RdfTriple(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 0))),
+        RdfTriple.Subject.SIri(RdfIri(1, 0)),
+        RdfTriple.Predicate.PIri(RdfIri(0, 0)),
+        RdfTriple.Object.OIri(RdfIri(2, 0)),
       ),
       RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
-        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
+        RdfTriple.Subject.SIri(RdfIri(1, 1)),
+        RdfTriple.Predicate.PIri(RdfIri(0, 0)),
+        RdfTriple.Object.OLiteral(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
       ),
     ))
 
@@ -170,32 +169,32 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
       RdfQuad(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
-        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
-        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 0))),
+        RdfQuad.Subject.SIri(RdfIri(1, 0)),
+        RdfQuad.Predicate.PIri(RdfIri(0, 0)),
+        RdfQuad.Object.OLiteral(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb"))),
+        RdfQuad.Graph.GIri(RdfIri(2, 0)),
       ),
       RdfQuad(
-        TERM_REPEAT,
-        RdfTerm(RdfTerm.Term.Bnode("blank")),
-        RdfTerm(RdfTerm.Term.Literal(RdfLiteral(
+        RdfQuad.Subject.Empty,
+        RdfQuad.Predicate.PBnode("blank"),
+        RdfQuad.Object.OLiteral(RdfLiteral(
           "test", RdfLiteral.LiteralKind.Empty
-        ))),
-        GRAPH_REPEAT,
+        )),
+        RdfQuad.Graph.Empty,
       ),
       RdfQuad(
-        TERM_REPEAT,
-        TERM_REPEAT,
-        TERM_REPEAT,
-        RdfGraph(RdfGraph.Graph.Bnode("blank")),
+        RdfQuad.Subject.Empty,
+        RdfQuad.Predicate.Empty,
+        RdfQuad.Object.Empty,
+        RdfQuad.Graph.GBnode("blank"),
       ),
       RdfQuad(
-        TERM_REPEAT,
-        TERM_REPEAT,
-        TERM_REPEAT,
-        RdfGraph(RdfGraph.Graph.Literal(RdfLiteral(
+        RdfQuad.Subject.Empty,
+        RdfQuad.Predicate.Empty,
+        RdfQuad.Object.Empty,
+        RdfQuad.Graph.GLiteral(RdfLiteral(
           "test", RdfLiteral.LiteralKind.Empty
-        ))),
+        )),
       ),
     ))
 
@@ -223,18 +222,18 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
       RdfQuad(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
-        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
-        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 0))),
+        RdfQuad.Subject.SIri(RdfIri(1, 0)),
+        RdfQuad.Predicate.PIri(RdfIri(0, 0)),
+        RdfQuad.Object.OLiteral(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb"))),
+        RdfQuad.Graph.GIri(RdfIri(2, 0)),
       ),
       RdfQuad(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 1))),
-        RdfTerm(RdfTerm.Term.Bnode("blank")),
-        RdfTerm(RdfTerm.Term.Literal(RdfLiteral(
+        RdfQuad.Subject.SIri(RdfIri(1, 1)),
+        RdfQuad.Predicate.PBnode("blank"),
+        RdfQuad.Object.OLiteral(RdfLiteral(
           "test", RdfLiteral.LiteralKind.Empty
-        ))),
-        RdfGraph(RdfGraph.Graph.Iri(RdfIri(2, 3))),
+        )),
+        RdfQuad.Graph.GIri(RdfIri(2, 3)),
       ),
     ))
 
@@ -260,18 +259,18 @@ object ProtoTestCases:
       RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
       RdfQuad(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
-        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")))),
-        RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph())),
+        RdfQuad.Subject.SIri(RdfIri(1, 0)),
+        RdfQuad.Predicate.PIri(RdfIri(0, 0)),
+        RdfQuad.Object.OLiteral(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb"))),
+        RdfQuad.Graph.GDefaultGraph(RdfDefaultGraph()),
       ),
       RdfQuad(
-        TERM_REPEAT,
-        RdfTerm(RdfTerm.Term.Bnode("blank")),
-        RdfTerm(RdfTerm.Term.Literal(RdfLiteral(
+        RdfQuad.Subject.Empty,
+        RdfQuad.Predicate.PBnode("blank"),
+        RdfQuad.Object.OLiteral(RdfLiteral(
           "test", RdfLiteral.LiteralKind.Empty
-        ))),
-        GRAPH_REPEAT,
+        )),
+        RdfQuad.Graph.Empty,
       ),
     ))
 
@@ -327,31 +326,35 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfGraphStart(RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph()))),
+      RdfGraphStart(
+        RdfGraphStart.Graph.GDefaultGraph(RdfDefaultGraph())
+      ),
       RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
       RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
       RdfTriple(
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(1, 0))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(0, 0))),
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 0))),
+        RdfTriple.Subject.SIri(RdfIri(1, 0)),
+        RdfTriple.Predicate.PIri(RdfIri(0, 0)),
+        RdfTriple.Object.OIri(RdfIri(2, 0)),
       ),
       RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
-        TERM_REPEAT,
-        TERM_REPEAT,
-        RdfTerm(RdfTerm.Term.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)))),
+        RdfTriple.Subject.Empty,
+        RdfTriple.Predicate.Empty,
+        RdfTriple.Object.OLiteral(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
       ),
       RdfGraphEnd(),
       RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
-      RdfGraphStart(RdfGraph(RdfGraph.Graph.Iri(RdfIri(3, 0)))),
+      RdfGraphStart(
+        RdfGraphStart.Graph.GIri(RdfIri(3, 0))
+      ),
       RdfTriple(
-        TERM_REPEAT,
-        TERM_REPEAT,
-        RdfTerm(RdfTerm.Term.Iri(RdfIri(2, 3))),
+        RdfTriple.Subject.Empty,
+        RdfTriple.Predicate.Empty,
+        RdfTriple.Object.OIri(RdfIri(2, 3)),
       ),
       RdfGraphEnd(),
     ))

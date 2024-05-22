@@ -1,14 +1,12 @@
 package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.core.proto_adapters.{given, *}
 
 import scala.collection.mutable.ListBuffer
 
 object ProtoEncoder:
   private val graphEnd = Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd.defaultInstance)))
-  private val nodeTermRepeat = RdfTerm(RdfTerm.Term.Repeat(RdfRepeat.defaultInstance))
-  private val graphTermRepeat = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat.defaultInstance))
-  private val graphTermDefault = RdfGraph(RdfGraph.Graph.DefaultGraph(RdfDefaultGraph.defaultInstance))
 
 /**
  * Stateful encoder of a protobuf RDF stream.
@@ -58,7 +56,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
       startDefaultGraph()
     else
       handleHeader()
-      val graphNode = graphNodeToProto(graph)
+      val graphNode = graphNodeToProto[RdfGraphStart.Graph](graph)
       val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
         RdfGraphStart(graphNode)
       ))
@@ -71,7 +69,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   final def startDefaultGraph(): Iterable[RdfStreamRow] =
     handleHeader()
     val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
-      RdfGraphStart(graphTermDefault)
+      RdfGraphStart(graphStartGraphAdapter.makeDefaultGraph)
     ))
     extraRowsBuffer.append(mainRow)
 
@@ -111,7 +109,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    * @return RdfTerm
    * @throws RdfProtoSerializationError if node cannot be encoded
    */
-  protected def nodeToProto(node: TNode): RdfTerm
+  protected def nodeToProto[TTerm : RdfTermAdapter](node: TNode): TTerm
 
   /**
    * Turn an RDF graph node into its protobuf representation.
@@ -122,59 +120,60 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    * @return RdfTerm
    * @throws RdfProtoSerializationError if node cannot be encoded
    */
-  protected def graphNodeToProto(node: TNode): RdfGraph
+  protected def graphNodeToProto[TGraph : RdfGraphAdapter](node: TNode): TGraph
 
 
   // *** 3. THE PROTECTED INTERFACE ***
   // **********************************
-  protected final inline def makeIriNode(iri: String): RdfTerm =
-    val iriEnc = iriEncoder.encodeIri(iri, extraRowsBuffer)
-    RdfTerm(RdfTerm.Term.Iri(iriEnc))
+  protected final inline def makeIriNode[TTerm](iri: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+    a.makeIri(iriEncoder.encodeIri(iri, extraRowsBuffer))
 
-  protected final inline def makeBlankNode(label: String): RdfTerm =
-    RdfTerm(RdfTerm.Term.Bnode(label))
+  protected final inline def makeBlankNode[TTerm](label: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+    a.makeBnode(label)
 
-  protected final inline def makeSimpleLiteral(lex: String): RdfTerm =
-    RdfTerm(RdfTerm.Term.Literal(
+  protected final inline def makeSimpleLiteral[TTerm](lex: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+    a.makeLiteral(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
-    ))
+    )
 
-  protected final inline def makeLangLiteral(lex: String, lang: String): RdfTerm =
-    RdfTerm(RdfTerm.Term.Literal(
+  protected final inline def makeLangLiteral[TTerm](lex: String, lang: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+    a.makeLiteral(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
-    ))
+    )
 
-  protected final inline def makeDtLiteral(lex: String, dt: String): RdfTerm =
-    RdfTerm(RdfTerm.Term.Literal(
+  protected final inline def makeDtLiteral[TTerm](lex: String, dt: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+    a.makeLiteral(
       RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
-    ))
+    )
 
-  protected final inline def makeTripleNode(triple: TQuoted): RdfTerm =
-    RdfTerm(RdfTerm.Term.TripleTerm(quotedToProto(triple)))
+  protected final inline def makeTripleNode[TTerm](triple: TQuoted)(using a: RdfTermAdapter[TTerm]): TTerm =
+    a.makeTripleTerm(quotedToProto(triple))
 
-  protected final inline def makeIriNodeGraph(iri: String): RdfGraph =
-    val iriEnc = iriEncoder.encodeIri(iri, extraRowsBuffer)
-    RdfGraph(RdfGraph.Graph.Iri(iriEnc))
+  protected final inline def makeIriNodeGraph[TGraph](iri: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+    a.makeIri(iriEncoder.encodeIri(iri, extraRowsBuffer))
 
-  protected final inline def makeBlankNodeGraph(label: String): RdfGraph =
-    RdfGraph(RdfGraph.Graph.Bnode(label))
+  protected final inline def makeBlankNodeGraph[TGraph](label: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+    a.makeBnode(label)
 
-  protected final inline def makeSimpleLiteralGraph(lex: String): RdfGraph =
-    RdfGraph(RdfGraph.Graph.Literal(
+  protected final inline def makeSimpleLiteralGraph[TGraph](lex: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+    a.makeLiteral(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
-    ))
+    )
 
-  protected final inline def makeLangLiteralGraph(lex: String, lang: String): RdfGraph =
-    RdfGraph(RdfGraph.Graph.Literal(
+  protected final inline def makeLangLiteralGraph[TGraph]
+  (lex: String, lang: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+    a.makeLiteral(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
-    ))
+    )
 
-  protected final inline def makeDtLiteralGraph(lex: String, dt: String): RdfGraph =
-    RdfGraph(RdfGraph.Graph.Literal(
+  protected final inline def makeDtLiteralGraph[TGraph]
+  (lex: String, dt: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+    a.makeLiteral(
       RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
-    ))
+    )
 
-  protected final inline def makeDefaultGraph: RdfGraph = graphTermDefault
+  protected final inline def makeDefaultGraph[TGraph](using a: RdfGraphAdapter[TGraph]): TGraph =
+    a.makeDefaultGraph
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
@@ -187,20 +186,21 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
 
-  private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): RdfTerm =
+  private def nodeToProtoWrapped[TTerm]
+  (node: TNode, lastNodeHolder: LastNodeHolder[TNode])(using a: RdfTermAdapter[TTerm]): TTerm =
     if options.useRepeat then
       lastNodeHolder.node match
-        case oldNode if node == oldNode => nodeTermRepeat
+        case oldNode if node == oldNode => a.makeEmpty
         case _ =>
           lastNodeHolder.node = node
           nodeToProto(node)
     else
       nodeToProto(node)
 
-  private def graphNodeToProtoWrapped(node: TNode): RdfGraph =
+  private def graphNodeToProtoWrapped[TGraph](node: TNode)(using a: RdfGraphAdapter[TGraph]): TGraph =
     if options.useRepeat then
       lastGraph.node match
-        case oldNode if node == oldNode => graphTermRepeat
+        case oldNode if node == oldNode => a.makeEmpty
         case _ =>
           lastGraph.node = node
           graphNodeToProto(node)
@@ -209,25 +209,25 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
 
   private def tripleToProto(triple: TTriple): RdfTriple =
     RdfTriple(
-      s = nodeToProtoWrapped(getTstS(triple), lastSubject),
-      p = nodeToProtoWrapped(getTstP(triple), lastPredicate),
-      o = nodeToProtoWrapped(getTstO(triple), lastObject),
+      subject = nodeToProtoWrapped[RdfTriple.Subject](getTstS(triple), lastSubject),
+      predicate = nodeToProtoWrapped[RdfTriple.Predicate](getTstP(triple), lastPredicate),
+      `object` = nodeToProtoWrapped[RdfTriple.Object](getTstO(triple), lastObject),
     )
 
   private def quadToProto(quad: TQuad): RdfQuad =
     RdfQuad(
-      s = nodeToProtoWrapped(getQstS(quad), lastSubject),
-      p = nodeToProtoWrapped(getQstP(quad), lastPredicate),
-      o = nodeToProtoWrapped(getQstO(quad), lastObject),
-      g = graphNodeToProtoWrapped(getQstG(quad)),
+      subject = nodeToProtoWrapped[RdfQuad.Subject](getQstS(quad), lastSubject),
+      predicate = nodeToProtoWrapped[RdfQuad.Predicate](getQstP(quad), lastPredicate),
+      `object` = nodeToProtoWrapped[RdfQuad.Object](getQstO(quad), lastObject),
+      graph = graphNodeToProtoWrapped[RdfQuad.Graph](getQstG(quad)),
     )
 
   private def quotedToProto(quoted: TQuoted): RdfTriple =
     // ! No RdfRepeat support for inside of quoted triples.
     RdfTriple(
-      s = nodeToProto(getQuotedS(quoted)),
-      p = nodeToProto(getQuotedP(quoted)),
-      o = nodeToProto(getQuotedO(quoted)),
+      subject = nodeToProto(getQuotedS(quoted)),
+      predicate = nodeToProto(getQuotedP(quoted)),
+      `object` = nodeToProto(getQuotedO(quoted)),
     )
 
   private inline def handleHeader(): Unit =

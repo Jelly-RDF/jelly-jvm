@@ -1,7 +1,8 @@
 package eu.ostrzyciel.jelly.convert.jena
 
 import eu.ostrzyciel.jelly.core.{ProtoEncoder, RdfProtoSerializationError}
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfTerm}
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import eu.ostrzyciel.jelly.core.proto_adapters.*
 import org.apache.jena.JenaRuntime
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.datatypes.xsd.impl.RDFLangString
@@ -29,7 +30,7 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
    * @param node RDF node
    * @return option of RdfTerm
    */
-  override protected def nodeToProto(node: Node): RdfTerm = node match
+  override protected def nodeToProto[TTerm : RdfTermAdapter](node: Node): TTerm = node match
     // URI/IRI
     case _: Node_URI => makeIriNode(node.getURI)
     // Blank node
@@ -45,7 +46,7 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
     case _: Node_Triple => makeTripleNode(node.getTriple)
     case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")
 
-  override protected def graphNodeToProto(node: Node) = node match
+  override protected def graphNodeToProto[TGraph : RdfGraphAdapter](node: Node): TGraph = node match
     // URI/IRI
     case _: Node_URI =>
       if Quad.isDefaultGraph(node) then makeDefaultGraph
