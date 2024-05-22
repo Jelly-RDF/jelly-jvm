@@ -12,24 +12,24 @@ class JenaIterableAdapterSpec extends AnyWordSpec, Matchers:
   import JenaIterableAdapter.*
 
   val triples = Set(
-    Triple(
+    Triple.create(
       NodeFactory.createURI("http://example.com/subject"),
       NodeFactory.createURI("http://example.com/predicate"),
       NodeFactory.createURI("http://example.com/object_1")
     ),
-    Triple(
+    Triple.create(
       NodeFactory.createURI("http://example.com/subject"),
       NodeFactory.createURI("http://example.com/predicate"),
       NodeFactory.createURI("http://example.com/object_2")
     ),
-    Triple(
+    Triple.create(
       NodeFactory.createURI("http://example.com/subject"),
       NodeFactory.createURI("http://example.com/predicate_2"),
       NodeFactory.createURI("http://example.com/object_2")
     )
   )
 
-  val graph = GraphFactory.createGraphMem()
+  val graph = GraphFactory.createDefaultGraph()
   triples.foreach(graph.add)
   val model = ModelCom(graph)
 
