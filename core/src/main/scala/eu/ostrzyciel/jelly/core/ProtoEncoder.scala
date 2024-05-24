@@ -230,7 +230,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
       `object` = nodeToProto(getQuotedO(quoted)),
     )
 
-  private def handleHeader(): Unit =
+  private inline def handleHeader(): Unit =
     extraRowsBuffer = new ListBuffer[RdfStreamRow]()
     if !emittedOptions then emitOptions()
 
