@@ -67,23 +67,6 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       )
       encoded.size should be (4)
     }
-
-    "encode triples (norepeat)" in {
-      val jOptions = JellyOptions.smallGeneralized.withUseRepeat(false)
-      val encoded: Seq[RdfStreamFrame] = Source(Triples2NoRepeat.mrl)
-        .via(EncoderFlow.flatTripleStream(StreamRowCountLimiter(1000), jOptions))
-        .toMat(Sink.seq)(Keep.right)
-        .run().futureValue
-
-      assertEncoded(
-        encoded.flatMap(_.rows),
-        Triples2NoRepeat.encoded(jOptions
-          .withPhysicalType(PhysicalStreamType.TRIPLES)
-          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
-        )
-      )
-      encoded.size should be (1)
-    }
   }
 
   "flatTripleStreamGrouped" should {

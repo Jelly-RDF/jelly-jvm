@@ -56,8 +56,11 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndA
 
   private val jellyOptions: Seq[(String, RdfStreamOptions)] = Seq(
     ("small default", JellyOptions.smallGeneralized),
-    ("small, no repeat", JellyOptions.smallGeneralized.withUseRepeat(false)),
     ("small, no prefix table", JellyOptions.smallGeneralized.withMaxPrefixTableSize(0)),
+    (
+      "tiny name table, no prefix table",
+      JellyOptions.smallGeneralized.withMaxPrefixTableSize(0).withMaxNameTableSize(16)
+    ),
     ("big default", JellyOptions.bigGeneralized),
   )
 

@@ -11,7 +11,6 @@ object JellyWriterSettings:
     c.set(STREAM_NAME, opt.streamName)
     c.set(PHYSICAL_TYPE, opt.physicalType)
     c.set(ALLOW_GENERALIZED_STATEMENTS, opt.generalizedStatements)
-    c.set(USE_REPEAT, opt.useRepeat)
     c.set(MAX_NAME_TABLE_SIZE, opt.maxNameTableSize.toLong)
     c.set(MAX_PREFIX_TABLE_SIZE, opt.maxPrefixTableSize.toLong)
     c.set(MAX_DATATYPE_TABLE_SIZE, opt.maxDatatypeTableSize.toLong)
@@ -39,12 +38,6 @@ object JellyWriterSettings:
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.allowGeneralizedStatements",
     "Allow generalized statements",
     false
-  )
-
-  val USE_REPEAT = new BooleanRioSetting(
-    "eu.ostrzyciel.jelly.convert.rdf4j.rio.useRepeat",
-    "Whether to compress repeating values (recommended)",
-    true
   )
   
   val ALLOW_RDF_STAR = new BooleanRioSetting(

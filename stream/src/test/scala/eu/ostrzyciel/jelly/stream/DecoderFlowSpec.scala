@@ -34,12 +34,11 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         assertDecoded(decoded, Triples1.mrl)
       }
 
-    "decode triples (norepeat), with options snooping" in {
-      val encoded = Triples2NoRepeat.encodedFull(
+    "decode triples" in {
+      val encoded = Triples1.encodedFull(
         JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
-          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
-          .withUseRepeat(false),
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES),
         100,
       )
       val decoded: Seq[Triple] = Source(encoded)
@@ -47,17 +46,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
-      assertDecoded(decoded, Triples2NoRepeat.mrl)
+      assertDecoded(decoded, Triples1.mrl)
     }
   }
 
   "snoopStreamOptions with decodeTriples.asFlatTripleStream" should {
     "decode triples (norepeat), with options snooping" in {
-      val encoded = Triples2NoRepeat.encodedFull(
+      val encoded = Triples1.encodedFull(
         JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
           .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
-          .withUseRepeat(false),
+          .withRdfStar(true),
         100,
       )
       val (optionsF, decodedF) = Source(encoded)
@@ -66,10 +65,10 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .toMat(Sink.seq)(Keep.both)
         .run()
 
-      assertDecoded(decodedF.futureValue, Triples2NoRepeat.mrl)
+      assertDecoded(decodedF.futureValue, Triples1.mrl)
       val options = optionsF.futureValue
       options.isDefined should be (true)
-      options.get.useRepeat should be (false)
+      options.get.rdfStar should be (true)
       options.get.logicalType should be (LogicalStreamType.FLAT_TRIPLES)
       options.get.physicalType should be (PhysicalStreamType.TRIPLES)
 

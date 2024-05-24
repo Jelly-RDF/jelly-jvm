@@ -140,18 +140,6 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       error.getMessage should include ("Expected logical stream type")
     }
 
-    "decode triple statements (norepeat)" in {
-      val decoder = MockConverterFactory.triplesDecoder(Some(LogicalStreamType.FLAT_TRIPLES))
-      val decoded = Triples2NoRepeat
-        .encoded(JellyOptions.smallGeneralized
-          .withPhysicalType(PhysicalStreamType.TRIPLES)
-          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
-          .withUseRepeat(false)
-        )
-        .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
-      assertDecoded(decoded, Triples2NoRepeat.mrl)
-    }
-
     "throw exception on a quad in a TRIPLES stream" in {
       val decoder = MockConverterFactory.triplesDecoder(None)
       val data = wrapEncodedFull(Seq(
@@ -179,13 +167,13 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
-          .withUseRepeat(false),
+          .withRdfStar(true),
       ))
 
       decoder.ingestRow(data.head)
       decoder.ingestRow(data(1))
       decoder.getStreamOpt.isDefined should be (true)
-      decoder.getStreamOpt.get.useRepeat should be (true)
+      decoder.getStreamOpt.get.rdfStar should be (false)
     }
 
     "throw exception on unset term without preceding value" in {
@@ -257,26 +245,14 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       assertDecoded(decoded, Quads1.mrl)
     }
 
-    "decode quad statements (norepeat)" in {
-      val decoder = MockConverterFactory.quadsDecoder(None)
-      val decoded = Quads2NoRepeat
-        .encoded(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(PhysicalStreamType.QUADS)
-            .withUseRepeat(false)
-        )
-        .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
-      assertDecoded(decoded, Quads2NoRepeat.mrl)
-    }
-
     "decode quad statements (repeated default graph)" in {
       val decoder = MockConverterFactory.quadsDecoder(None)
-      val decoded = Quads3RepeatDefault
+      val decoded = Quads2RepeatDefault
         .encoded(
           JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
-      assertDecoded(decoded, Quads3RepeatDefault.mrl)
+      assertDecoded(decoded, Quads2RepeatDefault.mrl)
     }
 
     "throw exception on a triple in a QUADS stream" in {

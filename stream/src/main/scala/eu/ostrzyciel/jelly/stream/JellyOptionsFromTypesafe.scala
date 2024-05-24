@@ -44,7 +44,6 @@ object JellyOptionsFromTypesafe:
           case _ => throw IllegalArgumentException()
         ),
       generalizedStatements = merged.getBoolean("generalized-statements"),
-      useRepeat = merged.getBoolean("use-repeat"),
       rdfStar = merged.getBoolean("rdf-star"),
       maxNameTableSize = merged.getInt("name-table-size"),
       maxPrefixTableSize = merged.getInt("prefix-table-size"),

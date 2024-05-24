@@ -27,7 +27,6 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     s.add(STREAM_NAME)
     s.add(PHYSICAL_TYPE)
     s.add(ALLOW_GENERALIZED_STATEMENTS)
-    s.add(USE_REPEAT)
     s.add(ALLOW_RDF_STAR)
     s.add(MAX_NAME_TABLE_SIZE)
     s.add(MAX_PREFIX_TABLE_SIZE)
@@ -51,7 +50,6 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
       streamName = c.get(STREAM_NAME),
       physicalType = c.get(PHYSICAL_TYPE),
       generalizedStatements = c.get(ALLOW_GENERALIZED_STATEMENTS).booleanValue(),
-      useRepeat = c.get(USE_REPEAT).booleanValue(),
       rdfStar = c.get(ALLOW_RDF_STAR).booleanValue(),
       maxNameTableSize = c.get(MAX_NAME_TABLE_SIZE).toInt,
       maxPrefixTableSize = c.get(MAX_PREFIX_TABLE_SIZE).toInt,

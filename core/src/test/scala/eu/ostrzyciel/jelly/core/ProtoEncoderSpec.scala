@@ -20,16 +20,6 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       assertEncoded(encoded, Triples1.encoded(encoder.options))
     }
 
-    "encode triple statements (norepeat)" in {
-      val encoder = MockProtoEncoder(
-        JellyOptions.smallGeneralized
-          .withPhysicalType(PhysicalStreamType.TRIPLES)
-          .withUseRepeat(false)
-      )
-      val encoded = Triples2NoRepeat.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
-      assertEncoded(encoded, Triples2NoRepeat.encoded(encoder.options))
-    }
-
     "encode quad statements" in {
       val encoder = MockProtoEncoder(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
@@ -38,22 +28,12 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       assertEncoded(encoded, Quads1.encoded(encoder.options))
     }
 
-    "encode quad statements (norepeat)" in {
-      val encoder = MockProtoEncoder(
-        JellyOptions.smallGeneralized
-          .withPhysicalType(PhysicalStreamType.QUADS)
-          .withUseRepeat(false)
-      )
-      val encoded = Quads2NoRepeat.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
-      assertEncoded(encoded, Quads2NoRepeat.encoded(encoder.options))
-    }
-
     "encode quad statements (repeated default graph)" in {
       val encoder = MockProtoEncoder(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
       )
-      val encoded = Quads3RepeatDefault.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
-      assertEncoded(encoded, Quads3RepeatDefault.encoded(encoder.options))
+      val encoded = Quads2RepeatDefault.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
+      assertEncoded(encoded, Quads2RepeatDefault.encoded(encoder.options))
     }
 
     "encode graphs" in {

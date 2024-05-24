@@ -188,24 +188,18 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
 
   private def nodeToProtoWrapped[TTerm]
   (node: TNode, lastNodeHolder: LastNodeHolder[TNode])(using a: RdfTermAdapter[TTerm]): TTerm =
-    if options.useRepeat then
-      lastNodeHolder.node match
-        case oldNode if node == oldNode => a.makeEmpty
-        case _ =>
-          lastNodeHolder.node = node
-          nodeToProto(node)
-    else
-      nodeToProto(node)
+    lastNodeHolder.node match
+      case oldNode if node == oldNode => a.makeEmpty
+      case _ =>
+        lastNodeHolder.node = node
+        nodeToProto(node)
 
   private def graphNodeToProtoWrapped[TGraph](node: TNode)(using a: RdfGraphAdapter[TGraph]): TGraph =
-    if options.useRepeat then
-      lastGraph.node match
-        case oldNode if node == oldNode => a.makeEmpty
-        case _ =>
-          lastGraph.node = node
-          graphNodeToProto(node)
-    else
-      graphNodeToProto(node)
+    lastGraph.node match
+      case oldNode if node == oldNode => a.makeEmpty
+      case _ =>
+        lastGraph.node = node
+        graphNodeToProto(node)
 
   private def tripleToProto(triple: TTriple): RdfTriple =
     RdfTriple(
