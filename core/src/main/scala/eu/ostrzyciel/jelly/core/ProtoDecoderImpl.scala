@@ -239,7 +239,7 @@ object ProtoDecoderImpl:
         throw new RdfProtoDeserializationError("Incoming stream type is not GRAPHS.")
       super.handleOptions(opts)
 
-    private inline def emitBuffer(): Option[(TNode, Iterable[TTriple])] =
+    private def emitBuffer(): Option[(TNode, Iterable[TTriple])] =
       if buffer.isEmpty then None
       else if currentGraph.isEmpty then
         throw new RdfProtoDeserializationError("End of graph encountered before a start.")
