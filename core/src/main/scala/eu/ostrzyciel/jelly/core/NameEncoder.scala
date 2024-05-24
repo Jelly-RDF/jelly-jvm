@@ -4,9 +4,6 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.collection.mutable.ListBuffer
 
-private[core] object NameEncoder:
-  private val repeatDatatype = RdfLiteral.LiteralKind.Datatype(0)
-
 /**
  * IRI and datatype encoder.
  * Maintains internal lookups for prefixes, names, and datatypes. Uses the LRU strategy for eviction.
@@ -14,8 +11,6 @@ private[core] object NameEncoder:
  * @param opt Jelly options
  */
 private[core] final class NameEncoder(opt: RdfStreamOptions):
-  import NameEncoder.*
-
   private val nameLookup = new EncoderLookup(opt.maxNameTableSize)
   private val prefixLookup = new EncoderLookup(opt.maxPrefixTableSize)
   private val dtLookup = new EncoderLookup(opt.maxDatatypeTableSize)

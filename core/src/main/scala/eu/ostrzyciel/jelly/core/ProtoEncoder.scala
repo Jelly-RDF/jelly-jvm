@@ -106,7 +106,8 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    * Use the protected final inline make* methods in this class to create the nodes.
    *
    * @param node RDF node
-   * @return RdfTerm
+   * @tparam TTerm type of the protobuf representation of the node
+   * @return the encoded term
    * @throws RdfProtoSerializationError if node cannot be encoded
    */
   protected def nodeToProto[TTerm : RdfTermAdapter](node: TNode): TTerm
@@ -117,7 +118,8 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    * Use the protected final inline make*Graph methods in this class to create the nodes.
    *
    * @param node RDF graph node
-   * @return RdfTerm
+   * @tparam TGraph type of the protobuf representation of the node
+   * @return the encoded term
    * @throws RdfProtoSerializationError if node cannot be encoded
    */
   protected def graphNodeToProto[TGraph : RdfGraphAdapter](node: TNode): TGraph

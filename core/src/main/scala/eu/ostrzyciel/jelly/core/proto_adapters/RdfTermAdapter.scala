@@ -5,7 +5,8 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 export RdfTermAdapter.given
 
 object RdfTermAdapter:
-  // Explicitly name the givens, because scalac names the Triple and Quad givens identically
+  // Explicitly name the givens, because scalac names the Triple and Quad givens identically...
+
   given tripleSubjectAdapter: RdfTermAdapter[RdfTriple.Subject] with
     override inline def isIri(t: RdfTriple.Subject): Boolean = t.isSIri
     override inline def isBnode(t: RdfTriple.Subject): Boolean = t.isSBnode
@@ -102,6 +103,17 @@ object RdfTermAdapter:
     override inline def makeTripleTerm(triple: RdfTriple): RdfQuad.Object = RdfQuad.Object.OTripleTerm(triple)
     override val makeEmpty: RdfQuad.Object = RdfQuad.Object.Empty
 
+/**
+ * Trait enabling access into the fields of RDF terms (subjects, predicates, objects, graphs) in the
+ * protobuf encoding. Due to various quirks and performance optimizations, each of these terms must
+ * have its subfields named differently (for example, s_iri for IRIs in subjects, and p_iri in
+ * predicates). Accessing this manually would result in a horrendous amount of code, and this is
+ * why this trait was created.
+ *
+ * make* methods work in an analogous manner, providing easy access to term constructors.
+ *
+ * @tparam TInner The type of the term in the RDF statement (triple or quad).
+ */
 trait RdfTermAdapter[TInner]:
   def isIri(t: TInner): Boolean
   def isBnode(t: TInner): Boolean
@@ -116,4 +128,9 @@ trait RdfTermAdapter[TInner]:
   def makeBnode(bnode: String): TInner
   def makeLiteral(literal: RdfLiteral): TInner
   def makeTripleTerm(triple: RdfTriple): TInner
+
+  /**
+   * Returns an empty term, which is not put on the wire at all. This means that the value
+   * from the term in the same position, in the previous statement should be reused.
+   */
   val makeEmpty: TInner
