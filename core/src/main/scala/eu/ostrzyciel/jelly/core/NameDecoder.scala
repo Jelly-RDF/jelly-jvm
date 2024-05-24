@@ -55,4 +55,4 @@ private[core] final class NameDecoder(opt: RdfStreamOptions):
         lastIriNameId = id
         n
 
-    prefix + name
+    prefix.concat(name)
