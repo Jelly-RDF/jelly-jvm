@@ -65,18 +65,17 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
         .withPhysicalType(PhysicalStreamType.TRIPLES),
       1
     ),
-    "triples_norepeat" -> Triples2NoRepeat.encodedFull(
-      JellyOptions.smallGeneralized
-        .withStreamName("triples_norepeat")
-        .withPhysicalType(PhysicalStreamType.TRIPLES)
-        .withUseRepeat(false),
-      2
-    ),
     "quads" -> Quads1.encodedFull(
       JellyOptions.smallGeneralized
         .withStreamName("quads")
         .withPhysicalType(PhysicalStreamType.QUADS),
       3
+    ),
+    "quads_2" -> Quads2RepeatDefault.encodedFull(
+      JellyOptions.smallGeneralized
+        .withStreamName("quads_2")
+        .withPhysicalType(PhysicalStreamType.QUADS),
+      10
     ),
     "graphs" -> Graphs1.encodedFull(
       JellyOptions.smallGeneralized

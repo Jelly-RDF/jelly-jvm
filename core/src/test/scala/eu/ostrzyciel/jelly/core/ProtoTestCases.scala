@@ -7,8 +7,6 @@ object ProtoTestCases:
   type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad |
     RdfGraphStart | RdfGraphEnd
 
-  // val GRAPH_REPEAT: RdfGraph = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))
-
   def wrapEncoded(rows: Seq[RowValue]): Seq[RdfStreamRow.Row] = rows map {
     case v: RdfStreamOptions => v.version match
       // If the version is not set, set it to the current version
@@ -98,40 +96,6 @@ object ProtoTestCases:
       ),
     ))
 
-  object Triples2NoRepeat extends TestCase[Triple]:
-    val mrl = Seq(
-      Triple(
-        Iri("https://test.org/test/subject"),
-        Iri("https://test.org/test/predicate"),
-        Iri("https://test.org/ns2/object"),
-      ),
-      Triple(
-        Iri("https://test.org/test/subject"),
-        Iri("https://test.org/test/predicate"),
-        DtLiteral("123", Datatype("https://test.org/xsd/integer")),
-      ),
-    )
-
-    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
-      opt,
-      RdfPrefixEntry(0, "https://test.org/test/"),
-      RdfNameEntry(0, "subject"),
-      RdfNameEntry(0, "predicate"),
-      RdfPrefixEntry(0, "https://test.org/ns2/"),
-      RdfNameEntry(0, "object"),
-      RdfTriple(
-        RdfTriple.Subject.SIri(RdfIri(1, 0)),
-        RdfTriple.Predicate.PIri(RdfIri(0, 0)),
-        RdfTriple.Object.OIri(RdfIri(2, 0)),
-      ),
-      RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
-      RdfTriple(
-        RdfTriple.Subject.SIri(RdfIri(1, 1)),
-        RdfTriple.Predicate.PIri(RdfIri(0, 0)),
-        RdfTriple.Object.OLiteral(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
-      ),
-    ))
-
   object Quads1 extends TestCase[Quad]:
     val mrl = Seq(
       Quad(
@@ -198,46 +162,7 @@ object ProtoTestCases:
       ),
     ))
 
-  object Quads2NoRepeat extends TestCase[Quad]:
-    val mrl = Seq(
-      Quad(
-        Iri("https://test.org/test/subject"),
-        Iri("https://test.org/test/predicate"),
-        LangLiteral("test", "en-gb"),
-        Iri("https://test.org/ns3/graph"),
-      ),
-      Quad(
-        Iri("https://test.org/test/subject"),
-        BlankNode("blank"),
-        SimpleLiteral("test"),
-        Iri("https://test.org/ns3/graph"),
-      ),
-    )
-
-    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
-      opt,
-      RdfPrefixEntry(0, "https://test.org/test/"),
-      RdfNameEntry(0, "subject"),
-      RdfNameEntry(0, "predicate"),
-      RdfPrefixEntry(0, "https://test.org/ns3/"),
-      RdfNameEntry(0, "graph"),
-      RdfQuad(
-        RdfQuad.Subject.SIri(RdfIri(1, 0)),
-        RdfQuad.Predicate.PIri(RdfIri(0, 0)),
-        RdfQuad.Object.OLiteral(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb"))),
-        RdfQuad.Graph.GIri(RdfIri(2, 0)),
-      ),
-      RdfQuad(
-        RdfQuad.Subject.SIri(RdfIri(1, 1)),
-        RdfQuad.Predicate.PBnode("blank"),
-        RdfQuad.Object.OLiteral(RdfLiteral(
-          "test", RdfLiteral.LiteralKind.Empty
-        )),
-        RdfQuad.Graph.GIri(RdfIri(2, 3)),
-      ),
-    ))
-
-  object Quads3RepeatDefault extends TestCase[Quad]:
+  object Quads2RepeatDefault extends TestCase[Quad]:
     val mrl = Seq(
       Quad(
         Iri("https://test.org/test/subject"),

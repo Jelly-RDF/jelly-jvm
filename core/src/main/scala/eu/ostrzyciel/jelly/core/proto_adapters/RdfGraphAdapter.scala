@@ -37,6 +37,11 @@ object RdfGraphAdapter:
     override val makeDefaultGraph: RdfGraphStart.Graph = RdfGraphStart.Graph.GDefaultGraph(RdfDefaultGraph())
     override val makeEmpty: RdfGraphStart.Graph = RdfGraphStart.Graph.Empty
 
+/**
+ * Analogous trait to [[eu.ostrzyciel.jelly.core.proto_adapters.RdfTermAdapter]]
+ * – see its documentation for more information.
+ * @tparam TInner The type of the graph term / graph node.
+ */
 trait RdfGraphAdapter[TInner]:
   def isIri(g: TInner): Boolean
   def isBnode(g: TInner): Boolean

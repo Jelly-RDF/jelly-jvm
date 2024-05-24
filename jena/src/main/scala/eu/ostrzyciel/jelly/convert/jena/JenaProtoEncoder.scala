@@ -28,7 +28,7 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
   /**
    * TODO: try the NodeVisitor? might be faster, but there would be extra overhead on casting
    * @param node RDF node
-   * @return option of RdfTerm
+   * @return the encoded term to put in the protobuf
    */
   override protected def nodeToProto[TTerm : RdfTermAdapter](node: Node): TTerm = node match
     // URI/IRI

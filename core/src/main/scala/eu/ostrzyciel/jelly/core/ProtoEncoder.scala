@@ -106,7 +106,8 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    * Use the protected final inline make* methods in this class to create the nodes.
    *
    * @param node RDF node
-   * @return RdfTerm
+   * @tparam TTerm type of the protobuf representation of the node
+   * @return the encoded term
    * @throws RdfProtoSerializationError if node cannot be encoded
    */
   protected def nodeToProto[TTerm : RdfTermAdapter](node: TNode): TTerm
@@ -117,7 +118,8 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    * Use the protected final inline make*Graph methods in this class to create the nodes.
    *
    * @param node RDF graph node
-   * @return RdfTerm
+   * @tparam TGraph type of the protobuf representation of the node
+   * @return the encoded term
    * @throws RdfProtoSerializationError if node cannot be encoded
    */
   protected def graphNodeToProto[TGraph : RdfGraphAdapter](node: TNode): TGraph
@@ -188,24 +190,18 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
 
   private def nodeToProtoWrapped[TTerm]
   (node: TNode, lastNodeHolder: LastNodeHolder[TNode])(using a: RdfTermAdapter[TTerm]): TTerm =
-    if options.useRepeat then
-      lastNodeHolder.node match
-        case oldNode if node == oldNode => a.makeEmpty
-        case _ =>
-          lastNodeHolder.node = node
-          nodeToProto(node)
-    else
-      nodeToProto(node)
+    lastNodeHolder.node match
+      case oldNode if node == oldNode => a.makeEmpty
+      case _ =>
+        lastNodeHolder.node = node
+        nodeToProto(node)
 
   private def graphNodeToProtoWrapped[TGraph](node: TNode)(using a: RdfGraphAdapter[TGraph]): TGraph =
-    if options.useRepeat then
-      lastGraph.node match
-        case oldNode if node == oldNode => a.makeEmpty
-        case _ =>
-          lastGraph.node = node
-          graphNodeToProto(node)
-    else
-      graphNodeToProto(node)
+    lastGraph.node match
+      case oldNode if node == oldNode => a.makeEmpty
+      case _ =>
+        lastGraph.node = node
+        graphNodeToProto(node)
 
   private def tripleToProto(triple: TTriple): RdfTriple =
     RdfTriple(
@@ -223,7 +219,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     )
 
   private def quotedToProto(quoted: TQuoted): RdfTriple =
-    // ! No RdfRepeat support for inside of quoted triples.
+    // ! No support for repeated terms in quoted triples
     RdfTriple(
       subject = nodeToProto(getQuotedS(quoted)),
       predicate = nodeToProto(getQuotedP(quoted)),

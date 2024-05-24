@@ -12,7 +12,6 @@ object JellyOptionsFromTypesafe:
   private val defaultConfig = ConfigFactory.parseString("""
     |stream-type = UNSPECIFIED
     |generalized-statements = false
-    |use-repeat = true
     |rdf-star = false
     |name-table-size = 128
     |prefix-table-size = 16
@@ -25,7 +24,6 @@ object JellyOptionsFromTypesafe:
    * @param config typesafe config with keys:
    *               - "stream-type", either UNSPECIFIED, TRIPLES, QUADS, or GRAPHS. Default: UNSPECIFIED.
    *               - "generalized-statements", boolean. Default: false.
-   *               - "use-repeat", boolean. Default: true.
    *               - "rdf-star", boolean. Default: false.
    *               - "name-table-size", integer. Default: 128.
    *               - "prefix-table-size", integer. Default: 16.
@@ -44,7 +42,6 @@ object JellyOptionsFromTypesafe:
           case _ => throw IllegalArgumentException()
         ),
       generalizedStatements = merged.getBoolean("generalized-statements"),
-      useRepeat = merged.getBoolean("use-repeat"),
       rdfStar = merged.getBoolean("rdf-star"),
       maxNameTableSize = merged.getInt("name-table-size"),
       maxPrefixTableSize = merged.getInt("prefix-table-size"),

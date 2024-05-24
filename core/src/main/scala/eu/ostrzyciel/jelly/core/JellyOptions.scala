@@ -14,7 +14,6 @@ object JellyOptions:
    * @return
    */
   def bigStrict: RdfStreamOptions = RdfStreamOptions(
-    useRepeat = true,
     maxNameTableSize = 4000,
     maxPrefixTableSize = 150,
     maxDatatypeTableSize = 32,
@@ -42,7 +41,6 @@ object JellyOptions:
    * @return
    */
   def smallStrict: RdfStreamOptions = RdfStreamOptions(
-    useRepeat = true,
     maxNameTableSize = 128,
     maxPrefixTableSize = 16,
     maxDatatypeTableSize = 16,

@@ -11,7 +11,6 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(ConfigFactory.empty())
       opt.physicalType should be (PhysicalStreamType.UNSPECIFIED)
       opt.generalizedStatements should be (false)
-      opt.useRepeat should be (true)
       opt.maxNameTableSize should be (128)
       opt.maxPrefixTableSize should be (16)
       opt.maxDatatypeTableSize should be (16)
@@ -21,7 +20,6 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
       val conf = ConfigFactory.parseString("""
         |jelly.stream-type = GRAPHS
         |jelly.generalized-statements = true
-        |jelly.use-repeat = false
         |jelly.rdf-star = true
         |jelly.name-table-size = 1024
         |jelly.prefix-table-size = 64
@@ -30,7 +28,6 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
       opt.physicalType should be (PhysicalStreamType.GRAPHS)
       opt.generalizedStatements should be (true)
-      opt.useRepeat should be (false)
       opt.rdfStar should be (true)
       opt.maxNameTableSize should be (1024)
       opt.maxPrefixTableSize should be (64)
@@ -46,7 +43,6 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
       opt.physicalType should be (PhysicalStreamType.QUADS)
       opt.generalizedStatements should be (false)
-      opt.useRepeat should be (true)
       opt.rdfStar should be (false)
       opt.maxNameTableSize should be (1024)
       opt.maxPrefixTableSize should be (64)

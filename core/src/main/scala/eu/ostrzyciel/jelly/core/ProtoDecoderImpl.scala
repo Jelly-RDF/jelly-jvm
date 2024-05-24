@@ -57,7 +57,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
     else if a.isLiteral(term) then
       convertLiteral(a.literal(term))
     else if a.isTripleTerm(term) then
-      // ! No support for RdfRepeat in quoted triples
+      // ! No support for repeated terms in quoted triples
       val inner = a.tripleTerm(term)
       converter.makeTripleNode(
         convertTerm(inner.subject),

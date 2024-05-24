@@ -23,13 +23,13 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
       JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
       20,
     )),
-    ("triples (norepeat), frame size 5", Triples2NoRepeat.encodedFull(
-      JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
-      5
-    )),
     ("quads, frame size 6", Quads1.encodedFull(
       JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
       6,
+    )),
+    ("quads (2), frame size 2", Quads2RepeatDefault.encodedFull(
+      JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
+      2,
     )),
     ("graphs, frame size 3", Graphs1.encodedFull(
       JellyOptions.bigGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
