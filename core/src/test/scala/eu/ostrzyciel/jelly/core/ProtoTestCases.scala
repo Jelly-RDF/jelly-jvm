@@ -7,8 +7,6 @@ object ProtoTestCases:
   type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad |
     RdfGraphStart | RdfGraphEnd
 
-  // val GRAPH_REPEAT: RdfGraph = RdfGraph(RdfGraph.Graph.Repeat(RdfRepeat()))
-
   def wrapEncoded(rows: Seq[RowValue]): Seq[RdfStreamRow.Row] = rows map {
     case v: RdfStreamOptions => v.version match
       // If the version is not set, set it to the current version

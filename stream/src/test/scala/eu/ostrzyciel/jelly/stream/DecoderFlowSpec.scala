@@ -51,7 +51,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   }
 
   "snoopStreamOptions with decodeTriples.asFlatTripleStream" should {
-    "decode triples (norepeat), with options snooping" in {
+    "decode triples, with options snooping" in {
       val encoded = Triples1.encodedFull(
         JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
