@@ -30,29 +30,22 @@ private[core] final class NameDecoder(opt: RdfStreamOptions):
    * @param iri IRI from protobuf
    * @return full IRI combining the prefix and the name
    * @throws ArrayIndexOutOfBoundsException if [[iri]] had indices out of lookup table bounds
-   * @throws MissingPrefixEntryError if the prefix is not set in the table
-   * @throws MissingNameEntryError if the name is not set in the table
+   * @throws NullPointerException if the name or prefix are not found in the lookup table
    */
   def decode(iri: RdfIri): String =
     val prefix = iri.prefixId match
       case 0 if lastIriPrefixId < 1 => ""
-      // the .get() result can't be null here, we've already retrieved it before
       case 0 => prefixLookup.get(lastIriPrefixId)
       case id =>
-        val p = prefixLookup.get(id)
-        if p == null then throw MissingPrefixEntryError(id)
         lastIriPrefixId = id
-        p
+        prefixLookup.get(id)
+        
     val name = iri.nameId match
       case 0 => 
         lastIriNameId += 1
-        val n = nameLookup.get(lastIriNameId)
-        if n == null then throw MissingNameEntryError(lastIriNameId)
-        n
+        nameLookup.get(lastIriNameId)
       case id =>
-        val n = nameLookup.get(id)
-        if n == null then throw MissingNameEntryError(id)
         lastIriNameId = id
-        n
+        nameLookup.get(id)
 
     prefix.concat(name)

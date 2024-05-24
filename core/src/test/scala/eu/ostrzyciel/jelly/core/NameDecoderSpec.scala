@@ -9,31 +9,25 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
 
   "A NameDecoder" when {
     "empty" should {
-      "throw MissingPrefixEntryError when trying to retrieve a non-existent IRI" in {
+      "throw NullPointerException when trying to retrieve a non-existent IRI" in {
         val dec = NameDecoder(smallOptions)
-        val error = intercept[MissingPrefixEntryError] {
+        intercept[NullPointerException] {
           dec.decode(RdfIri(3, 5))
         }
-        error.getMessage should include ("prefix table at ID: 3")
-        error.prefixId should be (3)
       }
 
-      "throw MissingNameEntryError when trying to retrieve a non-existent IRI with no prefix" in {
+      "throw NullPointerException when trying to retrieve a non-existent IRI with no prefix" in {
         val dec = NameDecoder(smallOptions)
-        val error = intercept[MissingNameEntryError] {
+        intercept[NullPointerException] {
           dec.decode(RdfIri(0, 5))
         }
-        error.getMessage should include ("name table at ID: 5")
-        error.nameId should be (5)
       }
 
-      "throw MissingNameEntryError when trying to retrieve a name with empty LUT" in {
+      "throw NullPointerException when trying to retrieve a name with empty LUT" in {
         val dec = NameDecoder(smallOptions)
-        val error = intercept[MissingNameEntryError] {
+        intercept[NullPointerException] {
           dec.decode(RdfIri(0, 0))
         }
-        error.getMessage should include ("name table at ID: 1")
-        error.nameId should be (1)
       }
 
       "return empty string for no prefix and empty name" in {
