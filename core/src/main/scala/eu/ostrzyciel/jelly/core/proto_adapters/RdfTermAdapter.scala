@@ -7,8 +7,6 @@ export RdfTermAdapter.given
 object RdfTermAdapter:
   // Explicitly name the givens, because scalac names the Triple and Quad givens identically
   given tripleSubjectAdapter: RdfTermAdapter[RdfTriple.Subject] with
-    override inline def isEmpty(t: RdfTriple.Subject): Boolean = t.isEmpty
-    override inline def isDefined(t: RdfTriple.Subject): Boolean = t.isDefined
     override inline def isIri(t: RdfTriple.Subject): Boolean = t.isSIri
     override inline def isBnode(t: RdfTriple.Subject): Boolean = t.isSBnode
     override inline def isLiteral(t: RdfTriple.Subject): Boolean = t.isSLiteral
@@ -25,8 +23,6 @@ object RdfTermAdapter:
     override val makeEmpty: RdfTriple.Subject = RdfTriple.Subject.Empty
 
   given triplePredicateAdapter: RdfTermAdapter[RdfTriple.Predicate] with
-    override inline def isEmpty(t: RdfTriple.Predicate): Boolean = t.isEmpty
-    override inline def isDefined(t: RdfTriple.Predicate): Boolean = t.isDefined
     override inline def isIri(t: RdfTriple.Predicate): Boolean = t.isPIri
     override inline def isBnode(t: RdfTriple.Predicate): Boolean = t.isPBnode
     override inline def isLiteral(t: RdfTriple.Predicate): Boolean = t.isPLiteral
@@ -43,8 +39,6 @@ object RdfTermAdapter:
     override val makeEmpty: RdfTriple.Predicate = RdfTriple.Predicate.Empty
 
   given tripleObjectAdapter: RdfTermAdapter[RdfTriple.Object] with
-    override inline def isEmpty(t: RdfTriple.Object): Boolean = t.isEmpty
-    override inline def isDefined(t: RdfTriple.Object): Boolean = t.isDefined
     override inline def isIri(t: RdfTriple.Object): Boolean = t.isOIri
     override inline def isBnode(t: RdfTriple.Object): Boolean = t.isOBnode
     override inline def isLiteral(t: RdfTriple.Object): Boolean = t.isOLiteral
@@ -61,8 +55,6 @@ object RdfTermAdapter:
     override val makeEmpty: RdfTriple.Object = RdfTriple.Object.Empty
 
   given quadSubjectAdapter: RdfTermAdapter[RdfQuad.Subject] with
-    override inline def isEmpty(t: RdfQuad.Subject): Boolean = t.isEmpty
-    override inline def isDefined(t: RdfQuad.Subject): Boolean = t.isDefined
     override inline def isIri(t: RdfQuad.Subject): Boolean = t.isSIri
     override inline def isBnode(t: RdfQuad.Subject): Boolean = t.isSBnode
     override inline def isLiteral(t: RdfQuad.Subject): Boolean = t.isSLiteral
@@ -79,8 +71,6 @@ object RdfTermAdapter:
     override val makeEmpty: RdfQuad.Subject = RdfQuad.Subject.Empty
 
   given quadPredicateAdapter: RdfTermAdapter[RdfQuad.Predicate] with
-    override inline def isEmpty(t: RdfQuad.Predicate): Boolean = t.isEmpty
-    override inline def isDefined(t: RdfQuad.Predicate): Boolean = t.isDefined
     override inline def isIri(t: RdfQuad.Predicate): Boolean = t.isPIri
     override inline def isBnode(t: RdfQuad.Predicate): Boolean = t.isPBnode
     override inline def isLiteral(t: RdfQuad.Predicate): Boolean = t.isPLiteral
@@ -97,8 +87,6 @@ object RdfTermAdapter:
     override val makeEmpty: RdfQuad.Predicate = RdfQuad.Predicate.Empty
 
   given quadObjectAdapter: RdfTermAdapter[RdfQuad.Object] with
-    override inline def isEmpty(t: RdfQuad.Object): Boolean = t.isEmpty
-    override inline def isDefined(t: RdfQuad.Object): Boolean = t.isDefined
     override inline def isIri(t: RdfQuad.Object): Boolean = t.isOIri
     override inline def isBnode(t: RdfQuad.Object): Boolean = t.isOBnode
     override inline def isLiteral(t: RdfQuad.Object): Boolean = t.isOLiteral
@@ -115,8 +103,6 @@ object RdfTermAdapter:
     override val makeEmpty: RdfQuad.Object = RdfQuad.Object.Empty
 
 trait RdfTermAdapter[TInner]:
-  def isEmpty(t: TInner): Boolean
-  def isDefined(t: TInner): Boolean
   def isIri(t: TInner): Boolean
   def isBnode(t: TInner): Boolean
   def isLiteral(t: TInner): Boolean

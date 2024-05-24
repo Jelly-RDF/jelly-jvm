@@ -6,8 +6,6 @@ export RdfGraphAdapter.given
 
 object RdfGraphAdapter:
   given quadGraphAdapter: RdfGraphAdapter[RdfQuad.Graph] with
-    override inline def isEmpty(g: RdfQuad.Graph): Boolean = g.isEmpty
-    override inline def isDefined(g: RdfQuad.Graph): Boolean = g.isDefined
     override inline def isIri(g: RdfQuad.Graph): Boolean = g.isGIri
     override inline def isBnode(g: RdfQuad.Graph): Boolean = g.isGBnode
     override inline def isLiteral(g: RdfQuad.Graph): Boolean = g.isGLiteral
@@ -24,8 +22,6 @@ object RdfGraphAdapter:
     override val makeEmpty: RdfQuad.Graph = RdfQuad.Graph.Empty
 
   given graphStartGraphAdapter: RdfGraphAdapter[RdfGraphStart.Graph] with
-    override inline def isEmpty(g: RdfGraphStart.Graph): Boolean = g.isEmpty
-    override inline def isDefined(g: RdfGraphStart.Graph): Boolean = g.isDefined
     override inline def isIri(g: RdfGraphStart.Graph): Boolean = g.isGIri
     override inline def isBnode(g: RdfGraphStart.Graph): Boolean = g.isGBnode
     override inline def isLiteral(g: RdfGraphStart.Graph): Boolean = g.isGLiteral
@@ -42,8 +38,6 @@ object RdfGraphAdapter:
     override val makeEmpty: RdfGraphStart.Graph = RdfGraphStart.Graph.Empty
 
 trait RdfGraphAdapter[TInner]:
-  def isEmpty(g: TInner): Boolean
-  def isDefined(g: TInner): Boolean
   def isIri(g: TInner): Boolean
   def isBnode(g: TInner): Boolean
   def isDefaultGraph(g: TInner): Boolean
