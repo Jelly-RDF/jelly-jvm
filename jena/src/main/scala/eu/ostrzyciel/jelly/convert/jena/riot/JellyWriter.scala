@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.convert.jena.riot
 
 import eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory
 import eu.ostrzyciel.jelly.core.Constants.*
-import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, PhysicalStreamType, RdfStreamFrame, RdfStreamOptions, RdfStreamRow}
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.jena.graph.{Graph, Triple}
 import org.apache.jena.riot.adapters.RDFWriterRIOT
 import org.apache.jena.riot.*
@@ -87,9 +87,6 @@ final class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIO
       .foreach(rows => RdfStreamFrame(rows = rows.toSeq).writeDelimitedTo(out))
 
   override def getLang: Lang = JellyLanguage.JELLY
-
-
-object RDFWriterJelly extends RDFWriterRIOT(jellyName)
 
 
 /**
