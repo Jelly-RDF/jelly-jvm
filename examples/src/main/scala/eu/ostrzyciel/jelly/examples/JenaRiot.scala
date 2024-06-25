@@ -21,7 +21,7 @@ object JenaRiot extends shared.Example:
     // Print the size of the model
     println(s"Loaded an RDF graph from N-Triples with size: ${model.size}")
 
-    Using(new FileOutputStream("weather.jelly")) { out =>
+    Using.resource(new FileOutputStream("weather.jelly")) { out =>
       // Write the model to a Jelly file
       // Note: by default this will use the [[JellyFormat.JELLY_SMALL_STRICT]] format variant
       RDFDataMgr.write(out, model, JellyLanguage.JELLY)
@@ -44,7 +44,7 @@ object JenaRiot extends shared.Example:
     println(s"Loaded an RDF dataset from a Trig file with ${dataset.asDatasetGraph.size} named graphs and " +
       s"${dataset.asDatasetGraph.stream.count} quads")
 
-    Using(new FileOutputStream("weather-graphs.jelly")) { out =>
+    Using.resource(new FileOutputStream("weather-graphs.jelly")) { out =>
       // Write the dataset to a Jelly file, using the "BIG" settings
       // (better compression for big files, more memory usage)
       RDFDataMgr.write(out, dataset, JellyFormat.JELLY_BIG_STRICT)
@@ -75,7 +75,7 @@ object JenaRiot extends shared.Example:
     RDFWriterRegistry.register(customFormat, JellyGraphWriterFactory)
     RDFWriterRegistry.register(customFormat, JellyDatasetWriterFactory)
 
-    Using(new FileOutputStream("weather-graphs-custom.jelly")) { out =>
+    Using.resource(new FileOutputStream("weather-graphs-custom.jelly")) { out =>
       // Write the dataset to a Jelly file using the custom format
       RDFDataMgr.write(out, dataset, customFormat)
       println("Saved the dataset to a Jelly file with custom settings")

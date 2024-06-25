@@ -122,8 +122,8 @@ lazy val examples = (project in file("examples"))
     publishArtifact := false,
     name := "jelly-examples",
     libraryDependencies ++= Seq(
-      "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
-      "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
     ),
     commonSettings,
   )

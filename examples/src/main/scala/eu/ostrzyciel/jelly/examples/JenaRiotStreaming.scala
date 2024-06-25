@@ -12,6 +12,8 @@ import scala.util.Using
 
 /**
  * Example of using Apache Jena's streaming IO API with Jelly.
+ *
+ * See also: https://jena.apache.org/documentation/io/streaming-io.html
  */
 object JenaRiotStreaming extends shared.Example:
   def main(args: Array[String]): Unit =
@@ -63,7 +65,7 @@ object JenaRiotStreaming extends shared.Example:
       .set(JellyLanguage.SYMBOL_STREAM_OPTIONS, options)
       .set(JellyLanguage.SYMBOL_FRAME_SIZE, 128) // optional, default is 256
 
-    Using(new FileOutputStream("stream-riot.jelly")) { out =>
+    Using.resource(new FileOutputStream("stream-riot.jelly")) { out =>
       // Create the writer – remember to pass the context!
       val writerStream = StreamRDFWriter.getWriterStream(out, JellyLanguage.JELLY, context)
       writerStream.start()
