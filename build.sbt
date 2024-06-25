@@ -116,3 +116,15 @@ lazy val integrationTests = (project in file("integration-tests"))
     commonSettings,
   )
   .dependsOn(stream, rdf4j, jena)
+
+lazy val examples = (project in file("examples"))
+  .settings(
+    publishArtifact := false,
+    name := "jelly-examples",
+    libraryDependencies ++= Seq(
+      "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
+    ),
+    commonSettings,
+  )
+  .dependsOn(grpc, rdf4j, jena)
