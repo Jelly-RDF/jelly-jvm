@@ -15,7 +15,7 @@ given Measure[Dataset] = (ds: Dataset) => ds.asDatasetGraph().find().asScala.siz
 object JenaSerDes extends NativeSerDes[Model, Dataset]:
   val name = "Jena"
 
-  override def readTriplesW3C(is: InputStream) =
+  override def readTriplesW3C(is: InputStream): Model =
     val m = ModelFactory.createDefaultModel()
     RDFDataMgr.read(m, is, RDFLanguages.NT)
     m
@@ -25,12 +25,12 @@ object JenaSerDes extends NativeSerDes[Model, Dataset]:
     RDFDataMgr.read(ds, is, RDFLanguages.NQUADS)
     ds
 
-  def readQuadsJelly(is: InputStream): org.apache.jena.query.Dataset =
+  def readQuadsJelly(is: InputStream): Dataset =
     val ds = DatasetFactory.create()
     RDFDataMgr.read(ds, is, JellyLanguage.JELLY)
     ds
 
-  def readTriplesJelly(is: InputStream): org.apache.jena.rdf.model.Model =
+  def readTriplesJelly(is: InputStream): Model =
     val m = ModelFactory.createDefaultModel()
     RDFDataMgr.read(m, is, JellyLanguage.JELLY)
     m
