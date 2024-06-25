@@ -1,5 +1,5 @@
 package eu.ostrzyciel.jelly.examples
 
-object ParseFromFileWithoutDecoding {
-
-}
+object ParseFromFileWithoutDecoding extends shared.Example:
+  def main(args: Array[String]): Unit =
+    ???
