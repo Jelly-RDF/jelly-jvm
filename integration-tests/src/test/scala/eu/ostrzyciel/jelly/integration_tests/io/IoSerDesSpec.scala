@@ -2,8 +2,11 @@ package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import org.apache.jena.query.Dataset
+import org.apache.jena.rdf.model.Model
 import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
+import org.eclipse.rdf4j.model.Statement
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
@@ -12,7 +15,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream}
 
 /**
- * Tests for IO ser/des (Jena RIOT, RDF4J Rio, and semi-reactive IO over Pekko Streams).
+ * Tests for IO ser/des (Jena RIOT, Jena RIOT streaming, RDF4J Rio, and semi-reactive IO over Pekko Streams).
  */
 class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   given ActorSystem = ActorSystem("test")
@@ -42,20 +45,31 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
   )
 
   runTest(JenaSerDes, JenaSerDes)
+  runTest(JenaSerDes, JenaStreamSerDes)
   runTest(JenaSerDes, Rdf4jSerDes)
-  runTest(Rdf4jSerDes, JenaSerDes)
-  runTest(Rdf4jSerDes, Rdf4jSerDes)
-
-  runTest(Rdf4jReactiveSerDes(), Rdf4jReactiveSerDes())
-  runTest(Rdf4jReactiveSerDes(), JenaSerDes)
-  runTest(Rdf4jReactiveSerDes(), Rdf4jSerDes)
   runTest(JenaSerDes, Rdf4jReactiveSerDes())
+
+  runTest(JenaStreamSerDes, JenaSerDes)
+  runTest(JenaStreamSerDes, JenaStreamSerDes)
+  runTest(JenaStreamSerDes, Rdf4jSerDes)
+  runTest(JenaStreamSerDes, Rdf4jReactiveSerDes())
+
+  runTest(Rdf4jSerDes, JenaSerDes)
+  runTest(Rdf4jSerDes, JenaStreamSerDes)
+  runTest(Rdf4jSerDes, Rdf4jSerDes)
   runTest(Rdf4jSerDes, Rdf4jReactiveSerDes())
 
+  runTest(Rdf4jReactiveSerDes(), JenaSerDes)
+  runTest(Rdf4jReactiveSerDes(), JenaStreamSerDes)
+  runTest(Rdf4jReactiveSerDes(), Rdf4jSerDes)
+  runTest(Rdf4jReactiveSerDes(), Rdf4jReactiveSerDes())
+
   // the Jena reactive implementation only has a serializer
-  runTest(JenaReactiveSerDes(), Rdf4jReactiveSerDes())
-  runTest(JenaReactiveSerDes(), Rdf4jSerDes)
   runTest(JenaReactiveSerDes(), JenaSerDes)
+  runTest(JenaReactiveSerDes(), JenaStreamSerDes)
+  runTest(JenaReactiveSerDes(), Rdf4jSerDes)
+  runTest(JenaReactiveSerDes(), Rdf4jReactiveSerDes())
+
 
   private def runTest[TMSer : Measure, TDSer : Measure, TMDes : Measure, TDDes : Measure](
     ser: NativeSerDes[TMSer, TDSer],

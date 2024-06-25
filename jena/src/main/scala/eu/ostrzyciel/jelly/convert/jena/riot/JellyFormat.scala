@@ -10,10 +10,10 @@ import org.apache.jena.riot.{RDFFormat, RDFFormatVariant}
  * @param opt Jelly options
  * @param frameSize size of each RdfStreamFrame, in rows
  */
-final class JellyFormatVariant(
-  val opt: RdfStreamOptions = RdfStreamOptions.defaultInstance,
-  val frameSize: Int = 256
-) extends RDFFormatVariant(opt.toString) { }
+case class JellyFormatVariant(
+  opt: RdfStreamOptions = RdfStreamOptions.defaultInstance,
+  frameSize: Int = 256
+) extends RDFFormatVariant(opt.toString)
 
 /**
  * Pre-defined serialization format variants for Jelly.

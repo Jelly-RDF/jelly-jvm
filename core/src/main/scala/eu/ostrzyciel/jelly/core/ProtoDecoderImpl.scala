@@ -294,8 +294,8 @@ object ProtoDecoderImpl:
       checkVersion(opts)
       checkLogicalStreamType(opts, None)
       if inner.isDefined then
-        throw new RdfProtoDeserializationError("Stream options are already set." +
-          "The type of the stream cannot be inferred.")
+        throw new RdfProtoDeserializationError("Stream options are already set. " +
+          "The physical type of the stream cannot be inferred.")
       val dec = opts.physicalType match
         case PhysicalStreamType.TRIPLES =>
           new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
@@ -304,8 +304,8 @@ object ProtoDecoderImpl:
         case PhysicalStreamType.GRAPHS =>
           new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
         case PhysicalStreamType.UNSPECIFIED =>
-          throw new RdfProtoDeserializationError("Incoming stream type is not set.")
+          throw new RdfProtoDeserializationError("Incoming physical stream type is not set.")
         case _ =>
-          throw new RdfProtoDeserializationError("Incoming stream type is not recognized.")
+          throw new RdfProtoDeserializationError("Incoming physical stream type is not recognized.")
 
       inner = Some(dec.asInstanceOf[ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple | TQuad]])
