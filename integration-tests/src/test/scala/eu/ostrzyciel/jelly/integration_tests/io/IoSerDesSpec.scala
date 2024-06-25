@@ -2,11 +2,8 @@ package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
-import org.apache.jena.query.Dataset
-import org.apache.jena.rdf.model.Model
 import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
-import org.eclipse.rdf4j.model.Statement
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
