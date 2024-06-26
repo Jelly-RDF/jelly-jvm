@@ -127,4 +127,4 @@ lazy val examples = (project in file("examples"))
     ),
     commonSettings,
   )
-  .dependsOn(grpc, rdf4j, jena)
+  .dependsOn(grpc, stream, rdf4j, jena)
