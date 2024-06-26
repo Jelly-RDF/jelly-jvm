@@ -34,7 +34,7 @@ object JenaRiotStreaming extends shared.Example:
     println("Reading a stream of quads from a Jelly file...")
 
     // Parse a different Jelly file as a stream of quads and send it to the same sink
-    val inputFileQuads = new File(getClass.getResource("/jelly/weather-graphs.jelly").toURI)
+    val inputFileQuads = new File(getClass.getResource("/jelly/weather-quads.jelly").toURI)
     RDFParser
       .source(inputFileQuads.toURI.toString)
       .lang(JellyLanguage.JELLY)

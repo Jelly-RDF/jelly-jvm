@@ -7,6 +7,7 @@ class ExamplesSpec extends AnyWordSpec, Matchers:
   val examples: Seq[shared.Example] = Seq(
     JenaRiot,
     JenaRiotStreaming,
+    PekkoStreamsDecoderFlow,
     PekkoStreamsEncoderFlow,
     PekkoStreamsEncoderSource,
     Rdf4jRio,

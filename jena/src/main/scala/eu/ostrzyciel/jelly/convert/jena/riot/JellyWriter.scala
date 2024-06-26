@@ -1,10 +1,8 @@
 package eu.ostrzyciel.jelly.convert.jena.riot
 
 import eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory
-import eu.ostrzyciel.jelly.core.Constants.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.jena.graph.{Graph, Triple}
-import org.apache.jena.riot.adapters.RDFWriterRIOT
 import org.apache.jena.riot.*
 import org.apache.jena.riot.system.{PrefixMap, StreamRDF, StreamRDFWriterFactory}
 import org.apache.jena.riot.writer.{WriterDatasetRIOTBase, WriterGraphRIOTBase}

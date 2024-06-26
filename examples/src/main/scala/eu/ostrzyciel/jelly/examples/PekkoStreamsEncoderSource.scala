@@ -15,7 +15,7 @@ import scala.concurrent.duration.*
  * Example of using the [[eu.ostrzyciel.jelly.stream.EncoderSource]] utility to convert RDF graphs and datasets
  * into Jelly streams with a single method call.
  *
- * In this example we will be using Apache Jena as the RDF library (note the import:
+ * In this example we are using Apache Jena as the RDF library (note the import:
  * `import eu.ostrzyciel.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */

@@ -15,7 +15,11 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.*
 
 /**
+ * Example of using the [[eu.ostrzyciel.jelly.stream.EncoderFlow]] utility to encode RDF data as Jelly streams.
  *
+ * In this example we are using Apache Jena as the RDF library (note the import:
+ * `import eu.ostrzyciel.jelly.convert.jena.given`).
+ * The same can be achieved with RDF4J just by importing a different module.
  */
 object PekkoStreamsEncoderFlow extends shared.Example:
   def main(args: Array[String]): Unit =
