@@ -10,6 +10,7 @@ class ExamplesSpec extends AnyWordSpec, Matchers:
     PekkoStreamsDecoderFlow,
     PekkoStreamsEncoderFlow,
     PekkoStreamsEncoderSource,
+    PekkoStreamsWithIo,
     Rdf4jRio,
   )
 

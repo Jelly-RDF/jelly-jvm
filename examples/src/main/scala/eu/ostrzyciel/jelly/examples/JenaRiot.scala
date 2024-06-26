@@ -82,6 +82,6 @@ object JenaRiot extends shared.Example:
     }
 
     // Load the RDF dataset from a Jelly file with the custom format
-    val dataset3 = RDFDataMgr.loadDataset("weather-graphs-custom.jelly", JellyLanguage.JELLY)
+    val dataset3 = RDFDataMgr.loadDataset("weather-quads-custom.jelly", JellyLanguage.JELLY)
     println(s"Loaded an RDF dataset from Jelly with custom settings with ${dataset3.asDatasetGraph.size} named graphs" +
       s" and ${dataset3.asDatasetGraph.stream.count} quads")

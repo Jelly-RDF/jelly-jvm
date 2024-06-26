@@ -45,7 +45,7 @@ object PekkoStreamsEncoderSource extends shared.Example:
       // Notice in the output that the frames are slightly bigger than 2000 bytes.
       .wireTap(frame => println(s"Frame with ${frame.rows.size} rows, ${frame.serializedSize} bytes on wire"))
       // Convert each stream frame to bytes
-      .map(_.toByteArray)
+      .via(JellyIo.toBytes)
       // Collect the stream into a sequence
       .runWith(Sink.seq)
 
@@ -79,7 +79,7 @@ object PekkoStreamsEncoderSource extends shared.Example:
       // on graph boundaries.
       .wireTap(frame => println(s"Frame with ${frame.rows.size} rows, ${frame.serializedSize} bytes on wire"))
       // Convert each stream frame to bytes
-      .map(_.toByteArray)
+      .via(JellyIo.toBytes)
       // Collect the stream into a sequence
       .runWith(Sink.seq)
 

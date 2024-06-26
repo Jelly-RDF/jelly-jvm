@@ -16,6 +16,11 @@ import scala.concurrent.duration.*
 
 /**
  * Example of using the [[eu.ostrzyciel.jelly.stream.EncoderFlow]] utility to encode RDF data as Jelly streams.
+ * 
+ * Here, the RDF data is turned into a series of byte buffers, with each buffer corresponding to exactly one frame.
+ * This is suitable if your streaming protocol (e.g., Kafka, MQTT, AMQP) already frames the messages.
+ * If you are writing to a raw socket or file, then you must use the DELIMITED variant of Jelly instead.
+ * See [[eu.ostrzyciel.jelly.examples.PekkoStreamsWithIo]] for examples of that.
  *
  * In this example we are using Apache Jena as the RDF library (note the import:
  * `import eu.ostrzyciel.jelly.convert.jena.given`).
@@ -38,6 +43,10 @@ object PekkoStreamsEncoderFlow extends shared.Example:
     val graphs: immutable.Iterable[(Node, Iterable[Triple])] = dataset.asGraphs
     // 3. Iterable of all triples in the default graph
     val triples: immutable.Iterable[Triple] = dataset.getDefaultModel.asTriples
+
+    // Note: here we are not turning the frames into bytes, but just printing their size in bytes.
+    // You can find an example of how to turn a frame into a byte array in the `PekkoStreamsEncoderSource` example.
+    // This is done with: .via(JellyIo.toBytes)
 
     // Let's try encoding this as flat RDF streams (streams of triples or quads)
     // https://w3id.org/stax/ontology#flatQuadStream
