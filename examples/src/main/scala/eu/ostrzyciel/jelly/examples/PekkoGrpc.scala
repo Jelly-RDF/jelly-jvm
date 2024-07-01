@@ -111,7 +111,7 @@ object PekkoGrpc extends shared.Example:
         "weather",
         Some(JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.QUADS))
       ))
-      .via(DecoderFlow.decodeQuads.asFlatQuadStream(strict = true))
+      .via(DecoderFlow.decodeQuads.asFlatQuadStreamStrict)
       .runFold(0L)((acc, _) => acc + 1)
       // Process the result of the stream (Future[Long])
       .map { counter =>

@@ -1,9 +1,17 @@
 package eu.ostrzyciel.jelly.core
 
 import ProtoDecoderImpl.*
-import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, RdfStreamOptions}
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 
 import scala.reflect.ClassTag
+
+object ConverterFactory:
+  /**
+   * Convenience method for getting the default supported options for the decoders.
+   *
+   * See: [[eu.ostrzyciel.jelly.core.JellyOptions.defaultSupportedOptions]]
+   */
+  final def defaultSupportedOptions: RdfStreamOptions = JellyOptions.defaultSupportedOptions
 
 /**
  * "Main" trait to be implemented by RDF conversion modules (e.g., for Jena and RDF4J).
@@ -24,50 +32,68 @@ trait ConverterFactory[
   +TDecConv <: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
   TNode, TDatatype : ClassTag, TTriple, TQuad
 ]:
+  import ConverterFactory.*
+  
   def decoderConverter: TDecConv
 
   /**
    * Create a new [[TriplesDecoder]].
-   * @return
+   * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
+   *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
+   *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @return decoder
    */
-  final def triplesDecoder(expLogicalType: Option[LogicalStreamType]): 
+  final def triplesDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
   TriplesDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new TriplesDecoder(decoderConverter, expLogicalType)
+    new TriplesDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[QuadsDecoder]].
-   * @return
+   * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
+   *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
+   *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @return decoder
    */
-  final def quadsDecoder(expLogicalType: Option[LogicalStreamType]): 
+  final def quadsDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
   QuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new QuadsDecoder(decoderConverter, expLogicalType)
+    new QuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[GraphsAsQuadsDecoder]].
-   * @return
+   * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
+   *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
+   *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @return decoder
    */
-  final def graphsAsQuadsDecoder(expLogicalType: Option[LogicalStreamType]): 
+  final def graphsAsQuadsDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
   GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsAsQuadsDecoder(decoderConverter, expLogicalType)
+    new GraphsAsQuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[GraphsDecoder]].
-   * @return
+   * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
+   *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
+   *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @return decoder
    */
-  final def graphsDecoder(expLogicalType: Option[LogicalStreamType]): 
+  final def graphsDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
   GraphsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsDecoder(decoderConverter, expLogicalType)
+    new GraphsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[AnyStatementDecoder]].
-   * @return
+   * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
+   *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
+   *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @return decoder
    */
-  final def anyStatementDecoder: AnyStatementDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new AnyStatementDecoder(decoderConverter)
+  final def anyStatementDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  AnyStatementDecoder[TNode, TDatatype, TTriple, TQuad] =
+    new AnyStatementDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[ProtoEncoder]].
    * @param options Jelly serialization options.
-   * @return
+   * @return encoder
    */
   def encoder(options: RdfStreamOptions): TEncoder

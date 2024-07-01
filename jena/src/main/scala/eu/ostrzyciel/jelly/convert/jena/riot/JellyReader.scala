@@ -22,7 +22,7 @@ object JellyReader extends ReaderRIOT:
       "Please use an InputStream.")
 
   override def read(in: InputStream, baseURI: String, ct: ContentType, output: StreamRDF, context: Context): Unit =
-    val decoder = JenaConverterFactory.anyStatementDecoder
+    val decoder = JenaConverterFactory.anyStatementDecoder()
     output.start()
     try {
       while in.available() > 0 do

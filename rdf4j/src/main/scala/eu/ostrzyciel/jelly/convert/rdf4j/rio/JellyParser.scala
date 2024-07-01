@@ -7,7 +7,7 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFParser
 import java.io.{InputStream, Reader}
 
 final class JellyParser extends AbstractRDFParser:
-  private val decoder = Rdf4jConverterFactory.anyStatementDecoder
+  private val decoder = Rdf4jConverterFactory.anyStatementDecoder()
 
   override def getRDFFormat = JELLY
 
