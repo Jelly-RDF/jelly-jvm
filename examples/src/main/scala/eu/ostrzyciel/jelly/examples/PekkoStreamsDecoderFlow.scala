@@ -150,7 +150,8 @@ object PekkoStreamsDecoderFlow extends shared.Example:
     val streamOptions = Await.result(snoopFuture._1, 10.seconds)
     val decodedQuads2 = Await.result(snoopFuture._2, 10.seconds)
 
-    print(s"Stream options: \n${streamOptions.get.toProtoString.indent(2)}")
+    val streamOptionsIndented = ("\n" + streamOptions.get.toProtoString.strip).replace("\n", "\n  ")
+    println(s"Stream options: $streamOptionsIndented")
     println(s"Decoded ${decodedQuads2.size} quads.")
 
     actorSystem.terminate()
