@@ -3,3 +3,6 @@ target
 *.log
 /.idea
 /.bsp
+
+# Output files of example code
+/*.jelly

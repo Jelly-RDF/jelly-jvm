@@ -24,12 +24,17 @@ trait SizeLimiter:
   def flow: Flow[RdfStreamRow, Seq[RdfStreamRow], NotUsed]
 
 /**
- * Stream frame size limiter that maintains a maximum byte size of stream frames.
- * @param maxSize maximum byte size of stream frames
+ * Stream frame size limiter that tries to maintain a specific byte size of stream frames.
+ * 
+ * NOTE: this does not guarantee that the size of the stream frames will be less or equal
+ * to the target size. The frames will in general be slightly larger than the target size,
+ * by as much as one stream row.
+ * 
+ * @param targetSize target byte size of stream frames
  */
-final class ByteSizeLimiter(maxSize: Long) extends SizeLimiter:
+final class ByteSizeLimiter(targetSize: Long) extends SizeLimiter:
   override def flow: Flow[RdfStreamRow, Seq[RdfStreamRow], NotUsed] =
-    Flow[RdfStreamRow].groupedWeighted(maxSize)(row => row.serializedSize)
+    Flow[RdfStreamRow].groupedWeighted(targetSize)(row => row.serializedSize)
 
 /**
  * Stream frame size limiter that maintains a maximum number of rows in stream frames.

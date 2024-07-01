@@ -56,6 +56,8 @@ object EncoderSource:
    * @param dataset the RDF dataset to be streamed
    * @param maybeLimiter frame size limiter (see [[SizeLimiter]]).
    *                     If None, no size limit is applied (frames are only split by graphs).
+   *                     NOTE: without the limiter the frames may be very large for large graphs, which
+   *                     may lead to out-of-memory errors.
    * @param opt Jelly serialization options
    * @param adapter dataset -> graphs adapter (see implementations of [[IterableAdapter]])
    * @param factory implementation of [[ConverterFactory]] (e.g., JenaConverterFactory)
