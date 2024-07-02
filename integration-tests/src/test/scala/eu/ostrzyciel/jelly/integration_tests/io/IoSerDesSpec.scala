@@ -127,10 +127,9 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
           val data = os.toByteArray
           data.size should be > 0
 
-          val error = intercept[java.util.concurrent.ExecutionException | RdfProtoDeserializationError] {
+          intercept[java.util.concurrent.ExecutionException | RdfProtoDeserializationError] {
             des.readTriplesJelly(ByteArrayInputStream(data), Some(decOptions))
           }
-          println(error)
         }
 
       for (preset, size, presetName) <- presets do
