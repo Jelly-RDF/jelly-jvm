@@ -40,9 +40,7 @@ jobs:
           cache: 'sbt'
 
       - name: 'Build plugins'
-        run: |
-          sbt jena/assembly
-          sbt rdf4j/assembly
+        run: sbt -v jena/assembly rdf4j/assembly
 
       - name: 'Publish plugins (pre-release)'
         if: github.ref == 'refs/heads/main'
