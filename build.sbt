@@ -30,6 +30,12 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   ),
+  scalacOptions ++= Seq(
+    "-Werror",
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+  )
 )
 
 lazy val core = (project in file("core"))
