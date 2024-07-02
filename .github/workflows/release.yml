@@ -24,3 +24,46 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
+  publish-plugins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'sbt'
+
+      - name: 'Build plugins'
+        run: sbt -v jena/assembly rdf4j/assembly
+
+      - name: 'Publish plugins (pre-release)'
+        if: github.ref == 'refs/heads/main'
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          allowUpdates: true
+          prerelease: true
+          draft: false
+          omitDraftDuringUpdate: false
+          makeLatest: false
+          tag: dev
+          name: "Development build"
+          artifacts: 'jena/target/scala-*/*-plugin.jar,rdf4j/target/scala-*/*-plugin.jar'
+          generateReleaseNotes: true
+
+      - name: 'Publish plugins (tagged release)'
+        if: github.ref != 'refs/heads/main'
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          prerelease: false
+          draft: false
+          makeLatest: true
+          tag: "${{ env.GITHUB_REF_NAME }}"
+          name: "${{ env.GITHUB_REF_NAME }}"
+          artifacts: 'jena/target/scala-*/*-plugin.jar,rdf4j/target/scala-*/*-plugin.jar'
+          generateReleaseNotes: true

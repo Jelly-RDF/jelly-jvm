@@ -22,6 +22,7 @@ jobs:
           - os: ubuntu-latest
             java: 21
     runs-on: ${{ matrix.os }}
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -37,3 +38,7 @@ jobs:
     - name: Build and test
       shell: bash
       run: sbt -v +test
+
+    - name: Test building assemblies
+      shell: bash
+      run: sbt -v jena/assembly rdf4j/assembly

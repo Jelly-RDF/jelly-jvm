@@ -35,7 +35,13 @@ lazy val commonSettings = Seq(
     "-feature",
     "-deprecation",
     "-unchecked",
-  )
+  ),
+  assemblyJarName := s"${name.value}-plugin.jar",
+  assemblyMergeStrategy := {
+    case x if x.endsWith("module-info.class") => MergeStrategy.concat
+    case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.first
+    case x => assemblyMergeStrategy.value(x)
+  },
 )
 
 lazy val core = (project in file("core"))
@@ -60,8 +66,9 @@ lazy val jena = (project in file("jena"))
   .settings(
     name := "jelly-jena",
     libraryDependencies ++= Seq(
-      "org.apache.jena" % "jena-core" % jenaV,
-      "org.apache.jena" % "jena-arq" % jenaV,
+      // Use the "provided" scope to not include the Jena dependencies in the plugin JAR
+      "org.apache.jena" % "jena-core" % jenaV % "provided,test",
+      "org.apache.jena" % "jena-arq" % jenaV % "provided,test",
     ),
     commonSettings,
   )
@@ -71,8 +78,9 @@ lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
     libraryDependencies ++= Seq(
-      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
-      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
+      // Use the "provided" scope to not include the RDF4J dependencies in the plugin JAR
+      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV % "provided,test",
+      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV % "provided,test",
     ),
     commonSettings,
   )
@@ -122,7 +130,9 @@ lazy val integrationTests = (project in file("integration-tests"))
     ),
     commonSettings,
   )
-  .dependsOn(stream, rdf4j, jena)
+  // We have to depend on Jena's and RDF4J's test configurations as the base libraries (RDF4J and Jena)
+  // use the "provided" scope.
+  .dependsOn(stream, jena % "compile->test", rdf4j % "compile->test")
 
 lazy val examples = (project in file("examples"))
   .settings(
@@ -134,4 +144,6 @@ lazy val examples = (project in file("examples"))
     ),
     commonSettings,
   )
-  .dependsOn(grpc, stream, rdf4j, jena)
+  // We have to depend on Jena's and RDF4J's test configurations as the base libraries (RDF4J and Jena)
+  // use the "provided" scope.
+  .dependsOn(grpc, stream, jena % "compile->test", rdf4j % "compile->test")
