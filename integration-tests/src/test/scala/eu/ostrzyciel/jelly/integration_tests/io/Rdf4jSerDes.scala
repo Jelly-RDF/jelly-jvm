@@ -1,8 +1,8 @@
 package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.rdf4j.rio
-import eu.ostrzyciel.jelly.convert.rdf4j.rio.JellyWriterSettings
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, PhysicalStreamType}
+import eu.ostrzyciel.jelly.convert.rdf4j.rio.{JellyParserSettings, JellyWriterSettings}
+import eu.ostrzyciel.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
@@ -15,10 +15,14 @@ given seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
 object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
   val name = "RDF4J"
 
-  private def read(is: InputStream, format: RDFFormat): Seq[Statement] =
+  private def read(is: InputStream, format: RDFFormat, supportedOptions: Option[RdfStreamOptions] = None): 
+  Seq[Statement] =
     val parser = Rio.createParser(format)
     val collector = new StatementCollector()
     parser.setRDFHandler(collector)
+    supportedOptions.foreach(opt =>
+      parser.setParserConfig(JellyParserSettings.configFromOptions(opt))
+    )
     parser.parse(is)
     collector.getStatements.asScala.toSeq
 
@@ -26,9 +30,11 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
 
   override def readQuadsW3C(is: InputStream): Seq[Statement] = read(is, RDFFormat.NQUADS)
 
-  override def readTriplesJelly(is: InputStream): Seq[Statement] = read(is, rio.JELLY)
+  override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] = 
+    read(is, rio.JELLY, supportedOptions)
 
-  override def readQuadsJelly(is: InputStream): Seq[Statement] = read(is, rio.JELLY)
+  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] = 
+    read(is, rio.JELLY, supportedOptions)
 
   private def write(os: OutputStream, model: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
     val conf = JellyWriterSettings.configFromOptions(opt, frameSize)

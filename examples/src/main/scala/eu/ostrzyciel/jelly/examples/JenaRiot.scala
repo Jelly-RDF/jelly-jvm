@@ -1,8 +1,9 @@
 package eu.ostrzyciel.jelly.examples
 
 import eu.ostrzyciel.jelly.convert.jena.riot.*
-import eu.ostrzyciel.jelly.core.JellyOptions
-import org.apache.jena.riot.{RDFDataMgr, RDFFormat, RDFWriterRegistry}
+import eu.ostrzyciel.jelly.core.*
+import org.apache.jena.rdf.model.ModelFactory
+import org.apache.jena.riot.{RDFDataMgr, RDFFormat, RDFParser, RDFWriterRegistry, RIOT}
 
 import java.io.{File, FileOutputStream}
 import scala.util.Using
@@ -85,3 +86,31 @@ object JenaRiot extends shared.Example:
     val dataset3 = RDFDataMgr.loadDataset("weather-quads-custom.jelly", JellyLanguage.JELLY)
     println(s"Loaded an RDF dataset from Jelly with custom settings with ${dataset3.asDatasetGraph.size} named graphs" +
       s" and ${dataset3.asDatasetGraph.stream.count} quads")
+
+    // ---------------------------------
+    println("\n")
+
+    // By default, the parser has limits on for example the maximum size of the lookup tables.
+    // The default supported options are [[JellyOptions.defaultSupportedOptions]].
+    // You can change these limits by creating your own options object.
+    val customOptions = JellyOptions.defaultSupportedOptions
+      .withMaxNameTableSize(50) // set the maximum size of the name table to 100
+    // Create a Context object with the custom options
+    val parserContext = RIOT.getContext.copy()
+      .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, customOptions)
+
+    println("Trying to load the model with custom supported options...")
+    val model3 = ModelFactory.createDefaultModel()
+    try
+      // The loading operation should fail because our allowed max name table size is too low
+      RDFParser.create()
+        .source("weather.jelly")
+        .lang(JellyLanguage.JELLY)
+        // Set the context object with the custom options
+        .context(parserContext)
+        .parse(model3)
+    catch
+      case e: RdfProtoDeserializationError =>
+        // The stream uses a name table size of 128, which is larger than the maximum supported size of 50.
+        // To read this stream, set maxNameTableSize to at least 128 in the supportedOptions for this decoder.
+        println(s"Failed to load the model with custom options: ${e.getMessage}")

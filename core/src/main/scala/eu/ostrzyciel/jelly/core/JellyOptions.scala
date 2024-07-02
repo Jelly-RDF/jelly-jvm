@@ -61,3 +61,30 @@ object JellyOptions:
     */
   def smallRdfStar: RdfStreamOptions =
     smallStrict.withRdfStar(true)
+
+  /**
+   * Default maximum supported options for Jelly decoders.
+   * 
+   * This means that by default Jelly-JVM will refuse to read streams that exceed these limits (e.g., with a
+   * name lookup table larger than 4096 entries).
+   * 
+   * To change these defaults, you should pass a different RdfStreamOptions object to the decoder.
+   * You should use this method to get the default options and then modify them as needed.
+   * For example, to disable RDF-star support, you can do this:
+   * <code>
+   * val myOptions = JellyOptions.defaultSupportedOptions.withRdfStar(false)
+   * </code>
+   * 
+   * If you were to pass a default RdfStreamOptions object to the decoder, it would simply refuse to read any stream
+   * as (by default) it will have all max table sizes set to 0. So, you should always use this method as the base.
+   * 
+   * @return
+   */
+  def defaultSupportedOptions: RdfStreamOptions = RdfStreamOptions(
+    generalizedStatements = true,
+    rdfStar = true,
+    maxNameTableSize = 4096,
+    maxPrefixTableSize = 1024,
+    maxDatatypeTableSize = 256,
+    version = Constants.protoVersion,
+  )

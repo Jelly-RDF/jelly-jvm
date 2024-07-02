@@ -1,66 +1,56 @@
 package eu.ostrzyciel.jelly.convert.rdf4j.rio
 
-import eu.ostrzyciel.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
-import org.eclipse.rdf4j.rio.WriterConfig
+import eu.ostrzyciel.jelly.core.JellyOptions
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import org.eclipse.rdf4j.rio.ParserConfig
 import org.eclipse.rdf4j.rio.helpers.*
 
-object JellyWriterSettings:
-  def configFromOptions(opt: RdfStreamOptions, frameSize: Long = 256L): WriterConfig =
-    val c = new WriterConfig()
-    c.set(FRAME_SIZE, frameSize)
-    c.set(STREAM_NAME, opt.streamName)
-    c.set(PHYSICAL_TYPE, opt.physicalType)
+object JellyParserSettings:
+  val defaultOptions: RdfStreamOptions = JellyOptions.defaultSupportedOptions
+
+  def configFromOptions(opt: RdfStreamOptions): ParserConfig =
+    val c = new ParserConfig()
+    c.set(PROTO_VERSION, opt.version.toLong)
     c.set(ALLOW_GENERALIZED_STATEMENTS, opt.generalizedStatements)
     c.set(ALLOW_RDF_STAR, opt.rdfStar)
     c.set(MAX_NAME_TABLE_SIZE, opt.maxNameTableSize.toLong)
     c.set(MAX_PREFIX_TABLE_SIZE, opt.maxPrefixTableSize.toLong)
     c.set(MAX_DATATYPE_TABLE_SIZE, opt.maxDatatypeTableSize.toLong)
     c
-  
-  val FRAME_SIZE = new LongRioSetting(
-    "eu.ostrzyciel.jelly.convert.rdf4j.rio.frameSize",
-    "Target RDF frame size",
-    256L
-  )
 
-  val STREAM_NAME = new StringRioSetting(
-    "eu.ostrzyciel.jelly.convert.rdf4j.rio.streamName",
-    "Stream name",
-    ""
-  )
-
-  val PHYSICAL_TYPE = new ClassRioSetting[PhysicalStreamType](
-    "eu.ostrzyciel.jelly.convert.rdf4j.rio.physicalType",
-    "Physical stream type",
-    PhysicalStreamType.TRIPLES
+  val PROTO_VERSION = new LongRioSetting(
+    "eu.ostrzyciel.jelly.convert.rdf4j.rio.protoVersion",
+    "Maximum supported Jelly protocol version",
+    defaultOptions.version.toLong
   )
 
   val ALLOW_GENERALIZED_STATEMENTS = new BooleanRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.allowGeneralizedStatements",
-    "Allow generalized statements",
-    false
+    "Allow decoding generalized statements",
+    defaultOptions.generalizedStatements
   )
-  
+
   val ALLOW_RDF_STAR = new BooleanRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.allowRdfStar",
-    "Allow RDF-star statements",
-    false
+    "Allow decoding RDF-star statements",
+    defaultOptions.rdfStar
   )
 
   val MAX_NAME_TABLE_SIZE = new LongRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.maxNameTableSize",
     "Maximum size of the name table",
-    128L
+    defaultOptions.maxNameTableSize.toLong
   )
 
   val MAX_PREFIX_TABLE_SIZE = new LongRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.maxPrefixTableSize",
     "Maximum size of the prefix table",
-    16L
+    defaultOptions.maxPrefixTableSize.toLong
   )
 
   val MAX_DATATYPE_TABLE_SIZE = new LongRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.maxDatatypeTableSize",
     "Maximum size of the datatype table",
-    16L
+    defaultOptions.maxDatatypeTableSize.toLong
   )
+

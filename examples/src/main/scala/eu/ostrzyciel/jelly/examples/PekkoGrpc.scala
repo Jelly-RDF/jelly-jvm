@@ -111,7 +111,7 @@ object PekkoGrpc extends shared.Example:
         "weather",
         Some(JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.QUADS))
       ))
-      .via(DecoderFlow.decodeQuads.asFlatQuadStream(strict = true))
+      .via(DecoderFlow.decodeQuads.asFlatQuadStreamStrict)
       .runFold(0L)((acc, _) => acc + 1)
       // Process the result of the stream (Future[Long])
       .map { counter =>
@@ -130,7 +130,7 @@ object PekkoGrpc extends shared.Example:
         Some(JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.GRAPHS))
       ))
       // Decode the response and transform it into a stream of quads
-      .via(DecoderFlow.decodeGraphs.asDatasetStreamOfQuads())
+      .via(DecoderFlow.decodeGraphs.asDatasetStreamOfQuads)
       .mapConcat(identity)
       .runFold(0L)((acc, _) => acc + 1)
       // Process the result of the stream (Future[Long])
@@ -150,7 +150,7 @@ object PekkoGrpc extends shared.Example:
         "weather",
         Some(JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES))
       ))
-      .via(DecoderFlow.decodeTriples.asFlatTripleStream())
+      .via(DecoderFlow.decodeTriples.asFlatTripleStream)
       .runFold(0L)((acc, _) => acc + 1)
       .map { counter =>
         println(s"[CLIENT] Received $counter triples.")

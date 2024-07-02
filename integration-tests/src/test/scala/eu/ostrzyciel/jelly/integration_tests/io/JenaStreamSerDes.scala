@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.jena.riot.JellyLanguage
+import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import org.apache.jena.graph.Triple
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
@@ -33,17 +34,23 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]]:
       .parse(StreamRDFLib.sinkQuads(sink))
     sink.result
 
-  override def readTriplesJelly(is: InputStream): Seq[Triple] =
+  override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Triple] =
+    val context = RIOT.getContext.copy()
+      .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.defaultSupportedOptions))
     val sink = SinkSeq[Triple]()
     RDFParser.source(is)
       .lang(JellyLanguage.JELLY)
+      .context(context)
       .parse(StreamRDFLib.sinkTriples(sink))
     sink.result
 
-  override def readQuadsJelly(is: InputStream): Seq[Quad] =
+  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Quad] =
+    val context = RIOT.getContext.copy()
+      .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.defaultSupportedOptions))
     val sink = SinkSeq[Quad]()
     RDFParser.source(is)
       .lang(JellyLanguage.JELLY)
+      .context(context)
       .parse(StreamRDFLib.sinkQuads(sink))
     sink.result
 

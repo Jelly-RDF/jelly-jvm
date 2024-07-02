@@ -3,7 +3,7 @@ package eu.ostrzyciel.jelly.convert.rdf4j.rio
 import eu.ostrzyciel.jelly.convert.rdf4j.Rdf4jProtoEncoder
 import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, RdfStreamFrame, RdfStreamOptions, RdfStreamRow}
 import org.eclipse.rdf4j.model.Statement
-import org.eclipse.rdf4j.rio.RioSetting
+import org.eclipse.rdf4j.rio.{RDFFormat, RioSetting}
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter
 
 import java.io.OutputStream
@@ -20,9 +20,9 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
   private val buffer: ArrayBuffer[RdfStreamRow] = new ArrayBuffer[RdfStreamRow]()
   private var frameSize: Long = 256L
 
-  override def getRDFFormat = JELLY
+  override def getRDFFormat: RDFFormat = JELLY
 
-  override def getSupportedSettings =
+  override def getSupportedSettings: util.HashSet[RioSetting[_]] =
     val s = new util.HashSet[RioSetting[_]](super.getSupportedSettings)
     s.add(STREAM_NAME)
     s.add(PHYSICAL_TYPE)

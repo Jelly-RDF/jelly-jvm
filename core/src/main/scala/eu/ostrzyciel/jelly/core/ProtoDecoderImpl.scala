@@ -13,11 +13,11 @@ import scala.reflect.ClassTag
  * See the base (extendable) trait: [[ProtoDecoder]].
  */
 sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +TQuad, +TOut]
-(converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
+(converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], supportedOptions: RdfStreamOptions)
   extends ProtoDecoder[TOut]:
 
   private var streamOpt: Option[RdfStreamOptions] = None
-  private lazy val nameDecoder = new NameDecoder(streamOpt getOrElse RdfStreamOptions.defaultInstance)
+  private lazy val nameDecoder = new NameDecoder(streamOpt getOrElse JellyOptions.smallStrict)
   private lazy val dtLookup = new DecoderLookup[TDatatype](streamOpt.map(o => o.maxDatatypeTableSize) getOrElse 20)
 
   protected final val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
@@ -144,8 +144,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
         throw new RdfProtoDeserializationError("Row kind is not set.")
 
   protected def handleOptions(opts: RdfStreamOptions): Unit =
-    checkVersion(opts)
-    checkLogicalStreamType(opts, expLogicalType)
+    checkOptions(opts, supportedOptions)
     setStreamOpt(opts)
 
   protected def handleTriple(triple: RdfTriple): Option[TOut] =
@@ -168,10 +167,13 @@ object ProtoDecoderImpl:
 
   /**
    * A decoder that reads TRIPLES streams and outputs a sequence of triples.
+   *
+   * Do not instantiate this class directly. Instead use factory methods in
+   * [[eu.ostrzyciel.jelly.core.ConverterFactory]] implementations.
    */
-  final class TriplesDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple](converter, expLogicalType):
+  private[core] final class TriplesDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], supportedOptions: RdfStreamOptions)
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple](converter, supportedOptions):
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
       if !opts.physicalType.isTriples then
@@ -183,10 +185,13 @@ object ProtoDecoderImpl:
 
   /**
    * A decoder that reads QUADS streams and outputs a sequence of quads.
+   *
+   * Do not instantiate this class directly. Instead use factory methods in
+   * [[eu.ostrzyciel.jelly.core.ConverterFactory]] implementations.
    */
-  final class QuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter, expLogicalType):
+  private[core] final class QuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], supportedOptions: RdfStreamOptions)
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter, supportedOptions):
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
       if !opts.physicalType.isQuads then
@@ -198,10 +203,13 @@ object ProtoDecoderImpl:
 
   /**
    * A decoder that reads GRAPHS streams and outputs a flat sequence of quads.
+   *
+   * Do not instantiate this class directly. Instead use factory methods in
+   * [[eu.ostrzyciel.jelly.core.ConverterFactory]] implementations.
    */
-  final class GraphsAsQuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter, expLogicalType):
+  private[core] final class GraphsAsQuadsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], supportedOptions: RdfStreamOptions)
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TQuad](converter, supportedOptions):
     private var currentGraph: Option[TNode] = None
 
     override protected def handleOptions(opts: RdfStreamOptions): Unit =
@@ -230,10 +238,13 @@ object ProtoDecoderImpl:
   /**
    * A decoder that reads GRAPHS streams and outputs a sequence of graphs.
    * Each graph is emitted as soon as the producer signals that it's complete.
+   *
+   * Do not instantiate this class directly. Instead use factory methods in
+   * [[eu.ostrzyciel.jelly.core.ConverterFactory]] implementations.
    */
-  final class GraphsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], expLogicalType: Option[LogicalStreamType])
-    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, (TNode, Iterable[TTriple])](converter, expLogicalType):
+  private[core] final class GraphsDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], supportedOptions: RdfStreamOptions)
+    extends ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, (TNode, Iterable[TTriple])](converter, supportedOptions):
     private var currentGraph: Option[TNode] = None
     private var buffer: ListBuffer[TTriple] = new ListBuffer[TTriple]()
 
@@ -271,9 +282,12 @@ object ProtoDecoderImpl:
    * The type of the stream is detected automatically based on the options row, 
    * which must be at the start of the stream. If the options row is not present or the stream changes its type
    * in the middle, an error is thrown.
+   *
+   * Do not instantiate this class directly. Instead use factory methods in
+   * [[eu.ostrzyciel.jelly.core.ConverterFactory]] implementations.
    */
-  final class AnyStatementDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
-  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad])
+  private[core] final class AnyStatementDecoder[TNode, TDatatype : ClassTag, TTriple, TQuad]
+  (converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad], supportedOptions: RdfStreamOptions)
     extends ProtoDecoder[TTriple | TQuad]:
     private var inner: Option[ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple | TQuad]] = None
 
@@ -291,18 +305,19 @@ object ProtoDecoderImpl:
           inner.get.ingestRow(row)
 
     private def handleOptions(opts: RdfStreamOptions): Unit =
-      checkVersion(opts)
-      checkLogicalStreamType(opts, None)
+      // Reset the logical type to UNSPECIFIED to ignore checking if it's supported by the inner decoder
+      val newSupportedOptions = supportedOptions.copy(logicalType = LogicalStreamType.UNSPECIFIED)
+      checkOptions(opts, newSupportedOptions)
       if inner.isDefined then
         throw new RdfProtoDeserializationError("Stream options are already set. " +
           "The physical type of the stream cannot be inferred.")
       val dec = opts.physicalType match
         case PhysicalStreamType.TRIPLES =>
-          new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
+          new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter, newSupportedOptions)
         case PhysicalStreamType.QUADS =>
-          new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
+          new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, newSupportedOptions)
         case PhysicalStreamType.GRAPHS =>
-          new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, None)
+          new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, newSupportedOptions)
         case PhysicalStreamType.UNSPECIFIED =>
           throw new RdfProtoDeserializationError("Incoming physical stream type is not set.")
         case _ =>

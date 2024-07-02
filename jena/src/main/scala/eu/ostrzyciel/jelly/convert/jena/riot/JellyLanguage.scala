@@ -30,6 +30,17 @@ object JellyLanguage:
   val SYMBOL_STREAM_OPTIONS: util.Symbol = org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "streamOptions")
 
   /**
+   * Symbol for the maximum supported options of the Jelly parser. Use this to for example allow for decoding Jelly
+   * files with very large lookup tables or to disable RDF-star support.
+   * 
+   * Set this in Jena's Context to instances of [[eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions]].
+   * 
+   * You should always first obtain the default supported options from 
+   * [[eu.ostrzyciel.jelly.core.JellyOptions.defaultSupportedOptions]] and then modify them as needed.
+   */
+  val SYMBOL_SUPPORTED_OPTIONS: util.Symbol = org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "supportedOptions")
+
+  /**
    * Symbol for the frame size to be used when writing RDF data.
    *
    * Set this in Jena's Context to an integer (not long!) value.
