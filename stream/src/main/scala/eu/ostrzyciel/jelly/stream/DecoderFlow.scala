@@ -67,6 +67,7 @@ object DecoderFlow:
       .mapConcat(frame => frame.rows)
       .mapConcat(row => decoder.ingestRow(row))
 
+
   private def groupedStream[TOut](decoder: ProtoDecoder[TOut]):
   Flow[RdfStreamFrame, IterableOnce[TOut], NotUsed] =
     Flow[RdfStreamFrame]

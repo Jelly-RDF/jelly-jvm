@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.rdf4j.Rdf4jConverterFactory
+import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import eu.ostrzyciel.jelly.stream.*
 import org.apache.pekko.stream.Materializer
@@ -20,15 +21,17 @@ class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement
 
   override def readQuadsW3C(is: InputStream): Seq[Statement] = Rdf4jSerDes.readQuadsW3C(is)
 
-  private def read(is: InputStream): Seq[Statement] =
+  private def read(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
     val f = JellyIo.fromIoStream(is)
-      .via(DecoderFlow.decodeAny.asFlatStream)
+      .via(DecoderFlow.decodeAny.asFlatStream(supportedOptions.getOrElse(JellyOptions.defaultSupportedOptions)))
       .runWith(Sink.seq)
     Await.result(f, 10.seconds)
 
-  override def readTriplesJelly(is: InputStream): Seq[Statement] = read(is)
+  override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] = 
+    read(is, supportedOptions)
 
-  override def readQuadsJelly(is: InputStream): Seq[Statement] = read(is)
+  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] = 
+    read(is, supportedOptions)
 
   override def writeTriplesJelly(os: OutputStream, model: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
     val f = Source.fromIterator(() => model.iterator)

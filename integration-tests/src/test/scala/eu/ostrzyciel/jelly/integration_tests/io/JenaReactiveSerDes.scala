@@ -17,20 +17,22 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
 
   override def readTriplesW3C(is: InputStream) = JenaSerDes.readTriplesW3C(is)
 
-  def readQuadsW3C(is: InputStream): Dataset = JenaSerDes.readQuadsW3C(is)
+  override def readQuadsW3C(is: InputStream): Dataset = JenaSerDes.readQuadsW3C(is)
 
-  def readQuadsJelly(is: InputStream): Dataset = JenaSerDes.readQuadsJelly(is)
+  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Dataset = 
+    JenaSerDes.readQuadsJelly(is, supportedOptions)
 
-  def readTriplesJelly(is: InputStream): Model = JenaSerDes.readTriplesJelly(is)
+  override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Model = 
+    JenaSerDes.readTriplesJelly(is, supportedOptions)
 
-  def writeQuadsJelly
+  override def writeQuadsJelly
   (os: OutputStream, dataset: Dataset, opt: RdfStreamOptions, frameSize: Int): Unit =
     val f = EncoderSource.fromDatasetAsQuads(dataset, ByteSizeLimiter(32_000), opt)
       (using jenaIterableAdapter, jenaConverterFactory)
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)
 
-  def writeTriplesJelly
+  override def writeTriplesJelly
   (os: OutputStream, model: Model, opt: RdfStreamOptions, frameSize: Int): Unit =
     val f = EncoderSource.fromGraph(model, ByteSizeLimiter(32_000), opt)
       (using jenaIterableAdapter, jenaConverterFactory)

@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.integration_tests.io
 
-import eu.ostrzyciel.jelly.core.JellyOptions
+import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
@@ -10,6 +10,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream}
+import scala.concurrent.ExecutionException
 
 /**
  * Tests for IO ser/des (Jena RIOT, Jena RIOT streaming, RDF4J Rio, and semi-reactive IO over Pekko Streams).
@@ -39,6 +40,45 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
     (JellyOptions.bigGeneralized, 256, "big generalized"),
     (JellyOptions.bigRdfStar, 10_000, "big RDF-star"),
     (JellyOptions.bigStrict, 3, "big strict"),
+  )
+
+  val presetsUnsupported: Seq[(RdfStreamOptions, RdfStreamOptions, String)] = Seq(
+    (
+      JellyOptions.smallGeneralized,
+      JellyOptions.defaultSupportedOptions.withGeneralizedStatements(false),
+      "generalized statements unsupported"
+    ),
+    (
+      JellyOptions.smallRdfStar,
+      JellyOptions.defaultSupportedOptions.withRdfStar(false),
+      "RDF-star unsupported"
+    ),
+    (
+      JellyOptions.smallStrict,
+      JellyOptions.defaultSupportedOptions.withMaxNameTableSize(
+        JellyOptions.smallStrict.maxNameTableSize - 5
+      ),
+      "supported name table size too small"
+    ),
+    (
+      JellyOptions.smallStrict,
+      JellyOptions.defaultSupportedOptions.withMaxPrefixTableSize(
+        JellyOptions.smallStrict.maxPrefixTableSize - 5
+      ),
+      "supported prefix table size too small"
+    ),
+    (
+      JellyOptions.smallStrict,
+      JellyOptions.defaultSupportedOptions.withMaxDatatypeTableSize(
+        JellyOptions.smallStrict.maxDatatypeTableSize - 5
+      ),
+      "supported datatype table size too small"
+    ),
+    (
+      JellyOptions.smallStrict,
+      JellyOptions.defaultSupportedOptions.withVersion(JellyOptions.smallStrict.version - 1),
+      "unsupported version"
+    )
   )
 
   runTest(JenaSerDes, JenaSerDes)
@@ -73,6 +113,26 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
     des: NativeSerDes[TMDes, TDDes],
   ) =
     f"${ser.name} serializer + ${des.name} deserializer" should {
+      for (encOptions, decOptions, presetName) <- presetsUnsupported do
+      for (name, file) <- casesTriples do
+        s"not accept unsupported options (file $name, $presetName)" in {
+          val model = ser.readTriplesW3C(FileInputStream(file))
+          val originalSize = summon[Measure[TMSer]].size(model)
+          originalSize should be > 0L
+
+          val os = ByteArrayOutputStream()
+          ser.writeTriplesJelly(os, model, encOptions, 100)
+          os.flush()
+          os.close()
+          val data = os.toByteArray
+          data.size should be > 0
+
+          val error = intercept[java.util.concurrent.ExecutionException | RdfProtoDeserializationError] {
+            des.readTriplesJelly(ByteArrayInputStream(data), Some(decOptions))
+          }
+          println(error)
+        }
+
       for (preset, size, presetName) <- presets do
         for (name, file) <- casesTriples do
           s"ser/des file $name with preset $presetName, frame size $size" in {
@@ -87,7 +147,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
             val data = os.toByteArray
             data.size should be > 0
 
-            val model2 = des.readTriplesJelly(ByteArrayInputStream(data))
+            val model2 = des.readTriplesJelly(ByteArrayInputStream(data), None)
             val deserializedSize = summon[Measure[TMDes]].size(model2)
             // Add -1 to account for the different statement counting of RDF4J and Jena
             deserializedSize should be <= originalSize
@@ -107,7 +167,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
             val data = os.toByteArray
             data.size should be > 0
 
-            val ds2 = des.readQuadsJelly(ByteArrayInputStream(data))
+            val ds2 = des.readQuadsJelly(ByteArrayInputStream(data), None)
             val deserializedSize = summon[Measure[TDDes]].size(ds2)
             // Add -2 to account for the different statement counting of RDF4J and Jena
             deserializedSize should be <= originalSize

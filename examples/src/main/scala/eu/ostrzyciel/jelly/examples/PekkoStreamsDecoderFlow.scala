@@ -49,10 +49,10 @@ object PekkoStreamsDecoderFlow extends shared.Example:
       .via(JellyIo.fromBytes)
       // And then decode the frame into Jena quads.
       // We use "decodeQuads" because the physical stream type is QUADS.
-      // And then we want to treat it as a flat RDF quad stream, so we call "asFlatQuadStream".
-      // We use "strict = true" to tell the decoder to check if the incoming logical stream type is the same
+      // And then we want to treat it as a flat RDF quad stream, so we call "asFlatQuadStreamStrict".
+      // We use the "Strict" method to tell the decoder to check if the incoming logical stream type is the same
       // as we are expecting: flat RDF quad stream.
-      .via(DecoderFlow.decodeQuads.asFlatQuadStream(strict = true))
+      .via(DecoderFlow.decodeQuads.asFlatQuadStreamStrict)
       .runWith(Sink.seq)
 
     val decodedQuads: Seq[Quad] = Await.result(decodedQuadsFuture, 10.seconds)
@@ -63,20 +63,20 @@ object PekkoStreamsDecoderFlow extends shared.Example:
     println(f"\n\nDecoding quads as an RDF dataset stream from ${encodedQuads.size} frames...")
     val decodedDatasetFuture = Source(encodedQuads)
       .via(JellyIo.fromBytes)
-      // Note that we cannot use strict = true here, because the stream says its logical type is flat RDF quad stream.
-      // You can skip the "strict" parameter entirely, it defaults to false.
-      .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuads(strict = false))
+      // Note that we cannot use the strict variant (asDatasetStreamOfQuadsStrict) here, because the stream says its
+      // logical type is flat RDF quad stream.
+      .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuads)
       .runWith(Sink.seq)
 
     val decodedDatasets: Seq[IterableOnce[Quad]] = Await.result(decodedDatasetFuture, 10.seconds)
     println(s"Decoded ${decodedDatasets.size} datasets with" +
       s" ${decodedDatasets.map(_.iterator.size).sum} quads in total.")
 
-    // If we tried that with strict = true, we would get an exception:
+    // If we tried that with the strict variant, we would get an exception:
     println(f"\n\nDecoding quads as an RDF dataset stream with strict = true...")
     val future = Source(encodedQuads)
       .via(JellyIo.fromBytes)
-      .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuads(strict = true))
+      .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuadsStrict)
       .runWith(Sink.seq)
     Await.result(future.recover {
       // eu.ostrzyciel.jelly.core.JellyExceptions$RdfProtoDeserializationError:
@@ -89,7 +89,7 @@ object PekkoStreamsDecoderFlow extends shared.Example:
     println(f"\n\nDecoding triples as a flat RDF triple stream...")
     val decodedTriplesFuture = Source(encodedTriples)
       .via(JellyIo.fromBytes)
-      .via(DecoderFlow.decodeTriples.asFlatTripleStream(strict = true))
+      .via(DecoderFlow.decodeTriples.asFlatTripleStreamStrict)
       .runWith(Sink.seq)
 
     val decodedTriples: Seq[Triple] = Await.result(decodedTriplesFuture, 10.seconds)
@@ -101,8 +101,8 @@ object PekkoStreamsDecoderFlow extends shared.Example:
     println(f"\n\nDecoding graphs as an RDF named graph stream...")
     val decodedGraphsFuture = Source(encodedGraphs)
       .via(JellyIo.fromBytes)
-      // strict = false because the original logical stream type is flat RDF quad stream.
-      .via(DecoderFlow.decodeGraphs.asNamedGraphStream(strict = false))
+      // Non-strict because the original logical stream type is flat RDF quad stream.
+      .via(DecoderFlow.decodeGraphs.asNamedGraphStream)
       .runWith(Sink.seq)
 
     val decodedGraphs: Seq[(Node, Iterable[Triple])] = Await.result(decodedGraphsFuture, 10.seconds)
@@ -114,7 +114,7 @@ object PekkoStreamsDecoderFlow extends shared.Example:
     val future2 = Source(encodedQuads)
       .via(JellyIo.fromBytes)
       // Note the "decodeTriples" here
-      .via(DecoderFlow.decodeTriples.asFlatTripleStream())
+      .via(DecoderFlow.decodeTriples.asFlatTripleStream)
       .runWith(Sink.seq)
     Await.result(future2.recover {
       // eu.ostrzyciel.jelly.core.JellyExceptions$RdfProtoDeserializationError:
@@ -128,7 +128,7 @@ object PekkoStreamsDecoderFlow extends shared.Example:
     println(f"\n\nDecoding quads as a flat RDF stream using decodeAny...")
     val decodedAnyFuture = Source(encodedQuads)
       .via(JellyIo.fromBytes)
-      // There is no "strict" setting, as we don't care about the stream type anyway.
+      // The is no strict variant at all for decodeAny, as we don't care about the stream type anyway.
       .via(DecoderFlow.decodeAny.asFlatStream)
       .runWith(Sink.seq)
 
@@ -143,7 +143,7 @@ object PekkoStreamsDecoderFlow extends shared.Example:
       .via(JellyIo.fromBytes)
       // We add a .viaMat here to capture the materialized value of this stage.
       .viaMat(DecoderFlow.snoopStreamOptions)(Keep.right)
-      .via(DecoderFlow.decodeQuads.asFlatQuadStream(strict = true))
+      .via(DecoderFlow.decodeQuads.asFlatQuadStreamStrict)
       .toMat(Sink.seq)(Keep.both)
       .run()
 

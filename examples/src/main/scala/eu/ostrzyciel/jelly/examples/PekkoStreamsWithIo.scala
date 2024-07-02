@@ -49,7 +49,7 @@ object PekkoStreamsWithIo extends shared.Example:
       val decodedTriplesFuture = JellyIo.fromIoStream(inputStream)
         // Decode the Jelly frames to triples.
         // Under the hood it uses the RdfStreamFrame.parseDelimitedFrom method.
-        .via(DecoderFlow.decodeTriples.asFlatTripleStream())
+        .via(DecoderFlow.decodeTriples.asFlatTripleStream)
         .runWith(Sink.seq)
 
       Await.result(decodedTriplesFuture, 10.seconds)
