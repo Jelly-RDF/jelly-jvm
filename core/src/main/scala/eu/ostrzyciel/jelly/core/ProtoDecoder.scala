@@ -59,14 +59,14 @@ trait ProtoDecoder[+TOut]:
       
     def checkTableSize(name: String, size: Int, supportedSize: Int): Unit =
       if size > supportedSize then
-        throw new RdfProtoDeserializationError(s"The stream uses a $name table size of $size, which is larger than " +
-          s"the maximum supported size of $supportedSize. To read this stream, set max${name}TableSize to at least " +
-          s"$size in the supportedOptions for this decoder."
+        throw new RdfProtoDeserializationError(s"The stream uses a ${name.toLowerCase} table size of $size, which is " +
+          s"larger than the maximum supported size of $supportedSize. To read this stream, set max${name}TableSize " +
+          s"to at least $size in the supportedOptions for this decoder."
         )
       
-    checkTableSize("name", options.maxNameTableSize, supportedOptions.maxNameTableSize)
-    checkTableSize("prefix", options.maxPrefixTableSize, supportedOptions.maxPrefixTableSize)
-    checkTableSize("datatype", options.maxDatatypeTableSize, supportedOptions.maxDatatypeTableSize)
+    checkTableSize("Name", options.maxNameTableSize, supportedOptions.maxNameTableSize)
+    checkTableSize("Prefix", options.maxPrefixTableSize, supportedOptions.maxPrefixTableSize)
+    checkTableSize("Datatype", options.maxDatatypeTableSize, supportedOptions.maxDatatypeTableSize)
       
     checkLogicalStreamType(options, supportedOptions.logicalType)
 

@@ -73,7 +73,7 @@ object PekkoStreamsDecoderFlow extends shared.Example:
       s" ${decodedDatasets.map(_.iterator.size).sum} quads in total.")
 
     // If we tried that with the strict variant, we would get an exception:
-    println(f"\n\nDecoding quads as an RDF dataset stream with strict = true...")
+    println(f"\n\nDecoding quads as an RDF dataset stream with strict logical type handling...")
     val future = Source(encodedQuads)
       .via(JellyIo.fromBytes)
       .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuadsStrict)
@@ -82,6 +82,23 @@ object PekkoStreamsDecoderFlow extends shared.Example:
       // eu.ostrzyciel.jelly.core.JellyExceptions$RdfProtoDeserializationError:
       // Expected logical stream type LOGICAL_STREAM_TYPE_DATASETS, got LOGICAL_STREAM_TYPE_FLAT_QUADS.
       // LOGICAL_STREAM_TYPE_FLAT_QUADS is not a subtype of LOGICAL_STREAM_TYPE_DATASETS.
+      case e: Exception => println(e.getCause)
+    }, 10.seconds)
+
+    // We can also pass entirely custom supported options to the decoder, instead of the defaults
+    // (see [[JellyOptions.defaultSupportedOptions]]). This is useful if we want to decode a stream with
+    // for example very large lookup tables or we want to put stricter limits on the streams that we accept.
+    println(f"\n\nDecoding quads as an RDF dataset stream with custom supported options...")
+    val customSupportedOptions = JellyOptions.defaultSupportedOptions
+      .withMaxNameTableSize(50) // This is too small for the stream we are decoding
+    val customSupportedOptionsFuture = Source(encodedQuads)
+      .via(JellyIo.fromBytes)
+      .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuads(customSupportedOptions))
+      .runWith(Sink.seq)
+    Await.result(customSupportedOptionsFuture.recover {
+      // eu.ostrzyciel.jelly.core.JellyExceptions$RdfProtoDeserializationError:
+      // The stream uses a name table size of 128, which is larger than the maximum supported size of 50.
+      // To read this stream, set maxNameTableSize to at least 128 in the supportedOptions for this decoder.
       case e: Exception => println(e.getCause)
     }, 10.seconds)
 
