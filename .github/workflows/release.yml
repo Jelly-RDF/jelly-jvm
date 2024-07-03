@@ -85,14 +85,14 @@ jobs:
 
       - name: Deploy site
         run: |
-          TAG='${{ env.GITHUB_REF_NAME }}'
+          export TAG='${{ env.GITHUB_REF_NAME }}'
           git fetch origin gh-pages --depth=1
           git config user.name ci-bot
           git config user.email ci-bot@example.com
           if [[ $TAG == v* ]] ; then
             V_MAJOR=`echo ${TAG#v} | awk -F '.' '{print $1}'`
             V_MINOR=`echo ${TAG#v} | awk -F '.' '{print $2}'`
-            mike deploy --push --update-aliases "${V_MAJOR}.${V_MINOR}" stable
+            mike deploy --push --update-aliases "${V_MAJOR}.${V_MINOR}.x" stable "${TAG#v}"
           else
             mike deploy --push --update-aliases dev latest
           fi

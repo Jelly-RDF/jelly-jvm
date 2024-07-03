@@ -6,6 +6,7 @@ plugins:
   - search
   - include-markdown
   - mike
+  - macros
 
 markdown_extensions:
   - attr_list
