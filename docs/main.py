@@ -4,6 +4,9 @@ import os
 import subprocess
 
 
+print(f'Working directory: {os.getcwd()}')
+
+
 def define_env(env):
 
     @env.macro
