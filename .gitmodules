@@ -1,3 +1,0 @@
-[submodule "core/src/main/protobuf/shared"]
-	path = core/src/main/protobuf_shared
-	url = ../jelly-protobuf

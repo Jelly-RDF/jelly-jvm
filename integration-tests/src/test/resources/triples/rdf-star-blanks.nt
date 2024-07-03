@@ -1,5 +1,0 @@
-_:b0 <http://example/p> <http://example/o> .
-<< _:b0 <http://example/p> <http://example/o> >> <http://example/q> "ABC" .
-
-<http://example/s> <http://example/p> _:b1 .
-<< <http://example/s> <http://example/p> _:b1 >> <http://example/q> "456"^^<http://www.w3.org/2001/XMLSchema#integer> .
