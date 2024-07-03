@@ -2,7 +2,7 @@
 
 **Jelly-JVM** is an implementation of the Jelly serialization format and the gRPC streaming protocol for the Java Virtual Machine (JVM), written in Scala 3. The supported RDF libraries are [Apache Jena](https://jena.apache.org/) and [Eclipse RDF4J](https://rdf4j.org/).
 
-This collection of libraries aims to provide the full stack of utilities for fast and scalable RDF streaming with the [Jelly protocol](../specification/).
+This collection of libraries aims to provide the full stack of utilities for fast and scalable RDF streaming with the [Jelly protocol](../../specification/).
 
 !!! tip "Getting started with plugins – no code required"
 
@@ -18,7 +18,7 @@ TODO: versioning – point to the version selector in the navbar
 
 The implementation is split into a few modules that can be used separately:
 
-- `jelly-core` – implementation of the [Jelly serialization format](../specification/serialization/) (using the [scalapb](https://scalapb.github.io/) library), along with generic utilities for converting the deserialized RDF data to/from the representations of RDF libraries (like Apache Jena or RDF4J). 
+- `jelly-core` – implementation of the [Jelly serialization format](../../specification/serialization/) (using the [scalapb](https://scalapb.github.io/) library), along with generic utilities for converting the deserialized RDF data to/from the representations of RDF libraries (like Apache Jena or RDF4J). 
     - [![jelly-core Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core) [![javadoc](https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-core_3/javadoc.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-core_3) 
 
 - `jelly-jena` – conversions and interop code for the [Apache Jena](https://jena.apache.org/) library.
@@ -30,7 +30,7 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data (based on Pekko Streams). Useful for integrating with gRPC or other streaming protocols (e.g., Kafka, MQTT).
     - [![jelly-stream Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream) [![javadoc](https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-stream_3/javadoc.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-stream_3)
 
-- `jelly-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol](../specification/streaming/).
+- `jelly-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol](../../specification/streaming/).
     - [![jelly-grpc Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc) [![javadoc](https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-grpc_3/javadoc.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-grpc_3)
 
 ## TODO: PLUGIN JARS

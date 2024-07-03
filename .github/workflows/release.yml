@@ -90,7 +90,9 @@ jobs:
           git config user.name ci-bot
           git config user.email ci-bot@example.com
           if [[ $TAG == v* ]] ; then
-            mike deploy --push --update-aliases "${TAG#v}" stable
+            V_MAJOR=`echo ${TAG#v} | awk -F '.' '{print $1}'`
+            V_MINOR=`echo ${TAG#v} | awk -F '.' '{print $2}'`
+            mike deploy --push --update-aliases "${V_MAJOR}.${V_MINOR}" stable
           else
             mike deploy --push --update-aliases dev latest
           fi
