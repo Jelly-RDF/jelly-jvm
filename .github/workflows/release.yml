@@ -63,8 +63,8 @@ jobs:
           prerelease: false
           draft: false
           makeLatest: true
-          tag: "${{ env.GITHUB_REF_NAME }}"
-          name: "${{ env.GITHUB_REF_NAME }}"
+          tag: "${{ github.ref_name }}"
+          name: "${{ github.ref_name }}"
           artifacts: 'jena/target/scala-*/*-plugin.jar,rdf4j/target/scala-*/*-plugin.jar'
           generateReleaseNotes: true
 
@@ -92,7 +92,7 @@ jobs:
       - name: Deploy site
         working-directory: ./docs
         run: |
-          export TAG='${{ env.GITHUB_REF_NAME }}'
+          export TAG='${{ github.ref_name }}'
           git fetch origin gh-pages --depth=1
           git config user.name ci-bot
           git config user.email ci-bot@example.com
