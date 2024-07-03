@@ -44,6 +44,9 @@ def define_env(env):
     def proto_version():
         if jvm_version() == 'dev':
             return 'dev'
+        if '-' in proto_tag:
+            print('Warning: proto tag contains a hyphen, using only the first part')
+            return proto_tag.split('-')[0].replace('v', '')
         return proto_tag.replace('v', '')
 
     
