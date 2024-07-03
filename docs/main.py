@@ -4,10 +4,18 @@ import os
 import subprocess
 
 
-print(f'Working directory: {os.getcwd()}')
-
-
 def define_env(env):
+    try:
+        proto_tag = subprocess.run(
+            ['git', 'describe', '--tags', '--abbrev=0'],
+            cwd='../core/src/main/protobuf_shared',
+            check=True,
+            capture_output=True,
+        ).stdout.decode().strip()
+    except subprocess.CalledProcessError as e:
+        print('Failed to call git: ', e.returncode, e.stderr)
+        raise e
+
 
     @env.macro
     def jvm_version():
@@ -36,16 +44,7 @@ def define_env(env):
     def proto_version():
         if jvm_version() == 'dev':
             return 'dev'
-        try:
-            tag = subprocess.run(
-                ['git', 'describe', '--tags', '--abbrev=0'],
-                cwd='../core/src/main/protobuf_shared',
-                check=True,
-                capture_output=True,
-            ).stdout.decode().strip()
-            return tag.replace('v', '')
-        except subprocess.CalledProcessError as e:
-            print('Failed to call git: ', e.returncode, e.stderr)
+        return proto_tag.replace('v', '')
 
     
     @env.macro
