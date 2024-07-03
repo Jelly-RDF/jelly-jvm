@@ -27,4 +27,6 @@ jobs:
 
       - name: Build documentation
         working-directory: ./docs
-        run: mkdocs build -s
+        run: |
+          export TAG='main'
+          mkdocs build -s
