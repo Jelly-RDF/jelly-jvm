@@ -1,0 +1,32 @@
+name: Test documentation compilation
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: 'docs/requirements.txt'
+  
+      - name: Install dependencies
+        working-directory: ./docs
+        run: pip install -r requirements.txt
+
+      - name: Build documentation
+        working-directory: ./docs
+        run: |
+          export TAG='main'
+          mkdocs build -s

@@ -1,0 +1,93 @@
+site_name: Jelly-JVM
+site_description: Jelly-JVM is a JVM (Scala) implementation of the Jelly RDF streaming protocol.
+site_url: https://jelly-rdf.github.io/jelly-jvm/
+
+plugins:
+  - search
+  - include-markdown
+  - mike
+  - macros
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+repo_url: https://github.com/Jelly-RDF/jelly-jvm
+repo_name: Jelly-RDF/jelly-jvm
+
+theme:
+  name: material
+  # TODO: custom scripts
+  custom_dir: overrides
+  features:
+    # Behave like an SPA
+    - navigation.instant
+    - navigation.instant.progress
+    # Update anchors in the address bar
+    - navigation.tracking
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+  palette: 
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: blue
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: blue
+      toggle:
+        icon: material/brightness-3
+        name: Switch to light mode
+
+  logo: assets/jelly_white.png
+  favicon: assets/jelly_color.png
+  icon:
+    repo: fontawesome/brands/github
+
+extra:
+  version:
+    provider: mike
+    default: latest
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Jelly-RDF/jelly-jvm
+      name: Jelly-JVM on GitHub
+
+nav:
+  - Home: 'index.md'
+  - Getting started (Jena/RDF4J plugin): 'getting-started-plugins.md'
+  - Getting started (developers): 'getting-started-devs.md'
+  - User guide:
+    - Apache Jena integration: 'user/jena.md'
+    - RDF4J integration: 'user/rdf4j.md'
+    - Reactive streaming: 'user/reactive.md'
+    - gRPC: 'user/grpc.md'
+    - Useful utilities: 'user/utilities.md'
+  - Developer guide:
+    - Releases: 'dev/releases.md'
+    - Implementing Jelly for other libraries: 'dev/implementing.md'
+  - ↩ Back to main Jelly docs: 'https://jelly-rdf.github.io/'
