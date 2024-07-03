@@ -45,7 +45,7 @@ def define_env(env):
             ).stdout.decode().strip()
             return tag.replace('v', '')
         except subprocess.CalledProcessError as e:
-            print('Failed to call git: ', e.returncode, e.output)
+            print('Failed to call git: ', e.returncode, e.stderr)
 
     
     @env.macro
