@@ -36,14 +36,16 @@ def define_env(env):
     def proto_version():
         if jvm_version() == 'dev':
             return 'dev'
-        
-        tag = subprocess.run(
-            ['git', 'describe', '--tags', '--abbrev=0'],
-            cwd='../core/src/main/protobuf_shared',
-            check=True,
-            capture_output=True,
-        ).stdout.decode().strip()
-        return tag.replace('v', '')
+        try:
+            tag = subprocess.run(
+                ['git', 'describe', '--tags', '--abbrev=0'],
+                cwd='../core/src/main/protobuf_shared',
+                check=True,
+                capture_output=True,
+            ).stdout.decode().strip()
+            return tag.replace('v', '')
+        except subprocess.CalledProcessError as e:
+            print('Failed to call git: ', e.returncode, e.output)
 
     
     @env.macro
