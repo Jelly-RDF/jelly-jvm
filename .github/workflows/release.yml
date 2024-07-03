@@ -67,3 +67,30 @@ jobs:
           name: "${{ env.GITHUB_REF_NAME }}"
           artifacts: 'jena/target/scala-*/*-plugin.jar,rdf4j/target/scala-*/*-plugin.jar'
           generateReleaseNotes: true
+
+  publish-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: 'docs/requirements.txt'
+
+      - name: Install dependencies
+        working-directory: ./docs
+        run: pip install -r requirements.txt
+
+      - name: Deploy site
+        run: |
+          TAG='${{ env.GITHUB_REF_NAME }}'
+          git fetch origin gh-pages --depth=1
+          git config user.name ci-bot
+          git config user.email ci-bot@example.com
+          if [[ $TAG == v* ]] ; then
+            mike deploy --push --update-aliases "${TAG#v}" stable
+          else
+            mike deploy --push --update-aliases dev latest
+          fi
