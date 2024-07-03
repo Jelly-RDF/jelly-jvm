@@ -1,4 +1,5 @@
 # Jelly-JVM
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Java Virtual Machine implementation of Jelly, an RDF streaming protocol, written in Scala 3.
@@ -6,7 +7,8 @@ Java Virtual Machine implementation of Jelly, an RDF streaming protocol, written
 This collection of libraries aims to provide the full stack of utilities for fast and scalable RDF streaming with the [Jelly protocol](https://github.com/Jelly-RDF/specification). You can only use a part of the stack (e.g., only the serializer), or you may choose to use the full gRPC server and the reactive streaming utilities.
 
 ## Development status
-The libraries are in active (alpha) development and **are not yet stable**. Expect a first stable release in Q4 2023.
+
+The libraries are in active (beta) development and **are not yet stable**. Expect a first stable release in Q3 2024.
 
 The libraries follow the semantic versioning scheme for binary compatibility.
 
@@ -37,10 +39,13 @@ The `jelly-stream` and `jelly-grpc` use the [Apache Pekko library](https://pekko
 - [`jelly-examples`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/examples/src) – examples of using Jelly-JVM in practical scenarios.
 
 ## Contributing
+
 Feel free to submit bug reports, feature proposals and pull requests! You can also contribute to the documentation in the [wiki](https://github.com/Jelly-RDF/jelly-jvm/wiki).
 
 ## License
+
 The Jelly-JVM libraries are licensed under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0).
 
 ## Authors
+
 - Piotr Sowiński ([Ostrzyciel](https://github.com/Ostrzyciel))
