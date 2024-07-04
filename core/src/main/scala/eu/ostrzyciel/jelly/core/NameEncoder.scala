@@ -27,7 +27,9 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
    * @return prefix which can be empty, never null
    */
   private def getIriPrefix(iri: String): String =
-    iri.lastIndexOf('#') match
+    // String.indexOf is intrinsified by the JVM, so it should be faster than lastIndexOf
+    // Also, start looking for the # after the first 8 characters, because IRIs usually start with "http(s)://".
+    iri.indexOf('#', 8) match
       case i if i > -1 => iri.substring(0, i + 1)
       case _ =>
         iri.lastIndexOf('/') match
