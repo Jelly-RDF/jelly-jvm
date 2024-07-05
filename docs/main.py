@@ -56,6 +56,15 @@ def define_env(env):
         return f'https://jelly-rdf.github.io/{version}/{page}'
     
 
+    @env.macro
+    def module_badges(module):
+        version = jvm_version()
+        if version == 'dev':
+            return f'[![Browse jelly-{module} versions](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}) [![Browse latest jelly-{module} API docs](https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-{module}_3/javadoc.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-{module}_3)'
+        else:
+            return f'[![See jelly-{module} {version} module details](https://img.shields.io/badge/jelly--{module}-{version.replace("-", "--")}-green.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/{version}) [![Browse jelly-{module} {version} API docs](https://img.shields.io/badge/javadoc-{version.replace("-", "--")}-brightgreen.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-{module}_3/{version})'
+    
+
     def transform_nav_item(item):
         if list(item.values())[0] == 'https://jelly-rdf.github.io/':
             return {list(item.keys())[0]: proto_link('')}
