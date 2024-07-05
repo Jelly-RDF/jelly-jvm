@@ -167,8 +167,8 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         val expectedBuffer = Seq(
           // Prefix? (name otherwise), ID, value
-          (true, 0, "https://test.org/"),
           (false, 0, "Cake1"),
+          (true, 0, "https://test.org/"),
           (true, 0, "https://test.org#"),
           (true, 0, "https://test.org/test/"),
           (false, 0, "Cake2"),
