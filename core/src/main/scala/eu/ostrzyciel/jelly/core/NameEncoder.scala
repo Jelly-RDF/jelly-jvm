@@ -16,7 +16,7 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
   private val dtLookup = new EncoderLookup(opt.maxDatatypeTableSize)
   private val dtTable = new DecoderLookup[RdfLiteral.LiteralKind.Datatype](opt.maxDatatypeTableSize)
 
-  private var lastIriPrefix: String = null
+  private var lastIriPrefixId: Int = -1000
   private var lastIriNameId: Int = 0
 
   /**
@@ -75,27 +75,27 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
     else
       val prefix = getIriPrefix(iri)
       val postfix = iri.substring(prefix.length)
+      val prefixLookupEntry = prefixLookup.addEntry(prefix)
       val nameLookupEntry = nameLookup.addEntry(postfix)
+
+      if prefixLookupEntry.newEntry then rowsBuffer.append(
+        RdfStreamRow(RdfStreamRow.Row.Prefix(
+          RdfPrefixEntry(prefixLookupEntry.setId, prefix)
+        ))
+      )
       if nameLookupEntry.newEntry then rowsBuffer.append(
         RdfStreamRow(RdfStreamRow.Row.Name(
           RdfNameEntry(nameLookupEntry.setId, postfix)
         ))
       )
-      val nameIdWithRepeat = getNameIdWithRepeat(nameLookupEntry.getId)
 
-      if lastIriPrefix == prefix then
+      val nameIdWithRepeat = getNameIdWithRepeat(nameLookupEntry.getId)
+      if lastIriPrefixId == prefixLookupEntry.getId then
         // If the last IRI had the same prefix, we can tell the consumer to reuse it.
-        // This is a quick path that avoids hashing the prefix again.
-        // No need to update lastIriPrefix, because it's the same.
+        // No need to update lastIriPrefixId, because it's the same.
         RdfIri(prefixId = 0, nameId = nameIdWithRepeat)
       else
-        lastIriPrefix = prefix
-        val prefixLookupEntry = prefixLookup.addEntry(prefix)
-        if prefixLookupEntry.newEntry then rowsBuffer.append(
-          RdfStreamRow(RdfStreamRow.Row.Prefix(
-            RdfPrefixEntry(prefixLookupEntry.setId, prefix)
-          ))
-        )
+        lastIriPrefixId = prefixLookupEntry.getId
         RdfIri(
           prefixId = prefixLookupEntry.getId,
           nameId = nameIdWithRepeat

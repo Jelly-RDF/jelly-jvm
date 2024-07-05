@@ -61,11 +61,11 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfNameEntry(0, "subject"),
       RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
-      RdfNameEntry(0, "object"),
       RdfPrefixEntry(0, "https://test.org/ns2/"),
+      RdfNameEntry(0, "object"),
       RdfTriple(
         RdfTriple.Subject.SIri(RdfIri(1, 0)),
         RdfTriple.Predicate.PIri(RdfIri(0, 0)),
@@ -77,8 +77,8 @@ object ProtoTestCases:
         RdfTriple.Predicate.Empty,
         RdfTriple.Object.OLiteral(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
       ),
-      RdfNameEntry(0, "b"),
       RdfPrefixEntry(0, ""),
+      RdfNameEntry(0, "b"),
       RdfNameEntry(0, "c"),
       RdfTriple(
         RdfTriple.Subject.Empty,
@@ -127,11 +127,11 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfNameEntry(0, "subject"),
       RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
-      RdfNameEntry(0, "graph"),
       RdfPrefixEntry(0, "https://test.org/ns3/"),
+      RdfNameEntry(0, "graph"),
       RdfQuad(
         RdfQuad.Subject.SIri(RdfIri(1, 0)),
         RdfQuad.Predicate.PIri(RdfIri(0, 0)),
@@ -180,8 +180,8 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfNameEntry(0, "subject"),
       RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
       RdfQuad(
         RdfQuad.Subject.SIri(RdfIri(1, 0)),
@@ -254,11 +254,11 @@ object ProtoTestCases:
       RdfGraphStart(
         RdfGraphStart.Graph.GDefaultGraph(RdfDefaultGraph())
       ),
-      RdfNameEntry(0, "subject"),
       RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
-      RdfNameEntry(0, "object"),
       RdfPrefixEntry(0, "https://test.org/ns2/"),
+      RdfNameEntry(0, "object"),
       RdfTriple(
         RdfTriple.Subject.SIri(RdfIri(1, 0)),
         RdfTriple.Predicate.PIri(RdfIri(0, 0)),
@@ -271,8 +271,8 @@ object ProtoTestCases:
         RdfTriple.Object.OLiteral(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
       ),
       RdfGraphEnd(),
-      RdfNameEntry(0, "graph"),
       RdfPrefixEntry(0, "https://test.org/ns3/"),
+      RdfNameEntry(0, "graph"),
       RdfGraphStart(
         RdfGraphStart.Graph.GIri(RdfIri(3, 0))
       ),
