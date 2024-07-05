@@ -12,7 +12,7 @@ This collection of libraries aims to provide the full stack of utilities for fas
 
     If you want to use the full feature set of Jelly-JVM in your code, see the **[Getting started guide](getting-started-devs.md)** for developers.
 
-TODO: versioning – point to the version selector in the navbar
+TODO: versioning – point to the version selector in the navbar 
 
 {{ jvm_version() }}
 
