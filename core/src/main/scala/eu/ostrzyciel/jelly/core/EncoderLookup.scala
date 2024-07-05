@@ -9,10 +9,6 @@ private[core] final class EncoderLookup(maxEntries: Int)
 
   // 1-based index of the last assigned new value in the lookup table
   private var lastSetId: Int = 0
-  // Last key that was retrieved from the lookup. Use null for extra speed.
-  private var lastGetKey: String = null
-  // Last value that was retrieved from the lookup.
-  private var lastGetValue: EncoderValue = null
 
   override def removeEldestEntry(eldest: util.Map.Entry[String, EncoderValue]): Boolean =
     size > maxEntries
@@ -23,33 +19,23 @@ private[core] final class EncoderLookup(maxEntries: Int)
    * @return (1-based id of the value, is a new entry)
    */
   def addEntry(v: String): EncoderValue =
-    if v == lastGetKey then
-      // case 1: the value is the same as the last one
-      return lastGetValue
-
     val value = this.get(v)
     if value != null then
-      // case 2: the value is already in the map
-      lastGetKey = v
-      lastGetValue = value
+      // case 1: the value is already in the map
       return value
 
     val s = this.size
     if s < maxEntries then
-      // case 3: we still have free IDs, add it to the map
+      // case 2: we still have free IDs, add it to the map
       lastSetId = s + 1
-      lastGetKey = v
-      lastGetValue = EncoderValue(lastSetId, lastSetId, false)
-      this.put(v, lastGetValue)
+      this.put(v, EncoderValue(lastSetId, lastSetId, false))
       // the setId is always 0, because we haven't filled in the table yet
       return EncoderValue(lastSetId, 0, true)
 
-    // case 4: no free IDs, reuse an old one
+    // case 3: no free IDs, reuse an old one
     val next = this.values.iterator.next
     this.put(v, next)
     val getId = next.getId
     val setId = if lastSetId + 1 == getId then 0 else getId
     lastSetId = getId
-    lastGetKey = v
-    lastGetValue = EncoderValue(getId, setId, false)
     EncoderValue(getId, setId, true)
