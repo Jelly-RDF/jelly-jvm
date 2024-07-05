@@ -41,4 +41,4 @@ jobs:
 
     - name: Test building assemblies
       shell: bash
-      run: sbt -v jena/assembly rdf4j/assembly
+      run: sbt -v jenaPlugin/assembly rdf4jPlugin/assembly
