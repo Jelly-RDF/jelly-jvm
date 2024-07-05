@@ -36,7 +36,7 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-unchecked",
   ),
-  assemblyJarName := s"${name.value}-plugin.jar",
+  assemblyJarName := s"${name.value}.jar",
   assemblyMergeStrategy := {
     case x if x.endsWith("module-info.class") => MergeStrategy.concat
     case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.first
@@ -66,10 +66,27 @@ lazy val jena = (project in file("jena"))
   .settings(
     name := "jelly-jena",
     libraryDependencies ++= Seq(
+      "org.apache.jena" % "jena-core" % jenaV,
+      "org.apache.jena" % "jena-arq" % jenaV,
+    ),
+    commonSettings,
+  )
+  .dependsOn(core)
+
+// jena-plugin is a dummy directory that contains only a symlink (src) to the source code
+// in the jena directory. This way sbt won't shout at us for having two projects in the
+// same directory.
+// Same applies to rdf4j-plugin below.
+lazy val jenaPlugin = (project in file("jena-plugin"))
+  .settings(
+    name := "jelly-jena-plugin",
+    libraryDependencies ++= Seq(
       // Use the "provided" scope to not include the Jena dependencies in the plugin JAR
       "org.apache.jena" % "jena-core" % jenaV % "provided,test",
       "org.apache.jena" % "jena-arq" % jenaV % "provided,test",
     ),
+    // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
+    publishArtifact := false,
     commonSettings,
   )
   .dependsOn(core)
@@ -78,10 +95,23 @@ lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
     libraryDependencies ++= Seq(
+      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
+    ),
+    commonSettings,
+  )
+  .dependsOn(core)
+
+lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
+  .settings(
+    name := "jelly-rdf4j-plugin",
+    libraryDependencies ++= Seq(
       // Use the "provided" scope to not include the RDF4J dependencies in the plugin JAR
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV % "provided,test",
       "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV % "provided,test",
     ),
+    // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
+    publishArtifact := false,
     commonSettings,
   )
   .dependsOn(core)
