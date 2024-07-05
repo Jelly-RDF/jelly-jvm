@@ -6,8 +6,8 @@ import subprocess
 
 def define_env(env):
     try:
-        proto_tag = subprocess.run(
-            ['git', 'describe', '--tags', '--abbrev=0'],
+        proto_tag_raw = subprocess.run(
+            ['git', 'describe', '--tags'],
             cwd='../core/src/main/protobuf_shared',
             check=True,
             capture_output=True,
@@ -15,7 +15,16 @@ def define_env(env):
     except subprocess.CalledProcessError as e:
         print('Failed to call git: ', e.returncode, e.stderr)
         raise e
+    
 
+    def proto_tag():
+        if proto_tag_raw.count('-') > 1:
+            if jvm_version() == 'dev':
+                print(f'Warning: proto tag ({proto_tag_raw}) contains more than one hyphen, using dev instead')
+                return 'dev'
+            else:
+                raise ValueError(f'Proto tag ({proto_tag_raw}) contains more than one hyphen, but you are trying to build a tagged release. To fix this, you must update the protobuf_shared submodule to some stable tag.')
+        
 
     @env.macro
     def jvm_version():
@@ -44,10 +53,11 @@ def define_env(env):
     def proto_version():
         if jvm_version() == 'dev':
             return 'dev'
-        if '-' in proto_tag:
+        tag = proto_tag()
+        if '-' in tag:
             print('Warning: proto tag contains a hyphen, using dev instead of ' + proto_tag)
             return 'dev'
-        return proto_tag.replace('v', '')
+        return tag.replace('v', '')
 
     
     @env.macro
