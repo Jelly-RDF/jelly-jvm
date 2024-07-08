@@ -206,12 +206,22 @@ object PekkoGrpc extends shared.Example:
           println(s"[SERVER] No requested stream options.")
           PhysicalStreamType.UNSPECIFIED
 
-      // Use the client's requested options without checking them to encode the response stream.
-      // !!! THIS IS DANGEROUS IF YOU DON'T TRUST THE CLIENT !!!
-      // In a real application, you should validate the options and set a limit on, e.g., the size of the
-      // lookup tables. Otherwise, the client could send you a request that would consume all your memory.
-      val options = in.requestedOptions.getOrElse(RdfStreamOptions())
+      // Get the stream options requested by the client or the default options if none were provided
+      val options = in.requestedOptions.getOrElse(JellyOptions.smallStrict)
         .withStreamName(in.topic)
+      // Check if the requested options are supported
+      // !!! THIS IS IMPORTANT !!!
+      // If you don't check if the requested options are supported, you may be vulnerable to
+      // denial-of-service attacks. For example, a client could request a very large lookup table
+      // that would consume a lot of memory on the server.
+      try
+        JellyOptions.checkCompatibility(options, JellyOptions.defaultSupportedOptions)
+      catch
+        case e: IllegalArgumentException =>
+          // If the requested options are not supported, return an error
+          return Source.failed(new GrpcServiceException(
+            io.grpc.Status.INVALID_ARGUMENT.withDescription(e.getMessage)
+          ))
 
       streamType match
         // This server implementation only supports QUADS and GRAPHS streams... and in both cases
