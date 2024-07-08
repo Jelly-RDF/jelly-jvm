@@ -144,7 +144,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
         throw new RdfProtoDeserializationError("Row kind is not set.")
 
   protected def handleOptions(opts: RdfStreamOptions): Unit =
-    checkOptions(opts, supportedOptions)
+    JellyOptions.checkCompatibility(opts, supportedOptions)
     setStreamOpt(opts)
 
   protected def handleTriple(triple: RdfTriple): Option[TOut] =
@@ -307,7 +307,7 @@ object ProtoDecoderImpl:
     private def handleOptions(opts: RdfStreamOptions): Unit =
       // Reset the logical type to UNSPECIFIED to ignore checking if it's supported by the inner decoder
       val newSupportedOptions = supportedOptions.copy(logicalType = LogicalStreamType.UNSPECIFIED)
-      checkOptions(opts, newSupportedOptions)
+      JellyOptions.checkCompatibility(opts, newSupportedOptions)
       if inner.isDefined then
         throw new RdfProtoDeserializationError("Stream options are already set. " +
           "The physical type of the stream cannot be inferred.")
