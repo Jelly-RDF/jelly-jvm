@@ -757,7 +757,7 @@
 <p>If you want to use the full feature set of Jelly-JVM in your code, see the <strong><a href="getting-started-devs/">Getting started guide</a></strong> for developers.</p>
 </div>
 <p>TODO: versioning – point to the version selector in the navbar </p>
-<p>0.10.1</p>
+<p>0.10.2</p>
 <p>dev </p>
 <h2 id="library-modules">Library modules</h2>
 <p>The implementation is split into a few modules that can be used separately:</p>
@@ -765,31 +765,31 @@
 <li>
 <p><code>jelly-core</code> – implementation of the <a href="https://jelly-rdf.github.io/dev/specification/serialization">Jelly serialization format</a> (using the <a href="https://scalapb.github.io/">scalapb</a> library), along with generic utilities for converting the deserialized RDF data to/from the representations of RDF libraries (like Apache Jena or RDF4J). </p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core/0.10.1"><img alt="See jelly-core 0.10.1 module details" src="https://img.shields.io/badge/jelly--core-0.10.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-core_3/0.10.1"><img alt="Browse jelly-core 0.10.1 API docs" src="https://img.shields.io/badge/javadoc-0.10.1-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core/0.10.2"><img alt="See jelly-core 0.10.2 module details" src="https://img.shields.io/badge/jelly--core-0.10.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-core_3/0.10.2"><img alt="Browse jelly-core 0.10.2 API docs" src="https://img.shields.io/badge/javadoc-0.10.2-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-jena</code> – conversions and interop code for the <a href="https://jena.apache.org/">Apache Jena</a> library.</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena/0.10.1"><img alt="See jelly-jena 0.10.1 module details" src="https://img.shields.io/badge/jelly--jena-0.10.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-jena_3/0.10.1"><img alt="Browse jelly-jena 0.10.1 API docs" src="https://img.shields.io/badge/javadoc-0.10.1-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena/0.10.2"><img alt="See jelly-jena 0.10.2 module details" src="https://img.shields.io/badge/jelly--jena-0.10.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-jena_3/0.10.2"><img alt="Browse jelly-jena 0.10.2 API docs" src="https://img.shields.io/badge/javadoc-0.10.2-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-rdf4j</code> – conversions and interop code for the <a href="https://rdf4j.org/">RDF4J</a> library.</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j/0.10.1"><img alt="See jelly-rdf4j 0.10.1 module details" src="https://img.shields.io/badge/jelly--rdf4j-0.10.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-rdf4j_3/0.10.1"><img alt="Browse jelly-rdf4j 0.10.1 API docs" src="https://img.shields.io/badge/javadoc-0.10.1-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j/0.10.2"><img alt="See jelly-rdf4j 0.10.2 module details" src="https://img.shields.io/badge/jelly--rdf4j-0.10.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-rdf4j_3/0.10.2"><img alt="Browse jelly-rdf4j 0.10.2 API docs" src="https://img.shields.io/badge/javadoc-0.10.2-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-stream</code> – utilities for building <a href="https://www.reactive-streams.org/">Reactive Streams</a> of RDF data (based on Pekko Streams). Useful for integrating with gRPC or other streaming protocols (e.g., Kafka, MQTT).</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/0.10.1"><img alt="See jelly-stream 0.10.1 module details" src="https://img.shields.io/badge/jelly--stream-0.10.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-stream_3/0.10.1"><img alt="Browse jelly-stream 0.10.1 API docs" src="https://img.shields.io/badge/javadoc-0.10.1-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/0.10.2"><img alt="See jelly-stream 0.10.2 module details" src="https://img.shields.io/badge/jelly--stream-0.10.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-stream_3/0.10.2"><img alt="Browse jelly-stream 0.10.2 API docs" src="https://img.shields.io/badge/javadoc-0.10.2-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-grpc</code> – implementation of a gRPC client and server for the <a href="https://jelly-rdf.github.io/dev/specification/streaming">Jelly gRPC streaming protocol</a>.</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc/0.10.1"><img alt="See jelly-grpc 0.10.1 module details" src="https://img.shields.io/badge/jelly--grpc-0.10.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-grpc_3/0.10.1"><img alt="Browse jelly-grpc 0.10.1 API docs" src="https://img.shields.io/badge/javadoc-0.10.1-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc/0.10.2"><img alt="See jelly-grpc 0.10.2 module details" src="https://img.shields.io/badge/jelly--grpc-0.10.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-grpc_3/0.10.2"><img alt="Browse jelly-grpc 0.10.2 API docs" src="https://img.shields.io/badge/javadoc-0.10.2-brightgreen.svg" /></a></li>
 </ul>
 </li>
 </ul>
