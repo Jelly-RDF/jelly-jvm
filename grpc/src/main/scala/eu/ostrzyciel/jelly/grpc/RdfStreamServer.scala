@@ -8,6 +8,7 @@ import org.apache.pekko.actor.typed.ActorSystem
 import org.apache.pekko.http.scaladsl.Http
 import org.apache.pekko.http.scaladsl.Http.ServerBinding
 import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.*
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,8 +40,10 @@ object RdfStreamServer:
  * @param system actor system
  */
 final class RdfStreamServer(options: RdfStreamServer.Options, streamService: RdfStreamService)
-                     (using system: ActorSystem[_]) extends LazyLogging:
+                     (using system: ActorSystem[_]):
   given ExecutionContext = system.executionContext
+
+  private val logger = LoggerFactory.getLogger(getClass)
   private var binding: Option[ServerBinding] = _
 
   /**
