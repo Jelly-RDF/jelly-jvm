@@ -43,6 +43,7 @@ jobs:
         run: |
           sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly
           LATEST_SCALA_VERSION=`ls -1 jena-plugin/target | grep scala- | sort -V | tail -n1`
+          echo "LATEST_SCALA_VERSION=$LATEST_SCALA_VERSION" >> $GITHUB_ENV
 
       - name: 'Publish plugins (pre-release)'
         if: github.ref == 'refs/heads/main'
