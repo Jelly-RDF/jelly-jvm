@@ -1,4 +1,11 @@
-ThisBuild / scalaVersion := "3.3.3"
+// We have two builds of Jelly – both compiled using the Scala 3 compiler, but one with
+// Scala 2.13 dependencies and the other with Scala 3 dependencies. This is because we
+// want to at least somewhat support both Scala 2.13 and Scala 3 projects that use Jelly.
+// The "fake" Scala 2.13 build is published with the _2.13 suffix.
+lazy val scala2Version = "3.3.2" // This is the fake Scala 2 version
+lazy val scala3Version = "3.3.3" // This is the real Scala 3 version
+
+ThisBuild / crossScalaVersions := Seq(scala2Version, scala3Version)
 ThisBuild / organization := "eu.ostrzyciel.jelly"
 ThisBuild / homepage := Some(url("https://github.com/Jelly-RDF/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
@@ -26,6 +33,29 @@ lazy val rdf4jV = "4.3.12"
 // When updating also change the version in plugins.sbt
 lazy val scalapbV = "0.11.13"
 
+// Helper function to transform Scala 3 dependencies into Scala 2 ones
+def crossDependencies(binVersion: String, modules: ModuleID*): Seq[ModuleID] = {
+  if (binVersion == scala2Version) {
+    modules.map(_.cross(CrossVersion.for3Use2_13))
+  }
+  else modules
+}
+
+// List of exclusions for the grpc module and its dependencies
+lazy val grpcExclusions = Seq(
+  ExclusionRule(organization = "org.parboiled", name = "parboiled_3"),
+  ExclusionRule(organization = "org.apache.pekko", name = "pekko-protobuf-v3_3"),
+  ExclusionRule(organization = "org.apache.pekko", name = "pekko-actor_3"),
+  ExclusionRule(organization = "org.apache.pekko", name = "pekko-stream_3"),
+  ExclusionRule(organization = "org.apache.pekko", name = "pekko-http_3"),
+  ExclusionRule(organization = "org.apache.pekko", name = "pekko-discovery_3"),
+  ExclusionRule(organization = "org.apache.pekko", name = "pekko-parsing_3"),
+  ExclusionRule(organization = "org.apache.pekko", name = "pekko-http-cors_3"),
+  ExclusionRule(organization = "org.apache.pekko", name = "pekko-http-core_3"),
+  ExclusionRule(organization = "org.apache.pekko", name = "pekko-grpc-runtime_3"),
+  ExclusionRule(organization = "com.typesafe", name = "ssl-config-core_3"),
+)
+
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.19" % Test,
@@ -42,15 +72,30 @@ lazy val commonSettings = Seq(
     case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.first
     case x => assemblyMergeStrategy.value(x)
   },
+  excludeDependencies ++= {
+    if (scalaVersion.value == scala2Version) Seq(
+      ExclusionRule(organization = "org.scala-lang.modules", name = "scala-collection-compat_3"),
+      ExclusionRule(organization = "com.thesamet.scalapb", name = "lenses_3"),
+      ExclusionRule(organization = "com.thesamet.scalapb", name = "scalapb-runtime_3"),
+    )
+    else Seq()
+  },
+  crossVersion := {
+    // Publish our fake Scala 2 project with _2.13 suffix
+    if (scalaVersion.value == scala2Version) CrossVersion.Constant("2.13")
+    else CrossVersion.binary
+  },
 )
 
 lazy val core = (project in file("core"))
   .settings(
     name := "jelly-core",
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= crossDependencies(scalaVersion.value,
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbV,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV % "protobuf",
       "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbV,
+    ),
+    libraryDependencies ++= Seq(
       "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
     ),
     Compile / PB.targets := Seq(
@@ -119,7 +164,7 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
 lazy val stream = (project in file("stream"))
   .settings(
     name := "jelly-stream",
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= crossDependencies(scalaVersion.value,
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
     ),
@@ -131,7 +176,7 @@ lazy val grpc = (project in file("grpc"))
   .enablePlugins(PekkoGrpcPlugin)
   .settings(
     name := "jelly-grpc",
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= crossDependencies(scalaVersion.value,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
       "org.apache.pekko" %% "pekko-discovery" % pekkoV,
@@ -145,6 +190,10 @@ lazy val grpc = (project in file("grpc"))
       (core / baseDirectory).value / "src" / "main" / "protobuf",
     ),
     Compile / PB.generate / excludeFilter := "rdf.proto",
+    excludeDependencies ++= {
+      if (scalaVersion.value == scala2Version) grpcExclusions
+      else Seq()
+    },
     commonSettings,
   )
   .dependsOn(stream % "test->compile")
@@ -160,9 +209,7 @@ lazy val integrationTests = (project in file("integration-tests"))
     ),
     commonSettings,
   )
-  // We have to depend on Jena's and RDF4J's test configurations as the base libraries (RDF4J and Jena)
-  // use the "provided" scope.
-  .dependsOn(stream, jena % "compile->test", rdf4j % "compile->test")
+  .dependsOn(stream, jena, rdf4j)
 
 lazy val examples = (project in file("examples"))
   .settings(
@@ -172,8 +219,10 @@ lazy val examples = (project in file("examples"))
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
     ),
+    excludeDependencies ++= {
+      if (scalaVersion.value == scala2Version) grpcExclusions
+      else Seq()
+    },
     commonSettings,
   )
-  // We have to depend on Jena's and RDF4J's test configurations as the base libraries (RDF4J and Jena)
-  // use the "provided" scope.
-  .dependsOn(grpc, stream, jena % "compile->test", rdf4j % "compile->test")
+  .dependsOn(grpc, stream, jena, rdf4j)
