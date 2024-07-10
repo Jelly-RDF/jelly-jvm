@@ -1,8 +1,11 @@
 package eu.ostrzyciel.jelly.core
 
+import eu.ostrzyciel.jelly.core.helpers.Conversions.given
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
+import scala.language.implicitConversions
 
 class NameDecoderSpec extends AnyWordSpec, Matchers:
   val smallOptions = RdfStreamOptions(maxNameTableSize = 16, maxPrefixTableSize = 8)

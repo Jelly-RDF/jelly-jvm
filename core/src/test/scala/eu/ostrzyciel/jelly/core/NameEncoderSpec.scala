@@ -1,11 +1,14 @@
 package eu.ostrzyciel.jelly.core
 
+import com.google.protobuf.ByteString
+import eu.ostrzyciel.jelly.core.helpers.Conversions.given
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.mutable.ListBuffer
+import scala.language.implicitConversions
 
 class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
   def smallOptions(prefixTableSize: Int) = RdfStreamOptions(
@@ -26,7 +29,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         dt.value should be (1)
         buffer.size should be (1)
         val dtEntry = buffer.head.row.datatype.get
-        dtEntry.value should be ("dt1")
+        dtEntry.value should be (ByteString.copyFromUtf8("dt1"))
         dtEntry.id should be (0)
       }
 
@@ -76,7 +79,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for (r, i) <- buffer.zipWithIndex do
           val dt = r.row.datatype.get
           dt.id should be (expectedIds(i))
-          dt.value should be (s"dt${i + 1}")
+          dt.value should be (ByteString.copyFromUtf8(s"dt${i + 1}"))
       }
     }
 
@@ -177,7 +180,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           (false, 0, "Cake4"),
           (false, 1, "Cake5"),
           (true, 1, ""),
-        )
+        ).map((isPrefix, id, value) => (isPrefix, id, ByteString.copyFromUtf8(value)))
 
         buffer.size should be (expectedBuffer.size)
         for ((isPrefix, eId, eVal), row) <- expectedBuffer.zip(buffer) do
