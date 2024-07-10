@@ -105,6 +105,7 @@ lazy val core = (project in file("core"))
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(baseDirectory.value / "src" / "main" / "protobuf_shared"),
     Compile / PB.generate / excludeFilter := "grpc.proto",
+    Compile / PB.additionalDependencies := Nil,
     commonSettings,
   )
 
@@ -191,6 +192,7 @@ lazy val grpc = (project in file("grpc"))
       (core / baseDirectory).value / "src" / "main" / "protobuf",
     ),
     Compile / PB.generate / excludeFilter := "rdf.proto",
+    Compile / PB.additionalDependencies := Nil,
     excludeDependencies ++= {
       if (scalaVersion.value == scala2Version) grpcExclusions
       else Seq()
