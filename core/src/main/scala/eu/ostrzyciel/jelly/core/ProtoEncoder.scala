@@ -1,7 +1,8 @@
 package eu.ostrzyciel.jelly.core
 
+import com.google.protobuf.ByteString
 import eu.ostrzyciel.jelly.core.proto.v1.*
-import eu.ostrzyciel.jelly.core.proto_adapters.{given, *}
+import eu.ostrzyciel.jelly.core.proto_adapters.{*, given}
 
 import scala.collection.mutable.ListBuffer
 
@@ -131,21 +132,24 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     a.makeIri(iriEncoder.encodeIri(iri, extraRowsBuffer))
 
   protected final inline def makeBlankNode[TTerm](label: String)(using a: RdfTermAdapter[TTerm]): TTerm =
-    a.makeBnode(label)
+    a.makeBnode(ByteString.copyFromUtf8(label))
 
   protected final inline def makeSimpleLiteral[TTerm](lex: String)(using a: RdfTermAdapter[TTerm]): TTerm =
     a.makeLiteral(
-      RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
+      RdfLiteral(ByteString.copyFromUtf8(lex), RdfLiteral.LiteralKind.Empty)
     )
 
   protected final inline def makeLangLiteral[TTerm](lex: String, lang: String)(using a: RdfTermAdapter[TTerm]): TTerm =
     a.makeLiteral(
-      RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
+      RdfLiteral(
+        ByteString.copyFromUtf8(lex), 
+        RdfLiteral.LiteralKind.Langtag(ByteString.copyFromUtf8(lang))
+      )
     )
 
   protected final inline def makeDtLiteral[TTerm](lex: String, dt: String)(using a: RdfTermAdapter[TTerm]): TTerm =
     a.makeLiteral(
-      RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
+      RdfLiteral(ByteString.copyFromUtf8(lex), iriEncoder.encodeDatatype(dt, extraRowsBuffer))
     )
 
   protected final inline def makeTripleNode[TTerm](triple: TQuoted)(using a: RdfTermAdapter[TTerm]): TTerm =
@@ -155,23 +159,26 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     a.makeIri(iriEncoder.encodeIri(iri, extraRowsBuffer))
 
   protected final inline def makeBlankNodeGraph[TGraph](label: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
-    a.makeBnode(label)
+    a.makeBnode(ByteString.copyFromUtf8(label))
 
   protected final inline def makeSimpleLiteralGraph[TGraph](lex: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
     a.makeLiteral(
-      RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
+      RdfLiteral(ByteString.copyFromUtf8(lex), RdfLiteral.LiteralKind.Empty)
     )
 
   protected final inline def makeLangLiteralGraph[TGraph]
   (lex: String, lang: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
     a.makeLiteral(
-      RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
+      RdfLiteral(
+        ByteString.copyFromUtf8(lex), 
+        RdfLiteral.LiteralKind.Langtag(ByteString.copyFromUtf8(lang))
+      )
     )
 
   protected final inline def makeDtLiteralGraph[TGraph]
   (lex: String, dt: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
     a.makeLiteral(
-      RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
+      RdfLiteral(ByteString.copyFromUtf8(lex), iriEncoder.encodeDatatype(dt, extraRowsBuffer))
     )
 
   protected final inline def makeDefaultGraph[TGraph](using a: RdfGraphAdapter[TGraph]): TGraph =

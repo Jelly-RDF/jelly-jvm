@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
+import com.google.protobuf.ByteString
 import eu.ostrzyciel.jelly.core.proto_adapters.{*, given}
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import scalapb.GeneratedOneof
@@ -39,13 +40,15 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
     if streamOpt.isEmpty then
       streamOpt = Some(opt)
 
-  private final def convertLiteral(literal: RdfLiteral): TNode = literal.literalKind match
-    case RdfLiteral.LiteralKind.Empty =>
-      converter.makeSimpleLiteral(literal.lex)
-    case RdfLiteral.LiteralKind.Langtag(lang) =>
-      converter.makeLangLiteral(literal.lex, lang)
-    case RdfLiteral.LiteralKind.Datatype(dtId) =>
-      converter.makeDtLiteral(literal.lex, dtLookup.get(dtId))
+  private final def convertLiteral(literal: RdfLiteral): TNode =
+    val lexString = literal.lex.toStringUtf8
+    literal.literalKind match
+      case RdfLiteral.LiteralKind.Empty =>
+        converter.makeSimpleLiteral(lexString)
+      case RdfLiteral.LiteralKind.Langtag(lang) =>
+        converter.makeLangLiteral(lexString, lang.toStringUtf8)
+      case RdfLiteral.LiteralKind.Datatype(dtId) =>
+        converter.makeDtLiteral(lexString, dtLookup.get(dtId))
 
 
   private final def convertTerm[TTerm <: GeneratedOneof : RdfTermAdapter](term: TTerm): TNode =
@@ -53,7 +56,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
     if a.isIri(term) then
       converter.makeIriNode(nameDecoder.decode(a.iri(term)))
     else if a.isBnode(term) then
-      converter.makeBlankNode(a.bnode(term))
+      converter.makeBlankNode(a.bnode(term).toStringUtf8)
     else if a.isLiteral(term) then
       convertLiteral(a.literal(term))
     else if a.isTripleTerm(term) then
@@ -77,7 +80,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
     else if a.isDefaultGraph(graph) then
       converter.makeDefaultGraphNode()
     else if a.isBnode(graph) then
-      converter.makeBlankNode(a.bnode(graph))
+      converter.makeBlankNode(a.bnode(graph).toStringUtf8)
     else if a.isLiteral(graph) then
       convertLiteral(a.literal(graph))
     else if graph.isEmpty then
@@ -134,7 +137,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
         nameDecoder.updatePrefixes(prefixRow)
         None
       case RdfStreamRow.Row.Datatype(dtRow) =>
-        dtLookup.update(dtRow.id, converter.makeDatatype(dtRow.value))
+        dtLookup.update(dtRow.id, converter.makeDatatype(dtRow.value.toStringUtf8))
         None
       case RdfStreamRow.Row.Triple(triple) => handleTriple(triple)
       case RdfStreamRow.Row.Quad(quad) => handleQuad(quad)
