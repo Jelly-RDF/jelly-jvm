@@ -5,6 +5,7 @@
 lazy val scala2Version = "3.3.2" // This is the fake Scala 2 version
 lazy val scala3Version = "3.3.3" // This is the real Scala 3 version
 
+ThisBuild / scalaVersion := scala3Version
 ThisBuild / crossScalaVersions := Seq(scala2Version, scala3Version)
 ThisBuild / organization := "eu.ostrzyciel.jelly"
 ThisBuild / homepage := Some(url("https://github.com/Jelly-RDF/jelly-jvm"))
