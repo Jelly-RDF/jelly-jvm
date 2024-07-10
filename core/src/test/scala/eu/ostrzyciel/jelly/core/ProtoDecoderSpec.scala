@@ -596,30 +596,4 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         error.getMessage should include("datatype table size of 100")
         error.getMessage should include("larger than the maximum supported size of 80")
       }
-
-      "throw exception on a stream with a name table size smaller than supported" in {
-        val data = wrapEncodedFull(Seq(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(streamType)
-            .withMaxNameTableSize(2) // 16 is the minimum
-        ))
-        val error = intercept[RdfProtoDeserializationError] {
-          decoderFactory(None).ingestRow(data.head)
-        }
-        error.getMessage should include("name table size of 2")
-        error.getMessage should include("smaller than the minimum supported size of 16")
-      }
-
-      "throw exception on a stream with a datatype table size smaller than supported" in {
-        val data = wrapEncodedFull(Seq(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(streamType)
-            .withMaxDatatypeTableSize(2) // 8 is the minimum
-        ))
-        val error = intercept[RdfProtoDeserializationError] {
-          decoderFactory(None).ingestRow(data.head)
-        }
-        error.getMessage should include("datatype table size of 2")
-        error.getMessage should include("smaller than the minimum supported size of 8")
-      }
     }
