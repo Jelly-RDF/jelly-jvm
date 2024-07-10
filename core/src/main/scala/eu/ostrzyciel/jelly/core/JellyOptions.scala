@@ -104,9 +104,9 @@ object JellyOptions:
    * - version (must be <= Constants.protoVersion and <= supportedOptions.version)
    * - generalized statements (must be <= supportedOptions.generalizedStatements)
    * - RDF star (must be <= supportedOptions.rdfStar)
-   * - max name table size (must be <= supportedOptions.maxNameTableSize).
+   * - max name table size (must be <= supportedOptions.maxNameTableSize and >= 16).
    * - max prefix table size (must be <= supportedOptions.maxPrefixTableSize)
-   * - max datatype table size (must be <= supportedOptions.maxDatatypeTableSize)
+   * - max datatype table size (must be <= supportedOptions.maxDatatypeTableSize and >= 8)
    * - logical stream type (must be compatible with physical stream type and compatible with expected log. stream type)
    *
    * We don't check:
@@ -128,23 +128,28 @@ object JellyOptions:
         s"This library version supports up to version ${Constants.protoVersion}.")
 
     if requestedOptions.generalizedStatements && !supportedOptions.generalizedStatements then
-      throw new RdfProtoDeserializationError(s"The stream uses generalized statements, which the user marked as not " +
-        s"supported. To read this stream, set generalizedStatements to true in the supportedOptions for this decoder.")
+      throw new RdfProtoDeserializationError(s"The stream uses generalized statements, which are not supported. " +
+        s"Either disable generalized statements or enable them in the supportedOptions.")
 
     if requestedOptions.rdfStar && !supportedOptions.rdfStar then
-      throw new RdfProtoDeserializationError(s"The stream uses RDF-star, which the user marked as not supported. " +
-        s"To read this stream, set rdfStar to true in the supportedOptions for this decoder.")
+      throw new RdfProtoDeserializationError(s"The stream uses RDF-star, which is not supported. Either disable" +
+        s" RDF-star or enable it in the supportedOptions.")
 
-    def checkTableSize(name: String, size: Int, supportedSize: Int): Unit =
+    def checkTableSize(name: String, size: Int, supportedSize: Int, minSize: Int = 0): Unit =
       if size > supportedSize then
         throw new RdfProtoDeserializationError(s"The stream uses a ${name.toLowerCase} table size of $size, which is " +
-          s"larger than the maximum supported size of $supportedSize. To read this stream, set max${name}TableSize " +
-          s"to at least $size in the supportedOptions for this decoder."
+          s"larger than the maximum supported size of $supportedSize."
+        )
+      if size < minSize then
+        throw new RdfProtoDeserializationError(s"The stream uses a ${name.toLowerCase} table size of $size, which is " +
+          s"smaller than the minimum supported size of $minSize."
         )
 
-    checkTableSize("Name", requestedOptions.maxNameTableSize, supportedOptions.maxNameTableSize)
+    // The minimum sizes are hard-coded because it would be impossible to reliably encode the stream
+    // with smaller tables, especially if RDF-star is used.
+    checkTableSize("Name", requestedOptions.maxNameTableSize, supportedOptions.maxNameTableSize, 16)
     checkTableSize("Prefix", requestedOptions.maxPrefixTableSize, supportedOptions.maxPrefixTableSize)
-    checkTableSize("Datatype", requestedOptions.maxDatatypeTableSize, supportedOptions.maxDatatypeTableSize)
+    checkTableSize("Datatype", requestedOptions.maxDatatypeTableSize, supportedOptions.maxDatatypeTableSize, 8)
 
     checkLogicalStreamType(requestedOptions, supportedOptions.logicalType)
 
