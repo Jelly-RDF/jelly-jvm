@@ -1,6 +1,5 @@
 package eu.ostrzyciel.jelly.core
 
-import com.google.protobuf.ByteString
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.collection.mutable.ListBuffer
@@ -67,7 +66,7 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
       if nameLookupEntry.newEntry then
         rowsBuffer.append(
           RdfStreamRow(RdfStreamRow.Row.Name(
-            RdfNameEntry(id = nameLookupEntry.setId, value = ByteString.copyFromUtf8(iri))
+            RdfNameEntry(id = nameLookupEntry.setId, value = iri)
           ))
         )
       // We set the prefixId to 0, but it's a special case, because the prefix table is disabled.
@@ -81,12 +80,12 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
 
       if prefixLookupEntry.newEntry then rowsBuffer.append(
         RdfStreamRow(RdfStreamRow.Row.Prefix(
-          RdfPrefixEntry(prefixLookupEntry.setId, ByteString.copyFromUtf8(prefix))
+          RdfPrefixEntry(prefixLookupEntry.setId, prefix)
         ))
       )
       if nameLookupEntry.newEntry then rowsBuffer.append(
         RdfStreamRow(RdfStreamRow.Row.Name(
-          RdfNameEntry(nameLookupEntry.setId, ByteString.copyFromUtf8(postfix))
+          RdfNameEntry(nameLookupEntry.setId, postfix)
         ))
       )
 
@@ -119,7 +118,7 @@ private[core] final class NameEncoder(opt: RdfStreamOptions):
       )
       rowsBuffer.append(
         RdfStreamRow(RdfStreamRow.Row.Datatype(
-          RdfDatatypeEntry(id = dtVal.setId, value = ByteString.copyFromUtf8(dtIri))
+          RdfDatatypeEntry(id = dtVal.setId, value = dtIri)
         ))
       )
       datatype

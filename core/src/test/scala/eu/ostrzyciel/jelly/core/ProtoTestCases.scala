@@ -1,10 +1,7 @@
 package eu.ostrzyciel.jelly.core
 
-import eu.ostrzyciel.jelly.core.helpers.Conversions.given
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
-
-import scala.language.implicitConversions
 
 object ProtoTestCases:
   type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad |

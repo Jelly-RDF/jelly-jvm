@@ -1,5 +1,3 @@
-import java.nio.file.{Files, Path}
-
 // We have two builds of Jelly – both compiled using the Scala 3 compiler, but one with
 // Scala 2.13 dependencies and the other with Scala 3 dependencies. This is because we
 // want to at least somewhat support both Scala 2.13 and Scala 3 projects that use Jelly.
@@ -43,8 +41,6 @@ def crossDependencies(binVersion: String, modules: ModuleID*): Seq[ModuleID] = {
   }
   else modules
 }
-
-lazy val preprocessProto = taskKey[Path]("Preprocess a proto file before compilation")
 
 // List of exclusions for the grpc module and its dependencies
 lazy val grpcExclusions = Seq(
@@ -106,32 +102,9 @@ lazy val core = (project in file("core"))
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     ),
-    preprocessProto / fileInputs += baseDirectory.value.toGlob / "src" / "main" / "protobuf_shared" / "rdf.proto",
-    preprocessProto := {
-      val inputPath = preprocessProto.inputFiles.head
-      val outputPath = Path.of(inputPath.toString.replace("rdf.proto", ".rdf.proto"))
-      val logger = streams.value.log
-      logger.info(s"Preprocessing $inputPath to $outputPath")
-      val input = Files.newBufferedReader(inputPath)
-      val output = Files.newBufferedWriter(outputPath)
-      try {
-        var line: String = null
-        while ({ line = input.readLine(); line != null }) {
-          if (!line.contains("stream_name")) line = line.replace(" string ", " bytes ")
-          output.write(line + "\n")
-        }
-      } finally {
-        input.close()
-        output.close()
-      }
-      outputPath
-    },
-    // Preprocess the proto file before Protobuf compilation
-    Compile / PB.generate := (Compile / PB.generate).dependsOn(preprocessProto).value,
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(baseDirectory.value / "src" / "main" / "protobuf_shared"),
-    // We use .rdf.proto instead of rdf.proto
-    Compile / PB.generate / excludeFilter := "grpc.proto" || "rdf.proto",
+    Compile / PB.generate / excludeFilter := "grpc.proto",
     commonSettings,
   )
 
@@ -217,7 +190,7 @@ lazy val grpc = (project in file("grpc"))
       (core / baseDirectory).value / "src" / "main" / "protobuf_shared",
       (core / baseDirectory).value / "src" / "main" / "protobuf",
     ),
-    Compile / PB.generate / excludeFilter := "rdf.proto" || ".rdf.proto",
+    Compile / PB.generate / excludeFilter := "rdf.proto",
     excludeDependencies ++= {
       if (scalaVersion.value == scala2Version) grpcExclusions
       else Seq()

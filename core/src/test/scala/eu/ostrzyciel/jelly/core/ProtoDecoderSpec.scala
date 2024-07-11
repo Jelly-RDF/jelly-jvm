@@ -1,14 +1,11 @@
 package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.helpers.Assertions.*
-import eu.ostrzyciel.jelly.core.helpers.Conversions.given
 import eu.ostrzyciel.jelly.core.helpers.MockConverterFactory
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-
-import scala.language.implicitConversions
 
 class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   import ProtoDecoderImpl.*

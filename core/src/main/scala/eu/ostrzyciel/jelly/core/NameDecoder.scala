@@ -15,7 +15,7 @@ private[core] final class NameDecoder(opt: RdfStreamOptions):
    * @throws ArrayIndexOutOfBoundsException if id < 1 or id > maxNameTableSize
    */
   inline def updateNames(nameRow: RdfNameEntry): Unit =
-    nameLookup.update(nameRow.id, nameRow.value.toStringUtf8)
+    nameLookup.update(nameRow.id, nameRow.value)
 
   /**
    * Update the prefix table.
@@ -23,7 +23,7 @@ private[core] final class NameDecoder(opt: RdfStreamOptions):
    * @throws ArrayIndexOutOfBoundsException if id < 1 or id > maxPrefixTableSize
    */
   inline def updatePrefixes(prefixRow: RdfPrefixEntry): Unit =
-    prefixLookup.update(prefixRow.id, prefixRow.value.toStringUtf8)
+    prefixLookup.update(prefixRow.id, prefixRow.value)
 
   /**
    * Reconstruct an IRI from its prefix and name ids.

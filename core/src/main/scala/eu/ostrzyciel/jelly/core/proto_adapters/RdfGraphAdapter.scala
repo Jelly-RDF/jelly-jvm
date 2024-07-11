@@ -1,6 +1,5 @@
 package eu.ostrzyciel.jelly.core.proto_adapters
 
-import com.google.protobuf.ByteString
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
 export RdfGraphAdapter.given
@@ -12,12 +11,12 @@ object RdfGraphAdapter:
     override inline def isLiteral(g: RdfQuad.Graph): Boolean = g.isGLiteral
     override inline def isDefaultGraph(g: RdfQuad.Graph): Boolean = g.isGDefaultGraph
     override inline def iri(g: RdfQuad.Graph): RdfIri = g.asInstanceOf[RdfQuad.Graph.GIri].value
-    override inline def bnode(g: RdfQuad.Graph): ByteString = g.asInstanceOf[RdfQuad.Graph.GBnode].value
+    override inline def bnode(g: RdfQuad.Graph): String = g.asInstanceOf[RdfQuad.Graph.GBnode].value
     override inline def literal(g: RdfQuad.Graph): RdfLiteral = g.asInstanceOf[RdfQuad.Graph.GLiteral].value
     override inline def defaultGraph(g: RdfQuad.Graph): RdfDefaultGraph = g.asInstanceOf[RdfQuad.Graph.GDefaultGraph].value
     
     override inline def makeIri(iri: RdfIri): RdfQuad.Graph = RdfQuad.Graph.GIri(iri)
-    override inline def makeBnode(bnode: ByteString): RdfQuad.Graph = RdfQuad.Graph.GBnode(bnode)
+    override inline def makeBnode(bnode: String): RdfQuad.Graph = RdfQuad.Graph.GBnode(bnode)
     override inline def makeLiteral(literal: RdfLiteral): RdfQuad.Graph = RdfQuad.Graph.GLiteral(literal)
     override val makeDefaultGraph: RdfQuad.Graph = RdfQuad.Graph.GDefaultGraph(RdfDefaultGraph())
     override val makeEmpty: RdfQuad.Graph = RdfQuad.Graph.Empty
@@ -28,12 +27,12 @@ object RdfGraphAdapter:
     override inline def isLiteral(g: RdfGraphStart.Graph): Boolean = g.isGLiteral
     override inline def isDefaultGraph(g: RdfGraphStart.Graph): Boolean = g.isGDefaultGraph
     override inline def iri(g: RdfGraphStart.Graph): RdfIri = g.asInstanceOf[RdfGraphStart.Graph.GIri].value
-    override inline def bnode(g: RdfGraphStart.Graph): ByteString = g.asInstanceOf[RdfGraphStart.Graph.GBnode].value
+    override inline def bnode(g: RdfGraphStart.Graph): String = g.asInstanceOf[RdfGraphStart.Graph.GBnode].value
     override inline def literal(g: RdfGraphStart.Graph): RdfLiteral = g.asInstanceOf[RdfGraphStart.Graph.GLiteral].value
     override inline def defaultGraph(g: RdfGraphStart.Graph): RdfDefaultGraph = g.asInstanceOf[RdfGraphStart.Graph.GDefaultGraph].value
     
     override inline def makeIri(iri: RdfIri): RdfGraphStart.Graph = RdfGraphStart.Graph.GIri(iri)
-    override inline def makeBnode(bnode: ByteString): RdfGraphStart.Graph = RdfGraphStart.Graph.GBnode(bnode)
+    override inline def makeBnode(bnode: String): RdfGraphStart.Graph = RdfGraphStart.Graph.GBnode(bnode)
     override inline def makeLiteral(literal: RdfLiteral): RdfGraphStart.Graph = RdfGraphStart.Graph.GLiteral(literal)
     override val makeDefaultGraph: RdfGraphStart.Graph = RdfGraphStart.Graph.GDefaultGraph(RdfDefaultGraph())
     override val makeEmpty: RdfGraphStart.Graph = RdfGraphStart.Graph.Empty
@@ -49,12 +48,12 @@ trait RdfGraphAdapter[TInner]:
   def isDefaultGraph(g: TInner): Boolean
   def isLiteral(g: TInner): Boolean
   def iri(g: TInner): RdfIri
-  def bnode(g: TInner): ByteString
+  def bnode(g: TInner): String
   def defaultGraph(g: TInner): RdfDefaultGraph
   def literal(g: TInner): RdfLiteral
 
   def makeIri(iri: RdfIri): TInner
-  def makeBnode(bnode: ByteString): TInner
+  def makeBnode(bnode: String): TInner
   def makeLiteral(literal: RdfLiteral): TInner
   val makeDefaultGraph: TInner
   val makeEmpty: TInner 

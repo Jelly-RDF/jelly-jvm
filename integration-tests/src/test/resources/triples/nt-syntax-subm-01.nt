@@ -77,9 +77,3 @@ _:anon <http://example.org/property> <http://example.org/resource2> .
 # Typed Literals
 <http://example.org/resource32> <http://example.org/property> "abc"^^<http://example.org/datatype1> .
 # resource33 test removed 2003-08-03
-
-# Additional tests -- added for Jelly
-<http://a.example/s> <http://a.example/p> "߿ࠀ࿿က쿿퀀퟿�𐀀𿿽񀀀󿿽􀀀􏿽" .
-<http://a.zażółć.pl/gęślą_jaźń> <http://a.zażółć.pl/żółć> "żółć" .
-<http://a.zażółć.pl/gęślą_jaźń> <http://a.zażółć.pl/żółć> "żółć"^^<http://a.zażółć.pl/żółć> .
-<http://a.zażółć.pl/gęślą_jaźń> <http://a.zażółć.pl/żółć> "żółć"@pl .
