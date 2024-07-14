@@ -31,16 +31,16 @@ object JellyReader extends ReaderRIOT:
     val decoder = JenaConverterFactory.anyStatementDecoder(Some(supportedOptions))
     output.start()
     try {
-      while in.available() > 0 do
-        val frame = RdfStreamFrame.parseDelimitedFrom(in)
-        frame match
-          case Some(f) =>
-            for row <- f.rows do
-              decoder.ingestRow(row) match
-                case Some(st: Triple) => output.triple(st)
-                case Some(st: Quad) => output.quad(st)
-                case None => ()
-          case None => ()
+      Iterator.continually(RdfStreamFrame.parseDelimitedFrom(in))
+        .takeWhile(_.isDefined)
+        .foreach { maybeFrame =>
+          val frame = maybeFrame.get
+          for row <- frame.rows do
+            decoder.ingestRow(row) match
+              case Some(st: Triple) => output.triple(st)
+              case Some(st: Quad) => output.quad(st)
+              case None => ()
+        }
     }
     finally {
       output.finish()

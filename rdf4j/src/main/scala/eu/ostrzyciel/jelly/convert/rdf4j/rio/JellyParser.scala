@@ -38,15 +38,15 @@ final class JellyParser extends AbstractRDFParser:
 
     rdfHandler.startRDF()
     try {
-      while in.available() > 0 do
-        val frame = RdfStreamFrame.parseDelimitedFrom(in)
-        frame match
-          case Some(f) =>
-            for row <- f.rows do
-              decoder.ingestRow(row) match
-                case Some(st) => rdfHandler.handleStatement(st)
-                case None => ()
-          case None => ()
+      Iterator.continually(RdfStreamFrame.parseDelimitedFrom(in))
+        .takeWhile(_.isDefined)
+        .foreach { maybeFrame =>
+          val frame = maybeFrame.get
+          for row <- frame.rows do
+            decoder.ingestRow(row) match
+              case Some(st) => rdfHandler.handleStatement(st)
+              case None => ()
+        }
     }
     finally {
       rdfHandler.endRDF()
