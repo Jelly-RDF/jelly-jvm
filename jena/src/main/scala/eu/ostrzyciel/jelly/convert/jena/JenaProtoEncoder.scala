@@ -36,12 +36,13 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
     // Blank node
     case _: Node_Blank => makeBlankNode(node.getBlankNodeLabel)
     // Literal
-    case lit: Node_Literal =>
-      val litInternal = deconstructLiteral(lit)
-      litInternal match
-        case LiteralInternal(null, null) => makeSimpleLiteral(lit.getLiteralLexicalForm)
-        case LiteralInternal(_, null) => makeDtLiteral(lit.getLiteralLexicalForm, litInternal.dt)
-        case _ => makeLangLiteral(lit.getLiteralLexicalForm, litInternal.lang)
+    case lit: Node_Literal => lit.getLiteralLanguage match
+      case l if l.isEmpty =>
+        // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
+        if lit.getLiteralDatatype == XSDDatatype.XSDstring then
+          makeSimpleLiteral(lit.getLiteralLexicalForm)
+        else makeDtLiteral(lit.getLiteralLexicalForm, lit.getLiteralDatatypeURI)
+      case lang => makeLangLiteral(lit.getLiteralLexicalForm, lang)
     // RDF-star node
     case _: Node_Triple => makeTripleNode(node.getTriple)
     case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")
@@ -54,25 +55,13 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
     // Blank node
     case _: Node_Blank => makeBlankNodeGraph(node.getBlankNodeLabel)
     // Literal
-    case lit: Node_Literal =>
-      val litInternal = deconstructLiteral(lit)
-      litInternal match
-        case LiteralInternal(null, null) => makeSimpleLiteralGraph(lit.getLiteralLexicalForm)
-        case LiteralInternal(_, null) => makeDtLiteralGraph(lit.getLiteralLexicalForm, litInternal.dt)
-        case _ => makeLangLiteralGraph(lit.getLiteralLexicalForm, litInternal.lang)
+    case lit: Node_Literal => lit.getLiteralLanguage match
+      case l if l.isEmpty =>
+        // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
+        if lit.getLiteralDatatype == XSDDatatype.XSDstring then
+          makeSimpleLiteralGraph(lit.getLiteralLexicalForm)
+        else makeDtLiteralGraph(lit.getLiteralLexicalForm, lit.getLiteralDatatypeURI)
+      case lang => makeLangLiteralGraph(lit.getLiteralLexicalForm, lang)
     // Default graph
     case null => makeDefaultGraph
     case _ => throw RdfProtoSerializationError(s"Cannot encode graph node: $node")
-
-  private case class LiteralInternal(dt: String, lang: String)
-
-  private inline def deconstructLiteral(node: Node_Literal) =
-    var dt = node.getLiteralDatatypeURI
-    val lang = node.getLiteralLanguage match
-      case l if l.isEmpty => null
-      case l => l
-    if (JenaRuntime.isRDF11)
-      if (node.getLiteralDatatype == XSDDatatype.XSDstring
-        || node.getLiteralDatatype == RDFLangString.rdfLangString)
-        dt = null
-    LiteralInternal(dt, lang)
