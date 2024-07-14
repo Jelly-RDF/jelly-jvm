@@ -28,7 +28,7 @@ sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 lazy val pekkoV = "1.0.3"
 lazy val pekkoGrpcV = "1.0.2"
 lazy val jenaV = "4.10.0"
-lazy val rdf4jV = "4.3.12"
+lazy val rdf4jV = "5.0.1"
 // Must be synchronized to the version used by Pekko gRPC
 // See: https://mvnrepository.com/artifact/org.apache.pekko/pekko-grpc-runtime_3
 // When updating also change the version in plugins.sbt
