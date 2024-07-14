@@ -35,6 +35,14 @@ object RdfStreamServer:
 
 /**
  * Simple implementation of a Pekko gRPC server for streaming Jelly RDF data.
+ * 
+ * The server implements gRPC server reflection, which allows clients to discover the service. It also supports
+ * gzip compression only when enabled in the configuration.
+ * 
+ * This implementation is a good starting point. For your production application, you will most likely need to
+ * create your own server implementation, using this as a template. For example, here we create a new
+ * Pekko HTTP server instance, while you may want to integrate this with your existing HTTP server.
+ * 
  * @param options options for this server
  * @param streamService the service implementing the methods of the API
  * @param system actor system
@@ -52,16 +60,17 @@ final class RdfStreamServer(options: RdfStreamServer.Options, streamService: Rdf
    */
   def run(): Future[ServerBinding] =
     val service: HttpRequest => Future[HttpResponse] =
-      RdfStreamServiceHandler(streamService)
+      // Enable server reflection to allow clients to discover the service
+      // See: https://grpc.io/docs/guides/reflection/
+      RdfStreamServiceHandler.withServerReflection(streamService)
 
     val handler: HttpRequest => Future[HttpResponse] = if options.enableGzip then
       service
-    else
-      { request =>
-        // Eternal thanks to: https://github.com/akka/akka-grpc/issues/1265
-        val withoutEncoding = request.withHeaders(request.headers.filterNot(_.lowercaseName == "grpc-accept-encoding"))
-        service(withoutEncoding)
-      }
+    else { request =>
+      // Eternal thanks to: https://github.com/akka/akka-grpc/issues/1265
+      val withoutEncoding = request.withHeaders(request.headers.filterNot(_.lowercaseName == "grpc-accept-encoding"))
+      service(withoutEncoding)
+    }
 
     val bound: Future[ServerBinding] = Http()
       .newServerAt(options.host, options.port)
