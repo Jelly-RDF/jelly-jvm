@@ -1,10 +1,8 @@
 import scala.meta._
 
-object ProtoTransformer {
+object ProtoTransformer2 {
   def transform(input: String): String = {
     val tree = input.parse[Source].get
-
-    val isMain: Mod => Boolean = { case mod"@main" => true; case _ => false }
 
     val transformer = new Transformer {
       private def transformIsDefinedInner(thenp: Term): Term = thenp.transform {
@@ -96,10 +94,6 @@ object ProtoTransformer {
             thenp = thenBody,
             elsep = elseArgs.values.head
           )
-        // Option[T] => T
-//        case Type.Apply.After_4_6_0(tpe, args) if tpe.syntax == "_root_.scala.Option" => args.values.head
-//        // None => null
-//        case ts: Term.Select if ts.syntax == "_root_.scala.None" => q"null"
         case node => super.apply(node)
       }
     }

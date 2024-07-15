@@ -30,7 +30,7 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
    * @param node RDF node
    * @return the encoded term to put in the protobuf
    */
-  override protected def nodeToProto[TTerm : RdfTermAdapter](node: Node): TTerm = node match
+  override protected def nodeToProto[TTerm <: SpoTerm : SpoTermCompanion](node: Node): TTerm = node match
     // URI/IRI
     case _: Node_URI => makeIriNode(node.getURI)
     // Blank node
@@ -47,7 +47,7 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
     case _: Node_Triple => makeTripleNode(node.getTriple)
     case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")
 
-  override protected def graphNodeToProto[TGraph : RdfGraphAdapter](node: Node): TGraph = node match
+  override protected def graphNodeToProto[TGraph <: GraphTerm : GraphTermCompanion](node: Node): TGraph = node match
     // URI/IRI
     case _: Node_URI =>
       if Quad.isDefaultGraph(node) then makeDefaultGraph

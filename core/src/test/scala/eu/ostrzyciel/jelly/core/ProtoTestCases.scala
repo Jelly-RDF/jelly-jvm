@@ -67,15 +67,15 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
       RdfTriple(
-        RdfTriple.Subject.SIri(RdfIri(1, 0)),
-        RdfTriple.Predicate.PIri(RdfIri(0, 0)),
-        RdfTriple.Object.OIri(RdfIri(2, 0)),
+        RdfTriple.Subject.Iri(RdfIri(1, 0)),
+        RdfTriple.Predicate.Iri(RdfIri(0, 0)),
+        RdfTriple.Object.Iri(RdfIri(2, 0)),
       ),
       RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
         RdfTriple.Subject.Empty,
         RdfTriple.Predicate.Empty,
-        RdfTriple.Object.OLiteral(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
+        RdfTriple.Object.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
       ),
       RdfPrefixEntry(0, ""),
       RdfNameEntry(0, "b"),
@@ -83,15 +83,15 @@ object ProtoTestCases:
       RdfTriple(
         RdfTriple.Subject.Empty,
         RdfTriple.Predicate.Empty,
-        RdfTriple.Object.OTripleTerm(RdfTriple(
-          RdfTriple.Subject.SIri(RdfIri(1, 1)),
-          RdfTriple.Predicate.PIri(RdfIri(3, 4)),
-          RdfTriple.Object.OIri(RdfIri(0, 0)),
+        RdfTriple.Object.TripleTerm(RdfTriple(
+          RdfTriple.Subject.Iri(RdfIri(1, 1)),
+          RdfTriple.Predicate.Iri(RdfIri(3, 4)),
+          RdfTriple.Object.Iri(RdfIri(0, 0)),
         ))
       ),
       RdfTriple(
-        RdfTriple.Subject.SIri(RdfIri(1, 2)),
-        RdfTriple.Predicate.PIri(RdfIri(0, 1)),
+        RdfTriple.Subject.Iri(RdfIri(1, 2)),
+        RdfTriple.Predicate.Iri(RdfIri(0, 1)),
         RdfTriple.Object.Empty,
       ),
     ))
@@ -133,15 +133,15 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
       RdfQuad(
-        RdfQuad.Subject.SIri(RdfIri(1, 0)),
-        RdfQuad.Predicate.PIri(RdfIri(0, 0)),
-        RdfQuad.Object.OLiteral(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb"))),
-        RdfQuad.Graph.GIri(RdfIri(2, 0)),
+        RdfQuad.Subject.Iri(RdfIri(1, 0)),
+        RdfQuad.Predicate.Iri(RdfIri(0, 0)),
+        RdfQuad.Object.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb"))),
+        RdfQuad.Graph.Iri(RdfIri(2, 0)),
       ),
       RdfQuad(
         RdfQuad.Subject.Empty,
-        RdfQuad.Predicate.PBnode("blank"),
-        RdfQuad.Object.OLiteral(RdfLiteral(
+        RdfQuad.Predicate.Bnode("blank"),
+        RdfQuad.Object.Literal(RdfLiteral(
           "test", RdfLiteral.LiteralKind.Empty
         )),
         RdfQuad.Graph.Empty,
@@ -150,13 +150,13 @@ object ProtoTestCases:
         RdfQuad.Subject.Empty,
         RdfQuad.Predicate.Empty,
         RdfQuad.Object.Empty,
-        RdfQuad.Graph.GBnode("blank"),
+        RdfQuad.Graph.Bnode("blank"),
       ),
       RdfQuad(
         RdfQuad.Subject.Empty,
         RdfQuad.Predicate.Empty,
         RdfQuad.Object.Empty,
-        RdfQuad.Graph.GLiteral(RdfLiteral(
+        RdfQuad.Graph.Literal(RdfLiteral(
           "test", RdfLiteral.LiteralKind.Empty
         )),
       ),
@@ -184,15 +184,15 @@ object ProtoTestCases:
       RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
       RdfQuad(
-        RdfQuad.Subject.SIri(RdfIri(1, 0)),
-        RdfQuad.Predicate.PIri(RdfIri(0, 0)),
-        RdfQuad.Object.OLiteral(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb"))),
-        RdfQuad.Graph.GDefaultGraph(RdfDefaultGraph()),
+        RdfQuad.Subject.Iri(RdfIri(1, 0)),
+        RdfQuad.Predicate.Iri(RdfIri(0, 0)),
+        RdfQuad.Object.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb"))),
+        RdfQuad.Graph.DefaultGraph(RdfDefaultGraph()),
       ),
       RdfQuad(
         RdfQuad.Subject.Empty,
-        RdfQuad.Predicate.PBnode("blank"),
-        RdfQuad.Object.OLiteral(RdfLiteral(
+        RdfQuad.Predicate.Bnode("blank"),
+        RdfQuad.Object.Literal(RdfLiteral(
           "test", RdfLiteral.LiteralKind.Empty
         )),
         RdfQuad.Graph.Empty,
@@ -252,7 +252,7 @@ object ProtoTestCases:
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
       RdfGraphStart(
-        RdfGraphStart.Graph.GDefaultGraph(RdfDefaultGraph())
+        RdfGraphStart.Graph.DefaultGraph(RdfDefaultGraph())
       ),
       RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "subject"),
@@ -260,26 +260,26 @@ object ProtoTestCases:
       RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
       RdfTriple(
-        RdfTriple.Subject.SIri(RdfIri(1, 0)),
-        RdfTriple.Predicate.PIri(RdfIri(0, 0)),
-        RdfTriple.Object.OIri(RdfIri(2, 0)),
+        RdfTriple.Subject.Iri(RdfIri(1, 0)),
+        RdfTriple.Predicate.Iri(RdfIri(0, 0)),
+        RdfTriple.Object.Iri(RdfIri(2, 0)),
       ),
       RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
       RdfTriple(
         RdfTriple.Subject.Empty,
         RdfTriple.Predicate.Empty,
-        RdfTriple.Object.OLiteral(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
+        RdfTriple.Object.Literal(RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1))),
       ),
       RdfGraphEnd(),
       RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
       RdfGraphStart(
-        RdfGraphStart.Graph.GIri(RdfIri(3, 0))
+        RdfGraphStart.Graph.Iri(RdfIri(3, 0))
       ),
       RdfTriple(
         RdfTriple.Subject.Empty,
         RdfTriple.Predicate.Empty,
-        RdfTriple.Object.OIri(RdfIri(2, 3)),
+        RdfTriple.Object.Iri(RdfIri(2, 3)),
       ),
       RdfGraphEnd(),
     ))

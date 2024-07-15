@@ -9,7 +9,7 @@ object Generator {
       println(s"  Processing ${inputFile.getName}")
       val inputStr = IO.read(inputFile)
       val outputFile = outputDir / inputFile.name
-      val outputStr = ProtoTransformer.transform(inputStr)
+      val outputStr = ProtoTransformer2.transform(ProtoTransformer1.transform(inputStr))
       IO.write(outputFile, outputStr)
       outputFile
     }
