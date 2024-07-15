@@ -1,5 +1,15 @@
 import scala.meta._
 
+/**
+ * Source code transformer that for oneof protos:
+ *  - Unifies naming of is[S/P/O/G]Something methods to isSomething
+ *  - Removes with[S/P/O/G]Something methods
+ *  - Unifies naming of [S/P/O/G]Something classes to Something
+ *  - Unifies naming of [s/p/o/g]Something fields to something
+ *  - Adds base traits (RdfTerm, RdfTermCompanion)
+ *
+ * All this must be done before ProtoTransformer2 is executed.
+ */
 object ProtoTransformer1 {
   def transform(input: String): String = {
     val tree = input.parse[Source].get
@@ -12,6 +22,7 @@ object ProtoTransformer1 {
 
     val transformer = new Transformer {
       override def apply(tree: Tree): Tree = tree match {
+        // Transform method and class names in references
         case Term.Name(name) => name match {
           case isMethodNamePattern(t) => Term.Name(f"is$t")
           case classNamePattern(t) => Term.Name(t)
@@ -19,8 +30,10 @@ object ProtoTransformer1 {
           case _ => super.apply(tree)
         }
 
+        // Transform class names in definitions
         case Type.Name(classNamePattern(t)) => Type.Name(t)
 
+        // Remove with[S/P/O/G]Something methods
         case Template.After_4_4_0(_, _, _, stats, _) => tree.asInstanceOf[Template].copy(
           stats = stats.flatMap { stat => stat match {
             case Defn.Def.After_4_7_3(_, Term.Name(withMethodNamePattern(t)), _, _, _) => None
@@ -28,6 +41,7 @@ object ProtoTransformer1 {
           }}
         )
 
+        // Transform traits for RDF terms
         case Defn.Trait.After_4_6_0(_, Type.Name(traitNamePattern(name)), _, _, templ) =>
           val adapterName = if (name == "Graph") "GraphTerm" else s"SpoTerm"
           tree.asInstanceOf[Defn.Trait].copy(
@@ -39,6 +53,7 @@ object ProtoTransformer1 {
             )).asInstanceOf[Template]
           )
 
+        // Transform companion objects for RDF terms
         case Defn.Object(_, Term.Name(traitNamePattern(name)), templ) =>
           val adapterName = if (name == "Graph") "GraphTermCompanion" else s"SpoTermCompanion"
           val lastMethod = if (name == "Graph")

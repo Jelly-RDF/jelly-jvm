@@ -1,5 +1,9 @@
 import scala.meta._
 
+/**
+ * Source code transformer that (mostly) just removes Option[] from the code.
+ * Instead, we use nulls to avoid heap allocations and other overhead.
+ */
 object ProtoTransformer2 {
   def transform(input: String): String = {
     val tree = input.parse[Source].get
@@ -99,6 +103,5 @@ object ProtoTransformer2 {
     }
 
     transformer(tree).toString
-
   }
 }
