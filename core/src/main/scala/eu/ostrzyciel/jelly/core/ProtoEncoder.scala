@@ -7,6 +7,9 @@ import scala.collection.mutable.ListBuffer
 
 object ProtoEncoder:
   private val graphEnd = Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd.defaultInstance)))
+  private val defaultGraphStart = RdfStreamRow(RdfStreamRow.Row.GraphStart(
+    RdfGraphStart(RdfGraphStart.Graph.makeDefaultGraph)
+  ))
 
 /**
  * Stateful encoder of a protobuf RDF stream.
@@ -68,10 +71,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    */
   final def startDefaultGraph(): Iterable[RdfStreamRow] =
     handleHeader()
-    val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
-      RdfGraphStart(graphStartGraphAdapter.makeDefaultGraph)
-    ))
-    extraRowsBuffer.append(mainRow)
+    extraRowsBuffer.append(defaultGraphStart)
 
   /**
    * Signal the end of a delimited graph in a GRAPHS stream.
@@ -110,7 +110,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    * @return the encoded term
    * @throws RdfProtoSerializationError if node cannot be encoded
    */
-  protected def nodeToProto[TTerm : RdfTermAdapter](node: TNode): TTerm
+  protected def nodeToProto[TTerm <: SpoTerm : SpoTermCompanion](node: TNode): TTerm
 
   /**
    * Turn an RDF graph node into its protobuf representation.
@@ -122,59 +122,59 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    * @return the encoded term
    * @throws RdfProtoSerializationError if node cannot be encoded
    */
-  protected def graphNodeToProto[TGraph : RdfGraphAdapter](node: TNode): TGraph
+  protected def graphNodeToProto[TGraph <: GraphTerm : GraphTermCompanion](node: TNode): TGraph
 
 
   // *** 3. THE PROTECTED INTERFACE ***
   // **********************************
-  protected final inline def makeIriNode[TTerm](iri: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+  protected final inline def makeIriNode[TTerm <: SpoTerm](iri: String)(using a: SpoTermCompanion[TTerm]): TTerm =
     a.makeIri(iriEncoder.encodeIri(iri, extraRowsBuffer))
 
-  protected final inline def makeBlankNode[TTerm](label: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+  protected final inline def makeBlankNode[TTerm <: SpoTerm](label: String)(using a: SpoTermCompanion[TTerm]): TTerm =
     a.makeBnode(label)
 
-  protected final inline def makeSimpleLiteral[TTerm](lex: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+  protected final inline def makeSimpleLiteral[TTerm <: SpoTerm](lex: String)(using a: SpoTermCompanion[TTerm]): TTerm =
     a.makeLiteral(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
     )
 
-  protected final inline def makeLangLiteral[TTerm](lex: String, lang: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+  protected final inline def makeLangLiteral[TTerm <: SpoTerm](lex: String, lang: String)(using a: SpoTermCompanion[TTerm]): TTerm =
     a.makeLiteral(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
     )
 
-  protected final inline def makeDtLiteral[TTerm](lex: String, dt: String)(using a: RdfTermAdapter[TTerm]): TTerm =
+  protected final inline def makeDtLiteral[TTerm <: SpoTerm](lex: String, dt: String)(using a: SpoTermCompanion[TTerm]): TTerm =
     a.makeLiteral(
       RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
     )
 
-  protected final inline def makeTripleNode[TTerm](triple: TQuoted)(using a: RdfTermAdapter[TTerm]): TTerm =
+  protected final inline def makeTripleNode[TTerm <: SpoTerm](triple: TQuoted)(using a: SpoTermCompanion[TTerm]): TTerm =
     a.makeTripleTerm(quotedToProto(triple))
 
-  protected final inline def makeIriNodeGraph[TGraph](iri: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+  protected final inline def makeIriNodeGraph[TGraph <: GraphTerm](iri: String)(using a: GraphTermCompanion[TGraph]): TGraph =
     a.makeIri(iriEncoder.encodeIri(iri, extraRowsBuffer))
 
-  protected final inline def makeBlankNodeGraph[TGraph](label: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+  protected final inline def makeBlankNodeGraph[TGraph <: GraphTerm](label: String)(using a: GraphTermCompanion[TGraph]): TGraph =
     a.makeBnode(label)
 
-  protected final inline def makeSimpleLiteralGraph[TGraph](lex: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+  protected final inline def makeSimpleLiteralGraph[TGraph <: GraphTerm](lex: String)(using a: GraphTermCompanion[TGraph]): TGraph =
     a.makeLiteral(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
     )
 
-  protected final inline def makeLangLiteralGraph[TGraph]
-  (lex: String, lang: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+  protected final inline def makeLangLiteralGraph[TGraph <: GraphTerm]
+  (lex: String, lang: String)(using a: GraphTermCompanion[TGraph]): TGraph =
     a.makeLiteral(
       RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
     )
 
-  protected final inline def makeDtLiteralGraph[TGraph]
-  (lex: String, dt: String)(using a: RdfGraphAdapter[TGraph]): TGraph =
+  protected final inline def makeDtLiteralGraph[TGraph <: GraphTerm]
+  (lex: String, dt: String)(using a: GraphTermCompanion[TGraph]): TGraph =
     a.makeLiteral(
       RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
     )
 
-  protected final inline def makeDefaultGraph[TGraph](using a: RdfGraphAdapter[TGraph]): TGraph =
+  protected final inline def makeDefaultGraph[TGraph <: GraphTerm](using a: GraphTermCompanion[TGraph]): TGraph =
     a.makeDefaultGraph
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
@@ -188,15 +188,15 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
 
-  private def nodeToProtoWrapped[TTerm]
-  (node: TNode, lastNodeHolder: LastNodeHolder[TNode])(using a: RdfTermAdapter[TTerm]): TTerm =
+  private def nodeToProtoWrapped[TTerm <: SpoTerm]
+  (node: TNode, lastNodeHolder: LastNodeHolder[TNode])(using a: SpoTermCompanion[TTerm]): TTerm =
     lastNodeHolder.node match
       case oldNode if node == oldNode => a.makeEmpty
       case _ =>
         lastNodeHolder.node = node
         nodeToProto(node)
 
-  private def graphNodeToProtoWrapped[TGraph](node: TNode)(using a: RdfGraphAdapter[TGraph]): TGraph =
+  private def graphNodeToProtoWrapped[TGraph <: GraphTerm](node: TNode)(using a: GraphTermCompanion[TGraph]): TGraph =
     lastGraph.node match
       case oldNode if node == oldNode => a.makeEmpty
       case _ =>

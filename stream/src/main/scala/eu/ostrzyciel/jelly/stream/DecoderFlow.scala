@@ -55,7 +55,7 @@ object DecoderFlow:
     Flow[RdfStreamFrame].alsoToMat(
       Flow[RdfStreamFrame]
         .mapConcat(frame => {
-          frame.rows.filter(_.row.isOptions).map(_.row.options.get)
+          frame.rows.filter(_.row.isOptions).map(_.row.options)
         })
         .toMat(Sink.headOption)(Keep.right)
     )(Keep.right)

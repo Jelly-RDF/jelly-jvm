@@ -151,10 +151,10 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         RdfQuad(
-          RdfQuad.Subject.SBnode("1"),
-          RdfQuad.Predicate.PBnode("2"),
-          RdfQuad.Object.OBnode("3"),
-          RdfQuad.Graph.GBnode("4"),
+          RdfQuad.Subject.Bnode("1"),
+          RdfQuad.Predicate.Bnode("2"),
+          RdfQuad.Object.Bnode("3"),
+          RdfQuad.Graph.Bnode("4"),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -202,9 +202,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         RdfTriple(
-          RdfTriple.Subject.SBnode("1"),
-          RdfTriple.Predicate.PBnode("2"),
-          RdfTriple.Object.OTripleTerm(RdfTriple(
+          RdfTriple.Subject.Bnode("1"),
+          RdfTriple.Predicate.Bnode("2"),
+          RdfTriple.Object.TripleTerm(RdfTriple(
             RdfTriple.Subject.Empty, RdfTriple.Predicate.Empty, RdfTriple.Object.Empty
           )),
         )
@@ -229,9 +229,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         RdfTriple(
-          RdfTriple.Subject.SBnode("1"),
-          RdfTriple.Predicate.PBnode("2"),
-          RdfTriple.Object.OLiteral(RdfLiteral("test", RdfLiteral.LiteralKind.Empty)),
+          RdfTriple.Subject.Bnode("1"),
+          RdfTriple.Predicate.Bnode("2"),
+          RdfTriple.Object.Literal(RdfLiteral("test", RdfLiteral.LiteralKind.Empty)),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -266,9 +266,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
         RdfTriple(
-          RdfTriple.Subject.SBnode("1"),
-          RdfTriple.Predicate.PBnode("2"),
-          RdfTriple.Object.OBnode("3"),
+          RdfTriple.Subject.Bnode("1"),
+          RdfTriple.Predicate.Bnode("2"),
+          RdfTriple.Object.Bnode("3"),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -283,7 +283,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
         RdfGraphStart(
-          RdfGraphStart.Graph.GDefaultGraph(RdfDefaultGraph.defaultInstance)
+          RdfGraphStart.Graph.DefaultGraph(RdfDefaultGraph.defaultInstance)
         ),
       ))
       decoder.ingestRow(data.head)
@@ -333,10 +333,10 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
         RdfQuad(
-          RdfQuad.Subject.SBnode("1"),
-          RdfQuad.Predicate.PBnode("2"),
-          RdfQuad.Object.OBnode("3"),
-          RdfQuad.Graph.GBnode("4"),
+          RdfQuad.Subject.Bnode("1"),
+          RdfQuad.Predicate.Bnode("2"),
+          RdfQuad.Object.Bnode("3"),
+          RdfQuad.Graph.Bnode("4"),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -351,9 +351,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
         RdfTriple(
-          RdfTriple.Subject.SBnode("1"),
-          RdfTriple.Predicate.PBnode("2"),
-          RdfTriple.Object.OBnode("3"),
+          RdfTriple.Subject.Bnode("1"),
+          RdfTriple.Predicate.Bnode("2"),
+          RdfTriple.Object.Bnode("3"),
         ),
         RdfGraphEnd(),
       ))
@@ -396,9 +396,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
         RdfTriple(
-          RdfTriple.Subject.SBnode("1"),
-          RdfTriple.Predicate.PBnode("2"),
-          RdfTriple.Object.OBnode("3"),
+          RdfTriple.Subject.Bnode("1"),
+          RdfTriple.Predicate.Bnode("2"),
+          RdfTriple.Object.Bnode("3"),
         ),
       ))
       decoder.ingestRow(data.head)
@@ -438,9 +438,9 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.anyStatementDecoder()
       val data = wrapEncodedFull(Seq(
         RdfTriple(
-          RdfTriple.Subject.SBnode("1"),
-          RdfTriple.Predicate.PBnode("2"),
-          RdfTriple.Object.OBnode("3"),
+          RdfTriple.Subject.Bnode("1"),
+          RdfTriple.Predicate.Bnode("2"),
+          RdfTriple.Object.Bnode("3"),
         ),
       ))
       val error = intercept[RdfProtoDeserializationError] {

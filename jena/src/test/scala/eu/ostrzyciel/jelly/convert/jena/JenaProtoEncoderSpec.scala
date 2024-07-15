@@ -13,7 +13,7 @@ import org.scalatest.wordspec.AnyWordSpec
 class JenaProtoEncoderSpec extends AnyWordSpec, Matchers:
   private val encodedDefaultGraph = RdfStreamRow(
     RdfStreamRow.Row.GraphStart(
-      RdfGraphStart(RdfGraphStart.Graph.GDefaultGraph(
+      RdfGraphStart(RdfGraphStart.Graph.DefaultGraph(
         RdfDefaultGraph()
       ))
     )

@@ -5,6 +5,10 @@
 lazy val scala2Version = "3.3.2" // This is the fake Scala 2 version
 lazy val scala3Version = "3.3.3" // This is the real Scala 3 version
 
+// Scala 2 version used for meta-programming – transforming the generated proto classes.
+// Not used to compile any of the Jelly projects.
+lazy val scala2MetaVersion = "2.13.14"
+
 ThisBuild / scalaVersion := scala3Version
 ThisBuild / crossScalaVersions := Seq(scala2Version, scala3Version)
 ThisBuild / organization := "eu.ostrzyciel.jelly"
@@ -42,8 +46,8 @@ def crossDependencies(binVersion: String, modules: ModuleID*): Seq[ModuleID] = {
   else modules
 }
 
-// List of exclusions for the grpc module and its dependencies
-lazy val grpcExclusions = Seq(
+// List of exclusions for the grpc module and its dependencies (when building for Scala 2)
+lazy val grpcExclusions2 = Seq(
   ExclusionRule(organization = "org.parboiled", name = "parboiled_3"),
   ExclusionRule(organization = "org.apache.pekko", name = "pekko-protobuf-v3_3"),
   ExclusionRule(organization = "org.apache.pekko", name = "pekko-actor_3"),
@@ -55,6 +59,13 @@ lazy val grpcExclusions = Seq(
   ExclusionRule(organization = "org.apache.pekko", name = "pekko-http-core_3"),
   ExclusionRule(organization = "org.apache.pekko", name = "pekko-grpc-runtime_3"),
   ExclusionRule(organization = "com.typesafe", name = "ssl-config-core_3"),
+)
+
+// List of exclusions for the grpc module and its dependencies (when building for Scala 3)
+lazy val grpcExclusions3 = Seq(
+  ExclusionRule(organization = "org.scala-lang.modules", name = "scala-collection-compat_2.13"),
+  ExclusionRule(organization = "com.thesamet.scalapb", name = "lenses_2.13"),
+  ExclusionRule(organization = "com.thesamet.scalapb", name = "scalapb-runtime_2.13"),
 )
 
 lazy val commonSettings = Seq(
@@ -88,9 +99,10 @@ lazy val commonSettings = Seq(
   },
 )
 
-lazy val core = (project in file("core"))
+// Intermediate project that generates the Scala code from the protobuf files
+lazy val rdfProtos = (project in file("rdf-protos"))
   .settings(
-    name := "jelly-core",
+    name := "jelly-scalameta-test",
     libraryDependencies ++= crossDependencies(scalaVersion.value,
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbV,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV % "protobuf",
@@ -105,6 +117,26 @@ lazy val core = (project in file("core"))
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(baseDirectory.value / "src" / "main" / "protobuf_shared"),
     Compile / PB.generate / excludeFilter := "grpc.proto",
+    scalaVersion := "2.13.14",
+    publishArtifact := false,
+  )
+
+lazy val core = (project in file("core"))
+  .settings(
+    name := "jelly-core",
+    libraryDependencies ++= crossDependencies(scalaVersion.value,
+      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbV,
+    ),
+    libraryDependencies ++= Seq(
+      "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
+    ),
+    // Add the generated proto classes after transforming them with Scalameta
+    Compile / sourceGenerators += Def.task {
+      Generator.gen(
+        inputDir = (rdfProtos / target).value / "scala-2.13" / "src_managed" / "main",
+        outputDir = sourceManaged.value / "scalapb",
+      )
+    },
     commonSettings,
   )
 
@@ -187,18 +219,19 @@ lazy val grpc = (project in file("grpc"))
     ),
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(
-      (core / baseDirectory).value / "src" / "main" / "protobuf_shared",
-      (core / baseDirectory).value / "src" / "main" / "protobuf",
+      (rdfProtos / baseDirectory).value / "src" / "main" / "protobuf_shared",
+      (rdfProtos / baseDirectory).value / "src" / "main" / "protobuf",
     ),
     Compile / PB.generate / excludeFilter := "rdf.proto",
     excludeDependencies ++= {
-      if (scalaVersion.value == scala2Version) grpcExclusions
-      else Seq()
+      if (scalaVersion.value == scala2Version) grpcExclusions2
+      else grpcExclusions3
     },
     commonSettings,
   )
   .dependsOn(stream % "test->compile")
   .dependsOn(core % "compile->compile;test->test;protobuf->protobuf")
+  .dependsOn(rdfProtos % "protobuf->protobuf")
 
 lazy val integrationTests = (project in file("integration-tests"))
   .settings(
@@ -221,8 +254,8 @@ lazy val examples = (project in file("examples"))
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
     ),
     excludeDependencies ++= {
-      if (scalaVersion.value == scala2Version) grpcExclusions
-      else Seq()
+      if (scalaVersion.value == scala2Version) grpcExclusions2
+      else grpcExclusions3
     },
     commonSettings,
   )
