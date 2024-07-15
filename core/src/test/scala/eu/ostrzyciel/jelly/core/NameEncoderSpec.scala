@@ -25,7 +25,8 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         val dt = encoder.encodeDatatype("dt1", buffer)
         dt.value should be (1)
         buffer.size should be (1)
-        val dtEntry = buffer.head.row.datatype.get
+        buffer.head.row.isDatatype should be (true)
+        val dtEntry = buffer.head.row.datatype
         dtEntry.value should be ("dt1")
         dtEntry.id should be (0)
       }
@@ -41,7 +42,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         dt.value should be (3)
 
         buffer.size should be (4)
-        buffer.map(_.row.datatype.get) should contain only (
+        buffer.map(_.row.datatype) should contain only (
           RdfDatatypeEntry(0, "dt1"),
           RdfDatatypeEntry(0, "dt2"),
           RdfDatatypeEntry(0, "dt3"),
@@ -74,7 +75,7 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           Iterable.fill(8)(0) ++ Seq(1) ++ Iterable.fill(3)(0) ++ Seq(1) ++ Iterable.fill(3)(0)
         )
         for (r, i) <- buffer.zipWithIndex do
-          val dt = r.row.datatype.get
+          val dt = r.row.datatype
           dt.id should be (expectedIds(i))
           dt.value should be (s"dt${i + 1}")
       }
@@ -183,12 +184,12 @@ class NameEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for ((isPrefix, eId, eVal), row) <- expectedBuffer.zip(buffer) do
           if isPrefix then
             row.row.isPrefix should be (true)
-            val prefix = row.row.prefix.get
+            val prefix = row.row.prefix
             prefix.id should be (eId)
             prefix.value should be (eVal)
           else
             row.row.isName should be (true)
-            val name = row.row.name.get
+            val name = row.row.name
             name.id should be (eId)
             name.value should be (eVal)
       }

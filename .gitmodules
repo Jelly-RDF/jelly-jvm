@@ -1,3 +1,3 @@
 [submodule "core/src/main/protobuf/shared"]
-	path = core/src/main/protobuf_shared
+	path = rdf-protos/src/main/protobuf_shared
 	url = ../jelly-protobuf

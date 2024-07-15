@@ -26,7 +26,7 @@ object RdfGraphAdapter:
     override inline def isBnode(g: RdfGraphStart.Graph): Boolean = g.isGBnode
     override inline def isLiteral(g: RdfGraphStart.Graph): Boolean = g.isGLiteral
     override inline def isDefaultGraph(g: RdfGraphStart.Graph): Boolean = g.isGDefaultGraph
-    override inline def iri(g: RdfGraphStart.Graph): RdfIri = g.asInstanceOf[RdfGraphStart.Graph.GIri].value
+    override inline def iri(g: RdfGraphStart.Graph): RdfIri = g.gIri
     override inline def bnode(g: RdfGraphStart.Graph): String = g.asInstanceOf[RdfGraphStart.Graph.GBnode].value
     override inline def literal(g: RdfGraphStart.Graph): RdfLiteral = g.asInstanceOf[RdfGraphStart.Graph.GLiteral].value
     override inline def defaultGraph(g: RdfGraphStart.Graph): RdfDefaultGraph = g.asInstanceOf[RdfGraphStart.Graph.GDefaultGraph].value

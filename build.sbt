@@ -5,6 +5,10 @@
 lazy val scala2Version = "3.3.2" // This is the fake Scala 2 version
 lazy val scala3Version = "3.3.3" // This is the real Scala 3 version
 
+// Scala 2 version used for meta-programming – transforming the generated proto classes.
+// Not used to compile any of the Jelly projects.
+lazy val scala2MetaVersion = "2.13.14"
+
 ThisBuild / scalaVersion := scala3Version
 ThisBuild / crossScalaVersions := Seq(scala2Version, scala3Version)
 ThisBuild / organization := "eu.ostrzyciel.jelly"
@@ -88,9 +92,9 @@ lazy val commonSettings = Seq(
   },
 )
 
-lazy val core = (project in file("core"))
+lazy val rdfProtos = (project in file("rdf-protos"))
   .settings(
-    name := "jelly-core",
+    name := "jelly-scalameta-test",
     libraryDependencies ++= crossDependencies(scalaVersion.value,
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbV,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV % "protobuf",
@@ -105,6 +109,25 @@ lazy val core = (project in file("core"))
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(baseDirectory.value / "src" / "main" / "protobuf_shared"),
     Compile / PB.generate / excludeFilter := "grpc.proto",
+    scalaVersion := "2.13.14",
+    publishArtifact := false,
+  )
+
+lazy val core = (project in file("core"))
+  .settings(
+    name := "jelly-core",
+    libraryDependencies ++= crossDependencies(scalaVersion.value,
+      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbV,
+    ),
+    libraryDependencies ++= Seq(
+      "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
+    ),
+    Compile / sourceGenerators += Def.task {
+      Generator.gen(
+        inputDir = (rdfProtos / target).value / "scala-2.13" / "src_managed" / "main",
+        outputDir = sourceManaged.value / "scalapb",
+      )
+    },
     commonSettings,
   )
 
@@ -187,8 +210,8 @@ lazy val grpc = (project in file("grpc"))
     ),
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(
-      (core / baseDirectory).value / "src" / "main" / "protobuf_shared",
-      (core / baseDirectory).value / "src" / "main" / "protobuf",
+      (rdfProtos / baseDirectory).value / "src" / "main" / "protobuf_shared",
+      (rdfProtos / baseDirectory).value / "src" / "main" / "protobuf",
     ),
     Compile / PB.generate / excludeFilter := "rdf.proto",
     excludeDependencies ++= {

@@ -51,7 +51,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
       in.toMat(Sink.seq)(Keep.right)
         .run()
         .map(data => {
-          receivedData(data.head.rows.head.row.options.get.streamName) = data
+          receivedData(data.head.rows.head.row.options.streamName) = data
           RdfStreamReceived()
         })
 
