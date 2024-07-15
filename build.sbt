@@ -136,7 +136,7 @@ lazy val core = (project in file("core"))
         inputDir = (rdfProtos / target).value / "scala-2.13" / "src_managed" / "main",
         outputDir = sourceManaged.value / "scalapb",
       )
-    },
+    }.dependsOn(rdfProtos / Compile / PB.generate),
     commonSettings,
   )
 
