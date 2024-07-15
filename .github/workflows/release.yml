@@ -89,7 +89,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Fetch tags for the protobuf submodule
-        working-directory: ./core/src/main/protobuf_shared
+        working-directory: ./rdf-protos/src/main/protobuf_shared
         run: git fetch --prune --unshallow
 
       - name: Deploy site

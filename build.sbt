@@ -46,8 +46,8 @@ def crossDependencies(binVersion: String, modules: ModuleID*): Seq[ModuleID] = {
   else modules
 }
 
-// List of exclusions for the grpc module and its dependencies
-lazy val grpcExclusions = Seq(
+// List of exclusions for the grpc module and its dependencies (when building for Scala 2)
+lazy val grpcExclusions2 = Seq(
   ExclusionRule(organization = "org.parboiled", name = "parboiled_3"),
   ExclusionRule(organization = "org.apache.pekko", name = "pekko-protobuf-v3_3"),
   ExclusionRule(organization = "org.apache.pekko", name = "pekko-actor_3"),
@@ -59,6 +59,13 @@ lazy val grpcExclusions = Seq(
   ExclusionRule(organization = "org.apache.pekko", name = "pekko-http-core_3"),
   ExclusionRule(organization = "org.apache.pekko", name = "pekko-grpc-runtime_3"),
   ExclusionRule(organization = "com.typesafe", name = "ssl-config-core_3"),
+)
+
+// List of exclusions for the grpc module and its dependencies (when building for Scala 3)
+lazy val grpcExclusions3 = Seq(
+  ExclusionRule(organization = "org.scala-lang.modules", name = "scala-collection-compat_2.13"),
+  ExclusionRule(organization = "com.thesamet.scalapb", name = "lenses_2.13"),
+  ExclusionRule(organization = "com.thesamet.scalapb", name = "scalapb-runtime_2.13"),
 )
 
 lazy val commonSettings = Seq(
@@ -92,6 +99,7 @@ lazy val commonSettings = Seq(
   },
 )
 
+// Intermediate project that generates the Scala code from the protobuf files
 lazy val rdfProtos = (project in file("rdf-protos"))
   .settings(
     name := "jelly-scalameta-test",
@@ -122,6 +130,7 @@ lazy val core = (project in file("core"))
     libraryDependencies ++= Seq(
       "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
     ),
+    // Add the generated proto classes after transforming them with Scalameta
     Compile / sourceGenerators += Def.task {
       Generator.gen(
         inputDir = (rdfProtos / target).value / "scala-2.13" / "src_managed" / "main",
@@ -215,13 +224,14 @@ lazy val grpc = (project in file("grpc"))
     ),
     Compile / PB.generate / excludeFilter := "rdf.proto",
     excludeDependencies ++= {
-      if (scalaVersion.value == scala2Version) grpcExclusions
-      else Seq()
+      if (scalaVersion.value == scala2Version) grpcExclusions2
+      else grpcExclusions3
     },
     commonSettings,
   )
   .dependsOn(stream % "test->compile")
   .dependsOn(core % "compile->compile;test->test;protobuf->protobuf")
+  .dependsOn(rdfProtos % "protobuf->protobuf")
 
 lazy val integrationTests = (project in file("integration-tests"))
   .settings(
@@ -244,8 +254,8 @@ lazy val examples = (project in file("examples"))
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
     ),
     excludeDependencies ++= {
-      if (scalaVersion.value == scala2Version) grpcExclusions
-      else Seq()
+      if (scalaVersion.value == scala2Version) grpcExclusions2
+      else grpcExclusions3
     },
     commonSettings,
   )
