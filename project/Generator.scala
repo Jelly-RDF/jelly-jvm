@@ -12,8 +12,8 @@ object Generator {
       println(s"  Processing ${inputFile.getName}")
       val inputStr = IO.read(inputFile)
       val outputFile = outputDir / inputFile.name
-      // Apply transformations: 1, 2
-      val outputStr = ProtoTransformer2.transform(ProtoTransformer1.transform(inputStr))
+      // Apply transformations
+      val outputStr = ProtoTransformer.transform(inputStr)
       IO.write(outputFile, outputStr)
       outputFile
     }
