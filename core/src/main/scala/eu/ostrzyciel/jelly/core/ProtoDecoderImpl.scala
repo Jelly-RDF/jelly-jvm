@@ -1,7 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
-import eu.ostrzyciel.jelly.core.proto_adapters.*
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag

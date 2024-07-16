@@ -4,9 +4,8 @@ import scala.meta._
  * Source code transformer that for oneof protos:
  *  - Unifies naming of is[S/P/O/G]Something methods to isSomething
  *  - Removes with[S/P/O/G]Something methods
- *  - Unifies naming of [S/P/O/G]Something classes to Something
+ *  - Removes Subject/Predicate/Object/Graph classes and replaces them with RdfTerm from jelly-core
  *  - Unifies naming of [s/p/o/g]Something fields to something
- *  - Adds base traits (RdfTerm, RdfTermCompanion)
  *
  * All this must be done before ProtoTransformer2 is executed.
  */
@@ -27,52 +26,23 @@ object Transform1 {
         case _ => super.apply(tree)
       }
 
-      // Transform class names in definitions
-      case Type.Name(classNamePattern(t)) => Type.Name(t)
+      // Transform method and class names in references
+      case Term.Select(_, Term.Name(traitNamePattern(name))) =>
+        q"eu.ostrzyciel.jelly.core.RdfTerm"
 
-      // Remove with[S/P/O/G]Something methods
+      // Transform class names
+      case Type.Select(_, Type.Name(traitNamePattern(name))) =>
+        Type.Select(q"eu.ostrzyciel.jelly.core", Type.Name(if (name == "Graph") "GraphTerm" else "SpoTerm"))
+
+      // Remove with[S/P/O/G]Something methods and Subject/Predicate/Object/Graph classes
       case Template.After_4_4_0(_, _, _, stats, _) => tree.asInstanceOf[Template].copy(
         stats = stats.flatMap { stat => stat match {
           case Defn.Def.After_4_7_3(_, Term.Name(withMethodNamePattern(t)), _, _, _) => None
+          case Defn.Trait.After_4_6_0(_, Type.Name(traitNamePattern(name)), _, _, _) => None
+          case Defn.Object(_, Term.Name(traitNamePattern(name)), _) => None
           case t => Some(apply(t).asInstanceOf[Stat])
         }}
       )
-
-      // Transform traits for RDF terms
-      case Defn.Trait.After_4_6_0(_, Type.Name(traitNamePattern(name)), _, _, templ) =>
-        val adapterName = if (name == "Graph") "GraphTerm" else s"SpoTerm"
-        tree.asInstanceOf[Defn.Trait].copy(
-          templ = apply(templ.copy(
-            inits = templ.inits :+ Init.After_4_6_0(
-              Type.Select(q"eu.ostrzyciel.jelly.core.proto_adapters", Type.Name(adapterName)),
-              Name.Anonymous(), Nil
-            )
-          )).asInstanceOf[Template]
-        )
-
-      // Transform companion objects for RDF terms
-      case Defn.Object(_, Term.Name(traitNamePattern(name)), templ) =>
-        val adapterName = if (name == "Graph") "GraphTermCompanion" else s"SpoTermCompanion"
-        val lastMethod = if (name == "Graph")
-          q"val makeDefaultGraph: DefaultGraph = DefaultGraph(RdfDefaultGraph.defaultInstance)"
-        else q"def makeTripleTerm(t: eu.ostrzyciel.jelly.core.proto.v1.RdfTriple): TripleTerm = TripleTerm(t)"
-        tree.asInstanceOf[Defn.Object].copy(
-          templ = apply(templ.copy(
-            inits = templ.inits :+ Init.After_4_6_0(
-              Type.Apply(
-                Type.Select(q"eu.ostrzyciel.jelly.core.proto_adapters", Type.Name(adapterName)),
-                Type.ArgClause(Type.Name(name) :: Nil)
-              ),
-              Name.Anonymous(), Nil
-            ),
-            stats = templ.stats ++ Seq(
-              q"val makeEmpty: Empty.type = Empty",
-              q"def makeIri(iri: eu.ostrzyciel.jelly.core.proto.v1.RdfIri): Iri = Iri(iri)",
-              q"def makeBnode(bnode: String): Bnode = Bnode(bnode)",
-              q"def makeLiteral(literal: eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral): Literal = Literal(literal)"
-            ) ++ Seq(lastMethod),
-          )).asInstanceOf[Template]
-        )
 
       case node => super.apply(node)
     }
