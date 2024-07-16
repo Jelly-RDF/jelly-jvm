@@ -1,49 +1,100 @@
 import scala.meta._
 
 /**
- * Source code transformer that for oneof protos:
- *  - Unifies naming of is[S/P/O/G]Something methods to isSomething
- *  - Removes with[S/P/O/G]Something methods
- *  - Removes Subject/Predicate/Object/Graph classes and replaces them with RdfTerm from jelly-core
- *  - Unifies naming of [s/p/o/g]Something fields to something
- *
- * All this must be done before ProtoTransformer2 is executed.
+ * Source code transformer that (mostly) just removes Option[] from the code.
+ * Instead, we use nulls to avoid heap allocations and other overhead.
  */
 object Transform1 {
-  val isMethodNamePattern = "^is[SPOG](Iri|Bnode|Literal|TripleTerm|DefaultGraph)$".r
-  val withMethodNamePattern = "^with[SPOG](Iri|Bnode|Literal|TripleTerm|DefaultGraph)$".r
-  val classNamePattern = "^[SPOG](Iri|Bnode|Literal|TripleTerm|DefaultGraph)".r
-  val fieldNamePattern = "^[spog](Iri|Bnode|Literal|TripleTerm|DefaultGraph)".r
-  val traitNamePattern = "^(Subject|Predicate|Object|Graph)$".r
-
   val transformer = new Transformer {
+    private def transformIsDefinedInner(thenp: Term): Term = thenp.transform {
+      // ().field.get => ().field
+      case Term.Select(name, methodName) if methodName.value == "get" => name
+      case t => super.apply(t)
+    }.asInstanceOf[Term]
+
     override def apply(tree: Tree): Tree = tree match {
-      // Transform method and class names in references
-      case Term.Name(name) => name match {
-        case isMethodNamePattern(t) => Term.Name(f"is$t")
-        case classNamePattern(t) => Term.Name(t)
-        case fieldNamePattern(t) => Term.Name(f"${t.head.toLower}${t.tail}")
-        case _ => super.apply(tree)
-      }
-
-      // Transform method and class names in references
-      case Term.Select(_, Term.Name(traitNamePattern(name))) =>
-        q"eu.ostrzyciel.jelly.core.RdfTerm"
-
-      // Transform class names
-      case Type.Select(_, Type.Name(traitNamePattern(name))) =>
-        Type.Select(q"eu.ostrzyciel.jelly.core", Type.Name(if (name == "Graph") "GraphTerm" else "SpoTerm"))
-
-      // Remove with[S/P/O/G]Something methods and Subject/Predicate/Object/Graph classes
       case Template.After_4_4_0(_, _, _, stats, _) => tree.asInstanceOf[Template].copy(
         stats = stats.flatMap { stat => stat match {
-          case Defn.Def.After_4_7_3(_, Term.Name(withMethodNamePattern(t)), _, _, _) => None
-          case Defn.Trait.After_4_6_0(_, Type.Name(traitNamePattern(name)), _, _, _) => None
-          case Defn.Object(_, Term.Name(traitNamePattern(name)), _) => None
-          case t => Some(apply(t).asInstanceOf[Stat])
+          // Remove def asRecognized
+          case Defn.Def.After_4_7_3(_, Term.Name("asRecognized"), _, _, _) => None
+          // Transform def ... => Option[T]  to  def ... => T
+          case Defn.Def.After_4_7_3(_, _, _, Some(Type.Apply.After_4_6_0(tpe, typeArgs)), term)
+            if tpe.syntax == "_root_.scala.Option" => Some(stat.asInstanceOf[Defn.Def].copy(
+            decltpe = Some(typeArgs.values.head),
+            body = term match {
+              case _ if term.syntax == "_root_.scala.None" => typeArgs.values.head.syntax match {
+                case "_root_.scala.Int" => q"0"
+                case "_root_.scala.Predef.String" => q""" "" """
+                case _ => q"null"
+              }
+              case Term.Apply.After_4_6_0(term, argClause) if term.syntax == "Some" => argClause.values.head
+              case _ => term
+            }
+          ))
+          case t => Some(super.apply(t).asInstanceOf[Stat])
         }}
       )
 
+      // ().field.isDefined  to  ().isField
+      case Term.If.After_4_4_0(cond, thenp, _, _) => cond match {
+        case Term.Select(Term.Select(subject, Term.Name(fieldName)), methodName) => methodName.value match {
+          case "isDefined" => tree.asInstanceOf[Term.If].copy(
+            cond = Term.Select(subject, Term.Name(f"is${fieldName.head.toUpper}${fieldName.tail}")),
+            thenp = transformIsDefinedInner(thenp)
+          )
+          case _ => tree
+        }
+        case _ => tree
+      }
+
+      // ().orNull  to  ()
+      case Term.Select(name, methodName) => methodName.value match {
+        case "orNull" => name
+        case _ => tree
+      }
+
+      // ().fold($1)($2)  to  $1
+      case Term.Apply.After_4_6_0(
+        Term.Apply.After_4_6_0(Term.Select(name, methodName), argClause1),
+        argClause2
+      ) if methodName.value == "fold" => argClause1.values.head
+
+      // ().field.foreach { __v => ... }  to  if (().isField) { ... }
+      case Term.Apply.After_4_6_0(
+        Term.Select(Term.Select(subject, Term.Name(fieldName)), methodName),
+        Term.ArgClause(List(Term.Block(List(Term.Function.After_4_6_0(_, Term.Block(stats))))), _)
+      ) if methodName.value == "foreach" =>
+        val newStats = stats.map(_.transform {
+          case Term.Name("__v") => Term.Select(subject, Term.Name(fieldName))
+          case s => s
+        }.asInstanceOf[Stat])
+        Term.If.After_4_4_0(
+          cond = Term.Select(subject, Term.Name(f"is${fieldName.head.toUpper}${fieldName.tail}")),
+          thenp = Term.Block(newStats),
+          elsep = Lit.Unit(),
+        )
+
+      // ().field.getOrElse(...)  to  if (().isField) { ... } else { ... }
+      case Term.Apply.After_4_6_0(
+        Term.Select(
+          Term.Apply.After_4_6_0(Term.Select(Term.Select(subject, fieldName), Term.Name("map")), thenArgs),
+          Term.Name("getOrElse")
+        ),
+        elseArgs
+      ) =>
+        val thenBody = thenArgs.values.head.asInstanceOf[Term.AnonymousFunction].body match {
+          case Term.Apply.After_4_6_0(fun, _) => Term.Apply.After_4_6_0(
+            fun,
+            Term.ArgClause(List(Term.Select(subject, fieldName)))
+          )
+          case Term.Select(_, subField) => Term.Select(Term.Select(subject, fieldName), subField)
+          case t => t
+        }
+        Term.If.After_4_4_0(
+          cond = Term.Select(subject, Term.Name(f"is${fieldName.value.head.toUpper}${fieldName.value.tail}")),
+          thenp = thenBody,
+          elsep = elseArgs.values.head
+        )
       case node => super.apply(node)
     }
   }

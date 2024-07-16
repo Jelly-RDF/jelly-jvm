@@ -7,7 +7,7 @@ import scala.collection.mutable.ListBuffer
 object ProtoEncoder:
   private val graphEnd = Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd.defaultInstance)))
   private val defaultGraphStart = RdfStreamRow(RdfStreamRow.Row.GraphStart(
-    RdfGraphStart(RdfTerm.DefaultGraph.defaultInstance)
+    RdfGraphStart(RdfDefaultGraph.defaultInstance)
   ))
 
 /**
@@ -125,54 +125,38 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   // *** 3. THE PROTECTED INTERFACE ***
   // **********************************
   protected final inline def makeIriNode(iri: String): SpoTerm =
-    RdfTerm.Iri(iriEncoder.encodeIri(iri, extraRowsBuffer))
+    iriEncoder.encodeIri(iri, extraRowsBuffer)
 
-  protected final inline def makeBlankNode(label: String): SpoTerm =
-    RdfTerm.Bnode(label)
+  protected final inline def makeBlankNode(label: String): SpoTerm = label
 
   protected final inline def makeSimpleLiteral(lex: String): SpoTerm =
-    RdfTerm.Literal(
-      RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
-    )
+    RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
 
   protected final inline def makeLangLiteral(lex: String, lang: String): SpoTerm =
-    RdfTerm.Literal(
-      RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
-    )
+    RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
 
   protected final inline def makeDtLiteral(lex: String, dt: String): SpoTerm =
-    RdfTerm.Literal(
-      RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
-    )
+    RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
 
   protected final inline def makeTripleNode(triple: TQuoted): SpoTerm =
-    RdfTerm.TripleTerm(quotedToProto(triple))
+    quotedToProto(triple)
 
   protected final inline def makeIriNodeGraph(iri: String): GraphTerm =
-    RdfTerm.Iri(iriEncoder.encodeIri(iri, extraRowsBuffer))
+    iriEncoder.encodeIri(iri, extraRowsBuffer)
 
-  protected final inline def makeBlankNodeGraph(label: String): GraphTerm =
-    RdfTerm.Bnode(label)
+  protected final inline def makeBlankNodeGraph(label: String): GraphTerm = label
 
   protected final inline def makeSimpleLiteralGraph(lex: String): GraphTerm =
-    RdfTerm.Literal(
-      RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
-    )
+    RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
 
-  protected final inline def makeLangLiteralGraph
-  (lex: String, lang: String): GraphTerm =
-    RdfTerm.Literal(
-      RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
-    )
+  protected final inline def makeLangLiteralGraph(lex: String, lang: String): GraphTerm =
+    RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
 
-  protected final inline def makeDtLiteralGraph
-  (lex: String, dt: String): GraphTerm =
-    RdfTerm.Literal(
-      RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
-    )
+  protected final inline def makeDtLiteralGraph(lex: String, dt: String): GraphTerm =
+    RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
 
   protected final inline def makeDefaultGraph: GraphTerm =
-    RdfTerm.DefaultGraph.defaultInstance
+    RdfDefaultGraph.defaultInstance
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
@@ -185,17 +169,16 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
 
-  private def nodeToProtoWrapped
-  (node: TNode, lastNodeHolder: LastNodeHolder[TNode]): SpoTerm =
+  private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): SpoTerm =
     lastNodeHolder.node match
-      case oldNode if node == oldNode => RdfTerm.Empty
+      case oldNode if node == oldNode => null
       case _ =>
         lastNodeHolder.node = node
         nodeToProto(node)
 
   private def graphNodeToProtoWrapped(node: TNode): GraphTerm =
     lastGraph.node match
-      case oldNode if node == oldNode => RdfTerm.Empty
+      case oldNode if node == oldNode => null
       case _ =>
         lastGraph.node = node
         graphNodeToProto(node)

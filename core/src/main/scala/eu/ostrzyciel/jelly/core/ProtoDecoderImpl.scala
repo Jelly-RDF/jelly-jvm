@@ -46,43 +46,38 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
       converter.makeDtLiteral(literal.lex, dtLookup.get(dtId))
 
 
-  private final def convertTerm(term: SpoTerm): TNode =
-    if term.isIri then
-      converter.makeIriNode(nameDecoder.decode(term.iri))
-    else if term.isBnode then
-      converter.makeBlankNode(term.bnode)
-    else if term.isLiteral then
-      convertLiteral(term.literal)
-    else if term.isTripleTerm then
+  private final def convertTerm(term: SpoTerm): TNode = term match
+    case null =>
+      throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.")
+    case iri: RdfIri =>
+      converter.makeIriNode(nameDecoder.decode(iri))
+    case bnode: String =>
+      converter.makeBlankNode(bnode)
+    case literal: RdfLiteral =>
+      convertLiteral(literal)
+    case inner: RdfTriple =>
       // ! No support for repeated terms in quoted triples
-      val inner = term.tripleTerm
       converter.makeTripleNode(
         convertTerm(inner.subject),
         convertTerm(inner.predicate),
         convertTerm(inner.`object`),
       )
-    else if term.isEmpty then
-      throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.")
-    else
-      throw new RdfProtoDeserializationError("Unknown term type.")
 
 
-  protected final def convertGraphTerm(graph: GraphTerm): TNode =
-    if graph.isIri then
-      converter.makeIriNode(nameDecoder.decode(graph.iri))
-    else if graph.isDefaultGraph then
-      converter.makeDefaultGraphNode()
-    else if graph.isBnode then
-      converter.makeBlankNode(graph.bnode)
-    else if graph.isLiteral then
-      convertLiteral(graph.literal)
-    else if graph.isEmpty then
+  protected final def convertGraphTerm(graph: GraphTerm): TNode = graph match
+    case null =>
       throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.")
-    else
-      throw new RdfProtoDeserializationError("Unknown graph term type.")
+    case iri: RdfIri =>
+      converter.makeIriNode(nameDecoder.decode(iri))
+    case _: RdfDefaultGraph =>
+      converter.makeDefaultGraphNode()
+    case bnode: String =>
+      converter.makeBlankNode(bnode)
+    case literal: RdfLiteral =>
+      convertLiteral(literal)
 
   protected final def convertTermWrapped(term: SpoTerm, lastNodeHolder: LastNodeHolder[TNode]): TNode =
-    if term.isEmpty then
+    if term == null then
       lastNodeHolder.node match
         case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("Empty term without previous term.")
         case n => n.asInstanceOf[TNode]
@@ -92,7 +87,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
       node
 
   protected final def convertGraphTermWrapped(graph: GraphTerm): TNode =
-    if graph.isEmpty then
+    if graph == null then
       lastGraph.node match
         case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("Empty term without previous graph term.")
         case n => n.asInstanceOf[TNode]
