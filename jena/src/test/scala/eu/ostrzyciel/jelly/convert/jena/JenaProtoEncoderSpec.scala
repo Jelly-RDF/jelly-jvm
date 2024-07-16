@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.convert.jena
 
-import eu.ostrzyciel.jelly.core.JellyOptions
+import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.jena.sparql.core.Quad
 import org.scalatest.matchers.should.Matchers
@@ -13,7 +13,7 @@ import org.scalatest.wordspec.AnyWordSpec
 class JenaProtoEncoderSpec extends AnyWordSpec, Matchers:
   private val encodedDefaultGraph = RdfStreamRow(
     RdfStreamRow.Row.GraphStart(
-      RdfGraphStart(RdfGraphStart.Graph.DefaultGraph(
+      RdfGraphStart(RdfTerm.DefaultGraph(
         RdfDefaultGraph()
       ))
     )
