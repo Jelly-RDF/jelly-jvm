@@ -8,14 +8,22 @@ object Generator {
     println(s"Generating Scala files from $inputDir to $outputDir")
     val finder: PathFinder = inputDir ** "*.scala"
 
-    for(inputFile <- finder.get) yield {
-      println(s"  Processing ${inputFile.getName}")
-      val inputStr = IO.read(inputFile)
-      val outputFile = outputDir / inputFile.name
-      // Apply transformations
-      val outputStr = ProtoTransformer.transform(inputStr)
-      IO.write(outputFile, outputStr)
-      outputFile
+    val exclusions = Seq("RdfTriple.scala", "RdfQuad.scala", "RdfGraphStart.scala")
+
+    val files = for (inputFile <- finder.get) yield {
+      if (exclusions.contains(inputFile.getName)) {
+        println(s"  Skipping ${inputFile.getName}")
+        None
+      } else {
+        println(s"  Processing ${inputFile.getName}")
+        val inputStr = IO.read(inputFile)
+        val outputFile = outputDir / inputFile.name
+        // Apply transformations
+        val outputStr = ProtoTransformer.transform(inputStr)
+        IO.write(outputFile, outputStr)
+        Some(outputFile)
+      }
     }
+    files.flatten
   }
 }

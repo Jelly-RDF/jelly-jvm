@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.convert.rdf4j
 
 import eu.ostrzyciel.jelly.core.*
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, RdfStreamOptions, SpoTerm}
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.vocabulary.XSD
 

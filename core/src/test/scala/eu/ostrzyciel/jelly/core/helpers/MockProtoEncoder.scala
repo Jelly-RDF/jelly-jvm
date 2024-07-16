@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.core.helpers
 
 import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, RdfStreamOptions, SpoTerm}
 
 /**
  * Mock implementation of ProtoEncoder
