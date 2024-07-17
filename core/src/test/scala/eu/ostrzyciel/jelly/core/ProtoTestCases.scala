@@ -140,7 +140,7 @@ object ProtoTestCases:
       ),
       RdfQuad(
         null,
-        "blank",
+        RdfTerm.Bnode("blank"),
         RdfLiteral(
           "test", RdfLiteral.LiteralKind.Empty
         ),
@@ -150,7 +150,7 @@ object ProtoTestCases:
         null,
         null,
         null,
-        "blank",
+        RdfTerm.Bnode("blank"),
       ),
       RdfQuad(
         null,
@@ -191,7 +191,7 @@ object ProtoTestCases:
       ),
       RdfQuad(
         null,
-        "blank",
+        RdfTerm.Bnode("blank"),
         RdfLiteral("test", RdfLiteral.LiteralKind.Empty),
         null,
       ),

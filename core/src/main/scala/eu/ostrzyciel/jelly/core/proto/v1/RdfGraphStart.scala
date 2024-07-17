@@ -43,16 +43,16 @@ final case class RdfGraphStart(graph: GraphTerm = null) extends scalapb.Generate
     _root_.scala.Predef.require(__field.containingMessage eq companion.scalaDescriptor)
     (__field.number: @_root_.scala.unchecked) match {
       case 1 =>
-        if (graph.isInstanceOf[RdfIri]) graph.asInstanceOf[RdfIri].toPMessage
+        if (graph.isIri) graph.iri.toPMessage
         else _root_.scalapb.descriptors.PEmpty
       case 2 =>
-        if (graph.isInstanceOf[String]) _root_.scalapb.descriptors.PString(graph.asInstanceOf[String])
+        if (graph.isBnode) _root_.scalapb.descriptors.PString(graph.bnode)
         else _root_.scalapb.descriptors.PEmpty
       case 3 =>
-        if (graph.isInstanceOf[RdfDefaultGraph]) graph.asInstanceOf[RdfDefaultGraph].toPMessage
+        if (graph.isDefaultGraph) graph.defaultGraph.toPMessage
         else _root_.scalapb.descriptors.PEmpty
       case 4 =>
-        if (graph.isInstanceOf[RdfLiteral]) graph.asInstanceOf[RdfLiteral].toPMessage
+        if (graph.isLiteral) graph.literal.toPMessage
         else _root_.scalapb.descriptors.PEmpty
     }
   }
@@ -76,7 +76,7 @@ object RdfGraphStart extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jel
         case 10 =>
           __graph = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfIri](_input__)
         case 18 =>
-          __graph = _input__.readStringRequireUtf8()
+          __graph = RdfTerm.Bnode(_input__.readStringRequireUtf8())
         case 26 =>
           __graph = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfDefaultGraph](_input__)
         case 34 =>
@@ -92,7 +92,7 @@ object RdfGraphStart extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jel
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
       eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart(graph = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfIri]])
-        .orElse[GraphTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(2).get).flatMap(_.as[_root_.scala.Option[_root_.scala.Predef.String]]))
+        .orElse[GraphTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(2).get).flatMap(_.as[_root_.scala.Option[_root_.scala.Predef.String]]).map(RdfTerm.Bnode.apply))
         .orElse[GraphTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(3).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfDefaultGraph]]))
         .orElse[GraphTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(4).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral]])).orNull)
     case _ =>

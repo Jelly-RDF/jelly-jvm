@@ -1,0 +1,45 @@
+import scala.meta.*
+
+/**
+ * Transformer that adds `is*` and `*` methods to `RdfIri`, `RdfLiteral` and `RdfDefaultGraph` classes,
+ * to allow using them directly in RDF term context. See: [[eu.ostrzyciel.jelly.core.proto.v1.RdfTerm]].
+ */
+object Transform3 {
+  val transformer: Transformer = new Transformer {
+    def copyTemplate(templ: Template, traits: Seq[String], name: String, isName: String): Template = {
+      templ.copy(
+        inits = templ.inits ++ traits.map { tName =>
+          Init.After_4_6_0(Type.Name(tName), Name.Anonymous(), Nil)
+        },
+        stats = templ.stats ++ Seq(
+          Defn.Def.After_4_7_3(
+            List(Mod.Override()),
+            Term.Name(isName),
+            Nil,
+            None,
+            Lit.Boolean(value = true),
+          ),
+          Defn.Def.After_4_7_3(
+            List(Mod.Override()),
+            Term.Name(name),
+            Nil,
+            None,
+            Term.This(Name.Anonymous()),
+          ),
+        )
+      )
+    }
+
+    override def apply(tree: Tree): Tree = tree match {
+      case Defn.Class.After_4_6_0(_, Type.Name(name), _, _, templ) =>
+        val newTempl = name match {
+          case "RdfIri" => Some(copyTemplate(templ, Seq("SpoTerm", "GraphTerm"), "iri", "isIri"))
+          case "RdfLiteral" => Some(copyTemplate(templ, Seq("SpoTerm", "GraphTerm"), "literal", "isLiteral"))
+          case "RdfDefaultGraph" => Some(copyTemplate(templ, Seq("GraphTerm"), "defaultGraph", "isDefaultGraph"))
+          case _ => None
+        }
+        newTempl.map(templ => tree.asInstanceOf[Defn.Class].copy(templ = templ)).getOrElse(tree)
+      case t => super.apply(t)
+    }
+  }
+}

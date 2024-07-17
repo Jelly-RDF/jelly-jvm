@@ -127,7 +127,8 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   protected final inline def makeIriNode(iri: String): SpoTerm =
     iriEncoder.encodeIri(iri, extraRowsBuffer)
 
-  protected final inline def makeBlankNode(label: String): SpoTerm = label
+  protected final inline def makeBlankNode(label: String): SpoTerm =
+    RdfTerm.Bnode(label)
 
   protected final inline def makeSimpleLiteral(lex: String): SpoTerm =
     RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
@@ -144,7 +145,8 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   protected final inline def makeIriNodeGraph(iri: String): GraphTerm =
     iriEncoder.encodeIri(iri, extraRowsBuffer)
 
-  protected final inline def makeBlankNodeGraph(label: String): GraphTerm = label
+  protected final inline def makeBlankNodeGraph(label: String): GraphTerm =
+    RdfTerm.Bnode(label)
 
   protected final inline def makeSimpleLiteralGraph(lex: String): GraphTerm =
     RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
