@@ -19,23 +19,24 @@ private[core] final class EncoderLookup(maxEntries: Int)
    * @return (1-based id of the value, is a new entry)
    */
   def addEntry(v: String): EncoderValue =
-    val value = this.get(v)
-    if value != null then
-      // case 1: the value is already in the map
-      return value
-
-    val s = this.size
-    if s < maxEntries then
-      // case 2: we still have free IDs, add it to the map
-      lastSetId = s + 1
-      this.put(v, EncoderValue(lastSetId, lastSetId, false))
-      // the setId is always 0, because we haven't filled in the table yet
-      return EncoderValue(lastSetId, 0, true)
-
-    // case 3: no free IDs, reuse an old one
-    val next = this.values.iterator.next
-    this.put(v, next)
-    val getId = next.getId
-    val setId = if lastSetId + 1 == getId then 0 else getId
-    lastSetId = getId
-    EncoderValue(getId, setId, true)
+    var setId: Int = 0
+    var getId: Int = 0
+    val value = this.computeIfAbsent(v, _ => {
+      val s = this.size
+      if s < maxEntries then
+        // case 2a: there is still space in the map
+        lastSetId = s + 1
+        getId = lastSetId
+        EncoderValue(lastSetId, lastSetId, false)
+      else
+        // case 2b: the map is full, we need to evict something
+        val next = this.values.iterator.next
+        getId = next.getId
+        setId = if lastSetId + 1 == getId then 0 else getId
+        lastSetId = getId
+        next
+    })
+    // case 1: the value is already in the map
+    if getId == 0 then value
+    // case 2: we've added a new entry
+    else EncoderValue(getId, setId, newEntry = true)
