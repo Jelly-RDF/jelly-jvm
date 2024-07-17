@@ -19,7 +19,8 @@ package eu.ostrzyciel.jelly.core.proto.v1
  * optimizations to make this as fast as possible.
  */
 @SerialVersionUID(0L)
-final case class RdfTriple(subject: SpoTerm = null, predicate: SpoTerm = null, `object`: SpoTerm = null) extends scalapb.GeneratedMessage {
+final case class RdfTriple(subject: SpoTerm = null, predicate: SpoTerm = null, `object`: SpoTerm = null)
+  extends scalapb.GeneratedMessage, SpoTerm, GraphTerm {
   @transient private[this] var __serializedSizeMemoized: _root_.scala.Int = 0
 
   private[this] def __computeSerializedSize(): _root_.scala.Int = {
@@ -46,29 +47,29 @@ final case class RdfTriple(subject: SpoTerm = null, predicate: SpoTerm = null, `
   def getFieldByNumber(__fieldNumber: _root_.scala.Int): _root_.scala.Any = {
     (__fieldNumber: @_root_.scala.unchecked) match {
       case 1 =>
-        subject.asInstanceOf[RdfIri]
+        subject.iri
       case 2 =>
-        subject.asInstanceOf[String]
+        subject.bnode
       case 3 =>
-        subject.asInstanceOf[RdfLiteral]
+        subject.literal
       case 4 =>
-        subject.asInstanceOf[RdfTriple]
+        subject.tripleTerm
       case 5 =>
-        predicate.asInstanceOf[RdfIri]
+        predicate.iri
       case 6 =>
-        predicate.asInstanceOf[String]
+        predicate.bnode
       case 7 =>
-        predicate.asInstanceOf[RdfLiteral]
+        predicate.literal
       case 8 =>
-        predicate.asInstanceOf[RdfTriple]
+        predicate.tripleTerm
       case 9 =>
-        `object`.asInstanceOf[RdfIri]
+        `object`.iri
       case 10 =>
-        `object`.asInstanceOf[String]
+        `object`.bnode
       case 11 =>
-        `object`.asInstanceOf[RdfLiteral]
+        `object`.literal
       case 12 =>
-        `object`.asInstanceOf[RdfTriple]
+        `object`.tripleTerm
     }
   }
 
@@ -76,35 +77,39 @@ final case class RdfTriple(subject: SpoTerm = null, predicate: SpoTerm = null, `
     _root_.scala.Predef.require(__field.containingMessage eq companion.scalaDescriptor)
     (__field.number: @_root_.scala.unchecked) match {
       case 1 =>
-        if (subject.isInstanceOf[RdfIri]) subject.asInstanceOf[RdfIri].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (subject.isIri) subject.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 2 =>
-        if (subject.isInstanceOf[String]) _root_.scalapb.descriptors.PString(subject.asInstanceOf[String]) else _root_.scalapb.descriptors.PEmpty
+        if (subject.isBnode) _root_.scalapb.descriptors.PString(subject.bnode) else _root_.scalapb.descriptors.PEmpty
       case 3 =>
-        if (subject.isInstanceOf[RdfLiteral]) subject.asInstanceOf[RdfLiteral].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (subject.isLiteral) subject.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 4 =>
-        if (subject.isInstanceOf[RdfTriple]) subject.asInstanceOf[RdfTriple].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (subject.isTripleTerm) subject.tripleTerm.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 5 =>
-        if (predicate.isInstanceOf[RdfIri]) predicate.asInstanceOf[RdfIri].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (predicate.isIri) predicate.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 6 =>
-        if (predicate.isInstanceOf[String]) _root_.scalapb.descriptors.PString(predicate.asInstanceOf[String]) else _root_.scalapb.descriptors.PEmpty
+        if (predicate.isBnode) _root_.scalapb.descriptors.PString(predicate.bnode) else _root_.scalapb.descriptors.PEmpty
       case 7 =>
-        if (predicate.isInstanceOf[RdfLiteral]) predicate.asInstanceOf[RdfLiteral].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (predicate.isLiteral) predicate.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 8 =>
-        if (predicate.isInstanceOf[RdfTriple]) predicate.asInstanceOf[RdfTriple].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (predicate.isTripleTerm) predicate.tripleTerm.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 9 =>
-        if (`object`.isInstanceOf[RdfIri]) `object`.asInstanceOf[RdfIri].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (`object`.isIri) `object`.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 10 =>
-        if (`object`.isInstanceOf[String]) _root_.scalapb.descriptors.PString(`object`.asInstanceOf[String]) else _root_.scalapb.descriptors.PEmpty
+        if (`object`.isBnode) _root_.scalapb.descriptors.PString(`object`.bnode) else _root_.scalapb.descriptors.PEmpty
       case 11 =>
-        if (`object`.isInstanceOf[RdfLiteral]) `object`.asInstanceOf[RdfLiteral].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (`object`.isLiteral) `object`.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 12 =>
-        if (`object`.isInstanceOf[RdfTriple]) `object`.asInstanceOf[RdfTriple].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (`object`.isTripleTerm) `object`.tripleTerm.toPMessage else _root_.scalapb.descriptors.PEmpty
     }
   }
 
   def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
 
   def companion: eu.ostrzyciel.jelly.core.proto.v1.RdfTriple.type = eu.ostrzyciel.jelly.core.proto.v1.RdfTriple
+
+  override def isTripleTerm: Boolean = true
+
+  override def tripleTerm: RdfTriple = this
 }
 
 object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfTriple] {
@@ -123,7 +128,7 @@ object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.c
         case 10 =>
           __subject = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfIri](_input__)
         case 18 =>
-          __subject = _input__.readStringRequireUtf8()
+          __subject = RdfTerm.Bnode(_input__.readStringRequireUtf8())
         case 26 =>
           __subject = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral](_input__)
         case 34 =>
@@ -131,7 +136,7 @@ object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.c
         case 42 =>
           __predicate = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfIri](_input__)
         case 50 =>
-          __predicate = _input__.readStringRequireUtf8()
+          __predicate = RdfTerm.Bnode(_input__.readStringRequireUtf8())
         case 58 =>
           __predicate = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral](_input__)
         case 66 =>
@@ -139,7 +144,7 @@ object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.c
         case 74 =>
           __object = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfIri](_input__)
         case 82 =>
-          __object = _input__.readStringRequireUtf8()
+          __object = RdfTerm.Bnode(_input__.readStringRequireUtf8())
         case 90 =>
           __object = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral](_input__)
         case 98 =>
@@ -156,17 +161,17 @@ object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.c
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
       eu.ostrzyciel.jelly.core.proto.v1.RdfTriple(
         subject = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfIri]])
-          .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(2).get).flatMap(_.as[_root_.scala.Option[_root_.scala.Predef.String]]))
+          .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(2).get).flatMap(_.as[_root_.scala.Option[_root_.scala.Predef.String]]).map(RdfTerm.Bnode.apply))
           .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(3).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral]]))
           .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(4).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfTriple]]))
           .orNull,
         predicate = __fieldsMap.get(scalaDescriptor.findFieldByNumber(5).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfIri]])
-          .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(6).get).flatMap(_.as[_root_.scala.Option[_root_.scala.Predef.String]]))
+          .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(6).get).flatMap(_.as[_root_.scala.Option[_root_.scala.Predef.String]]).map(RdfTerm.Bnode.apply))
           .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(7).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral]]))
           .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(8).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfTriple]]))
           .orNull,
         `object` = __fieldsMap.get(scalaDescriptor.findFieldByNumber(9).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfIri]])
-          .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(10).get).flatMap(_.as[_root_.scala.Option[_root_.scala.Predef.String]]))
+          .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(10).get).flatMap(_.as[_root_.scala.Option[_root_.scala.Predef.String]]).map(RdfTerm.Bnode.apply))
           .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(11).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral]]))
           .orElse[SpoTerm](__fieldsMap.get(scalaDescriptor.findFieldByNumber(12).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfTriple]]))
           .orNull

@@ -4,6 +4,7 @@ object ProtoTransformer {
   val transformations: Seq[Transformer] = Seq(
     Transform1.transformer,
     Transform2.transformer,
+    Transform3.transformer,
   )
 
   def transform(input: String): String = {

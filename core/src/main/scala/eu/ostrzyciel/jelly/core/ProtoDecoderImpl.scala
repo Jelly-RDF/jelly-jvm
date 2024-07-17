@@ -46,35 +46,40 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
       converter.makeDtLiteral(literal.lex, dtLookup.get(dtId))
 
 
-  private final def convertTerm(term: SpoTerm): TNode = term match
-    case null =>
+  private final def convertTerm(term: SpoTerm): TNode =
+    if term == null then
       throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.")
-    case iri: RdfIri =>
-      converter.makeIriNode(nameDecoder.decode(iri))
-    case bnode: String =>
-      converter.makeBlankNode(bnode)
-    case literal: RdfLiteral =>
-      convertLiteral(literal)
-    case inner: RdfTriple =>
+    else if term.isIri then
+      converter.makeIriNode(nameDecoder.decode(term.iri))
+    else if term.isBnode then
+      converter.makeBlankNode(term.bnode)
+    else if term.isLiteral then
+      convertLiteral(term.literal)
+    else if term.isTripleTerm then
+      val inner = term.tripleTerm
       // ! No support for repeated terms in quoted triples
       converter.makeTripleNode(
         convertTerm(inner.subject),
         convertTerm(inner.predicate),
         convertTerm(inner.`object`),
       )
+    else
+      throw new RdfProtoDeserializationError("Unknown term type.")
 
 
-  protected final def convertGraphTerm(graph: GraphTerm): TNode = graph match
-    case null =>
+  protected final def convertGraphTerm(graph: GraphTerm): TNode =
+    if graph == null then
       throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.")
-    case iri: RdfIri =>
-      converter.makeIriNode(nameDecoder.decode(iri))
-    case _: RdfDefaultGraph =>
+    else if graph.isIri then
+      converter.makeIriNode(nameDecoder.decode(graph.iri))
+    else if graph.isDefaultGraph then
       converter.makeDefaultGraphNode()
-    case bnode: String =>
-      converter.makeBlankNode(bnode)
-    case literal: RdfLiteral =>
-      convertLiteral(literal)
+    else if graph.isBnode then
+      converter.makeBlankNode(graph.bnode)
+    else if graph.isLiteral then
+      convertLiteral(graph.literal)
+    else
+      throw new RdfProtoDeserializationError("Unknown graph term type.")
 
   protected final def convertTermWrapped(term: SpoTerm, lastNodeHolder: LastNodeHolder[TNode]): TNode =
     if term == null then
