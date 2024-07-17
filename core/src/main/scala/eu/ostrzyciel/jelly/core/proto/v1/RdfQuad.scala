@@ -73,7 +73,7 @@ final case class RdfQuad(subject: SpoTerm = null, predicate: SpoTerm = null, `ob
       case 14 =>
         graph.bnode
       case 15 =>
-        graph.asInstanceOf[RdfDefaultGraph]
+        graph.defaultGraph
       case 16 =>
         graph.literal
     }
@@ -111,7 +111,7 @@ final case class RdfQuad(subject: SpoTerm = null, predicate: SpoTerm = null, `ob
       case 14 =>
         if (graph.isBnode) _root_.scalapb.descriptors.PString(graph.bnode) else _root_.scalapb.descriptors.PEmpty
       case 15 =>
-        if (graph.isInstanceOf[RdfDefaultGraph]) graph.asInstanceOf[RdfDefaultGraph].toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (graph.isInstanceOf[RdfDefaultGraph]) graph.defaultGraph.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 16 =>
         if (graph.isLiteral) graph.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
     }
