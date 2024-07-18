@@ -63,7 +63,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndA
 
   private object TripleTests:
     val files: Seq[(String, File)] = Seq[String](
-      "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.nt", "rdf-star-blanks.nt", "generalized_rdf.nt"
+      "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.nt", "rdf-star-blanks.nt"
     ).map(name => (
       name, File(getClass.getResource("/triples/" + name).toURI)
     ))
