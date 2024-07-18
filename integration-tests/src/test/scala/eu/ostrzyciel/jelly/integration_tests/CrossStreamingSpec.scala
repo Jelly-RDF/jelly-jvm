@@ -21,7 +21,34 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 
+object CrossStreamingSpec extends AnyWordSpec, Matchers:
+  def compareDatasets(resultDataset: DatasetGraph, sourceDataset: DatasetGraph): Unit =
+    resultDataset.size() should be(sourceDataset.size())
+    resultDataset.getDefaultGraph.isIsomorphicWith(sourceDataset.getDefaultGraph) should be(true)
+    // I have absolutely no idea why, but the .asScala extension method is not working here.
+    // Made the conversion explicit and it's fine.
+    for graphNode <- IteratorHasAsScala(sourceDataset.listGraphNodes).asScala do
+      val otherGraphNode = if graphNode.isBlank then
+        // Take any blank node graph. This will only work if there is at most one blank node graph
+        // in the dataset. This happens to cover our test cases.
+        IteratorHasAsScala(resultDataset.listGraphNodes)
+          .asScala
+          .filter(_.isBlank)
+          .next()
+      else graphNode
+
+      withClue(s"result dataset should have graph $graphNode") {
+        resultDataset.containsGraph(otherGraphNode) should be(true)
+      }
+      withClue(s"graph $graphNode should be isomorphic") {
+        sourceDataset.getGraph(graphNode)
+          .isIsomorphicWith(resultDataset.getGraph(otherGraphNode)) should be(true)
+      }
+
+
 class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
+  import CrossStreamingSpec.*
+
   given actorSystem: ActorSystem = ActorSystem()
   given ExecutionContext = actorSystem.getDispatcher
   given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
@@ -75,29 +102,6 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndA
   final case class CaseKey(physicalType: String, encoder: String, jOpt: String, sOpt: String, caseName: String)
 
   private val encodedSizes: mutable.Map[CaseKey, Long] = mutable.Map()
-
-  private def compareDatasets(resultDataset: DatasetGraph, sourceDataset: DatasetGraph): Unit =
-    resultDataset.size() should be (sourceDataset.size())
-    resultDataset.getDefaultGraph.isIsomorphicWith(sourceDataset.getDefaultGraph) should be (true)
-    // I have absolutely no idea why, but the .asScala extension method is not working here.
-    // Made the conversion explicit and it's fine.
-    for graphNode <- IteratorHasAsScala(sourceDataset.listGraphNodes).asScala do
-      val otherGraphNode = if graphNode.isBlank then
-      // Take any blank node graph. This will only work if there is at most one blank node graph
-      // in the dataset. This happens to cover our test cases.
-        IteratorHasAsScala(resultDataset.listGraphNodes)
-          .asScala
-          .filter(_.isBlank)
-          .next()
-      else graphNode
-
-      withClue(s"result dataset should have graph $graphNode") {
-        resultDataset.containsGraph(otherGraphNode) should be (true)
-      }
-      withClue(s"graph $graphNode should be isomorphic") {
-        sourceDataset.getGraph(graphNode)
-          .isIsomorphicWith(resultDataset.getGraph(otherGraphNode)) should be (true)
-      }
 
   for (encName, encFlow) <- implementations do
     s"$encName encoder" when {
