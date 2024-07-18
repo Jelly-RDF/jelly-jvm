@@ -4,13 +4,11 @@ import eu.ostrzyciel.jelly.core.proto.v1.*;
 import scala.collection.mutable.ListBuffer;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class NodeEncoder<TNode> {
-    public final static class DependentNode {
-        public RdfTerm encoded;
+    public static final class DependentNode {
+        public UniversalTerm encoded;
         // 1: datatypes and IRI names
         public int lookupPointer1;
         public int lookupSerial1;
@@ -40,7 +38,7 @@ public class NodeEncoder<TNode> {
     NewEncoderLookup prefixLookup;
     NewEncoderLookup nameLookup;
     NodeCache<Object, DependentNode> dependentNodeCache;
-    NodeCache<TNode, RdfTerm> nodeCache;
+    NodeCache<Object, UniversalTerm> nodeCache;
 
     static final RdfIri zeroIri = new RdfIri(0, 0);
 
@@ -54,18 +52,17 @@ public class NodeEncoder<TNode> {
         dependentNodeCache = new NodeCache<>(dependentNodeCacheSize);
         nodeCache = new NodeCache<>(nodeCacheSize);
     }
-
-    // if returned object.encoded = null -> set it to new RdfLiteral.
-    // else, use it to write on the wire
-    public DependentNode encodeDtLiteral(TNode key, ListBuffer<RdfStreamRow> rowsBuffer, Supplier<String> dtSupplier) {
+    
+    public UniversalTerm encodeDtLiteral(
+            TNode key, String lex, String datatypeName, ListBuffer<RdfStreamRow> rowsBuffer
+    ) {
         var cachedNode = dependentNodeCache.get(key);
         if (cachedNode != null) {
             // Check if the value is still valid
             if (cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]) {
                 datatypeLookup.onAccess(cachedNode.lookupPointer1);
-                return cachedNode;
+                return cachedNode.encoded;
             }
-            cachedNode.encoded = null;
         } else {
             cachedNode = new DependentNode();
             // We can already put the node in the map, we will update it later using our reference
@@ -73,7 +70,6 @@ public class NodeEncoder<TNode> {
         }
 
         // The node is not encoded, but we may already have the datatype encoded
-        var datatypeName = dtSupplier.get();
         var dtEntry = datatypeLookup.addEntry(datatypeName);
         if (dtEntry.newEntry) {
             rowsBuffer.append(new RdfStreamRow(
@@ -84,11 +80,14 @@ public class NodeEncoder<TNode> {
         }
         cachedNode.lookupPointer1 = dtEntry.getId;
         cachedNode.lookupSerial1 = dtEntry.serial;
+        cachedNode.encoded = new RdfLiteral(
+                lex, new RdfLiteral$LiteralKind$Datatype(dtEntry.getId)
+        );
 
-        return cachedNode;
+        return cachedNode.encoded;
     }
 
-    public RdfTerm encodeIri(String iri, ListBuffer<RdfStreamRow> rowsBuffer) {
+    public UniversalTerm encodeIri(String iri, ListBuffer<RdfStreamRow> rowsBuffer) {
         var cachedNode = dependentNodeCache.get(iri);
         if (cachedNode != null) {
             // Check if the value is still valid
@@ -166,7 +165,7 @@ public class NodeEncoder<TNode> {
         return outputIri(cachedNode);
     }
 
-    private RdfTerm outputIri(DependentNode cachedNode) {
+    private UniversalTerm outputIri(DependentNode cachedNode) {
         if (lastIriPrefixId == cachedNode.lookupPointer2) {
             if (lastIriNameId + 1 == cachedNode.lookupPointer1) {
                 lastIriNameId = cachedNode.lookupPointer1;
@@ -187,7 +186,7 @@ public class NodeEncoder<TNode> {
         }
     }
 
-    public RdfTerm encodeOther(TNode key, Function<TNode, RdfTerm> encoder) {
+    public UniversalTerm encodeOther(Object key, Function<Object, UniversalTerm> encoder) {
         return nodeCache.computeIfAbsent(key, encoder);
     }
 }

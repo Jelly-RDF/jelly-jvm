@@ -26,14 +26,15 @@ trait SpoTerm extends RdfTerm:
 trait GraphTerm extends RdfTerm:
   def isDefaultGraph: Boolean = false
   def defaultGraph: RdfDefaultGraph = null
-
+  
+trait UniversalTerm extends SpoTerm, GraphTerm
 
 object RdfTerm:
   /**
    * Wrapper class for blank nodes, because in the proto they are simply represented as strings, and
    * we cannot inherit from String. We must use a wrapper.
    */
-  final case class Bnode(override val bnode: String) extends SpoTerm, GraphTerm:
+  final case class Bnode(override val bnode: String) extends UniversalTerm:
     override def isBnode: Boolean = true
 
 // Methods below are used in RdfTriple, RdfQuad, and RdfGraphStart instead of generated code. They are all

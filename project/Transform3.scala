@@ -33,8 +33,8 @@ object Transform3 {
     override def apply(tree: Tree): Tree = tree match {
       case Defn.Class.After_4_6_0(_, Type.Name(name), _, _, templ) =>
         val newTempl = name match {
-          case "RdfIri" => Some(copyTemplate(templ, Seq("SpoTerm", "GraphTerm"), "iri", "isIri"))
-          case "RdfLiteral" => Some(copyTemplate(templ, Seq("SpoTerm", "GraphTerm"), "literal", "isLiteral"))
+          case "RdfIri" => Some(copyTemplate(templ, Seq("UniversalTerm"), "iri", "isIri"))
+          case "RdfLiteral" => Some(copyTemplate(templ, Seq("UniversalTerm"), "literal", "isLiteral"))
           case "RdfDefaultGraph" => Some(copyTemplate(templ, Seq("GraphTerm"), "defaultGraph", "isDefaultGraph"))
           case _ => None
         }

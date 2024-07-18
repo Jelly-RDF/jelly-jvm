@@ -27,16 +27,16 @@ class MockProtoEncoder(override val options: RdfStreamOptions)
   override protected def nodeToProto(node: Node): SpoTerm = node match
     case Iri(iri) => makeIriNode(iri)
     case SimpleLiteral(lex) => makeSimpleLiteral(lex)
-    case LangLiteral(lex, lang) => makeLangLiteral(lex, lang)
-    case DtLiteral(lex, dt) => makeDtLiteral(lex, dt.dt)
+    case LangLiteral(lex, lang) => makeLangLiteral(node, lex, lang)
+    case DtLiteral(lex, dt) => makeDtLiteral(node, lex, dt.dt)
     case TripleNode(t) => makeTripleNode(t)
     case BlankNode(label) => makeBlankNode(label)
 
   override protected def graphNodeToProto(node: Node): GraphTerm = node match
-    case Iri(iri) => makeIriNodeGraph(iri)
-    case SimpleLiteral(lex) => makeSimpleLiteralGraph(lex)
-    case LangLiteral(lex, lang) => makeLangLiteralGraph(lex, lang)
-    case DtLiteral(lex, dt) => makeDtLiteralGraph(lex, dt.dt)
-    case BlankNode(label) => makeBlankNodeGraph(label)
+    case Iri(iri) => makeIriNode(iri)
+    case SimpleLiteral(lex) => makeSimpleLiteral(lex)
+    case LangLiteral(lex, lang) => makeLangLiteral(node, lex, lang)
+    case DtLiteral(lex, dt) => makeDtLiteral(node, lex, dt.dt)
+    case BlankNode(label) => makeBlankNode(label)
     case null => makeDefaultGraph
     case _ => throw RdfProtoSerializationError(s"Cannot encode graph node: $node")

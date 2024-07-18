@@ -40,8 +40,8 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
         // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
         if lit.getLiteralDatatype == XSDDatatype.XSDstring then
           makeSimpleLiteral(lit.getLiteralLexicalForm)
-        else makeDtLiteral(lit.getLiteralLexicalForm, lit.getLiteralDatatypeURI)
-      case lang => makeLangLiteral(lit.getLiteralLexicalForm, lang)
+        else makeDtLiteral(lit, lit.getLiteralLexicalForm, lit.getLiteralDatatypeURI)
+      case lang => makeLangLiteral(lit, lit.getLiteralLexicalForm, lang)
     // RDF-star node
     case _: Node_Triple => makeTripleNode(node.getTriple)
     case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")
@@ -50,17 +50,17 @@ final class JenaProtoEncoder(override val options: RdfStreamOptions)
     // URI/IRI
     case _: Node_URI =>
       if Quad.isDefaultGraph(node) then makeDefaultGraph
-      else makeIriNodeGraph(node.getURI)
+      else makeIriNode(node.getURI)
     // Blank node
-    case _: Node_Blank => makeBlankNodeGraph(node.getBlankNodeLabel)
+    case _: Node_Blank => makeBlankNode(node.getBlankNodeLabel)
     // Literal
     case lit: Node_Literal => lit.getLiteralLanguage match
       case l if l.isEmpty =>
         // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
         if lit.getLiteralDatatype == XSDDatatype.XSDstring then
-          makeSimpleLiteralGraph(lit.getLiteralLexicalForm)
-        else makeDtLiteralGraph(lit.getLiteralLexicalForm, lit.getLiteralDatatypeURI)
-      case lang => makeLangLiteralGraph(lit.getLiteralLexicalForm, lang)
+          makeSimpleLiteral(lit.getLiteralLexicalForm)
+        else makeDtLiteral(lit, lit.getLiteralLexicalForm, lit.getLiteralDatatypeURI)
+      case lang => makeLangLiteral(lit, lit.getLiteralLexicalForm, lang)
     // Default graph
     case null => makeDefaultGraph
     case _ => throw RdfProtoSerializationError(s"Cannot encode graph node: $node")
