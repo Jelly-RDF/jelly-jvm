@@ -124,46 +124,31 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
 
   // *** 3. THE PROTECTED INTERFACE ***
   // **********************************
-  protected final inline def makeIriNode(iri: String): SpoTerm =
-    iriEncoder.encodeIri(iri, extraRowsBuffer)
+  protected final inline def makeIriNode(iri: String): UniversalTerm =
+    nodeEncoder.encodeIri(iri, extraRowsBuffer)
 
-  protected final inline def makeBlankNode(label: String): SpoTerm =
-    RdfTerm.Bnode(label)
+  protected final inline def makeBlankNode(label: String): UniversalTerm =
+    nodeEncoder.encodeOther(label, _ => RdfTerm.Bnode(label))
 
-  protected final inline def makeSimpleLiteral(lex: String): SpoTerm =
-    RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
+  protected final inline def makeSimpleLiteral(lex: String): UniversalTerm =
+    nodeEncoder.encodeOther(lex, _ => RdfLiteral(lex, RdfLiteral.LiteralKind.Empty))
 
-  protected final inline def makeLangLiteral(lex: String, lang: String): SpoTerm =
-    RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
+  protected final inline def makeLangLiteral(lit: TNode, lex: String, lang: String): UniversalTerm =
+    nodeEncoder.encodeOther(lit, _ => RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang)))
 
-  protected final inline def makeDtLiteral(lex: String, dt: String): SpoTerm =
-    RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
+  protected final inline def makeDtLiteral(lit: TNode, lex: String, dt: String): UniversalTerm =
+    nodeEncoder.encodeDtLiteral(lit, lex, dt, extraRowsBuffer)
 
-  protected final inline def makeTripleNode(triple: TQuoted): SpoTerm =
+  protected final inline def makeTripleNode(triple: TQuoted): RdfTriple =
     quotedToProto(triple)
 
-  protected final inline def makeIriNodeGraph(iri: String): GraphTerm =
-    iriEncoder.encodeIri(iri, extraRowsBuffer)
-
-  protected final inline def makeBlankNodeGraph(label: String): GraphTerm =
-    RdfTerm.Bnode(label)
-
-  protected final inline def makeSimpleLiteralGraph(lex: String): GraphTerm =
-    RdfLiteral(lex, RdfLiteral.LiteralKind.Empty)
-
-  protected final inline def makeLangLiteralGraph(lex: String, lang: String): GraphTerm =
-    RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang))
-
-  protected final inline def makeDtLiteralGraph(lex: String, dt: String): GraphTerm =
-    RdfLiteral(lex, iriEncoder.encodeDatatype(dt, extraRowsBuffer))
-
-  protected final inline def makeDefaultGraph: GraphTerm =
+  protected final inline def makeDefaultGraph: RdfDefaultGraph =
     RdfDefaultGraph.defaultInstance
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
   private var extraRowsBuffer = new ListBuffer[RdfStreamRow]()
-  private val iriEncoder = new NameEncoder(options)
+  private val nodeEncoder = new NodeEncoder[TNode](options, 1024, 1024)
   private var emittedOptions = false
 
   private val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()

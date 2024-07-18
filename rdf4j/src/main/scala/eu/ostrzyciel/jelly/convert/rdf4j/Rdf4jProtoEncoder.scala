@@ -31,11 +31,11 @@ final class Rdf4jProtoEncoder(override val options: RdfStreamOptions)
       val lex = literal.getLabel
       val lang = literal.getLanguage
       if lang.isPresent then
-        makeLangLiteral(lex, lang.get)
+        makeLangLiteral(literal, lex, lang.get)
       else
         val dt = literal.getDatatype
         if dt != XSD.STRING then
-          makeDtLiteral(lex, dt.stringValue)
+          makeDtLiteral(literal, lex, dt.stringValue)
         else
           makeSimpleLiteral(lex)
     case triple: Triple => makeTripleNode(triple)
@@ -44,21 +44,21 @@ final class Rdf4jProtoEncoder(override val options: RdfStreamOptions)
 
   override protected def graphNodeToProto(node: Value): GraphTerm = node match
     // URI/IRI
-    case iri: IRI => makeIriNodeGraph(iri.stringValue)
+    case iri: IRI => makeIriNode(iri.stringValue)
     // Blank node
-    case bnode: BNode => makeBlankNodeGraph(bnode.getID)
+    case bnode: BNode => makeBlankNode(bnode.getID)
     // Literal
     case literal: Literal =>
       val lex = literal.getLabel
       val lang = literal.getLanguage
       if lang.isPresent then
-        makeLangLiteralGraph(lex, lang.get)
+        makeLangLiteral(literal, lex, lang.get)
       else
         val dt = literal.getDatatype
         if dt != XSD.STRING then
-          makeDtLiteralGraph(lex, dt.stringValue)
+          makeDtLiteral(literal, lex, dt.stringValue)
         else
-          makeSimpleLiteralGraph(lex)
+          makeSimpleLiteral(lex)
     // Default graph
     case null => makeDefaultGraph
     case _ =>
