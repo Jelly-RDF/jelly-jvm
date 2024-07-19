@@ -58,7 +58,9 @@ public class NodeEncoder<TNode> {
     ) {
         var cachedNode = dependentNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
-        if (cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]) {
+        if (cachedNode.encoded != null && 
+                cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]
+        ) {
             datatypeLookup.onAccess(cachedNode.lookupPointer1);
             return cachedNode.encoded;
         }
@@ -84,7 +86,9 @@ public class NodeEncoder<TNode> {
     public UniversalTerm encodeIri(String iri, ListBuffer<RdfStreamRow> rowsBuffer) {
         var cachedNode = dependentNodeCache.computeIfAbsent(iri, k -> new DependentNode());
         // Check if the value is still valid
-        if (cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2]) {
+        if (cachedNode.encoded != null && 
+                cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2]
+        ) {
             if (cachedNode.lookupPointer2 == 0) {
                 nameLookup.onAccess(cachedNode.lookupPointer1);
                 // No need to call outputIri, we know it's a zero prefix
