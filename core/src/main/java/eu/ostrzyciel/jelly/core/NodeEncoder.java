@@ -39,22 +39,16 @@ public class NodeEncoder<TNode> {
     NewEncoderLookup nameLookup;
     NodeCache<Object, DependentNode> dependentNodeCache;
     NodeCache<Object, UniversalTerm> nodeCache;
-    
-    // Precomputed IRIs with the prefix field set to 0.
-    private final RdfIri[] precomputedNoPrefixIris;
+
+    static final RdfIri zeroIri = new RdfIri(0, 0);
 
     public NodeEncoder(RdfStreamOptions opt, int nodeCacheSize, int dependentNodeCacheSize) {
-        // TODO: size the node caches automatically based on opt. If noprefix, then dependentNodeCache can be smaller.
         datatypeLookup = new NewEncoderLookup(opt.maxDatatypeTableSize());
         this.maxPrefixTableSize = opt.maxPrefixTableSize();
         if (maxPrefixTableSize > 0) {
             prefixLookup = new NewEncoderLookup(maxPrefixTableSize);
         }
         nameLookup = new NewEncoderLookup(opt.maxNameTableSize());
-        precomputedNoPrefixIris = new RdfIri[opt.maxNameTableSize() + 1];
-        for (int i = 0; i < opt.maxNameTableSize() + 1; i++) {
-            precomputedNoPrefixIris[i] = new RdfIri(0, i);
-        }
         dependentNodeCache = new NodeCache<>(dependentNodeCacheSize);
         nodeCache = new NodeCache<>(nodeCacheSize);
     }
@@ -90,8 +84,29 @@ public class NodeEncoder<TNode> {
     }
 
     public UniversalTerm encodeIri(String iri, ArrayBuffer<RdfStreamRow> rowsBuffer) {
-        // Fast path for no prefixes.
-        // We entirely skip the dependent node cache.
+        var cachedNode = dependentNodeCache.computeIfAbsent(iri, k -> new DependentNode());
+        // Check if the value is still valid
+        if (cachedNode.encoded != null &&
+                cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2]
+        ) {
+            if (cachedNode.lookupPointer2 == 0) {
+                nameLookup.onAccess(cachedNode.lookupPointer1);
+                // No need to call outputIri, we know it's a zero prefix
+                if (lastIriNameId + 1 == cachedNode.lookupPointer1) {
+                    lastIriNameId = cachedNode.lookupPointer1;
+                    return zeroIri;
+                } else {
+                    lastIriNameId = cachedNode.lookupPointer1;
+                    return new RdfIri(0, cachedNode.lookupPointer1);
+                }
+            } else if (cachedNode.lookupSerial2 == prefixLookup.table[cachedNode.lookupPointer2 * 3 + 2]) {
+                nameLookup.onAccess(cachedNode.lookupPointer1);
+                prefixLookup.onAccess(cachedNode.lookupPointer2);
+                return outputIri(cachedNode);
+            }
+        }
+
+        // Fast path for no prefixes
         if (this.maxPrefixTableSize == 0) {
             var nameEntry = nameLookup.addEntry(iri);
             if (nameEntry.newEntry) {
@@ -99,24 +114,16 @@ public class NodeEncoder<TNode> {
                         new RdfStreamRow$Row$Name(new RdfNameEntry(nameEntry.setId, iri))
                 ));
             }
+            cachedNode.lookupPointer1 = nameEntry.getId;
+            cachedNode.lookupSerial1 = nameEntry.serial;
+            cachedNode.encoded = new RdfIri(0, nameEntry.getId);
             if (lastIriNameId + 1 == nameEntry.getId) {
                 lastIriNameId = nameEntry.getId;
-                return precomputedNoPrefixIris[0];
+                return zeroIri;
             } else {
                 lastIriNameId = nameEntry.getId;
-                return precomputedNoPrefixIris[lastIriNameId];
+                return cachedNode.encoded;
             }
-        }
-        
-        var cachedNode = dependentNodeCache.computeIfAbsent(iri, k -> new DependentNode());
-        // Check if the value is still valid
-        if (cachedNode.encoded != null &&
-                cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2] &&
-                cachedNode.lookupSerial2 == prefixLookup.table[cachedNode.lookupPointer2 * 3 + 2]
-        ) {
-            nameLookup.onAccess(cachedNode.lookupPointer1);
-            prefixLookup.onAccess(cachedNode.lookupPointer2);
-            return outputIri(cachedNode);
         }
 
         // Slow path, with splitting out the prefix
@@ -161,16 +168,15 @@ public class NodeEncoder<TNode> {
         if (lastIriPrefixId == cachedNode.lookupPointer2) {
             if (lastIriNameId + 1 == cachedNode.lookupPointer1) {
                 lastIriNameId = cachedNode.lookupPointer1;
-                return precomputedNoPrefixIris[0];
+                return zeroIri;
             } else {
                 lastIriNameId = cachedNode.lookupPointer1;
-                return precomputedNoPrefixIris[cachedNode.lookupPointer1];
+                return new RdfIri(0, cachedNode.lookupPointer1);
             }
         } else {
             lastIriPrefixId = cachedNode.lookupPointer2;
             if (lastIriNameId + 1 == cachedNode.lookupPointer1) {
                 lastIriNameId = cachedNode.lookupPointer1;
-                // This is the only case where we actually construct an RdfIri just to return it.
                 return new RdfIri(cachedNode.lookupPointer2, 0);
             } else {
                 lastIriNameId = cachedNode.lookupPointer1;
