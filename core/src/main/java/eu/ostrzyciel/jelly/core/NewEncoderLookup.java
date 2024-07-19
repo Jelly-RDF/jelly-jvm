@@ -21,21 +21,24 @@ public class NewEncoderLookup {
         }
     }
 
-    HashMap<String, LookupEntry> map = new HashMap<>();
+    private final HashMap<String, LookupEntry> map = new HashMap<>();
     // Layout: [left, right, serial]
     // Head: table[1]
-    int[] table;
-    int tail;
-    final int size;
-    int used;
-    int lastSetId;
-    String[] names;
+    final int[] table;
+    private int tail;
+    private final int size;
+    private int used;
+    private int lastSetId;
+    private final String[] names;
 
-    LookupEntry entryForReturns = new LookupEntry(0, 0, true);
+    private final LookupEntry entryForReturns = new LookupEntry(0, 0, true);
 
     public NewEncoderLookup(int size) {
         this.size = size;
         table = new int[(size + 1) * 3];
+        // Set the head's serial to non-zero value, so that default-initialized DependentNodes are not
+        // considered as valid entries.
+        table[2] = -1;
         names = new String[size + 1];
     }
 

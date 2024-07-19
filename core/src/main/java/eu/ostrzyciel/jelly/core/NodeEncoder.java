@@ -56,17 +56,11 @@ public class NodeEncoder<TNode> {
     public UniversalTerm encodeDtLiteral(
             TNode key, String lex, String datatypeName, ListBuffer<RdfStreamRow> rowsBuffer
     ) {
-        var cachedNode = dependentNodeCache.get(key);
-        if (cachedNode != null) {
-            // Check if the value is still valid
-            if (cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]) {
-                datatypeLookup.onAccess(cachedNode.lookupPointer1);
-                return cachedNode.encoded;
-            }
-        } else {
-            cachedNode = new DependentNode();
-            // We can already put the node in the map, we will update it later using our reference
-            dependentNodeCache.put(key, cachedNode);
+        var cachedNode = dependentNodeCache.computeIfAbsent(key, k -> new DependentNode());
+        // Check if the value is still valid
+        if (cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]) {
+            datatypeLookup.onAccess(cachedNode.lookupPointer1);
+            return cachedNode.encoded;
         }
 
         // The node is not encoded, but we may already have the datatype encoded
@@ -88,23 +82,24 @@ public class NodeEncoder<TNode> {
     }
 
     public UniversalTerm encodeIri(String iri, ListBuffer<RdfStreamRow> rowsBuffer) {
-        var cachedNode = dependentNodeCache.get(iri);
-        if (cachedNode != null) {
-            // Check if the value is still valid
-            if (cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2]) {
-                if (cachedNode.lookupPointer2 == 0) {
-                    nameLookup.onAccess(cachedNode.lookupPointer1);
-                    // TODO: fast path for no prefixes? or it may be just an empty prefix... consider
-                    return outputIri(cachedNode);
-                } else if (cachedNode.lookupSerial2 == prefixLookup.table[cachedNode.lookupPointer2 * 3 + 2]) {
-                    nameLookup.onAccess(cachedNode.lookupPointer1);
-                    prefixLookup.onAccess(cachedNode.lookupPointer2);
-                    return outputIri(cachedNode);
+        var cachedNode = dependentNodeCache.computeIfAbsent(iri, k -> new DependentNode());
+        // Check if the value is still valid
+        if (cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2]) {
+            if (cachedNode.lookupPointer2 == 0) {
+                nameLookup.onAccess(cachedNode.lookupPointer1);
+                // No need to call outputIri, we know it's a zero prefix
+                if (lastIriNameId + 1 == cachedNode.lookupPointer1) {
+                    lastIriNameId = cachedNode.lookupPointer1;
+                    return zeroIri;
+                } else {
+                    lastIriNameId = cachedNode.lookupPointer1;
+                    return new RdfIri(0, cachedNode.lookupPointer1);
                 }
+            } else if (cachedNode.lookupSerial2 == prefixLookup.table[cachedNode.lookupPointer2 * 3 + 2]) {
+                nameLookup.onAccess(cachedNode.lookupPointer1);
+                prefixLookup.onAccess(cachedNode.lookupPointer2);
+                return outputIri(cachedNode);
             }
-        } else {
-            cachedNode = new DependentNode();
-            dependentNodeCache.put(iri, cachedNode);
         }
 
         // Fast path for no prefixes
