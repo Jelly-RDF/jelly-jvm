@@ -6,7 +6,7 @@ import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
@@ -16,8 +16,8 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
     maxDatatypeTableSize = 8,
   )
 
-  private def getEncoder(prefixTableSize: Int = 8): (NodeEncoder[Mrl.Node], ListBuffer[RdfStreamRow]) =
-    val buffer = new ListBuffer[RdfStreamRow]()
+  private def getEncoder(prefixTableSize: Int = 8): (NodeEncoder[Mrl.Node], ArrayBuffer[RdfStreamRow]) =
+    val buffer = new ArrayBuffer[RdfStreamRow]()
     (NodeEncoder[Mrl.Node](smallOptions(prefixTableSize), 16, 16), buffer)
 
   "A NodeEncoder" when {

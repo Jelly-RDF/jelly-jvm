@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core;
 
 import eu.ostrzyciel.jelly.core.proto.v1.*;
-import scala.collection.mutable.ListBuffer;
+import scala.collection.mutable.ArrayBuffer;
 
 import java.util.LinkedHashMap;
 import java.util.function.Function;
@@ -54,11 +54,11 @@ public class NodeEncoder<TNode> {
     }
     
     public UniversalTerm encodeDtLiteral(
-            TNode key, String lex, String datatypeName, ListBuffer<RdfStreamRow> rowsBuffer
+            TNode key, String lex, String datatypeName, ArrayBuffer<RdfStreamRow> rowsBuffer
     ) {
         var cachedNode = dependentNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
-        if (cachedNode.encoded != null && 
+        if (cachedNode.encoded != null &&
                 cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]
         ) {
             datatypeLookup.onAccess(cachedNode.lookupPointer1);
@@ -83,10 +83,10 @@ public class NodeEncoder<TNode> {
         return cachedNode.encoded;
     }
 
-    public UniversalTerm encodeIri(String iri, ListBuffer<RdfStreamRow> rowsBuffer) {
+    public UniversalTerm encodeIri(String iri, ArrayBuffer<RdfStreamRow> rowsBuffer) {
         var cachedNode = dependentNodeCache.computeIfAbsent(iri, k -> new DependentNode());
         // Check if the value is still valid
-        if (cachedNode.encoded != null && 
+        if (cachedNode.encoded != null &&
                 cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2]
         ) {
             if (cachedNode.lookupPointer2 == 0) {

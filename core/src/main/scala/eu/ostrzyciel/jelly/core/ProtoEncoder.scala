@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object ProtoEncoder:
   private val graphEnd = Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd.defaultInstance)))
@@ -33,7 +33,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     val mainRow = RdfStreamRow(RdfStreamRow.Row.Triple(
       tripleToProto(triple)
     ))
-    extraRowsBuffer.append(mainRow)
+    extraRowsBuffer.append(mainRow).toSeq
 
   /**
    * Add an RDF quad statement to the stream.
@@ -45,7 +45,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     val mainRow = RdfStreamRow(RdfStreamRow.Row.Quad(
       quadToProto(quad)
     ))
-    extraRowsBuffer.append(mainRow)
+    extraRowsBuffer.append(mainRow).toSeq
 
   /**
    * Signal the start of a new (named) delimited graph in a GRAPHS stream.
@@ -62,7 +62,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
       val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
         RdfGraphStart(graphNode)
       ))
-      extraRowsBuffer.append(mainRow)
+      extraRowsBuffer.append(mainRow).toSeq
 
   /**
    * Signal the start of the default delimited graph in a GRAPHS stream.
@@ -70,7 +70,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    */
   final def startDefaultGraph(): Iterable[RdfStreamRow] =
     handleHeader()
-    extraRowsBuffer.append(defaultGraphStart)
+    extraRowsBuffer.append(defaultGraphStart).toSeq
 
   /**
    * Signal the end of a delimited graph in a GRAPHS stream.
@@ -147,7 +147,9 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
-  private var extraRowsBuffer = new ListBuffer[RdfStreamRow]()
+  // We assume by default that 32 rows should be enough to encode one statement.
+  // If not, the buffer will grow.
+  private val extraRowsBuffer = new ArrayBuffer[RdfStreamRow](32)
   private val nodeEncoder = new NodeEncoder[TNode](options, 1024, 1024)
   private var emittedOptions = false
 
@@ -194,7 +196,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     )
 
   private inline def handleHeader(): Unit =
-    extraRowsBuffer = new ListBuffer[RdfStreamRow]()
+    extraRowsBuffer.clear()
     if !emittedOptions then emitOptions()
 
   private def emitOptions(): Unit =
