@@ -1,0 +1,297 @@
+# RDF-STaX ontology, version 1.1.2.
+# https://w3id.org/stax/1.1.2/ontology
+
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/2004/02/skos/core#inScheme> <https://w3id.org/stax/ontology> .
+_:n081e1db9176748f38f5806dd94e32572b7 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:n081e1db9176748f38f5806dd94e32572b8 .
+<https://w3id.org/stax/ontology#flatQuadStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#triple> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#RdfElementType> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <https://w3id.org/stax/ontology#hasElementType> <https://w3id.org/stax/ontology#graph> .
+_:n081e1db9176748f38f5806dd94e32572b2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://w3id.org/stax/ontology#canBeFlattenedInto> .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/elements/1.1/title> "RDF Stream Taxonomy (RDF-STaX)"@en .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/2004/02/skos/core#relatedMatch> <http://w3id.org/rsp/vocals#RDFStream> .
+_:n081e1db9176748f38f5806dd94e32572b6 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<https://w3id.org/stax/ontology#streamTypeSemanticRelation> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+_:n081e1db9176748f38f5806dd94e32572b8 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://w3id.org/stax/ontology#hasElementType> .
+_:n081e1db9176748f38f5806dd94e32572b14 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:n081e1db9176748f38f5806dd94e32572b15 .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/2004/02/skos/core#inScheme> <https://w3id.org/stax/ontology> .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "Grouped RDF stream"@en .
+<https://w3id.org/stax/ontology#namedGraphStream> <https://w3id.org/stax/ontology#hasElementType> <https://w3id.org/stax/ontology#dataset> .
+<https://w3id.org/stax/ontology#RdfElementType> <http://www.w3.org/2002/07/owl#disjointWith> <https://w3id.org/stax/ontology#RdfStreamType> .
+<https://w3id.org/stax/ontology#graph> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#RdfElementType> .
+<https://w3id.org/stax/ontology#ConcreteRdfStreamType> <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:n081e1db9176748f38f5806dd94e32572b10 .
+_:n081e1db9176748f38f5806dd94e32572b13 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:n081e1db9176748f38f5806dd94e32572b14 .
+<http://xmlns.com/foaf/0.1/logo> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF named graph stream"@en .
+<https://w3id.org/stax/ontology> <http://purl.org/vocab/vann/preferredNamespacePrefix> "stax" .
+_:nf85c28f1008144c2baa8268e0db6aa57b2 <http://xmlns.com/foaf/0.1/name> "Paweł Szmeja" .
+_:n081e1db9176748f38f5806dd94e32572b12 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://w3id.org/stax/ontology#dataset> .
+<http://purl.org/dc/terms/source> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+_:n081e1db9176748f38f5806dd94e32572b8 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<https://w3id.org/stax/ontology#hasStreamTypeUsage> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RAelRRiQeq2oSXNR-qqrB5dQ6g7Lait55srza_sfz6Jzs> .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/2004/02/skos/core#inScheme> <https://w3id.org/stax/ontology> .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/terms/contributor> _:nf85c28f1008144c2baa8268e0db6aa57b2 .
+<http://purl.org/dc/elements/1.1/title> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology#flatQuadStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/2004/02/skos/core#narrower> <https://w3id.org/stax/ontology#flatTripleStream> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/2004/02/skos/core#inScheme> <https://w3id.org/stax/ontology> .
+<https://w3id.org/stax/ontology#canBeGroupedInto> <http://www.w3.org/2000/01/rdf-schema#label> "can be grouped into"@en .
+<http://purl.org/dc/elements/1.1/description> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology#AbstractRdfStreamType> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <https://w3id.org/stax/ontology#RdfStreamType> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/2004/02/skos/core#inScheme> <https://w3id.org/stax/ontology> .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#AbstractRdfStreamType> .
+<https://w3id.org/stax/ontology> <http://www.w3.org/2004/02/skos/core#altLabel> "RDF-STaX"@en .
+<https://w3id.org/stax/ontology#dataset> <http://www.w3.org/2004/02/skos/core#relatedMatch> <http://www.w3.org/ns/sparql-service-description#Dataset> .
+_:n081e1db9176748f38f5806dd94e32572b9 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .
+<https://w3id.org/stax/ontology#RdfStreamTypeUsage> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://w3id.org/stax/ontology#canBeFlattenedInto> <http://www.w3.org/2002/07/owl#propertyChainAxiom> _:n081e1db9176748f38f5806dd94e32572b1 .
+<https://w3id.org/stax/ontology#streamTypeSemanticRelation> <http://www.w3.org/2000/01/rdf-schema#range> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/terms/created> "2023-10-22T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF subject graph stream"@en .
+<https://w3id.org/stax/ontology#AbstractRdfStreamType> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://w3id.org/stax/ontology> <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://w3id.org/stax/ontology#rdfStream> .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/2004/02/skos/core#inScheme> <https://w3id.org/stax/ontology> .
+<https://w3id.org/stax/ontology#flatQuadStream> <http://www.w3.org/2004/02/skos/core#inScheme> <https://w3id.org/stax/ontology> .
+_:n081e1db9176748f38f5806dd94e32572b5 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://www.w3.org/2004/02/skos/core#broaderTransitive> .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/2004/02/skos/core#definition> "A flat RDF stream is an RDF stream whose elements are statements (either RDF triples or RDF quads)."@en .
+_:n081e1db9176748f38f5806dd94e32572b5 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:n081e1db9176748f38f5806dd94e32572b6 .
+<https://w3id.org/stax/ontology#RdfStreamTypeUsage> <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:n081e1db9176748f38f5806dd94e32572b16 .
+<https://w3id.org/stax/ontology> <http://xmlns.com/foaf/0.1/homepage> <https://w3id.org/stax/1.1.2> .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "Flat RDF stream"@en .
+<https://w3id.org/stax/ontology#RdfStreamTypeUsage> <http://www.w3.org/2000/01/rdf-schema#label> "RDF stream type usage"@en .
+<https://w3id.org/stax/ontology#streamTypeSemanticRelation> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.w3.org/2004/02/skos/core#semanticRelation> .
+<https://w3id.org/stax/ontology#isUsageOf> <http://www.w3.org/2000/01/rdf-schema#comment> "For an RDF stream type usage, this property indicates where the stream was used or from where the usage was derived. The value of this property can be anything that makes sense for the desired use case. The value can be for example: the DOI URL of an academic work, URL of a piece of software, IRI of a published stream, IRI of an RDF dataset.\n\nInverse of stax:hasStreamTypeUsage."@en .
+<https://w3id.org/stax/ontology#hasStreamTypeUsage> <http://www.w3.org/2002/07/owl#inverseOf> <https://w3id.org/stax/ontology#isUsageOf> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#flatTripleStream> <https://w3id.org/stax/ontology#canBeGroupedInto> <https://w3id.org/stax/ontology#graphStream> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "Timestamped RDF named graph stream"@en .
+<http://purl.org/dc/terms/created> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+_:n081e1db9176748f38f5806dd94e32572b11 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/2004/02/skos/core#note> "A stream of triple statements."@en .
+<https://w3id.org/stax/ontology#triple> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/2004/02/skos/core#narrower> <https://w3id.org/stax/ontology#namedGraphStream> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#rdfStream> <http://www.w3.org/2004/02/skos/core#definition> "An RDF stream is an ordered, potentially infinite sequence of RDF stream elements."@en .
+<https://w3id.org/stax/ontology#canBeGroupedInto> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <https://w3id.org/stax/ontology#streamTypeSemanticRelation> .
+<https://w3id.org/stax/ontology> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#ConceptScheme> .
+<https://w3id.org/stax/ontology#rdfStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF stream"@en .
+<https://w3id.org/stax/ontology#rdfStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#AbstractRdfStreamType> .
+<https://w3id.org/stax/ontology#flatQuadStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "Flat RDF quad stream"@en .
+<https://w3id.org/stax/ontology#flatTripleStream> <https://w3id.org/stax/ontology#hasElementType> <https://w3id.org/stax/ontology#triple> .
+<https://w3id.org/stax/ontology> <http://schema.org/citation> "Please cite this ontology according to the instructions here: https://w3id.org/stax/dev/licensing/"@en .
+<https://w3id.org/stax/ontology#flatTripleStream> <https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <https://w3id.org/stax/ontology#flatQuadStream> .
+<https://w3id.org/stax/ontology#graph> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF graph"@en .
+<https://w3id.org/stax/ontology#rdfStream> <http://www.w3.org/2004/02/skos/core#topConceptOf> <https://w3id.org/stax/ontology> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RAqbZ03A1F0UPJmpa6d_r_uRUp46nmcwN8Yep2Rgiy8b4> .
+<http://purl.org/vocab/vann/preferredNamespaceUri> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<http://xmlns.com/foaf/0.1/homepage> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology#quad> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#RdfElementType> .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/2004/02/skos/core#definition> "A grouped RDF stream is an RDF stream whose elements are either RDF graphs or RDF datasets."@en .
+<https://w3id.org/stax/ontology#rdfStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://w3id.org/stax/ontology> <http://purl.org/vocab/vann/preferredNamespaceUri> <https://w3id.org/stax/ontology#> .
+<https://w3id.org/stax/ontology#isUsageOf> <http://www.w3.org/2000/01/rdf-schema#domain> <https://w3id.org/stax/ontology#RdfStreamTypeUsage> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/2004/02/skos/core#relatedMatch> <http://w3id.org/rsp/vocals#RDFStream> .
+<https://w3id.org/stax/ontology#flatQuadStream> <http://www.w3.org/2004/02/skos/core#note> "A stream of quad statements."@en .
+<https://w3id.org/stax/ontology#quad> <http://www.w3.org/2004/02/skos/core#note> "RDF quad, as defined by the RDF 1.2 Concepts and Abstract Syntax W3C Working Draft 13 October 2023."@en .
+<https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <http://www.w3.org/2000/01/rdf-schema#label> "can be trivially extended into"@en .
+<https://w3id.org/stax/ontology#dataset> <http://www.w3.org/2004/02/skos/core#note> "RDF dataset, as defined by the RDF 1.1 Concepts and Abstract Syntax W3C Recommendation."@en .
+<https://w3id.org/stax/ontology#rdfStream> <http://www.w3.org/2004/02/skos/core#note> "Base abstract RDF stream type."@en .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+_:n081e1db9176748f38f5806dd94e32572b15 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://w3id.org/stax/ontology#triple> .
+<https://w3id.org/stax/ontology> <http://xmlns.com/foaf/0.1/logo> <https://w3id.org/stax/1.1.2/assets/logo_color.svg> .
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#hasStreamTypeUsage> <http://www.w3.org/2000/01/rdf-schema#label> "has stream type usage"@en .
+<https://w3id.org/stax/ontology#RdfStreamTypeUsage> <http://www.w3.org/2000/01/rdf-schema#comment> "Class for instances of using an RDF stream type, in a program, an academic paper, or elsewhere. This class is suitable for annotating both theoretical uses and practical ones, i.e., real streams or datasets.\n\nInstances of this class should have the stax:hasStreamType property pointing to a concrete stream type. The stax:usedIn property is recommended to indicate where the stream is used – alternatively you can use its inverse (stax:hasStreamTypeUsage). The use of other properties (e.g., rdfs:label, rdfs:comment) is encouraged to give more context about the usage.\n\nNote that \"stream type usage\" is a subjective assertion and instances of this class may be annotated with additional provenance properties to explain who made the assertion. There can be multiple views on what type of stream is in use, depending on the involved actor, processing step, etc."@en .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/2004/02/skos/core#definition> "An RDF subject graph stream is an RDF graph stream in which every element contains an IRI node (called the subject node) that uniquely identifies the graph in the stream. Every other node in the graph can be reached by traversing triples, starting from the subject node."@en .
+_:n081e1db9176748f38f5806dd94e32572b13 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://w3id.org/stax/ontology#graph> .
+<https://w3id.org/stax/ontology#RdfStreamTypeUsage> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/stax/dev/use-it/> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/2004/02/skos/core#inScheme> <https://w3id.org/stax/ontology> .
+<https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/2004/02/skos/core#broader> <https://w3id.org/stax/ontology#rdfStream> .
+<https://w3id.org/stax/ontology#streamTypeSemanticRelation> <http://www.w3.org/2000/01/rdf-schema#label> "is in stream type semantic relation with"@en .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "Flat RDF triple stream"@en .
+<http://purl.org/dc/terms/modified> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology> <http://www.w3.org/2002/07/owl#imports> <http://www.w3.org/TR/skos-reference/skos-owl1-dl.rdf> .
+<https://w3id.org/stax/ontology#canBeFlattenedInto> <http://www.w3.org/2000/01/rdf-schema#domain> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#AbstractRdfStreamType> <http://www.w3.org/2000/01/rdf-schema#comment> "Class for abstract RDF stream types in the taxonomy. Instances of this class have abstract definitions, i.e., they cannot be used to annotate real streams. They are only intended to be used for reasoning about stream types."@en .
+<https://w3id.org/stax/ontology#canBeGroupedInto> <http://www.w3.org/2000/01/rdf-schema#comment> "Indicates that the subject stream type can be grouped into the object.\n\nThe grouping is done by splitting the flat stream of statements into groups, which then can be used to construct elements of the grouped stream. For example, a flat triple stream can be grouped into a graph stream. In this operation, the ordering information within a group is lost."@en .
+_:n081e1db9176748f38f5806dd94e32572b3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://www.w3.org/2004/02/skos/core#broaderTransitive> .
+<https://w3id.org/stax/ontology#dataset> <http://www.w3.org/2004/02/skos/core#definition> <https://www.w3.org/TR/rdf11-concepts/#section-dataset> .
+<https://w3id.org/stax/ontology#canBeGroupedInto> <http://www.w3.org/2000/01/rdf-schema#range> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+_:n081e1db9176748f38f5806dd94e32572b16 <http://www.w3.org/2002/07/owl#allValuesFrom> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+_:nf85c28f1008144c2baa8268e0db6aa57b1 <http://xmlns.com/foaf/0.1/name> "Piotr Sowiński" .
+_:n081e1db9176748f38f5806dd94e32572b10 <http://www.w3.org/2002/07/owl#onProperty> <https://w3id.org/stax/ontology#hasElementType> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <https://w3id.org/stax/ontology#canBeFlattenedInto> <https://w3id.org/stax/ontology#flatQuadStream> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/2004/02/skos/core#relatedMatch> <https://w3id.org/ldes#EventStream> .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/2004/02/skos/core#note> "Abstract flat RDF stream type."@en .
+<https://w3id.org/stax/ontology#isUsageOf> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://w3id.org/stax/ontology#canBeGroupedInto> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://w3id.org/stax/ontology#datasetStream> <https://w3id.org/stax/ontology#canBeFlattenedInto> <https://w3id.org/stax/ontology#flatQuadStream> .
+<https://w3id.org/stax/ontology> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Ontology> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/2004/02/skos/core#broader> <https://w3id.org/stax/ontology#namedGraphStream> .
+<https://w3id.org/stax/ontology#hasElementType> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://w3id.org/stax/ontology#graph> <http://www.w3.org/2004/02/skos/core#relatedMatch> <http://www.w3.org/ns/sparql-service-description#Graph> .
+<https://w3id.org/stax/ontology#dataset> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/2004/02/skos/core#definition> "A timestamped named graph is an RDF dataset in which: (1) there is exactly one named RDF graph pair <n, G>, where G is an RDF graph, and n is the graph name; (2) the default graph includes a timestamp triple <n, p, t>, where p is a timestamp predicate that relates t, called the timestamp, and the graph G.\n\nA timestamped RDF named graph stream is an RDF named graph stream in which every element is a timestamped named graph. The elements that share the same timestamp predicate p are ordered by the partial order associated with p."@en .
+<https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <http://www.w3.org/2000/01/rdf-schema#range> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#hasElementType> <http://www.w3.org/2000/01/rdf-schema#comment> "For an RDF stream type, indicates the base (primitive) type of elements in the stream (e.g., triple, quad, graph, dataset)."@en .
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/2004/02/skos/core#narrower> <https://w3id.org/stax/ontology#timestampedNamedGraphStream> .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/terms/publisher> <https://orcid.org/0000-0002-2543-9461> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RAU7pbHsOVgltc5Az1pOuNSV4cjI-DDWqoRJyAVhKvUus> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RAD3_KmaQcSOOQTOKOsrwahi56Ib8pKMRlKfhylozW-UQ> .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/terms/source> <https://github.com/RDF-STaX/rdf-stax.github.io/tree/v1.1.2> .
+<https://w3id.org/stax/ontology#hasStreamType> <http://www.w3.org/2000/01/rdf-schema#domain> <https://w3id.org/stax/ontology#RdfStreamTypeUsage> .
+<https://w3id.org/stax/ontology#ConcreteRdfStreamType> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <https://w3id.org/stax/ontology#RdfStreamType> .
+<https://w3id.org/stax/ontology#quad> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF quad"@en .
+<https://w3id.org/stax/ontology#isUsageOf> <http://www.w3.org/2000/01/rdf-schema#label> "is usage of"@en .
+<https://w3id.org/stax/ontology#streamTypeSemanticRelation> <http://www.w3.org/2000/01/rdf-schema#domain> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+_:n081e1db9176748f38f5806dd94e32572b16 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/2004/02/skos/core#broader> <https://w3id.org/stax/ontology#rdfStream> .
+<https://w3id.org/stax/ontology#hasStreamType> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://w3id.org/stax/ontology#ConcreteRdfStreamType> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+_:n081e1db9176748f38f5806dd94e32572b7 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://www.w3.org/2004/02/skos/core#broaderTransitive> .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/2004/02/skos/core#note> "A stream of datasets which contain one timestamped, named graph. The definition is based on the draft RSP Data model: https://streamreasoning.org/RSP-QL/Abstract%20Syntax%20and%20Semantics%20Document/"@en .
+<https://w3id.org/stax/ontology#canBeGroupedInto> <http://www.w3.org/2000/01/rdf-schema#domain> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+_:n081e1db9176748f38f5806dd94e32572b9 <http://www.w3.org/2002/07/owl#someValuesFrom> <https://w3id.org/stax/ontology#RdfElementType> .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+_:n081e1db9176748f38f5806dd94e32572b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:n081e1db9176748f38f5806dd94e32572b2 .
+<https://w3id.org/stax/ontology#dataset> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF dataset"@en .
+<https://w3id.org/stax/ontology#flatQuadStream> <https://w3id.org/stax/ontology#canBeGroupedInto> <https://w3id.org/stax/ontology#datasetStream> .
+<https://w3id.org/stax/ontology#canBeFlattenedInto> <http://www.w3.org/2000/01/rdf-schema#comment> "Indicates that the subject stream type can be flattened into the object.\n\nThe flattening is done by enumerating all components of the stream elements in one, flat stream. For example, a graph stream can be flattened into a flat triple stream."@en .
+_:n081e1db9176748f38f5806dd94e32572b16 <http://www.w3.org/2002/07/owl#onProperty> <https://w3id.org/stax/ontology#hasStreamType> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/2004/02/skos/core#definition> "A flat RDF triple stream is a flat RDF stream whose elements are triples."@en .
+<https://w3id.org/stax/ontology> <http://www.w3.org/2002/07/owl#versionIRI> <https://w3id.org/stax/1.1.2/ontology> .
+<https://w3id.org/stax/ontology#flatQuadStream> <http://www.w3.org/2004/02/skos/core#definition> "A flat RDF quad stream is a flat RDF stream whose elements are quads."@en .
+<https://w3id.org/stax/ontology> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF Stream Taxonomy"@en .
+<https://w3id.org/stax/ontology#canBeFlattenedInto> <http://www.w3.org/2000/01/rdf-schema#label> "can be flattened into"@en .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/2004/02/skos/core#inScheme> <https://w3id.org/stax/ontology> .
+<http://schema.org/citation> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+_:n081e1db9176748f38f5806dd94e32572b10 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/2004/02/skos/core#definition> "An RDF graph stream is a grouped RDF stream whose elements are unnamed (default) RDF graphs."@en .
+<https://w3id.org/stax/ontology#triple> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF triple"@en .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://w3id.org/stax/ontology#RdfStreamType> <http://www.w3.org/2000/01/rdf-schema#comment> "Base class for RDF stream types. This class should not be used directly – use instead either stax:AbstractRdfStreamType or stax:ConcreteRdfStreamType."@en .
+<https://w3id.org/stax/ontology#hasStreamType> <http://www.w3.org/2000/01/rdf-schema#range> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#graphStream> <https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <https://w3id.org/stax/ontology#datasetStream> .
+_:n081e1db9176748f38f5806dd94e32572b12 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:n081e1db9176748f38f5806dd94e32572b13 .
+<https://w3id.org/stax/ontology#flatQuadStream> <http://www.w3.org/2004/02/skos/core#broader> <https://w3id.org/stax/ontology#flatStream> .
+<https://w3id.org/stax/ontology#ConcreteRdfStreamType> <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:n081e1db9176748f38f5806dd94e32572b9 .
+<https://w3id.org/stax/ontology#graphStream> <https://w3id.org/stax/ontology#hasElementType> <https://w3id.org/stax/ontology#graph> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/2004/02/skos/core#relatedMatch> <http://rdfs.org/ns/void#Dataset> .
+<https://w3id.org/stax/ontology#rdfStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/2004/02/skos/core#note> "A stream of RDF graphs which have a node that uniquely identifies them in the stream."@en .
+<https://w3id.org/stax/ontology#hasStreamType> <http://www.w3.org/2000/01/rdf-schema#label> "has stream type"@en .
+<https://w3id.org/stax/ontology#graph> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+_:nf85c28f1008144c2baa8268e0db6aa57b2 <http://xmlns.com/foaf/0.1/homepage> <https://orcid.org/0000-0003-0869-3836> .
+<https://w3id.org/stax/ontology#AbstractRdfStreamType> <http://www.w3.org/2002/07/owl#disjointWith> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+_:n081e1db9176748f38f5806dd94e32572b10 <http://www.w3.org/2002/07/owl#allValuesFrom> <https://w3id.org/stax/ontology#RdfElementType> .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RA9jYlusATe999AN0jb6fn4eR_H4Q23xhnwU4xSwuUxQw> .
+<https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <https://w3id.org/stax/ontology#streamTypeSemanticRelation> .
+_:nf85c28f1008144c2baa8268e0db6aa57b1 <http://xmlns.com/foaf/0.1/nick> "Ostrzyciel" .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/2004/02/skos/core#narrower> <https://w3id.org/stax/ontology#graphStream> .
+<https://w3id.org/stax/ontology> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <https://w3id.org/stax/ontology#hasElementType> <https://w3id.org/stax/ontology#dataset> .
+_:n081e1db9176748f38f5806dd94e32572b14 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://w3id.org/stax/ontology#quad> .
+<https://w3id.org/stax/ontology#hasElementType> <http://www.w3.org/2002/07/owl#propertyChainAxiom> _:n081e1db9176748f38f5806dd94e32572b7 .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RA2LEhdLOYY_c9YgGIwu9TrzHVFPQcpE2vMnAbPghQY60> .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/terms/modified> "2024-06-30T08:44:43"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+_:n081e1db9176748f38f5806dd94e32572b11 <http://www.w3.org/2002/07/owl#oneOf> _:n081e1db9176748f38f5806dd94e32572b12 .
+<https://w3id.org/stax/ontology#RdfStreamType> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RAxK3wEoSabXMV2_s24gd27O8rzsUFceYeMKn5s04cnkk> .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF dataset stream"@en .
+<https://w3id.org/stax/ontology#datasetStream> <https://w3id.org/stax/ontology#hasElementType> <https://w3id.org/stax/ontology#dataset> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/terms/license> <https://spdx.org/licenses/CC-BY-4.0> .
+<https://w3id.org/stax/ontology#quad> <http://www.w3.org/2004/02/skos/core#definition> <https://www.w3.org/TR/2023/WD-rdf12-concepts-20231013/#section-dataset-quad> .
+<http://purl.org/dc/terms/issued> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology#streamTypeSemanticRelation> <http://www.w3.org/2000/01/rdf-schema#comment> "This property should not be used directly, but as a super-property for all properties denoting a relationship of meaning between RDF stream types."@en .
+<https://w3id.org/stax/ontology#RdfElementType> <http://www.w3.org/2000/01/rdf-schema#label> "RDF element type"@en .
+_:n081e1db9176748f38f5806dd94e32572b15 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/terms/creator> _:nf85c28f1008144c2baa8268e0db6aa57b1 .
+<http://purl.org/dc/terms/license> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology#RdfStreamType> <http://www.w3.org/2000/01/rdf-schema#label> "RDF stream type"@en .
+<https://w3id.org/stax/ontology#canBeFlattenedInto> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <https://w3id.org/stax/ontology#streamTypeSemanticRelation> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/2004/02/skos/core#broader> <https://w3id.org/stax/ontology#graphStream> .
+<https://w3id.org/stax/ontology> <http://purl.org/ontology/bibo/status> <http://purl.org/ontology/bibo/status/published> .
+<https://w3id.org/stax/ontology> <http://www.w3.org/2002/07/owl#versionInfo> "1.1.2" .
+<https://w3id.org/stax/ontology#namedGraphStream> <https://w3id.org/stax/ontology#canBeFlattenedInto> <https://w3id.org/stax/ontology#flatQuadStream> .
+<https://w3id.org/stax/ontology#RdfStreamType> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#canBeFlattenedInto> <http://www.w3.org/2000/01/rdf-schema#range> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+_:nf85c28f1008144c2baa8268e0db6aa57b1 <http://xmlns.com/foaf/0.1/homepage> <https://orcid.org/0000-0002-2543-9461> .
+<https://w3id.org/stax/ontology#flatQuadStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+_:n081e1db9176748f38f5806dd94e32572b6 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> .
+<https://w3id.org/stax/ontology#flatQuadStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RAZIs-6LyJuxrn-osVbEdxEoXmGsC1g-8m3n8LYAZ6sUI> .
+<https://w3id.org/stax/ontology#flatQuadStream> <https://w3id.org/stax/ontology#hasElementType> <https://w3id.org/stax/ontology#quad> .
+_:n081e1db9176748f38f5806dd94e32572b3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:n081e1db9176748f38f5806dd94e32572b4 .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RA6E9BH7J5qMYnuL7Kgys4Vsz25AKIAHtSQ78tcXFIlTc> .
+<https://w3id.org/stax/ontology#RdfElementType> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://w3id.org/stax/ontology#graph> <http://www.w3.org/2004/02/skos/core#note> "RDF graph, as defined by the RDF 1.1 Concepts and Abstract Syntax W3C Recommendation."@en .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/2004/02/skos/core#broader> <https://w3id.org/stax/ontology#flatStream> .
+<https://w3id.org/stax/ontology#triple> <http://www.w3.org/2004/02/skos/core#note> "RDF triple, as defined by the RDF 1.1 Concepts and Abstract Syntax W3C Recommendation."@en .
+<https://w3id.org/stax/ontology#hasStreamType> <http://www.w3.org/2000/01/rdf-schema#comment> "For an RDF stream type usage, this property indicates which stream type is used."@en .
+_:n081e1db9176748f38f5806dd94e32572b9 <http://www.w3.org/2002/07/owl#onProperty> <https://w3id.org/stax/ontology#hasElementType> .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/2004/02/skos/core#note> "A stream of RDF graphs."@en .
+<https://w3id.org/stax/ontology#hasStreamTypeUsage> <http://www.w3.org/2000/01/rdf-schema#range> <https://w3id.org/stax/ontology#RdfStreamTypeUsage> .
+<https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <http://www.w3.org/2000/01/rdf-schema#domain> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/2004/02/skos/core#definition> "An RDF named graph stream is an RDF dataset stream in which every element has exactly one named RDF graph pair <n, G>, where G is an RDF graph, and n is the graph name. Apart from graph G, the dataset may contain any number of triples in the default graph."@en .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/2004/02/skos/core#narrower> <https://w3id.org/stax/ontology#datasetStream> .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/elements/1.1/description> "RDF-STaX is an OWL 2 DL ontology that enables describing the types of RDF streams and defines relations between them."@en .
+<https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <http://www.w3.org/2002/07/owl#propertyChainAxiom> _:n081e1db9176748f38f5806dd94e32572b5 .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RAcku4ZQ6KWKFF2uLthK3mqCCNfWbrEeN643SVXwjXseE> .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#AbstractRdfStreamType> .
+<https://w3id.org/stax/ontology#timestampedNamedGraphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://purl.org/dc/terms/publisher> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology#quad> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/2004/02/skos/core#broader> <https://w3id.org/stax/ontology#groupedStream> .
+<https://w3id.org/stax/ontology#groupedStream> <http://www.w3.org/2004/02/skos/core#note> "Abstract grouped RDF stream type."@en .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/2004/02/skos/core#narrower> <https://w3id.org/stax/ontology#subjectGraphStream> .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/2004/02/skos/core#prefLabel> "RDF graph stream"@en .
+<https://w3id.org/stax/ontology#triple> <http://www.w3.org/2004/02/skos/core#definition> <https://www.w3.org/TR/rdf11-concepts/#section-triples> .
+<https://w3id.org/stax/ontology#ConcreteRdfStreamType> <http://www.w3.org/2000/01/rdf-schema#label> "Concrete RDF stream type"@en .
+<https://w3id.org/stax/ontology#dataset> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#RdfElementType> .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+_:n081e1db9176748f38f5806dd94e32572b4 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+_:n081e1db9176748f38f5806dd94e32572b4 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://w3id.org/stax/ontology#canBeGroupedInto> .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <http://www.w3.org/2000/01/rdf-schema#comment> "Indicates that the subject stream type that uses triples or graphs can be trivially extended into the object type that uses quads or datasets.\n\nThe extension is done by (in case of flat RDF streams) adding a fourth component, corresponding to the default graph. In case of grouped RDF streams, the contents of the graph are placed explicitly in the default graph."@en .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/2004/02/skos/core#definition> "An RDF dataset stream is a grouped RDF stream whose elements are RDF datasets."@en .
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/2004/02/skos/core#broader> <https://w3id.org/stax/ontology#datasetStream> .
+<http://purl.org/vocab/vann/preferredNamespacePrefix> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology#ConcreteRdfStreamType> <http://www.w3.org/2000/01/rdf-schema#comment> "Class for the concrete RDF stream types in the taxonomy. Instances of this class have concrete definitions, and they can be used to annotate real streams."@en .
+<https://w3id.org/stax/ontology#RdfElementType> <http://www.w3.org/2002/07/owl#equivalentClass> _:n081e1db9176748f38f5806dd94e32572b11 .
+<https://w3id.org/stax/ontology> <http://purl.org/dc/terms/issued> "2023-10-23T00:00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+_:n081e1db9176748f38f5806dd94e32572b2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<https://w3id.org/stax/ontology#canBeFlattenedInto> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://w3id.org/stax/ontology#hasElementType> <http://www.w3.org/2000/01/rdf-schema#domain> <https://w3id.org/stax/ontology#ConcreteRdfStreamType> .
+<https://w3id.org/stax/ontology#hasStreamTypeUsage> <http://www.w3.org/2000/01/rdf-schema#comment> "Inverse of stax:isUsageOf – indicates that the subject is related to a usage of an RDF stream type.\n\nThe subject for this property can be for example a published stream on the Web (e.g., vocals:RDFStream) or a scientific publication that discusses a usage of an RDF stream type."@en .
+<https://w3id.org/stax/ontology#flatStream> <http://www.w3.org/2004/02/skos/core#narrower> <https://w3id.org/stax/ontology#flatQuadStream> .
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/2004/02/skos/core#note> "A stream of datasets which have one named graph."@en .
+<https://w3id.org/stax/ontology#graphStream> <https://w3id.org/stax/ontology#canBeFlattenedInto> <https://w3id.org/stax/ontology#flatTripleStream> .
+<https://w3id.org/stax/ontology#graphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/2004/02/skos/core#broader> <https://w3id.org/stax/ontology#groupedStream> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RAsiMOcZpJwtQVyiIBvn5-K1AvCcXmU8axm9VY4A7AY-k> .
+<https://w3id.org/stax/ontology#rdfStream> <http://www.w3.org/2004/02/skos/core#narrower> <https://w3id.org/stax/ontology#groupedStream> .
+<https://w3id.org/stax/ontology#RdfElementType> <http://www.w3.org/2000/01/rdf-schema#comment> "Class for base types of elements in RDF streams. There are four instances of this class (triple, quad, graph, dataset) and they should not be further specialized. The instances of this class do NOT form a taxonomical structure."@en .
+<https://w3id.org/stax/ontology#canBeGroupedInto> <http://www.w3.org/2002/07/owl#propertyChainAxiom> _:n081e1db9176748f38f5806dd94e32572b3 .
+<https://w3id.org/stax/ontology#subjectGraphStream> <https://w3id.org/stax/ontology#canBeFlattenedInto> <https://w3id.org/stax/ontology#flatTripleStream> .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/2004/02/skos/core#note> "A stream of RDF datasets."@en .
+_:n081e1db9176748f38f5806dd94e32572b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://www.w3.org/2004/02/skos/core#broaderTransitive> .
+<https://w3id.org/stax/ontology#hasElementType> <http://www.w3.org/2000/01/rdf-schema#range> <https://w3id.org/stax/ontology#RdfElementType> .
+<https://w3id.org/stax/ontology#hasElementType> <http://www.w3.org/2000/01/rdf-schema#label> "has element type"@en .
+<https://w3id.org/stax/ontology#AbstractRdfStreamType> <http://www.w3.org/2000/01/rdf-schema#label> "Abstract RDF stream type"@en .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/2004/02/skos/core#example> <https://w3id.org/np/RAq7ctp_pHq3u76I54CU9S4WA4L9wQFCnmj3DJyrfrL58> .
+<https://w3id.org/stax/ontology#flatTripleStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://w3id.org/stax/ontology#rdfStream> <http://www.w3.org/2004/02/skos/core#narrower> <https://w3id.org/stax/ontology#flatStream> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<http://purl.org/ontology/bibo/status> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#AnnotationProperty> .
+<https://w3id.org/stax/ontology#namedGraphStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://w3id.org/stax/ontology#graph> <http://www.w3.org/2004/02/skos/core#definition> <https://www.w3.org/TR/rdf11-concepts/#section-rdf-graph> .
+<https://w3id.org/stax/ontology#datasetStream> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2004/02/skos/core#Concept> .
+<https://w3id.org/stax/ontology#subjectGraphStream> <https://w3id.org/stax/ontology#canBeTriviallyExtendedInto> <https://w3id.org/stax/ontology#datasetStream> .

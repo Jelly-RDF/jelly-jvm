@@ -2,6 +2,7 @@ package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import eu.ostrzyciel.jelly.integration_tests.TestCases
 import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
 import org.scalatest.BeforeAndAfterAll
@@ -20,18 +21,6 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
 
   override def beforeAll(): Unit =
     JenaSystem.init()
-
-  val casesTriples: Seq[(String, File)] = Seq[String](
-    "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.nt", "rdf-star-blanks.nt"
-  ).map(name => (
-    name, File(getClass.getResource("/triples/" + name).toURI)
-  ))
-
-  val casesQuads: Seq[(String, File)] = Seq(
-    "nq-syntax-tests.nq", "weather-quads.nq"
-  ).map(name => (
-    name, File(getClass.getResource("/quads/" + name).toURI)
-  ))
 
   val presets: Seq[(RdfStreamOptions, Int, String)] = Seq(
     (JellyOptions.smallGeneralized, 1, "small generalized"),
@@ -114,7 +103,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
   ) =
     f"${ser.name} serializer + ${des.name} deserializer" should {
       for (encOptions, decOptions, presetName) <- presetsUnsupported do
-      for (name, file) <- casesTriples do
+      for (name, file) <- TestCases.triples do
         s"not accept unsupported options (file $name, $presetName)" in {
           val model = ser.readTriplesW3C(FileInputStream(file))
           val originalSize = summon[Measure[TMSer]].size(model)
@@ -133,7 +122,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
         }
 
       for (preset, size, presetName) <- presets do
-        for (name, file) <- casesTriples do
+        for (name, file) <- TestCases.triples do
           s"ser/des file $name with preset $presetName, frame size $size" in {
             val model = ser.readTriplesW3C(FileInputStream(file))
             val originalSize = summon[Measure[TMSer]].size(model)
@@ -153,7 +142,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAl
             deserializedSize should be >= originalSize - 1
           }
 
-        for (name, file) <- casesQuads do
+        for (name, file) <- TestCases.quads do
           s"ser/des file $name with preset $presetName, frame size $size" in {
             val ds = ser.readQuadsW3C(FileInputStream(file))
             val originalSize = summon[Measure[TDSer]].size(ds)
