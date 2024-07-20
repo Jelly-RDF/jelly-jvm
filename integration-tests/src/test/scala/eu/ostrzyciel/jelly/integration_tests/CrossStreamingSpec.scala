@@ -62,21 +62,13 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndA
   )
 
   private object TripleTests:
-    val files: Seq[(String, File)] = Seq[String](
-      "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.nt", "rdf-star-blanks.nt"
-    ).map(name => (
-      name, File(getClass.getResource("/triples/" + name).toURI)
-    ))
+    val files: Seq[(String, File)] = TestCases.triples
     val graphs: Map[String, Graph] = Map.from(
       files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString)))
     )
 
   private object QuadTests:
-    val files: Seq[(String, File)] = Seq(
-      "nq-syntax-tests.nq", "weather-quads.nq"
-    ).map(name => (
-      name, File(getClass.getResource("/quads/" + name).toURI)
-    ))
+    val files: Seq[(String, File)] = TestCases.quads
     val datasets: Map[String, DatasetGraph] = Map.from(
       files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString)))
     )
