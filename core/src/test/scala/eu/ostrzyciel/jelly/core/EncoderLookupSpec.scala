@@ -11,7 +11,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
 
   "encoder lookup" should {
     "add new entries up to capacity" in {
-      val lookup = NewEncoderLookup(4)
+      val lookup = EncoderLookup(4)
       for i <- 1 to 4 do
         val v = lookup.addEntry(s"v$i")
         v.getId should be (i)
@@ -21,7 +21,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
     }
 
     "retrieve entries" in {
-      val lookup = NewEncoderLookup(4)
+      val lookup = EncoderLookup(4)
       for i <- 1 to 4 do
         lookup.addEntry(s"v$i")
       for i <- 1 to 4 do
@@ -33,7 +33,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
     }
 
     "retrieve entries many times, in random order" in {
-      val lookup = NewEncoderLookup(50)
+      val lookup = EncoderLookup(50)
       for i <- 1 to 50 do
         lookup.addEntry(s"v$i")
       for _ <- 1 to 20 do
@@ -46,7 +46,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
     }
 
     "overwrite existing entries, from oldest to newest" in {
-      val lookup = NewEncoderLookup(4)
+      val lookup = EncoderLookup(4)
       for i <- 1 to 4 do
         lookup.addEntry(s"v$i")
 
@@ -65,7 +65,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
     }
 
     "overwrite existing entries in order, many times" in {
-      val lookup = NewEncoderLookup(17)
+      val lookup = EncoderLookup(17)
       for i <- 1 to 17 do
         lookup.addEntry(s"v$i")
 
@@ -84,7 +84,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
     }
 
     "pass random stress test (1)" in {
-      val lookup = NewEncoderLookup(100)
+      val lookup = EncoderLookup(100)
       val frequentSet = (1 to 10).map(i => s"v$i")
       frequentSet.foreach(lookup.addEntry)
 
@@ -104,7 +104,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
     }
 
     "pass random stress test (2)" in {
-      val lookup = NewEncoderLookup(113)
+      val lookup = EncoderLookup(113)
       for i <- 1 to 20 do
         lookup.addEntry(s"v$i")
       for _ <- 1 to 1000 do
@@ -120,7 +120,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
     }
 
     "pass random stress test (3)" in {
-      val lookup = NewEncoderLookup(1023)
+      val lookup = EncoderLookup(1023)
       for _ <- 1 to 100_000 do
         val v = lookup.addEntry(s"v${Random.nextInt(10_000) + 1}")
         v.getId should be > 0
