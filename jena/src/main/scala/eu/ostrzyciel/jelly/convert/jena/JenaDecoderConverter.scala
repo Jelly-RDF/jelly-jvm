@@ -6,22 +6,23 @@ import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
 
 final class JenaDecoderConverter extends ProtoDecoderConverter[Node, RDFDatatype, Triple, Quad]:
-  override inline def makeSimpleLiteral(lex: String) = NodeFactory.createLiteral(lex)
+  override inline def makeSimpleLiteral(lex: String): Node = NodeFactory.createLiteral(lex)
 
-  override inline def makeLangLiteral(lex: String, lang: String) = NodeFactory.createLiteral(lex, lang)
+  override inline def makeLangLiteral(lex: String, lang: String): Node = NodeFactory.createLiteral(lex, lang)
 
-  override inline def makeDtLiteral(lex: String, dt: RDFDatatype) = NodeFactory.createLiteral(lex, dt)
+  override inline def makeDtLiteral(lex: String, dt: RDFDatatype): Node = NodeFactory.createLiteral(lex, dt)
 
-  override inline def makeDatatype(dt: String) = NodeFactory.getType(dt)
+  override inline def makeDatatype(dt: String): RDFDatatype = NodeFactory.getType(dt)
 
-  override inline def makeBlankNode(label: String) = NodeFactory.createBlankNode(label)
+  override inline def makeBlankNode(label: String): Node = NodeFactory.createBlankNode(label)
 
-  override inline def makeIriNode(iri: String) = NodeFactory.createURI(iri)
+  override inline def makeIriNode(iri: String): Node = NodeFactory.createURI(iri)
 
-  override inline def makeTripleNode(s: Node, p: Node, o: Node) = NodeFactory.createTripleNode(s, p, o)
+  override inline def makeTripleNode(s: Node, p: Node, o: Node): Node = NodeFactory.createTripleNode(s, p, o)
 
-  override inline def makeDefaultGraphNode(): Node = Quad.defaultGraphIRI
+  // See: https://github.com/apache/jena/issues/2578#issuecomment-2231749564
+  override inline def makeDefaultGraphNode(): Node = Quad.defaultGraphNodeGenerated
 
-  override inline def makeTriple(s: Node, p: Node, o: Node) = Triple.create(s, p, o)
+  override inline def makeTriple(s: Node, p: Node, o: Node): Triple = Triple.create(s, p, o)
 
-  override inline def makeQuad(s: Node, p: Node, o: Node, g: Node) = Quad.create(g, s, p, o)
+  override inline def makeQuad(s: Node, p: Node, o: Node, g: Node): Quad = Quad.create(g, s, p, o)
