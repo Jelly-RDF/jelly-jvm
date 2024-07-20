@@ -57,9 +57,9 @@ public final class NodeEncoder<TNode> {
     private int lastIriNameId;
     private int lastIriPrefixId = -1000;
 
-    private final NewEncoderLookup datatypeLookup;
-    private NewEncoderLookup prefixLookup;
-    private final NewEncoderLookup nameLookup;
+    private final EncoderLookup datatypeLookup;
+    private EncoderLookup prefixLookup;
+    private final EncoderLookup nameLookup;
 
     // We split the node caches in two – the first one is for nodes that depend on the lookups
     // (IRIs and datatype literals). The second one is for nodes that don't depend on the lookups.
@@ -76,12 +76,12 @@ public final class NodeEncoder<TNode> {
      * @param dependentNodeCacheSize The size of the dependent node cache (for nodes that depend on lookups)
      */
     public NodeEncoder(RdfStreamOptions opt, int nodeCacheSize, int dependentNodeCacheSize) {
-        datatypeLookup = new NewEncoderLookup(opt.maxDatatypeTableSize());
+        datatypeLookup = new EncoderLookup(opt.maxDatatypeTableSize());
         this.maxPrefixTableSize = opt.maxPrefixTableSize();
         if (maxPrefixTableSize > 0) {
-            prefixLookup = new NewEncoderLookup(maxPrefixTableSize);
+            prefixLookup = new EncoderLookup(maxPrefixTableSize);
         }
-        nameLookup = new NewEncoderLookup(opt.maxNameTableSize());
+        nameLookup = new EncoderLookup(opt.maxNameTableSize());
         dependentNodeCache = new NodeCache<>(dependentNodeCacheSize);
         nodeCache = new NodeCache<>(nodeCacheSize);
     }

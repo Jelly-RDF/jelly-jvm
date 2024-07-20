@@ -26,7 +26,11 @@ trait SpoTerm extends RdfTerm:
 trait GraphTerm extends RdfTerm:
   def isDefaultGraph: Boolean = false
   def defaultGraph: RdfDefaultGraph = null
-  
+
+/**
+ * Trait for any RDF terms, only needed to properly interoperate with our Java code (NodeEncoder), because
+ * Java does not support intersection types as well as Scala.
+ */
 trait UniversalTerm extends SpoTerm, GraphTerm
 
 object RdfTerm:

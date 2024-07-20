@@ -7,7 +7,7 @@ import java.util.HashMap;
  * This is a very efficient implementation of an LRU cache that uses as few allocations as possible.
  * The table is implemented as a doubly linked list in an array.
  */
-final class NewEncoderLookup {
+final class EncoderLookup {
     /**
      * Represents an entry in the lookup table.
      */
@@ -61,7 +61,7 @@ final class NewEncoderLookup {
 
     private final LookupEntry entryForReturns = new LookupEntry(0, 0, true);
 
-    public NewEncoderLookup(int size) {
+    public EncoderLookup(int size) {
         this.size = size;
         table = new int[(size + 1) * 3];
         // Set the head's serial to non-zero value, so that default-initialized DependentNodes are not
