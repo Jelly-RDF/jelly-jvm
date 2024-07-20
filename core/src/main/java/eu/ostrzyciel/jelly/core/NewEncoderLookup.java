@@ -2,11 +2,28 @@ package eu.ostrzyciel.jelly.core;
 
 import java.util.HashMap;
 
-public class NewEncoderLookup {
-    public final static class LookupEntry {
+/**
+ * A lookup table for NodeEncoder, used for indexing datatypes, IRI prefixes, and IRI names.
+ * This is a very efficient implementation of an LRU cache that uses as few allocations as possible.
+ * The table is implemented as a doubly linked list in an array.
+ */
+final class NewEncoderLookup {
+    /**
+     * Represents an entry in the lookup table.
+     */
+    static final class LookupEntry {
+        /** The ID of the entry used for referencing it from RdfIri and RdfLiteral objects. */
         public int getId;
+        /** The ID of the entry used for adding the lookup entry to the RDF stream. */
         public int setId;
+        /** Whether this entry is a new entry. */
         public boolean newEntry;
+        /** 
+         * The serial number of the entry, incremented each time the entry is replaced in the table.
+         * This could theoretically overflow and cause bogus cache hits, but it's enormously
+         * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that 
+         * causes this to happen.
+         */
         public int serial = 1;
 
         public LookupEntry(int getId, int setId) {
@@ -21,14 +38,25 @@ public class NewEncoderLookup {
         }
     }
 
+    /** The lookup hash map */
     private final HashMap<String, LookupEntry> map = new HashMap<>();
-    // Layout: [left, right, serial]
-    // Head: table[1]
+    /**
+     * The doubly-linked list of entries, with 1-based indexing.
+     * Each entry is represented by three integers: left, right, and serial.
+     * The head pointer is in table[1].
+     * The first valid entry is in table[3] – table[5].
+     */
     final int[] table;
+    // Tail pointer for the table.
     private int tail;
+    // Maximum size of the lookup.
     private final int size;
+    // Current size of the lookup (how many entries are used).
+    // This will monotonically increase until it reaches the maximum size.
     private int used;
+    // The last id that was set in the table.
     private int lastSetId;
+    // Names of the entries. Entry 0 is always null.
     private final String[] names;
 
     private final LookupEntry entryForReturns = new LookupEntry(0, 0, true);
@@ -37,11 +65,16 @@ public class NewEncoderLookup {
         this.size = size;
         table = new int[(size + 1) * 3];
         // Set the head's serial to non-zero value, so that default-initialized DependentNodes are not
-        // considered as valid entries.
+        // accidentally considered as valid entries.
         table[2] = -1;
         names = new String[size + 1];
     }
 
+    /**
+     * To be called after an entry is accessed (used).
+     * This moves the entry to the front of the list to prevent it from being evicted.
+     * @param id The ID of the entry that was accessed.
+     */
     public void onAccess(int id) {
         int base = id * 3;
         if (base == tail) {
@@ -61,15 +94,22 @@ public class NewEncoderLookup {
         tail = base;
     }
 
+    /**
+     * Adds a new entry to the lookup table or retrieves it if it already exists.
+     * @param key The key of the entry.
+     * @return The entry.
+     */
     public LookupEntry addEntry(String key) {
         var value = map.get(key);
         if (value != null) {
+            // The entry is already in the table, just update the access order
             onAccess(value.getId);
             return value;
         }
 
         int id;
         if (used < size) {
+            // We still have space in the table, add a new entry to the end of the table.
             id = ++used;
             int base = id * 3;
             // Set the left to the tail
@@ -88,8 +128,8 @@ public class NewEncoderLookup {
             // .serial is already 1 by default
             // entryForReturns.serial = 1;
         } else {
+            // The table is full, evict the least recently used entry.
             int base = table[1];
-            // Evict the least recently used
             id = base / 3;
             // Remove the entry from the map
             LookupEntry oldEntry = map.remove(names[id]);

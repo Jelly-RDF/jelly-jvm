@@ -304,5 +304,34 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
             name.id should be (eId)
             name.value should be (eVal)
       }
+
+      "add IRIs while evicting old ones, without a prefix table" in {
+        val (encoder, buffer) = getEncoder(0)
+        val data = Seq(
+          // IRI, expected name ID
+          ("https://test.org/Cake1", 0),
+          ("https://test.org/Cake1", 1),
+          ("https://test.org/Cake1", 1),
+          ("https://test.org#Cake1", 0),
+          ("https://test.org/test/Cake1", 0),
+          ("https://test.org/Cake2", 0),
+          ("https://test.org#Cake2", 1),
+          ("https://test.org/other/Cake1", 0),
+          ("https://test.org/other/Cake2", 0),
+          ("https://test.org/other/Cake3", 0),
+          ("https://test.org/other/Cake1", 2),
+          ("https://test.org/other/Cake2", 0),
+          ("https://test.org/other/Cake3", 0),
+          ("https://test.org/other/Cake4", 1),
+          ("https://test.org/other/Cake5", 0),
+          ("https://test.org/other/Cake5", 2),
+          ("https://test.org/other/Cake3", 4),
+        )
+
+        for (sIri, eName) <- data do
+          val iri = encoder.encodeIri(sIri, buffer).asInstanceOf[RdfIri]
+          iri.prefixId should be(0)
+          iri.nameId should be(eName)
+      }
     }
   }
