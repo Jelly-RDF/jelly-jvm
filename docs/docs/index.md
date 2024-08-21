@@ -54,7 +54,7 @@ The following table shows the compatibility of the Jelly-JVM implementation with
 Below is a list of all documentation pages about Jelly-JVM. You can also browse the Javadoc using the badges in the module list above. The documentation uses examples written in Scala, but the libraries can be used from Java as well.
 
 - [Getting started with Jena/RDF4J plugins](getting-started-plugins.md) – how to use Jelly-JVM as a plugin for Apache Jena or RDF4J, without writing any code.
-- [Getting started for developers](getting-started-devs.md) – how to use Jelly-JVM in code.
+- [Getting started for application developers](getting-started-devs.md) – how to use Jelly-JVM in code.
 - User guide
     - [Apache Jena integration](user/jena.md)
     - [RDF4J integration](user/rdf4j.md)

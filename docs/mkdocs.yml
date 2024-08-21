@@ -80,7 +80,7 @@ extra:
 nav:
   - Home: 'index.md'
   - Getting started (Jena/RDF4J plugin): 'getting-started-plugins.md'
-  - Getting started (developers): 'getting-started-devs.md'
+  - Getting started (application developers): 'getting-started-devs.md'
   - User guide:
     - Apache Jena integration: 'user/jena.md'
     - RDF4J integration: 'user/rdf4j.md'
