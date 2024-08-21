@@ -91,7 +91,7 @@ jobs:
 
       - name: Fetch tags for the protobuf submodule
         working-directory: ./rdf-protos/src/main/protobuf_shared
-        run: git fetch --prune --unshallow
+        run: git fetch
 
       - name: Deploy site
         working-directory: ./docs
