@@ -7,6 +7,8 @@ plugins:
   - include-markdown
   - mike
   - macros
+  - git-revision-date-localized:
+      enable_creation_date: true
 
 markdown_extensions:
   - attr_list
@@ -26,6 +28,7 @@ markdown_extensions:
 
 repo_url: https://github.com/Jelly-RDF/jelly-jvm
 repo_name: Jelly-RDF/jelly-jvm
+edit_uri: edit/main/docs/
 
 theme:
   name: material
@@ -43,6 +46,7 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
+    - content.action.edit
 
   palette: 
     # Palette toggle for light mode

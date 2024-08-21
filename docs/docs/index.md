@@ -64,4 +64,4 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
 - Developer guide
     - [Releases](dev/releases.md)
     - [Implementing Jelly for other libraries](dev/implementing.md)
-- [Main Jelly website]({{ proto_link( '' ) }}) – including the Jelly protocol specification and explanation of the the various stream types.
+- [Main Jelly website]({{ proto_link( '' ) }}) – including the Jelly protocol specification and explanation of the various stream types.
