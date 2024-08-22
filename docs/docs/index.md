@@ -49,7 +49,7 @@ The following table shows the compatibility of the Jelly-JVM implementation with
 
 | Jelly | Scala       | Java | RDF4J | Apache Jena | Apache Pekko |
 | ----- | ----------- | ---- | ----- | ----------- | ------------ |
-| **1.0.x (current)** | 3.3.x (LTS) | 11+  | 4.x.y | 4.x.y       | 1.0.x        |
+| **1.0.x (current)** | 3.3.x (LTS)<br>2.13.x[^1] | 11+  | 4.x.x | 4.x.x       | 1.0.x        |
 
 ## Documentation
 
