@@ -1,16 +1,16 @@
 # Jelly-JVM
 
-**Jelly-JVM** is an implementation of the Jelly serialization format and the gRPC streaming protocol for the Java Virtual Machine (JVM), written in Scala 3. The supported RDF libraries are [Apache Jena](https://jena.apache.org/) and [Eclipse RDF4J](https://rdf4j.org/).
+**Jelly-JVM** is an implementation of the Jelly serialization format and the gRPC streaming protocol for the Java Virtual Machine (JVM), written in Scala 3[^1]. The supported RDF libraries are [Apache Jena](https://jena.apache.org/) and [Eclipse RDF4J](https://rdf4j.org/).
 
 This collection of libraries aims to provide the full stack of utilities for fast and scalable RDF streaming with the [Jelly protocol]({{ proto_link( 'specification' ) }}).
 
 !!! tip "Getting started with plugins – no code required"
 
-    See the **[Getting started guide](getting-started-plugins.md)** for a quick way to use Jelly with your Apache Jena or RDF4J application without writing any code.
+    See the **[getting started guide with plugins](getting-started-plugins.md)** for a quick way to use Jelly with your Apache Jena or RDF4J application without writing any code.
 
-!!! tip "Getting started for developers"
+!!! tip "Getting started for application developers"
 
-    If you want to use the full feature set of Jelly-JVM in your code, see the **[Getting started guide](getting-started-devs.md)** for developers.
+    If you want to use the full feature set of Jelly-JVM in your code, see the **[getting started guide for application developers](getting-started-devs.md)**.
 
 {% if jvm_version() == 'dev' %}
 **This documentation is for the latest development version of Jelly-JVM** – it is not considered stable. If you are looking for the documentation of a stable release, use the version selector on the left of the top navigation bar. See: [latest stable version](https://w3id.org/jelly/jelly-jvm/stable).
@@ -67,3 +67,7 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
     - [Releases](dev/releases.md)
     - [Implementing Jelly for other libraries](dev/implementing.md)
 - [Main Jelly website]({{ proto_link( '' ) }}) – including the Jelly protocol specification and explanation of the various stream types.
+
+## Footnotes
+
+[^1]: Scala 2.13-compatible builds of Jelly-JVM are available as well. [See more details](user/scala2.md).

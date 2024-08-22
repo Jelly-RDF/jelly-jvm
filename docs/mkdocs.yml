@@ -14,6 +14,7 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - admonition
+  - footnotes
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -91,6 +92,7 @@ nav:
     - Reactive streaming: 'user/reactive.md'
     - gRPC: 'user/grpc.md'
     - Useful utilities: 'user/utilities.md'
+    - Scala 2 builds: 'user/scala2.md'
   - Developer guide:
     - Releases: 'dev/releases.md'
     - Implementing Jelly for other libraries: 'dev/implementing.md'
