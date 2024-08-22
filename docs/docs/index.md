@@ -12,11 +12,11 @@ This collection of libraries aims to provide the full stack of utilities for fas
 
     If you want to use the full feature set of Jelly-JVM in your code, see the **[Getting started guide](getting-started-devs.md)** for developers.
 
-TODO: versioning – point to the version selector in the navbar 
-
-{{ jvm_version() }}
-
-{{ proto_version() }} 
+{% if jvm_version() == 'dev' %}
+**This documentation is for the latest development version of Jelly-JVM** – it is not considered stable. If you are looking for the documentation of a stable release, use the version selector on the left of the top navigation bar. See: [latest stable version](https://w3id.org/jelly/jelly-jvm/stable).
+{% else %}
+**This documentation is for Jelly-JVM version {{ jvm_version() }}**, which uses the [Jelly protocol version {{ proto_version() }}]({{ proto_link('specification') }}). If you are looking for the documentation of a different version, use the version selector on the left of the top navigation bar. See: [latest stable version](https://w3id.org/jelly/jelly-jvm/stable), [latest development version](https://w3id.org/jelly/jelly-jvm/dev).
+{% endif %}
 
 ## Library modules
 
@@ -37,7 +37,9 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}).
     - {{ module_badges('grpc') }}
 
-## TODO: PLUGIN JARS
+## Plugin JARs
+
+We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](https://jena.apache.org/) and [RDF4J](https://rdf4j.org/) just by dropping the JARs into the classpath. **[Find out more about using the plugins](getting-started-plugins.md)**.
 
 ## Compatibility
 
@@ -60,7 +62,7 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
     - [RDF4J integration](user/rdf4j.md)
     - [Reactive streaming](user/reactive.md)
     - [gRPC](user/grpc.md)
-    - [Userful utilities](user/utilities.md)
+    - [Useful utilities](user/utilities.md)
 - Developer guide
     - [Releases](dev/releases.md)
     - [Implementing Jelly for other libraries](dev/implementing.md)

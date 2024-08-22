@@ -5,16 +5,21 @@ import subprocess
 
 
 def define_env(env):
-    try:
-        proto_tag_raw = subprocess.run(
-            ['git', 'describe', '--tags'],
-            cwd='../rdf-protos/src/main/protobuf_shared',
-            check=True,
-            capture_output=True,
-        ).stdout.decode().strip()
-    except subprocess.CalledProcessError as e:
-        print('Failed to call git: ', e.returncode, e.stderr)
-        raise e
+    # Override for use in local development
+    proto_tag_raw = os.environ.get('PROTO_TAG', None)
+    if proto_tag_raw is not None:
+        print(f'PROTO_TAG env var is set to {proto_tag_raw}')
+    else:
+        try:
+            proto_tag_raw = subprocess.run(
+                ['git', 'describe', '--tags'],
+                cwd='../rdf-protos/src/main/protobuf_shared',
+                check=True,
+                capture_output=True,
+            ).stdout.decode().strip()
+        except subprocess.CalledProcessError as e:
+            print('Failed to call git: ', e.returncode, e.stderr)
+            raise e
     
 
     def proto_tag():
