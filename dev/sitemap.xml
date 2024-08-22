@@ -2,52 +2,52 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/getting-started-devs/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/getting-started-plugins/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/dev/implementing/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/dev/releases/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/grpc/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/jena/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/rdf4j/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/reactive/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/utilities/</loc>
-         <lastmod>2024-08-21</lastmod>
+         <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
