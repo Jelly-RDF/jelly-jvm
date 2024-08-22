@@ -64,7 +64,7 @@ def define_env(env):
     @env.macro
     def proto_link(page: str):
         version = proto_version()
-        return f'https://jelly-rdf.github.io/{version}/{page}'
+        return f'https://w3id.org/jelly/{version}/{page}'
     
 
     @env.macro
@@ -77,7 +77,7 @@ def define_env(env):
     
 
     def transform_nav_item(item):
-        if list(item.values())[0] == 'https://jelly-rdf.github.io/':
+        if list(item.values())[0] == 'https://w3id.org/jelly/':
             return {list(item.keys())[0]: proto_link('')}
         return item
     
