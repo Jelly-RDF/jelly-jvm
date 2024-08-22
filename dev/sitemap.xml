@@ -46,6 +46,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/scala2/</loc>
+         <lastmod>2024-08-22</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/utilities/</loc>
          <lastmod>2024-08-22</lastmod>
          <changefreq>daily</changefreq>
