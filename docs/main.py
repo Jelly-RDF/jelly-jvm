@@ -20,6 +20,16 @@ def define_env(env):
         except subprocess.CalledProcessError as e:
             print('Failed to call git: ', e.returncode, e.stderr)
             raise e
+        
+    try:
+        jvm_tag_raw = subprocess.run(
+            ['git', 'describe', '--tags'],
+            check=True,
+            capture_output=True,
+        ).stdout.decode().strip()
+    except subprocess.CalledProcessError as e:
+        print('Failed to call git: ', e.returncode, e.stderr)
+        raise e
     
 
     def proto_tag():
@@ -42,6 +52,16 @@ def define_env(env):
             return 'dev'
         else:
             return tag.replace('v', '')
+        
+    
+    @env.macro
+    def jvm_package_version():
+        """Returns the current JVM package version, as published to Maven."""
+        v = jvm_version()
+        if v == 'dev':
+            return jvm_tag_raw.split('-')[0].replace('v', '')
+        else:
+            return v
     
     
     @env.macro

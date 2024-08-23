@@ -1,6 +1,6 @@
 # Compatibility policy
 
-Jelly-JVM follows [Semantic Versioning 2.0.0](https://semver.org/), with MAJOR.MINOR.PATCH releases. Please see the compatibility table on the [main page](index.md) for the current compatibility information. The documentation is versioned to match each Jelly-JVM MAJOR.MINOR version.
+Jelly-JVM follows [Semantic Versioning 2.0.0](https://semver.org/), with MAJOR.MINOR.PATCH releases. Please see the compatibility table on the [main page](../index.md) for the current compatibility information. The documentation is versioned to match each Jelly-JVM MAJOR.MINOR version.
 
 ## JVM and Scala
 
