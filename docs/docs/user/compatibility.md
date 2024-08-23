@@ -6,7 +6,7 @@ Jelly-JVM follows [Semantic Versioning 2.0.0](https://semver.org/), with MAJOR.M
 
 The current version of Jelly-JVM is compatible with Java 11 and newer. Java 11, 17, and 21 are tested in CI and are guaranteed to work. We recommend using a recent release of [GraalVM](https://www.graalvm.org/) to get the best performance.
 
-Jelly is built with [Scala 3 LTS releases](https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html).
+Jelly is built with [Scala 3 LTS releases](https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html), however, [Scala 2.13-compatible builds are available as well](scala2.md).
 
 ## RDF libraries
 
@@ -26,5 +26,7 @@ Auto-generated classes in the `jelly-core` module, `eu.ostrzyciel.jelly.core.pro
 
 ## See also
 
-- [Contributing to Jelly-JVM](../contributing.md)
+- [Scala 2.13 builds](scala2.md)
+- [Release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)
 - [Making Jelly-JVM releases](../dev/releases.md)
+- [Contributing to Jelly-JVM](../contributing.md)

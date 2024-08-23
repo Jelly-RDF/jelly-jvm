@@ -51,7 +51,7 @@ The following table shows the compatibility of the Jelly-JVM implementation with
 | ----- | ----------- | ---- | ----- | ----------- | ------------ |
 | **1.0.x (current)** | 3.3.x (LTS)<br>2.13.x[^1] | 11+  | 4.x.x | 4.x.x       | 1.0.x        |
 
-See the **[compatibility policy](user/compatibility.md)** for more details.
+See the **[compatibility policy](user/compatibility.md)** for more details and the **[release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)**.
 
 ## Documentation
 
@@ -65,9 +65,14 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
     - [Reactive streaming](user/reactive.md)
     - [gRPC](user/grpc.md)
     - [Useful utilities](user/utilities.md)
+    - [Compatibility policy](user/compatibility.md)
+    - [Scala 2.13 builds](user/scala2.md)
 - Developer guide
     - [Releases](dev/releases.md)
     - [Implementing Jelly for other libraries](dev/implementing.md)
+- [Contributing to Jelly-JVM](contributing.md)
+- [License and citation](licensing.md)
+- [Release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)
 - [Main Jelly website]({{ proto_link( '' ) }}) – including the Jelly protocol specification and explanation of the various stream types.
 
 
