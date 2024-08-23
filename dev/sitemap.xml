@@ -36,6 +36,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/compatibility/</loc>
+         <lastmod>2024-08-23</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/grpc/</loc>
          <lastmod>2024-08-23</lastmod>
          <changefreq>daily</changefreq>
