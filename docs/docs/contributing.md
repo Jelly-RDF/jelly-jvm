@@ -8,7 +8,7 @@ If you have a question, found a bug, or have an idea for a new feature, please [
 
 ### Security issues
 
-If you find a security issue, please **do not** open a public issue. Instead, send an email to the maintainer – the email address is listed in the [GitHub profile](https://github.com/Ostrzyciel).
+If you find a security issue or vulnerability, please **do not** open a public issue. Instead, **[use the dedicated vulnerability reporting page](https://github.com/Jelly-RDF/jelly-jvm/security)**.
 
 ## Pull requests
 
