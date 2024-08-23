@@ -33,7 +33,6 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
-  # TODO: custom scripts
   custom_dir: overrides
   features:
     # Behave like an SPA
@@ -54,7 +53,7 @@ theme:
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: teal
-      accent: blue
+      accent: teal
       toggle:
         icon: material/brightness-7 
         name: Switch to dark mode
@@ -63,7 +62,7 @@ theme:
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: teal
-      accent: blue
+      accent: teal
       toggle:
         icon: material/brightness-3
         name: Switch to light mode
@@ -72,6 +71,9 @@ theme:
   favicon: assets/jelly_color.png
   icon:
     repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
 
 extra:
   version:
