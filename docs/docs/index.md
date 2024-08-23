@@ -68,6 +68,6 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
     - [Implementing Jelly for other libraries](dev/implementing.md)
 - [Main Jelly website]({{ proto_link( '' ) }}) – including the Jelly protocol specification and explanation of the various stream types.
 
-## Footnotes
+
 
 [^1]: Scala 2.13-compatible builds of Jelly-JVM are available as well. [See more details](user/scala2.md).

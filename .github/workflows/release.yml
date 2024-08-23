@@ -103,7 +103,7 @@ jobs:
           if [[ $TAG == v* ]] ; then
             V_MAJOR=`echo ${TAG#v} | awk -F '.' '{print $1}'`
             V_MINOR=`echo ${TAG#v} | awk -F '.' '{print $2}'`
-            mike deploy --push --title "${V_MAJOR}.${V_MINOR}.x" --update-aliases "${V_MAJOR}.${V_MINOR}" stable "${TAG#v}" "${V_MAJOR}.${V_MINOR}.x"
+            mike deploy --push --alias-type=redirect --update-aliases "${V_MAJOR}.${V_MINOR}.x" stable "${TAG#v}"
           else
-            mike deploy --push --title "Development version" --update-aliases dev latest
+            mike deploy --push --alias-type=redirect --title "Development version" --update-aliases dev latest
           fi
