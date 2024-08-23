@@ -6,12 +6,22 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://jelly-rdf.github.io/jelly-jvm/dev/contributing/</loc>
+         <lastmod>2024-08-23</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/getting-started-devs/</loc>
          <lastmod>2024-08-23</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/getting-started-plugins/</loc>
+         <lastmod>2024-08-23</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://jelly-rdf.github.io/jelly-jvm/dev/licensing/</loc>
          <lastmod>2024-08-23</lastmod>
          <changefreq>daily</changefreq>
     </url>
