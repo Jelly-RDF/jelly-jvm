@@ -67,7 +67,7 @@ def define_env(env):
 
     
     @env.macro
-    def proto_link(page: str):
+    def proto_link(page: str = ''):
         version = proto_version()
         return f'https://w3id.org/jelly/{version}/{page}'
     
