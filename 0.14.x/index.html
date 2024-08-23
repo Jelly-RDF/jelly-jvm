@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="assets/jelly_color.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.33">
     
     
       
@@ -60,7 +60,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Jelly-JVM" />
     <meta property="og:description" content="Jelly-JVM is a JVM (Scala) implementation of the Jelly RDF streaming protocol." />
-    <meta property="og:image" content="https://jelly-rdf.github.io/jelly-jvm/dev/assets/social.jpg" />
+    <meta property="og:image" content="https://w3id.org/jelly/jelly-jvm/dev/assets/social.jpg" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -322,9 +322,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#todo-plugin-jars" class="md-nav__link">
+  <a href="#plugin-jars" class="md-nav__link">
     <span class="md-ellipsis">
-      TODO: PLUGIN JARS
+      Plugin JARs
     </span>
   </a>
   
@@ -387,7 +387,7 @@
         
   
   <span class="md-ellipsis">
-    Getting started (developers)
+    Getting started (application developers)
   </span>
   
 
@@ -404,6 +404,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -548,6 +552,48 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user/compatibility/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Compatibility policy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user/scala2/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scala 2 builds
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -652,7 +698,47 @@
   
   
     <li class="md-nav__item">
-      <a href="https://jelly-rdf.github.io/dev/" class="md-nav__link">
+      <a href="contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="licensing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Licensing and citation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://w3id.org/jelly/dev/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -701,9 +787,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#todo-plugin-jars" class="md-nav__link">
+  <a href="#plugin-jars" class="md-nav__link">
     <span class="md-ellipsis">
-      TODO: PLUGIN JARS
+      Plugin JARs
     </span>
   </a>
   
@@ -742,58 +828,62 @@
                   
 
   
+    <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/index.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
+    </a>
+  
   
 
 
 <h1 id="jelly-jvm">Jelly-JVM</h1>
-<p><strong>Jelly-JVM</strong> is an implementation of the Jelly serialization format and the gRPC streaming protocol for the Java Virtual Machine (JVM), written in Scala 3. The supported RDF libraries are <a href="https://jena.apache.org/">Apache Jena</a> and <a href="https://rdf4j.org/">Eclipse RDF4J</a>.</p>
-<p>This collection of libraries aims to provide the full stack of utilities for fast and scalable RDF streaming with the <a href="https://jelly-rdf.github.io/dev/specification">Jelly protocol</a>.</p>
+<p><strong>Jelly-JVM</strong> is an implementation of the Jelly serialization format and the gRPC streaming protocol for the Java Virtual Machine (JVM), written in Scala 3<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. The supported RDF libraries are <a href="https://jena.apache.org/">Apache Jena</a> and <a href="https://rdf4j.org/">Eclipse RDF4J</a>.</p>
+<p>This collection of libraries aims to provide the full stack of utilities for fast and scalable RDF streaming with the <a href="https://w3id.org/jelly/dev/specification">Jelly protocol</a>.</p>
 <div class="admonition tip">
 <p class="admonition-title">Getting started with plugins – no code required</p>
-<p>See the <strong><a href="getting-started-plugins/">Getting started guide</a></strong> for a quick way to use Jelly with your Apache Jena or RDF4J application without writing any code.</p>
+<p>See the <strong><a href="getting-started-plugins/">getting started guide with plugins</a></strong> for a quick way to use Jelly with your Apache Jena or RDF4J application without writing any code.</p>
 </div>
 <div class="admonition tip">
-<p class="admonition-title">Getting started for developers</p>
-<p>If you want to use the full feature set of Jelly-JVM in your code, see the <strong><a href="getting-started-devs/">Getting started guide</a></strong> for developers.</p>
+<p class="admonition-title">Getting started for application developers</p>
+<p>If you want to use the full feature set of Jelly-JVM in your code, see the <strong><a href="getting-started-devs/">getting started guide for application developers</a></strong>.</p>
 </div>
-<p>TODO: versioning – point to the version selector in the navbar </p>
-<p>0.14.0</p>
-<p>dev </p>
+<p><strong>This documentation is for Jelly-JVM version 0.14.1</strong>, which uses the <a href="https://w3id.org/jelly/dev/specification">Jelly protocol version dev</a>. If you are looking for the documentation of a different version, use the version selector on the left of the top navigation bar. See: <a href="https://w3id.org/jelly/jelly-jvm/stable">latest stable version</a>, <a href="https://w3id.org/jelly/jelly-jvm/dev">latest development version</a>.</p>
 <h2 id="library-modules">Library modules</h2>
 <p>The implementation is split into a few modules that can be used separately:</p>
 <ul>
 <li>
-<p><code>jelly-core</code> – implementation of the <a href="https://jelly-rdf.github.io/dev/specification/serialization">Jelly serialization format</a> (using the <a href="https://scalapb.github.io/">scalapb</a> library), along with generic utilities for converting the deserialized RDF data to/from the representations of RDF libraries (like Apache Jena or RDF4J). </p>
+<p><code>jelly-core</code> – implementation of the <a href="https://w3id.org/jelly/dev/specification/serialization">Jelly serialization format</a> (using the <a href="https://scalapb.github.io/">scalapb</a> library), along with generic utilities for converting the deserialized RDF data to/from the representations of RDF libraries (like Apache Jena or RDF4J). </p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core/0.14.0"><img alt="See jelly-core 0.14.0 module details" src="https://img.shields.io/badge/jelly--core-0.14.0-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-core_3/0.14.0"><img alt="Browse jelly-core 0.14.0 API docs" src="https://img.shields.io/badge/javadoc-0.14.0-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core/0.14.1"><img alt="See jelly-core 0.14.1 module details" src="https://img.shields.io/badge/jelly--core-0.14.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-core_3/0.14.1"><img alt="Browse jelly-core 0.14.1 API docs" src="https://img.shields.io/badge/javadoc-0.14.1-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-jena</code> – conversions and interop code for the <a href="https://jena.apache.org/">Apache Jena</a> library.</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena/0.14.0"><img alt="See jelly-jena 0.14.0 module details" src="https://img.shields.io/badge/jelly--jena-0.14.0-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-jena_3/0.14.0"><img alt="Browse jelly-jena 0.14.0 API docs" src="https://img.shields.io/badge/javadoc-0.14.0-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena/0.14.1"><img alt="See jelly-jena 0.14.1 module details" src="https://img.shields.io/badge/jelly--jena-0.14.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-jena_3/0.14.1"><img alt="Browse jelly-jena 0.14.1 API docs" src="https://img.shields.io/badge/javadoc-0.14.1-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-rdf4j</code> – conversions and interop code for the <a href="https://rdf4j.org/">RDF4J</a> library.</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j/0.14.0"><img alt="See jelly-rdf4j 0.14.0 module details" src="https://img.shields.io/badge/jelly--rdf4j-0.14.0-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-rdf4j_3/0.14.0"><img alt="Browse jelly-rdf4j 0.14.0 API docs" src="https://img.shields.io/badge/javadoc-0.14.0-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j/0.14.1"><img alt="See jelly-rdf4j 0.14.1 module details" src="https://img.shields.io/badge/jelly--rdf4j-0.14.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-rdf4j_3/0.14.1"><img alt="Browse jelly-rdf4j 0.14.1 API docs" src="https://img.shields.io/badge/javadoc-0.14.1-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-stream</code> – utilities for building <a href="https://www.reactive-streams.org/">Reactive Streams</a> of RDF data (based on Pekko Streams). Useful for integrating with gRPC or other streaming protocols (e.g., Kafka, MQTT).</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/0.14.0"><img alt="See jelly-stream 0.14.0 module details" src="https://img.shields.io/badge/jelly--stream-0.14.0-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-stream_3/0.14.0"><img alt="Browse jelly-stream 0.14.0 API docs" src="https://img.shields.io/badge/javadoc-0.14.0-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/0.14.1"><img alt="See jelly-stream 0.14.1 module details" src="https://img.shields.io/badge/jelly--stream-0.14.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-stream_3/0.14.1"><img alt="Browse jelly-stream 0.14.1 API docs" src="https://img.shields.io/badge/javadoc-0.14.1-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
-<p><code>jelly-grpc</code> – implementation of a gRPC client and server for the <a href="https://jelly-rdf.github.io/dev/specification/streaming">Jelly gRPC streaming protocol</a>.</p>
+<p><code>jelly-grpc</code> – implementation of a gRPC client and server for the <a href="https://w3id.org/jelly/dev/specification/streaming">Jelly gRPC streaming protocol</a>.</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc/0.14.0"><img alt="See jelly-grpc 0.14.0 module details" src="https://img.shields.io/badge/jelly--grpc-0.14.0-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-grpc_3/0.14.0"><img alt="Browse jelly-grpc 0.14.0 API docs" src="https://img.shields.io/badge/javadoc-0.14.0-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc/0.14.1"><img alt="See jelly-grpc 0.14.1 module details" src="https://img.shields.io/badge/jelly--grpc-0.14.1-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-grpc_3/0.14.1"><img alt="Browse jelly-grpc 0.14.1 API docs" src="https://img.shields.io/badge/javadoc-0.14.1-brightgreen.svg" /></a></li>
 </ul>
 </li>
 </ul>
-<h2 id="todo-plugin-jars">TODO: PLUGIN JARS</h2>
+<h2 id="plugin-jars">Plugin JARs</h2>
+<p>We also publish plugin JARs which allow you to use Jelly-JVM with <a href="https://jena.apache.org/">Apache Jena</a> and <a href="https://rdf4j.org/">RDF4J</a> just by dropping the JARs into the classpath. <strong><a href="getting-started-plugins/">Find out more about using the plugins</a></strong>.</p>
 <h2 id="compatibility">Compatibility</h2>
 <p>The Jelly-JVM implementation is compatible with Java 11 and newer. Java 11, 17, and 21 are tested in CI and are guaranteed to work. Jelly is built with <a href="https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html">Scala 3 LTS releases</a>.</p>
 <p>The following table shows the compatibility of the Jelly-JVM implementation with other libraries:</p>
@@ -811,25 +901,28 @@
 <tbody>
 <tr>
 <td><strong>1.0.x (current)</strong></td>
-<td>3.3.x (LTS)</td>
+<td>3.3.x (LTS)<br>2.13.x<sup id="fnref2:1"><a class="footnote-ref" href="#fn:1">1</a></sup></td>
 <td>11+</td>
-<td>4.x.y</td>
-<td>4.x.y</td>
+<td>4.x.x</td>
+<td>4.x.x</td>
 <td>1.0.x</td>
 </tr>
 </tbody>
 </table>
+<p>See the <strong><a href="user/compatibility/">compatibility policy</a></strong> for more details and the <strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases">release notes on GitHub</a></strong>.</p>
 <h2 id="documentation">Documentation</h2>
 <p>Below is a list of all documentation pages about Jelly-JVM. You can also browse the Javadoc using the badges in the module list above. The documentation uses examples written in Scala, but the libraries can be used from Java as well.</p>
 <ul>
 <li><a href="getting-started-plugins/">Getting started with Jena/RDF4J plugins</a> – how to use Jelly-JVM as a plugin for Apache Jena or RDF4J, without writing any code.</li>
-<li><a href="getting-started-devs/">Getting started for developers</a> – how to use Jelly-JVM in code.</li>
+<li><a href="getting-started-devs/">Getting started for application developers</a> – how to use Jelly-JVM in code.</li>
 <li>User guide<ul>
 <li><a href="user/jena/">Apache Jena integration</a></li>
 <li><a href="user/rdf4j/">RDF4J integration</a></li>
 <li><a href="user/reactive/">Reactive streaming</a></li>
 <li><a href="user/grpc/">gRPC</a></li>
-<li><a href="user/utilities/">Userful utilities</a></li>
+<li><a href="user/utilities/">Useful utilities</a></li>
+<li><a href="user/compatibility/">Compatibility policy</a></li>
+<li><a href="user/scala2/">Scala 2.13 builds</a></li>
 </ul>
 </li>
 <li>Developer guide<ul>
@@ -837,8 +930,19 @@
 <li><a href="dev/implementing/">Implementing Jelly for other libraries</a></li>
 </ul>
 </li>
-<li><a href="https://jelly-rdf.github.io/dev/">Main Jelly website</a> – including the Jelly protocol specification and explanation of the the various stream types.</li>
+<li><a href="contributing/">Contributing to Jelly-JVM</a></li>
+<li><a href="licensing/">License and citation</a></li>
+<li><a href="https://github.com/Jelly-RDF/jelly-jvm/releases">Release notes on GitHub</a></li>
+<li><a href="https://w3id.org/jelly/dev/">Main Jelly website</a> – including the Jelly protocol specification and explanation of the various stream types.</li>
 </ul>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Scala 2.13-compatible builds of Jelly-JVM are available as well. <a href="user/scala2/">See more details</a>.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 
 
 
@@ -846,6 +950,38 @@
 
 
 
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 23, 2024</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2Z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 3, 2024</span>
+  </span>
+
+    
+    
+    
+  </aside>
 
 
 
@@ -910,10 +1046,10 @@
       <div class="md-progress" data-md-component="progress" role="progressbar"></div>
     
     
-    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy"], "search": "assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="assets/javascripts/bundle.fe8b6f2b.min.js"></script>
+      <script src="assets/javascripts/bundle.af256bd8.min.js"></script>
       
     
   </body>
