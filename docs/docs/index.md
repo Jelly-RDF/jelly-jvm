@@ -51,6 +51,8 @@ The following table shows the compatibility of the Jelly-JVM implementation with
 | ----- | ----------- | ---- | ----- | ----------- | ------------ |
 | **1.0.x (current)** | 3.3.x (LTS)<br>2.13.x[^1] | 11+  | 4.x.x | 4.x.x       | 1.0.x        |
 
+See the **[compatibility policy](user/compatibility.md)** for more details.
+
 ## Documentation
 
 Below is a list of all documentation pages about Jelly-JVM. You can also browse the Javadoc using the badges in the module list above. The documentation uses examples written in Scala, but the libraries can be used from Java as well.
