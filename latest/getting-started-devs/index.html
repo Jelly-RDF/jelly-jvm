@@ -7,7 +7,9 @@
     <meta http-equiv="refresh" content="1; url=../../dev/getting-started-devs/" />
   </noscript>
   <script>
-    window.location.replace("../../dev/getting-started-devs/" + window.location.hash);
+    window.location.replace(
+      "../../dev/getting-started-devs/" + window.location.search + window.location.hash
+    );
   </script>
 </head>
 <body>
