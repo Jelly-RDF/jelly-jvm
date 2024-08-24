@@ -16,7 +16,7 @@ If you do encounter any compatibility issues, please report them on the [issue t
 
 ### Apache Jena 4.x.x
 
-Jelly-JVM 1.0.x only supports the RDF 1.1 mode of Apache Jena (enabled by default in Jena 4.x.x). The RDF 1.0 mode was removed entirely in Apache Jena 5.
+Jelly-JVM 1.0.x only supports the RDF 1.1 mode of Apache Jena (enabled by default in Jena 4.x.x). The RDF 1.1 mode [became the only available one](https://lists.apache.org/thread/hn1d1mpg9hwv7m0m620j53jgpw2rrdyz) in Apache Jena 5 (RDF 1.0 support was removed).
 
 ## Internal vs external APIs
 

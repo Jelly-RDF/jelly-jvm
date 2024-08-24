@@ -1,4 +1,4 @@
-This guide explains the functionalities of the `jelly-jena` module, which provides Jelly support for Apache Jena.
+This guide explains the functionalities of the `jelly-jena` module, which provides Jelly support for [Apache Jena](https://jena.apache.org/).
 
 If you just want to add Jelly format support to Apache Jena / Apache Jena Fuseki, you can use the Jelly-JVM plugin JAR. See the **[dedicated guide](../getting-started-plugins.md#apache-jena-apache-jena-fuseki)** for more information.
 
@@ -10,14 +10,14 @@ The module also implements the {{ javadoc_link_pretty('core', 'IterableAdapter')
 
 ## Serialization and deserialization with RIOT
 
-Jelly implements an RDF writer and reader for [Apache Jena's RIOT library](https://jena.apache.org/documentation/io/). This means you can use Jelly just like, for example, Turtle or RDF/XML. See the example below:
+`jelly-jena` implements an RDF writer and reader for [Apache Jena's RIOT library](https://jena.apache.org/documentation/io/). This means you can use Jelly just like, for example, Turtle or RDF/XML. See the example below:
 
 {{ code_example('JenaRiot.scala') }}
 
 Usage notes:
 
 - {{ javadoc_link_pretty('core', 'JellyOptions$') }} provides a few common presets for Jelly serialization options construct a `JellyFormatVariant`, as shown in the example above. You can also further customize the serialization options (e.g., dictionary size).
-- The RIOT integration implements only the [delimited variant of Jelly]({{ proto_link('specification/serialization#delimited-variant-of-jelly') }}). It is used for writing Jelly to files on disk or sockets. Because of this, RIOT will not parse non-delimited Jelly data (e.g., a single message in a Kafka stream). For this, you should use the `jelly-stream` module or the more low-level API: [Low-level usage](low-level.md).
+- The RIOT integration implements only the [delimited variant of Jelly]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}). It is used for writing Jelly to files on disk or sockets. Because of this, RIOT will not parse non-delimited Jelly data (e.g., a single message in a Kafka stream). For this, you should use the `jelly-stream` module or the more low-level API: [Low-level usage](low-level.md).
 - Jelly's parsers and writers are registered in the {{ javadoc_link_pretty('jena', 'riot.JellyLanguage$') }} object ([source code]({{ git_link('jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/riot/JellyLanguage.scala') }})). This registration should happen automatically when you include the `jelly-jena` module in your project, using Jena's [component initialization mechanism](https://jena.apache.org/documentation/notes/system-initialization.html).
 
 ## Streaming serialization with RIOT
