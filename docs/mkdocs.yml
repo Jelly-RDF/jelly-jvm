@@ -94,6 +94,7 @@ nav:
     - Reactive streaming: 'user/reactive.md'
     - gRPC: 'user/grpc.md'
     - Useful utilities: 'user/utilities.md'
+    - Low-level usage: 'user/low-level.md'
     - Compatibility policy: 'user/compatibility.md'
     - Scala 2 builds: 'user/scala2.md'
   - Developer guide:

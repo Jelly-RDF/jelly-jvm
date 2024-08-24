@@ -131,6 +131,7 @@ Jelly is a bit more than just a serialization format – it also defines a [gRPC
 - [Reactive streaming with Jelly-JVM](user/reactive.md) – using the `jelly-stream` module and [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html)
 - [Using Jelly gRPC protocol servers and clients](user/grpc.md)
 - [Other useful utilities in Jelly-JVM](user/utilities.md)
+- [Low-level usage of Jelly-JVM](user/low-level.md)
 
 ## Example applications using Jelly-JVM
 

@@ -107,6 +107,44 @@ def define_env(env):
         return item
     
 
+    @env.macro
+    def code_example(file_name):
+        prefix = 'examples/src/main/scala/eu/ostrzyciel/jelly/examples/'
+        return f"""
+??? example "Example: {file_name} (click to expand)"
+
+    **[:octicons-code-24: Source code on GitHub]({git_link(prefix + file_name)})**
+
+    ```scala title="{file_name}" linenums="1"
+    --8<-- "docs/examples/{file_name}"
+    ```
+"""
+    
+
+    @env.macro
+    def javadoc_link(module: str, clazz: str):
+        version = jvm_package_version()
+        if module in ['jena', 'rdf4j']:
+            clazz = f'eu/ostrzyciel/jelly/convert/{module}/{clazz}'
+        else:
+            clazz = f'eu/ostrzyciel/jelly/{module}/{clazz}'
+        clazz = clazz.replace('.', '/')
+        if version == 'dev':
+            version = 'latest'
+        return f'https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-{module}_3/{version}/{clazz}.html'
+    
+
+    @env.macro
+    def javadoc_link_pretty(module: str, clazz: str, fun: str = ''):
+        if module in ['jena', 'rdf4j']:
+            name = f'eu.ostrzyciel.jelly.convert.{module}.{clazz}'
+        else:
+            name = f'eu.ostrzyciel.jelly.{module}.{clazz}'
+        if fun:
+            name += f'.{fun}'
+        return f"[`{name.replace('$', '')}` :material-api:]({javadoc_link(module, clazz)})"
+    
+
     env.conf['nav'] = [
         transform_nav_item(item)
         for item in env.conf['nav']
