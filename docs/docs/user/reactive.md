@@ -6,7 +6,7 @@ This guide explains the reactive streaming functionalities of the `jelly-stream`
 
     If you are unfamiliar with the concept of reactive streams or Apache Pekko Streams, we highly recommend you start from reading about the **[basic concepts of Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/stream-flows-and-basics.html)**.
     
-    We also recommend you first read about the **[RDF stream types in Jelly]({{ proto_link('user-guide#rdf-stream-types') }})**. Otherwise, this guide may not make much sense.
+    We also recommend you first read about the **[RDF stream types in Jelly]({{ proto_link('user-guide#stream-types') }})**. Otherwise, this guide may not make much sense.
 
 
 You can use `jelly-stream` with any RDF library that has a Jelly integration, such as [Apache Jena](jena.md) (using `jelly-jena`) or [RDF4J](rdf4j.md) (using `jelly-rdf4j`). The streaming API is generic and identical across all libraries.
@@ -30,7 +30,7 @@ The easiest way to start is with flat RDF streams (i.e., flat streams of triples
 
 ## Encoding any RDF data as a flat or grouped stream (`EncoderFlow`)
 
-The {{ javadoc_link_pretty('stream', 'EncoderFlow$') }} provides even more options for turning RDF data into Jelly streams, including both grouped and flat streams. Every [type of RDF stream in Jelly](({{ proto_link('user-guide#rdf-stream-types') }})) can be created using this API.
+The {{ javadoc_link_pretty('stream', 'EncoderFlow$') }} provides even more options for turning RDF data into Jelly streams, including both grouped and flat streams. Every [type of RDF stream in Jelly]({{ proto_link('user-guide#stream-types') }}) can be created using this API.
 
 {{ code_example('PekkoStreamsEncoderFlow.scala') }}
 
