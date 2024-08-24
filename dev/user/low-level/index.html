@@ -10,26 +10,28 @@
       
       
       
-        <link rel="canonical" href="https://jelly-rdf.github.io/jelly-jvm/dev/licensing/">
+        <link rel="canonical" href="https://jelly-rdf.github.io/jelly-jvm/dev/user/low-level/">
       
       
-        <link rel="prev" href="../contributing/">
+        <link rel="prev" href="../utilities/">
       
       
+        <link rel="next" href="../compatibility/">
       
-      <link rel="icon" href="../assets/jelly_color.png">
+      
+      <link rel="icon" href="../../assets/jelly_color.png">
       <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.33">
     
     
       
-        <title>Licensing and citation - Jelly-JVM</title>
+        <title>Low-level usage - Jelly-JVM</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.3cba04c6.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.3cba04c6.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,9 +50,9 @@
       
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -62,7 +64,7 @@
         
     
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Jelly-JVM – Licensing and citation" />
+    <meta property="og:title" content="Jelly-JVM – Low-level usage" />
     <meta property="og:description" content="Jelly-JVM is a JVM (Scala) implementation of the Jelly RDF streaming protocol." />
     <meta property="og:image" content="https://w3id.org/jelly/jelly-jvm/dev/assets/social.jpg" />
     <meta property="og:image:type" content="image/jpeg" />
@@ -88,7 +90,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#licensing-and-citation" class="md-skip">
+        <a href="#low-level-usage" class="md-skip">
           Skip to content
         </a>
       
@@ -108,9 +110,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Jelly-JVM" class="md-header__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
+    <a href="../.." title="Jelly-JVM" class="md-header__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
       
-  <img src="../assets/jelly_white.png" alt="logo">
+  <img src="../../assets/jelly_white.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -127,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Licensing and citation
+              Low-level usage
             
           </span>
         </div>
@@ -242,9 +244,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Jelly-JVM" class="md-nav__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
+    <a href="../.." title="Jelly-JVM" class="md-nav__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
       
-  <img src="../assets/jelly_white.png" alt="logo">
+  <img src="../../assets/jelly_white.png" alt="logo">
 
     </a>
     Jelly-JVM
@@ -271,7 +273,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -291,7 +293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started-plugins/" class="md-nav__link">
+      <a href="../../getting-started-plugins/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -311,7 +313,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started-devs/" class="md-nav__link">
+      <a href="../../getting-started-devs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -328,8 +330,10 @@
       
   
   
+    
   
   
+  
     
     
       
@@ -352,11 +356,11 @@
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -370,7 +374,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             User guide
@@ -384,7 +388,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user/jena/" class="md-nav__link">
+      <a href="../jena/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -405,7 +409,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user/rdf4j/" class="md-nav__link">
+      <a href="../rdf4j/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -426,7 +430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user/reactive/" class="md-nav__link">
+      <a href="../reactive/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -447,7 +451,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user/grpc/" class="md-nav__link">
+      <a href="../grpc/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -468,7 +472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user/utilities/" class="md-nav__link">
+      <a href="../utilities/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -486,10 +490,30 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../user/low-level/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Low-level usage
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -498,6 +522,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deserialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deserialization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Serialization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -510,7 +581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user/compatibility/" class="md-nav__link">
+      <a href="../compatibility/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -531,7 +602,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user/scala2/" class="md-nav__link">
+      <a href="../scala2/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -600,7 +671,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev/releases/" class="md-nav__link">
+      <a href="../../dev/releases/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -621,7 +692,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev/implementing/" class="md-nav__link">
+      <a href="../../dev/implementing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -649,7 +720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributing/" class="md-nav__link">
+      <a href="../../contributing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -666,30 +737,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Licensing and citation
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../licensing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -698,53 +749,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#attribution-citation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Attribution / citation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#jelly-maintainer" class="md-nav__link">
-    <span class="md-ellipsis">
-      Jelly maintainer
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      See also
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -796,18 +800,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#attribution-citation" class="md-nav__link">
+  <a href="#deserialization" class="md-nav__link">
     <span class="md-ellipsis">
-      Attribution / citation
+      Deserialization
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#jelly-maintainer" class="md-nav__link">
+  <a href="#serialization" class="md-nav__link">
     <span class="md-ellipsis">
-      Jelly maintainer
+      Serialization
     </span>
   </a>
   
@@ -837,7 +841,7 @@
                   
 
   
-    <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/licensing.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/user/low-level.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
     </a>
@@ -845,28 +849,45 @@
   
 
 
-<h1 id="licensing-and-citation">Licensing and citation</h1>
-<p>Jelly-JVM is licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>.</p>
-<h2 id="attribution-citation">Attribution / citation</h2>
-<p>If you use Jelly-JVM in your research, please <a href="https://ieeexplore.ieee.org/abstract/document/10152225">the most recent paper about Jelly</a>:</p>
-<p>Sowiński, P., Wasielewska-Michniewska, K., Ganzha, M., &amp; Paprzycki, M. (2022, October). Efficient RDF streaming for the edge-cloud continuum. In <em>2022 IEEE 8th World Forum on Internet of Things (WF-IoT)</em> (pp. 1-8). IEEE.</p>
-<p>Or use this BibTeX entry:</p>
-<div class="language-bibtex highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">sowinski2022efficient</span><span class="p">,</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{Efficient RDF streaming for the edge-cloud continuum}</span><span class="p">,</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Sowi{\&#39;n}ski, Piotr and Wasielewska-Michniewska, Katarzyna and Ganzha, Maria and Paprzycki, Marcin and others}</span><span class="p">,</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{2022 IEEE 8th World Forum on Internet of Things (WF-IoT)}</span><span class="p">,</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="na">pages</span><span class="p">=</span><span class="s">{1--8}</span><span class="p">,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2022}</span><span class="p">,</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="na">organization</span><span class="p">=</span><span class="s">{IEEE}</span><span class="p">,</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="na">doi</span><span class="p">=</span><span class="s">{10.1109/WF-IoT54382.2022.10152225}</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">}</span>
-</span></code></pre></div>
-<p>This paper describes an earlier version of Jelly from 2022. A new paper is in preparation.</p>
-<h2 id="jelly-maintainer">Jelly maintainer</h2>
-<p>Jelly-JVM was created and is maintained by <a href="https://ostrzyciel.eu">Piotr Sowiński (Ostrzyciel)</a> – <a href="https://github.com/Ostrzyciel">GitHub</a>.</p>
+<h1 id="low-level-usage">Low-level usage</h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This page describes a low-level API that is a bit of a hassle to use directly. It's recommended to use the higher-level abstractions provided by the <a href="../reactive/"><code>jelly-stream</code> module</a>, or the integrations with <a href="../jena/">Apache Jena's RIOT</a> or <a href="../rdf4j/">RDF4J's Rio</a> libraries. If you really want to use this, it is highly recommended that you first get a <a href="https://w3id.org/jelly/dev/user-guide">basic understanding of how Jelly works under the hood</a> and take a look at the <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/stream">code in the <code>jelly-stream</code> module</a> to see how it's done there.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The following guide uses the <a href="../jena/">Apache Jena</a> library as an example. The exact same thing can be done with <a href="../rdf4j/">RDF4J</a> or any other RDF library that has a Jelly integration.</p>
+</div>
+<h2 id="deserialization">Deserialization</h2>
+<p>To parse a serialized stream frame into triples/quads:</p>
+<ol>
+<li>Call <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/proto/v1/RdfStreamFrame$.html"><code>eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame.parseFrom</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> if it's a non-delimited frame (like you would see, e.g., in a Kafka or gRPC stream), or <code>parseDelimitedFrom</code> if it's a <a href="https://w3id.org/jelly/dev/specification/serialization#delimited-variant-of-jelly">delimited stream</a> (like you would see in a file or a socket).</li>
+<li>Obtain a decoder that turns <code>RdfStreamFrame</code>s into triples/quads: <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/0.14.1/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory$.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> has different methods for <a href="https://w3id.org/jelly/dev/user-guide#stream-types">different physical stream types</a>:<ul>
+<li><code>anyStatementDecoder</code> for any physical stream type, outputs <code>Triple</code> or <code>Quad</code></li>
+<li><code>triplesDecoder</code> for TRIPLES streams, outputs <code>Triple</code></li>
+<li><code>quadsDecoder</code> for QUADS streams, outputs <code>Quad</code></li>
+<li><code>graphsDecoder</code> for GRAPHS streams, outputs <code>(Node, Iterable[Triple])</code></li>
+<li><code>graphsAsQuadsDecoder</code> for GRAPHS streams, outputs <code>Quad</code></li>
+</ul>
+</li>
+<li>For each row in the frame, call the decoder's <code>ingestRow</code> method to get the output iteratively.</li>
+</ol>
+<h2 id="serialization">Serialization</h2>
+<p>To serialize triples/quads into a stream frame:</p>
+<ol>
+<li>If you want to serialize an RDF graph/dataset, transform them first into triples/quads in an iterable form. Use the <code>asTriples</code>/<code>asQuads</code>/<code>asGraphs</code> extension methods provided by the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/0.14.1/eu/ostrzyciel/jelly/convert/jena/JenaIterableAdapter$.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaIterableAdapter</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> object.</li>
+<li>Obtain an encoder that turns triples/quads into <code>RdfStreamRow</code>s (the rows of a stream frame): use the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/0.14.1/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory$.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory.encoder</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> method to get an instance of <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/0.14.1/eu/ostrzyciel/jelly/convert/jena/JenaProtoEncoder.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaProtoEncoder</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>.</li>
+<li>Call the encoder's methods to add quads, triples, or named graphs to the stream frame.<ul>
+<li>Note that <strong>YOU</strong> are responsible for sticking to a specific physical stream type. For example, you should not mix triples with quads. It is highly recommended that you first read on the <a href="https://w3id.org/jelly/dev/user-guide#stream-types">available stream types</a> in Jelly.</li>
+</ul>
+</li>
+<li>The encoder will be returning batches or rows. You are responsible for grouping those rows logically into <code>RdfStreamFrame</code>s. What you do here depends highly on the <a href="https://w3id.org/jelly/dev/user-guide#stream-types">logical stream type</a> you are working with.</li>
+</ol>
 <h2 id="see-also">See also</h2>
 <ul>
-<li><a href="../contributing/">Contributing to Jelly-JVM</a></li>
+<li><a href="../utilities/">Useful utilities</a></li>
+<li><a href="../reactive/">Reactive streaming with Jelly-JVM</a></li>
+<li><a href="../../dev/implementing/">Implementing Jelly-JVM for a new RDF library</a></li>
 </ul>
 
 
@@ -890,7 +911,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 23, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 24, 2024</span>
   </span>
 
     
@@ -900,7 +921,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 23, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 24, 2024</span>
   </span>
 
     
@@ -971,10 +992,10 @@
       <div class="md-progress" data-md-component="progress" role="progressbar"></div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.af256bd8.min.js"></script>
+      <script src="../../assets/javascripts/bundle.af256bd8.min.js"></script>
       
     
   </body>
