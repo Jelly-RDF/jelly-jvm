@@ -89,6 +89,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#base-facilities" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -411,6 +416,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    RDF4J integration
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -420,6 +436,50 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#base-facilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Base facilities
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serialization-and-deserialization-with-rdf4j-rio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Serialization and deserialization with RDF4J Rio
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -727,6 +787,41 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#base-facilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      Base facilities
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serialization-and-deserialization-with-rdf4j-rio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Serialization and deserialization with RDF4J Rio
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -750,8 +845,212 @@
 
   <h1>RDF4J integration</h1>
 
-<p>...</p>
-<p>If you just want to use Jelly with your RDF4J application, you can use the Jelly-JVM plugin JAR. See the <strong><a href="../../getting-started-plugins/#eclipse-rdf4j">dedicated guide</a></strong> for more information.</p>
+<p>This guide explains the functionalities of the <code>jelly-rdf4j</code> module, which provides Jelly support for <a href="https://rdf4j.org/">Eclipse RDF4J</a>.</p>
+<p>If you just want to add Jelly format support to your RDF4J application, you can use the Jelly-JVM plugin JAR. See the <strong><a href="../../getting-started-plugins/#eclipse-rdf4j">dedicated guide</a></strong> for more information.</p>
+<h2 id="base-facilities">Base facilities</h2>
+<p><code>jelly-rdf4j</code> implements the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/ConverterFactory.html"><code>eu.ostrzyciel.jelly.core.ConverterFactory</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> trait in <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-rdf4j_3/0.14.1/eu/ostrzyciel/jelly/convert/rdf4j/Rdf4jConverterFactory$.html"><code>eu.ostrzyciel.jelly.convert.rdf4j.Rdf4jConverterFactory</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>. This factory allows you to build encoders and decoders that convert between Jelly's <code>RdfStreamFrame</code>s and RDF4J's <code>Statement</code> objects. The <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/proto/v1/RdfStreamFrame.html"><code>eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> class is an object representation of Jelly's binary format.</p>
+<p>The module also implements the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/IterableAdapter.html"><code>eu.ostrzyciel.jelly.core.IterableAdapter</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> trait in <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-rdf4j_3/0.14.1/eu/ostrzyciel/jelly/convert/rdf4j/Rdf4jIterableAdapter$.html"><code>eu.ostrzyciel.jelly.convert.rdf4j.Rdf4jIterableAdapter</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>. This adapter provides extension methods for RDF4J's <code>Model</code> class to convert it into an iterable of triples (<code>.asTriples</code>), quads (<code>.asQuads</code>), or named graphs (<code>.asGraphs</code>). This is useful when working with Jelly <a href="../low-level/">on a lower level</a> or when <a href="../reactive/">using the <code>jelly-stream</code> module</a>.</p>
+<h2 id="serialization-and-deserialization-with-rdf4j-rio">Serialization and deserialization with RDF4J Rio</h2>
+<p><code>jelly-rdf4j</code> implements an RDF writer and parser for <a href="https://rdf4j.org/documentation/programming/rio/">Eclipse RDF4J's Rio library</a>. This means you can use Jelly just like any other RDF serialization format (e.g., RDF/XML, Turtle). See the example below:</p>
+<details class="example">
+<summary>Example: Rdf4jRio.scala (click to expand)</summary>
+<p><strong><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/examples/src/main/scala/eu/ostrzyciel/jelly/examples/Rdf4jRio.scala"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.22 4.97a.75.75 0 0 1 1.06 0l6.5 6.5a.75.75 0 0 1 0 1.06l-6.5 6.5a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734L21.19 12l-5.97-5.97a.75.75 0 0 1 0-1.06Zm-6.44 0a.75.75 0 0 1 0 1.06L2.81 12l5.97 5.97a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215l-6.5-6.5a.75.75 0 0 1 0-1.06l6.5-6.5a.75.75 0 0 1 1.06 0Z"/></svg></span> Source code on GitHub</a></strong></p>
+<div class="language-scala highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Rdf4jRio.scala</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-0-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-0-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span>
+<span class="normal"><a href="#__codelineno-0-17">17</a></span>
+<span class="normal"><a href="#__codelineno-0-18">18</a></span>
+<span class="normal"><a href="#__codelineno-0-19">19</a></span>
+<span class="normal"><a href="#__codelineno-0-20">20</a></span>
+<span class="normal"><a href="#__codelineno-0-21">21</a></span>
+<span class="normal"><a href="#__codelineno-0-22">22</a></span>
+<span class="normal"><a href="#__codelineno-0-23">23</a></span>
+<span class="normal"><a href="#__codelineno-0-24">24</a></span>
+<span class="normal"><a href="#__codelineno-0-25">25</a></span>
+<span class="normal"><a href="#__codelineno-0-26">26</a></span>
+<span class="normal"><a href="#__codelineno-0-27">27</a></span>
+<span class="normal"><a href="#__codelineno-0-28">28</a></span>
+<span class="normal"><a href="#__codelineno-0-29">29</a></span>
+<span class="normal"><a href="#__codelineno-0-30">30</a></span>
+<span class="normal"><a href="#__codelineno-0-31">31</a></span>
+<span class="normal"><a href="#__codelineno-0-32">32</a></span>
+<span class="normal"><a href="#__codelineno-0-33">33</a></span>
+<span class="normal"><a href="#__codelineno-0-34">34</a></span>
+<span class="normal"><a href="#__codelineno-0-35">35</a></span>
+<span class="normal"><a href="#__codelineno-0-36">36</a></span>
+<span class="normal"><a href="#__codelineno-0-37">37</a></span>
+<span class="normal"><a href="#__codelineno-0-38">38</a></span>
+<span class="normal"><a href="#__codelineno-0-39">39</a></span>
+<span class="normal"><a href="#__codelineno-0-40">40</a></span>
+<span class="normal"><a href="#__codelineno-0-41">41</a></span>
+<span class="normal"><a href="#__codelineno-0-42">42</a></span>
+<span class="normal"><a href="#__codelineno-0-43">43</a></span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
+<span class="normal"><a href="#__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span>
+<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+<span class="normal"><a href="#__codelineno-0-52">52</a></span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span>
+<span class="normal"><a href="#__codelineno-0-58">58</a></span>
+<span class="normal"><a href="#__codelineno-0-59">59</a></span>
+<span class="normal"><a href="#__codelineno-0-60">60</a></span>
+<span class="normal"><a href="#__codelineno-0-61">61</a></span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span>
+<span class="normal"><a href="#__codelineno-0-63">63</a></span>
+<span class="normal"><a href="#__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+<span class="normal"><a href="#__codelineno-0-66">66</a></span>
+<span class="normal"><a href="#__codelineno-0-67">67</a></span>
+<span class="normal"><a href="#__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#__codelineno-0-71">71</a></span>
+<span class="normal"><a href="#__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span>
+<span class="normal"><a href="#__codelineno-0-75">75</a></span>
+<span class="normal"><a href="#__codelineno-0-76">76</a></span>
+<span class="normal"><a href="#__codelineno-0-77">77</a></span>
+<span class="normal"><a href="#__codelineno-0-78">78</a></span>
+<span class="normal"><a href="#__codelineno-0-79">79</a></span>
+<span class="normal"><a href="#__codelineno-0-80">80</a></span>
+<span class="normal"><a href="#__codelineno-0-81">81</a></span>
+<span class="normal"><a href="#__codelineno-0-82">82</a></span>
+<span class="normal"><a href="#__codelineno-0-83">83</a></span>
+<span class="normal"><a href="#__codelineno-0-84">84</a></span>
+<span class="normal"><a href="#__codelineno-0-85">85</a></span>
+<span class="normal"><a href="#__codelineno-0-86">86</a></span>
+<span class="normal"><a href="#__codelineno-0-87">87</a></span>
+<span class="normal"><a href="#__codelineno-0-88">88</a></span>
+<span class="normal"><a href="#__codelineno-0-89">89</a></span>
+<span class="normal"><a href="#__codelineno-0-90">90</a></span>
+<span class="normal"><a href="#__codelineno-0-91">91</a></span>
+<span class="normal"><a href="#__codelineno-0-92">92</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="k">package</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="n">examples</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">rdf4j</span><span class="p">.</span><span class="nn">rio</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nn">proto</span><span class="p">.</span><span class="nn">v1</span><span class="p">.{</span><span class="nc">PhysicalStreamType</span><span class="p">,</span><span class="w"> </span><span class="nc">RdfStreamOptions</span><span class="p">}</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">eclipse</span><span class="p">.</span><span class="nn">rdf4j</span><span class="p">.</span><span class="nn">model</span><span class="p">.</span><span class="nc">Statement</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">eclipse</span><span class="p">.</span><span class="nn">rdf4j</span><span class="p">.</span><span class="nn">rio</span><span class="p">.</span><span class="nn">helpers</span><span class="p">.</span><span class="nc">StatementCollector</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">eclipse</span><span class="p">.</span><span class="nn">rdf4j</span><span class="p">.</span><span class="nn">rio</span><span class="p">.{</span><span class="nc">RDFFormat</span><span class="p">,</span><span class="w"> </span><span class="nc">Rio</span><span class="p">}</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9"></a>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="k">import</span><span class="w"> </span><span class="nn">java</span><span class="p">.</span><span class="nn">io</span><span class="p">.{</span><span class="nc">File</span><span class="p">,</span><span class="w"> </span><span class="nc">FileOutputStream</span><span class="p">}</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="k">import</span><span class="w"> </span><span class="nn">scala</span><span class="p">.</span><span class="nn">jdk</span><span class="p">.</span><span class="nc">CollectionConverters</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="k">import</span><span class="w"> </span><span class="nn">scala</span><span class="p">.</span><span class="nn">util</span><span class="p">.</span><span class="nc">Using</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13"></a>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="cm">/**</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="cm"> * Example of using RDF4J&#39;s Rio library to read and write RDF data.</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="cm"> *</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="cm"> * See also: https://rdf4j.org/documentation/programming/rio/</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="cm"> */</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="k">object</span><span class="w"> </span><span class="nc">Rdf4jRio</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">Example</span><span class="p">:</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">:</span><span class="w"> </span><span class="nc">Array</span><span class="p">[</span><span class="nc">String</span><span class="p">]):</span><span class="w"> </span><span class="nc">Unit</span><span class="w"> </span><span class="o">=</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="w">    </span><span class="c1">// Load the RDF graph from an N-Triples file</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">inputFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">File</span><span class="p">(</span><span class="n">getClass</span><span class="p">.</span><span class="n">getResource</span><span class="p">(</span><span class="s">&quot;/weather.nt&quot;</span><span class="p">).</span><span class="n">toURI</span><span class="p">)</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">triples</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">readRdf4j</span><span class="p">(</span><span class="n">inputFile</span><span class="p">,</span><span class="w"> </span><span class="nc">RDFFormat</span><span class="p">.</span><span class="nc">TURTLE</span><span class="p">,</span><span class="w"> </span><span class="nc">None</span><span class="p">)</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="w">    </span><span class="c1">// Print the size of the graph</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">s&quot;Loaded </span><span class="si">${</span><span class="n">triples</span><span class="p">.</span><span class="n">size</span><span class="si">}</span><span class="s"> triples from an N-Triples file&quot;</span><span class="p">)</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="w">    </span><span class="c1">// Write the RDF graph to a Jelly file</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="w">    </span><span class="c1">// Fist, create the stream&#39;s options:</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JellyOptions</span><span class="p">.</span><span class="n">smallStrict</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="w">      </span><span class="c1">// Setting the physical stream type is mandatory! It will always be either TRIPLES or QUADS.</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="w">      </span><span class="p">.</span><span class="n">withPhysicalType</span><span class="p">(</span><span class="nc">PhysicalStreamType</span><span class="p">.</span><span class="nc">TRIPLES</span><span class="p">)</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="w">      </span><span class="c1">// Set other optional options</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="w">      </span><span class="p">.</span><span class="n">withStreamName</span><span class="p">(</span><span class="s">&quot;My weather data&quot;</span><span class="p">)</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="w">    </span><span class="c1">// Create the config object to pass to the writer</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JellyWriterSettings</span><span class="p">.</span><span class="n">configFromOptions</span><span class="p">(</span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">frameSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">128</span><span class="p">)</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="w">    </span><span class="c1">// Do the actual writing</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="w">    </span><span class="nc">Using</span><span class="p">.</span><span class="n">resource</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="nc">FileOutputStream</span><span class="p">(</span><span class="s">&quot;weather.jelly&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">=&gt;</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="w">      </span><span class="kd">val</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Rio</span><span class="p">.</span><span class="n">createWriter</span><span class="p">(</span><span class="nc">JELLY</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">)</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="w">      </span><span class="n">writer</span><span class="p">.</span><span class="n">setWriterConfig</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="w">      </span><span class="n">writer</span><span class="p">.</span><span class="n">startRDF</span><span class="p">()</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="w">      </span><span class="n">triples</span><span class="p">.</span><span class="n">foreach</span><span class="p">(</span><span class="n">writer</span><span class="p">.</span><span class="n">handleStatement</span><span class="p">)</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="w">      </span><span class="n">writer</span><span class="p">.</span><span class="n">endRDF</span><span class="p">()</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">&quot;Saved the model to a Jelly file&quot;</span><span class="p">)</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a>
+</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="w">    </span><span class="c1">// Load the RDF graph from the Jelly file</span>
+</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">File</span><span class="p">(</span><span class="s">&quot;weather.jelly&quot;</span><span class="p">)</span>
+</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyTriples</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">readRdf4j</span><span class="p">(</span><span class="n">jellyFile</span><span class="p">,</span><span class="w"> </span><span class="nc">JELLY</span><span class="p">,</span><span class="w"> </span><span class="nc">None</span><span class="p">)</span>
+</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a>
+</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">    </span><span class="c1">// Print the size of the graph</span>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">s&quot;Loaded </span><span class="si">${</span><span class="n">jellyTriples</span><span class="p">.</span><span class="n">size</span><span class="si">}</span><span class="s"> triples from a Jelly file&quot;</span><span class="p">)</span>
+</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a>
+</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="w">    </span><span class="c1">// ---------------------------------</span>
+</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">&quot;\n&quot;</span><span class="p">)</span>
+</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="w">    </span><span class="c1">// By default, the parser has limits on for example the maximum size of the lookup tables.</span>
+</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="w">    </span><span class="c1">// The default supported options are [[JellyOptions.defaultSupportedOptions]].</span>
+</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="w">    </span><span class="c1">// You can change these limits by creating your own options object.</span>
+</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">customOptions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JellyOptions</span><span class="p">.</span><span class="n">defaultSupportedOptions</span>
+</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="w">      </span><span class="p">.</span><span class="n">withMaxPrefixTableSize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w"> </span><span class="c1">// set the maximum size of the prefix table to 10</span>
+</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">&quot;Trying to read the Jelly file with custom options...&quot;</span><span class="p">)</span>
+</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="w">    </span><span class="k">try</span>
+</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="w">      </span><span class="c1">// This operation should fail because the Jelly file uses a prefix table larger than 10</span>
+</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="w">      </span><span class="kd">val</span><span class="w"> </span><span class="n">customTriples</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">readRdf4j</span><span class="p">(</span><span class="n">jellyFile</span><span class="p">,</span><span class="w"> </span><span class="nc">JELLY</span><span class="p">,</span><span class="w"> </span><span class="nc">Some</span><span class="p">(</span><span class="n">customOptions</span><span class="p">))</span>
+</span><span id="__span-0-67"><a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="w">    </span><span class="k">catch</span>
+</span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="n">e</span><span class="p">:</span><span class="w"> </span><span class="nc">RdfProtoDeserializationError</span><span class="w"> </span><span class="o">=&gt;</span>
+</span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="w">        </span><span class="c1">// The stream uses a prefix table size of 16, which is larger than the maximum supported size of 10.</span>
+</span><span id="__span-0-70"><a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="w">        </span><span class="c1">// To read this stream, set maxPrefixTableSize to at least 16 in the supportedOptions for this decoder.</span>
+</span><span id="__span-0-71"><a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="w">        </span><span class="n">println</span><span class="p">(</span><span class="s">s&quot;Failed to read the Jelly file with custom options: </span><span class="si">${</span><span class="n">e</span><span class="p">.</span><span class="n">getMessage</span><span class="si">}</span><span class="s">&quot;</span><span class="p">)</span>
+</span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a>
+</span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a>
+</span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="w">  </span><span class="cm">/**</span>
+</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="cm">   * Helper function to read RDF data using RDF4J&#39;s Rio library.</span>
+</span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="cm">   * @param file file to read from</span>
+</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="cm">   * @param format RDF format</span>
+</span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="cm">   * @param supportedOptions supported options for reading Jelly streams (optional)</span>
+</span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="cm">   * @return sequence of RDF statements</span>
+</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="cm">   */</span>
+</span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="k">def</span><span class="w"> </span><span class="nf">readRdf4j</span><span class="p">(</span><span class="n">file</span><span class="p">:</span><span class="w"> </span><span class="nc">File</span><span class="p">,</span><span class="w"> </span><span class="n">format</span><span class="p">:</span><span class="w"> </span><span class="nc">RDFFormat</span><span class="p">,</span><span class="w"> </span><span class="n">supportedOptions</span><span class="p">:</span><span class="w"> </span><span class="nc">Option</span><span class="p">[</span><span class="nc">RdfStreamOptions</span><span class="p">]):</span><span class="w"> </span><span class="nc">Seq</span><span class="p">[</span><span class="nc">Statement</span><span class="p">]</span><span class="w"> </span><span class="o">=</span>
+</span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">parser</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Rio</span><span class="p">.</span><span class="n">createParser</span><span class="p">(</span><span class="n">format</span><span class="p">)</span>
+</span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">collector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">StatementCollector</span><span class="p">()</span>
+</span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="w">    </span><span class="n">parser</span><span class="p">.</span><span class="n">setRDFHandler</span><span class="p">(</span><span class="n">collector</span><span class="p">)</span>
+</span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="w">    </span><span class="n">supportedOptions</span><span class="p">.</span><span class="n">foreach</span><span class="p">(</span><span class="n">opt</span><span class="w"> </span><span class="o">=&gt;</span>
+</span><span id="__span-0-86"><a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="w">      </span><span class="c1">// If the user provided supported options, set them on the parser</span>
+</span><span id="__span-0-87"><a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="w">      </span><span class="n">parser</span><span class="p">.</span><span class="n">setParserConfig</span><span class="p">(</span><span class="nc">JellyParserSettings</span><span class="p">.</span><span class="n">configFromOptions</span><span class="p">(</span><span class="n">opt</span><span class="p">))</span>
+</span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="w">    </span><span class="p">)</span>
+</span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="w">    </span><span class="nc">Using</span><span class="p">.</span><span class="n">resource</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">toURI</span><span class="p">.</span><span class="n">toURL</span><span class="p">.</span><span class="n">openStream</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="o">=&gt;</span>
+</span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="w">      </span><span class="n">parser</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">is</span><span class="p">)</span>
+</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="w">    </span><span class="n">collector</span><span class="p">.</span><span class="n">getStatements</span><span class="p">.</span><span class="n">asScala</span><span class="p">.</span><span class="n">toSeq</span>
+</span></code></pre></div></td></tr></table></div>
+</details>
+<p>Usage notes:</p>
+<ul>
+<li><a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/JellyOptions$.html"><code>eu.ostrzyciel.jelly.core.JellyOptions</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> provides a few common presets for Jelly serialization options. These options are passed through <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-rdf4j_3/0.14.1/eu/ostrzyciel/jelly/convert/rdf4j/rio/JellyWriterSettings$.html"><code>eu.ostrzyciel.jelly.convert.rdf4j.rio.JellyWriterSettings.configFromOptions</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> and used to configure the writer, as shown in the example above. You can also further customize the serialization options (e.g., dictionary size).</li>
+<li>The RDF4J Rio integration implements only the <a href="https://w3id.org/jelly/dev/user-guide#delimited-vs-non-delimited-jelly">delimited variant of Jelly</a>. It is used for writing Jelly to files on disk or sockets. Because of this, Rio will not parse non-delimited Jelly data (e.g., a single message in a Kafka stream). For this, you should use the <code>jelly-stream</code> module or the more low-level API: <a href="../low-level/">Low-level usage</a>.</li>
+<li>Jelly's parsers and writers are in the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-rdf4j_3/0.14.1/eu/ostrzyciel/jelly/convert/rdf4j/rio.html"><code>eu.ostrzyciel.jelly.convert.rdf4j.rio</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> package (<a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/rdf4j/src/main/scala/eu/ostrzyciel/jelly/convert/rdf4j/rio">source code</a>). They are automatically registered on startup using the <code>RDFParserFactory</code> and <code>RDFWriterFactory</code> <a href="https://en.wikipedia.org/wiki/Service_provider_interface">SPIs</a> provided by RDF4J.</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="../utilities/">Useful utilities</a></li>
+<li><a href="../reactive/">Reactive streaming with Jelly-JVM</a></li>
+</ul>
 
 
 
@@ -774,7 +1073,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 3, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 24, 2024</span>
   </span>
 
     
