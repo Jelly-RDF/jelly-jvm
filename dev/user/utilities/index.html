@@ -481,6 +481,17 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Useful utilities
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -490,6 +501,79 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#jelly-options-presets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Jelly options presets
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-supported-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checking supported options
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#useful-constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Useful constants
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rdf-stream-taxonomy-rdf-stax-stream-type-utilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      RDF Stream Taxonomy (RDF-STaX) stream type utilities
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jelly-configuration-from-typesafe-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Jelly configuration from Typesafe config
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -736,6 +820,68 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#jelly-options-presets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Jelly options presets
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checking-supported-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checking supported options
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#useful-constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Useful constants
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rdf-stream-taxonomy-rdf-stax-stream-type-utilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      RDF Stream Taxonomy (RDF-STaX) stream type utilities
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jelly-configuration-from-typesafe-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Jelly configuration from Typesafe config
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -758,7 +904,115 @@
 
 
 <h1 id="useful-utilities">Useful utilities</h1>
-<p>TODO: all utilities defined in <code>core</code>, including obtaining RDF-STaX annotations (describe its potential uses – external metadata, etc. – in the docs.) and constructing logical types from RDF-STaX IRIs.</p>
+<p>This guide presents some useful utilities in the <code>jelly-core</code> and <code>jelly-stream</code> modules.</p>
+<h2 id="jelly-options-presets">Jelly options presets</h2>
+<p>Every Jelly stream begins with a header that specifies the serialization options used to encode the stream – <a href="https://w3id.org/jelly/dev/specification/serialization#stream-options">see the details in the specification</a>. So, whenever you serialize some RDF with Jelly (e.g., using <a href="../jena/">Apache Jena RIOT</a>, <a href="../rdf4j/">RDF4J Rio</a>, or the <a href="../reactive/"><code>jelly-stream</code> module</a>), you need to specify these options.</p>
+<p>The <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/JellyOptions$.html"><code>eu.ostrzyciel.jelly.core.JellyOptions</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> object provides a few common presets for Jelly serialization options. They return an instance of <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/proto/v1/RdfStreamOptions.html"><code>eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> that you can further customize. For example:</p>
+<div class="language-scala highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nc">JellyOptions</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kd">val</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JellyOptions</span><span class="p">.</span><span class="n">smallStrict</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kd">val</span><span class="w"> </span><span class="n">optionsWithRdfStarSupport</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JellyOptions</span><span class="p">.</span><span class="n">smallRdfStar</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="kd">val</span><span class="w"> </span><span class="n">bigWithCustomDictionarySize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JellyOptions</span><span class="p">.</span><span class="n">bigStrict</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="p">.</span><span class="n">withMaxNameTableSize</span><span class="p">(</span><span class="mi">2000</span><span class="p">)</span><span class="w">  </span>
+</span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>These presets <strong>do not</strong> specify the physical or logical stream type. In most cases, the Jelly library will take care of this for you and set these types automatically later. However, if you use the <a href="../low-level/">low-level API</a>, you need to set the stream types manually. For example:</p>
+<div class="language-scala highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nc">JellyOptions</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nn">proto</span><span class="p">.</span><span class="nn">v1</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nc">JellyOptions</span><span class="p">.</span><span class="n">smallStrict</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="p">.</span><span class="n">withPhysicalType</span><span class="p">(</span><span class="nc">PhysicalStreamType</span><span class="p">.</span><span class="nc">QUADS</span><span class="p">)</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="p">.</span><span class="n">withLogicalType</span><span class="p">(</span><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">DATASETS</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<h2 id="checking-supported-options">Checking supported options</h2>
+<p>There is also the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/JellyOptions$.html"><code>eu.ostrzyciel.jelly.core.JellyOptions.defaultSupportedOptions</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> method which specifies the maximum set of options supported by default in Jelly-JVM, when parsing a stream. By default, Jelly-JVM will refuse to parse any stream that uses options that are beyond what is specified in this method. This is important for security reasons, as it prevents the library from, for example, allocating a 10 GB dictionary (potential Denial of Service attack).</p>
+<p>The supported options check is carried out automatically by the decoder when parsing a stream. You cannot disable the check, but you can customize the supported options by constructing a new <code>RdfStreamOptions</code> object from <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/JellyOptions$.html"><code>eu.ostrzyciel.jelly.core.JellyOptions.defaultSupportedOptions</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>, customizing it, and passing it to the decoder.</p>
+<p>If you want to do this kind of check in some other context (e.g., in a <a href="../grpc/">gRPC service</a> to check if you can support the options requested by the client), you can use the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/JellyOptions$.html"><code>eu.ostrzyciel.jelly.core.JellyOptions.checkCompatibility</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> method. It will throw an exception if the options are not supported.</p>
+<h2 id="useful-constants">Useful constants</h2>
+<p>The <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/Constants$.html"><code>eu.ostrzyciel.jelly.core.Constants</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> object defines some useful constants, such as the file extension for Jelly, its content type, and the version of the Jelly protocol.</p>
+<h2 id="rdf-stream-taxonomy-rdf-stax-stream-type-utilities">RDF Stream Taxonomy (RDF-STaX) stream type utilities</h2>
+<p>Jelly uses <a href="https://w3id.org/stax">RDF-STaX</a> to define the logical stream types (more details <a href="https://w3id.org/jelly/dev/user-guide#stream-types">here</a>). Jelly-JVM defines each of these types as a case object in <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/0.14.1/eu/ostrzyciel/jelly/core/proto/v1/LogicalStreamType.html"><code>eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>.</p>
+<p>These objects have a few useful methods for working with the <a href="https://w3id.org/stax/ontology">RDF-STaX ontology</a>:</p>
+<div class="language-scala highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nn">proto</span><span class="p">.</span><span class="nn">v1</span><span class="p">.</span><span class="nc">LogicalStreamType</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1">// Get the RDF-STaX IRI of a stream type</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1">// returns &quot;https://w3id.org/stax/ontology#flatTripleStream&quot;</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">TRIPLES</span><span class="p">.</span><span class="n">getRdfStaxType</span>
+</span></code></pre></div>
+<p>You can also obtain a <a href="https://w3id.org/stax/dev/use-it">full RDF-STaX annotation</a> for your stream if you also import an RDF library interop module (e.g., <code>jelly-jena</code> or <code>jelly-rdf4j</code>):</p>
+<div class="language-scala highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// Here we import `jena.given` to get the necessary implicit conversions.</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1">// You can do the same with `rdf4j.given` if you are using RDF4J.</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="k">given</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nn">proto</span><span class="p">.</span><span class="nn">v1</span><span class="p">.</span><span class="nc">LogicalStreamType</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">graph</span><span class="p">.</span><span class="nc">NodeFactory</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="kd">val</span><span class="w"> </span><span class="n">subjectNode</span><span class="p">:</span><span class="w"> </span><span class="nc">Node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">NodeFactory</span><span class="p">.</span><span class="n">createURI</span><span class="p">(</span><span class="s">&quot;http://example.org/subject&quot;</span><span class="p">)</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="kd">val</span><span class="w"> </span><span class="n">triples</span><span class="p">:</span><span class="w"> </span><span class="nc">Seq</span><span class="p">[</span><span class="nc">Triple</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">QUADS</span><span class="p">.</span><span class="n">getRdfStaxAnnotation</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1">// Returns a Seq of three triples that would look like this in Turtle:</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1">// &lt;http://example.org/subject&gt; stax:hasStreamTypeUsage [</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="c1">//   a stax:RdfStreamTypeUsage ;</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1">//   stax:hasStreamType stax:flatQuadStream</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="c1">// ] .</span>
+</span></code></pre></div>
+<p>You can then take this annotation and expose as semantic metadata of your stream.</p>
+<p>You can also do the opposite and construct an instance of <code>LogicalStreamType</code> from an RDF-STaX IRI:</p>
+<div class="language-scala highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nc">LogicalStreamTypeFactory</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kd">val</span><span class="w"> </span><span class="n">iri</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://w3id.org/stax/ontology#flatQuadStream&quot;</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1">// returns LogicalStreamType.QUADS</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kd">val</span><span class="w"> </span><span class="n">streamType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">LogicalStreamTypeFactory</span><span class="p">.</span><span class="n">fromOntologyIri</span><span class="p">(</span><span class="n">iri</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Finally, there are also stream type checking and manipulation utilities:</p>
+<div class="language-scala highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nn">proto</span><span class="p">.</span><span class="nn">v1</span><span class="p">.</span><span class="nc">LogicalStreamType</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">// Check if this type is equal or a subtype of another type.</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1">// This is useful for performing compatibility checks.</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">// Returns false</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">TRIPLES</span><span class="p">.</span><span class="n">isEqualOrSubtypeOf</span><span class="p">(</span><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">DATASETS</span><span class="p">)</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1">// Returns true</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">NAMED_GRAPHS</span><span class="p">.</span><span class="n">isEqualOrSubtypeOf</span><span class="p">(</span><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">DATASETS</span><span class="p">)</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1">// Get the &quot;base&quot; type of a stream type. Base types are concrete stream types </span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1">// that have no parent types. </span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1">// There are only 4 base types: GRAPHS, DATASETS, TRIPLES, QUADS.</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="c1">// Returns LogicalStreamType.TRIPLES</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">TRIPLES</span><span class="p">.</span><span class="n">toBaseType</span>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="c1">// Returns LogicalStreamType.DATASETS</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">NAMED_GRAPHS</span><span class="p">.</span><span class="n">toBaseType</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="c1">// Returns LogicalStreamType.DATASETS</span>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="nc">LogicalStreamType</span><span class="p">.</span><span class="nc">TIMESTAMPED_NAMED_GRAPHS</span><span class="p">.</span><span class="n">toBaseType</span>
+</span></code></pre></div>
+<h2 id="jelly-configuration-from-typesafe-config">Jelly configuration from Typesafe config</h2>
+<p>The <a href="../reactive/"><code>jelly-stream</code> module</a> also implements a utility for configuring Jelly serialization options using the <a href="https://github.com/lightbend/config">Typesafe config library</a>, which is commonly used in <a href="https://pekko.apache.org/">Apache Pekko</a> applications.</p>
+<p>The utility is provided by the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/0.14.1/eu/ostrzyciel/jelly/stream/JellyOptionsFromTypesafe$.html"><code>eu.ostrzyciel.jelly.stream.JellyOptionsFromTypesafe</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> object. For example:</p>
+<div class="language-scala highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">typesafe</span><span class="p">.</span><span class="nn">config</span><span class="p">.</span><span class="nc">ConfigFactory</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">stream</span><span class="p">.</span><span class="nc">JellyOptionsFromTypesafe</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kd">val</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">ConfigFactory</span><span class="p">.</span><span class="n">parseString</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="s">  |jelly.physical-type = QUADS</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s">  |jelly.name-table-size = 1024</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="s">  |jelly.prefix-table-size = 64</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="s">  |&quot;&quot;&quot;</span><span class="p">.</span><span class="n">stripMargin</span><span class="p">)</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="kd">val</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JellyOptionsFromTypesafe</span><span class="p">.</span><span class="n">fromConfig</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">getConfig</span><span class="p">(</span><span class="s">&quot;jelly&quot;</span><span class="p">))</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">options</span><span class="p">.</span><span class="n">physicalType</span><span class="w"> </span><span class="c1">// returns PhysicalStreamType.QUADS</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">options</span><span class="p">.</span><span class="n">maxNameTableSize</span><span class="w"> </span><span class="c1">// returns 1024</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="n">options</span><span class="p">.</span><span class="n">maxPrefixTableSize</span><span class="w"> </span><span class="c1">// returns 64</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="n">options</span><span class="p">.</span><span class="n">maxDatatypeTableSize</span><span class="w"> </span><span class="c1">// returns 16 (the default)</span>
+</span></code></pre></div>
+<p>See <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/stream/src/main/scala/eu/ostrzyciel/jelly/stream/JellyOptionsFromTypesafe.scala">the source code of this class</a> for more details.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="../reactive/">Reactive streaming with Jelly-JVM</a></li>
+<li><a href="../low-level/">Low-level usage of Jelly-JVM</a></li>
+</ul>
 
 
 
@@ -781,7 +1035,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 3, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 26, 2024</span>
   </span>
 
     
