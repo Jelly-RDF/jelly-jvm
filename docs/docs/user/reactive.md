@@ -50,4 +50,5 @@ In all of the examples above, we used the [non-delimited variant of Jelly]({{ pr
 
 - [Using Jelly gRPC servers and clients](grpc.md)
 - [Useful utilities](utilities.md)
+    - [Using Typesafe config to configure Jelly](utilities.md#jelly-configuration-from-typesafe-config)
 - [Low-level usage](low-level.md)

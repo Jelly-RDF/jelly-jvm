@@ -29,6 +29,7 @@ To serialize triples/quads into a stream frame:
 2. Obtain an encoder that turns triples/quads into `RdfStreamRow`s (the rows of a stream frame): use the {{ javadoc_link_pretty('jena', 'JenaConverterFactory$', 'encoder') }} method to get an instance of {{ javadoc_link_pretty('jena', 'JenaProtoEncoder') }}.
 3. Call the encoder's methods to add quads, triples, or named graphs to the stream frame.
     - Note that **YOU** are responsible for sticking to a specific physical stream type. For example, you should not mix triples with quads. It is highly recommended that you first read on the [available stream types]({{ proto_link('user-guide#stream-types') }}) in Jelly.
+    - You are also responsible for setting the appropriate stream options with proper stream types. See the guide on [Jelly options presets](utilities.md#jelly-options-presets) for more information.
 4. The encoder will be returning batches or rows. You are responsible for grouping those rows logically into `RdfStreamFrame`s. What you do here depends highly on the [logical stream type]({{ proto_link('user-guide#stream-types') }}) you are working with.
 
 ## See also

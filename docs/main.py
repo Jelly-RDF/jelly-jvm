@@ -31,6 +31,10 @@ def define_env(env):
         print('Failed to call git: ', e.returncode, e.stderr)
         raise e
     
+    tag_env_var = os.environ.get('TAG', 'dev')
+    if tag_env_var == 'dev':
+        print('Warning: TAG env var is not set, using dev as default')
+    
 
     def proto_tag():
         if proto_tag_raw.count('-') > 1:
@@ -44,14 +48,12 @@ def define_env(env):
 
     @env.macro
     def jvm_version():
-        tag = os.environ.get('TAG', 'dev')
-        if tag == 'dev':
-            print('Warning: TAG env var is not set, using dev as default')
-            return tag
-        elif tag == 'main':
+        if tag_env_var == 'dev':
+            return tag_env_var
+        elif tag_env_var == 'main':
             return 'dev'
         else:
-            return tag.replace('v', '')
+            return tag_env_var.replace('v', '')
         
     
     @env.macro

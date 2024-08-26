@@ -26,3 +26,4 @@ Of course, you can also implement the server or the client from scratch, if you 
 
 - [Reactive streaming with Jelly-JVM](reactive.md)
 - [Useful utilities](utilities.md)
+    - [Using Typesafe config to configure Jelly](utilities.md#jelly-configuration-from-typesafe-config)
