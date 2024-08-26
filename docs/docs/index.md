@@ -1,8 +1,8 @@
 # Jelly-JVM
 
-**Jelly-JVM** is an implementation of the Jelly serialization format and the gRPC streaming protocol for the Java Virtual Machine (JVM), written in Scala 3[^1]. The supported RDF libraries are [Apache Jena](https://jena.apache.org/) and [Eclipse RDF4J](https://rdf4j.org/).
+**Jelly-JVM** is an implementation of the [Jelly serialization format and gRPC streaming protocol]({{ proto_link() }}) for the Java Virtual Machine (JVM), written in Scala 3[^1]. The supported RDF libraries are [Apache Jena](https://jena.apache.org/) and [Eclipse RDF4J](https://rdf4j.org/).
 
-This collection of libraries aims to provide the full stack of utilities for fast and scalable RDF streaming with the [Jelly protocol]({{ proto_link( 'specification' ) }}).
+Jelly-JVM provides a **full stack** of utilities for fast and scalable RDF streaming with the [Jelly protocol]({{ proto_link( 'specification' ) }}).
 
 !!! tip "Getting started with plugins – no code required"
 
