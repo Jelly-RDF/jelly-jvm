@@ -29,7 +29,7 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeProfileName := "eu.ostrzyciel"
 sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
-lazy val pekkoV = "1.0.3"
+lazy val pekkoV = "1.1.0"
 lazy val pekkoGrpcV = "1.0.2"
 lazy val jenaV = "4.10.0"
 lazy val rdf4jV = "4.3.13"
