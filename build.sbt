@@ -126,10 +126,7 @@ lazy val core = (project in file("core"))
     name := "jelly-core",
     description := "Core code for serializing and deserializing RDF data in the Jelly format.",
     libraryDependencies ++= crossDependencies(scalaVersion.value,
-      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbV,
-    ),
-    libraryDependencies ++= Seq(
-      "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV,
     ),
     // Add the generated proto classes after transforming them with Scalameta
     Compile / sourceGenerators += Def.task {
