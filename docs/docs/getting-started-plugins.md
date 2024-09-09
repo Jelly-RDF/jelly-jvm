@@ -20,6 +20,13 @@ You can simply add Jelly format support to [Apache Jena](https://jena.apache.org
     - For other applications, consult the manual of the application.
 - You can now use Jelly format for parsing, serialization, and streaming serialization in your Jena application.
 
+!!! bug "Content negotiation in Fuseki"
+
+    Currently Apache Jena Fuseki will not properly handle content negotiation for the Jelly format, due to the supported content types being hardcoded in Fuseki (see [upstream issue](https://github.com/apache/jena/issues/2700)).
+    
+    Until that is fixed, you can use Jelly with Fuseki endpoints by specifying the `output=application/x-jelly-rdf` parameter (either in the URL or in the URL-encoded form body) when querying the endpoint.
+    
+
 ### Eclipse RDF4J
 
 You can simply add Jelly format support to an application based on RDF4J with Jelly's plugin JAR.
