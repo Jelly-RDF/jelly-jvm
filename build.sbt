@@ -12,7 +12,7 @@ lazy val scala2MetaVersion = "2.13.14"
 ThisBuild / scalaVersion := scala3Version
 ThisBuild / crossScalaVersions := Seq(scala2Version, scala3Version)
 ThisBuild / organization := "eu.ostrzyciel.jelly"
-ThisBuild / homepage := Some(url("https://github.com/Jelly-RDF/jelly-jvm"))
+ThisBuild / homepage := Some(url("https://w3id.org/jelly/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / autoAPIMappings := true
@@ -124,6 +124,7 @@ lazy val rdfProtos = (project in file("rdf-protos"))
 lazy val core = (project in file("core"))
   .settings(
     name := "jelly-core",
+    description := "Core code for serializing and deserializing RDF data in the Jelly format.",
     libraryDependencies ++= crossDependencies(scalaVersion.value,
       "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbV,
     ),
@@ -143,6 +144,7 @@ lazy val core = (project in file("core"))
 lazy val jena = (project in file("jena"))
   .settings(
     name := "jelly-jena",
+    description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-core" % jenaV,
       "org.apache.jena" % "jena-arq" % jenaV,
@@ -172,6 +174,7 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
+    description := "Jelly parsers, serializers, and other utilities for RDF4J.",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
@@ -197,6 +200,7 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
 lazy val stream = (project in file("stream"))
   .settings(
     name := "jelly-stream",
+    description := "Utilities for using the Jelly RDF serialization format with Reactive Streams (via Apache Pekko).",
     libraryDependencies ++= crossDependencies(scalaVersion.value,
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
@@ -209,6 +213,7 @@ lazy val grpc = (project in file("grpc"))
   .enablePlugins(PekkoGrpcPlugin)
   .settings(
     name := "jelly-grpc",
+    description := "Implementation of a gRPC client and server for the Jelly gRPC streaming protocol.",
     libraryDependencies ++= crossDependencies(scalaVersion.value,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
