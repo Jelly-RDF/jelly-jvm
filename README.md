@@ -1,20 +1,16 @@
+[![Documentation](https://img.shields.io/website?url=https%3A%2F%2Fw3id.org%2Fjelly%2Fjelly-jvm&label=Documentation)](https://w3id.org/jelly/jelly-jvm) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Scala build and test](https://github.com/Jelly-RDF/jelly-jvm/actions/workflows/scala.yml/badge.svg)](https://github.com/Jelly-RDF/jelly-jvm/actions/workflows/scala.yml) [![Release](https://github.com/Jelly-RDF/jelly-jvm/actions/workflows/release.yml/badge.svg)](https://github.com/Jelly-RDF/jelly-jvm/actions/workflows/release.yml)
+
 # Jelly-JVM
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-
-Java Virtual Machine implementation of Jelly, an RDF streaming protocol, written in Scala 3.
+Java Virtual Machine implementation of Jelly, an RDF serialization format and gRPC streaming protocol, written in Scala 3. Jelly-JVM currently supports both Apache Jena and RDF4J.
 
 This collection of libraries aims to provide the full stack of utilities for fast and scalable RDF streaming with the [Jelly protocol](https://github.com/Jelly-RDF/specification). You can only use a part of the stack (e.g., only the serializer), or you may choose to use the full gRPC server and the reactive streaming utilities.
 
-## Development status
-
-The libraries are in active (beta) development and **are not yet stable**. Expect a first stable release in Q3 2024.
-
-The libraries follow the semantic versioning scheme for binary compatibility.
-
-The `jelly-stream` and `jelly-grpc` use the [Apache Pekko library](https://pekko.apache.org/), which was forked recently from the popular Akka library. This is due to Akka switching to a non-free license.
+**Documentation, download links, usage guide and more: [https://w3id.org/jelly/jelly-jvm](https://w3id.org/jelly/jelly-jvm)**
 
 ## Modules
+
+**Read more about each module in the [documentation](https://w3id.org/jelly/jelly-jvm).**
 
 ### Published to Maven Central
 
@@ -44,12 +40,12 @@ We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](
 
 ## Contributing
 
-Feel free to submit bug reports, feature proposals and pull requests! You can also contribute to the documentation in the [wiki](https://github.com/Jelly-RDF/jelly-jvm/wiki).
+Feel free to submit bug reports, feature proposals and pull requests!
+
+Check out the **[contribution guide](https://w3id.org/jelly/jelly-jvm/dev/contributing/)** for more information.
 
 ## License
 
 The Jelly-JVM libraries are licensed under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0).
 
-## Authors
-
-- Piotr Sowiński ([Ostrzyciel](https://github.com/Ostrzyciel))
+Jelly-JVM was written by [Piotr Sowiński](https://ostrzyciel.eu) ([Ostrzyciel](https://github.com/Ostrzyciel)).
