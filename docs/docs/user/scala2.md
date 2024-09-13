@@ -5,7 +5,7 @@ Jelly-JVM is written in Scala 3, but we also provide packages that _mostly_ work
 ## How to use this?
 
 - In your project enable the Scala 2.13 TASTy reader – [read more in Scala docs](https://docs.scala-lang.org/scala3/guides/migration/compatibility-classpath.html#the-scala-213-tasty-reader).
-- Add Jelly-JVM dependencies with the `_2.13` suffilx, e.g., `eu.ostrzyciel.jelly %% jelly-core % 0.14.0` in sbt (assuming you are building a Scala 2.13 project).
+- Add Jelly-JVM dependencies with the `_2.13` suffix, e.g., `eu.ostrzyciel.jelly %% jelly-core % 0.14.0` in sbt (assuming you are building a Scala 2.13 project).
 - If you get conflicting Scala version suffix errors from sbt, you may need to add exclusion rules like this:
     ```scala
     libraryDependencies ++= List(
@@ -24,7 +24,7 @@ That's it!
 
 ## Is this supported?
 
-Kind of. It does work (we tested it), but it's not a perfect solution, as Jelly-JVM was from the start designed only for Scala 3. **Support for Scala 2 will be dropped in Jelly-JVM 1.2.0** – the support will remain as-is in versions 1.0.x and 1.1.x.
+Kind of. It does work (we tested it), but it's not a perfect solution, as Jelly-JVM was from the start designed only for Scala 3. **Support for Scala 2 will be dropped in Jelly-JVM 2.0.0**.
 
 ## Technical notes – maintainer guide
 
