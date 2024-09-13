@@ -6,11 +6,11 @@ import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
 
 final class JenaDecoderConverter extends ProtoDecoderConverter[Node, RDFDatatype, Triple, Quad]:
-  override inline def makeSimpleLiteral(lex: String): Node = NodeFactory.createLiteral(lex)
+  override inline def makeSimpleLiteral(lex: String): Node = NodeFactory.createLiteralString(lex)
 
-  override inline def makeLangLiteral(lex: String, lang: String): Node = NodeFactory.createLiteral(lex, lang)
+  override inline def makeLangLiteral(lex: String, lang: String): Node = NodeFactory.createLiteralLang(lex, lang)
 
-  override inline def makeDtLiteral(lex: String, dt: RDFDatatype): Node = NodeFactory.createLiteral(lex, dt)
+  override inline def makeDtLiteral(lex: String, dt: RDFDatatype): Node = NodeFactory.createLiteralDT(lex, dt)
 
   override inline def makeDatatype(dt: String): RDFDatatype = NodeFactory.getType(dt)
 
