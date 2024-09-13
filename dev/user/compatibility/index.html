@@ -575,21 +575,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="RDF libraries">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#apache-jena-4xx" class="md-nav__link">
-    <span class="md-ellipsis">
-      Apache Jena 4.x.x
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -839,21 +824,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="RDF libraries">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#apache-jena-4xx" class="md-nav__link">
-    <span class="md-ellipsis">
-      Apache Jena 4.x.x
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -903,10 +873,8 @@
 <p>The current version of Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 22 are tested in CI and are guaranteed to work. We recommend using a recent release of <a href="https://www.graalvm.org/">GraalVM</a> to get the best performance. If you need Java 11 support, you should use <a href="https://w3id.org/jelly/jelly-jvm/1.0.x">Jelly-JVM 1.0.x</a>.</p>
 <p>Jelly is built with <a href="https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html">Scala 3 LTS releases</a>, however, <a href="../scala2/">Scala 2.13-compatible builds are available as well</a>.</p>
 <h2 id="rdf-libraries">RDF libraries</h2>
-<p>Major-version upgrades of RDF4J and Apache Jena (e.g., updating from 4.0.x to 5.0.x) are done in Jelly-JVM MINOR releases. Jelly-JVM generally does not use any complex features of these libraries, so you can expect it to work with multiple versions without any problems. For example, although Jelly-JVM 1.0.x officially supports only Jena 4.x.x, it works fine with 5.0.x.</p>
+<p>Major-version upgrades of RDF4J and Apache Jena (e.g., updating from 4.0.x to 5.0.x) are done in Jelly-JVM MINOR releases. Jelly-JVM generally does not use any complex features of these libraries, so it should work with multiple versions without any problems.</p>
 <p>If you do encounter any compatibility issues, please report them on the <a href="https://github.com/Jelly-RDF/jelly-jvm/issues">issue tracker</a>.</p>
-<h3 id="apache-jena-4xx">Apache Jena 4.x.x</h3>
-<p>Jelly-JVM 1.0.x only supports the RDF 1.1 mode of Apache Jena (enabled by default in Jena 4.x.x). The RDF 1.1 mode <a href="https://lists.apache.org/thread/hn1d1mpg9hwv7m0m620j53jgpw2rrdyz">became the only available one</a> in Apache Jena 5 (RDF 1.0 support was removed).</p>
 <h2 id="internal-vs-external-apis">Internal vs external APIs</h2>
 <p>Generally, all public classes and methods in Jelly-JVM are considered part of the public API. However, there are some exceptions.</p>
 <p>Auto-generated classes in the <code>jelly-core</code> module, <code>eu.ostrzyciel.jelly.core.proto.v1</code> package are not considered part of the public API, although we will avoid any incompatibilities where possible. These classes may change between MINOR releases.</p>

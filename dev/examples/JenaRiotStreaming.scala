@@ -74,7 +74,7 @@ object JenaRiotStreaming extends shared.Example:
         writerStream.triple(Triple.create(
           NodeFactory.createBlankNode(),
           NodeFactory.createURI("https://example.org/p"),
-          NodeFactory.createLiteral(s"object $i")
+          NodeFactory.createLiteralString(s"object $i")
         ))
 
       writerStream.finish()
