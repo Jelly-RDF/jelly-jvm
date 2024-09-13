@@ -4,7 +4,7 @@ Jelly-JVM follows [Semantic Versioning 2.0.0](https://semver.org/), with MAJOR.M
 
 ## JVM and Scala
 
-The current version of Jelly-JVM is compatible with Java 11 and newer. Java 11, 17, and 21 are tested in CI and are guaranteed to work. We recommend using a recent release of [GraalVM](https://www.graalvm.org/) to get the best performance.
+The current version of Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 22 are tested in CI and are guaranteed to work. We recommend using a recent release of [GraalVM](https://www.graalvm.org/) to get the best performance. If you need Java 11 support, you should use [Jelly-JVM 1.0.x](https://w3id.org/jelly/jelly-jvm/1.0.x).
 
 Jelly is built with [Scala 3 LTS releases](https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html), however, [Scala 2.13-compatible builds are available as well](scala2.md).
 
