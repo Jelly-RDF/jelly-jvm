@@ -10,13 +10,9 @@ Jelly is built with [Scala 3 LTS releases](https://www.scala-lang.org/blog/2022/
 
 ## RDF libraries
 
-Major-version upgrades of RDF4J and Apache Jena (e.g., updating from 4.0.x to 5.0.x) are done in Jelly-JVM MINOR releases. Jelly-JVM generally does not use any complex features of these libraries, so you can expect it to work with multiple versions without any problems. For example, although Jelly-JVM 1.0.x officially supports only Jena 4.x.x, it works fine with 5.0.x.
+Major-version upgrades of RDF4J and Apache Jena (e.g., updating from 4.0.x to 5.0.x) are done in Jelly-JVM MINOR releases. Jelly-JVM generally does not use any complex features of these libraries, so it should work with multiple versions without any problems.
 
 If you do encounter any compatibility issues, please report them on the [issue tracker](https://github.com/Jelly-RDF/jelly-jvm/issues).
-
-### Apache Jena 4.x.x
-
-Jelly-JVM 1.0.x only supports the RDF 1.1 mode of Apache Jena (enabled by default in Jena 4.x.x). The RDF 1.1 mode [became the only available one](https://lists.apache.org/thread/hn1d1mpg9hwv7m0m620j53jgpw2rrdyz) in Apache Jena 5 (RDF 1.0 support was removed).
 
 ## Internal vs external APIs
 
