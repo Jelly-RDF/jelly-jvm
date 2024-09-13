@@ -104,6 +104,8 @@ lazy val jena = (project in file("jena"))
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-core" % jenaV,
       "org.apache.jena" % "jena-arq" % jenaV,
+      // Integration with Fuseki is optional, so include this dep as "provided"
+      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
     ),
     commonSettings,
   )
@@ -120,6 +122,7 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
       // Use the "provided" scope to not include the Jena dependencies in the plugin JAR
       "org.apache.jena" % "jena-core" % jenaV % "provided,test",
       "org.apache.jena" % "jena-arq" % jenaV % "provided,test",
+      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
     ),
     // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
     publishArtifact := false,
