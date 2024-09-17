@@ -67,7 +67,6 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
     - [gRPC](user/grpc.md)
     - [Useful utilities](user/utilities.md)
     - [Compatibility policy](user/compatibility.md)
-    - [Scala 2.13 builds](user/scala2.md)
 - Developer guide
     - [Releases](dev/releases.md)
     - [Implementing Jelly for other libraries](dev/implementing.md)
@@ -78,4 +77,4 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
 
 
 
-[^1]: Scala 2.13-compatible builds of Jelly-JVM are available as well. [See more details](user/scala2.md).
+[^1]: Scala 2.13-compatible builds of Jelly-JVM are available for Jelly-JVM 1.0.x. Scala 2 support was removed in subsequent versions. [See more details](https://w3id.org/jelly/jelly-jvm/1.0.x/user/scala2).
