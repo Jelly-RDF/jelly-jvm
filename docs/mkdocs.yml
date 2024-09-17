@@ -96,7 +96,6 @@ nav:
     - Useful utilities: 'user/utilities.md'
     - Low-level usage: 'user/low-level.md'
     - Compatibility policy: 'user/compatibility.md'
-    - Scala 2 builds: 'user/scala2.md'
   - Developer guide:
     - Releases: 'dev/releases.md'
     - Implementing Jelly for other libraries: 'dev/implementing.md'
