@@ -18,7 +18,7 @@ You can simply add Jelly format support to [Apache Jena](https://jena.apache.org
     - For Apache Jena Fuseki, simply place the file in `$FUSEKI_BASE/extra/` directory. `$FUSEKI_BASE` is the directory usually called `run` where you have files such as `config.ttl` and `shiro.ini`. You will most likely need to create the `extra` directory yourself.
     - For Apache Jena, place the file in the `lib/` directory of your Jena installation.
     - For other applications, consult the manual of the application.
-- You can now use Jelly format for parsing, serialization, and streaming serialization in your Jena application.
+- You can now use the Jelly format for parsing, serialization, and streaming serialization in your Jena application.
 
 !!! bug "Content negotiation in Fuseki"
 
@@ -38,7 +38,7 @@ You can simply add Jelly format support to an application based on RDF4J with Je
 {% endif %} or you can go the the [releases page](https://github.com/Jelly-RDF/jelly-jvm/releases) on GitHub to download a specific version of the `jelly-rdf4j-plugin.jar` file.
     - Note that the Jelly version must be compatible with your RDF4J version. Consult the [compatibility table](index.md#compatibility).
 - Place the file in your classpath. Consult the manual of your application for the exact location.
-- You can now use Jelly format for parsing, serialization, and streaming serialization in your RDF4J application.
+- You can now use the Jelly format for parsing and serialization in your RDF4J application.
 
 ## Supported features
 
