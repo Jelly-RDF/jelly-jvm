@@ -25,10 +25,8 @@ lazy val pekkoV = "1.1.1"
 lazy val pekkoGrpcV = "1.0.2"
 lazy val jenaV = "5.1.0"
 lazy val rdf4jV = "5.0.2"
-// Must be synchronized to the version used by Pekko gRPC
-// See: https://mvnrepository.com/artifact/org.apache.pekko/pekko-grpc-runtime_3
-// When updating also change the version in plugins.sbt
-lazy val scalapbV = "0.11.13"
+// !! When updating ScalaPB also change the version of the plugin in plugins.sbt
+lazy val scalapbV = "0.11.17"
 lazy val protobufV = "3.25.5"
 
 // List of exclusions for the grpc module and its dependencies
