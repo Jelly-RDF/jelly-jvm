@@ -15,8 +15,8 @@ object Transform1 {
     override def apply(tree: Tree): Tree = tree match {
       case Template.After_4_4_0(_, _, _, stats, _) => tree.asInstanceOf[Template].copy(
         stats = stats.flatMap { stat => stat match {
-          // Remove def asRecognized
-          case Defn.Def.After_4_7_3(_, Term.Name("asRecognized"), _, _, _) => None
+          // Keep def asRecognized as-is
+          case Defn.Def.After_4_7_3(_, Term.Name("asRecognized"), _, _, _) => Some(stat)
           // Transform def ... => Option[T]  to  def ... => T
           case Defn.Def.After_4_7_3(_, _, _, Some(Type.Apply.After_4_6_0(tpe, typeArgs)), term)
             if tpe.syntax == "_root_.scala.Option" => Some(stat.asInstanceOf[Defn.Def].copy(
