@@ -29,6 +29,7 @@ lazy val rdf4jV = "5.0.2"
 // See: https://mvnrepository.com/artifact/org.apache.pekko/pekko-grpc-runtime_3
 // When updating also change the version in plugins.sbt
 lazy val scalapbV = "0.11.13"
+lazy val protobufV = "3.25.5"
 
 // List of exclusions for the grpc module and its dependencies
 lazy val grpcExclusions = Seq(
@@ -64,6 +65,7 @@ lazy val rdfProtos = (project in file("rdf-protos"))
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbV,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV % "protobuf",
       "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbV,
+      "com.google.protobuf" % "protobuf-java" % protobufV,
       "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
     ),
     Compile / PB.targets := Seq(
@@ -82,6 +84,7 @@ lazy val core = (project in file("core"))
     description := "Core code for serializing and deserializing RDF data in the Jelly format.",
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV,
+      "com.google.protobuf" % "protobuf-java" % protobufV,
     ),
     // Add the generated proto classes after transforming them with Scalameta
     Compile / sourceGenerators += Def.task {
