@@ -11,7 +11,7 @@ object Transform3 {
         inits = templ.inits ++ traits.map { tName =>
           Init.After_4_6_0(Type.Name(tName), Name.Anonymous(), Nil)
         },
-        stats = templ.stats ++ Seq(
+        stats = templ.body.stats ++ Seq(
           Defn.Def.After_4_7_3(
             List(Mod.Override()),
             Term.Name(isName),
