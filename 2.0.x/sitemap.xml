@@ -2,58 +2,58 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/contributing/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/getting-started-devs/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/getting-started-plugins/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/licensing/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/dev/implementing/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/dev/releases/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/user/compatibility/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/user/grpc/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/user/jena/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/user/low-level/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/user/rdf4j/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/user/reactive/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/2.0.x/user/utilities/</loc>
-         <lastmod>2024-09-22</lastmod>
+         <lastmod>2024-09-24</lastmod>
     </url>
 </urlset>
