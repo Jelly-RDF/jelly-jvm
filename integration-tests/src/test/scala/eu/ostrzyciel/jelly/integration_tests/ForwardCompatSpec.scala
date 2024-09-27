@@ -50,6 +50,15 @@ class ForwardCompatSpec extends AnyWordSpec, Matchers, ScalaFutures:
   private val futureFrameBytes: Array[Byte] = futureFrame.toByteArray
   private val futureFrameBytes2: Array[Byte] = futureFrame2.toByteArray
 
+  "current Jelly version" should {
+    "be 1" in {
+      // If this test is failing, it means that you have to update this spec :)
+      // Go to integration-tests/src/main/protobuf and update the proto file to what you are using now.
+      // Then, reintroduce the "future" changes that are tested here.
+      // You can then update this test to the version number you are using.
+      Constants.protoVersion should be (1)
+    }
+  }
 
   "v1.RdfStreamFrame" should {
     "parse a future stream frame" in {
