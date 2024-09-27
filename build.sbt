@@ -36,6 +36,15 @@ lazy val grpcExclusions = Seq(
   ExclusionRule(organization = "com.thesamet.scalapb", name = "scalapb-runtime_2.13"),
 )
 
+// Dependencies used for subprojects that generate Scala code from protobuf files
+lazy val protobufCompilerDeps = Seq(
+  "com.thesamet.scalapb" %% "compilerplugin" % scalapbV,
+  "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV % "protobuf",
+  "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbV,
+  "com.google.protobuf" % "protobuf-java" % protobufV,
+  "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
+)
+
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.19" % Test,
@@ -59,13 +68,7 @@ lazy val commonSettings = Seq(
 lazy val rdfProtos = (project in file("rdf-protos"))
   .settings(
     name := "jelly-scalameta-test",
-    libraryDependencies ++= Seq(
-      "com.thesamet.scalapb" %% "compilerplugin" % scalapbV,
-      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV % "protobuf",
-      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbV,
-      "com.google.protobuf" % "protobuf-java" % protobufV,
-      "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
-    ),
+    libraryDependencies ++= protobufCompilerDeps,
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     ),
@@ -195,6 +198,10 @@ lazy val integrationTests = (project in file("integration-tests"))
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
+    ),
+    libraryDependencies ++= protobufCompilerDeps,
+    Compile / PB.targets := Seq(
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     ),
     commonSettings,
   )
