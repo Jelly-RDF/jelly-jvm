@@ -50,7 +50,7 @@ object EncoderSource:
 
   /**
    * A source of RDF stream frames from an RDF dataset implementation (graphs format).
-   * RDF stream type: GRAPHS.
+   * Physical stream type: GRAPHS.
    * Logical stream type (RDF-STaX): flat RDF quad stream (FLAT_QUADS).
    *
    * @param dataset the RDF dataset to be streamed
