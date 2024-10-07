@@ -100,7 +100,7 @@ object EncoderFlow:
   /**
    * A flow converting a stream of iterables with quad statements into a stream of [[RdfStreamFrame]]s.
    * Physical stream type: QUADS.
-   * Logical stream type (RDF-STaX): flat RDF triple stream (FLAT_QUADS).
+   * Logical stream type (RDF-STaX): flat RDF quad stream (FLAT_QUADS).
    *
    * After this flow finishes processing an iterable in the input stream, it is guaranteed to output an
    * [[RdfStreamFrame]], which allows to maintain low latency.
