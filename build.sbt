@@ -2,7 +2,7 @@
 // Not used to compile any of the Jelly projects.
 lazy val scala2MetaVersion = "2.13.14"
 
-ThisBuild / scalaVersion := "3.3.3"
+ThisBuild / scalaVersion := "3.3.4"
 ThisBuild / organization := "eu.ostrzyciel.jelly"
 ThisBuild / homepage := Some(url("https://w3id.org/jelly/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
