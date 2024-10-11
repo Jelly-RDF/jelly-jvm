@@ -1,8 +1,8 @@
 // Scala 2 version used for meta-programming – transforming the generated proto classes.
 // Not used to compile any of the Jelly projects.
-lazy val scala2MetaVersion = "2.13.14"
+lazy val scala2MetaVersion = "2.13.15"
 
-ThisBuild / scalaVersion := "3.3.3"
+ThisBuild / scalaVersion := "3.3.4"
 ThisBuild / organization := "eu.ostrzyciel.jelly"
 ThisBuild / homepage := Some(url("https://w3id.org/jelly/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
@@ -21,8 +21,8 @@ ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeProfileName := "eu.ostrzyciel"
 sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
-lazy val pekkoV = "1.1.1"
-lazy val pekkoGrpcV = "1.0.2"
+lazy val pekkoV = "1.1.2"
+lazy val pekkoGrpcV = "1.1.0"
 lazy val jenaV = "5.1.0"
 lazy val rdf4jV = "5.0.2"
 // !! When updating ScalaPB also change the version of the plugin in plugins.sbt
@@ -75,7 +75,7 @@ lazy val rdfProtos = (project in file("rdf-protos"))
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(baseDirectory.value / "src" / "main" / "protobuf_shared"),
     Compile / PB.generate / excludeFilter := "grpc.proto",
-    scalaVersion := "2.13.14",
+    scalaVersion := "2.13.15",
     publishArtifact := false,
   )
 
