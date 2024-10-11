@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../../assets/jelly_color.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.36">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.06209087.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.8c3ca2c6.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -70,6 +70,7 @@
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta name="google-site-verification" content="JMy5zT6f11aw--RbVdmvGDEfHi_khf67nj7XDkz0KvA" />
 
   </head>
   
@@ -743,7 +744,7 @@
 <ul>
 <li><code>get*</code> methods deconstruct triple statements, quad statements, and quoted triples (RDF-star). You can make them <code>inline</code>.</li>
 <li><code>nodeToProto</code> and <code>graphToProto</code> should translate into Jelly's representation all possible variations of RDF terms in the SPO and G positions, respectively.</li>
-<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.0.2/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaProtoEncoder.scala">JenaProtoEncoder</a></li>
+<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.0.3/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaProtoEncoder.scala">JenaProtoEncoder</a></li>
 <li>You can skip implementing this trait if you don't need serialization.</li>
 <li>You can also skip implementing some methods (make them throw an exception or return null) if, for example, you don't want to work with quads or RDF-start.</li>
 </ul>
@@ -752,7 +753,7 @@
 <p><strong>ProtoDecoderConverter (deserialization)</strong></p>
 <ul>
 <li>The <code>make*</code> methods should construct new RDF terms and statements. You can make them <code>inline</code>.</li>
-<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.0.2/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaDecoderConverter.scala">JenaDecoderConverter</a></li>
+<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.0.3/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaDecoderConverter.scala">JenaDecoderConverter</a></li>
 <li>You can skip implementing this trait if you don't need deserialization.</li>
 <li>You can also skip implementing some methods (make them throw an exception or return null) if, for example, you don't want to work with quads or RDF-start.</li>
 </ul>
@@ -761,7 +762,7 @@
 <p><strong>ConverterFactory</strong> – wrapper that allows other modules to use your converter.</p>
 <ul>
 <li>The methods should just return new instances of your <code>ProtoEncoder</code> and <code>ProtoDecoderConverter</code> implementations.</li>
-<li>Example for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.0.2/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory.scala">JenaConverterFactory</a></li>
+<li>Example for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.0.3/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory.scala">JenaConverterFactory</a></li>
 </ul>
 </li>
 </ul>
@@ -871,7 +872,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.56dfad97.min.js"></script>
+      <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>
       
     
   </body>

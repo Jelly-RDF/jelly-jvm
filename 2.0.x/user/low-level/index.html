@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../../assets/jelly_color.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.36">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.06209087.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.8c3ca2c6.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -70,6 +70,7 @@
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta name="google-site-verification" content="JMy5zT6f11aw--RbVdmvGDEfHi_khf67nj7XDkz0KvA" />
 
   </head>
   
@@ -829,7 +830,7 @@
 <h1 id="low-level-usage">Low-level usage</h1>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>This page describes a low-level API that is a bit of a hassle to use directly. It's recommended to use the higher-level abstractions provided by the <a href="../reactive/"><code>jelly-stream</code> module</a>, or the integrations with <a href="../jena/">Apache Jena's RIOT</a> or <a href="../rdf4j/">RDF4J's Rio</a> libraries. If you really want to use this, it is highly recommended that you first get a <a href="https://w3id.org/jelly/1.0.0/user-guide">basic understanding of how Jelly works under the hood</a> and take a look at the <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.0.2/stream">code in the <code>jelly-stream</code> module</a> to see how it's done there.</p>
+<p>This page describes a low-level API that is a bit of a hassle to use directly. It's recommended to use the higher-level abstractions provided by the <a href="../reactive/"><code>jelly-stream</code> module</a>, or the integrations with <a href="../jena/">Apache Jena's RIOT</a> or <a href="../rdf4j/">RDF4J's Rio</a> libraries. If you really want to use this, it is highly recommended that you first get a <a href="https://w3id.org/jelly/1.0.0/user-guide">basic understanding of how Jelly works under the hood</a> and take a look at the <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.0.3/stream">code in the <code>jelly-stream</code> module</a> to see how it's done there.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -838,8 +839,8 @@
 <h2 id="deserialization">Deserialization</h2>
 <p>To parse a serialized stream frame into triples/quads:</p>
 <ol>
-<li>Call <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/2.0.2/eu/ostrzyciel/jelly/core/proto/v1/RdfStreamFrame$.html"><code>eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame.parseFrom</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> if it's a non-delimited frame (like you would see, e.g., in a Kafka or gRPC stream), or <code>parseDelimitedFrom</code> if it's a <a href="https://w3id.org/jelly/1.0.0/user-guide#delimited-vs-non-delimited-jelly">delimited stream</a> (like you would see in a file or a socket).</li>
-<li>Obtain a decoder that turns <code>RdfStreamFrame</code>s into triples/quads: <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/2.0.2/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory$.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> has different methods for <a href="https://w3id.org/jelly/1.0.0/user-guide#stream-types">different physical stream types</a>:<ul>
+<li>Call <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-core_3/2.0.3/eu/ostrzyciel/jelly/core/proto/v1/RdfStreamFrame$.html"><code>eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame.parseFrom</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> if it's a non-delimited frame (like you would see, e.g., in a Kafka or gRPC stream), or <code>parseDelimitedFrom</code> if it's a <a href="https://w3id.org/jelly/1.0.0/user-guide#delimited-vs-non-delimited-jelly">delimited stream</a> (like you would see in a file or a socket).</li>
+<li>Obtain a decoder that turns <code>RdfStreamFrame</code>s into triples/quads: <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/2.0.3/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory$.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> has different methods for <a href="https://w3id.org/jelly/1.0.0/user-guide#stream-types">different physical stream types</a>:<ul>
 <li><code>anyStatementDecoder</code> for any physical stream type, outputs <code>Triple</code> or <code>Quad</code></li>
 <li><code>triplesDecoder</code> for TRIPLES streams, outputs <code>Triple</code></li>
 <li><code>quadsDecoder</code> for QUADS streams, outputs <code>Quad</code></li>
@@ -852,8 +853,8 @@
 <h2 id="serialization">Serialization</h2>
 <p>To serialize triples/quads into a stream frame:</p>
 <ol>
-<li>If you want to serialize an RDF graph/dataset, transform them first into triples/quads in an iterable form. Use the <code>asTriples</code>/<code>asQuads</code>/<code>asGraphs</code> extension methods provided by the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/2.0.2/eu/ostrzyciel/jelly/convert/jena/JenaIterableAdapter$.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaIterableAdapter</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> object.</li>
-<li>Obtain an encoder that turns triples/quads into <code>RdfStreamRow</code>s (the rows of a stream frame): use the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/2.0.2/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory$.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory.encoder</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> method to get an instance of <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/2.0.2/eu/ostrzyciel/jelly/convert/jena/JenaProtoEncoder.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaProtoEncoder</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>.</li>
+<li>If you want to serialize an RDF graph/dataset, transform them first into triples/quads in an iterable form. Use the <code>asTriples</code>/<code>asQuads</code>/<code>asGraphs</code> extension methods provided by the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/2.0.3/eu/ostrzyciel/jelly/convert/jena/JenaIterableAdapter$.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaIterableAdapter</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> object.</li>
+<li>Obtain an encoder that turns triples/quads into <code>RdfStreamRow</code>s (the rows of a stream frame): use the <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/2.0.3/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory$.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory.encoder</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> method to get an instance of <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-jena_3/2.0.3/eu/ostrzyciel/jelly/convert/jena/JenaProtoEncoder.html"><code>eu.ostrzyciel.jelly.convert.jena.JenaProtoEncoder</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>.</li>
 <li>Call the encoder's methods to add quads, triples, or named graphs to the stream frame.<ul>
 <li>Note that <strong>YOU</strong> are responsible for sticking to a specific physical stream type. For example, you should not mix triples with quads. It is highly recommended that you first read on the <a href="https://w3id.org/jelly/1.0.0/user-guide#stream-types">available stream types</a> in Jelly.</li>
 <li>You are also responsible for setting the appropriate stream options with proper stream types. See the guide on <a href="../utilities/#jelly-options-presets">Jelly options presets</a> for more information.</li>
@@ -973,7 +974,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.56dfad97.min.js"></script>
+      <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>
       
     
   </body>
