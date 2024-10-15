@@ -22,9 +22,11 @@ You can simply add Jelly format support to [Apache Jena](https://jena.apache.org
 
 !!! bug "Content negotiation in Fuseki"
 
-    Currently Apache Jena Fuseki will not properly handle content negotiation for the Jelly format, due to the supported content types being hardcoded in Fuseki (see [upstream issue](https://github.com/apache/jena/issues/2700)).
+    Content negotiation using the `application/x-jelly-rdf` media type in the `Accept` header works in Fuseki "Main" distribution since version 5.2.0. To get it working, you need to run Fuseki with the `--modules=true` command-line option. Content negotiation does not work in the "webapp" distribution with UI due to an [upstream bug](https://github.com/apache/jena/issues/2774).
+
+    In Fuseki 5.1.0 and older, content negotiation with Jelly does not work at all.
     
-    Until that is fixed, you can use Jelly with Fuseki endpoints by specifying the `output=application/x-jelly-rdf` parameter (either in the URL or in the URL-encoded form body) when querying the endpoint.
+    To work around these issues, you can specify the `output=application/x-jelly-rdf` parameter (either in the URL or in the URL-encoded form body) when querying the endpoint.
     
 
 ### Eclipse RDF4J
