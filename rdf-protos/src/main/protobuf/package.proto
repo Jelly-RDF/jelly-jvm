@@ -14,7 +14,6 @@ option (scalapb.options) = {
   // Disabling this can substantially improve performance
   preserve_unknown_fields: false
   enum_strip_prefix: true
-  scala3_sources: true
 };
 
 option java_package = "eu.ostrzyciel.jelly.core.proto.v1";
