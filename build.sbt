@@ -67,7 +67,7 @@ lazy val commonSettings = Seq(
 // Intermediate project that generates the Scala code from the protobuf files
 lazy val rdfProtos = (project in file("rdf-protos"))
   .settings(
-    name := "jelly-scalameta-test",
+    name := "jelly-scalameta",
     libraryDependencies ++= protobufCompilerDeps,
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
@@ -75,7 +75,6 @@ lazy val rdfProtos = (project in file("rdf-protos"))
     // Add the shared proto sources
     Compile / PB.protoSources ++= Seq(baseDirectory.value / "src" / "main" / "protobuf_shared"),
     Compile / PB.generate / excludeFilter := "grpc.proto",
-    scalaVersion := "2.13.15",
     publishArtifact := false,
   )
 
@@ -90,7 +89,7 @@ lazy val core = (project in file("core"))
     // Add the generated proto classes after transforming them with Scalameta
     Compile / sourceGenerators += Def.task {
       Generator.gen(
-        inputDir = (rdfProtos / target).value / "scala-2.13" / "src_managed" / "main",
+        inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main",
         outputDir = sourceManaged.value / "scalapb",
       )
     }.dependsOn(rdfProtos / Compile / PB.generate),
