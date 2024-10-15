@@ -29,9 +29,6 @@ class JellyFusekiLifecycleSpec extends AnyWordSpec, Matchers:
       val oldLists = List(DEF.constructOffer, DEF.rdfOffer, DEF.quadsOffer)
       for list <- oldLists do
         list.entries().asScala should not contain JellyFusekiLifecycle.mediaRangeJelly
-      DEF.constructOffer.entries().asScala should not contain JellyFusekiLifecycle.mediaRangeJelly
-      DEF.rdfOffer.entries().asScala should not contain JellyFusekiLifecycle.mediaRangeJelly
-      DEF.quadsOffer.entries().asScala should not contain JellyFusekiLifecycle.mediaRangeJelly
 
       val module = JellyFusekiLifecycle()
       module.start()
