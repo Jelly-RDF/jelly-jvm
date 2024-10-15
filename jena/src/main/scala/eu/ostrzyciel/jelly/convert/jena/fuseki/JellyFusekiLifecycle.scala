@@ -3,28 +3,23 @@ package eu.ostrzyciel.jelly.convert.jena.fuseki
 import eu.ostrzyciel.jelly.core.Constants
 import org.apache.jena.atlas.web.{AcceptList, MediaRange}
 import org.apache.jena.fuseki.{DEF, Fuseki}
-import org.apache.jena.fuseki.main.FusekiServer
-import org.apache.jena.fuseki.main.sys.FusekiAutoModule
-import org.apache.jena.rdf.model.Model
-import org.apache.jena.riot.WebContent
+import org.apache.jena.sys.JenaSubsystemLifecycle
 
 import java.util
 
-object JellyFusekiModule:
+object JellyFusekiLifecycle:
   val mediaRangeJelly: MediaRange = new MediaRange(Constants.jellyContentType)
 
 /**
- * A Fuseki module that adds Jelly content type to the list of accepted content types.
+ * A Jena module that adds Jelly content type to the list of accepted content types in Fuseki.
+ * This isn't a Fuseki module, because Fuseki modules are not supported in all distributions of Fuseki, see:
+ * https://github.com/apache/jena/issues/2774
  *
  * This allows users to use the Accept header set to application/x-jelly-rdf to request Jelly RDF responses.
  * It works for SPARQL CONSTRUCT queries and for the Graph Store Protocol.
- *
- * More info on Fuseki modules: https://jena.apache.org/documentation/fuseki2/fuseki-modules.html
  */
-final class JellyFusekiModule extends FusekiAutoModule:
-  import JellyFusekiModule.*
-
-  override def name(): String = "Jelly"
+final class JellyFusekiLifecycle extends JenaSubsystemLifecycle:
+  import JellyFusekiLifecycle.*
 
   override def start(): Unit =
     try {
@@ -32,15 +27,21 @@ final class JellyFusekiModule extends FusekiAutoModule:
       maybeAddJellyToList(DEF.rdfOffer).foreach(offer => DEF.rdfOffer = offer)
       maybeAddJellyToList(DEF.quadsOffer).foreach(offer => {
         DEF.quadsOffer = offer
-        Fuseki.serverLog.info(s"Added ${Constants.jellyContentType} to the list of accepted content types")
+        Fuseki.serverLog.info(s"Jelly: Added ${Constants.jellyContentType} to the list of accepted content types")
       })
     } catch {
+      case e: NoClassDefFoundError => // ignore, we are not running Fuseki
       case e: IllegalAccessError => Fuseki.serverLog.warn(
-        s"Cannot register the ${Constants.jellyContentType} content type, because you are running an Apache Jena " +
-          s"Fuseki version that doesn't support content type registration. " +
+        s"Jelly: Cannot register the ${Constants.jellyContentType} content type, because you are running an " +
+          s"Apache Jena Fuseki version that doesn't support content type registration. " +
           s"Update to Fuseki 5.2.0 or newer for this to work."
       )
     }
+
+  override def stop(): Unit = ()
+
+  // Initialize after JellySubsystemLifecycle
+  override def level(): Int = 502
 
   /**
    * Adds the Jelly content type to the list of accepted content types if it is not already present.

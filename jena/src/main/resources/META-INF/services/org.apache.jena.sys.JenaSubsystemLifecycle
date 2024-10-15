@@ -1,1 +1,2 @@
 eu.ostrzyciel.jelly.convert.jena.riot.JellySubsystemLifecycle
+eu.ostrzyciel.jelly.convert.jena.fuseki.JellyFusekiLifecycle
