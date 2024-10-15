@@ -2,6 +2,7 @@ package eu.ostrzyciel.jelly.convert.jena.fuseki
 
 import eu.ostrzyciel.jelly.convert.jena.riot.JellySubsystemLifecycle
 import org.apache.jena.fuseki.DEF
+import org.apache.jena.sys.JenaSystem
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -20,6 +21,11 @@ class JellyFusekiLifecycleSpec extends AnyWordSpec, Matchers:
     }
 
     "register the Jelly content type in the lists of accepted content types" in {
+      // This assumption is broken for `jenaPlugin` tests, because there the JenaSystem is initialized
+      // and reads the service definition.
+      // This test thus only can be executed in the `jena` module.
+      assume(DEF.constructOffer == DEF.constructOfferDefault())
+
       val oldLists = List(DEF.constructOffer, DEF.rdfOffer, DEF.quadsOffer)
       for list <- oldLists do
         list.entries().asScala should not contain JellyFusekiLifecycle.mediaRangeJelly
