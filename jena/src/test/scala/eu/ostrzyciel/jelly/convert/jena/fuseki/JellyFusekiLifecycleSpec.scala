@@ -1,15 +1,18 @@
 package eu.ostrzyciel.jelly.convert.jena.fuseki
 
+import eu.ostrzyciel.jelly.convert.jena.riot.JellySubsystemLifecycle
 import org.apache.jena.fuseki.DEF
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.jdk.CollectionConverters.*
 
-class JellyFusekiModuleSpec extends AnyWordSpec, Matchers:
-  "JellyFusekiModule" should {
-    "have a name" in {
-      JellyFusekiLifecycle().name() should be ("Jelly")
+class JellyFusekiLifecycleSpec extends AnyWordSpec, Matchers:
+  "JellyFusekiLifecycle" should {
+    "initialize after JenaSubsystemLifecycle" in {
+      val jenaModule = JellySubsystemLifecycle()
+      val module = JellyFusekiLifecycle()
+      module.level() should be > jenaModule.level()
     }
 
     "use the correct content type for Jelly" in {
