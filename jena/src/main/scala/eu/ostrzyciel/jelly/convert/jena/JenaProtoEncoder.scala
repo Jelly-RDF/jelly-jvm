@@ -2,9 +2,7 @@ package eu.ostrzyciel.jelly.convert.jena
 
 import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, RdfStreamOptions, SpoTerm}
-import org.apache.jena.JenaRuntime
 import org.apache.jena.datatypes.xsd.XSDDatatype
-import org.apache.jena.datatypes.xsd.impl.RDFLangString
 import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
 
