@@ -895,8 +895,9 @@
 </ul>
 <div class="admonition bug">
 <p class="admonition-title">Content negotiation in Fuseki</p>
-<p>Currently Apache Jena Fuseki will not properly handle content negotiation for the Jelly format, due to the supported content types being hardcoded in Fuseki (see <a href="https://github.com/apache/jena/issues/2700">upstream issue</a>).</p>
-<p>Until that is fixed, you can use Jelly with Fuseki endpoints by specifying the <code>output=application/x-jelly-rdf</code> parameter (either in the URL or in the URL-encoded form body) when querying the endpoint.</p>
+<p>Content negotiation using the <code>application/x-jelly-rdf</code> media type in the <code>Accept</code> header works in Fuseki "Main" distribution since version 5.2.0. To get it working, you need to run Fuseki with the <code>--modules=true</code> command-line option. Content negotiation does not work in the "webapp" distribution with UI due to an <a href="https://github.com/apache/jena/issues/2774">upstream bug</a>.</p>
+<p>In Fuseki 5.1.0 and older, content negotiation with Jelly does not work at all.</p>
+<p>To work around these issues, you can specify the <code>output=application/x-jelly-rdf</code> parameter (either in the URL or in the URL-encoded form body) when querying the endpoint.</p>
 </div>
 <h3 id="eclipse-rdf4j">Eclipse RDF4J</h3>
 <p>You can simply add Jelly format support to an application based on RDF4J with Jelly's plugin JAR.</p>
@@ -947,7 +948,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">September 22, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 15, 2024</span>
   </span>
 
     
