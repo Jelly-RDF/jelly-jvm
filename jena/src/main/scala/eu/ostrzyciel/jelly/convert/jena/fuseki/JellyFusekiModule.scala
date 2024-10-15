@@ -2,10 +2,11 @@ package eu.ostrzyciel.jelly.convert.jena.fuseki
 
 import eu.ostrzyciel.jelly.core.Constants
 import org.apache.jena.atlas.web.{AcceptList, MediaRange}
-import org.apache.jena.fuseki.DEF
+import org.apache.jena.fuseki.{DEF, Fuseki}
 import org.apache.jena.fuseki.main.FusekiServer
 import org.apache.jena.fuseki.main.sys.FusekiAutoModule
 import org.apache.jena.rdf.model.Model
+import org.apache.jena.riot.WebContent
 
 import java.util
 
@@ -25,10 +26,21 @@ final class JellyFusekiModule extends FusekiAutoModule:
 
   override def name(): String = "Jelly"
 
-  override def prepare(serverBuilder: FusekiServer.Builder, datasetNames: util.Set[String], configModel: Model): Unit =
-    maybeAddJellyToList(DEF.constructOffer).foreach(offer => DEF.constructOffer = offer)
-    maybeAddJellyToList(DEF.rdfOffer).foreach(offer => DEF.rdfOffer = offer)
-    maybeAddJellyToList(DEF.quadsOffer).foreach(offer => DEF.quadsOffer = offer)
+  override def start(): Unit =
+    try {
+      maybeAddJellyToList(DEF.constructOffer).foreach(offer => DEF.constructOffer = offer)
+      maybeAddJellyToList(DEF.rdfOffer).foreach(offer => DEF.rdfOffer = offer)
+      maybeAddJellyToList(DEF.quadsOffer).foreach(offer => {
+        DEF.quadsOffer = offer
+        Fuseki.serverLog.info(s"Added ${Constants.jellyContentType} to the list of accepted content types")
+      })
+    } catch {
+      case e: IllegalAccessError => Fuseki.serverLog.warn(
+        s"Cannot register the ${Constants.jellyContentType} content type, because you are running an Apache Jena " +
+          s"Fuseki version that doesn't support content type registration. " +
+          s"Update to Fuseki 5.2.0 or newer for this to work."
+      )
+    }
 
   /**
    * Adds the Jelly content type to the list of accepted content types if it is not already present.

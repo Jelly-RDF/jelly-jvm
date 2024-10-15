@@ -25,7 +25,7 @@ class JellyFusekiModuleSpec extends AnyWordSpec, Matchers:
       DEF.quadsOffer.entries().asScala should not contain JellyFusekiModule.mediaRangeJelly
 
       val module = JellyFusekiModule()
-      module.prepare(null, null, null)
+      module.start()
 
       val lists = List(DEF.constructOffer, DEF.rdfOffer, DEF.quadsOffer)
       for (list, oldList) <- lists.zip(oldLists) do
@@ -35,11 +35,11 @@ class JellyFusekiModuleSpec extends AnyWordSpec, Matchers:
 
     "not register the Jelly content type if it's already registered" in {
       val module = JellyFusekiModule()
-      module.prepare(null, null, null)
+      module.start()
       DEF.rdfOffer.entries().asScala should contain (JellyFusekiModule.mediaRangeJelly)
       val size1 = DEF.rdfOffer.entries().size()
 
-      module.prepare(null, null, null)
+      module.start()
       DEF.rdfOffer.entries().asScala should contain (JellyFusekiModule.mediaRangeJelly)
       val size2 = DEF.rdfOffer.entries().size()
       size2 should be (size1)
