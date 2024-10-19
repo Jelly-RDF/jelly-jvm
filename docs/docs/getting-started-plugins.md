@@ -43,6 +43,7 @@ You can simply add Jelly format support to an application based on RDF4J with Je
 The Jelly-JVM plugin JARs provide the following features:
 
 - Full support for parsing and serialization of RDF data (triples and quads) in the Jelly format.
+    - The parser will automatically detect if the input data [is delimited or not]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}). Both delimited and non-delimited Jelly data can be parsed.
     - In Apache Jena also the stream serialization is supported.
 - Recognizing the `.jelly` file extension.
 - Recognizing the `application/x-jelly-rdf` media type.
