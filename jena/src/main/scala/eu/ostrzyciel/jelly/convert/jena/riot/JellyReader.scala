@@ -21,11 +21,8 @@ object JellyReader extends ReaderRIOT:
   override def read(reader: Reader, baseURI: String, ct: ContentType, output: StreamRDF, context: Context): Unit =
     throw new RiotException("RDF Jelly: Reading binary data from a java.io.Reader is not supported. " +
       "Please use an InputStream.")
-
-  /**
-   * Reads Jelly RDF data from an InputStream.
-   * Automatically detects whether the input is a single frame (non-delimited) or a stream of frames (delimited).
-   */
+  
+  
   override def read(in: InputStream, baseURI: String, ct: ContentType, output: StreamRDF, context: Context): Unit =
     // Get the supported options specified by the user in the context -- or the default if not available
     val supportedOptions = context.get[RdfStreamOptions](
@@ -44,15 +41,16 @@ object JellyReader extends ReaderRIOT:
       IoUtils.guessDelimiting(in) match
         case (false, newIn) =>
           // Non-delimited Jelly file
-          // In this case, we can only read one frame
           val frame = RdfStreamFrame.parseFrom(newIn)
           processFrame(frame)
         case (true, newIn) =>
           // Delimited Jelly file
-          // In this case, we can read multiple frames
           Iterator.continually(RdfStreamFrame.parseDelimitedFrom(newIn))
             .takeWhile(_.isDefined)
-            .foreach { maybeFrame => processFrame(maybeFrame.get) }
+            .foreach { maybeFrame =>
+              val frame = maybeFrame.get
+              processFrame(frame)
+            }
     }
     finally {
       output.finish()
