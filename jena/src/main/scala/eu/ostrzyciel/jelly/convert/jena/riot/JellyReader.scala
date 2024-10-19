@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.convert.jena.riot
 
 import eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory
 import eu.ostrzyciel.jelly.core.Constants.*
-import eu.ostrzyciel.jelly.core.JellyOptions
+import eu.ostrzyciel.jelly.core.{IoUtils, JellyOptions}
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import org.apache.jena.atlas.web.ContentType
 import org.apache.jena.graph.Triple
@@ -29,18 +29,28 @@ object JellyReader extends ReaderRIOT:
       JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, JellyOptions.defaultSupportedOptions
     )
     val decoder = JenaConverterFactory.anyStatementDecoder(Some(supportedOptions))
+    inline def processFrame(f: RdfStreamFrame): Unit =
+      for row <- f.rows do
+        decoder.ingestRow(row) match
+          case Some(st: Triple) => output.triple(st)
+          case Some(st: Quad) => output.quad(st)
+          case None => ()
+
     output.start()
     try {
-      Iterator.continually(RdfStreamFrame.parseDelimitedFrom(in))
-        .takeWhile(_.isDefined)
-        .foreach { maybeFrame =>
-          val frame = maybeFrame.get
-          for row <- frame.rows do
-            decoder.ingestRow(row) match
-              case Some(st: Triple) => output.triple(st)
-              case Some(st: Quad) => output.quad(st)
-              case None => ()
-        }
+      IoUtils.guessDelimiting(in) match
+        case (false, newIn) =>
+          // Non-delimited Jelly file
+          val frame = RdfStreamFrame.parseFrom(newIn)
+          processFrame(frame)
+        case (true, newIn) =>
+          // Delimited Jelly file
+          Iterator.continually(RdfStreamFrame.parseDelimitedFrom(newIn))
+            .takeWhile(_.isDefined)
+            .foreach { maybeFrame =>
+              val frame = maybeFrame.get
+              processFrame(frame)
+            }
     }
     finally {
       output.finish()
