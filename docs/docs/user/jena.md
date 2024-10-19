@@ -17,7 +17,8 @@ The module also implements the {{ javadoc_link_pretty('core', 'IterableAdapter')
 Usage notes:
 
 - {{ javadoc_link_pretty('core', 'JellyOptions$') }} provides a few common presets for Jelly serialization options construct a `JellyFormatVariant`, as shown in the example above. You can also further customize the serialization options (e.g., dictionary size).
-- The RIOT integration implements only the [delimited variant of Jelly]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}). It is used for writing Jelly to files on disk or sockets. Because of this, RIOT will not parse non-delimited Jelly data (e.g., a single message in a Kafka stream). For this, you should use the `jelly-stream` module or the more low-level API: [Low-level usage](low-level.md).
+- The RIOT writer (serializer) integration implements only the [delimited variant of Jelly]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}). It is used for writing Jelly to files on disk or sockets. Because of this, you cannot use RIOT to write non-delimited Jelly data (e.g., a single message to a Kafka stream). For this, you should use the `jelly-stream` module or the more low-level API: [Low-level usage](low-level.md).
+- However, the RIOT parser (deserializer) integration will automatically detect if the parsed Jelly data is delimited or not. If it's non-delimited, the parser will assume that there is only one `RdfStreamFrame` in the file.
 - Jelly's parsers and writers are registered in the {{ javadoc_link_pretty('jena', 'riot.JellyLanguage$') }} object ([source code]({{ git_link('jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/riot/JellyLanguage.scala') }})). This registration should happen automatically when you include the `jelly-jena` module in your project, using Jena's [component initialization mechanism](https://jena.apache.org/documentation/notes/system-initialization.html).
 
 ## Streaming serialization with RIOT

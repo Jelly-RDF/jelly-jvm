@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.convert.rdf4j.rio
 
 import eu.ostrzyciel.jelly.convert.rdf4j.Rdf4jConverterFactory
+import eu.ostrzyciel.jelly.core.IoUtils
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import org.eclipse.rdf4j.rio.{RDFFormat, RioSetting}
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFParser
@@ -23,6 +24,10 @@ final class JellyParser extends AbstractRDFParser:
     s.add(MAX_DATATYPE_TABLE_SIZE)
     s
 
+  /**
+   * Read Jelly RDF data from an InputStream.
+   * Automatically detects whether the input is a single frame (non-delimited) or a stream of frames (delimited).
+   */
   override def parse(in: InputStream, baseURI: String): Unit =
     if (in == null) throw new IllegalArgumentException("Input stream must not be null")
 
@@ -35,18 +40,26 @@ final class JellyParser extends AbstractRDFParser:
       maxDatatypeTableSize = config.get(MAX_DATATYPE_TABLE_SIZE).toInt,
       version = config.get(PROTO_VERSION).toInt,
     )))
+    inline def processFrame(f: RdfStreamFrame): Unit =
+      for row <- f.rows do
+        decoder.ingestRow(row) match
+          case Some(st) => rdfHandler.handleStatement(st)
+          case None => ()
 
     rdfHandler.startRDF()
     try {
-      Iterator.continually(RdfStreamFrame.parseDelimitedFrom(in))
-        .takeWhile(_.isDefined)
-        .foreach { maybeFrame =>
-          val frame = maybeFrame.get
-          for row <- frame.rows do
-            decoder.ingestRow(row) match
-              case Some(st) => rdfHandler.handleStatement(st)
-              case None => ()
-        }
+      IoUtils.autodetectDelimiting(in) match
+        case (false, newIn) =>
+          // Non-delimited Jelly file
+          // In this case, we can only read one frame
+          val frame = RdfStreamFrame.parseFrom(newIn)
+          processFrame(frame)
+        case (true, newIn) =>
+          // Delimited Jelly file
+          // In this case, we can read multiple frames
+          Iterator.continually(RdfStreamFrame.parseDelimitedFrom(newIn))
+            .takeWhile(_.isDefined)
+            .foreach { maybeFrame => processFrame(maybeFrame.get) }
     }
     finally {
       rdfHandler.endRDF()

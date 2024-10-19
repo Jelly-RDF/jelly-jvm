@@ -31,7 +31,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(1) should not be 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.guessDelimiting(in)
+        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
         isDelimited shouldBe false
         newIn.readAllBytes() shouldBe bytes
       }
@@ -44,7 +44,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(1) shouldBe 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.guessDelimiting(in)
+        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
         isDelimited shouldBe true
         newIn.readAllBytes() shouldBe bytes
       }
@@ -56,7 +56,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(1) should not be 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.guessDelimiting(in)
+        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
         isDelimited shouldBe false
         newIn.readAllBytes() shouldBe bytes
       }
@@ -71,7 +71,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(2) should not be 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.guessDelimiting(in)
+        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
         isDelimited shouldBe true
         newIn.readAllBytes() shouldBe bytes
       }
@@ -84,7 +84,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(2) shouldBe 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.guessDelimiting(in)
+        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
         isDelimited shouldBe false
         newIn.readAllBytes() shouldBe bytes
       }
@@ -99,7 +99,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(3) shouldBe 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.guessDelimiting(in)
+        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
         isDelimited shouldBe true
         newIn.readAllBytes() shouldBe bytes
       }

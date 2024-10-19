@@ -13,6 +13,7 @@
 To parse a serialized stream frame into triples/quads:
 
 1. Call {{ javadoc_link_pretty('core', 'proto.v1.RdfStreamFrame$', 'parseFrom') }} if it's a non-delimited frame (like you would see, e.g., in a Kafka or gRPC stream), or `parseDelimitedFrom` if it's a [delimited stream]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}) (like you would see in a file or a socket).
+    - There is also a utility method to detect if the stream is delimited or not: {{ javadoc_link_pretty('core', 'IoUtils$', 'autodetectDelimiting') }}. In most cases you will not need to use it. It is used internally by the Jena and RDF4J integrations for user convenience.
 2. Obtain a decoder that turns `RdfStreamFrame`s into triples/quads: {{ javadoc_link_pretty('jena', 'JenaConverterFactory$') }} has different methods for [different physical stream types]({{ proto_link('user-guide#stream-types') }}):
     - `anyStatementDecoder` for any physical stream type, outputs `Triple` or `Quad`
     - `triplesDecoder` for TRIPLES streams, outputs `Triple`
