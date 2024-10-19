@@ -57,7 +57,7 @@ final class JellyParser extends AbstractRDFParser:
         case (true, newIn) =>
           // Delimited Jelly file
           // In this case, we can read multiple frames
-          Iterator.continually(RdfStreamFrame.parseDelimitedFrom(in))
+          Iterator.continually(RdfStreamFrame.parseDelimitedFrom(newIn))
             .takeWhile(_.isDefined)
             .foreach { maybeFrame => processFrame(maybeFrame.get) }
     }
