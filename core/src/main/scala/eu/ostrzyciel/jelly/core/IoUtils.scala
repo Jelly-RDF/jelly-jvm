@@ -4,14 +4,14 @@ import java.io.{ByteArrayInputStream, InputStream, SequenceInputStream}
 
 object IoUtils:
   /**
-   * Guesses whether the input stream is a non-delimited Jelly file or a delimited Jelly file.
+   * Autodetects whether the input stream is a non-delimited Jelly file or a delimited Jelly file.
    *
    * To do this, the first three bytes in the stream are peeked.
    * The two bytes are then put back into the stream, and the stream is returned.
    * @param in the input stream
    * @return (isDelimited, newInputStream) where isDelimited is true if the stream is a delimited Jelly file
    */
-  def guessDelimiting(in: InputStream): (Boolean, InputStream) =
+  def autodetectDelimiting(in: InputStream): (Boolean, InputStream) =
     val scout = in.readNBytes(3)
     val scoutIn = ByteArrayInputStream(scout)
     val newInput = SequenceInputStream(scoutIn, in)

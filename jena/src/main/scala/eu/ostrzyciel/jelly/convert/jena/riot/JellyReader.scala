@@ -41,7 +41,7 @@ object JellyReader extends ReaderRIOT:
 
     output.start()
     try {
-      IoUtils.guessDelimiting(in) match
+      IoUtils.autodetectDelimiting(in) match
         case (false, newIn) =>
           // Non-delimited Jelly file
           // In this case, we can only read one frame
