@@ -7,7 +7,7 @@ object IoUtils:
    * Autodetects whether the input stream is a non-delimited Jelly file or a delimited Jelly file.
    *
    * To do this, the first three bytes in the stream are peeked.
-   * The two bytes are then put back into the stream, and the stream is returned.
+   * These bytes are then put back into the stream, and the stream is returned, so the parser won't notice the peeking.
    * @param in the input stream
    * @return (isDelimited, newInputStream) where isDelimited is true if the stream is a delimited Jelly file
    */
