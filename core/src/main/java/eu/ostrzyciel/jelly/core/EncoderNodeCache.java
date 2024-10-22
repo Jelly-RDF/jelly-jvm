@@ -1,8 +1,5 @@
 package eu.ostrzyciel.jelly.core;
 
-import java.util.Objects;
-import java.util.function.Function;
-
 /**
  * A terrifyingly simple cache.
  *

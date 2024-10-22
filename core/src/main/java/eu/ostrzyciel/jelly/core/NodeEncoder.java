@@ -4,7 +4,6 @@ import eu.ostrzyciel.jelly.core.proto.v1.*;
 import scala.collection.mutable.ArrayBuffer;
 
 import java.util.LinkedHashMap;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**

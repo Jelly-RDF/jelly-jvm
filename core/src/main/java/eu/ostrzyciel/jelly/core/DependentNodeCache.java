@@ -2,8 +2,6 @@ package eu.ostrzyciel.jelly.core;
 
 import eu.ostrzyciel.jelly.core.proto.v1.UniversalTerm;
 
-import java.util.function.Function;
-
 /**
  * A cached node that depends on other lookups (RdfIri and RdfLiteral in the datatype variant).
  */
