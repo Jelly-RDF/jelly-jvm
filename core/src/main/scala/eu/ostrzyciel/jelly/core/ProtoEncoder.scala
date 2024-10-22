@@ -158,21 +158,21 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   private val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
-  private val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
+  private var lastGraph: TNode | LastNodeHolder.NoValue.type = LastNodeHolder.NoValue 
 
   private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): SpoTerm =
-    lastNodeHolder.node match
-      case oldNode if node == oldNode => null
-      case _ =>
-        lastNodeHolder.node = node
-        nodeToProto(node)
+    if node.equals(lastNodeHolder.node) then null
+    else
+      lastNodeHolder.node = node
+      nodeToProto(node)
 
   private def graphNodeToProtoWrapped(node: TNode): GraphTerm =
-    lastGraph.node match
-      case oldNode if node == oldNode => null
-      case _ =>
-        lastGraph.node = node
-        graphNodeToProto(node)
+    // Graph nodes may be null in Jena for example... so we need to handle that.
+    if (node == null && lastGraph == null) || (node != null && node.equals(lastGraph)) then
+      null
+    else
+      lastGraph = node
+      graphNodeToProto(node)
 
   private def tripleToProto(triple: TTriple): RdfTriple =
     RdfTriple(
