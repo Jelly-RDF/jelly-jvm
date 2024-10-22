@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.convert.jena
 
+import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import org.apache.jena.graph.{NodeFactory, Triple}
 import org.apache.jena.query.DatasetFactory
 import org.apache.jena.rdf.model.impl.ModelCom
@@ -8,7 +9,7 @@ import org.apache.jena.sparql.graph.GraphFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class JenaIterableAdapterSpec extends AnyWordSpec, Matchers:
+class JenaIterableAdapterSpec extends AnyWordSpec, Matchers, JenaTest:
   import JenaIterableAdapter.*
 
   val triples = Set(

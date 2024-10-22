@@ -1,14 +1,14 @@
 package eu.ostrzyciel.jelly.convert.jena.fuseki
 
 import eu.ostrzyciel.jelly.convert.jena.riot.JellySubsystemLifecycle
+import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import org.apache.jena.fuseki.DEF
-import org.apache.jena.sys.JenaSystem
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.jdk.CollectionConverters.*
 
-class JellyFusekiLifecycleSpec extends AnyWordSpec, Matchers:
+class JellyFusekiLifecycleSpec extends AnyWordSpec, Matchers, JenaTest:
   "JellyFusekiLifecycle" should {
     "initialize after JenaSubsystemLifecycle" in {
       val jenaModule = JellySubsystemLifecycle()

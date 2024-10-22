@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.integration_tests
 
+import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import eu.ostrzyciel.jelly.stream.*
@@ -7,10 +8,8 @@ import org.apache.jena.graph.Graph
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
 import org.apache.jena.sparql.core.DatasetGraph
 import org.apache.jena.sparql.util.IsoMatcher
-import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -46,15 +45,12 @@ object CrossStreamingSpec extends AnyWordSpec, Matchers:
       }
 
 
-class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
+class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   import CrossStreamingSpec.*
 
   given actorSystem: ActorSystem = ActorSystem()
   given ExecutionContext = actorSystem.getDispatcher
   given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
-
-  override def beforeAll(): Unit =
-    JenaSystem.init()
 
   private val implementations: Seq[(String, TestStream)] = Seq(
     ("Jena", JenaTestStream),
