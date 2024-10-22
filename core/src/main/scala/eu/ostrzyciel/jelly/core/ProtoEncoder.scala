@@ -128,13 +128,13 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     nodeEncoder.encodeIri(iri, extraRowsBuffer)
 
   protected final inline def makeBlankNode(label: String): UniversalTerm =
-    nodeEncoder.encodeOther(label, _ => RdfTerm.Bnode(label))
+    nodeEncoder.encodeOther(label, () => RdfTerm.Bnode(label))
 
   protected final inline def makeSimpleLiteral(lex: String): UniversalTerm =
-    nodeEncoder.encodeOther(lex, _ => RdfLiteral(lex, RdfLiteral.LiteralKind.Empty))
+    nodeEncoder.encodeOther(lex, () => RdfLiteral(lex, RdfLiteral.LiteralKind.Empty))
 
   protected final inline def makeLangLiteral(lit: TNode, lex: String, lang: String): UniversalTerm =
-    nodeEncoder.encodeOther(lit, _ => RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang)))
+    nodeEncoder.encodeOther(lit, () => RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang)))
 
   protected final inline def makeDtLiteral(lit: TNode, lex: String, dt: String): UniversalTerm =
     nodeEncoder.encodeDtLiteral(lit, lex, dt, extraRowsBuffer)

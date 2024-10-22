@@ -5,6 +5,7 @@ import scala.collection.mutable.ArrayBuffer;
 
 import java.util.LinkedHashMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Encodes RDF nodes native to the used RDF library (e.g., Apache Jena, RDF4J) into Jelly's protobuf objects.
@@ -209,7 +210,7 @@ public final class NodeEncoder<TNode> {
      * @param encoder The function that encodes the node
      * @return The encoded node
      */
-    public UniversalTerm encodeOther(Object key, Function<Object, UniversalTerm> encoder) {
+    public UniversalTerm encodeOther(Object key, Supplier<UniversalTerm> encoder) {
         return nodeCache.computeIfAbsent(key, encoder);
     }
 }
