@@ -1,26 +1,21 @@
 package eu.ostrzyciel.jelly.integration_tests.io
 
+import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import eu.ostrzyciel.jelly.integration_tests.TestCases
-import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream}
-import scala.concurrent.ExecutionException
 
 /**
  * Tests for IO ser/des (Jena RIOT, Jena RIOT streaming, RDF4J Rio, and semi-reactive IO over Pekko Streams).
  */
-class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
+class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   given ActorSystem = ActorSystem("test")
-
-  override def beforeAll(): Unit =
-    JenaSystem.init()
 
   val presets: Seq[(RdfStreamOptions, Int, String)] = Seq(
     (JellyOptions.smallGeneralized, 1, "small generalized"),

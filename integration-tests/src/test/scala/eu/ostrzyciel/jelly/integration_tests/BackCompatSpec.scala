@@ -1,20 +1,16 @@
 package eu.ostrzyciel.jelly.integration_tests
 
 import eu.ostrzyciel.jelly.convert.jena.riot.JellyLanguage
+import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import org.apache.jena.riot.{Lang, RDFDataMgr}
 import org.apache.jena.sparql.core.DatasetGraphFactory
-import org.apache.jena.sys.JenaSystem
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.jdk.CollectionConverters.*
 
-class BackCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
-  override def beforeAll(): Unit =
-    JenaSystem.init()
-
+class BackCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   private val testCases = Seq(
     ("riverbench_main", "RiverBench main metadata", Seq("v1_0_0")),
     ("riverbench_nanopubs", "RiverBench nanopubs dataset metadata", Seq("v1_0_0")),
