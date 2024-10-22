@@ -35,24 +35,6 @@ public final class NodeEncoder<TNode> {
         public int lookupSerial2;
     }
 
-    /**
-     * A simple LRU cache for already encoded nodes.
-     * @param <K> Key type
-     * @param <V> Value type
-     */
-    private static final class NodeCache<K, V> extends LinkedHashMap<K, V> {
-        private final int maxSize;
-
-        public NodeCache(int maxSize) {
-            this.maxSize = maxSize;
-        }
-
-        @Override
-        protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
-            return size() > maxSize;
-        }
-    }
-
     private final int maxPrefixTableSize;
     private int lastIriNameId;
     private int lastIriPrefixId = -1000;
@@ -63,8 +45,8 @@ public final class NodeEncoder<TNode> {
 
     // We split the node caches in two – the first one is for nodes that depend on the lookups
     // (IRIs and datatype literals). The second one is for nodes that don't depend on the lookups.
-    private final NodeCache<Object, DependentNode> dependentNodeCache;
-    private final NodeCache<Object, UniversalTerm> nodeCache;
+    private final EncoderNodeCache<Object, DependentNode> dependentNodeCache;
+    private final EncoderNodeCache<Object, UniversalTerm> nodeCache;
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     static final RdfIri zeroIri = new RdfIri(0, 0);
@@ -82,8 +64,8 @@ public final class NodeEncoder<TNode> {
             prefixLookup = new EncoderLookup(maxPrefixTableSize);
         }
         nameLookup = new EncoderLookup(opt.maxNameTableSize());
-        dependentNodeCache = new NodeCache<>(dependentNodeCacheSize);
-        nodeCache = new NodeCache<>(nodeCacheSize);
+        dependentNodeCache = new EncoderNodeCache<>(dependentNodeCacheSize);
+        nodeCache = new EncoderNodeCache<>(nodeCacheSize);
     }
 
     /**
