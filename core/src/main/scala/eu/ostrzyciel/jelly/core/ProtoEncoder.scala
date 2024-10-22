@@ -2,6 +2,8 @@ package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+
 object ProtoEncoder:
   private val graphEnd = Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd.defaultInstance)))
   private val defaultGraphStart = RdfStreamRow(RdfStreamRow.Row.GraphStart(
@@ -31,7 +33,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     val mainRow = RdfStreamRow(RdfStreamRow.Row.Triple(
       tripleToProto(triple)
     ))
-    extraRowsBuffer.append(mainRow).getBufferCopy
+    extraRowsBuffer.append(mainRow).toSeq
 
   /**
    * Add an RDF quad statement to the stream.
@@ -43,7 +45,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     val mainRow = RdfStreamRow(RdfStreamRow.Row.Quad(
       quadToProto(quad)
     ))
-    extraRowsBuffer.append(mainRow).getBufferCopy
+    extraRowsBuffer.append(mainRow).toSeq
 
   /**
    * Signal the start of a new (named) delimited graph in a GRAPHS stream.
@@ -60,7 +62,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
       val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
         RdfGraphStart(graphNode)
       ))
-      extraRowsBuffer.append(mainRow).getBufferCopy
+      extraRowsBuffer.append(mainRow).toSeq
 
   /**
    * Signal the start of the default delimited graph in a GRAPHS stream.
@@ -68,7 +70,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    */
   final def startDefaultGraph(): Iterable[RdfStreamRow] =
     handleHeader()
-    extraRowsBuffer.append(defaultGraphStart).getBufferCopy
+    extraRowsBuffer.append(defaultGraphStart).toSeq
 
   /**
    * Signal the end of a delimited graph in a GRAPHS stream.
@@ -147,7 +149,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   // *************************************
   // We assume by default that 32 rows should be enough to encode one statement.
   // If not, the buffer will grow.
-  private val extraRowsBuffer = new FastBuffer[RdfStreamRow](32)
+  private val extraRowsBuffer = new ArrayBuffer[RdfStreamRow](32)
   // Make the node cache size between 256 and 1024, depending on the user's maxNameTableSize.
   private val nodeCacheSize = Math.max(Math.min(options.maxNameTableSize, 1024), 256)
   private val nodeEncoder = new NodeEncoder[TNode](options, nodeCacheSize, nodeCacheSize)
