@@ -207,7 +207,7 @@ lazy val integrationTests = (project in file("integration-tests"))
     ),
     commonSettings,
   )
-  .dependsOn(stream, jena, rdf4j)
+  .dependsOn(stream, jena % "compile->compile;test->test", rdf4j)
 
 lazy val examples = (project in file("examples"))
   .settings(
@@ -220,4 +220,4 @@ lazy val examples = (project in file("examples"))
     excludeDependencies ++= grpcExclusions,
     commonSettings,
   )
-  .dependsOn(grpc, stream, jena, rdf4j)
+  .dependsOn(grpc, stream, jena % "compile->compile;test->test", rdf4j)

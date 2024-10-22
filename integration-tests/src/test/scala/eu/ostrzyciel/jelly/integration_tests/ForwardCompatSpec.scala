@@ -1,9 +1,9 @@
 package eu.ostrzyciel.jelly.integration_tests
 
 import eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory
+import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import eu.ostrzyciel.jelly.core.*
-import eu.ostrzyciel.jelly.core.proto.v1
-import eu.ostrzyciel.jelly.core.proto.future
+import eu.ostrzyciel.jelly.core.proto.{future, v1}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -11,7 +11,7 @@ import org.scalatest.wordspec.AnyWordSpec
 /**
  * Tests checking forward compatibility of Jelly with future versions of the protocol.
  */
-class ForwardCompatSpec extends AnyWordSpec, Matchers, ScalaFutures:
+class ForwardCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   private val futureFrame = future.RdfStreamFrame(Seq(
     future.RdfStreamRow(future.RdfStreamRow.Row.Options(
       future.RdfStreamOptions(
