@@ -19,22 +19,6 @@ import java.util.function.Function;
  * @param <TNode> The type of RDF nodes used by the RDF library.
  */
 public final class NodeEncoder<TNode> {
-    /**
-     * A cached node that depends on other lookups (RdfIri and RdfLiteral in the datatype variant).
-     */
-    static final class DependentNode {
-        // The actual cached node
-        public UniversalTerm encoded;
-        // 1: datatypes and IRI names
-        // The pointer is the index in the lookup table, the serial is the serial number of the entry.
-        // The serial in the lookup table must be equal to the serial here for the entry to be valid.
-        public int lookupPointer1;
-        public int lookupSerial1;
-        // 2: IRI prefixes
-        public int lookupPointer2;
-        public int lookupSerial2;
-    }
-
     private final int maxPrefixTableSize;
     private int lastIriNameId;
     private int lastIriPrefixId = -1000;
@@ -45,8 +29,8 @@ public final class NodeEncoder<TNode> {
 
     // We split the node caches in two – the first one is for nodes that depend on the lookups
     // (IRIs and datatype literals). The second one is for nodes that don't depend on the lookups.
-    private final EncoderNodeCache<Object, DependentNode> dependentNodeCache;
-    private final EncoderNodeCache<Object, UniversalTerm> nodeCache;
+    private final DependentNodeCache dependentNodeCache;
+    private final OtherNodeCache nodeCache;
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     static final RdfIri zeroIri = new RdfIri(0, 0);
@@ -64,8 +48,8 @@ public final class NodeEncoder<TNode> {
             prefixLookup = new EncoderLookup(maxPrefixTableSize);
         }
         nameLookup = new EncoderLookup(opt.maxNameTableSize());
-        dependentNodeCache = new EncoderNodeCache<>(dependentNodeCacheSize);
-        nodeCache = new EncoderNodeCache<>(nodeCacheSize);
+        dependentNodeCache = new DependentNodeCache(dependentNodeCacheSize);
+        nodeCache = new OtherNodeCache(nodeCacheSize);
     }
 
     /**
@@ -79,7 +63,7 @@ public final class NodeEncoder<TNode> {
     public UniversalTerm encodeDtLiteral(
             TNode key, String lex, String datatypeName, ArrayBuffer<RdfStreamRow> rowsBuffer
     ) {
-        var cachedNode = dependentNodeCache.computeIfAbsent(key, k -> new DependentNode());
+        var cachedNode = dependentNodeCache.getOrClearIfAbsent(key);
         // Check if the value is still valid
         if (cachedNode.encoded != null &&
                 cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]
@@ -113,7 +97,7 @@ public final class NodeEncoder<TNode> {
      * @return The encoded IRI
      */
     public UniversalTerm encodeIri(String iri, ArrayBuffer<RdfStreamRow> rowsBuffer) {
-        var cachedNode = dependentNodeCache.computeIfAbsent(iri, k -> new DependentNode());
+        var cachedNode = dependentNodeCache.getOrClearIfAbsent(iri);
         // Check if the value is still valid
         if (cachedNode.encoded != null &&
                 cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2]

@@ -150,8 +150,9 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   // We assume by default that 32 rows should be enough to encode one statement.
   // If not, the buffer will grow.
   private val extraRowsBuffer = new ArrayBuffer[RdfStreamRow](32)
-  // Make the node cache size between 512 and 4096, depending on the user's maxNameTableSize.
-  private val nodeCacheSize = Math.max(Math.min(options.maxNameTableSize * 2, 4096), 256)
+  // Make the node cache size between 4096 and 8192, depending on the user's maxNameTableSize.
+  // Kind of. Fix this tomorrow.
+  private val nodeCacheSize = Math.max(Math.min(options.maxNameTableSize * 4, 8192), 4096)
   private val nodeEncoder = new NodeEncoder[TNode](options, nodeCacheSize, nodeCacheSize)
   private var emittedOptions = false
 
