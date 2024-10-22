@@ -1,10 +1,11 @@
 package eu.ostrzyciel.jelly.convert.jena
 
+import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import org.apache.jena.sparql.core.Quad
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class JenaDecoderConverterSpec extends AnyWordSpec, Matchers:
+class JenaDecoderConverterSpec extends AnyWordSpec, Matchers, JenaTest:
   val instance = JenaDecoderConverter()
 
   "JenaDecoderConverter" should {

@@ -1,9 +1,10 @@
 package eu.ostrzyciel.jelly.examples
 
+import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class ExamplesSpec extends AnyWordSpec, Matchers:
+class ExamplesSpec extends AnyWordSpec, Matchers, JenaTest:
   val examples: Seq[shared.Example] = Seq(
     JenaRiot,
     JenaRiotStreaming,
