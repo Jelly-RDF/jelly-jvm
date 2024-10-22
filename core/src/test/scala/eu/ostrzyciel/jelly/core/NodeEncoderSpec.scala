@@ -6,7 +6,6 @@ import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
@@ -16,8 +15,8 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
     maxDatatypeTableSize = 8,
   )
 
-  private def getEncoder(prefixTableSize: Int = 8): (NodeEncoder[Mrl.Node], ArrayBuffer[RdfStreamRow]) =
-    val buffer = new ArrayBuffer[RdfStreamRow]()
+  private def getEncoder(prefixTableSize: Int = 8): (NodeEncoder[Mrl.Node], FastBuffer[RdfStreamRow]) =
+    val buffer = new FastBuffer[RdfStreamRow](32)
     (NodeEncoder[Mrl.Node](smallOptions(prefixTableSize), 16, 16), buffer)
 
   "A NodeEncoder" when {
@@ -31,8 +30,8 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         node.literal.lex should be ("v1")
         node.literal.literalKind.datatype should be (1)
         buffer.size should be (1)
-        buffer.head.row.isDatatype should be (true)
-        val dtEntry = buffer.head.row.datatype
+        buffer.get(0).row.isDatatype should be (true)
+        val dtEntry = buffer.get(0).row.datatype
         dtEntry.value should be ("dt1")
         dtEntry.id should be (0)
       }
@@ -64,7 +63,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         node2.literal.literalKind.datatype should be (2)
 
         buffer.size should be (4)
-        buffer.map(_.row.datatype) should contain only (
+        buffer.getBufferCopy.map(_.row.datatype) should contain only (
           RdfDatatypeEntry(0, "dt1"),
           RdfDatatypeEntry(0, "dt2"),
           RdfDatatypeEntry(0, "dt3"),
@@ -112,7 +111,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         val expectedIds = Array.from(
           Iterable.fill(8)(0) ++ Seq(1) ++ Iterable.fill(3)(0) ++ Seq(1) ++ Iterable.fill(3)(0)
         )
-        for (r, i) <- buffer.zipWithIndex do
+        for (r, i) <- buffer.getBufferCopy.zipWithIndex do
           val dt = r.row.datatype
           dt.id should be (expectedIds(i))
           dt.value should be (s"dt${i + 1}")
@@ -192,10 +191,10 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         iri.prefixId should be (1)
 
         buffer.size should be (2)
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Prefix(
+        buffer.getBufferCopy should contain (RdfStreamRow(RdfStreamRow.Row.Prefix(
           RdfPrefixEntry(id = 0, value = "https://test.org/")
         )))
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
+        buffer.getBufferCopy should contain (RdfStreamRow(RdfStreamRow.Row.Name(
           RdfNameEntry(id = 0, value = "Cake")
         )))
       }
@@ -208,10 +207,10 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // an empty name entry still has to be allocated
         buffer.size should be (2)
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Prefix(
+        buffer.getBufferCopy should contain (RdfStreamRow(RdfStreamRow.Row.Prefix(
           RdfPrefixEntry(id = 0, value = "https://test.org/test/")
         )))
-        buffer should contain(RdfStreamRow(RdfStreamRow.Row.Name(
+        buffer.getBufferCopy should contain(RdfStreamRow(RdfStreamRow.Row.Name(
           RdfNameEntry(id = 0, value = "")
         )))
       }
@@ -224,10 +223,10 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // in the mode with the prefix table enabled, an empty prefix entry still has to be allocated
         buffer.size should be (2)
-        buffer should contain(RdfStreamRow(RdfStreamRow.Row.Prefix(
+        buffer.getBufferCopy should contain(RdfStreamRow(RdfStreamRow.Row.Prefix(
           RdfPrefixEntry(id = 0, value = "")
         )))
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
+        buffer.getBufferCopy should contain (RdfStreamRow(RdfStreamRow.Row.Name(
           RdfNameEntry(id = 0, value = "testTestTest")
         )))
       }
@@ -240,7 +239,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // in the no prefix mode, there must be no prefix entries
         buffer.size should be (1)
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
+        buffer.getBufferCopy should contain (RdfStreamRow(RdfStreamRow.Row.Name(
           RdfNameEntry(id = 0, value = "https://test.org/Cake")
         )))
       }
@@ -292,7 +291,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         buffer.size should be (expectedBuffer.size)
-        for ((isPrefix, eId, eVal), row) <- expectedBuffer.zip(buffer) do
+        for ((isPrefix, eId, eVal), row) <- expectedBuffer.zip(buffer.getBufferCopy) do
           if isPrefix then
             row.row.isPrefix should be (true)
             val prefix = row.row.prefix
