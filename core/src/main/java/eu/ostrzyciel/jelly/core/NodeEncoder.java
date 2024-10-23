@@ -4,7 +4,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.*;
 import scala.collection.mutable.ArrayBuffer;
 
 import java.util.LinkedHashMap;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * Encodes RDF nodes native to the used RDF library (e.g., Apache Jena, RDF4J) into Jelly's protobuf objects.
@@ -19,6 +19,40 @@ import java.util.function.Supplier;
  * @param <TNode> The type of RDF nodes used by the RDF library.
  */
 public final class NodeEncoder<TNode> {
+    /**
+     * A cached node that depends on other lookups (RdfIri and RdfLiteral in the datatype variant).
+     */
+    static final class DependentNode {
+        // The actual cached node
+        public UniversalTerm encoded;
+        // 1: datatypes and IRI names
+        // The pointer is the index in the lookup table, the serial is the serial number of the entry.
+        // The serial in the lookup table must be equal to the serial here for the entry to be valid.
+        public int lookupPointer1;
+        public int lookupSerial1;
+        // 2: IRI prefixes
+        public int lookupPointer2;
+        public int lookupSerial2;
+    }
+
+    /**
+     * A simple LRU cache for already encoded nodes.
+     * @param <K> Key type
+     * @param <V> Value type
+     */
+    private static final class NodeCache<K, V> extends LinkedHashMap<K, V> {
+        private final int maxSize;
+
+        public NodeCache(int maxSize) {
+            this.maxSize = maxSize;
+        }
+
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
+            return size() > maxSize;
+        }
+    }
+
     private final int maxPrefixTableSize;
     private int lastIriNameId;
     private int lastIriPrefixId = -1000;
@@ -29,8 +63,8 @@ public final class NodeEncoder<TNode> {
 
     // We split the node caches in two – the first one is for nodes that depend on the lookups
     // (IRIs and datatype literals). The second one is for nodes that don't depend on the lookups.
-    private final DependentNodeCache dependentNodeCache;
-    private final OtherNodeCache nodeCache;
+    private final NodeCache<Object, DependentNode> dependentNodeCache;
+    private final NodeCache<Object, UniversalTerm> nodeCache;
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     static final RdfIri zeroIri = new RdfIri(0, 0);
@@ -48,8 +82,8 @@ public final class NodeEncoder<TNode> {
             prefixLookup = new EncoderLookup(maxPrefixTableSize);
         }
         nameLookup = new EncoderLookup(opt.maxNameTableSize());
-        dependentNodeCache = new DependentNodeCache(dependentNodeCacheSize);
-        nodeCache = new OtherNodeCache(nodeCacheSize);
+        dependentNodeCache = new NodeCache<>(dependentNodeCacheSize);
+        nodeCache = new NodeCache<>(nodeCacheSize);
     }
 
     /**
@@ -63,7 +97,7 @@ public final class NodeEncoder<TNode> {
     public UniversalTerm encodeDtLiteral(
             TNode key, String lex, String datatypeName, ArrayBuffer<RdfStreamRow> rowsBuffer
     ) {
-        var cachedNode = dependentNodeCache.getOrClearIfAbsent(key);
+        var cachedNode = dependentNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
         if (cachedNode.encoded != null &&
                 cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]
@@ -97,7 +131,7 @@ public final class NodeEncoder<TNode> {
      * @return The encoded IRI
      */
     public UniversalTerm encodeIri(String iri, ArrayBuffer<RdfStreamRow> rowsBuffer) {
-        var cachedNode = dependentNodeCache.getOrClearIfAbsent(iri);
+        var cachedNode = dependentNodeCache.computeIfAbsent(iri, k -> new DependentNode());
         // Check if the value is still valid
         if (cachedNode.encoded != null &&
                 cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2]
@@ -209,7 +243,7 @@ public final class NodeEncoder<TNode> {
      * @param encoder The function that encodes the node
      * @return The encoded node
      */
-    public UniversalTerm encodeOther(Object key, Supplier<UniversalTerm> encoder) {
+    public UniversalTerm encodeOther(Object key, Function<Object, UniversalTerm> encoder) {
         return nodeCache.computeIfAbsent(key, encoder);
     }
 }
