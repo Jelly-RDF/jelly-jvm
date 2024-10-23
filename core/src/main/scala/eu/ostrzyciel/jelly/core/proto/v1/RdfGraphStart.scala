@@ -9,7 +9,7 @@ package eu.ostrzyciel.jelly.core.proto.v1
  * optimizations to make this as fast as possible.
  */
 @SerialVersionUID(0L)
-final case class RdfGraphStart(graph: GraphTerm = null) extends scalapb.GeneratedMessage {
+final case class RdfGraphStart(graph: GraphTerm = null) extends scalapb.GeneratedMessage, RdfStreamRowValue {
   @transient
   private[this] var __serializedSizeMemoized: _root_.scala.Int = 0
 
@@ -60,6 +60,12 @@ final case class RdfGraphStart(graph: GraphTerm = null) extends scalapb.Generate
   def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
 
   def companion: eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart.type = eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart
+  
+  override def streamRowValueNumber: Int = 4
+  
+  override def isGraphStart: Boolean = true
+  
+  override def graphStart: RdfGraphStart = this
 }
 
 object RdfGraphStart extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart] {

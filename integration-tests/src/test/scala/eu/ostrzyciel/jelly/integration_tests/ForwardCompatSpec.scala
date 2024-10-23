@@ -80,8 +80,8 @@ class ForwardCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       options.maxDatatypeTableSize should be (32)
       options.version should be (123)
 
-      parsed.rows(1).row.isEmpty should be (true)
-      parsed.rows(2).row.isEmpty should be (true)
+      parsed.rows(1).row should be (null)
+      parsed.rows(2).row should be (null)
     }
   }
 

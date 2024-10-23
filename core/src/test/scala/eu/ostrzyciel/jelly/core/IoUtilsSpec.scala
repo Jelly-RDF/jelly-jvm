@@ -8,19 +8,19 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 class IoUtilsSpec extends AnyWordSpec, Matchers:
   private val frameLarge = RdfStreamFrame(Seq(
-    RdfStreamRow(RdfStreamRow.Row.Name(
+    RdfStreamRow(
       RdfNameEntry(1, "name name name name")
-    ))
+    )
   ))
   private val frameSize10 = RdfStreamFrame(Seq(
-    RdfStreamRow(RdfStreamRow.Row.Name(
+    RdfStreamRow(
       RdfNameEntry(0, "name")
-    ))
+    )
   ))
   private val frameOptionsSize10 = RdfStreamFrame(Seq(
-    RdfStreamRow(RdfStreamRow.Row.Options(
+    RdfStreamRow(
       RdfStreamOptions(streamName = "name12")
-    ))
+    )
   ))
 
   "IoUtils" should {

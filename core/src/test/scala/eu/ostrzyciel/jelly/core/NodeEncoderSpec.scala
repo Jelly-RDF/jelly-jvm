@@ -192,12 +192,12 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         iri.prefixId should be (1)
 
         buffer.size should be (2)
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Prefix(
+        buffer should contain (RdfStreamRow(
           RdfPrefixEntry(id = 0, value = "https://test.org/")
-        )))
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
+        ))
+        buffer should contain (RdfStreamRow(
           RdfNameEntry(id = 0, value = "Cake")
-        )))
+        ))
       }
 
       "add a prefix-only IRI" in {
@@ -208,12 +208,12 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // an empty name entry still has to be allocated
         buffer.size should be (2)
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Prefix(
+        buffer should contain (RdfStreamRow(
           RdfPrefixEntry(id = 0, value = "https://test.org/test/")
-        )))
-        buffer should contain(RdfStreamRow(RdfStreamRow.Row.Name(
+        ))
+        buffer should contain(RdfStreamRow(
           RdfNameEntry(id = 0, value = "")
-        )))
+        ))
       }
 
       "add a name-only IRI" in {
@@ -224,12 +224,12 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // in the mode with the prefix table enabled, an empty prefix entry still has to be allocated
         buffer.size should be (2)
-        buffer should contain(RdfStreamRow(RdfStreamRow.Row.Prefix(
+        buffer should contain (RdfStreamRow(
           RdfPrefixEntry(id = 0, value = "")
-        )))
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
+        ))
+        buffer should contain (RdfStreamRow(
           RdfNameEntry(id = 0, value = "testTestTest")
-        )))
+        ))
       }
 
       "add a full IRI in no-prefix table mode" in {
@@ -240,9 +240,9 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // in the no prefix mode, there must be no prefix entries
         buffer.size should be (1)
-        buffer should contain (RdfStreamRow(RdfStreamRow.Row.Name(
+        buffer should contain (RdfStreamRow(
           RdfNameEntry(id = 0, value = "https://test.org/Cake")
-        )))
+        ))
       }
 
       "add IRIs while evicting old ones" in {

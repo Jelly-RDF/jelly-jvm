@@ -5,10 +5,8 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object ProtoEncoder:
-  private val graphEnd = Seq(RdfStreamRow(RdfStreamRow.Row.GraphEnd(RdfGraphEnd.defaultInstance)))
-  private val defaultGraphStart = RdfStreamRow(RdfStreamRow.Row.GraphStart(
-    RdfGraphStart(RdfDefaultGraph.defaultInstance)
-  ))
+  private val graphEnd = Seq(RdfStreamRow(RdfGraphEnd.defaultInstance))
+  private val defaultGraphStart = RdfStreamRow(RdfGraphStart(RdfDefaultGraph.defaultInstance))
 
 /**
  * Stateful encoder of a protobuf RDF stream.
@@ -30,9 +28,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    */
   final def addTripleStatement(triple: TTriple): Iterable[RdfStreamRow] =
     handleHeader()
-    val mainRow = RdfStreamRow(RdfStreamRow.Row.Triple(
-      tripleToProto(triple)
-    ))
+    val mainRow = RdfStreamRow(tripleToProto(triple))
     extraRowsBuffer.append(mainRow).toSeq
 
   /**
@@ -42,9 +38,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
    */
   final def addQuadStatement(quad: TQuad): Iterable[RdfStreamRow] =
     handleHeader()
-    val mainRow = RdfStreamRow(RdfStreamRow.Row.Quad(
-      quadToProto(quad)
-    ))
+    val mainRow = RdfStreamRow(quadToProto(quad))
     extraRowsBuffer.append(mainRow).toSeq
 
   /**
@@ -59,9 +53,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     else
       handleHeader()
       val graphNode = graphNodeToProto(graph)
-      val mainRow = RdfStreamRow(RdfStreamRow.Row.GraphStart(
-        RdfGraphStart(graphNode)
-      ))
+      val mainRow = RdfStreamRow(RdfGraphStart(graphNode))
       extraRowsBuffer.append(mainRow).toSeq
 
   /**
@@ -203,11 +195,9 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
 
   private def emitOptions(): Unit =
     emittedOptions = true
-    extraRowsBuffer.append(
-      RdfStreamRow(RdfStreamRow.Row.Options(
+    extraRowsBuffer.append(RdfStreamRow(
         // Override whatever the user set in the options.
         options.withVersion(Constants.protoVersion)
-      ))
-    )
+    ))
 
 
