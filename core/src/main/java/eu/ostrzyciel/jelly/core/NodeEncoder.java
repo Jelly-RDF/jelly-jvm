@@ -44,6 +44,7 @@ public final class NodeEncoder<TNode> {
         private final int maxSize;
 
         public NodeCache(int maxSize) {
+            super(maxSize + 16, 1f, true);
             this.maxSize = maxSize;
         }
 
