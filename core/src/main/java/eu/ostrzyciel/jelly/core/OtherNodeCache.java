@@ -15,7 +15,8 @@ public class OtherNodeCache extends EncoderNodeCache<Object, UniversalTerm> {
 
     public UniversalTerm computeIfAbsent(Object key, Supplier<UniversalTerm> supplier) {
         final int idx = calcIndex(key);
-        if (keys[idx] != null && keys[idx].equals(key)) {
+        final Object storedKey = keys[idx];
+        if (storedKey != null && storedKey.equals(key)) {
             return values[idx];
         } else {
             final var value = supplier.get();

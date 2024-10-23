@@ -34,8 +34,9 @@ final class DependentNodeCache extends EncoderNodeCache<Object, DependentNode> {
 
     public DependentNode getOrClearIfAbsent(Object key) {
         final int idx = calcIndex(key);
-        final DependentNode node = (DependentNode) values[idx];
-        if (node != null && node.equals(key)) {
+        final Object storedKey = keys[idx];
+        final DependentNode node = values[idx];
+        if (storedKey != null && storedKey.equals(key)) {
             return node;
         } else {
             node.encoded = null;
