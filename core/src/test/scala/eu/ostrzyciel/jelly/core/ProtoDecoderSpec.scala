@@ -217,7 +217,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on unset row kind" in {
       val decoder = MockConverterFactory.triplesDecoder(None)
       val error = intercept[RdfProtoDeserializationError] {
-        decoder.ingestRow(RdfStreamRow(RdfStreamRow.Row.Empty))
+        decoder.ingestRow(RdfStreamRow())
       }
       error.getMessage should include ("Row kind is not set")
     }

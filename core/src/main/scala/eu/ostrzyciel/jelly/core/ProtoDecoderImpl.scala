@@ -2,6 +2,7 @@ package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
+import scala.annotation.switch
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
@@ -117,24 +118,29 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
     )
 
   final override def ingestRow(row: RdfStreamRow): Option[TOut] =
-    row.row match
-      case RdfStreamRow.Row.Options(opts) =>
-        handleOptions(opts)
+    val r = row.row
+    if r == null then
+      throw new RdfProtoDeserializationError("Row kind is not set.")
+    (r.streamRowValueNumber : @switch) match
+      case RdfStreamRow.OPTIONS_FIELD_NUMBER =>
+        handleOptions(r.options)
         None
-      case RdfStreamRow.Row.Name(nameRow) =>
-        nameDecoder.updateNames(nameRow)
+      case RdfStreamRow.TRIPLE_FIELD_NUMBER => handleTriple(r.triple)
+      case RdfStreamRow.QUAD_FIELD_NUMBER => handleQuad(r.quad)
+      case RdfStreamRow.GRAPH_START_FIELD_NUMBER => handleGraphStart(r.graphStart)
+      case RdfStreamRow.GRAPH_END_FIELD_NUMBER => handleGraphEnd()
+      case RdfStreamRow.NAME_FIELD_NUMBER =>
+        nameDecoder.updateNames(r.name)
         None
-      case RdfStreamRow.Row.Prefix(prefixRow) =>
-        nameDecoder.updatePrefixes(prefixRow)
+      case RdfStreamRow.PREFIX_FIELD_NUMBER =>
+        nameDecoder.updatePrefixes(r.prefix)
         None
-      case RdfStreamRow.Row.Datatype(dtRow) =>
+      case RdfStreamRow.DATATYPE_FIELD_NUMBER =>
+        val dtRow = r.datatype
         dtLookup.update(dtRow.id, converter.makeDatatype(dtRow.value))
         None
-      case RdfStreamRow.Row.Triple(triple) => handleTriple(triple)
-      case RdfStreamRow.Row.Quad(quad) => handleQuad(quad)
-      case RdfStreamRow.Row.GraphStart(graph) => handleGraphStart(graph)
-      case RdfStreamRow.Row.GraphEnd(_) => handleGraphEnd()
-      case RdfStreamRow.Row.Empty =>
+      case _ =>
+        // This case should never happen
         throw new RdfProtoDeserializationError("Row kind is not set.")
 
   protected def handleOptions(opts: RdfStreamOptions): Unit =
@@ -289,14 +295,13 @@ object ProtoDecoderImpl:
       inner.flatMap(_.getStreamOpt)
 
     override def ingestRow(row: RdfStreamRow): Option[TTriple | TQuad] =
-      row.row match
-        case RdfStreamRow.Row.Options(opts) =>
-          handleOptions(opts)
-          inner.get.ingestRow(row)
-        case _ =>
-          if inner.isEmpty then
-            throw new RdfProtoDeserializationError("Stream options are not set.")
-          inner.get.ingestRow(row)
+      if row.row.isOptions then
+        handleOptions(row.row.options)
+        inner.get.ingestRow(row)
+      else
+        if inner.isEmpty then
+          throw new RdfProtoDeserializationError("Stream options are not set.")
+        inner.get.ingestRow(row)
 
     private def handleOptions(opts: RdfStreamOptions): Unit =
       // Reset the logical type to UNSPECIFIED to ignore checking if it's supported by the inner decoder

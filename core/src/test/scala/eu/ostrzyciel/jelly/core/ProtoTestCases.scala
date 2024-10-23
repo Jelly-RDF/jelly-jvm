@@ -4,30 +4,21 @@ import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
 object ProtoTestCases:
-  type RowValue = RdfStreamOptions | RdfDatatypeEntry | RdfPrefixEntry | RdfNameEntry | RdfTriple | RdfQuad |
-    RdfGraphStart | RdfGraphEnd
-
-  def wrapEncoded(rows: Seq[RowValue]): Seq[RdfStreamRow.Row] = rows map {
+  def wrapEncoded(rows: Seq[RdfStreamRowValue]): Seq[RdfStreamRowValue] = rows map {
     case v: RdfStreamOptions => v.version match
       // If the version is not set, set it to the current version
-      case 0 => RdfStreamRow.Row.Options(v.withVersion(Constants.protoVersion))
+      case 0 => v.withVersion(Constants.protoVersion)
       // Otherwise assume we are checking version compatibility
-      case _ => RdfStreamRow.Row.Options(v)
-    case v: RdfDatatypeEntry => RdfStreamRow.Row.Datatype(v)
-    case v: RdfPrefixEntry => RdfStreamRow.Row.Prefix(v)
-    case v: RdfNameEntry => RdfStreamRow.Row.Name(v)
-    case v: RdfTriple => RdfStreamRow.Row.Triple(v)
-    case v: RdfQuad => RdfStreamRow.Row.Quad(v)
-    case v: RdfGraphStart => RdfStreamRow.Row.GraphStart(v)
-    case v: RdfGraphEnd => RdfStreamRow.Row.GraphEnd(v)
+      case _ => v
+    case v => v
   }
 
-  def wrapEncodedFull(rows: Seq[RowValue]): Seq[RdfStreamRow] =
+  def wrapEncodedFull(rows: Seq[RdfStreamRowValue]): Seq[RdfStreamRow] =
     wrapEncoded(rows).map(row => RdfStreamRow(row))
 
   trait TestCase[TStatement]:
     def mrl: Seq[TStatement]
-    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow.Row]
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRowValue]
     def encodedFull(opt: RdfStreamOptions, groupByN: Int) =
       encoded(opt)
         .map(row => RdfStreamRow(row))

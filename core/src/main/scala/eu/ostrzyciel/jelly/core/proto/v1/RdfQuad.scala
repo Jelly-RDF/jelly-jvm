@@ -16,7 +16,8 @@ package eu.ostrzyciel.jelly.core.proto.v1
  * optimizations to make this as fast as possible.
  */
 @SerialVersionUID(0L)
-final case class RdfQuad(subject: SpoTerm = null, predicate: SpoTerm = null, `object`: SpoTerm = null, graph: GraphTerm = null) extends scalapb.GeneratedMessage {
+final case class RdfQuad(subject: SpoTerm = null, predicate: SpoTerm = null, `object`: SpoTerm = null, graph: GraphTerm = null)
+  extends scalapb.GeneratedMessage, RdfStreamRowValue {
   @transient private[this] var __serializedSizeMemoized: _root_.scala.Int = 0
 
   private[this] def __computeSerializedSize(): _root_.scala.Int = {
@@ -120,6 +121,12 @@ final case class RdfQuad(subject: SpoTerm = null, predicate: SpoTerm = null, `ob
   def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
 
   def companion: eu.ostrzyciel.jelly.core.proto.v1.RdfQuad.type = eu.ostrzyciel.jelly.core.proto.v1.RdfQuad
+
+  override def streamRowValueNumber: Int = 3
+
+  override def isQuad: Boolean = true
+
+  override def quad: RdfQuad = this
 }
 
 object RdfQuad extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfQuad] {
@@ -243,7 +250,7 @@ object RdfQuad extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.cor
 
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
 
-  lazy val defaultInstance = eu.ostrzyciel.jelly.core.proto.v1.RdfQuad(subject = null, predicate = null, `object` = null, graph = null)
+  val defaultInstance: RdfQuad = eu.ostrzyciel.jelly.core.proto.v1.RdfQuad(subject = null, predicate = null, `object` = null, graph = null)
 
   def of(subject: SpoTerm, predicate: SpoTerm, `object`: SpoTerm, graph: GraphTerm): _root_.eu.ostrzyciel.jelly.core.proto.v1.RdfQuad = _root_.eu.ostrzyciel.jelly.core.proto.v1.RdfQuad(subject, predicate, `object`, graph)
 }

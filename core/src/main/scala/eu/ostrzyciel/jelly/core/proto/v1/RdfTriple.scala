@@ -20,7 +20,7 @@ package eu.ostrzyciel.jelly.core.proto.v1
  */
 @SerialVersionUID(0L)
 final case class RdfTriple(subject: SpoTerm = null, predicate: SpoTerm = null, `object`: SpoTerm = null)
-  extends scalapb.GeneratedMessage, SpoTerm, GraphTerm {
+  extends scalapb.GeneratedMessage, SpoTerm, GraphTerm, RdfStreamRowValue {
   @transient private[this] var __serializedSizeMemoized: _root_.scala.Int = 0
 
   private[this] def __computeSerializedSize(): _root_.scala.Int = {
@@ -110,6 +110,12 @@ final case class RdfTriple(subject: SpoTerm = null, predicate: SpoTerm = null, `
   override def isTripleTerm: Boolean = true
 
   override def tripleTerm: RdfTriple = this
+
+  override def streamRowValueNumber: Int = 2
+
+  override def isTriple: Boolean = true
+
+  override def triple: RdfTriple = this
 }
 
 object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfTriple] {
@@ -213,7 +219,7 @@ object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.c
 
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
 
-  lazy val defaultInstance = eu.ostrzyciel.jelly.core.proto.v1.RdfTriple(subject = null, predicate = null, `object` = null)
+  val defaultInstance: RdfTriple = eu.ostrzyciel.jelly.core.proto.v1.RdfTriple(subject = null, predicate = null, `object` = null)
 
   def of(subject: SpoTerm, predicate: SpoTerm, `object`: SpoTerm): _root_.eu.ostrzyciel.jelly.core.proto.v1.RdfTriple = _root_.eu.ostrzyciel.jelly.core.proto.v1.RdfTriple(subject, predicate, `object`)
 }
