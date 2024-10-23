@@ -44,7 +44,6 @@ public final class NodeEncoder<TNode> {
         private final int maxSize;
 
         public NodeCache(int maxSize) {
-            super(maxSize + 16, 1f, false);
             this.maxSize = maxSize;
         }
 
@@ -111,9 +110,7 @@ public final class NodeEncoder<TNode> {
         var dtEntry = datatypeLookup.addEntry(datatypeName);
         if (dtEntry.newEntry) {
             rowsBuffer.append(new RdfStreamRow(
-                    new RdfStreamRow$Row$Datatype(
-                            new RdfDatatypeEntry(dtEntry.setId, datatypeName)
-                    )
+                new RdfDatatypeEntry(dtEntry.setId, datatypeName)
             ));
         }
         cachedNode.lookupPointer1 = dtEntry.getId;
@@ -159,7 +156,7 @@ public final class NodeEncoder<TNode> {
             var nameEntry = nameLookup.addEntry(iri);
             if (nameEntry.newEntry) {
                 rowsBuffer.append(new RdfStreamRow(
-                        new RdfStreamRow$Row$Name(new RdfNameEntry(nameEntry.setId, iri))
+                    new RdfNameEntry(nameEntry.setId, iri)
                 ));
             }
             cachedNode.lookupPointer1 = nameEntry.getId;
@@ -196,12 +193,12 @@ public final class NodeEncoder<TNode> {
         var nameEntry = nameLookup.addEntry(postfix);
         if (prefixEntry.newEntry) {
             rowsBuffer.append(new RdfStreamRow(
-                    new RdfStreamRow$Row$Prefix(new RdfPrefixEntry(prefixEntry.setId, prefix))
+                new RdfPrefixEntry(prefixEntry.setId, prefix)
             ));
         }
         if (nameEntry.newEntry) {
             rowsBuffer.append(new RdfStreamRow(
-                    new RdfStreamRow$Row$Name(new RdfNameEntry(nameEntry.setId, postfix))
+                new RdfNameEntry(nameEntry.setId, postfix)
             ));
         }
         cachedNode.lookupPointer1 = nameEntry.getId;
