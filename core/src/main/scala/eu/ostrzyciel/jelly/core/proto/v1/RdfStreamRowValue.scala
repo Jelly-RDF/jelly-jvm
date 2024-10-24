@@ -1,13 +1,7 @@
 package eu.ostrzyciel.jelly.core.proto.v1
 
 private[core] trait RdfStreamRowValue:
-  /**
-   * Returns the internal stream row value number, which is used in switch statements to determine the type of the row.
-   * This is NOT guaranteed to be the same as the field number in the protobuf encoding!
-   * (although this is the case in the current implementation)
-   * The values returned by this method may change in future versions of Jelly-JVM without warning.
-   * @return
-   */
+  
   def streamRowValueNumber: Int
 
   def isOptions: Boolean = false

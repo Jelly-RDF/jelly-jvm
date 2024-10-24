@@ -116,8 +116,6 @@ final case class RdfTriple(subject: SpoTerm = null, predicate: SpoTerm = null, `
   override def isTriple: Boolean = true
 
   override def triple: RdfTriple = this
-
-  override def termNumber: Int = 4
 }
 
 object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfTriple] {
