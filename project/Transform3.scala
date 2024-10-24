@@ -1,8 +1,8 @@
 import scala.meta.*
 
 /**
- * Transformer that adds `is*` and `*` methods to `RdfIri`, `RdfLiteral` and `RdfDefaultGraph` classes,
- * to allow using them directly in RDF term context. See: [[eu.ostrzyciel.jelly.core.proto.v1.RdfTerm]].
+ * Transformer that adds `is*` and accessor methods to classes implementing RdfTerm and RdfStreamRowValue,
+ * to allow using them directly without additional wrapping. See: [[eu.ostrzyciel.jelly.core.proto.v1.RdfTerm]].
  */
 object Transform3 {
   val transformer: Transformer = new Transformer {
@@ -13,6 +13,7 @@ object Transform3 {
           Init.After_4_6_0(Type.Name(tName), Name.Anonymous(), Nil)
         },
         stats = templ.body.stats ++ Seq(
+          // is* method
           Defn.Def.After_4_7_3(
             List(Mod.Override()),
             Term.Name(isName),
@@ -20,6 +21,7 @@ object Transform3 {
             None,
             Lit.Boolean(value = true),
           ),
+          // Accessor method
           Defn.Def.After_4_7_3(
             List(Mod.Override()),
             Term.Name(name),
@@ -28,6 +30,7 @@ object Transform3 {
             Term.This(Name.Anonymous()),
           ),
         ) ++ number.map { n =>
+          // streamRowValueNumber method
           Defn.Def.After_4_7_3(
             List(Mod.Override()),
             Term.Name("streamRowValueNumber"),

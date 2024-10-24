@@ -2,6 +2,12 @@ package eu.ostrzyciel.jelly.core.proto.v1
 
 import scala.annotation.switch
 
+/**
+ * RDF stream row.
+ * 
+ * This code was written by hand based on the output of the ScalaPB compiler. It includes a lot of specific
+ * optimizations to make this as fast as possible.
+ */
 @SerialVersionUID(0L) final case class RdfStreamRow(row: RdfStreamRowValue = null) extends scalapb.GeneratedMessage {
   @transient private var __serializedSizeMemoized: _root_.scala.Int = 0
 
