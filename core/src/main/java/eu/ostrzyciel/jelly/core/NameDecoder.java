@@ -34,7 +34,6 @@ final class NameDecoder<TIri> {
         this.iriFactory = iriFactory;
         nameLookup = new Object[nameTableSize];
         prefixLookup = new Object[prefixTableSize];
-        prefixTableEnabled = prefixTableSize > 0;
 
         for (int i = 0; i < nameTableSize; i++) {
             nameLookup[i] = new NameLookupEntry();
@@ -54,13 +53,8 @@ final class NameDecoder<TIri> {
         @SuppressWarnings("unchecked")
         NameLookupEntry entry = (NameLookupEntry) nameLookup[lastNameIdSet];
         entry.name = nameEntry.value();
-        if (prefixTableEnabled) {
-            // Enough to invalidate the last IRI – we don't have to touch the other fields.
-            entry.lastPrefixId = 0;
-        } else {
-            // Prefix table is disabled, so we can compute the IRI here.
-            entry.lastIri = iriFactory.apply(entry.name);
-        }
+        // Enough to invalidate the last IRI – we don't have to touch the other fields.
+        entry.lastPrefixId = 0;
     }
 
     public void updatePrefixes(RdfPrefixEntry prefixEntry) {
