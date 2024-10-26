@@ -127,6 +127,7 @@ final class NameDecoder<TIri> {
                 nameEntry.lastPrefixSerial = prefixEntry.serial;
                 // And compute a new IRI
                 nameEntry.lastIri = iriFactory.apply(prefixEntry.prefix.concat(nameEntry.name));
+                return (TIri) nameEntry.lastIri;
             }
             if (nameEntry.lastIri == null) {
                 throw JellyExceptions.rdfProtoDeserializationError(
