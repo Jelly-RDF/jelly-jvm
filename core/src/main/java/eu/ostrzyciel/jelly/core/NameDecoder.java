@@ -126,9 +126,7 @@ final class NameDecoder<TIri> {
                 nameEntry.lastPrefixId = prefixId;
                 nameEntry.lastPrefixSerial = prefixEntry.serial;
                 // And compute a new IRI
-                TIri encoded = iriFactory.apply(prefixEntry.prefix.concat(nameEntry.name));
-                nameEntry.lastIri = encoded;
-                return encoded;
+                nameEntry.lastIri = iriFactory.apply(prefixEntry.prefix.concat(nameEntry.name));
             }
             if (nameEntry.lastIri == null) {
                 throw JellyExceptions.rdfProtoDeserializationError(
@@ -144,9 +142,7 @@ final class NameDecoder<TIri> {
                 );
             }
             // Name only, no need to check the prefix lookup
-            TIri encoded = iriFactory.apply(nameEntry.name);
-            nameEntry.lastIri = encoded;
-            return encoded;
+            nameEntry.lastIri = iriFactory.apply(nameEntry.name);
         }
 
         return (TIri) nameEntry.lastIri;
