@@ -55,6 +55,11 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-unchecked",
   ),
+  javacOptions ++= Seq(
+    "-Werror",
+    // TODO: enable more warnings
+    "-Xlint:unchecked",
+  ),
   assemblyJarName := s"${name.value}.jar",
   assemblyMergeStrategy := {
     case x if x.endsWith("module-info.class") => MergeStrategy.concat

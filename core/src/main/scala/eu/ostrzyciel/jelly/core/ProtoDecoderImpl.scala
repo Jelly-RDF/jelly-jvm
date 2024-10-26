@@ -16,7 +16,10 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
   extends ProtoDecoder[TOut]:
 
   private var streamOpt: Option[RdfStreamOptions] = None
-  private lazy val nameDecoder = new NameDecoder(streamOpt getOrElse JellyOptions.smallStrict)
+  private lazy val nameDecoder = {
+    val opt = streamOpt getOrElse JellyOptions.smallStrict
+    new NameDecoder(opt.maxPrefixTableSize, opt.maxNameTableSize, converter.makeIriNode)
+  }
   private lazy val dtLookup = new DecoderLookup[TDatatype](streamOpt.map(o => o.maxDatatypeTableSize) getOrElse 20)
 
   protected final val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
@@ -51,7 +54,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
     if term == null then
       throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.")
     else if term.isIri then
-      converter.makeIriNode(nameDecoder.decode(term.iri))
+      nameDecoder.decode(term.iri)
     else if term.isBnode then
       converter.makeBlankNode(term.bnode)
     else if term.isLiteral then
@@ -72,7 +75,7 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
     if graph == null then
       throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.")
     else if graph.isIri then
-      converter.makeIriNode(nameDecoder.decode(graph.iri))
+      nameDecoder.decode(graph.iri)
     else if graph.isDefaultGraph then
       converter.makeDefaultGraphNode()
     else if graph.isBnode then
