@@ -20,8 +20,6 @@ final class NameDecoder<TIri> {
     private final Object[] nameLookup;
     private final Object[] prefixLookup;
 
-    private boolean prefixTableEnabled;
-
     private int lastPrefixIdReference = 0;
     private int lastNameIdReference = 0;
 
