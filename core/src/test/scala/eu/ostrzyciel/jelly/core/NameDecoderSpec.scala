@@ -75,12 +75,29 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         dec.decode(RdfIri(0, 5)) should be ("Cake")
       }
 
+      "override an earlier name entry and decode the IRI (IRI with no prefix)" in {
+        val dec = makeDecoder(smallOptions)
+        dec.updateNames(RdfNameEntry(5, "Cake"))
+        dec.decode(RdfIri(0, 5)) should be("Cake")
+        dec.updateNames(RdfNameEntry(5, "Pie"))
+        dec.decode(RdfIri(0, 5)) should be("Pie")
+      }
+
       "accept a new name and prefix and return them" in {
         val dec = makeDecoder(smallOptions)
         // Test prefix & name on the edge of the lookup
         dec.updatePrefixes(RdfPrefixEntry(8, "https://test.org/"))
         dec.updateNames(RdfNameEntry(16, "Cake"))
         dec.decode(RdfIri(8, 16)) should be ("https://test.org/Cake")
+      }
+
+      "override an earlier name entry and decode the IRI (with prefix)" in {
+        val dec = makeDecoder(smallOptions)
+        dec.updatePrefixes(RdfPrefixEntry(8, "https://test.org/"))
+        dec.updateNames(RdfNameEntry(16, "Cake"))
+        dec.decode(RdfIri(8, 16)) should be("https://test.org/Cake")
+        dec.updateNames(RdfNameEntry(16, "Pie"))
+        dec.decode(RdfIri(8, 16)) should be("https://test.org/Pie")
       }
 
       "not accept a new prefix ID larger than table size" in {

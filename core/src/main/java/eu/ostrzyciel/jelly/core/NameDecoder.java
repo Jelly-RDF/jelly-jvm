@@ -51,8 +51,10 @@ final class NameDecoder<TIri> {
         @SuppressWarnings("unchecked")
         NameLookupEntry entry = (NameLookupEntry) nameLookup[lastNameIdSet];
         entry.name = nameEntry.value();
-        // Enough to invalidate the last IRI – we don't have to touch the other fields.
+        // Enough to invalidate the last IRI – we don't have to touch the serial number.
         entry.lastPrefixId = 0;
+        // Set to null is required to avoid a false positive in the decode method for cases without a prefix.
+        entry.lastIri = null;
     }
 
     public void updatePrefixes(RdfPrefixEntry prefixEntry) {
