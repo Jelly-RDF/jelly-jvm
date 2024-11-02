@@ -12,7 +12,7 @@ package object rio:
     jellyContentType,
     null,
     jellyFileExtension,
-    false,
-    false,
-    true
+    supportsNamespaces = false,
+    supportsContexts = true,
+    supportsRDFStar = true
   )
