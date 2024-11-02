@@ -13,6 +13,6 @@ package object rio:
     null,
     jellyFileExtension,
     false,
-    false,
+    true,
     true
   )
