@@ -61,28 +61,40 @@ public final class NodeEncoder<TNode> {
     private EncoderLookup prefixLookup;
     private final EncoderLookup nameLookup;
 
-    // We split the node caches in two – the first one is for nodes that depend on the lookups
-    // (IRIs and datatype literals). The second one is for nodes that don't depend on the lookups.
-    private final NodeCache<Object, DependentNode> dependentNodeCache;
+    // We split the node caches in three – the first two are for nodes that depend on the lookups
+    // (IRIs and datatype literals). The third one is for nodes that don't depend on the lookups.
+    private final NodeCache<Object, DependentNode> iriNodeCache;
+    private final NodeCache<Object, DependentNode> dtLiteralNodeCache;
     private final NodeCache<Object, UniversalTerm> nodeCache;
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     static final RdfIri zeroIri = new RdfIri(0, 0);
+    // Pre-allocated IRIs that have prefixId=0
+    private final RdfIri[] nameOnlyIris;
 
     /**
      * Creates a new NodeEncoder.
      * @param opt Jelly RDF stream options
      * @param nodeCacheSize The size of the node cache (for nodes that don't depend on lookups)
-     * @param dependentNodeCacheSize The size of the dependent node cache (for nodes that depend on lookups)
+     * @param iriNodeCacheSize The size of the IRI dependent node cache (for prefix+name encoding)
+     * @param dtLiteralNodeCacheSize The size of the datatype literal dependent node cache
      */
-    public NodeEncoder(RdfStreamOptions opt, int nodeCacheSize, int dependentNodeCacheSize) {
+    public NodeEncoder(RdfStreamOptions opt, int nodeCacheSize, int iriNodeCacheSize, int dtLiteralNodeCacheSize) {
         datatypeLookup = new EncoderLookup(opt.maxDatatypeTableSize());
         this.maxPrefixTableSize = opt.maxPrefixTableSize();
         if (maxPrefixTableSize > 0) {
             prefixLookup = new EncoderLookup(maxPrefixTableSize);
+            iriNodeCache = new NodeCache<>(iriNodeCacheSize);
+            nameOnlyIris = null;
+        } else {
+            iriNodeCache = null;
+            nameOnlyIris = new RdfIri[opt.maxNameTableSize() + 1];
+            for (int i = 0; i < nameOnlyIris.length; i++) {
+                nameOnlyIris[i] = new RdfIri(0, i);
+            }
         }
+        dtLiteralNodeCache = new NodeCache<>(dtLiteralNodeCacheSize);
         nameLookup = new EncoderLookup(opt.maxNameTableSize());
-        dependentNodeCache = new NodeCache<>(dependentNodeCacheSize);
         nodeCache = new NodeCache<>(nodeCacheSize);
     }
 
@@ -97,7 +109,7 @@ public final class NodeEncoder<TNode> {
     public UniversalTerm encodeDtLiteral(
             TNode key, String lex, String datatypeName, ArrayBuffer<RdfStreamRow> rowsBuffer
     ) {
-        var cachedNode = dependentNodeCache.computeIfAbsent(key, k -> new DependentNode());
+        var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
         if (cachedNode.encoded != null &&
                 cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]
@@ -129,49 +141,35 @@ public final class NodeEncoder<TNode> {
      * @return The encoded IRI
      */
     public UniversalTerm encodeIri(String iri, ArrayBuffer<RdfStreamRow> rowsBuffer) {
-        var cachedNode = dependentNodeCache.computeIfAbsent(iri, k -> new DependentNode());
-        // Check if the value is still valid
-        if (cachedNode.encoded != null &&
-                cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2]
-        ) {
-            if (cachedNode.lookupPointer2 == 0) {
-                nameLookup.onAccess(cachedNode.lookupPointer1);
-                // No need to call outputIri, we know it's a zero prefix
-                if (lastIriNameId + 1 == cachedNode.lookupPointer1) {
-                    lastIriNameId = cachedNode.lookupPointer1;
-                    return zeroIri;
-                } else {
-                    lastIriNameId = cachedNode.lookupPointer1;
-                    return new RdfIri(0, cachedNode.lookupPointer1);
-                }
-            } else if (cachedNode.lookupSerial2 == prefixLookup.table[cachedNode.lookupPointer2 * 3 + 2]) {
-                nameLookup.onAccess(cachedNode.lookupPointer1);
-                prefixLookup.onAccess(cachedNode.lookupPointer2);
-                return outputIri(cachedNode);
-            }
-        }
-
-        // Fast path for no prefixes
-        if (this.maxPrefixTableSize == 0) {
+        if (maxPrefixTableSize == 0) {
+            // Fast path for no prefixes
             var nameEntry = nameLookup.addEntry(iri);
             if (nameEntry.newEntry) {
                 rowsBuffer.append(new RdfStreamRow(
-                    new RdfNameEntry(nameEntry.setId, iri)
+                        new RdfNameEntry(nameEntry.setId, iri)
                 ));
             }
-            cachedNode.lookupPointer1 = nameEntry.getId;
-            cachedNode.lookupSerial1 = nameEntry.serial;
-            cachedNode.encoded = new RdfIri(0, nameEntry.getId);
             if (lastIriNameId + 1 == nameEntry.getId) {
                 lastIriNameId = nameEntry.getId;
                 return zeroIri;
             } else {
                 lastIriNameId = nameEntry.getId;
-                return cachedNode.encoded;
+                return nameOnlyIris[lastIriNameId];
             }
         }
 
         // Slow path, with splitting out the prefix
+        var cachedNode = iriNodeCache.computeIfAbsent(iri, k -> new DependentNode());
+        // Check if the value is still valid
+        if (cachedNode.encoded != null &&
+                cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2] &&
+                cachedNode.lookupSerial2 == prefixLookup.table[cachedNode.lookupPointer2 * 3 + 2]
+        ) {
+            nameLookup.onAccess(cachedNode.lookupPointer1);
+            prefixLookup.onAccess(cachedNode.lookupPointer2);
+            return outputIri(cachedNode);
+        }
+
         int i = iri.indexOf('#', 8);
         String prefix;
         String postfix;

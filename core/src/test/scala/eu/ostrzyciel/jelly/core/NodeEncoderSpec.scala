@@ -18,7 +18,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
   private def getEncoder(prefixTableSize: Int = 8): (NodeEncoder[Mrl.Node], ArrayBuffer[RdfStreamRow]) =
     val buffer = new ArrayBuffer[RdfStreamRow]()
-    (NodeEncoder[Mrl.Node](smallOptions(prefixTableSize), 16, 16), buffer)
+    (NodeEncoder[Mrl.Node](smallOptions(prefixTableSize), 16, 16, 16), buffer)
 
   "A NodeEncoder" when {
     "encoding datatype literals" should {
