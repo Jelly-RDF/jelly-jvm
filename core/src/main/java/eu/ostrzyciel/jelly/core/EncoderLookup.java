@@ -1,9 +1,6 @@
 package eu.ostrzyciel.jelly.core;
 
-import jdk.dynalink.linker.support.Lookup;
-
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 
 /**
  * A lookup table for NodeEncoder, used for indexing datatypes, IRI prefixes, and IRI names.
