@@ -25,14 +25,11 @@ public final class NodeEncoder<TNode> {
     static final class DependentNode {
         // The actual cached node
         public UniversalTerm encoded;
-        // 1: datatypes and IRI names
+        // datatypes and IRI prefixes
         // The pointer is the index in the lookup table, the serial is the serial number of the entry.
         // The serial in the lookup table must be equal to the serial here for the entry to be valid.
-        public int lookupPointer1;
-        public int lookupSerial1;
-        // 2: IRI prefixes
-        public int lookupPointer2;
-        public int lookupSerial2;
+        public int lookupPointer;
+        public int lookupSerial;
     }
 
     /**
@@ -58,12 +55,24 @@ public final class NodeEncoder<TNode> {
     private int lastIriPrefixId = -1000;
 
     private final EncoderLookup datatypeLookup;
-    private EncoderLookup prefixLookup;
+    /**
+     * The serial numbers of the entries, incremented each time the entry is replaced in the table.
+     * This could theoretically overflow and cause bogus cache hits, but it's enormously
+     * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that
+     * causes this to happen.
+     */
+    private final int[] datatypeSerials;
+    private final EncoderLookup prefixLookup;
+    private final int[] prefixSerials;
     private final EncoderLookup nameLookup;
+
+    // The last set value in the name lookup.
+    // Used for rough deduplication of name entries for IRIs with same name but different prefixes.
+    private String lastSetName;
 
     // We split the node caches in three – the first two are for nodes that depend on the lookups
     // (IRIs and datatype literals). The third one is for nodes that don't depend on the lookups.
-    private final NodeCache<Object, DependentNode> iriNodeCache;
+    private final DependentNode[] iriNodeCache;
     private final NodeCache<Object, DependentNode> dtLiteralNodeCache;
     private final NodeCache<Object, UniversalTerm> nodeCache;
 
@@ -83,17 +92,27 @@ public final class NodeEncoder<TNode> {
         datatypeLookup = new EncoderLookup(opt.maxDatatypeTableSize());
         this.maxPrefixTableSize = opt.maxPrefixTableSize();
         if (maxPrefixTableSize > 0) {
+            // With prefix table
             prefixLookup = new EncoderLookup(maxPrefixTableSize);
-            iriNodeCache = new NodeCache<>(iriNodeCacheSize);
+            prefixSerials = new int[opt.maxPrefixTableSize() + 1];
+            iriNodeCache = new DependentNode[opt.maxNameTableSize() + 1];
+            for (int i = 0; i < iriNodeCache.length; i++) {
+                iriNodeCache[i] = new DependentNode();
+            }
             nameOnlyIris = null;
         } else {
+            // No prefix table
+            prefixLookup = null;
+            prefixSerials = null;
             iriNodeCache = null;
+            // Pre-initialize a table of name-only IRIs
             nameOnlyIris = new RdfIri[opt.maxNameTableSize() + 1];
             for (int i = 0; i < nameOnlyIris.length; i++) {
                 nameOnlyIris[i] = new RdfIri(0, i);
             }
         }
         dtLiteralNodeCache = new NodeCache<>(dtLiteralNodeCacheSize);
+        datatypeSerials = new int[opt.maxDatatypeTableSize() + 1];
         nameLookup = new EncoderLookup(opt.maxNameTableSize());
         nodeCache = new NodeCache<>(nodeCacheSize);
     }
@@ -112,23 +131,25 @@ public final class NodeEncoder<TNode> {
         var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
         if (cachedNode.encoded != null &&
-                cachedNode.lookupSerial1 == datatypeLookup.table[cachedNode.lookupPointer1 * 3 + 2]
+                cachedNode.lookupSerial == datatypeSerials[cachedNode.lookupPointer]
         ) {
-            datatypeLookup.onAccess(cachedNode.lookupPointer1);
+            // Touch the datatype so that it doesn't get evicted
+            datatypeLookup.onAccess(cachedNode.lookupPointer);
             return cachedNode.encoded;
         }
 
         // The node is not encoded, but we may already have the datatype encoded
-        var dtEntry = datatypeLookup.addEntry(datatypeName);
+        var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
         if (dtEntry.newEntry) {
             rowsBuffer.append(new RdfStreamRow(
                 new RdfDatatypeEntry(dtEntry.setId, datatypeName)
             ));
         }
-        cachedNode.lookupPointer1 = dtEntry.getId;
-        cachedNode.lookupSerial1 = dtEntry.serial;
+        int dtId = dtEntry.getId;
+        cachedNode.lookupPointer = dtId;
+        cachedNode.lookupSerial = ++datatypeSerials[dtId];
         cachedNode.encoded = new RdfLiteral(
-                lex, new RdfLiteral$LiteralKind$Datatype(dtEntry.getId)
+                lex, new RdfLiteral$LiteralKind$Datatype(dtId)
         );
 
         return cachedNode.encoded;
@@ -141,9 +162,10 @@ public final class NodeEncoder<TNode> {
      * @return The encoded IRI
      */
     public UniversalTerm encodeIri(String iri, ArrayBuffer<RdfStreamRow> rowsBuffer) {
+        EncoderLookup.LookupEntry nameEntry;
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
-            var nameEntry = nameLookup.addEntry(iri);
+            nameEntry = nameLookup.getOrAddEntry(iri);
             if (nameEntry.newEntry) {
                 rowsBuffer.append(new RdfStreamRow(
                         new RdfNameEntry(nameEntry.setId, iri)
@@ -159,17 +181,23 @@ public final class NodeEncoder<TNode> {
         }
 
         // Slow path, with splitting out the prefix
-        var cachedNode = iriNodeCache.computeIfAbsent(iri, k -> new DependentNode());
-        // Check if the value is still valid
-        if (cachedNode.encoded != null &&
-                cachedNode.lookupSerial1 == nameLookup.table[cachedNode.lookupPointer1 * 3 + 2] &&
-                cachedNode.lookupSerial2 == prefixLookup.table[cachedNode.lookupPointer2 * 3 + 2]
-        ) {
-            nameLookup.onAccess(cachedNode.lookupPointer1);
-            prefixLookup.onAccess(cachedNode.lookupPointer2);
-            return outputIri(cachedNode);
+        nameEntry = nameLookup.map.get(iri);
+
+        int nameId;
+        DependentNode cachedNode;
+        if (nameEntry != null) {
+            // The IRI is already in the cache, check if the value is still valid
+            nameId = nameEntry.getId;
+            cachedNode = iriNodeCache[nameId];
+            int pId = cachedNode.lookupPointer;
+            if (prefixSerials[pId] == cachedNode.lookupSerial) {
+                prefixLookup.onAccess(pId);
+                return outputIri(cachedNode.encoded, pId, nameId);
+            }
         }
 
+        // The IRI is not in the cache, or we are dealing with a duplicate entry.
+        // In either case, we have to split the IRI in half.
         int i = iri.indexOf('#', 8);
         String prefix;
         String postfix;
@@ -187,48 +215,75 @@ public final class NodeEncoder<TNode> {
             postfix = iri.substring(i + 1);
         }
 
-        var prefixEntry = prefixLookup.addEntry(prefix);
-        var nameEntry = nameLookup.addEntry(postfix);
+        if (nameEntry != null) {
+            // The entry is there, but our prefix got evicted -- need to update that
+            nameId = nameEntry.getId;
+            cachedNode = iriNodeCache[nameId];
+        } else if (postfix.equals(lastSetName)) {
+            // This is a duplicated entry -- same name, different prefix
+            nameId = nameLookup.lastSetId;
+            // Do not set the cachedNode here, we don't want to overwrite its contents
+            cachedNode = null;
+        } else {
+            // No luck, need to add a whole new entry
+            nameEntry = nameLookup.addEntry(iri);
+            nameId = nameEntry.getId;
+            cachedNode = iriNodeCache[nameId];
+            lastSetName = postfix;
+            rowsBuffer.append(new RdfStreamRow(
+                    new RdfNameEntry(nameEntry.setId, postfix)
+            ));
+        }
+
+        var prefixEntry = prefixLookup.getOrAddEntry(prefix);
+        int prefixId = prefixEntry.getId;
+        int serial;
         if (prefixEntry.newEntry) {
             rowsBuffer.append(new RdfStreamRow(
                 new RdfPrefixEntry(prefixEntry.setId, prefix)
             ));
+            serial = ++prefixSerials[prefixId];
+        } else {
+            serial = prefixSerials[prefixId];
         }
-        if (nameEntry.newEntry) {
-            rowsBuffer.append(new RdfStreamRow(
-                new RdfNameEntry(nameEntry.setId, postfix)
-            ));
+
+        if (cachedNode != null) {
+            cachedNode.lookupPointer = prefixId;
+            cachedNode.lookupSerial = serial;
+            cachedNode.encoded = new RdfIri(prefixId, nameId);
+            return outputIri(cachedNode.encoded, prefixId, nameId);
         }
-        cachedNode.lookupPointer1 = nameEntry.getId;
-        cachedNode.lookupSerial1 = nameEntry.serial;
-        cachedNode.lookupPointer2 = prefixEntry.getId;
-        cachedNode.lookupSerial2 = prefixEntry.serial;
-        cachedNode.encoded = new RdfIri(prefixEntry.getId, nameEntry.getId);
-        return outputIri(cachedNode);
+
+        return outputIri(null, prefixId, nameId);
     }
 
     /**
      * Helper function to output an IRI from a cached node using same-prefix and next-name optimizations.
-     * @param cachedNode The cached node
+     * @param encoded The cached node -- optional, may be null (will be lazily constructed)
+     * @param prefixId The prefix ID of the IRI
+     * @param nameId The name ID of the IRI
      * @return The encoded IRI
      */
-    private UniversalTerm outputIri(DependentNode cachedNode) {
-        if (lastIriPrefixId == cachedNode.lookupPointer2) {
-            if (lastIriNameId + 1 == cachedNode.lookupPointer1) {
-                lastIriNameId = cachedNode.lookupPointer1;
+    private UniversalTerm outputIri(UniversalTerm encoded, int prefixId, int nameId) {
+        if (lastIriPrefixId == prefixId) {
+            if (lastIriNameId + 1 == nameId) {
+                lastIriNameId = nameId;
                 return zeroIri;
             } else {
-                lastIriNameId = cachedNode.lookupPointer1;
-                return new RdfIri(0, cachedNode.lookupPointer1);
+                lastIriNameId = nameId;
+                return new RdfIri(0, nameId);
             }
         } else {
-            lastIriPrefixId = cachedNode.lookupPointer2;
-            if (lastIriNameId + 1 == cachedNode.lookupPointer1) {
-                lastIriNameId = cachedNode.lookupPointer1;
-                return new RdfIri(cachedNode.lookupPointer2, 0);
+            lastIriPrefixId = prefixId;
+            if (lastIriNameId + 1 == nameId) {
+                lastIriNameId = nameId;
+                return new RdfIri(prefixId, 0);
             } else {
-                lastIriNameId = cachedNode.lookupPointer1;
-                return cachedNode.encoded;
+                lastIriNameId = nameId;
+                if (encoded == null) {
+                    return new RdfIri(prefixId, nameId);
+                }
+                return encoded;
             }
         }
     }

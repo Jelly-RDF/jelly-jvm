@@ -104,8 +104,9 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
               val is = new FileInputStream(sourceFile)
               val os = new ByteArrayOutputStream()
               var encSize = 0
+              var frames = new mutable.ArrayBuffer[eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame]()
               encFlow.tripleSource(is, limiter, jOpt)
-                .wireTap(f => encSize += f.serializedSize)
+                .wireTap(f => { encSize += f.serializedSize ; frames += f })
                 .toMat(decFlow.tripleSink(os))(Keep.right)
                 .run()
                 .futureValue
