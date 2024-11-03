@@ -52,11 +52,11 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "subject"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "predicate"),
-      RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
+      RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfTriple(
         RdfIri(1, 0),
         RdfIri(0, 0),
@@ -68,8 +68,8 @@ object ProtoTestCases:
         null,
         RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)),
       ),
-      RdfPrefixEntry(0, ""),
       RdfNameEntry(0, "b"),
+      RdfPrefixEntry(0, ""),
       RdfNameEntry(0, "c"),
       RdfTriple(
         null,
@@ -118,11 +118,11 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "subject"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "predicate"),
-      RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
+      RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfQuad(
         RdfIri(1, 0),
         RdfIri(0, 0),
@@ -171,8 +171,8 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "subject"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "predicate"),
       RdfQuad(
         RdfIri(1, 0),
@@ -243,11 +243,11 @@ object ProtoTestCases:
       RdfGraphStart(
         RdfDefaultGraph()
       ),
-      RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "subject"),
+      RdfPrefixEntry(0, "https://test.org/test/"),
       RdfNameEntry(0, "predicate"),
-      RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfNameEntry(0, "object"),
+      RdfPrefixEntry(0, "https://test.org/ns2/"),
       RdfTriple(
         RdfIri(1, 0),
         RdfIri(0, 0),
@@ -260,8 +260,8 @@ object ProtoTestCases:
         RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)),
       ),
       RdfGraphEnd(),
-      RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfNameEntry(0, "graph"),
+      RdfPrefixEntry(0, "https://test.org/ns3/"),
       RdfGraphStart(
         RdfIri(3, 0)
       ),
