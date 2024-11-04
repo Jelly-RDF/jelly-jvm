@@ -134,22 +134,12 @@ final class EncoderLookup {
             map.put(key, new LookupEntry(id, id));
             // setId is 0 because we are adding a new entry sequentially
             entryForReturns.setId = 0;
+            // .serial is already 1 by default
+            // entryForReturns.serial = 1;
         } else {
-            // The table is full, evict the least recently used entry, or the second-least.
+            // The table is full, evict the least recently used entry.
             int base = table[1];
             id = base / 2;
-            if (lastSetId + 1 == id) {
-                entryForReturns.setId = 0;
-            } else {
-                int after = table[base + 1];
-                if (after < base) {
-                    // Evict the second-least recently used entry if it has a lower ID.
-                    // This is a simple heuristic to prevent the table from becoming too fragmented.
-                    // It should help with cache locality, and with encoding the IDs on the wire.
-                    id = after / 2;
-                }
-                entryForReturns.setId = id;
-            }
             // Remove the entry from the map
             LookupEntry oldEntry = map.remove(names[id]);
             // Insert the new entry
@@ -157,6 +147,7 @@ final class EncoderLookup {
             map.put(key, oldEntry);
             // Update the table
             onAccess(id);
+            entryForReturns.setId = lastSetId + 1 == id ? 0 : id;
         }
         if (this.useSerials) {
             // Increment the serial number
