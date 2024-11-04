@@ -52,11 +52,11 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfNameEntry(0, "subject"),
       RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
-      RdfNameEntry(0, "object"),
       RdfPrefixEntry(0, "https://test.org/ns2/"),
+      RdfNameEntry(0, "object"),
       RdfTriple(
         RdfIri(1, 0),
         RdfIri(0, 0),
@@ -68,8 +68,8 @@ object ProtoTestCases:
         null,
         RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)),
       ),
-      RdfNameEntry(0, "b"),
       RdfPrefixEntry(0, ""),
+      RdfNameEntry(0, "b"),
       RdfNameEntry(0, "c"),
       RdfTriple(
         null,
@@ -118,11 +118,11 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfNameEntry(0, "subject"),
       RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
-      RdfNameEntry(0, "graph"),
       RdfPrefixEntry(0, "https://test.org/ns3/"),
+      RdfNameEntry(0, "graph"),
       RdfQuad(
         RdfIri(1, 0),
         RdfIri(0, 0),
@@ -171,8 +171,8 @@ object ProtoTestCases:
 
     def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfNameEntry(0, "subject"),
       RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
       RdfQuad(
         RdfIri(1, 0),
@@ -243,11 +243,11 @@ object ProtoTestCases:
       RdfGraphStart(
         RdfDefaultGraph()
       ),
-      RdfNameEntry(0, "subject"),
       RdfPrefixEntry(0, "https://test.org/test/"),
+      RdfNameEntry(0, "subject"),
       RdfNameEntry(0, "predicate"),
-      RdfNameEntry(0, "object"),
       RdfPrefixEntry(0, "https://test.org/ns2/"),
+      RdfNameEntry(0, "object"),
       RdfTriple(
         RdfIri(1, 0),
         RdfIri(0, 0),
@@ -260,8 +260,8 @@ object ProtoTestCases:
         RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)),
       ),
       RdfGraphEnd(),
-      RdfNameEntry(0, "graph"),
       RdfPrefixEntry(0, "https://test.org/ns3/"),
+      RdfNameEntry(0, "graph"),
       RdfGraphStart(
         RdfIri(3, 0)
       ),
