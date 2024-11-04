@@ -72,6 +72,33 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
       }
 
+      "not evict datatype IRIs used recently" in {
+        val (encoder, buffer) = getEncoder()
+        for i <- 1 to 8 do
+          val node = encoder.encodeDtLiteral(
+            Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
+            s"v$i", s"dt$i", buffer,
+          )
+          node.literal.lex should be(s"v$i")
+          node.literal.literalKind.datatype should be(i)
+
+        // use literal 1 again
+        val node = encoder.encodeDtLiteral(
+          Mrl.DtLiteral("v1", Mrl.Datatype("dt1")),
+          "v1", "dt1", buffer,
+        )
+        node.literal.lex should be("v1")
+        node.literal.literalKind.datatype should be(1)
+
+        // now add a new DT and see which DT is evicted
+        val node2 = encoder.encodeDtLiteral(
+          Mrl.DtLiteral("v9", Mrl.Datatype("dt9")),
+          "v9", "dt9", buffer,
+        )
+        node2.literal.lex should be("v9")
+        node2.literal.literalKind.datatype should be(2)
+      }
+
       "encode datatype literals while evicting old datatypes" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 12 do
@@ -303,6 +330,71 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
             val name = row.row.name
             name.id should be (eId)
             name.value should be (eVal)
+      }
+
+      "add IRIs while evicting old ones (2: detecting invalidated prefix entries)" in {
+        val (encoder, buffer) = getEncoder(3)
+        val data = Seq(
+          // IRI, expected prefix ID, expected name ID
+          ("https://test.org/1/Cake1", 1, 0),
+          ("https://test.org/2/Cake1", 2, 1),
+          ("https://test.org/3/Cake1", 3, 1),
+          ("https://test.org/3/Cake2", 0, 0),
+          // Evict the /1/ prefix
+          ("https://test.org/4/Cake2", 1, 2),
+          // Try to get the first IRI
+          ("https://test.org/1/Cake1", 2, 1),
+        )
+
+        for (sIri, ePrefix, eName) <- data do
+          val iri = encoder.encodeIri(sIri, buffer).asInstanceOf[RdfIri]
+          iri.prefixId should be(ePrefix)
+          iri.nameId should be(eName)
+
+        val expectedBuffer = Seq(
+          // Prefix? (name otherwise), ID, value
+          (true, 0, "https://test.org/1/"),
+          (false, 0, "Cake1"),
+          (true, 0, "https://test.org/2/"),
+          (true, 0, "https://test.org/3/"),
+          (false, 0, "Cake2"),
+          (true, 1, "https://test.org/4/"),
+          (true, 0, "https://test.org/1/"),
+        )
+
+        buffer.size should be(expectedBuffer.size)
+        for ((isPrefix, eId, eVal), row) <- expectedBuffer.zip(buffer) do
+          if isPrefix then
+            row.row.isPrefix should be (true)
+            val prefix = row.row.prefix
+            prefix.id should be(eId)
+            prefix.value should be(eVal)
+          else
+            row.row.isName should be (true)
+            val name = row.row.name
+            name.id should be(eId)
+            name.value should be(eVal)
+      }
+
+      "not evict IRI prefixes used recently" in {
+        val (encoder, buffer) = getEncoder(3)
+        val data = Seq(
+          // IRI, expected prefix ID, expected name ID
+          ("https://test.org/1/Cake1", 1, 0),
+          ("https://test.org/2/Cake2", 2, 0),
+          ("https://test.org/3/Cake3", 3, 0),
+          ("https://test.org/3/Cake3", 0, 3),
+          ("https://test.org/2/Cake2", 2, 2),
+          ("https://test.org/1/Cake1", 1, 1),
+          // Evict something -- this must not be /1/ because it was used last
+          // this tests if .onAccess() is called correctly
+          ("https://test.org/4/Cake4", 3, 4),
+        )
+
+        for (sIri, ePrefix, eName) <- data do
+          val iri = encoder.encodeIri(sIri, buffer).asInstanceOf[RdfIri]
+          iri.prefixId should be(ePrefix)
+          iri.nameId should be(eName)
       }
 
       "add IRIs while evicting old ones, without a prefix table" in {
