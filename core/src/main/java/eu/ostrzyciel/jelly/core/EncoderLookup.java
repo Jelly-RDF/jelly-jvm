@@ -18,13 +18,6 @@ final class EncoderLookup {
         public int setId;
         /** Whether this entry is a new entry. */
         public boolean newEntry;
-        /** 
-         * The serial number of the entry, incremented each time the entry is replaced in the table.
-         * This could theoretically overflow and cause bogus cache hits, but it's enormously
-         * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that 
-         * causes this to happen.
-         */
-        public int serial = 1;
 
         public LookupEntry(int getId, int setId) {
             this.getId = getId;
@@ -40,13 +33,23 @@ final class EncoderLookup {
 
     /** The lookup hash map */
     private final HashMap<String, LookupEntry> map = new HashMap<>();
+
     /**
      * The doubly-linked list of entries, with 1-based indexing.
-     * Each entry is represented by three integers: left, right, and serial.
+     * Each entry is represented by two integers: left and right.
      * The head pointer is in table[1].
-     * The first valid entry is in table[3] – table[5].
+     * The first valid entry is in table[3] – table[4].
      */
-    final int[] table;
+    private final int[] table;
+
+    /**
+     * The serial numbers of the entries, incremented each time the entry is replaced in the table.
+     * This could theoretically overflow and cause bogus cache hits, but it's enormously
+     * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that
+     * causes this to happen.
+     */
+    final int[] serials;
+
     // Tail pointer for the table.
     private int tail;
     // Maximum size of the lookup.
@@ -58,16 +61,24 @@ final class EncoderLookup {
     private int lastSetId;
     // Names of the entries. Entry 0 is always null.
     private final String[] names;
+    // Whether to use serials for the entries.
+    private final boolean useSerials;
 
     private final LookupEntry entryForReturns = new LookupEntry(0, 0, true);
 
-    public EncoderLookup(int size) {
+    public EncoderLookup(int size, boolean useSerials) {
         this.size = size;
-        table = new int[(size + 1) * 3];
-        // Set the head's serial to non-zero value, so that default-initialized DependentNodes are not
-        // accidentally considered as valid entries.
-        table[2] = -1;
+        table = new int[(size + 1) * 2];
         names = new String[size + 1];
+        this.useSerials = useSerials;
+        if (useSerials) {
+            serials = new int[size + 1];
+            // Set the head's serial to non-zero value, so that default-initialized DependentNodes are not
+            // accidentally considered as valid entries.
+            serials[0] = -1;
+        } else {
+            serials = null;
+        }
     }
 
     /**
@@ -76,18 +87,18 @@ final class EncoderLookup {
      * @param id The ID of the entry that was accessed.
      */
     public void onAccess(int id) {
-        int base = id * 3;
+        int base = id * 2;
         if (base == tail) {
             return;
         }
         int left = table[base];
         int right = table[base + 1];
+        // Set our left to the tail
+        table[base] = tail;
         // Set left's right to our right
         table[left + 1] = right;
         // Set right's left to our left
         table[right] = left;
-        // Set our left to the tail
-        table[base] = tail;
         // Set the tail's right to us
         table[tail + 1] = base;
         // Update the tail
@@ -99,7 +110,7 @@ final class EncoderLookup {
      * @param key The key of the entry.
      * @return The entry.
      */
-    public LookupEntry addEntry(String key) {
+    public LookupEntry getOrAddEntry(String key) {
         var value = map.get(key);
         if (value != null) {
             // The entry is already in the table, just update the access order
@@ -111,13 +122,11 @@ final class EncoderLookup {
         if (used < size) {
             // We still have space in the table, add a new entry to the end of the table.
             id = ++used;
-            int base = id * 3;
+            int base = id * 2;
             // Set the left to the tail
             table[base] = tail;
             // Right is already 0
             // table[base + 1] = 0;
-            // Serial is zero, set it to 0+1 = 1
-            table[base + 2] = 1;
             // Set the tail's right to us
             table[tail + 1] = base;
             tail = base;
@@ -130,21 +139,21 @@ final class EncoderLookup {
         } else {
             // The table is full, evict the least recently used entry.
             int base = table[1];
-            id = base / 3;
+            id = base / 2;
             // Remove the entry from the map
             LookupEntry oldEntry = map.remove(names[id]);
-            oldEntry.getId = id;
-            oldEntry.setId = id;
-            int serial = table[base + 2] + 1;
-            oldEntry.serial = serial;
-            table[base + 2] = serial;
             // Insert the new entry
             names[id] = key;
             map.put(key, oldEntry);
             // Update the table
             onAccess(id);
-            entryForReturns.serial = serial;
             entryForReturns.setId = lastSetId + 1 == id ? 0 : id;
+        }
+        if (this.useSerials) {
+            // Increment the serial number
+            // We save some memory accesses by not doing this if the serials are not used.
+            // The if should be very predictable and have no negative performance impact.
+            ++serials[id];
         }
         entryForReturns.getId = id;
         lastSetId = id;
