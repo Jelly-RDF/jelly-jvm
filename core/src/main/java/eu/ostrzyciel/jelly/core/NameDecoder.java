@@ -32,8 +32,8 @@ final class NameDecoder<TIri> {
     private int lastPrefixIdReference = 0;
     private int lastNameIdReference = 0;
 
-    private int lastPrefixIdSet = -1;
-    private int lastNameIdSet = -1;
+    private int lastPrefixIdSet = 0;
+    private int lastNameIdSet = 0;
 
     private final Function<String, TIri> iriFactory;
 
@@ -45,13 +45,13 @@ final class NameDecoder<TIri> {
      */
     public NameDecoder(int prefixTableSize, int nameTableSize, Function<String, TIri> iriFactory) {
         this.iriFactory = iriFactory;
-        nameLookup = new NameLookupEntry[nameTableSize];
-        prefixLookup = new PrefixLookupEntry[prefixTableSize];
+        nameLookup = new NameLookupEntry[nameTableSize + 1];
+        prefixLookup = new PrefixLookupEntry[prefixTableSize + 1];
 
-        for (int i = 0; i < nameTableSize; i++) {
+        for (int i = 1; i < nameTableSize + 1; i++) {
             nameLookup[i] = new NameLookupEntry();
         }
-        for (int i = 0; i < prefixTableSize; i++) {
+        for (int i = 1; i < prefixTableSize + 1; i++) {
             prefixLookup[i] = new PrefixLookupEntry();
         }
     }
@@ -63,11 +63,11 @@ final class NameDecoder<TIri> {
      */
     public void updateNames(RdfNameEntry nameEntry) {
         int id = nameEntry.id();
-        if (id == 0) {
-            lastNameIdSet++;
-        } else {
-            lastNameIdSet = id - 1;
-        }
+        // Branchless! Equivalent to:
+        //   if (id == 0) lastNameIdSet++;
+        //   else lastNameIdSet = id;
+        // Same code is used in the methods below.
+        lastNameIdSet = ((lastNameIdSet + 1) & ((id - 1) >> 31)) + id;
         NameLookupEntry entry = nameLookup[lastNameIdSet];
         entry.name = nameEntry.value();
         // Enough to invalidate the last IRI – we don't have to touch the serial number.
@@ -83,11 +83,7 @@ final class NameDecoder<TIri> {
      */
     public void updatePrefixes(RdfPrefixEntry prefixEntry) {
         int id = prefixEntry.id();
-        if (id == 0) {
-            lastPrefixIdSet++;
-        } else {
-            lastPrefixIdSet = id - 1;
-        }
+        lastPrefixIdSet = ((lastPrefixIdSet + 1) & ((id - 1) >> 31)) + id;
         PrefixLookupEntry entry = prefixLookup[lastPrefixIdSet];
         entry.prefix = prefixEntry.value();
         entry.serial++;
@@ -104,23 +100,18 @@ final class NameDecoder<TIri> {
     @SuppressWarnings("unchecked")
     public TIri decode(RdfIri iri) {
         int nameId = iri.nameId();
-
-        NameLookupEntry nameEntry;
-        if (nameId == 0) {
-            nameEntry = nameLookup[lastNameIdReference];
-            lastNameIdReference++;
-        } else {
-            nameEntry = nameLookup[nameId - 1];
-            lastNameIdReference = nameId;
-        }
+        lastNameIdReference = ((lastNameIdReference + 1) & ((nameId - 1) >> 31)) + nameId;
+        NameLookupEntry nameEntry = nameLookup[lastNameIdReference];
 
         int prefixId = iri.prefixId();
-        if (prefixId == 0) prefixId = lastPrefixIdReference;
-        else lastPrefixIdReference = prefixId;
-
+        // Branchless way to update the prefix ID
+        // Equivalent to:
+        //   if (prefixId == 0) prefixId = lastPrefixIdReference;
+        //   else lastPrefixIdReference = prefixId;
+        lastPrefixIdReference = prefixId = (((prefixId - 1) >> 31) & lastPrefixIdReference) + prefixId;
         if (prefixId != 0) {
             // Name and prefix
-            PrefixLookupEntry prefixEntry = prefixLookup[prefixId - 1];
+            PrefixLookupEntry prefixEntry = prefixLookup[prefixId];
             if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
                 // Update the last prefix
                 nameEntry.lastPrefixId = prefixId;
