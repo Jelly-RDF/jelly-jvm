@@ -58,10 +58,10 @@ final class EncoderLookup {
     // This will monotonically increase until it reaches the maximum size.
     private int used;
     // The last id that was set in the table.
-    private int lastSetId;
+    private int lastSetId = -1000;
     // Names of the entries. Entry 0 is always null.
     private final String[] names;
-    // Whether to use serials for the entries.
+    // Whether to maintain serial numbers for the entries.
     private final boolean useSerials;
 
     private final LookupEntry entryForReturns = new LookupEntry(0, 0, true);
@@ -133,13 +133,11 @@ final class EncoderLookup {
             names[id] = key;
             map.put(key, new LookupEntry(id, id));
             // setId is 0 because we are adding a new entry sequentially
-            entryForReturns.setId = 0;
-            // .serial is already 1 by default
-            // entryForReturns.serial = 1;
+            // We don't need to set it because it's 0 by default
+            // entryForReturns.setId = 0;
         } else {
             // The table is full, evict the least recently used entry.
-            int base = table[1];
-            id = base / 2;
+            id = table[1] / 2;
             // Remove the entry from the map
             LookupEntry oldEntry = map.remove(names[id]);
             // Insert the new entry
@@ -148,6 +146,8 @@ final class EncoderLookup {
             // Update the table
             onAccess(id);
             entryForReturns.setId = lastSetId + 1 == id ? 0 : id;
+            // We only update lastSetId in this case, because in the sequential case we don't check it anyway
+            lastSetId = id;
         }
         if (this.useSerials) {
             // Increment the serial number
@@ -156,7 +156,6 @@ final class EncoderLookup {
             ++serials[id];
         }
         entryForReturns.getId = id;
-        lastSetId = id;
         return entryForReturns;
     }
 }

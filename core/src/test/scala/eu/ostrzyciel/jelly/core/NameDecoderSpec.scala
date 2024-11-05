@@ -107,10 +107,17 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         }
       }
 
-      "not accept a new prefix ID lower than 0" in {
+      "not accept a new prefix ID lower than 0 (-1)" in {
+        val dec = makeDecoder(smallOptions)
+        intercept[NullPointerException] {
+          dec.updatePrefixes(RdfPrefixEntry(-1, "https://test.org/"))
+        }
+      }
+
+      "not accept a new prefix ID lower than 0 (-2)" in {
         val dec = makeDecoder(smallOptions)
         intercept[ArrayIndexOutOfBoundsException] {
-          dec.updatePrefixes(RdfPrefixEntry(-1, "https://test.org/"))
+          dec.updatePrefixes(RdfPrefixEntry(-2, "https://test.org/"))
         }
       }
 
@@ -136,10 +143,17 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         }
       }
 
-      "not accept a new name ID lower than 0" in {
+      "not accept a new name ID lower than 0 (-1)" in {
+        val dec = makeDecoder(smallOptions)
+        intercept[NullPointerException] {
+          dec.updateNames(RdfNameEntry(-1, "Cake"))
+        }
+      }
+
+      "not accept a new name ID lower than 0 (-2)" in {
         val dec = makeDecoder(smallOptions)
         intercept[ArrayIndexOutOfBoundsException] {
-          dec.updateNames(RdfNameEntry(-1, "Cake"))
+          dec.updateNames(RdfNameEntry(-2, "Cake"))
         }
       }
 

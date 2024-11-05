@@ -150,12 +150,13 @@ public final class NodeEncoder<TNode> {
                         new RdfNameEntry(nameEntry.setId, iri)
                 ));
             }
-            if (lastIriNameId + 1 == nameEntry.getId) {
-                lastIriNameId = nameEntry.getId;
+            int nameId = nameEntry.getId;
+            if (lastIriNameId + 1 == nameId) {
+                lastIriNameId = nameId;
                 return zeroIri;
             } else {
-                lastIriNameId = nameEntry.getId;
-                return nameOnlyIris[lastIriNameId];
+                lastIriNameId = nameId;
+                return nameOnlyIris[nameId];
             }
         }
 
