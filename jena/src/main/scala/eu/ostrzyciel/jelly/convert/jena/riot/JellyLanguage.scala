@@ -41,7 +41,8 @@ object JellyLanguage:
   val SYMBOL_SUPPORTED_OPTIONS: util.Symbol = org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "supportedOptions")
 
   /**
-   * Symbol for the frame size to be used when writing RDF data.
+   * Symbol for the target stream frame size to be used when writing RDF data.
+   * Frame size may be slightly larger than this value, to fit the entire statement and its lookup entries in one frame.
    *
    * Set this in Jena's Context to an integer (not long!) value.
    */

@@ -10,6 +10,7 @@ import org.apache.jena.sparql.core.{DatasetGraph, Quad}
 import org.apache.jena.sparql.util.Context
 
 import java.io.{OutputStream, Writer}
+import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.*
 
 
@@ -48,15 +49,14 @@ final class JellyGraphWriter(opt: JellyFormatVariant) extends WriterGraphRIOTBas
       "Please use an OutputStream.")
 
   override def write(out: OutputStream, graph: Graph, prefixMap: PrefixMap, baseURI: String, context: Context): Unit =
-    val encoder = JenaConverterFactory.encoder(
-      opt.opt
-        .withPhysicalType(PhysicalStreamType.TRIPLES)
-        .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+    val variant = opt.copy(opt.opt
+      .withPhysicalType(PhysicalStreamType.TRIPLES)
+      .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
     )
-    graph.find().asScala
-      .flatMap(triple => encoder.addTripleStatement(triple))
-      .grouped(opt.frameSize)
-      .foreach(rows => RdfStreamFrame(rows = rows.toSeq).writeDelimitedTo(out))
+    val inner = JellyStreamWriter(variant, out)
+    for triple <- graph.find().asScala do
+      inner.triple(triple)
+    inner.finish()
 
   override def getLang: Lang = JellyLanguage.JELLY
 
@@ -74,15 +74,14 @@ final class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIO
   override def write(
     out: OutputStream, dataset: DatasetGraph, prefixMap: PrefixMap, baseURI: String, context: Context
   ): Unit =
-    val encoder = JenaConverterFactory.encoder(
-      opt.opt
-        .withPhysicalType(PhysicalStreamType.QUADS)
-        .withLogicalType(LogicalStreamType.FLAT_QUADS)
+    val variant = opt.copy(opt.opt
+      .withPhysicalType(PhysicalStreamType.QUADS)
+      .withLogicalType(LogicalStreamType.FLAT_QUADS)
     )
-    dataset.find().asScala
-      .flatMap(quad => encoder.addQuadStatement(quad))
-      .grouped(opt.frameSize)
-      .foreach(rows => RdfStreamFrame(rows = rows.toSeq).writeDelimitedTo(out))
+    val inner = JellyStreamWriter(variant, out)
+    for quad <- dataset.find().asScala do
+      inner.quad(quad)
+    inner.finish()
 
   override def getLang: Lang = JellyLanguage.JELLY
 
@@ -113,18 +112,20 @@ final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extend
   // We don't set any options here – it is the responsibility of the caller to set
   // a valid stream type here.
   private val encoder = JenaConverterFactory.encoder(opt.opt)
-  private val buffer = collection.mutable.ArrayBuffer.empty[RdfStreamRow]
+  private val buffer: ArrayBuffer[RdfStreamRow] = new ArrayBuffer[RdfStreamRow]()
 
   // No need to handle this, the encoder will emit the header automatically anyway
   override def start(): Unit = ()
 
   override def triple(triple: Triple): Unit =
-    buffer.addAll(encoder.addTripleStatement(triple))
-    writeBuffer(isFinishing = false)
+    buffer ++= encoder.addTripleStatement(triple)
+    if buffer.size >= opt.frameSize then
+      flushBuffer()
 
   override def quad(quad: Quad): Unit =
-    buffer.addAll(encoder.addQuadStatement(quad))
-    writeBuffer(isFinishing = false)
+    buffer ++= encoder.addQuadStatement(quad)
+    if buffer.size >= opt.frameSize then
+      flushBuffer()
 
   // Not supported
   override def base(base: String): Unit = ()
@@ -133,15 +134,11 @@ final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extend
   override def prefix(prefix: String, iri: String): Unit = ()
 
   // Flush the buffer
-  override def finish(): Unit = writeBuffer(isFinishing = true)
+  override def finish(): Unit =
+    if buffer.nonEmpty then
+      flushBuffer()
 
-  private def writeBuffer(isFinishing: Boolean): Unit =
-    if isFinishing then
-      buffer.grouped(opt.frameSize)
-        .foreach(rows => RdfStreamFrame(rows = rows.toSeq).writeDelimitedTo(out))
-      buffer.clear()
-    else if buffer.size >= opt.frameSize then
-      buffer.take(buffer.size - (buffer.size % opt.frameSize))
-        .grouped(opt.frameSize)
-        .foreach(rows => RdfStreamFrame(rows = rows.toSeq).writeDelimitedTo(out))
-      buffer.remove(0, buffer.size - (buffer.size % opt.frameSize))
+  private def flushBuffer(): Unit =
+    val frame = RdfStreamFrame(rows = buffer.toSeq)
+    frame.writeDelimitedTo(out)
+    buffer.clear()
