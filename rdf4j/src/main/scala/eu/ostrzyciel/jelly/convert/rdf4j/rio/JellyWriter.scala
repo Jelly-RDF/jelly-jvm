@@ -77,7 +77,8 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
 
   override def endRDF(): Unit =
     checkWritingStarted()
-    flushBuffer()
+    if buffer.nonEmpty then
+      flushBuffer()
     out.flush()
 
   override def handleComment(comment: String): Unit =

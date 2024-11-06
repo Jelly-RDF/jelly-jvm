@@ -19,7 +19,8 @@ object JellyWriterSettings:
   
   val FRAME_SIZE = new LongRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.frameSize",
-    "Target RDF frame size",
+    "Target RDF stream frame size. Frame size may be slightly larger than this value, " +
+      "to fit the entire statement and its lookup entries in one frame.",
     256L
   )
 
