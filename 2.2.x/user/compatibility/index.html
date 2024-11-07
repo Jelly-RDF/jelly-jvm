@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../../assets/jelly_color.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.44">
     
     
       
@@ -875,8 +875,8 @@
 <p>Generally, all public classes and methods in Jelly-JVM are considered part of the public API. However, there are some exceptions.</p>
 <p>Auto-generated classes in the <code>jelly-core</code> module, <code>eu.ostrzyciel.jelly.core.proto.v1</code> package are not considered part of the public API, although we will avoid any incompatibilities where possible. These classes may change between MINOR releases.</p>
 <h2 id="backward-and-forward-protocol-compatibility">Backward and forward protocol compatibility</h2>
-<p>Jelly-JVM follows <a href="https://w3id.org/jelly/1.0.0/specification/serialization#versioning">the Jelly protocol's backward compatibility policy</a>. This means that Jelly-JVM can read data serialized with older versions of Jelly. Backward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.2.1/integration-tests/src/test/scala/eu/ostrzyciel/jelly/integration_tests/BackCompatSpec.scala">BackCompatSpec.scala</a>.</p>
-<p>Forward compatibility is provided only in a very limited manner in Jelly-JVM. The parser is guaranteed to only parse the stream options header and reject the rest of the stream, if the used protocol version is not supported. You may choose to disable this check and try to parse the rest of the data anyway, but this is most certainly <strong>NOT</strong> recommended and may lead to unexpected results. In general, Jelly-JVM will ignore any unknown fields in the stream, but any other changes in the protocol may lead to really "funny" errors. Forward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.2.1/integration-tests/src/test/scala/eu/ostrzyciel/jelly/integration_tests/ForwardCompatSpec.scala">ForwardCompatSpec.scala</a>.</p>
+<p>Jelly-JVM follows <a href="https://w3id.org/jelly/1.0.0/specification/serialization#versioning">the Jelly protocol's backward compatibility policy</a>. This means that Jelly-JVM can read data serialized with older versions of Jelly. Backward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.2.2/integration-tests/src/test/scala/eu/ostrzyciel/jelly/integration_tests/BackCompatSpec.scala">BackCompatSpec.scala</a>.</p>
+<p>Forward compatibility is provided only in a very limited manner in Jelly-JVM. The parser is guaranteed to only parse the stream options header and reject the rest of the stream, if the used protocol version is not supported. You may choose to disable this check and try to parse the rest of the data anyway, but this is most certainly <strong>NOT</strong> recommended and may lead to unexpected results. In general, Jelly-JVM will ignore any unknown fields in the stream, but any other changes in the protocol may lead to really "funny" errors. Forward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.2.2/integration-tests/src/test/scala/eu/ostrzyciel/jelly/integration_tests/ForwardCompatSpec.scala">ForwardCompatSpec.scala</a>.</p>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="https://github.com/Jelly-RDF/jelly-jvm/releases">Release notes on GitHub</a></li>
