@@ -16,18 +16,10 @@ final class EncoderLookup {
         public int getId;
         /** The ID of the entry used for adding the lookup entry to the RDF stream. */
         public int setId;
-        /** Whether this entry is a new entry. */
-        public boolean newEntry;
 
         public LookupEntry(int getId, int setId) {
             this.getId = getId;
             this.setId = setId;
-        }
-
-        public LookupEntry(int getId, int setId, boolean newEntry) {
-            this.getId = getId;
-            this.setId = setId;
-            this.newEntry = newEntry;
         }
     }
 
@@ -58,16 +50,17 @@ final class EncoderLookup {
     // This will monotonically increase until it reaches the maximum size.
     private int used;
     // The last id that was set in the table.
-    private int lastSetId = -1000;
+    private int lastSetId;
     // Names of the entries. Entry 0 is always null.
     private final String[] names;
     // Whether to maintain serial numbers for the entries.
     private final boolean useSerials;
 
-    private final LookupEntry entryForReturns = new LookupEntry(0, 0, true);
+    private final LookupEntry entryForReturns = new LookupEntry(0, 0);
 
     public EncoderLookup(int size, boolean useSerials) {
         this.size = size;
+        this.lastSetId = size;
         table = new int[(size + 1) * 2];
         names = new String[size + 1];
         this.useSerials = useSerials;
@@ -83,7 +76,7 @@ final class EncoderLookup {
 
     /**
      * To be called after an entry is accessed (used).
-     * This moves the entry to the front of the list to prevent it from being evicted.
+     * This moves the entry to the end (tail) of the list to prevent it from being evicted.
      * @param id The ID of the entry that was accessed.
      */
     public void onAccess(int id) {
@@ -105,19 +98,11 @@ final class EncoderLookup {
         tail = base;
     }
 
-    /**
-     * Adds a new entry to the lookup table or retrieves it if it already exists.
-     * @param key The key of the entry.
-     * @return The entry.
-     */
-    public LookupEntry getOrAddEntry(String key) {
-        var value = map.get(key);
-        if (value != null) {
-            // The entry is already in the table, just update the access order
-            onAccess(value.getId);
-            return value;
-        }
+    public LookupEntry getEntry(String key) {
+        return map.get(key);
+    }
 
+    public LookupEntry addEntry(String key) {
         int id;
         if (used < size) {
             // We still have space in the table, add a new entry to the end of the table.
@@ -145,7 +130,9 @@ final class EncoderLookup {
             map.put(key, oldEntry);
             // Update the table
             onAccess(id);
-            entryForReturns.setId = lastSetId + 1 == id ? 0 : id;
+            // Branchless version of:
+            // entryForReturns.setId = lastSetId + 1 == id ? 0 : id;
+            entryForReturns.setId = ((-((lastSetId + 1) ^ id)) >> 31) & id;
             // We only update lastSetId in this case, because in the sequential case we don't check it anyway
             lastSetId = id;
         }

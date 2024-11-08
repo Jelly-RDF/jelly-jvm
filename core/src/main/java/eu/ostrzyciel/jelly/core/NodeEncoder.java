@@ -119,11 +119,14 @@ public final class NodeEncoder<TNode> {
         }
 
         // The node is not encoded, but we may already have the datatype encoded
-        var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
-        if (dtEntry.newEntry) {
+        var dtEntry = datatypeLookup.getEntry(datatypeName);
+        if (dtEntry == null) {
+            dtEntry = datatypeLookup.addEntry(datatypeName);
             rowsBuffer.append(new RdfStreamRow(
                 new RdfDatatypeEntry(dtEntry.setId, datatypeName)
             ));
+        } else {
+            datatypeLookup.onAccess(dtEntry.getId);
         }
         int dtId = dtEntry.getId;
         cachedNode.lookupPointer1 = dtId;
@@ -144,20 +147,21 @@ public final class NodeEncoder<TNode> {
     public UniversalTerm encodeIri(String iri, ArrayBuffer<RdfStreamRow> rowsBuffer) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
-            var nameEntry = nameLookup.getOrAddEntry(iri);
-            if (nameEntry.newEntry) {
+            var nameEntry = nameLookup.getEntry(iri);
+            if (nameEntry == null) {
+                nameEntry = nameLookup.addEntry(iri);
                 rowsBuffer.append(new RdfStreamRow(
                         new RdfNameEntry(nameEntry.setId, iri)
                 ));
+            } else {
+                nameLookup.onAccess(nameEntry.getId);
             }
             int nameId = nameEntry.getId;
-            if (lastIriNameId + 1 == nameId) {
-                lastIriNameId = nameId;
-                return zeroIri;
-            } else {
-                lastIriNameId = nameId;
-                return nameOnlyIris[nameId];
-            }
+            // Branchless version of:
+            // int nameIndex = lastIriNameId + 1 == nameId ? 0 : nameId;
+            int nameIndex = ((-((lastIriNameId + 1) ^ nameId)) >> 31) & nameId;
+            lastIriNameId = nameId;
+            return nameOnlyIris[nameIndex];
         }
 
         // Slow path, with splitting out the prefix
@@ -189,18 +193,26 @@ public final class NodeEncoder<TNode> {
             postfix = iri.substring(i + 1);
         }
 
-        var prefixEntry = prefixLookup.getOrAddEntry(prefix);
-        var nameEntry = nameLookup.getOrAddEntry(postfix);
-        if (prefixEntry.newEntry) {
+        var prefixEntry = prefixLookup.getEntry(prefix);
+        if (prefixEntry == null) {
+            prefixEntry = prefixLookup.addEntry(prefix);
             rowsBuffer.append(new RdfStreamRow(
-                new RdfPrefixEntry(prefixEntry.setId, prefix)
+                    new RdfPrefixEntry(prefixEntry.setId, prefix)
             ));
+        } else {
+            prefixLookup.onAccess(prefixEntry.getId);
         }
-        if (nameEntry.newEntry) {
+
+        var nameEntry = nameLookup.getEntry(postfix);
+        if (nameEntry == null) {
+            nameEntry = nameLookup.addEntry(postfix);
             rowsBuffer.append(new RdfStreamRow(
-                new RdfNameEntry(nameEntry.setId, postfix)
+                    new RdfNameEntry(nameEntry.setId, postfix)
             ));
+        } else {
+            nameLookup.onAccess(nameEntry.getId);
         }
+
         int nameId = nameEntry.getId;
         int prefixId = prefixEntry.getId;
         cachedNode.lookupPointer1 = nameId;
@@ -220,15 +232,14 @@ public final class NodeEncoder<TNode> {
         int nameId = cachedNode.lookupPointer1;
         int prefixId = cachedNode.lookupPointer2;
         if (lastIriPrefixId == prefixId) {
-            if (lastIriNameId + 1 == nameId) {
-                lastIriNameId = nameId;
-                return zeroIri;
-            } else {
-                lastIriNameId = nameId;
-                return nameOnlyIris[nameId];
-            }
+            // Branchless version of:
+            // int nameIndex = lastIriNameId + 1 == nameId ? 0 : nameId;
+            int nameIndex = ((-((lastIriNameId + 1) ^ nameId)) >> 31) & nameId;
+            lastIriNameId = nameId;
+            return nameOnlyIris[nameIndex];
         } else {
             lastIriPrefixId = prefixId;
+            // Here using branchless won't help :(
             if (lastIriNameId + 1 == nameId) {
                 lastIriNameId = nameId;
                 return new RdfIri(prefixId, 0);
