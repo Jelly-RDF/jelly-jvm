@@ -117,16 +117,18 @@ public final class NodeEncoder<TNode> {
         }
 
         // The node is not encoded, but we may already have the datatype encoded
-        var dtEntry = datatypeLookup.getEntry(datatypeName);
+        Integer dtEntry = datatypeLookup.getEntry(datatypeName);
+        int dtId;
         if (dtEntry == null) {
-            dtEntry = datatypeLookup.addEntry(datatypeName);
+            var newDtEntry = datatypeLookup.addEntry(datatypeName);
             rowsBuffer.append(new RdfStreamRow(
-                new RdfDatatypeEntry(dtEntry.setId, datatypeName)
+                new RdfDatatypeEntry(newDtEntry.setId, datatypeName)
             ));
+            dtId = newDtEntry.getId;
         } else {
-            datatypeLookup.onAccess(dtEntry.getId);
+            dtId = dtEntry.intValue();
+            datatypeLookup.onAccess(dtId);
         }
-        int dtId = dtEntry.getId;
         cachedNode.lookupPointer1 = dtId;
         cachedNode.lookupSerial1 = datatypeLookup.serials[dtId];
         cachedNode.encoded = new RdfLiteral(
@@ -145,16 +147,18 @@ public final class NodeEncoder<TNode> {
     public UniversalTerm encodeIri(String iri, ArrayBuffer<RdfStreamRow> rowsBuffer) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
-            var nameEntry = nameLookup.getEntry(iri);
+            Integer nameEntry = nameLookup.getEntry(iri);
+            int nameId;
             if (nameEntry == null) {
-                nameEntry = nameLookup.addEntry(iri);
+                var newNameEntry = nameLookup.addEntry(iri);
                 rowsBuffer.append(new RdfStreamRow(
-                        new RdfNameEntry(nameEntry.setId, iri)
+                        new RdfNameEntry(newNameEntry.setId, iri)
                 ));
+                nameId = newNameEntry.getId;
             } else {
-                nameLookup.onAccess(nameEntry.getId);
+                nameId = nameEntry.intValue();
+                nameLookup.onAccess(nameId);
             }
-            int nameId = nameEntry.getId;
             // Branchless version of:
             // int nameIndex = lastIriNameId + 1 == nameId ? 0 : nameId;
             int nameIndex = ((-((lastIriNameId + 1) ^ nameId)) >> 31) & nameId;
@@ -191,28 +195,32 @@ public final class NodeEncoder<TNode> {
             postfix = iri.substring(i + 1);
         }
 
-        var prefixEntry = prefixLookup.getEntry(prefix);
+        Integer prefixEntry = prefixLookup.getEntry(prefix);
+        int prefixId;
         if (prefixEntry == null) {
-            prefixEntry = prefixLookup.addEntry(prefix);
+            var newPrefixEntry = prefixLookup.addEntry(prefix);
             rowsBuffer.append(new RdfStreamRow(
-                    new RdfPrefixEntry(prefixEntry.setId, prefix)
+                    new RdfPrefixEntry(newPrefixEntry.setId, prefix)
             ));
+            prefixId = newPrefixEntry.getId;
         } else {
-            prefixLookup.onAccess(prefixEntry.getId);
+            prefixId = prefixEntry.intValue();
+            prefixLookup.onAccess(prefixId);
         }
 
-        var nameEntry = nameLookup.getEntry(postfix);
+        Integer nameEntry = nameLookup.getEntry(postfix);
+        int nameId;
         if (nameEntry == null) {
-            nameEntry = nameLookup.addEntry(postfix);
+            var newNameEntry = nameLookup.addEntry(postfix);
             rowsBuffer.append(new RdfStreamRow(
-                    new RdfNameEntry(nameEntry.setId, postfix)
+                    new RdfNameEntry(newNameEntry.setId, postfix)
             ));
+            nameId = newNameEntry.getId;
         } else {
-            nameLookup.onAccess(nameEntry.getId);
+            nameId = nameEntry.intValue();
+            nameLookup.onAccess(nameId);
         }
 
-        int nameId = nameEntry.getId;
-        int prefixId = prefixEntry.getId;
         cachedNode.lookupPointer1 = nameId;
         cachedNode.lookupSerial1 = nameLookup.serials[nameId];
         cachedNode.lookupPointer2 = prefixId;

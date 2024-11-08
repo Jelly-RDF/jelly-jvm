@@ -9,28 +9,28 @@ import java.util.HashMap;
  */
 final class EncoderLookup {
     /**
-     * Represents an entry in the lookup table.
+     * Represents a new entry in the lookup table.
+     * Only used in the addEntry method.
      */
-    static final class LookupEntry {
+    static final class NewLookupEntry {
         /** The ID of the entry used for referencing it from RdfIri and RdfLiteral objects. */
         public int getId;
         /** The ID of the entry used for adding the lookup entry to the RDF stream. */
         public int setId;
-
-        public LookupEntry(int getId, int setId) {
-            this.getId = getId;
-            this.setId = setId;
-        }
     }
 
-    /** The lookup hash map */
-    private final HashMap<String, LookupEntry> map = new HashMap<>();
+    /**
+     * The lookup hash map.
+     * The values are the IDs of the entries in the table, used to reference the entries.
+     * This corresponds to the getId field of the NewLookupEntry class.
+     */
+    private final HashMap<String, Integer> map = new HashMap<>();
 
     /**
      * The doubly-linked list of entries, with 1-based indexing.
      * Each entry is represented by two integers: left and right.
      * The head pointer is in table[1].
-     * The first valid entry is in table[3] – table[4].
+     * The first valid entry is in table[2] – table[3].
      */
     private final int[] table;
 
@@ -56,7 +56,7 @@ final class EncoderLookup {
     // Whether to maintain serial numbers for the entries.
     private final boolean useSerials;
 
-    private final LookupEntry entryForReturns = new LookupEntry(0, 0);
+    private final NewLookupEntry entryForReturns = new NewLookupEntry();
 
     public EncoderLookup(int size, boolean useSerials) {
         this.size = size;
@@ -98,11 +98,11 @@ final class EncoderLookup {
         tail = base;
     }
 
-    public LookupEntry getEntry(String key) {
+    public Integer getEntry(String key) {
         return map.get(key);
     }
 
-    public LookupEntry addEntry(String key) {
+    public NewLookupEntry addEntry(String key) {
         int id;
         if (used < size) {
             // We still have space in the table, add a new entry to the end of the table.
@@ -116,7 +116,7 @@ final class EncoderLookup {
             table[tail + 1] = base;
             tail = base;
             names[id] = key;
-            map.put(key, new LookupEntry(id, id));
+            map.put(key, Integer.valueOf(id));
             // setId is 0 because we are adding a new entry sequentially
             // We don't need to set it because it's 0 by default
             // entryForReturns.setId = 0;
@@ -124,7 +124,7 @@ final class EncoderLookup {
             // The table is full, evict the least recently used entry.
             id = table[1] / 2;
             // Remove the entry from the map
-            LookupEntry oldEntry = map.remove(names[id]);
+            Integer oldEntry = map.remove(names[id]);
             // Insert the new entry
             names[id] = key;
             map.put(key, oldEntry);
