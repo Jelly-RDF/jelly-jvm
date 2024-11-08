@@ -144,10 +144,11 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   private val extraRowsBuffer = new ArrayBuffer[RdfStreamRow](32)
   private val nodeEncoder = new NodeEncoder[TNode](
     options,
-    // Make the node cache size between 256 and 1024, depending on the user's maxNameTableSize.
-    Math.max(Math.min(options.maxNameTableSize, 1024), 256),
-    options.maxNameTableSize,
-    Math.max(Math.min(options.maxNameTableSize, 1024), 256),
+    // Make the node cache size between 256 and 2048, depending on the user's maxNameTableSize.
+    Math.max(Math.min(options.maxNameTableSize, 2048), 512),
+    // IRI cache can be the largest...
+    Math.max(Math.min((options.maxNameTableSize * 1.5).toInt, 8192), 512),
+    Math.max(Math.min(options.maxNameTableSize, 2048), 512),
   )
   private var emittedOptions = false
 
