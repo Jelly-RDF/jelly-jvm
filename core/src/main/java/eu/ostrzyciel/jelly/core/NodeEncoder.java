@@ -19,6 +19,40 @@ import java.util.function.Function;
  * @param <TNode> The type of RDF nodes used by the RDF library.
  */
 public final class NodeEncoder<TNode> {
+    /**
+     * A cached node that depends on other lookups (RdfIri and RdfLiteral in the datatype variant).
+     */
+    static final class DependentNode {
+        // The actual cached node
+        public UniversalTerm encoded;
+        // 1: datatypes and IRI names
+        // The pointer is the index in the lookup table, the serial is the serial number of the entry.
+        // The serial in the lookup table must be equal to the serial here for the entry to be valid.
+        public int lookupPointer1;
+        public int lookupSerial1;
+        // 2: IRI prefixes
+        public int lookupPointer2;
+        public int lookupSerial2;
+    }
+
+    /**
+     * A simple LRU cache for already encoded nodes.
+     * @param <K> Key type
+     * @param <V> Value type
+     */
+    private static final class NodeCache<K, V> extends LinkedHashMap<K, V> {
+        private final int maxSize;
+
+        public NodeCache(int maxSize) {
+            this.maxSize = maxSize;
+        }
+
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
+            return size() > maxSize;
+        }
+    }
+
     private final int maxPrefixTableSize;
     private int lastIriNameId;
     private int lastIriPrefixId = -1000;
@@ -29,9 +63,9 @@ public final class NodeEncoder<TNode> {
 
     // We split the node caches in three – the first two are for nodes that depend on the lookups
     // (IRIs and datatype literals). The third one is for nodes that don't depend on the lookups.
-    private final EncoderNodeCacheDependent iriNodeCache;
-    private final EncoderNodeCacheDependent dtLiteralNodeCache;
-    private final EncoderNodeCacheSimple nodeCache;
+    private final NodeCache<Object, DependentNode> iriNodeCache;
+    private final NodeCache<Object, DependentNode> dtLiteralNodeCache;
+    private final NodeCache<Object, UniversalTerm> nodeCache;
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     static final RdfIri zeroIri = new RdfIri(0, 0);
@@ -50,7 +84,7 @@ public final class NodeEncoder<TNode> {
         this.maxPrefixTableSize = opt.maxPrefixTableSize();
         if (maxPrefixTableSize > 0) {
             prefixLookup = new EncoderLookup(maxPrefixTableSize, true);
-            iriNodeCache = new EncoderNodeCacheDependent(iriNodeCacheSize);
+            iriNodeCache = new NodeCache<>(iriNodeCacheSize);
         } else {
             prefixLookup = null;
             iriNodeCache = null;
@@ -59,9 +93,9 @@ public final class NodeEncoder<TNode> {
         for (int i = 0; i < nameOnlyIris.length; i++) {
             nameOnlyIris[i] = new RdfIri(0, i);
         }
-        dtLiteralNodeCache = new EncoderNodeCacheDependent(dtLiteralNodeCacheSize);
+        dtLiteralNodeCache = new NodeCache<>(dtLiteralNodeCacheSize);
         nameLookup = new EncoderLookup(opt.maxNameTableSize(), maxPrefixTableSize > 0);
-        nodeCache = new EncoderNodeCacheSimple(nodeCacheSize);
+        nodeCache = new NodeCache<>(nodeCacheSize);
     }
 
     /**
@@ -75,7 +109,7 @@ public final class NodeEncoder<TNode> {
     public UniversalTerm encodeDtLiteral(
             TNode key, String lex, String datatypeName, ArrayBuffer<RdfStreamRow> rowsBuffer
     ) {
-        var cachedNode = dtLiteralNodeCache.getOrClearIfAbsent(key);
+        var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
         if (cachedNode.encoded != null &&
                 cachedNode.lookupSerial1 == datatypeLookup.serials[cachedNode.lookupPointer1]
@@ -127,7 +161,7 @@ public final class NodeEncoder<TNode> {
         }
 
         // Slow path, with splitting out the prefix
-        var cachedNode = iriNodeCache.getOrClearIfAbsent(iri);
+        var cachedNode = iriNodeCache.computeIfAbsent(iri, k -> new DependentNode());
         // Check if the value is still valid
         if (cachedNode.encoded != null &&
                 cachedNode.lookupSerial1 == nameLookup.serials[cachedNode.lookupPointer1] &&
@@ -212,6 +246,6 @@ public final class NodeEncoder<TNode> {
      * @return The encoded node
      */
     public UniversalTerm encodeOther(Object key, Function<Object, UniversalTerm> encoder) {
-        return nodeCache.getOrComputeIfAbsent(key, encoder);
+        return nodeCache.computeIfAbsent(key, encoder);
     }
 }
