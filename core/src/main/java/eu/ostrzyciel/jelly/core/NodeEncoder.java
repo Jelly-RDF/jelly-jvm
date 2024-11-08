@@ -67,8 +67,6 @@ public final class NodeEncoder<TNode> {
     private final NodeCache<Object, DependentNode> dtLiteralNodeCache;
     private final NodeCache<Object, UniversalTerm> nodeCache;
 
-    // Pre-allocated IRI that has prefixId=0 and nameId=0
-    static final RdfIri zeroIri = new RdfIri(0, 0);
     // Pre-allocated IRIs that have prefixId=0
     private final RdfIri[] nameOnlyIris;
 
