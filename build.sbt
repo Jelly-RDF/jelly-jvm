@@ -24,7 +24,7 @@ sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 lazy val pekkoV = "1.1.2"
 lazy val pekkoGrpcV = "1.1.0"
 lazy val jenaV = "5.2.0"
-lazy val rdf4jV = "5.0.2"
+lazy val rdf4jV = "5.0.3"
 // !! When updating ScalaPB also change the version of the plugin in plugins.sbt
 lazy val scalapbV = "0.11.17"
 lazy val protobufV = "4.28.3"
