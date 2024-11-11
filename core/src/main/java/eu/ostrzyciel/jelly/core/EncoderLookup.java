@@ -38,7 +38,7 @@ final class EncoderLookup {
      * The doubly-linked list of entries, with 1-based indexing.
      * Each entry is represented by two integers: left and right.
      * The head pointer is in table[1].
-     * The first valid entry is in table[3] – table[4].
+     * The first valid entry is in table[2] – table[3].
      */
     private final int[] table;
 
