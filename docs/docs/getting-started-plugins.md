@@ -35,7 +35,9 @@ You can simply add Jelly format support to an application based on RDF4J with Je
 **[version {{ jvm_version() }} from here](https://github.com/Jelly-RDF/jelly-jvm/releases/download/{{ git_tag() }}/jelly-rdf4j-plugin.jar)**,
 {% endif %} or you can go the the [releases page](https://github.com/Jelly-RDF/jelly-jvm/releases) on GitHub to download a specific version of the `jelly-rdf4j-plugin.jar` file.
     - Note that the Jelly version must be compatible with your RDF4J version. Consult the [compatibility table](index.md#compatibility).
-- Place the file in your classpath. Consult the manual of your application for the exact location.
+- Place the file in your classpath:
+    - For the RDF4J SDK distribution, place the file in the `lib/` directory of your RDF4J installation.
+    - For other applications, consult the manual of your application for the exact location.
 - You can now use the Jelly format for parsing and serialization in your RDF4J application.
 
 ## Supported features
