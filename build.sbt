@@ -42,7 +42,6 @@ lazy val protobufCompilerDeps = Seq(
   "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV % "protobuf",
   "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbV,
   "com.google.protobuf" % "protobuf-java" % protobufV,
-  "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
 )
 
 lazy val commonSettings = Seq(
@@ -63,7 +62,6 @@ lazy val commonSettings = Seq(
   assemblyJarName := s"${name.value}.jar",
   assemblyMergeStrategy := {
     case x if x.endsWith("module-info.class") => MergeStrategy.concat
-    case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.first
     case x => assemblyMergeStrategy.value(x)
   },
   crossVersion := CrossVersion.binary,
