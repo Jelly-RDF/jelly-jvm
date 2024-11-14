@@ -65,17 +65,23 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     )
   )
 
-  private def checkStreamTypes(bytes: Array[Byte], expected: String) =
+  private def checkStreamOptions(bytes: Array[Byte], expectedType: String, expectedOpt: RdfStreamOptions) =
     val frame = RdfStreamFrame.parseDelimitedFrom(new ByteArrayInputStream(bytes)).get
     frame.rows.size should be > 0
     frame.rows.head.row.isOptions should be (true)
     val options = frame.rows.head.row.options
-    if expected == "triples" then
+    if expectedType == "triples" then
       options.physicalType should be (PhysicalStreamType.TRIPLES)
       options.logicalType should be (LogicalStreamType.FLAT_TRIPLES)
-    else if expected == "quads" then
+    else if expectedType == "quads" then
       options.physicalType should be (PhysicalStreamType.QUADS)
       options.logicalType should be (LogicalStreamType.FLAT_QUADS)
+    options.generalizedStatements should be (expectedOpt.generalizedStatements)
+    options.rdfStar should be (expectedOpt.rdfStar)
+    options.maxNameTableSize should be (expectedOpt.maxNameTableSize)
+    options.maxPrefixTableSize should be (expectedOpt.maxPrefixTableSize)
+    options.maxDatatypeTableSize should be (expectedOpt.maxDatatypeTableSize)
+    options.version should be (Constants.protoVersion)
 
   runTest(JenaSerDes, JenaSerDes)
   runTest(JenaSerDes, JenaStreamSerDes)
@@ -141,7 +147,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             os.close()
             val data = os.toByteArray
             data.size should be > 0
-            checkStreamTypes(data, "triples")
+            checkStreamOptions(data, "triples", preset)
 
             val model2 = des.readTriplesJelly(ByteArrayInputStream(data), None)
             val deserializedSize = summon[Measure[TMDes]].size(model2)
@@ -162,7 +168,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             os.close()
             val data = os.toByteArray
             data.size should be > 0
-            checkStreamTypes(data, "quads")
+            checkStreamOptions(data, "quads", preset)
 
             val ds2 = des.readQuadsJelly(ByteArrayInputStream(data), None)
             val deserializedSize = summon[Measure[TDDes]].size(ds2)
