@@ -36,19 +36,21 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
   override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] = 
     read(is, rio.JELLY, supportedOptions)
 
-  private def write(os: OutputStream, model: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
-    val conf = JellyWriterSettings.configFromOptions(opt, frameSize)
+  private def write(os: OutputStream, model: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+    val conf = if opt.isDefined then 
+      JellyWriterSettings.configFromOptions(opt.get, frameSize) 
+    else JellyWriterSettings.configFromOptions(frameSize)
     val writer = Rio.createWriter(rio.JELLY, os)
     writer.setWriterConfig(conf)
     writer.startRDF()
     model.foreach(writer.handleStatement)
     writer.endRDF()
 
-  override def writeTriplesJelly(os: OutputStream, model: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
+  override def writeTriplesJelly(os: OutputStream, model: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     // We set the physical type to TRIPLES, because the writer has no way of telling triples from
     // quads in RDF4J. Thus, the writer will default to QUADS.
-    write(os, model, opt.withPhysicalType(PhysicalStreamType.TRIPLES), frameSize)
+    write(os, model, opt.map(_.withPhysicalType(PhysicalStreamType.TRIPLES)), frameSize)
 
-  override def writeQuadsJelly(os: OutputStream, dataset: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
+  override def writeQuadsJelly(os: OutputStream, dataset: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     // No need to set the physical type, because the writer will default to QUADS.
     write(os, dataset, opt, frameSize)

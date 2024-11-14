@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.jena.given
+import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import eu.ostrzyciel.jelly.stream.*
 import org.apache.jena.query.Dataset
@@ -26,15 +27,16 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
     JenaSerDes.readTriplesJelly(is, supportedOptions)
 
   override def writeQuadsJelly
-  (os: OutputStream, dataset: Dataset, opt: RdfStreamOptions, frameSize: Int): Unit =
-    val f = EncoderSource.fromDatasetAsQuads(dataset, ByteSizeLimiter(32_000), opt)
+  (os: OutputStream, dataset: Dataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+    val f = EncoderSource.fromDatasetAsQuads
+      (dataset, ByteSizeLimiter(32_000), opt.getOrElse(JellyOptions.smallAllFeatures))
       (using jenaIterableAdapter, jenaConverterFactory)
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)
 
   override def writeTriplesJelly
-  (os: OutputStream, model: Model, opt: RdfStreamOptions, frameSize: Int): Unit =
-    val f = EncoderSource.fromGraph(model, ByteSizeLimiter(32_000), opt)
+  (os: OutputStream, model: Model, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+    val f = EncoderSource.fromGraph(model, ByteSizeLimiter(32_000), opt.getOrElse(JellyOptions.smallAllFeatures))
       (using jenaIterableAdapter, jenaConverterFactory)
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)

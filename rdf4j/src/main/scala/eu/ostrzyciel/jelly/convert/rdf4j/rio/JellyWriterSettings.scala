@@ -5,6 +5,11 @@ import org.eclipse.rdf4j.rio.WriterConfig
 import org.eclipse.rdf4j.rio.helpers.*
 
 object JellyWriterSettings:
+  def configFromOptions(frameSize: Long): WriterConfig =
+    val c = new WriterConfig()
+    c.set(FRAME_SIZE, frameSize)
+    c
+
   def configFromOptions(opt: RdfStreamOptions, frameSize: Long = 256L): WriterConfig =
     val c = new WriterConfig()
     c.set(FRAME_SIZE, frameSize)
@@ -33,19 +38,21 @@ object JellyWriterSettings:
   val PHYSICAL_TYPE = new ClassRioSetting[PhysicalStreamType](
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.physicalType",
     "Physical stream type",
-    PhysicalStreamType.TRIPLES
+    PhysicalStreamType.QUADS
   )
 
   val ALLOW_GENERALIZED_STATEMENTS = new BooleanRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.allowGeneralizedStatements",
-    "Allow generalized statements",
-    false
+    "Allow generalized statements. Enabled by default, because we cannot know this in advance. " +
+      "If your data does not contain generalized statements, it is recommended that you set this to false.",
+    true
   )
   
   val ALLOW_RDF_STAR = new BooleanRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.allowRdfStar",
-    "Allow RDF-star statements",
-    false
+    "Allow RDF-star statements. Enabled by default, because we cannot know this in advance. " +
+      "If your data does not contain RDF-star statements, it is recommended that you set this to false.",
+    true
   )
 
   val MAX_NAME_TABLE_SIZE = new LongRioSetting(

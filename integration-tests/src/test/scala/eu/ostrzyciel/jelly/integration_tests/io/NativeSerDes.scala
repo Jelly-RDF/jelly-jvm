@@ -17,5 +17,5 @@ trait NativeSerDes[TModel : Measure, TDataset : Measure]:
   def readQuadsW3C(is: InputStream): TDataset
   def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): TModel
   def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): TDataset
-  def writeTriplesJelly(os: OutputStream, model: TModel, opt: RdfStreamOptions, frameSize: Int): Unit
-  def writeQuadsJelly(os: OutputStream, dataset: TDataset, opt: RdfStreamOptions, frameSize: Int): Unit
+  def writeTriplesJelly(os: OutputStream, model: TModel, opt: Option[RdfStreamOptions], frameSize: Int): Unit
+  def writeQuadsJelly(os: OutputStream, dataset: TDataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit

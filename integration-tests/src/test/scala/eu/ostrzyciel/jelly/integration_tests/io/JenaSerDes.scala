@@ -49,11 +49,17 @@ object JenaSerDes extends NativeSerDes[Model, Dataset]:
     m
 
   def writeQuadsJelly
-  (os: OutputStream, dataset: Dataset, opt: RdfStreamOptions, frameSize: Int): Unit =
-    val format = new RDFFormat(JellyLanguage.JELLY, JellyFormatVariant(opt, frameSize))
+  (os: OutputStream, dataset: Dataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+    var variant = JellyFormatVariant(frameSize = frameSize)
+    if opt.isDefined then
+      variant = variant.copy(opt = opt.get)
+    val format = new RDFFormat(JellyLanguage.JELLY, variant)
     RDFDataMgr.write(os, dataset, format)
 
   def writeTriplesJelly
-  (os: OutputStream, model: Model, opt: RdfStreamOptions, frameSize: Int): Unit =
-    val format = new RDFFormat(JellyLanguage.JELLY, JellyFormatVariant(opt, frameSize))
+  (os: OutputStream, model: Model, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+    var variant = JellyFormatVariant(frameSize = frameSize)
+    if opt.isDefined then
+      variant = variant.copy(opt = opt.get)
+    val format = new RDFFormat(JellyLanguage.JELLY, variant)
     RDFDataMgr.write(os, model, format)

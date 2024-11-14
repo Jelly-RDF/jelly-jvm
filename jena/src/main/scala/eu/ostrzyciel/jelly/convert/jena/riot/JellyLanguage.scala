@@ -13,7 +13,11 @@ object JellyLanguage:
   /**
    * The Jelly language constant for use in Apache Jena RIOT.
    *
-   * This uses by default [[JellyFormat.JELLY_SMALL_STRICT]] for serialization.
+   * This uses by default [[JellyFormat.JELLY_SMALL_ALL_FEATURES]] for serialization, assuming pessimistically
+   * that the user may want to use all features of the protocol.
+   *
+   * If you are not intending to use generalized RDF or RDF-star, you may want to use
+   * [[JellyFormat.JELLY_SMALL_STRICT]].
    */
   val JELLY: Lang = LangBuilder.create(jellyName, jellyContentType)
     .addAltNames("JELLY")
@@ -66,18 +70,20 @@ object JellyLanguage:
       RDFLanguages.register(JELLY)
 
       // Default serialization format
-      RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_STRICT)
+      RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_ALL_FEATURES)
       // Register also the streaming writer
-      StreamRDFWriter.register(JELLY, JellyFormat.JELLY_SMALL_STRICT)
+      StreamRDFWriter.register(JELLY, JellyFormat.JELLY_SMALL_ALL_FEATURES)
 
       // Register the writers
       val allFormats = List(
         JELLY_SMALL_STRICT,
         JELLY_SMALL_GENERALIZED,
         JELLY_SMALL_RDF_STAR,
+        JELLY_SMALL_ALL_FEATURES,
         JELLY_BIG_STRICT,
         JELLY_BIG_GENERALIZED,
-        JELLY_BIG_RDF_STAR
+        JELLY_BIG_RDF_STAR,
+        JELLY_BIG_ALL_FEATURES,
       )
 
       for format <- allFormats do

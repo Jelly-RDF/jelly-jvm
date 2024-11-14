@@ -17,13 +17,16 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStre
 class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   given ActorSystem = ActorSystem("test")
 
-  val presets: Seq[(RdfStreamOptions, Int, String)] = Seq(
-    (JellyOptions.smallGeneralized, 1, "small generalized"),
-    (JellyOptions.smallRdfStar, 1_000_000, "small RDF-star"),
-    (JellyOptions.smallStrict, 30, "small strict"),
-    (JellyOptions.bigGeneralized, 256, "big generalized"),
-    (JellyOptions.bigRdfStar, 10_000, "big RDF-star"),
-    (JellyOptions.bigStrict, 3, "big strict"),
+  val presets: Seq[(Option[RdfStreamOptions], Int, String)] = Seq(
+    (Some(JellyOptions.smallGeneralized), 1, "small generalized"),
+    (Some(JellyOptions.smallRdfStar), 1_000_000, "small RDF-star"),
+    (Some(JellyOptions.smallStrict), 30, "small strict"),
+    (Some(JellyOptions.smallAllFeatures), 13, "small all features"),
+    (Some(JellyOptions.bigGeneralized), 256, "big generalized"),
+    (Some(JellyOptions.bigRdfStar), 10_000, "big RDF-star"),
+    (Some(JellyOptions.bigStrict), 3, "big strict"),
+    (Some(JellyOptions.bigAllFeatures), 2, "big all features"),
+    (None, 10, "no options"),
   )
 
   val presetsUnsupported: Seq[(RdfStreamOptions, RdfStreamOptions, String)] = Seq(
@@ -65,7 +68,8 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     )
   )
 
-  private def checkStreamOptions(bytes: Array[Byte], expectedType: String, expectedOpt: RdfStreamOptions) =
+  private def checkStreamOptions(bytes: Array[Byte], expectedType: String, expectedOpt: Option[RdfStreamOptions]) =
+    val expOpt = expectedOpt.getOrElse(JellyOptions.smallAllFeatures)
     val frame = RdfStreamFrame.parseDelimitedFrom(new ByteArrayInputStream(bytes)).get
     frame.rows.size should be > 0
     frame.rows.head.row.isOptions should be (true)
@@ -76,11 +80,11 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     else if expectedType == "quads" then
       options.physicalType should be (PhysicalStreamType.QUADS)
       options.logicalType should be (LogicalStreamType.FLAT_QUADS)
-    options.generalizedStatements should be (expectedOpt.generalizedStatements)
-    options.rdfStar should be (expectedOpt.rdfStar)
-    options.maxNameTableSize should be (expectedOpt.maxNameTableSize)
-    options.maxPrefixTableSize should be (expectedOpt.maxPrefixTableSize)
-    options.maxDatatypeTableSize should be (expectedOpt.maxDatatypeTableSize)
+    options.generalizedStatements should be (expOpt.generalizedStatements)
+    options.rdfStar should be (expOpt.rdfStar)
+    options.maxNameTableSize should be (expOpt.maxNameTableSize)
+    options.maxPrefixTableSize should be (expOpt.maxPrefixTableSize)
+    options.maxDatatypeTableSize should be (expOpt.maxDatatypeTableSize)
     options.version should be (Constants.protoVersion)
 
   runTest(JenaSerDes, JenaSerDes)
@@ -123,7 +127,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
           originalSize should be > 0L
 
           val os = ByteArrayOutputStream()
-          ser.writeTriplesJelly(os, model, encOptions, 100)
+          ser.writeTriplesJelly(os, model, Some(encOptions), 100)
           os.flush()
           os.close()
           val data = os.toByteArray
@@ -147,13 +151,21 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             os.close()
             val data = os.toByteArray
             data.size should be > 0
-            checkStreamOptions(data, "triples", preset)
+            // In case we are leaving the default settings, RDF4J has no way of knowing if the data is
+            // triples or quads, so it's going to default to quads.
+            val mayBeQuads = ser.name == "RDF4J" && preset.isEmpty
+            checkStreamOptions(data, if mayBeQuads then "quads" else "triples", preset)
 
-            val model2 = des.readTriplesJelly(ByteArrayInputStream(data), None)
-            val deserializedSize = summon[Measure[TMDes]].size(model2)
-            // Add -1 to account for the different statement counting of RDF4J and Jena
-            deserializedSize should be <= originalSize
-            deserializedSize should be >= originalSize - 1
+            // Do not test this if we are encoding with RDF4J with default settings with the streaming Jena parser,
+            // because the parser will just discard any quads completely.
+            // Funnily enough, this is not the case with the classic Jena parser, which forces quads in the
+            // default graph to be triples. Fun.
+            if !(mayBeQuads && des.name == "Jena (StreamRDF)") then
+              val model2 = des.readTriplesJelly(ByteArrayInputStream(data), None)
+              val deserializedSize = summon[Measure[TMDes]].size(model2)
+              // Add -1 to account for the different statement counting of RDF4J and Jena
+              deserializedSize should be <= originalSize
+              deserializedSize should be >= originalSize - 1
           }
 
         for (name, file) <- TestCases.quads do

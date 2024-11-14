@@ -36,6 +36,14 @@ object JellyOptions:
     bigStrict.withRdfStar(true)
 
   /**
+   * "Big" preset suitable for high-volume streams and larger machines.
+   * Allows all protocol features (including generalized RDF statements and RDF-star statements).
+   * @return
+   */
+  def bigAllFeatures: RdfStreamOptions =
+    bigStrict.withGeneralizedStatements(true).withRdfStar(true)
+
+  /**
    * "Small" preset suitable for low-volume streams and smaller machines.
    * Does not allow generalized RDF statements.
    * @return
@@ -61,6 +69,14 @@ object JellyOptions:
     */
   def smallRdfStar: RdfStreamOptions =
     smallStrict.withRdfStar(true)
+
+  /**
+   * "Small" preset suitable for low-volume streams and smaller machines.
+   * Allows all protocol features (including generalized RDF statements and RDF-star statements).
+   * @return
+   */
+  def smallAllFeatures: RdfStreamOptions =
+    smallStrict.withGeneralizedStatements(true).withRdfStar(true)
 
   /**
    * Default maximum supported options for Jelly decoders.
