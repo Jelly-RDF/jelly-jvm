@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.convert.rdf4j.rio
 
 import eu.ostrzyciel.jelly.convert.rdf4j.Rdf4jProtoEncoder
-import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, RdfStreamFrame, RdfStreamOptions, RdfStreamRow}
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.rio.{RDFFormat, RioSetting}
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter
@@ -10,7 +10,15 @@ import java.io.OutputStream
 import java.util
 import scala.collection.mutable.ArrayBuffer
 
-//noinspection ConvertNullInitializerToUnderscore
+/**
+ * RDF4J Rio writer for Jelly RDF format.
+ *
+ * The writer will automatically set the logical stream type based on the physical stream type.
+ * If no physical stream type is set, it will default to quads, because we really have no way of knowing in RDF4J.
+ * If you want your stream to be really of type TRIPLES, set the PHYSICAL_TYPE setting yourself.
+ *
+ * @param out the output stream to write to
+ */
 final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
   import JellyWriterSettings.*
 
@@ -38,7 +46,9 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     super.startRDF()
 
     val c = getWriterConfig
-    val pType = c.get(PHYSICAL_TYPE)
+    var pType = c.get(PHYSICAL_TYPE)
+    if pType.isUnspecified then
+      pType = PhysicalStreamType.QUADS
     val lType = if pType.isTriples then
       LogicalStreamType.FLAT_TRIPLES
     else if pType.isQuads then
@@ -48,7 +58,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
 
     options = RdfStreamOptions(
       streamName = c.get(STREAM_NAME),
-      physicalType = c.get(PHYSICAL_TYPE),
+      physicalType = pType,
       generalizedStatements = c.get(ALLOW_GENERALIZED_STATEMENTS).booleanValue(),
       rdfStar = c.get(ALLOW_RDF_STAR).booleanValue(),
       maxNameTableSize = c.get(MAX_NAME_TABLE_SIZE).toInt,

@@ -45,12 +45,10 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
     writer.endRDF()
 
   override def writeTriplesJelly(os: OutputStream, model: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
+    // We set the physical type to TRIPLES, because the writer has no way of telling triples from
+    // quads in RDF4J. Thus, the writer will default to QUADS.
     write(os, model, opt.withPhysicalType(PhysicalStreamType.TRIPLES), frameSize)
 
   override def writeQuadsJelly(os: OutputStream, dataset: Seq[Statement], opt: RdfStreamOptions, frameSize: Int): Unit =
-    write(os, dataset, opt.withPhysicalType(PhysicalStreamType.QUADS), frameSize)
-
-
-
-
-
+    // No need to set the physical type, because the writer will default to QUADS.
+    write(os, dataset, opt, frameSize)
