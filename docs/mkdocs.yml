@@ -90,6 +90,7 @@ nav:
   - Getting started (application developers): 'getting-started-devs.md'
   - User guide:
     - Apache Jena integration: 'user/jena.md'
+    - Apache Jena CLI tools: 'user/jena-cli.md'
     - RDF4J integration: 'user/rdf4j.md'
     - Reactive streaming: 'user/reactive.md'
     - gRPC: 'user/grpc.md'

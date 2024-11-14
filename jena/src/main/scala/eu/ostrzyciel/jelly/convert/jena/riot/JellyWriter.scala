@@ -20,9 +20,29 @@ private[riot] object Util:
    */
   def getVariant(syntaxForm: RDFFormat): JellyFormatVariant =
     syntaxForm.getVariant match
-      case opt: JellyFormatVariant => opt
+      case v: JellyFormatVariant => v
       case _ => JellyFormatVariant()
 
+  /**
+   * Update the Jelly format variant with the information from the context.
+   * @param baseVariant base variant
+   * @param context context
+   * @return
+   */
+  def applyContext(baseVariant: JellyFormatVariant, context: Context): JellyFormatVariant =
+    // Use the preset if set
+    val presetName = context.get(JellyLanguage.SYMBOL_PRESET, "")
+    val preset = if presetName.nonEmpty then
+      val p = JellyLanguage.presets.get(presetName)
+      if p.isEmpty then
+        throw new RiotException(s"Unknown Jelly preset: $presetName. " +
+          s"Available presets: ${JellyLanguage.presets.keys.mkString(", ")}")
+      p.get
+    else baseVariant.opt
+    baseVariant.copy(
+      opt = context.get[RdfStreamOptions](JellyLanguage.SYMBOL_STREAM_OPTIONS, preset),
+      frameSize = context.getInt(JellyLanguage.SYMBOL_FRAME_SIZE, baseVariant.frameSize),
+    )
 
 /**
  * A factory for creating a Jelly writer for a graph.
@@ -49,7 +69,8 @@ final class JellyGraphWriter(opt: JellyFormatVariant) extends WriterGraphRIOTBas
       "Please use an OutputStream.")
 
   override def write(out: OutputStream, graph: Graph, prefixMap: PrefixMap, baseURI: String, context: Context): Unit =
-    val variant = opt.copy(opt.opt
+    var variant = Util.applyContext(opt, context)
+    variant = variant.copy(variant.opt
       .withPhysicalType(PhysicalStreamType.TRIPLES)
       .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
     )
@@ -74,7 +95,8 @@ final class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIO
   override def write(
     out: OutputStream, dataset: DatasetGraph, prefixMap: PrefixMap, baseURI: String, context: Context
   ): Unit =
-    val variant = opt.copy(opt.opt
+    var variant = Util.applyContext(opt, context)
+    variant = variant.copy(variant.opt
       .withPhysicalType(PhysicalStreamType.QUADS)
       .withLogicalType(LogicalStreamType.FLAT_QUADS)
     )
@@ -91,14 +113,8 @@ final class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIO
  */
 object JellyStreamWriterFactory extends StreamRDFWriterFactory:
   override def create(out: OutputStream, format: RDFFormat, context: Context): StreamRDF =
-    val variant = Util.getVariant(format)
-    JellyStreamWriterAutodetectType(
-      variant.copy(
-        opt = context.get[RdfStreamOptions](JellyLanguage.SYMBOL_STREAM_OPTIONS, variant.opt),
-        frameSize = context.getInt(JellyLanguage.SYMBOL_FRAME_SIZE, variant.frameSize),
-      ),
-      out
-    )
+    val variant = Util.applyContext(Util.getVariant(format), context)
+    JellyStreamWriterAutodetectType(variant, out)
 
 /**
  * Wrapper on JellyStreamWriter that autodetects the physical stream type based on the first element

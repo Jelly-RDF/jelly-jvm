@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.jena.riot.JellyLanguage
 import eu.ostrzyciel.jelly.core.JellyOptions
-import eu.ostrzyciel.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import org.apache.jena.graph.Triple
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
 import org.apache.jena.riot.{RDFLanguages, RDFParser, RIOT}
