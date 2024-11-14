@@ -54,22 +54,24 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]]:
       .parse(StreamRDFLib.sinkQuads(sink))
     sink.result
 
-  override def writeTriplesJelly(os: OutputStream, model: Seq[Triple], opt: RdfStreamOptions, frameSize: Int): Unit =
+  override def writeTriplesJelly(os: OutputStream, model: Seq[Triple], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     val context = RIOT.getContext.copy()
+      .set(JellyLanguage.SYMBOL_FRAME_SIZE, frameSize)
+    if opt.isDefined then
       // Not setting the physical type, as it should be inferred from the data.
       // This emulates how RIOT initializes the stream writer in practice.
-      .set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt)
-      .set(JellyLanguage.SYMBOL_FRAME_SIZE, frameSize)
+      context.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.get)
 
     val writerStream = StreamRDFWriter.getWriterStream(os, JellyLanguage.JELLY, context)
     writerStream.start()
     model.foreach(writerStream.triple)
     writerStream.finish()
 
-  override def writeQuadsJelly(os: OutputStream, dataset: Seq[Quad], opt: RdfStreamOptions, frameSize: Int): Unit =
+  override def writeQuadsJelly(os: OutputStream, dataset: Seq[Quad], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     val context = RIOT.getContext.copy()
-      .set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt)
       .set(JellyLanguage.SYMBOL_FRAME_SIZE, frameSize)
+    if opt.isDefined then
+      context.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.get)
 
     val writerStream = StreamRDFWriter.getWriterStream(os, JellyLanguage.JELLY, context)
     writerStream.start()

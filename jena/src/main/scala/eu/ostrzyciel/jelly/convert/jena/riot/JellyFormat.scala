@@ -11,7 +11,7 @@ import org.apache.jena.riot.{RDFFormat, RDFFormatVariant}
  * @param frameSize size of each RdfStreamFrame, in rows
  */
 case class JellyFormatVariant(
-  opt: RdfStreamOptions = RdfStreamOptions.defaultInstance,
+  opt: RdfStreamOptions = JellyOptions.smallAllFeatures,
   frameSize: Int = 256
 ) extends RDFFormatVariant(opt.toString)
 
@@ -22,6 +22,8 @@ object JellyFormat:
   val JELLY_SMALL_STRICT = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.smallStrict))
   val JELLY_SMALL_GENERALIZED = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.smallGeneralized))
   val JELLY_SMALL_RDF_STAR = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.smallRdfStar))
+  val JELLY_SMALL_ALL_FEATURES = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.smallAllFeatures))
   val JELLY_BIG_STRICT = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.bigStrict))
   val JELLY_BIG_GENERALIZED = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.bigGeneralized))
   val JELLY_BIG_RDF_STAR = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.bigRdfStar))
+  val JELLY_BIG_ALL_FEATURES = new RDFFormat(JELLY, JellyFormatVariant(JellyOptions.bigAllFeatures))
