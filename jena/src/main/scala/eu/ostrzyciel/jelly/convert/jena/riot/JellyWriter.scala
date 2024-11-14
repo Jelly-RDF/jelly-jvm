@@ -117,14 +117,16 @@ final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: Output
   override def triple(triple: Triple): Unit =
     if inner == null then
       inner = JellyStreamWriter(opt.copy(
-        opt = opt.opt.withPhysicalType(PhysicalStreamType.TRIPLES),
+        opt = opt.opt.withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES),
       ), out)
     inner.triple(triple)
 
   override def quad(quad: Quad): Unit =
     if inner == null then
       inner = JellyStreamWriter(opt.copy(
-        opt = opt.opt.withPhysicalType(PhysicalStreamType.QUADS),
+        opt = opt.opt.withPhysicalType(PhysicalStreamType.QUADS)
+          .withLogicalType(LogicalStreamType.FLAT_QUADS),
       ), out)
     inner.quad(quad)
 
