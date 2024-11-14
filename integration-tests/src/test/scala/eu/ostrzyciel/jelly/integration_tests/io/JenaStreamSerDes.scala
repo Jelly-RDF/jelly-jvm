@@ -56,7 +56,9 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]]:
 
   override def writeTriplesJelly(os: OutputStream, model: Seq[Triple], opt: RdfStreamOptions, frameSize: Int): Unit =
     val context = RIOT.getContext.copy()
-      .set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.withPhysicalType(PhysicalStreamType.TRIPLES))
+      // Not setting the physical type, as it should be inferred from the data.
+      // This emulates how RIOT initializes the stream writer in practice.
+      .set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt)
       .set(JellyLanguage.SYMBOL_FRAME_SIZE, frameSize)
 
     val writerStream = StreamRDFWriter.getWriterStream(os, JellyLanguage.JELLY, context)
@@ -66,7 +68,7 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]]:
 
   override def writeQuadsJelly(os: OutputStream, dataset: Seq[Quad], opt: RdfStreamOptions, frameSize: Int): Unit =
     val context = RIOT.getContext.copy()
-      .set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.withPhysicalType(PhysicalStreamType.QUADS))
+      .set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt)
       .set(JellyLanguage.SYMBOL_FRAME_SIZE, frameSize)
 
     val writerStream = StreamRDFWriter.getWriterStream(os, JellyLanguage.JELLY, context)
