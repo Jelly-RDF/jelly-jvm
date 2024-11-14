@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import eu.ostrzyciel.jelly.core.*
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.integration_tests.TestCases
 import org.apache.pekko.actor.ActorSystem
 import org.scalatest.concurrent.ScalaFutures
@@ -64,6 +64,24 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       "unsupported version"
     )
   )
+
+  private def checkStreamOptions(bytes: Array[Byte], expectedType: String, expectedOpt: RdfStreamOptions) =
+    val frame = RdfStreamFrame.parseDelimitedFrom(new ByteArrayInputStream(bytes)).get
+    frame.rows.size should be > 0
+    frame.rows.head.row.isOptions should be (true)
+    val options = frame.rows.head.row.options
+    if expectedType == "triples" then
+      options.physicalType should be (PhysicalStreamType.TRIPLES)
+      options.logicalType should be (LogicalStreamType.FLAT_TRIPLES)
+    else if expectedType == "quads" then
+      options.physicalType should be (PhysicalStreamType.QUADS)
+      options.logicalType should be (LogicalStreamType.FLAT_QUADS)
+    options.generalizedStatements should be (expectedOpt.generalizedStatements)
+    options.rdfStar should be (expectedOpt.rdfStar)
+    options.maxNameTableSize should be (expectedOpt.maxNameTableSize)
+    options.maxPrefixTableSize should be (expectedOpt.maxPrefixTableSize)
+    options.maxDatatypeTableSize should be (expectedOpt.maxDatatypeTableSize)
+    options.version should be (Constants.protoVersion)
 
   runTest(JenaSerDes, JenaSerDes)
   runTest(JenaSerDes, JenaStreamSerDes)
@@ -129,6 +147,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             os.close()
             val data = os.toByteArray
             data.size should be > 0
+            checkStreamOptions(data, "triples", preset)
 
             val model2 = des.readTriplesJelly(ByteArrayInputStream(data), None)
             val deserializedSize = summon[Measure[TMDes]].size(model2)
@@ -149,6 +168,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             os.close()
             val data = os.toByteArray
             data.size should be > 0
+            checkStreamOptions(data, "quads", preset)
 
             val ds2 = des.readQuadsJelly(ByteArrayInputStream(data), None)
             val deserializedSize = summon[Measure[TDDes]].size(ds2)

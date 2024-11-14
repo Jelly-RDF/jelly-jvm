@@ -92,7 +92,7 @@ final class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIO
 object JellyStreamWriterFactory extends StreamRDFWriterFactory:
   override def create(out: OutputStream, format: RDFFormat, context: Context): StreamRDF =
     val variant = Util.getVariant(format)
-    JellyStreamWriter(
+    JellyStreamWriterAutodetectType(
       variant.copy(
         opt = context.get[RdfStreamOptions](JellyLanguage.SYMBOL_STREAM_OPTIONS, variant.opt),
         frameSize = context.getInt(JellyLanguage.SYMBOL_FRAME_SIZE, variant.frameSize),
@@ -100,6 +100,43 @@ object JellyStreamWriterFactory extends StreamRDFWriterFactory:
       out
     )
 
+/**
+ * Wrapper on JellyStreamWriter that autodetects the physical stream type based on the first element
+ * (triple or quad) added to the stream.
+ *
+ * This is used when initializing the stream writer with the RIOT APIs, where the stream type is not known.
+ *
+ * @param opt Jelly format variant
+ * @param out output stream
+ */
+final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: OutputStream) extends StreamRDF:
+  private var inner: JellyStreamWriter = null
+
+  override def start(): Unit = ()
+
+  override def triple(triple: Triple): Unit =
+    if inner == null then
+      inner = JellyStreamWriter(opt.copy(
+        opt = opt.opt.withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES),
+      ), out)
+    inner.triple(triple)
+
+  override def quad(quad: Quad): Unit =
+    if inner == null then
+      inner = JellyStreamWriter(opt.copy(
+        opt = opt.opt.withPhysicalType(PhysicalStreamType.QUADS)
+          .withLogicalType(LogicalStreamType.FLAT_QUADS),
+      ), out)
+    inner.quad(quad)
+
+  override def base(base: String): Unit = ()
+
+  override def prefix(prefix: String, iri: String): Unit = ()
+
+  override def finish(): Unit =
+    if inner != null then
+      inner.finish()
 
 /**
  * A stream writer that writes RDF data in Jelly format.
