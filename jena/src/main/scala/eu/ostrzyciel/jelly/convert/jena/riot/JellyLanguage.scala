@@ -2,6 +2,8 @@ package eu.ostrzyciel.jelly.convert.jena.riot
 
 import eu.ostrzyciel.jelly.convert.jena.riot.JellyFormat.*
 import eu.ostrzyciel.jelly.core.Constants.*
+import eu.ostrzyciel.jelly.core.JellyOptions
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
 import org.apache.jena.riot.*
 import org.apache.jena.riot.system.StreamRDFWriter
 import org.apache.jena.sparql.util
@@ -27,6 +29,20 @@ object JellyLanguage:
   private val SYMBOL_NS: String = "https://ostrzyciel.eu/jelly/riot/symbols#"
 
   /**
+   * Pre-defined serialization format variants for Jelly.
+   */
+  private[riot] val presets: Map[String, RdfStreamOptions] = Map(
+    "SMALL_STRICT" -> JellyOptions.smallStrict,
+    "SMALL_GENERALIZED" -> JellyOptions.smallGeneralized,
+    "SMALL_RDF_STAR" -> JellyOptions.smallRdfStar,
+    "SMALL_ALL_FEATURES" -> JellyOptions.smallAllFeatures,
+    "BIG_STRICT" -> JellyOptions.bigStrict,
+    "BIG_GENERALIZED" -> JellyOptions.bigGeneralized,
+    "BIG_RDF_STAR" -> JellyOptions.bigRdfStar,
+    "BIG_ALL_FEATURES" -> JellyOptions.bigAllFeatures,
+  )
+
+  /**
    * Symbol for the stream options to be used when writing RDF data.
    *
    * Set this in Jena's Context to instances of [[eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions]].
@@ -34,12 +50,23 @@ object JellyLanguage:
   val SYMBOL_STREAM_OPTIONS: util.Symbol = org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "streamOptions")
 
   /**
+   * Alternative to setting the stream options directly, you specify a name of the present to use.
+   *
+   * For example: "BIG_STRICT" or "SMALL_ALL_FEATURES".
+   *
+   * This is useful for example in the RIOT command line tool, where you can't set complex objects in the context.
+   *
+   * See the [[presets]] map for available presets.
+   */
+  val SYMBOL_PRESET: util.Symbol = org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "preset")
+
+  /**
    * Symbol for the maximum supported options of the Jelly parser. Use this to for example allow for decoding Jelly
    * files with very large lookup tables or to disable RDF-star support.
-   * 
+   *
    * Set this in Jena's Context to instances of [[eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions]].
-   * 
-   * You should always first obtain the default supported options from 
+   *
+   * You should always first obtain the default supported options from
    * [[eu.ostrzyciel.jelly.core.JellyOptions.defaultSupportedOptions]] and then modify them as needed.
    */
   val SYMBOL_SUPPORTED_OPTIONS: util.Symbol = org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "supportedOptions")

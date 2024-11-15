@@ -23,6 +23,10 @@ You can simply add Jelly format support to [Apache Jena](https://jena.apache.org
 !!! warning "Content negotiation in Fuseki"
 
     Content negotiation using the `application/x-jelly-rdf` media type in the `Accept` header works in Fuseki since Apache Jena version 5.2.0. Previous versions of Fuseki did not support media type registration.
+
+!!! tip "How to use Jelly with Jena's CLI tools?"
+
+    Jelly-JVM fully supports Apache Jena's command-line interface (CLI) utilities. See the **[dedicated guide](user/jena-cli.md)** for more information.
     
 
 ### Eclipse RDF4J

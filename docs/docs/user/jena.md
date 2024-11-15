@@ -32,3 +32,4 @@ Usage notes:
 
 - [Useful utilities](utilities.md)
 - [Reactive streaming with Jelly-JVM](reactive.md)
+- [Using Jelly with Jena's CLI tools](jena-cli.md)
