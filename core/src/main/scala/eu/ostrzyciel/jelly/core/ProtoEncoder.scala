@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ArrayBuffer
 
 object ProtoEncoder:
   private val graphEnd = Seq(RdfStreamRow(RdfGraphEnd.defaultInstance))
@@ -149,12 +149,12 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     options.maxNameTableSize,
     Math.max(Math.min(options.maxNameTableSize, 1024), 256),
   )
-  private var emittedOptions = false
+  private var emittedOptions: Boolean = false
 
   private val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
-  private var lastGraph: TNode | LastNodeHolder.NoValue.type = LastNodeHolder.NoValue 
+  private var lastGraph: TNode | LastNodeHolder.NoValue.type = LastNodeHolder.NoValue
 
   private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): SpoTerm =
     if node.equals(lastNodeHolder.node) then null

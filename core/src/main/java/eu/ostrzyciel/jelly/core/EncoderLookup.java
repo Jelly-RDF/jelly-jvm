@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -157,5 +158,17 @@ final class EncoderLookup {
         }
         entryForReturns.getId = id;
         return entryForReturns;
+    }
+
+    public void clear() {
+        map.clear();
+        Arrays.fill(table, 0);
+        tail = 0;
+        used = 0;
+        lastSetId = -1000;
+        if (useSerials) {
+            Arrays.fill(serials, 0);
+            serials[0] = -1;
+        }
     }
 }
