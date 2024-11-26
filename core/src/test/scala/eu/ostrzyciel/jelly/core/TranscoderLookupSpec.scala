@@ -117,6 +117,78 @@ class TranscoderLookupSpec extends AnyWordSpec, Matchers:
       }
     }
 
-    // TODO: cases for isFirstElement
+    "handle multiple input streams" when {
+      "it's a prefix lookup" in {
+        val tl = TranscoderLookup(false, 10)
+        tl.newInputStream(5)
+        tl.addEntry(0, "s1_1")
+        tl.addEntry(0, "s2_1")
+        tl.addEntry(0, "s3_1")
+        tl.remap(2) shouldBe 2
+
+        tl.newInputStream(5)
+        tl.addEntry(0, "s1_2")
+        tl.addEntry(0, "s2_2")
+        tl.addEntry(0, "s3_2")
+        tl.remap(1) shouldBe 4
+        tl.remap(2) shouldBe 5
+        tl.remap(3) shouldBe 6
+
+        tl.newInputStream(5)
+        tl.addEntry(0, "s1_3")
+        tl.addEntry(0, "s2_3")
+        tl.addEntry(0, "s3_3")
+        tl.remap(1) shouldBe 7
+        tl.remap(2) shouldBe 8
+        tl.remap(3) shouldBe 9
+
+        tl.newInputStream(5)
+        tl.addEntry(0, "s1_1")
+        tl.addEntry(0, "s2_2")
+        tl.addEntry(0, "s3_3")
+        tl.remap(1) shouldBe 1
+        tl.remap(2) shouldBe 5
+        tl.remap(3) shouldBe 9
+      }
+
+      "it's a name lookup" in {
+        val tl = TranscoderLookup(true, 10)
+        tl.newInputStream(5)
+        tl.addEntry(0, "s1_1")
+        tl.addEntry(0, "s2_1")
+        tl.addEntry(0, "s3_1")
+        tl.remap(2) shouldBe 2
+        tl.remap(0) shouldBe 0
+
+        tl.newInputStream(5)
+        tl.addEntry(0, "s1_1")
+        tl.addEntry(0, "s2_1")
+        tl.addEntry(0, "s3_1")
+        tl.remap(0) shouldBe 1
+        tl.remap(0) shouldBe 0
+        tl.remap(0) shouldBe 0
+
+        tl.newInputStream(5)
+        tl.addEntry(0, "s1_2")
+        tl.addEntry(0, "s2_2")
+        tl.addEntry(0, "s3_2")
+        tl.remap(0) shouldBe 0 // last was 3, this is 4, so it's 0
+        tl.remap(3) shouldBe 6
+        tl.remap(1) shouldBe 4
+        tl.remap(0) shouldBe 0
+        tl.remap(0) shouldBe 0
+      }
+    }
+
+    "resize the internal remapping table" in {
+      val tl = TranscoderLookup(false, 100)
+
+      for i <- 1 to 10 do
+        val size = i * 4
+        tl.newInputStream(size)
+        for j <- 1 to size do
+          tl.addEntry(j, s"s$j").getId shouldBe j
+          tl.remap(j)
+    }
   }
 
