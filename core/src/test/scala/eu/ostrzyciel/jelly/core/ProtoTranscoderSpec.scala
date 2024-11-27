@@ -195,5 +195,61 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
         output(i) shouldBe expectedOutput(i)
     }
 
-    // TODO: exception handling
+    "throw an exception on a null row" in {
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.smallStrict)
+      val ex = intercept[RdfProtoTranscodingError] {
+        transcoder.ingestRow(RdfStreamRow())
+      }
+      ex.getMessage should include ("Row kind is not set")
+    }
+
+    "throw an exception on mismatched physical types if checking is enabled" in {
+      val transcoder = ProtoTranscoder.fastMergingTranscoder(
+        JellyOptions.defaultSupportedOptions,
+        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+      )
+      val ex = intercept[RdfProtoTranscodingError] {
+        transcoder.ingestRow(RdfStreamRow(
+          JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.QUADS)
+        ))
+      }
+      ex.getMessage should include ("Input stream has a different physical type than the output")
+      ex.getMessage should include ("PHYSICAL_STREAM_TYPE_QUADS")
+      ex.getMessage should include ("PHYSICAL_STREAM_TYPE_TRIPLES")
+    }
+
+    "not throw an exception on mismatched physical types if checking is disabled" in {
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(
+        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+      )
+      transcoder.ingestRow(RdfStreamRow(
+        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.QUADS)
+      ))
+    }
+
+    "throw an exception on unsupported options if checking is enabled" in {
+      val transcoder = ProtoTranscoder.fastMergingTranscoder(
+        // Mark the prefix table as disabled
+        JellyOptions.defaultSupportedOptions.withMaxPrefixTableSize(0),
+        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+      )
+      val ex = intercept[RdfProtoDeserializationError] {
+        transcoder.ingestRow(RdfStreamRow(
+          JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+        ))
+      }
+      ex.getMessage should include ("larger than the maximum supported size")
+    }
+
+    "accept an input stream with valid options if checking is enabled" in {
+      val transcoder = ProtoTranscoder.fastMergingTranscoder(
+        // Mark the prefix table as disabled
+        JellyOptions.defaultSupportedOptions.withMaxPrefixTableSize(0),
+        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+      )
+      val inputOptions = JellyOptions.smallStrict
+        .withPhysicalType(PhysicalStreamType.TRIPLES)
+        .withMaxPrefixTableSize(0)
+      transcoder.ingestRow(RdfStreamRow(inputOptions))
+    }
   }

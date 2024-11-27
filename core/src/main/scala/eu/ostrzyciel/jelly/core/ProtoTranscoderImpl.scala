@@ -42,7 +42,7 @@ private final class ProtoTranscoderImpl(
   private def processRow(row: RdfStreamRow): Unit =
     val r = row.row
     if r == null then
-      throw new RdfProtoDeserializationError("Row kind is not set.")
+      throw new RdfProtoTranscodingError("Row kind is not set.")
     (r.streamRowValueNumber: @switch) match
       case RdfStreamRow.OPTIONS_FIELD_NUMBER => handleOptions(r.options)
       case RdfStreamRow.TRIPLE_FIELD_NUMBER => handleTriple(row)
@@ -75,7 +75,7 @@ private final class ProtoTranscoderImpl(
         else rowBuffer.append(RdfStreamRow(RdfDatatypeEntry(entry.setId, datatype.value)))
       case _ =>
         // This case should never happen
-        throw new RdfProtoDeserializationError("Row kind is not set.")
+        throw new RdfProtoTranscodingError("Row kind is not set.")
 
   private def handleTriple(row: RdfStreamRow): Unit =
     this.changeInTerms = false
@@ -104,7 +104,7 @@ private final class ProtoTranscoderImpl(
     else if term.isBnode then term
     else if term.isLiteral then handleLiteral(term.literal)
     else if term.isTripleTerm then handleTripleTerm(term.tripleTerm)
-    else throw new RdfProtoDeserializationError("Unknown term type.")
+    else throw new RdfProtoTranscodingError("Unknown term type.")
 
   private def handleGraphTerm(term: GraphTerm): GraphTerm =
     if term == null then null
@@ -112,7 +112,7 @@ private final class ProtoTranscoderImpl(
     else if term.isDefaultGraph then term
     else if term.isBnode then term
     else if term.isLiteral then handleLiteral(term.literal)
-    else throw new RdfProtoDeserializationError("Unknown term type.")
+    else throw new RdfProtoTranscodingError("Unknown term type.")
 
   private def handleIri(iri: RdfIri): RdfIri =
     val prefix = iri.prefixId
@@ -145,7 +145,9 @@ private final class ProtoTranscoderImpl(
 
   private def handleOptions(options: RdfStreamOptions): Unit =
     if checkInputOptions then
-      // TODO: check if this is the same physical stream type...
+      if outputOptions.physicalType != options.physicalType then
+        throw new RdfProtoTranscodingError("Input stream has a different physical type than the output. " +
+          f"Input: ${options.physicalType} output: ${outputOptions.physicalType}")
       JellyOptions.checkCompatibility(options, supportedInputOptions.get)
     this.inputUsesPrefixes = options.maxPrefixTableSize > 0
     if inputUsesPrefixes then
