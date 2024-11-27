@@ -16,7 +16,7 @@ object ProtoTestCases:
   def wrapEncodedFull(rows: Seq[RdfStreamRowValue]): Seq[RdfStreamRow] =
     wrapEncoded(rows).map(row => RdfStreamRow(row))
 
-  trait TestCase[TStatement]:
+  trait TestCase[+TStatement]:
     def mrl: Seq[TStatement]
     def encoded(opt: RdfStreamOptions): Seq[RdfStreamRowValue]
     def encodedFull(opt: RdfStreamOptions, groupByN: Int) =

@@ -48,6 +48,12 @@ private final class ProtoTranscoderImpl(
       case RdfStreamRow.TRIPLE_FIELD_NUMBER => handleTriple(row)
       case RdfStreamRow.QUAD_FIELD_NUMBER => handleQuad(row)
       case RdfStreamRow.GRAPH_START_FIELD_NUMBER =>
+        this.changeInTerms = false
+        val term = r.graphStart.graph
+        val g1 = handleGraphTerm(term)
+        if changeInTerms then
+          rowBuffer.append(RdfStreamRow(RdfGraphStart(g1)))
+        else rowBuffer.append(row)
       case RdfStreamRow.GRAPH_END_FIELD_NUMBER => rowBuffer.append(row)
       case RdfStreamRow.NAME_FIELD_NUMBER =>
         val name = r.name
