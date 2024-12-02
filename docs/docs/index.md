@@ -49,7 +49,7 @@ The following table shows the compatibility of the Jelly-JVM implementation with
 
 | Jelly-JVM | Scala                     | Java | RDF4J | Apache Jena | Apache Pekko |
 | --------- | :-----------------------: | :--: | :---: | :---------: | :----------: |
-| [2.0.x](https://w3id.org/jelly/jelly-jvm/2.0.x) – [**2.2.x**](https://w3id.org/jelly/jelly-jvm/2.2.x) | 3.3.x (LTS)               | 17+  | 5.x.x | 5.x.x       | 1.1.x        |
+| [2.0.x](https://w3id.org/jelly/jelly-jvm/2.0.x) – [**2.3.x**](https://w3id.org/jelly/jelly-jvm/2.2.x) | 3.3.x (LTS)               | 17+  | 5.x.x | 5.x.x       | 1.1.x        |
 | [1.0.x](https://w3id.org/jelly/jelly-jvm/1.0.x)     | 3.3.x (LTS)<br>2.13.x[^1] | 11+  | 4.x.x | 4.x.x       | 1.0.x        |
 
 See the **[compatibility policy](user/compatibility.md)** for more details and the **[release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)**.
