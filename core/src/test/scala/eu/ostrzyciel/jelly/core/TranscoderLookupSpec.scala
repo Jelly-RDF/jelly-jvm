@@ -59,20 +59,26 @@ class TranscoderLookupSpec extends AnyWordSpec, Matchers:
       "it's a prefix lookup" in {
         val tl = TranscoderLookup(false, 10)
         tl.newInputStream(5)
-        for i <- 0 to 50 do
-          tl.addEntry((i % 5) + 1, s"s$i").getId shouldBe (i % 10) + 1
-          tl.remap((i % 5) + 1) shouldBe (i % 10) + 1
+        for i <- 0 to 4 do
+          tl.addEntry(i + 1, s"s$i").getId shouldBe i + 1
+          tl.remap(i + 1) shouldBe i + 1
+        for i <- 5 to 50 do
+          // Later all ids will be remapped to 6–10 because the transcoder will evict the same entry as the input.
+          tl.addEntry((i % 5) + 1, s"s$i").getId shouldBe (i % 5) + 6
+          tl.remap((i % 5) + 1) shouldBe (i % 5) + 6
       }
 
       "it's a name lookup" in {
         val tl = TranscoderLookup(true, 10)
         tl.newInputStream(5)
         for i <- 0 to 50 do
-          tl.addEntry((i % 5) + 1, s"s$i").getId shouldBe (i % 10) + 1
-          if (i % 10) != 0 || i == 0 then
+          val getId = tl.addEntry((i % 5) + 1, s"s$i").getId
+          if i < 5 then getId shouldBe i + 1
+          else getId shouldBe (i % 5) + 6
+          if (i % 5) != 0 || i < 10 then
             tl.remap((i % 5) + 1) shouldBe 0
           else
-            tl.remap((i % 5) + 1) shouldBe (i % 10) + 1
+            tl.remap((i % 5) + 1) shouldBe (i % 5) + 6
       }
     }
 
@@ -189,6 +195,23 @@ class TranscoderLookupSpec extends AnyWordSpec, Matchers:
         for j <- 1 to size do
           tl.addEntry(j, s"s$j").getId shouldBe j
           tl.remap(j)
+    }
+
+    "evict the corresponding element if the input stream is evicting something" in {
+      val tl = TranscoderLookup(false, 3)
+      tl.newInputStream(3)
+      tl.addEntry(0, "s1_1")
+      tl.addEntry(0, "s2_1")
+      tl.addEntry(0, "s3_1")
+
+      tl.newInputStream(3)
+      tl.addEntry(0, "s1_1").newEntry should be (false)
+
+      // Even though this entry was just used, we are evicting it because our input stream does that
+      val e = tl.addEntry(1, "something else")
+      e.newEntry should be (true)
+      e.setId should be (1)
+      e.getId should be (1)
     }
   }
 

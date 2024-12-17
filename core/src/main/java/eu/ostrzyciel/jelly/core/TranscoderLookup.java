@@ -1,8 +1,11 @@
 package eu.ostrzyciel.jelly.core;
 
+import java.util.Arrays;
+
 class TranscoderLookup {
     private final int outputSize;
     private int[] table;
+    private int[] evictTable;
     private final EncoderLookup lookup;
 
     // 0-compression:
@@ -26,7 +29,15 @@ class TranscoderLookup {
         } else {
             lastSetId = originalId;
         }
-        EncoderLookup.LookupEntry entry = lookup.getOrAddEntry(value);
+        // If the input stream is evicting something, and our lookup is already full, we tell the lookup to evict
+        // the exact same entry as the one evicted in the input. This way we are 100% sure that the input and output
+        // streams have the same lookup entries available to each other.
+        //
+        // This has a downside in case where the output's lookup is larger than the input's lookup and we are
+        // concatenating multiple input streams together. Then, we will be evicting sometimes entries that really don't
+        // have to be evicted yet, because instead we could evict something from a previous input stream.
+        // Unfortunately, I don't really have an idea for how to track this efficiently.
+        EncoderLookup.LookupEntry entry = lookup.getOrAddEntryTranscoder(value, table[originalId]);
         table[originalId] = entry.getId;
         return entry;
     }
@@ -67,6 +78,10 @@ class TranscoderLookup {
         }
         if (table == null || table.length < size + 1) {
             table = new int[size + 1];
+        } else {
+            // We need to zero the mapping, so that we know when the input stream is doing
+            // an eviction vs just adding a new entry.
+            Arrays.fill(table, 0);
         }
     }
 }
