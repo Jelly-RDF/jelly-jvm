@@ -9,6 +9,10 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import scala.util.Random
 
+/**
+ * Unit tests for the ProtoTranscoder class.
+ * See also integration tests: [[eu.ostrzyciel.jelly.integration_tests.CrossTranscodingSpec]]
+ */
 class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
   def smallOptions(prefixTableSize: Int) = RdfStreamOptions(
     maxNameTableSize = 4,

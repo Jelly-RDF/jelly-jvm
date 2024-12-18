@@ -10,6 +10,11 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.duration.*
 
+/**
+ * Basic functionality tests for the TranscoderFlow class.
+ * This really only tests if the flows are working as intended, not the transcoder itself.
+ * For that, see tests in the core and integration-tests modules.
+ */
 class TranscoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   import ProtoTestCases.*
 

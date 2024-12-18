@@ -3,8 +3,10 @@ package eu.ostrzyciel.jelly.core
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+/**
+ * Unit tests for the TranscoderLookup class.
+ */
 class TranscoderLookupSpec extends AnyWordSpec, Matchers:
-  import EncoderLookup.LookupEntry
 
   "TranscoderLookup" should {
     "throw an exception when trying to set input lookup size greater than the output" in {

@@ -7,15 +7,31 @@ import scala.collection.mutable.ArrayBuffer
 
 // Note: the caller is responsible for setting a physical stream type in the output!
 
+/**
+ * Fast implementation of the ProtoTranscoder interface.
+ *
+ * It does not in perfect compression (like you would get with full decoding and re-encoding), but it should be
+ * good enough for the vast majority of cases.
+ *
+ * @param supportedInputOptions maximum allowable options for the input streams (optional)
+ * @param outputOptions options for the output stream. This MUST have the physical stream type set.
+ */
 private final class ProtoTranscoderImpl(
   supportedInputOptions: Option[RdfStreamOptions],
   outputOptions: RdfStreamOptions
 ) extends ProtoTranscoder:
+
+  /**
+   * @inheritdoc
+   */
   override def ingestRow(row: RdfStreamRow): Iterable[RdfStreamRow] =
     rowBuffer.clear()
     processRow(row)
     rowBuffer.toSeq
 
+  /**
+   * @inheritdoc
+   */
   override def ingestFrame(frame: RdfStreamFrame): RdfStreamFrame =
     rowBuffer.clear()
     for row <- frame.rows do

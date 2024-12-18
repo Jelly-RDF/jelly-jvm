@@ -16,7 +16,7 @@ object TranscoderFlow:
    * This variant DOES NOT check the input options of the consumed streams. This should be therefore only used
    * when the input is fully trusted. Otherwise, an attacker could cause a DoS by sending a stream with large lookups.
    *
-   * @param outputOptions options for the output stream
+   * @param outputOptions options for the output stream. This MUST have the physical stream type set.
    * @return intermediate object for creating a Pekko Streams flow
    */
   final def fastMergingUnsafe(outputOptions: RdfStreamOptions): TranscoderFlowOps =
@@ -27,7 +27,7 @@ object TranscoderFlow:
    * This variant does check the input options of the consumed streams, so it is SAFE to use with untrusted input.
    *
    * @param supportedInputOptions maximum allowable options for the input streams
-   * @param outputOptions options for the output stream
+   * @param outputOptions options for the output stream. This MUST have the physical stream type set.
    * @return intermediate object for creating a Pekko Streams flow
    */
   final def fastMerging(supportedInputOptions: RdfStreamOptions, outputOptions: RdfStreamOptions): TranscoderFlowOps =

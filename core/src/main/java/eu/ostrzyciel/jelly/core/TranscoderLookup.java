@@ -2,10 +2,15 @@ package eu.ostrzyciel.jelly.core;
 
 import java.util.Arrays;
 
+/**
+ * A wrapper around EncoderLookup that is used in proto transcoders to remap input stream IDs to output stream IDs.
+ */
 class TranscoderLookup {
+    // The size of the output lookup table
     private final int outputSize;
+    // Mapping input IDs to output IDs
     private int[] table;
-    private int[] evictTable;
+    // The actual lookup table (output)
     private final EncoderLookup lookup;
 
     // 0-compression:
@@ -23,6 +28,15 @@ class TranscoderLookup {
         this.lookup = new EncoderLookup(outputSize, false);
     }
 
+    /**
+     * Remap a lookup entry from the input stream to the output stream.
+     *
+     * This may result in us actually adding a new entry to the output lookup, or not, if it's already there.
+     *
+     * @param originalId The ID of the entry in the input stream.
+     * @param value The value of the entry.
+     * @return The lookup entry in the output stream.
+     */
     EncoderLookup.LookupEntry addEntry(int originalId, String value) {
         if (originalId == 0) {
             originalId = ++lastSetId;
@@ -42,6 +56,14 @@ class TranscoderLookup {
         return entry;
     }
 
+    /**
+     * Remap a reference to a lookup entry from the input stream ID space to the output stream ID space.
+     *
+     * This automatically handles 0-compression.
+     *
+     * @param id The ID to remap (input stream).
+     * @return The remapped ID (output stream).
+     */
     int remap(int id) {
         if (isNameLookup) {
             if (id == 0) {
@@ -67,6 +89,10 @@ class TranscoderLookup {
         return id;
     }
 
+    /**
+     * Signal that a new input stream is starting.
+     * @param size The size of the input lookup.
+     */
     void newInputStream(int size) {
         if (size > outputSize) {
             throw new IllegalArgumentException("Input lookup size cannot be greater than the output lookup size");
