@@ -1,6 +1,5 @@
 package eu.ostrzyciel.jelly.core
 
-import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoDeserializationError
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.annotation.switch
@@ -152,6 +151,8 @@ private final class ProtoTranscoderImpl(
     this.inputUsesPrefixes = options.maxPrefixTableSize > 0
     if inputUsesPrefixes then
       prefixLookup.newInputStream(options.maxPrefixTableSize)
+    else if outputOptions.maxPrefixTableSize > 0 then
+      throw new RdfProtoTranscodingError("Output stream uses prefixes, but the input stream does not.")
     nameLookup.newInputStream(options.maxNameTableSize)
     datatypeLookup.newInputStream(options.maxDatatypeTableSize)
     // Update the input options

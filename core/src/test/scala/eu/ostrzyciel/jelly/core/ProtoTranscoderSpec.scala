@@ -241,11 +241,24 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
       ex.getMessage should include ("larger than the maximum supported size")
     }
 
+    "throw an exception if the input does not use prefixes but the output does" in {
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(
+        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+      )
+      val ex = intercept[RdfProtoTranscodingError] {
+        transcoder.ingestRow(RdfStreamRow(
+          JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+            .withMaxPrefixTableSize(0)
+        ))
+      }
+      ex.getMessage should include ("Output stream uses prefixes, but the input stream does not")
+    }
+
     "accept an input stream with valid options if checking is enabled" in {
       val transcoder = ProtoTranscoder.fastMergingTranscoder(
         // Mark the prefix table as disabled
         JellyOptions.defaultSupportedOptions.withMaxPrefixTableSize(0),
-        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES).withMaxPrefixTableSize(0),
       )
       val inputOptions = JellyOptions.smallStrict
         .withPhysicalType(PhysicalStreamType.TRIPLES)

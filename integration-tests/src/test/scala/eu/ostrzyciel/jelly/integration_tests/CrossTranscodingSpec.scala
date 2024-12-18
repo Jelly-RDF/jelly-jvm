@@ -17,6 +17,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{ByteArrayOutputStream, File, FileInputStream}
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
+import scala.util.Random
 
 /**
  * TODO
@@ -26,12 +27,14 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
   given ExecutionContext = actorSystem.getDispatcher
   given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
 
+  Random.setSeed(123)
+
   // 0. Helper functions
 
   def checkCompat(requestedO: RdfStreamOptions, supportedO: RdfStreamOptions): Boolean =
     try {
       JellyOptions.checkCompatibility(requestedO, supportedO)
-      true
+      !(supportedO.maxPrefixTableSize > 0 && requestedO.maxPrefixTableSize == 0)
     } catch {
       case _: RdfProtoDeserializationError => false
     }
@@ -47,8 +50,10 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
   def addStreamTypeToOptions(opt: RdfStreamOptions, t: String): RdfStreamOptions =
     if t == "triples" then
       opt.withPhysicalType(PhysicalStreamType.TRIPLES).withLogicalType(LogicalStreamType.FLAT_TRIPLES)
-    else
+    else if t == "quads" then
       opt.withPhysicalType(PhysicalStreamType.QUADS).withLogicalType(LogicalStreamType.FLAT_QUADS)
+    else
+      opt.withPhysicalType(PhysicalStreamType.GRAPHS).withLogicalType(LogicalStreamType.NAMED_GRAPHS)
 
   // 1. Define the test data
 
@@ -137,6 +142,21 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .futureValue
       val statements = decodeToStatements(frames)
       TestCase("quads", encName, jOptName, limiterName, caseName, jOpt, frames, statements)
+  } ++ {
+    for
+      (caseName, sourceFile) <- QuadTests.files
+      (encName, encFlow) <- encoderImpls
+      (jOptName, jOpt) <- jellyOptions
+      (limiterName, limiter) <- sizeLimiters
+    yield
+      val sourceDataset = QuadTests.datasets(caseName)
+      val is = new FileInputStream(sourceFile)
+      val os = new ByteArrayOutputStream()
+      val frames: Seq[RdfStreamFrame] = encFlow.graphSource(is, limiter, jOpt)
+        .runWith(Sink.seq)
+        .futureValue
+      val statements = decodeToStatements(frames)
+      TestCase("graphs", encName, jOptName, limiterName, caseName, jOpt, frames, statements)
   }
 
   // 3. Run the tests
@@ -190,6 +210,29 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
             for (s, i) <- tc.statements.zip(decoded).zipWithIndex do
               val (expected, observed) = s
               withClue(s"at input stream $inputIx index $i") {
+                observed should be(expected)
+              }
+        }
+
+        def makeTc(physicalType: String) =
+          val pool = compatibleCases.filter(_.physicalType == physicalType)
+          for j <- 1 to Random.nextInt(20) + 20 yield
+            pool(Random.nextInt(pool.size))
+
+        val mixedTcs = (for i <- 1 to 4 yield makeTc("triples")) ++
+          (for i <- 1 to 4 yield makeTc("quads")) ++ (for i <- 1 to 4 yield makeTc("graphs"))
+
+        for (mixedTc, i) <- mixedTcs.zipWithIndex do s"frame-transcode a mixed concatenated input stream ($i)" in {
+          val outputOpt2 = addStreamTypeToOptions(outputOpt, mixedTc.head.physicalType)
+          val transcoder = transFactory(Some(sInputOpt2), outputOpt2)
+          val decoder = getFrameDecoder
+          for (tc, inputIx) <- mixedTc.zipWithIndex do
+            val result: Seq[RdfStreamFrame] = tc.frames.map(transcoder.ingestFrame)
+            val decoded = result.flatMap(decoder)
+            decoded.size should be(tc.statements.size)
+            for (s, i) <- tc.statements.zip(decoded).zipWithIndex do
+              val (expected, observed) = s
+              withClue(s"at input stream $inputIx $tc index $i") {
                 observed should be(expected)
               }
         }
