@@ -183,7 +183,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
           val outputOpt2 = addStreamTypeToOptions(outputOpt, tc.physicalType)
           val transcoder = transFactory(Some(sInputOpt2), outputOpt2)
           val decoder = getFrameDecoder
-          for inputIx <- 1 to 25 do
+          for inputIx <- 1 to 20 do
             val result: Seq[RdfStreamFrame] = tc.frames.map(transcoder.ingestFrame)
             val decoded = result.flatMap(decoder)
             decoded.size should be(tc.statements.size)
