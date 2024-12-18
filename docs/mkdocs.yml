@@ -4,7 +4,6 @@ site_url: https://jelly-rdf.github.io/jelly-jvm/
 
 plugins:
   - search
-  - include-markdown
   - mike
   - macros
   - git-revision-date-localized:
