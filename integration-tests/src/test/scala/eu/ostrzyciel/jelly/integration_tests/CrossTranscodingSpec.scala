@@ -20,7 +20,12 @@ import scala.concurrent.duration.*
 import scala.util.Random
 
 /**
- * TODO
+ * Integration tests for ProtoTranscoder.
+ * We check it here against a number of different encoders, stream option sets, and test cases.
+ * This is meant to catch rare or obscure bugs in the transcoder.
+ *
+ * More detailed test cases, testing specific behaviors are in the core module: ProtoTranscoderSpec and
+ * TranscoderLookupSpec.
  */
 class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
   given actorSystem: ActorSystem = ActorSystem()
