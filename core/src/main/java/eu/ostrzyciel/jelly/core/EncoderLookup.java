@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -106,6 +107,42 @@ final class EncoderLookup {
     }
 
     /**
+     * One branch of the getOrAddEntry method. Should be inlined by the JIT.
+     * @param key
+     * @param id
+     */
+    private final void addEntrySequential(String key, int id) {
+        int base = id * 2;
+        // Set the left to the tail
+        table[base] = tail;
+        // Right is already 0
+        // table[base + 1] = 0;
+        // Set the tail's right to us
+        table[tail + 1] = base;
+        tail = base;
+        names[id] = key;
+        map.put(key, new LookupEntry(id, id));
+    }
+
+    /**
+     * Another branch of the getOrAddEntry method. Should be inlined by the JIT.
+     * @param key
+     * @param id
+     */
+    private final void addEntryEvicting(String key, int id) {
+        // Remove the entry from the map
+        LookupEntry oldEntry = map.remove(names[id]);
+        // Insert the new entry
+        names[id] = key;
+        map.put(key, oldEntry);
+        // Update the table
+        onAccess(id);
+        entryForReturns.setId = lastSetId + 1 == id ? 0 : id;
+        // We only update lastSetId in this case, because in the sequential case we don't check it anyway
+        lastSetId = id;
+    }
+
+    /**
      * Adds a new entry to the lookup table or retrieves it if it already exists.
      * @param key The key of the entry.
      * @return The entry.
@@ -117,37 +154,15 @@ final class EncoderLookup {
             onAccess(value.getId);
             return value;
         }
-
         int id;
         if (used < size) {
             // We still have space in the table, add a new entry to the end of the table.
             id = ++used;
-            int base = id * 2;
-            // Set the left to the tail
-            table[base] = tail;
-            // Right is already 0
-            // table[base + 1] = 0;
-            // Set the tail's right to us
-            table[tail + 1] = base;
-            tail = base;
-            names[id] = key;
-            map.put(key, new LookupEntry(id, id));
-            // setId is 0 because we are adding a new entry sequentially
-            // We don't need to set it because it's 0 by default
-            // entryForReturns.setId = 0;
+            addEntrySequential(key, id);
         } else {
             // The table is full, evict the least recently used entry.
             id = table[1] / 2;
-            // Remove the entry from the map
-            LookupEntry oldEntry = map.remove(names[id]);
-            // Insert the new entry
-            names[id] = key;
-            map.put(key, oldEntry);
-            // Update the table
-            onAccess(id);
-            entryForReturns.setId = lastSetId + 1 == id ? 0 : id;
-            // We only update lastSetId in this case, because in the sequential case we don't check it anyway
-            lastSetId = id;
+            addEntryEvicting(key, id);
         }
         if (this.useSerials) {
             // Increment the serial number
@@ -155,6 +170,39 @@ final class EncoderLookup {
             // The if should be very predictable and have no negative performance impact.
             ++serials[id];
         }
+        entryForReturns.getId = id;
+        return entryForReturns;
+    }
+
+    /**
+     * A variant of getOrAddEntry that is used for transcoders.
+     * This method does not update the serial number of the entry because serials are not used by transcoders.
+     * @param key The key of the entry.
+     * @param evictHint A hint for the entry to evict. If 0, the least recently used entry is evicted.
+     * @return The entry.
+     */
+    public LookupEntry getOrAddEntryTranscoder(String key, int evictHint) {
+        var value = map.get(key);
+        if (value != null) {
+            onAccess(value.getId);
+            return value;
+        }
+        int id;
+        if (used < size) {
+            id = ++used;
+            addEntrySequential(key, id);
+        } else {
+            // The table is full
+            if (evictHint != 0) {
+                // We have a hint for the entry to evict
+                id = evictHint;
+            } else {
+                // Evict the least recently used entry.
+                id = table[1] / 2;
+            }
+            addEntryEvicting(key, id);
+        }
+        // Serials are not used for transcoders
         entryForReturns.getId = id;
         return entryForReturns;
     }
