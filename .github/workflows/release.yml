@@ -18,6 +18,9 @@ jobs:
           java-version: '17'
           cache: 'sbt'
 
+      - name: Setup SBT
+        uses: sbt/setup-sbt@v1
+
       - run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
@@ -38,6 +41,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'sbt'
+
+      - name: Setup SBT
+        uses: sbt/setup-sbt@v1
 
       - name: 'Build plugins'
         run: |
