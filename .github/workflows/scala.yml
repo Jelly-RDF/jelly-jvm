@@ -15,11 +15,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             java: 17
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             java: 21
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             java: 23
     runs-on: ${{ matrix.os }}
 
