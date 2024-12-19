@@ -22,6 +22,11 @@ class TranscoderLookup {
     private int lastInputGetId = 0;
     private int lastOutputGetId = 0;
 
+    /**
+     * Create a new TranscoderLookup.
+     * @param isNameLookup Whether this lookup is for IRI names.
+     * @param outputSize The size of the output lookup.
+     */
     TranscoderLookup(boolean isNameLookup, int outputSize) {
         this.isNameLookup = isNameLookup;
         this.outputSize = outputSize;

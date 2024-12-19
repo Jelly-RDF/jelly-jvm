@@ -5,8 +5,6 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import scala.annotation.switch
 import scala.collection.mutable.ArrayBuffer
 
-// Note: the caller is responsible for setting a physical stream type in the output!
-
 /**
  * Fast implementation of the ProtoTranscoder interface.
  *
