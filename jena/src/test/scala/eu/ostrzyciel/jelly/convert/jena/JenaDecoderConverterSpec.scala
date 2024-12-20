@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class JenaDecoderConverterSpec extends AnyWordSpec, Matchers, JenaTest:
-  val instance = JenaDecoderConverter()
+  val instance = JenaDecoderConverter((_, _) => ())
 
   "JenaDecoderConverter" should {
     "make a default graph node" in {

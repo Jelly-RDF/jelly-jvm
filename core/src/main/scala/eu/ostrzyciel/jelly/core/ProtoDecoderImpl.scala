@@ -132,6 +132,10 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
       case RdfStreamRow.QUAD_FIELD_NUMBER => handleQuad(r.quad)
       case RdfStreamRow.GRAPH_START_FIELD_NUMBER => handleGraphStart(r.graphStart)
       case RdfStreamRow.GRAPH_END_FIELD_NUMBER => handleGraphEnd()
+      case RdfStreamRow.NAMESPACE_FIELD_NUMBER =>
+        val nsRow = r.namespace
+        converter.handleNamespaceDeclaration(nsRow.nsName, nameDecoder.decode(nsRow.value))
+        None
       case RdfStreamRow.NAME_FIELD_NUMBER =>
         nameDecoder.updateNames(r.name)
         None

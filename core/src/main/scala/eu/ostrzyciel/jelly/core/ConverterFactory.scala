@@ -33,28 +33,40 @@ trait ConverterFactory[
   TNode, TDatatype : ClassTag, TTriple, TQuad
 ]:
   import ConverterFactory.*
-  
+
   def decoderConverter: TDecConv
+
+  def decoderConverter(namespaceHandler: (name: String, iri: TNode) => Unit): TDecConv
 
   /**
    * Create a new [[TriplesDecoder]].
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def triplesDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def triplesDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+  ):
   TriplesDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new TriplesDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new TriplesDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[QuadsDecoder]].
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def quadsDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def quadsDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+  ):
   QuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
     new QuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 
@@ -63,9 +75,14 @@ trait ConverterFactory[
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def graphsAsQuadsDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def graphsAsQuadsDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+  ):
   GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
     new GraphsAsQuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 
@@ -74,9 +91,14 @@ trait ConverterFactory[
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def graphsDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def graphsDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+  ):
   GraphsDecoder[TNode, TDatatype, TTriple, TQuad] =
     new GraphsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 
@@ -85,9 +107,14 @@ trait ConverterFactory[
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def anyStatementDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def anyStatementDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+  ):
   AnyStatementDecoder[TNode, TDatatype, TTriple, TQuad] =
     new AnyStatementDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 

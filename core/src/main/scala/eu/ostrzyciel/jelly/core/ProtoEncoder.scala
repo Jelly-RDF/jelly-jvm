@@ -73,11 +73,18 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
       throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one")
     ProtoEncoder.graphEnd
 
+  /**
+   * Declare a namespace in the stream.
+   * This is equivalent to the PREFIX directive in Turtle.
+   * @param name short name of the namespace (without the colon)
+   * @param iriValue IRI of the namespace
+   * @return iterable of stream rows
+   */
   final def declareNamespace(name: String, iriValue: String): Iterable[RdfStreamRow] =
     handleHeader()
     val mainRow = RdfStreamRow(RdfNamespaceDeclaration(
       name,
-      makeIriNode(iriValue).asInstanceOf[RdfIri]
+      makeIriNode(iriValue).iri
     ))
     extraRowsBuffer.append(mainRow).toSeq
 

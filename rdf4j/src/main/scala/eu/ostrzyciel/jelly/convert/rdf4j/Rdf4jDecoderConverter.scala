@@ -5,7 +5,8 @@ import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.base.CoreDatatype
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 
-final class Rdf4jDecoderConverter extends ProtoDecoderConverter[Value, Rdf4jDatatype, Statement, Statement]:
+final class Rdf4jDecoderConverter(namespaceHandler: (name: String, iri: Value) => Unit)
+  extends ProtoDecoderConverter[Value, Rdf4jDatatype, Statement, Statement]:
   private val vf = SimpleValueFactory.getInstance()
 
   override inline def makeSimpleLiteral(lex: String) = vf.createLiteral(lex)
@@ -44,3 +45,5 @@ final class Rdf4jDecoderConverter extends ProtoDecoderConverter[Value, Rdf4jData
     o,
     g.asInstanceOf[Resource],
   )
+
+  override def handleNamespaceDeclaration(name: String, iri: Value): Unit = namespaceHandler(name, iri)

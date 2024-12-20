@@ -61,7 +61,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val (decoderF, pst) = decoderFactories(decoderName)
 
       f"throw exception when expecting logical type $lst on a stream with no logical type, with $decoderName" in {
-        val decoder = decoderF(Some(defaultOptions.withLogicalType(lst)))
+        val decoder = decoderF(Some(defaultOptions.withLogicalType(lst)), (_, _) => ())
         val data = wrapEncodedFull(Seq(
           JellyOptions.smallGeneralized
             .withPhysicalType(pst)
@@ -75,7 +75,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
 
       for lstOfStream <- logicalStreamTypeSet do
         f"accept stream with logical type $lstOfStream when expecting $lst, with $decoderName" in {
-          val decoder = decoderF(Some(defaultOptions.withLogicalType(lst)))
+          val decoder = decoderF(Some(defaultOptions.withLogicalType(lst)), (_, _) => ())
           val data = wrapEncodedFull(Seq(
             JellyOptions.smallGeneralized
               .withPhysicalType(pst)
@@ -92,7 +92,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       lstOfStream <- lstSet
     do
       f"throw exception that a stream with logical type $lstOfStream is incompatible with $pst, with $decoderName" in {
-        val decoder = decoderF(None)
+        val decoder = decoderF(None, (_, _) => ())
         val data = wrapEncodedFull(Seq(
           JellyOptions.smallGeneralized
             .withPhysicalType(pst)
