@@ -23,6 +23,9 @@ import scala.annotation.switch
       case 5 =>
         val __value = row.graphEnd
         1 + _root_.com.google.protobuf.CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
+      case 6 =>
+        val __value = row.namespace
+        1 + _root_.com.google.protobuf.CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
       case 9 =>
         val __value = row.name
         1 + _root_.com.google.protobuf.CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
@@ -70,6 +73,11 @@ import scala.annotation.switch
         _output__.writeTag(5, 2)
         _output__.writeUInt32NoTag(__m.serializedSize)
         __m.writeTo(_output__)
+      case 6 =>
+        val __m = row.namespace
+        _output__.writeTag(6, 2)
+        _output__.writeUInt32NoTag(__m.serializedSize)
+        __m.writeTo(_output__)
       case 9 =>
         val __m = row.name
         _output__.writeTag(9, 2)
@@ -89,22 +97,15 @@ import scala.annotation.switch
   
   def getFieldByNumber(__fieldNumber: _root_.scala.Int): _root_.scala.Any = {
     (__fieldNumber: @_root_.scala.unchecked) match {
-      case 1 =>
-        row.options
-      case 2 =>
-        row.triple
-      case 3 =>
-        row.quad
-      case 4 =>
-        row.graphStart
-      case 5 =>
-        row.graphEnd
-      case 9 =>
-        row.name
-      case 10 =>
-        row.prefix
-      case 11 =>
-        row.datatype
+      case 1 => row.options
+      case 2 => row.triple
+      case 3 => row.quad
+      case 4 => row.graphStart
+      case 5 => row.graphEnd
+      case 6 => row.namespace
+      case 9 => row.name
+      case 10 => row.prefix
+      case 11 => row.datatype
     }
   }
   
@@ -121,6 +122,8 @@ import scala.annotation.switch
         if (row.isGraphStart) row.graphStart.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 5 =>
         if (row.isGraphEnd) row.graphEnd.toPMessage else _root_.scalapb.descriptors.PEmpty
+      case 6 =>
+        if (row.isNamespace) row.namespace.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 9 =>
         if (row.isName) row.name.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 10 =>
@@ -155,6 +158,8 @@ object RdfStreamRow extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jell
           __row = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart](_input__)
         case 42 =>
           __row = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfGraphEnd](_input__)
+        case 50 =>
+          __row = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfNamespaceDeclaration](_input__)
         case 74 =>
           __row = _root_.scalapb.LiteParser.readMessage[eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry](_input__)
         case 82 =>
@@ -177,6 +182,7 @@ object RdfStreamRow extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jell
           .orElse[RdfStreamRowValue](__fieldsMap.get(scalaDescriptor.findFieldByNumber(3).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfQuad]]))
           .orElse[RdfStreamRowValue](__fieldsMap.get(scalaDescriptor.findFieldByNumber(4).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart]]))
           .orElse[RdfStreamRowValue](__fieldsMap.get(scalaDescriptor.findFieldByNumber(5).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfGraphEnd]]))
+          .orElse[RdfStreamRowValue](__fieldsMap.get(scalaDescriptor.findFieldByNumber(6).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfNamespaceDeclaration]]))
           .orElse[RdfStreamRowValue](__fieldsMap.get(scalaDescriptor.findFieldByNumber(9).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry]]))
           .orElse[RdfStreamRowValue](__fieldsMap.get(scalaDescriptor.findFieldByNumber(10).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry]]))
           .orElse[RdfStreamRowValue](__fieldsMap.get(scalaDescriptor.findFieldByNumber(11).get).flatMap(_.as[_root_.scala.Option[eu.ostrzyciel.jelly.core.proto.v1.RdfDatatypeEntry]]))
@@ -203,6 +209,8 @@ object RdfStreamRow extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jell
         __out = eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart
       case 5 =>
         __out = eu.ostrzyciel.jelly.core.proto.v1.RdfGraphEnd
+      case 6 =>
+        __out = eu.ostrzyciel.jelly.core.proto.v1.RdfNamespaceDeclaration
       case 9 =>
         __out = eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry
       case 10 =>
@@ -224,6 +232,7 @@ object RdfStreamRow extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jell
   final val QUAD_FIELD_NUMBER = 3
   final val GRAPH_START_FIELD_NUMBER = 4
   final val GRAPH_END_FIELD_NUMBER = 5
+  final val NAMESPACE_FIELD_NUMBER = 6
   final val NAME_FIELD_NUMBER = 9
   final val PREFIX_FIELD_NUMBER = 10
   final val DATATYPE_FIELD_NUMBER = 11

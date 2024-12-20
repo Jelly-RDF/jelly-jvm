@@ -8,7 +8,8 @@ object Generator {
     println(s"Generating Scala files from $inputDir to $outputDir")
     val finder: PathFinder = inputDir ** "*.scala"
 
-    val exclusions = Seq("RdfTriple.scala", "RdfQuad.scala", "RdfGraphStart.scala", "RdfStreamRow.scala")
+    val exclusions = Seq("RdfTriple.scala", "RdfQuad.scala", "RdfGraphStart.scala", "RdfStreamRow.scala",
+      "RdfNamespaceDeclaration.scala")
 
     val files = for (inputFile <- finder.get) yield {
       if (exclusions.contains(inputFile.getName)) {

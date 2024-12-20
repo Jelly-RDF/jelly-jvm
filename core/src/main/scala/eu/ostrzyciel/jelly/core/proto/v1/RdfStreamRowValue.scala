@@ -9,6 +9,7 @@ private[core] trait RdfStreamRowValue:
   def isQuad: Boolean = false
   def isGraphStart: Boolean = false
   def isGraphEnd: Boolean = false
+  def isNamespace: Boolean = false
   def isName: Boolean = false
   def isPrefix: Boolean = false
   def isDatatype: Boolean = false
@@ -18,6 +19,7 @@ private[core] trait RdfStreamRowValue:
   def quad: RdfQuad = null
   def graphStart: RdfGraphStart = null
   def graphEnd: RdfGraphEnd = null
+  def namespace: RdfNamespaceDeclaration = null
   def name: RdfNameEntry = null
   def prefix: RdfPrefixEntry = null
   def datatype: RdfDatatypeEntry = null

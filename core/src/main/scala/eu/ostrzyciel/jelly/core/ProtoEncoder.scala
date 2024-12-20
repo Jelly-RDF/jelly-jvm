@@ -73,6 +73,14 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
       throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one")
     ProtoEncoder.graphEnd
 
+  final def declareNamespace(name: String, iriValue: String): Iterable[RdfStreamRow] =
+    handleHeader()
+    val mainRow = RdfStreamRow(RdfNamespaceDeclaration(
+      name,
+      makeIriNode(iriValue).asInstanceOf[RdfIri]
+    ))
+    extraRowsBuffer.append(mainRow).toSeq
+
   // *** 2. METHODS TO IMPLEMENT ***
   // *******************************
   // Triple statement deconstruction
