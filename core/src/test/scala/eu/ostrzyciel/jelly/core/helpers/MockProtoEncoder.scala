@@ -7,9 +7,10 @@ import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, RdfStreamOptions, SpoTerm}
 /**
  * Mock implementation of ProtoEncoder
  * @param options options for this stream
+ * @param enableNamespaceDeclarations whether to enable namespace declarations
  */
-class MockProtoEncoder(override val options: RdfStreamOptions)
-  extends ProtoEncoder[Node, Triple, Quad, Triple](options):
+class MockProtoEncoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean = false)
+  extends ProtoEncoder[Node, Triple, Quad, Triple](options, enableNamespaceDeclarations):
 
   protected inline def getTstS(triple: Triple) = triple.s
   protected inline def getTstP(triple: Triple) = triple.p

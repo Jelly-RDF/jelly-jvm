@@ -31,7 +31,10 @@ object JellyReader extends ReaderRIOT:
     val supportedOptions = context.get[RdfStreamOptions](
       JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, JellyOptions.defaultSupportedOptions
     )
-    val decoder = JenaConverterFactory.anyStatementDecoder(Some(supportedOptions))
+    val decoder = JenaConverterFactory.anyStatementDecoder(
+      Some(supportedOptions),
+      namespaceHandler = (name, iri) => output.prefix(name, iri.getURI)
+    )
     inline def processFrame(f: RdfStreamFrame): Unit =
       for row <- f.rows do
         decoder.ingestRow(row) match

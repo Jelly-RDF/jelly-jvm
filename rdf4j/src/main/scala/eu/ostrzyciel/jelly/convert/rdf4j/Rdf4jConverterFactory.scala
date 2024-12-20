@@ -12,4 +12,5 @@ object Rdf4jConverterFactory
   override final def decoderConverter(handler: (String, Value) => Unit): Rdf4jDecoderConverter =
     new Rdf4jDecoderConverter(handler)
 
-  override final def encoder(options: RdfStreamOptions): Rdf4jProtoEncoder = Rdf4jProtoEncoder(options)
+  override final def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): Rdf4jProtoEncoder =
+    Rdf4jProtoEncoder(options, enableNamespaceDeclarations)

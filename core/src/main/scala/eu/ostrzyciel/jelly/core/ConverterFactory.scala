@@ -119,8 +119,19 @@ trait ConverterFactory[
     new AnyStatementDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
-   * Create a new [[ProtoEncoder]].
+   * Create a new [[ProtoEncoder]]. Namespace declarations are disabled by default.
    * @param options Jelly serialization options.
    * @return encoder
    */
-  def encoder(options: RdfStreamOptions): TEncoder
+  def encoder(options: RdfStreamOptions): TEncoder = encoder(options, enableNamespaceDeclarations = false)
+
+  /**
+   * Create a new [[ProtoEncoder]].
+   *
+   * @param options Jelly serialization options.
+   * @param enableNamespaceDeclarations whether to enable namespace declarations in the stream. 
+   *                                    If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
+   *                                    the stream version will be 1 (Jelly 1.0.0).
+   * @return encoder
+   */
+  def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): TEncoder

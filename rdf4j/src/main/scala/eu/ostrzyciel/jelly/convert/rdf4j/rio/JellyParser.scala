@@ -32,14 +32,17 @@ final class JellyParser extends AbstractRDFParser:
     if (in == null) throw new IllegalArgumentException("Input stream must not be null")
 
     val config = getParserConfig
-    val decoder = Rdf4jConverterFactory.anyStatementDecoder(Some(RdfStreamOptions(
-      generalizedStatements = config.get(ALLOW_GENERALIZED_STATEMENTS).booleanValue(),
-      rdfStar = config.get(ALLOW_RDF_STAR).booleanValue(),
-      maxNameTableSize = config.get(MAX_NAME_TABLE_SIZE).toInt,
-      maxPrefixTableSize = config.get(MAX_PREFIX_TABLE_SIZE).toInt,
-      maxDatatypeTableSize = config.get(MAX_DATATYPE_TABLE_SIZE).toInt,
-      version = config.get(PROTO_VERSION).toInt,
-    )))
+    val decoder = Rdf4jConverterFactory.anyStatementDecoder(
+      Some(RdfStreamOptions(
+        generalizedStatements = config.get(ALLOW_GENERALIZED_STATEMENTS).booleanValue(),
+        rdfStar = config.get(ALLOW_RDF_STAR).booleanValue(),
+        maxNameTableSize = config.get(MAX_NAME_TABLE_SIZE).toInt,
+        maxPrefixTableSize = config.get(MAX_PREFIX_TABLE_SIZE).toInt,
+        maxDatatypeTableSize = config.get(MAX_DATATYPE_TABLE_SIZE).toInt,
+        version = config.get(PROTO_VERSION).toInt,
+      )),
+      namespaceHandler = (name, iri) => rdfHandler.handleNamespace(name, iri.stringValue())
+    )
     inline def processFrame(f: RdfStreamFrame): Unit =
       for row <- f.rows do
         decoder.ingestRow(row) match

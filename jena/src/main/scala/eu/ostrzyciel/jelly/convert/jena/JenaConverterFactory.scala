@@ -13,4 +13,5 @@ object JenaConverterFactory
   override final def decoderConverter(handler: (String, Node) => Unit): JenaDecoderConverter =
     new JenaDecoderConverter(handler)
 
-  override final def encoder(options: RdfStreamOptions): JenaProtoEncoder = JenaProtoEncoder(options)
+  override final def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): JenaProtoEncoder = 
+    JenaProtoEncoder(options, enableNamespaceDeclarations)

@@ -18,21 +18,21 @@ class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
   
   "JenaProtoEncoder" should {
     "encode a null graph node as default graph" in {
-      val encoder = JenaProtoEncoder(JellyOptions.smallGeneralized)
+      val encoder = JenaProtoEncoder(JellyOptions.smallGeneralized, false)
       val rows = encoder.startGraph(null).toSeq
       rows.size should be (2)
       rows(1) should be (encodedDefaultGraph)
     }
     
     "encode an explicitly named default graph as default graph" in {
-      val encoder = JenaProtoEncoder(JellyOptions.smallGeneralized)
+      val encoder = JenaProtoEncoder(JellyOptions.smallGeneralized, false)
       val rows = encoder.startGraph(Quad.defaultGraphIRI).toSeq
       rows.size should be (2)
       rows(1) should be (encodedDefaultGraph)
     }
     
     "encode a generated default graph as default graph" in {
-      val encoder = JenaProtoEncoder(JellyOptions.smallGeneralized)
+      val encoder = JenaProtoEncoder(JellyOptions.smallGeneralized, false)
       val rows = encoder.startGraph(Quad.defaultGraphNodeGenerated).toSeq
       rows.size should be (2)
       rows(1) should be (encodedDefaultGraph)
