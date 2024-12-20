@@ -64,12 +64,16 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
 
   for (factoryName, streamType, factory) <- factories do
     f"$factoryName ($streamType)" should {
-      for (presetName <- JellyLanguage.presets.keys) do
-        f"write a header with the $presetName preset set in the context" in {
+      for
+        presetName <- JellyLanguage.presets.keys
+        enableNsDecls <- Seq(Some(true), Some(false), None)
+      do
+        f"write a header with the $presetName preset set in the context, NS declarations $enableNsDecls" in {
           val os = new ByteArrayOutputStream()
           val format = RDFFormat(JellyLanguage.JELLY)
           val ctx = new Context()
           ctx.set(JellyLanguage.SYMBOL_PRESET, presetName)
+          enableNsDecls.foreach(ctx.set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, _))
           factory(format, ctx, os)
           val bytes = os.toByteArray
           bytes should not be empty
@@ -91,6 +95,9 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
           options.maxNameTableSize should be(expOpt.maxNameTableSize)
           options.maxPrefixTableSize should be(expOpt.maxPrefixTableSize)
           options.maxDatatypeTableSize should be(expOpt.maxDatatypeTableSize)
-          options.version should be(Constants.protoVersion)
+          if enableNsDecls.isDefined && enableNsDecls.get then
+            options.version should be(Constants.protoVersion)
+          else
+            options.version should be (Constants.protoVersionNoNsDecl)
         }
     }

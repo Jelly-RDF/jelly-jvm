@@ -156,7 +156,9 @@ final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: Output
   // Not supported
   override def base(base: String): Unit = ()
 
-  override def prefix(prefix: String, iri: String): Unit = inner.prefix(prefix, iri)
+  override def prefix(prefix: String, iri: String): Unit =
+    if inner != null then
+      inner.prefix(prefix, iri)
 
   override def finish(): Unit =
     if inner != null then
