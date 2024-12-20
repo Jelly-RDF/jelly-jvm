@@ -202,6 +202,14 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
         output(i) shouldBe expectedOutput(i)
     }
 
+    "maintain protocol version 1 if input uses it" in {
+      val options = JellyOptions.smallStrict.withVersion(Constants.protoVersionNoNsDecl)
+      val input = RdfStreamRow(options)
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(options.withVersion(Constants.protoVersion))
+      val output = transcoder.ingestRow(input)
+      output.head shouldBe input
+    }
+
     "throw an exception on a null row" in {
       val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.smallStrict)
       val ex = intercept[RdfProtoTranscodingError] {
