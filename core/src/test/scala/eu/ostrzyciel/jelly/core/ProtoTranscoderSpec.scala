@@ -20,8 +20,11 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     maxDatatypeTableSize = 8,
   )
 
-  val testCases: Seq[(String, PhysicalStreamType, TestCase[Mrl.Triple | Mrl.Quad | (Mrl.Node, Iterable[Mrl.Triple])])] = Seq(
+  val testCases: Seq[(String, PhysicalStreamType,
+    TestCase[Mrl.Triple | Mrl.Quad | (Mrl.Node, Iterable[Mrl.Triple]) | Mrl.NamespaceDecl]
+  )] = Seq(
     ("Triples1", PhysicalStreamType.TRIPLES, Triples1),
+    ("Triples2NsDecl", PhysicalStreamType.TRIPLES, Triples2NsDecl),
     ("Quads1", PhysicalStreamType.QUADS, Quads1),
     ("Quads2RepeatDefault", PhysicalStreamType.QUADS, Quads2RepeatDefault),
     ("Graphs1", PhysicalStreamType.GRAPHS, Graphs1),

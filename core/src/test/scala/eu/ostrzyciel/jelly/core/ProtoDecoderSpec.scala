@@ -7,6 +7,8 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import scala.collection.mutable.ArrayBuffer
+
 class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   import ProtoDecoderImpl.*
   import ProtoTestCases.*
@@ -129,6 +131,37 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Triples1.mrl)
+    }
+
+    "decode triple statements with namespace declarations" in {
+      val namespaces = ArrayBuffer[(String, Node)]()
+      val decoder = MockConverterFactory.triplesDecoder(Some(
+        defaultOptions.withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+      ), (name, iri) => namespaces.append((name, iri)))
+      val decoded = Triples2NsDecl
+        .encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
+        .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
+      assertDecoded(decoded, Triples2NsDecl.mrl.filter(_.isInstanceOf[Triple]).asInstanceOf[Seq[Triple]])
+      namespaces.toSeq should be (Seq(
+        ("test", Iri("https://test.org/test/")),
+        ("ns2", Iri("https://test.org/ns2/")),
+      ))
+    }
+
+    "ignore namespace declarations by default" in {
+      val decoder = MockConverterFactory.triplesDecoder(Some(
+        defaultOptions.withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+      ))
+      val decoded = Triples2NsDecl
+        .encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
+        .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
+      assertDecoded(decoded, Triples2NsDecl.mrl.filter(_.isInstanceOf[Triple]).asInstanceOf[Seq[Triple]])
     }
 
     "throw exception on unset logical stream type" in {
