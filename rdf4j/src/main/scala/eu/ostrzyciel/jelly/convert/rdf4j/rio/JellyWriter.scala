@@ -27,6 +27,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
   private var encoder: Rdf4jProtoEncoder = null
   private val buffer: ArrayBuffer[RdfStreamRow] = new ArrayBuffer[RdfStreamRow]()
   private var frameSize: Long = 256L
+  private var enableNamespaceDeclarations: Boolean = false
 
   override def getRDFFormat: RDFFormat = JELLY
 
@@ -40,6 +41,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     s.add(MAX_PREFIX_TABLE_SIZE)
     s.add(MAX_DATATYPE_TABLE_SIZE)
     s.add(FRAME_SIZE)
+    s.add(ENABLE_NAMESPACE_DECLARATIONS)
     s
 
   override def startRDF(): Unit =
@@ -67,7 +69,8 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
       logicalType = lType,
     )
     frameSize = c.get(FRAME_SIZE).toLong
-    encoder = Rdf4jConverterFactory.encoder(options)
+    enableNamespaceDeclarations = c.get(ENABLE_NAMESPACE_DECLARATIONS).booleanValue()
+    encoder = Rdf4jConverterFactory.encoder(options, enableNamespaceDeclarations)
 
   override def consumeStatement(st: Statement): Unit =
     checkWritingStarted()
@@ -96,5 +99,8 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     checkWritingStarted()
 
   override def handleNamespace(prefix: String, uri: String): Unit =
-    // ignore namespaces
     checkWritingStarted()
+    if enableNamespaceDeclarations then
+      buffer ++= encoder.declareNamespace(prefix, uri)
+      if buffer.size >= frameSize then
+        flushBuffer()

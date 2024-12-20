@@ -42,6 +42,7 @@ private[riot] object Util:
     baseVariant.copy(
       opt = context.get[RdfStreamOptions](JellyLanguage.SYMBOL_STREAM_OPTIONS, preset),
       frameSize = context.getInt(JellyLanguage.SYMBOL_FRAME_SIZE, baseVariant.frameSize),
+      enableNamespaceDeclarations = context.isTrue(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS),
     )
 
 /**
@@ -75,6 +76,9 @@ final class JellyGraphWriter(opt: JellyFormatVariant) extends WriterGraphRIOTBas
       .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
     )
     val inner = JellyStreamWriter(variant, out)
+    if opt.enableNamespaceDeclarations then
+      for (prefix, iri) <- prefixMap.getMapping.asScala do
+        inner.prefix(prefix, iri)
     for triple <- graph.find().asScala do
       inner.triple(triple)
     inner.finish()
@@ -101,6 +105,9 @@ final class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIO
       .withLogicalType(LogicalStreamType.FLAT_QUADS)
     )
     val inner = JellyStreamWriter(variant, out)
+    if opt.enableNamespaceDeclarations then
+      for (prefix, iri) <- prefixMap.getMapping.asScala do
+        inner.prefix(prefix, iri)
     for quad <- dataset.find().asScala do
       inner.quad(quad)
     inner.finish()
@@ -146,9 +153,10 @@ final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: Output
       ), out)
     inner.quad(quad)
 
+  // Not supported
   override def base(base: String): Unit = ()
 
-  override def prefix(prefix: String, iri: String): Unit = ()
+  override def prefix(prefix: String, iri: String): Unit = inner.prefix(prefix, iri)
 
   override def finish(): Unit =
     if inner != null then
@@ -164,7 +172,7 @@ final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: Output
 final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extends StreamRDF:
   // We don't set any options here – it is the responsibility of the caller to set
   // a valid stream type here.
-  private val encoder = JenaConverterFactory.encoder(opt.opt)
+  private val encoder = JenaConverterFactory.encoder(opt.opt, opt.enableNamespaceDeclarations)
   private val buffer: ArrayBuffer[RdfStreamRow] = new ArrayBuffer[RdfStreamRow]()
 
   // No need to handle this, the encoder will emit the header automatically anyway
@@ -183,8 +191,11 @@ final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extend
   // Not supported
   override def base(base: String): Unit = ()
 
-  // Not supported
-  override def prefix(prefix: String, iri: String): Unit = ()
+  override def prefix(prefix: String, iri: String): Unit =
+    if opt.enableNamespaceDeclarations then
+      buffer ++= encoder.declareNamespace(prefix, iri)
+      if buffer.size >= opt.frameSize then
+        flushBuffer()
 
   // Flush the buffer
   override def finish(): Unit =

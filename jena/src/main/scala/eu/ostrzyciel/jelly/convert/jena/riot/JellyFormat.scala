@@ -9,10 +9,12 @@ import org.apache.jena.riot.{RDFFormat, RDFFormatVariant}
  * Subclass of [[RDFFormatVariant]] to pass Jelly's options to the encoder.
  * @param opt Jelly options
  * @param frameSize size of each RdfStreamFrame, in rows
+ * @param enableNamespaceDeclarations whether to include namespace declarations in the output
  */
 case class JellyFormatVariant(
   opt: RdfStreamOptions = JellyOptions.smallAllFeatures,
-  frameSize: Int = 256
+  frameSize: Int = 256,
+  enableNamespaceDeclarations: Boolean = false,
 ) extends RDFFormatVariant(opt.toString)
 
 /**

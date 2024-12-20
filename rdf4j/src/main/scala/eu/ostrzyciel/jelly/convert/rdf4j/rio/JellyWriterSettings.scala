@@ -5,14 +5,20 @@ import org.eclipse.rdf4j.rio.WriterConfig
 import org.eclipse.rdf4j.rio.helpers.*
 
 object JellyWriterSettings:
-  def configFromOptions(frameSize: Long): WriterConfig =
+  def configFromOptions(frameSize: Long): WriterConfig = configFromOptions(frameSize, false)
+
+  def configFromOptions(frameSize: Long, enableNamespaceDeclarations: Boolean): WriterConfig =
     val c = new WriterConfig()
     c.set(FRAME_SIZE, frameSize)
+    c.set(ENABLE_NAMESPACE_DECLARATIONS, enableNamespaceDeclarations)
     c
 
-  def configFromOptions(opt: RdfStreamOptions, frameSize: Long = 256L): WriterConfig =
+  def configFromOptions(
+    opt: RdfStreamOptions, frameSize: Long = 256L, enableNamespaceDeclarations: Boolean = false
+  ): WriterConfig =
     val c = new WriterConfig()
     c.set(FRAME_SIZE, frameSize)
+    c.set(ENABLE_NAMESPACE_DECLARATIONS, enableNamespaceDeclarations)
     c.set(STREAM_NAME, opt.streamName)
     c.set(PHYSICAL_TYPE, opt.physicalType)
     c.set(ALLOW_GENERALIZED_STATEMENTS, opt.generalizedStatements)
@@ -27,6 +33,15 @@ object JellyWriterSettings:
     "Target RDF stream frame size. Frame size may be slightly larger than this value, " +
       "to fit the entire statement and its lookup entries in one frame.",
     256L
+  )
+
+  val ENABLE_NAMESPACE_DECLARATIONS = new BooleanRioSetting(
+    "eu.ostrzyciel.jelly.convert.rdf4j.rio.enableNamespaceDeclarations",
+    "Enable namespace declarations in the output (equivalent to PREFIX directives in Turtle syntax). " +
+      "This option is disabled by default and is not recommended when your only concern is performance. " +
+      "It is only useful when you want to preserve the namespace declarations in the output. " +
+      "Enabling this causes the stream to be written in protocol version 2 (Jelly 1.1.0) instead of 1.",
+    false
   )
 
   val STREAM_NAME = new StringRioSetting(

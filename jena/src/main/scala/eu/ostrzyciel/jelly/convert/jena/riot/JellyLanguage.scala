@@ -79,6 +79,19 @@ object JellyLanguage:
    */
   val SYMBOL_FRAME_SIZE: util.Symbol = org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "frameSize")
 
+  /**
+   * Symbol for enabling namespace declarations (equivalent to PREFIX directives in Turtle syntax) in the output.
+   *
+   * Set this to a boolean value in Jena's Context.
+   *
+   * This option is disabled by default and is not recommended when your only concern is performance. It is only
+   * useful when you want to preserve the namespace declarations in the output.
+   *
+   * Enabling this causes the stream to be written in protocol version 2 (Jelly 1.1.0) instead of 1.
+   */
+  val SYMBOL_ENABLE_NAMESPACE_DECLARATIONS: util.Symbol =
+    org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "enableNamespaceDeclarations")
+
   private var registered = false
 
   register()
