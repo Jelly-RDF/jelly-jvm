@@ -1,6 +1,9 @@
 package eu.ostrzyciel.jelly.core
 
-import java.io.{ByteArrayInputStream, InputStream, SequenceInputStream}
+import com.google.protobuf.CodedOutputStream
+import scalapb.LiteParser
+
+import java.io.{ByteArrayInputStream, InputStream, OutputStream, SequenceInputStream}
 
 object IoUtils:
   /**
@@ -28,3 +31,19 @@ object IoUtils:
       scout(0) != 0x0A || scout(1) == 0x0A && scout(2) != 0x0A
     )
     (isDelimited, newInput)
+
+  /**
+   * Utility method to transform a non-delimited Jelly frame (as a byte array) into a delimited one,
+   * writing it to a byte stream.
+   *
+   * This is useful if you for example store non-delimited frames in a database, but want to write them to a stream.
+   *
+   * @param nonDelimitedFrame EXACTLY one non-delimited Jelly frame
+   * @param output the output stream to write the frame to
+   */
+  def writeFrameAsDelimited(nonDelimitedFrame: Array[Byte], output: OutputStream): Unit =
+    // Don't worry, the buffer won't really have 0-size. It will be of minimal size able to fit the varint.
+    val codedOutput: CodedOutputStream = CodedOutputStream.newInstance(output, bufferSize = 0)
+    codedOutput.writeUInt32NoTag(nonDelimitedFrame.length)
+    codedOutput.flush()
+    output.write(nonDelimitedFrame)
