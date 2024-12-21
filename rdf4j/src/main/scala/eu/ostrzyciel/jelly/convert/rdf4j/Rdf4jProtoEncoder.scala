@@ -5,8 +5,10 @@ import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, RdfStreamOptions, SpoTerm}
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.vocabulary.XSD
 
-final class Rdf4jProtoEncoder(override val options: RdfStreamOptions)
-  extends ProtoEncoder[Value, Statement, Statement, Triple](options):
+final class Rdf4jProtoEncoder(
+  options: RdfStreamOptions,
+  enableNamespaceDeclarations: Boolean,
+) extends ProtoEncoder[Value, Statement, Statement, Triple](options, enableNamespaceDeclarations):
 
   protected inline def getTstS(triple: Statement) = triple.getSubject
   protected inline def getTstP(triple: Statement) = triple.getPredicate

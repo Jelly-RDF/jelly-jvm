@@ -2,8 +2,9 @@ syntax = "proto3";
 package eu.ostrzyciel.jelly.core.proto.future;
 
 // Jelly RDF serialization with Protocol Buffers.
-// Specification document: https://w3id.org/jelly/1.0.0/specification/serialization
-// Protocol version: 1.0.0
+// Specification document:
+// https://w3id.org/jelly/1.1.0/specification/serialization
+// Protocol version: 1.1.0
 // !!! MODIFIED FOR FORWARD COMPATIBILITY TESTING !!!
 // !!! DO NOT USE IN PRODUCTION !!!
 
@@ -194,6 +195,25 @@ message RdfGraphStart {
 message RdfGraphEnd {
 }
 
+// Explicit namespace declaration
+//
+// This does not correspond to any construct in the RDF Abstract Syntax.
+// Rather, it is a hint to the consumer that the given IRI prefix (namespace)
+// may be associated with a shorter name, like in Turtle syntax:
+// PREFIX ex: <http://example.org/>
+//
+// These short names (here "ex:") are NOT used in the RDF statement encoding.
+// This is a purely cosmetic feature useful in cases where you want to
+// preserve the namespace declarations from the original RDF document.
+// These declarations have nothing in common with the prefix lookup table.
+message RdfNamespaceDeclaration {
+  // Short name of the namespace (e.g., "ex")
+  // Do NOT include the colon.
+  string name = 1;
+  // IRI of the namespace (e.g., "http://example.org/")
+  RdfIri value = 2;
+}
+
 // Entry in the name lookup table
 message RdfNameEntry {
   // 1-based identifier
@@ -206,6 +226,11 @@ message RdfNameEntry {
 }
 
 // Entry in the prefix lookup table
+//
+// Note: the prefixes in the lookup table can be arbitrary strings, and are
+// NOT meant to be user-facing. They are only used for IRI compression.
+// To transmit user-facing namespace declarations for cosmetic purposes, use
+// RdfNamespaceDeclaration.
 message RdfPrefixEntry {
   // 1-based identifier
   // If id=0, it should be interpreted as previous_id + 1.
@@ -253,6 +278,7 @@ message RdfStreamOptions {
   LogicalStreamType logical_type = 14;
   // Protocol version (required)
   // For Jelly 1.0.x value must be 1.
+  // For Jelly 1.1.x value must be 2.
   // For custom extensions, the value must be 10000 or higher.
   // !!! FOR FORWARD COMPATIBILITY TESTING, THE VALUE IS 123 !!!
   uint32 version = 15;
@@ -344,6 +370,8 @@ message RdfStreamRow {
     // Signals the consumer that the transmitted graph is complete.
     // Only valid in streams of physical type GRAPHS.
     RdfGraphEnd graph_end = 5;
+    // Explicit namespace declaration.
+    RdfNamespaceDeclaration namespace = 6;
     // Entry in the name lookup table.
     RdfNameEntry name = 9;
     // Entry in the prefix lookup table.

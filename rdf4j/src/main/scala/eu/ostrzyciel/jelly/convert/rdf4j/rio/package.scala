@@ -12,7 +12,7 @@ package object rio:
     jellyContentType,
     null,
     jellyFileExtension,
-    false,
+    true, // supports namespaces if ENABLE_NAMESPACE_DECLARATIONS is true, otherwise ignored
     true,
     true
   )

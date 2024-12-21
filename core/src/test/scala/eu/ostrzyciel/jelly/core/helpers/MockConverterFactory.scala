@@ -9,4 +9,5 @@ object MockConverterFactory extends ConverterFactory
 
   override final def decoderConverter = new MockProtoDecoderConverter()
 
-  override final def encoder(options: RdfStreamOptions) = new MockProtoEncoder(options)
+  override final def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean) =
+    new MockProtoEncoder(options, enableNamespaceDeclarations)

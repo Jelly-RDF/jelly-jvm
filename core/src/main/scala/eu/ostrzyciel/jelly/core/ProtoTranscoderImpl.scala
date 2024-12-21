@@ -68,6 +68,7 @@ private final class ProtoTranscoderImpl(
           rowBuffer.append(RdfStreamRow(RdfGraphStart(g1)))
         else rowBuffer.append(row)
       case RdfStreamRow.GRAPH_END_FIELD_NUMBER => rowBuffer.append(row)
+      case RdfStreamRow.NAMESPACE_FIELD_NUMBER => handleNamespaceDeclaration(row)
       case RdfStreamRow.NAME_FIELD_NUMBER =>
         val name = r.name
         val entry = nameLookup.addEntry(name.id, name.value)
@@ -109,6 +110,14 @@ private final class ProtoTranscoderImpl(
     val g1 = handleGraphTerm(quad.graph)
     if changeInTerms then
       rowBuffer.append(RdfStreamRow(RdfQuad(s1, p1, o1, g1)))
+    else rowBuffer.append(row)
+
+  private def handleNamespaceDeclaration(row: RdfStreamRow): Unit =
+    this.changeInTerms = false
+    val nsRow = row.row.namespace
+    val iriValue = handleIri(nsRow.value)
+    if changeInTerms then
+      rowBuffer.append(RdfStreamRow(RdfNamespaceDeclaration(nsRow.nsName, iriValue)))
     else rowBuffer.append(row)
 
   private def handleSpoTerm(term: SpoTerm): SpoTerm =
@@ -174,5 +183,6 @@ private final class ProtoTranscoderImpl(
     if !emittedOptions then
       emittedOptions = true
       rowBuffer.append(RdfStreamRow(outputOptions.copy(
-        version = Constants.protoVersion
+        version = if inputOptions.version == Constants.protoVersionNoNsDecl then
+          Constants.protoVersionNoNsDecl else Constants.protoVersion,
       )))

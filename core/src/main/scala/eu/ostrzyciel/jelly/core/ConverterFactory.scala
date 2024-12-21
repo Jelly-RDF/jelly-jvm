@@ -13,6 +13,13 @@ object ConverterFactory:
    */
   final def defaultSupportedOptions: RdfStreamOptions = JellyOptions.defaultSupportedOptions
 
+  /**
+   * Type alias for a namespace handler function.
+   * The first argument is the namespace prefix (without a colon), the second is the IRI node.
+   * @tparam TNode Type of RDF nodes in the RDF library
+   */
+  final type NamespaceHandler[TNode] = (String, TNode) => Unit
+
 /**
  * "Main" trait to be implemented by RDF conversion modules (e.g., for Jena and RDF4J).
  * Exposes factory methods for building protobuf encoders and decoders.
@@ -34,6 +41,9 @@ trait ConverterFactory[
 ]:
   import ConverterFactory.*
   
+  final type NsHandler = NamespaceHandler[TNode]
+  final val defaultNsHandler: NsHandler = (_, _) => ()
+
   def decoderConverter: TDecConv
 
   /**
@@ -41,59 +51,95 @@ trait ConverterFactory[
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def triplesDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def triplesDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: NsHandler = defaultNsHandler
+  ):
   TriplesDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new TriplesDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new TriplesDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
    * Create a new [[QuadsDecoder]].
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def quadsDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def quadsDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: NsHandler = defaultNsHandler
+  ):
   QuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new QuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new QuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
    * Create a new [[GraphsAsQuadsDecoder]].
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def graphsAsQuadsDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def graphsAsQuadsDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: NsHandler = defaultNsHandler
+  ):
   GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsAsQuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new GraphsAsQuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
    * Create a new [[GraphsDecoder]].
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def graphsDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def graphsDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: NsHandler = defaultNsHandler
+  ):
   GraphsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new GraphsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
    * Create a new [[AnyStatementDecoder]].
    * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
    *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
    *                         type), you should always use this.defaultSupportedOptions.withXxx.
+   * @param namespaceHandler function to handle namespace declarations in the stream. The first argument is the
+   *                         namespace prefix (without a colon), the second is the IRI node.
    * @return decoder
    */
-  final def anyStatementDecoder(supportedOptions: Option[RdfStreamOptions] = None): 
+  final def anyStatementDecoder(
+    supportedOptions: Option[RdfStreamOptions] = None,
+    namespaceHandler: NsHandler = defaultNsHandler
+  ):
   AnyStatementDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new AnyStatementDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new AnyStatementDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
-   * Create a new [[ProtoEncoder]].
+   * Create a new [[ProtoEncoder]]. Namespace declarations are disabled by default.
    * @param options Jelly serialization options.
    * @return encoder
    */
-  def encoder(options: RdfStreamOptions): TEncoder
+  def encoder(options: RdfStreamOptions): TEncoder = encoder(options, enableNamespaceDeclarations = false)
+
+  /**
+   * Create a new [[ProtoEncoder]].
+   *
+   * @param options Jelly serialization options.
+   * @param enableNamespaceDeclarations whether to enable namespace declarations in the stream. 
+   *                                    If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
+   *                                    the stream version will be 1 (Jelly 1.0.0).
+   * @return encoder
+   */
+  def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): TEncoder

@@ -17,3 +17,5 @@ object Mrl:
   sealed trait Statement
   final case class Triple(s: Node, p: Node, o: Node) extends Statement
   final case class Quad(s: Node, p: Node, o: Node, g: Node) extends Statement
+
+  final case class NamespaceDecl(name: String, iri: String)

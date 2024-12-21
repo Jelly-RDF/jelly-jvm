@@ -7,6 +7,8 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import scala.collection.mutable.ArrayBuffer
+
 class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   import ProtoDecoderImpl.*
   import ProtoTestCases.*
@@ -61,7 +63,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val (decoderF, pst) = decoderFactories(decoderName)
 
       f"throw exception when expecting logical type $lst on a stream with no logical type, with $decoderName" in {
-        val decoder = decoderF(Some(defaultOptions.withLogicalType(lst)))
+        val decoder = decoderF(Some(defaultOptions.withLogicalType(lst)), (_, _) => ())
         val data = wrapEncodedFull(Seq(
           JellyOptions.smallGeneralized
             .withPhysicalType(pst)
@@ -75,7 +77,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
 
       for lstOfStream <- logicalStreamTypeSet do
         f"accept stream with logical type $lstOfStream when expecting $lst, with $decoderName" in {
-          val decoder = decoderF(Some(defaultOptions.withLogicalType(lst)))
+          val decoder = decoderF(Some(defaultOptions.withLogicalType(lst)), (_, _) => ())
           val data = wrapEncodedFull(Seq(
             JellyOptions.smallGeneralized
               .withPhysicalType(pst)
@@ -92,7 +94,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       lstOfStream <- lstSet
     do
       f"throw exception that a stream with logical type $lstOfStream is incompatible with $pst, with $decoderName" in {
-        val decoder = decoderF(None)
+        val decoder = decoderF(None, (_, _) => ())
         val data = wrapEncodedFull(Seq(
           JellyOptions.smallGeneralized
             .withPhysicalType(pst)
@@ -129,6 +131,37 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         )
         .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
       assertDecoded(decoded, Triples1.mrl)
+    }
+
+    "decode triple statements with namespace declarations" in {
+      val namespaces = ArrayBuffer[(String, Node)]()
+      val decoder = MockConverterFactory.triplesDecoder(Some(
+        defaultOptions.withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+      ), (name, iri) => namespaces.append((name, iri)))
+      val decoded = Triples2NsDecl
+        .encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
+        .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
+      assertDecoded(decoded, Triples2NsDecl.mrl.filter(_.isInstanceOf[Triple]).asInstanceOf[Seq[Triple]])
+      namespaces.toSeq should be (Seq(
+        ("test", Iri("https://test.org/test/")),
+        ("ns2", Iri("https://test.org/ns2/")),
+      ))
+    }
+
+    "ignore namespace declarations by default" in {
+      val decoder = MockConverterFactory.triplesDecoder(Some(
+        defaultOptions.withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+      ))
+      val decoded = Triples2NsDecl
+        .encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+        )
+        .flatMap(row => decoder.ingestRow(RdfStreamRow(row)))
+      assertDecoded(decoded, Triples2NsDecl.mrl.filter(_.isInstanceOf[Triple]).asInstanceOf[Seq[Triple]])
     }
 
     "throw exception on unset logical stream type" in {

@@ -6,8 +6,10 @@ import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
 
-final class JenaProtoEncoder(override val options: RdfStreamOptions)
-  extends ProtoEncoder[Node, Triple, Quad, Triple](options):
+final class JenaProtoEncoder(
+  options: RdfStreamOptions,
+  enableNamespaceDeclarations: Boolean,
+) extends ProtoEncoder[Node, Triple, Quad, Triple](options, enableNamespaceDeclarations):
 
   protected inline def getTstS(triple: Triple) = triple.getSubject
   protected inline def getTstP(triple: Triple) = triple.getPredicate

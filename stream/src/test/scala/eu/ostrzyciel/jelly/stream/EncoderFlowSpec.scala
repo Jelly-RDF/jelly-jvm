@@ -3,7 +3,7 @@ package eu.ostrzyciel.jelly.stream
 import eu.ostrzyciel.jelly.core.helpers.Assertions.*
 import eu.ostrzyciel.jelly.core.helpers.MockConverterFactory
 import eu.ostrzyciel.jelly.core.proto.v1.*
-import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
+import eu.ostrzyciel.jelly.core.{Constants, JellyOptions, ProtoTestCases}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures
@@ -31,6 +31,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Triples1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
           .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (1)
@@ -47,6 +48,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Triples1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
           .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (3)
@@ -63,6 +65,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Triples1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
           .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (4)
@@ -82,6 +85,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Triples1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
           .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (2)
@@ -101,6 +105,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Triples1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
           .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (5)
@@ -125,6 +130,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Triples1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.TRIPLES)
           .withLogicalType(LogicalStreamType.GRAPHS)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be(2)
@@ -145,6 +151,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Quads1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.QUADS)
           .withLogicalType(LogicalStreamType.FLAT_QUADS)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (1)
@@ -164,6 +171,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Quads1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.QUADS)
           .withLogicalType(LogicalStreamType.FLAT_QUADS)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (2)
@@ -185,6 +193,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Quads1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.QUADS)
           .withLogicalType(LogicalStreamType.DATASETS)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be(2)
@@ -205,6 +214,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Graphs1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.GRAPHS)
           .withLogicalType(LogicalStreamType.NAMED_GRAPHS)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (2)
@@ -221,6 +231,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Graphs1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.GRAPHS)
           .withLogicalType(LogicalStreamType.NAMED_GRAPHS)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       // 1 additional split due to split by graph
@@ -241,6 +252,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Graphs1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.GRAPHS)
           .withLogicalType(LogicalStreamType.DATASETS)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (1)
@@ -258,6 +270,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Graphs1.encoded(JellyOptions.smallGeneralized
           .withPhysicalType(PhysicalStreamType.GRAPHS)
           .withLogicalType(LogicalStreamType.DATASETS)
+          .withVersion(Constants.protoVersionNoNsDecl)
         )
       )
       encoded.size should be (4)

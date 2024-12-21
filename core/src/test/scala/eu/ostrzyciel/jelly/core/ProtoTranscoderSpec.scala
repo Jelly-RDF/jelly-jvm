@@ -20,8 +20,11 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     maxDatatypeTableSize = 8,
   )
 
-  val testCases: Seq[(String, PhysicalStreamType, TestCase[Mrl.Triple | Mrl.Quad | (Mrl.Node, Iterable[Mrl.Triple])])] = Seq(
+  val testCases: Seq[(String, PhysicalStreamType,
+    TestCase[Mrl.Triple | Mrl.Quad | (Mrl.Node, Iterable[Mrl.Triple]) | Mrl.NamespaceDecl]
+  )] = Seq(
     ("Triples1", PhysicalStreamType.TRIPLES, Triples1),
+    ("Triples2NsDecl", PhysicalStreamType.TRIPLES, Triples2NsDecl),
     ("Quads1", PhysicalStreamType.QUADS, Quads1),
     ("Quads2RepeatDefault", PhysicalStreamType.QUADS, Quads2RepeatDefault),
     ("Graphs1", PhysicalStreamType.GRAPHS, Graphs1),
@@ -197,6 +200,14 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
       output.size shouldBe expectedOutput.size
       for (i <- input.indices) do
         output(i) shouldBe expectedOutput(i)
+    }
+
+    "maintain protocol version 1 if input uses it" in {
+      val options = JellyOptions.smallStrict.withVersion(Constants.protoVersionNoNsDecl)
+      val input = RdfStreamRow(options)
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(options.withVersion(Constants.protoVersion))
+      val output = transcoder.ingestRow(input)
+      output.head shouldBe input
     }
 
     "throw an exception on a null row" in {

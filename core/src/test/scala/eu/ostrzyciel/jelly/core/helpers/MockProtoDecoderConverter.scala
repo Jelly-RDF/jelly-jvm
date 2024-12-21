@@ -6,7 +6,8 @@ import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 /**
  * Mock implementation of [[ProtoDecoder]].
  */
-class MockProtoDecoderConverter extends ProtoDecoderConverter[Node, Datatype, Triple, Quad]:
+class MockProtoDecoderConverter
+  extends ProtoDecoderConverter[Node, Datatype, Triple, Quad]:
   def makeSimpleLiteral(lex: String) = SimpleLiteral(lex)
   def makeLangLiteral(lex: String, lang: String) = LangLiteral(lex, lang)
   def makeDtLiteral(lex: String, dt: Datatype) = DtLiteral(lex, dt)

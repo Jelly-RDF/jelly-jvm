@@ -10,4 +10,5 @@ object JenaConverterFactory
   extends ConverterFactory[JenaProtoEncoder, JenaDecoderConverter, Node, RDFDatatype, Triple, Quad]:
   override final def decoderConverter: JenaDecoderConverter = new JenaDecoderConverter()
 
-  override final def encoder(options: RdfStreamOptions): JenaProtoEncoder = JenaProtoEncoder(options)
+  override final def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): JenaProtoEncoder = 
+    JenaProtoEncoder(options, enableNamespaceDeclarations)

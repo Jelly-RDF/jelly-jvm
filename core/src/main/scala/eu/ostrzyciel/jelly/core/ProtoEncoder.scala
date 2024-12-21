@@ -15,8 +15,14 @@ object ProtoEncoder:
  * It will, for example, allow the user to send generalized triples in a stream that should not have them.
  * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
  * @param options options for this stream
+ * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
+ *                                    If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
+ *                                    the stream version will be 1 (Jelly 1.0.0).
  */
-abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfStreamOptions):
+abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
+  final val options: RdfStreamOptions,
+  final val enableNamespaceDeclarations: Boolean,
+):
   import ProtoEncoder.*
 
   // *** 1. THE PUBLIC INTERFACE ***
@@ -72,6 +78,23 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
     if !emittedOptions then
       throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one")
     ProtoEncoder.graphEnd
+
+  /**
+   * Declare a namespace in the stream.
+   * This is equivalent to the PREFIX directive in Turtle.
+   * @param name short name of the namespace (without the colon)
+   * @param iriValue IRI of the namespace
+   * @return iterable of stream rows
+   */
+  final def declareNamespace(name: String, iriValue: String): Iterable[RdfStreamRow] =
+    if !enableNamespaceDeclarations then
+      throw new RdfProtoSerializationError("Namespace declarations are not enabled in this stream")
+    handleHeader()
+    val mainRow = RdfStreamRow(RdfNamespaceDeclaration(
+      name,
+      makeIriNode(iriValue).iri
+    ))
+    extraRowsBuffer.append(mainRow).toSeq
 
   // *** 2. METHODS TO IMPLEMENT ***
   // *******************************
@@ -200,8 +223,9 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](val options: RdfS
   private def emitOptions(): Unit =
     emittedOptions = true
     extraRowsBuffer.append(RdfStreamRow(
-        // Override whatever the user set in the options.
-        options.withVersion(Constants.protoVersion)
+      // Override whatever the user set in the options.
+      options.withVersion(
+        // If namespace declarations are enabled, we need to use Jelly 1.1.0.
+        if enableNamespaceDeclarations then Constants.protoVersion else Constants.protoVersionNoNsDecl
+      )
     ))
-
-
