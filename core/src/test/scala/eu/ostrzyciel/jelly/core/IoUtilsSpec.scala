@@ -119,4 +119,15 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         newIn.readAllBytes() shouldBe Array[Byte](0x12, 0x34)
       }
     }
+    
+    "writeFrameAsDelimited" in {
+      val os = ByteArrayOutputStream()
+      IoUtils.writeFrameAsDelimited(frameLarge.toByteArray, os)
+      val bytes = os.toByteArray
+      
+      val in = new ByteArrayInputStream(bytes)
+      val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
+      isDelimited shouldBe true
+      RdfStreamFrame.parseDelimitedFrom(newIn).get shouldBe frameLarge
+    }
   }
