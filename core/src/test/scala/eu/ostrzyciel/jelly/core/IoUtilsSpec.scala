@@ -24,7 +24,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
   ))
 
   "IoUtils" should {
-    "guessDelimiting" when {
+    "autodetectDelimiting" when {
       "input stream is a non-delimited Jelly message (size >10)" in {
         val bytes = frameLarge.toByteArray
         bytes(0) shouldBe 0x0A
@@ -103,6 +103,20 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         isDelimited shouldBe true
         newIn.readAllBytes() shouldBe bytes
       }
+
+      "input stream is empty" in {
+        val in = new ByteArrayInputStream(Array.emptyByteArray)
+        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
+        isDelimited shouldBe false
+        newIn.readAllBytes() shouldBe Array.emptyByteArray
+      }
+
+      "input stream has only 2 bytes" in {
+        // some messed-up data
+        val in = new ByteArrayInputStream(Array[Byte](0x12, 0x34))
+        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
+        isDelimited shouldBe false
+        newIn.readAllBytes() shouldBe Array[Byte](0x12, 0x34)
+      }
     }
   }
-
