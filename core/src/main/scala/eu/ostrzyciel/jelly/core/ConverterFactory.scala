@@ -68,7 +68,7 @@ trait ConverterFactory[
     namespaceHandler: (String, TNode) => Unit = (_, _) => ()
   ):
   QuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new QuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new QuadsDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[GraphsAsQuadsDecoder]].
@@ -84,7 +84,7 @@ trait ConverterFactory[
     namespaceHandler: (String, TNode) => Unit = (_, _) => ()
   ):
   GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsAsQuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new GraphsAsQuadsDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[GraphsDecoder]].
@@ -100,7 +100,7 @@ trait ConverterFactory[
     namespaceHandler: (String, TNode) => Unit = (_, _) => ()
   ):
   GraphsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new GraphsDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[AnyStatementDecoder]].
@@ -116,7 +116,7 @@ trait ConverterFactory[
     namespaceHandler: (String, TNode) => Unit = (_, _) => ()
   ):
   AnyStatementDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new AnyStatementDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions))
+    new AnyStatementDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
 
   /**
    * Create a new [[ProtoEncoder]]. Namespace declarations are disabled by default.

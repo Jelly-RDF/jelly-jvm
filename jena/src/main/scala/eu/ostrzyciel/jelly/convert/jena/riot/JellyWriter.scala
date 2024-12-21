@@ -10,7 +10,7 @@ import org.apache.jena.sparql.core.{DatasetGraph, Quad}
 import org.apache.jena.sparql.util.Context
 
 import java.io.{OutputStream, Writer}
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.jdk.CollectionConverters.*
 
 
@@ -77,7 +77,7 @@ final class JellyGraphWriter(opt: JellyFormatVariant) extends WriterGraphRIOTBas
       .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
     )
     val inner = JellyStreamWriter(variant, out)
-    if opt.enableNamespaceDeclarations then
+    if variant.enableNamespaceDeclarations then
       for (prefix, iri) <- prefixMap.getMapping.asScala do
         inner.prefix(prefix, iri)
     for triple <- graph.find().asScala do
@@ -106,7 +106,7 @@ final class JellyDatasetWriter(opt: JellyFormatVariant) extends WriterDatasetRIO
       .withLogicalType(LogicalStreamType.FLAT_QUADS)
     )
     val inner = JellyStreamWriter(variant, out)
-    if opt.enableNamespaceDeclarations then
+    if variant.enableNamespaceDeclarations then
       for (prefix, iri) <- prefixMap.getMapping.asScala do
         inner.prefix(prefix, iri)
     for quad <- dataset.find().asScala do
@@ -135,6 +135,13 @@ object JellyStreamWriterFactory extends StreamRDFWriterFactory:
  */
 final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: OutputStream) extends StreamRDF:
   private var inner: JellyStreamWriter = null
+  // If we start receiving prefix() calls before the first triple/quad, we need to store them
+  private val prefixBacklog: ListBuffer[(String, String)] = new ListBuffer[(String, String)]()
+  
+  private def clearPrefixBacklog(): Unit =
+    for (prefix, iri) <- prefixBacklog do
+      inner.prefix(prefix, iri)
+    prefixBacklog.clear()
 
   override def start(): Unit = ()
 
@@ -144,6 +151,7 @@ final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: Output
         opt = opt.opt.withPhysicalType(PhysicalStreamType.TRIPLES)
           .withLogicalType(LogicalStreamType.FLAT_TRIPLES),
       ), out)
+      clearPrefixBacklog()
     inner.triple(triple)
 
   override def quad(quad: Quad): Unit =
@@ -152,6 +160,7 @@ final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: Output
         opt = opt.opt.withPhysicalType(PhysicalStreamType.QUADS)
           .withLogicalType(LogicalStreamType.FLAT_QUADS),
       ), out)
+      clearPrefixBacklog()
     inner.quad(quad)
 
   // Not supported
@@ -160,6 +169,8 @@ final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: Output
   override def prefix(prefix: String, iri: String): Unit =
     if inner != null then
       inner.prefix(prefix, iri)
+    else
+      prefixBacklog += ((prefix, iri))
 
   override def finish(): Unit =
     if inner != null then
