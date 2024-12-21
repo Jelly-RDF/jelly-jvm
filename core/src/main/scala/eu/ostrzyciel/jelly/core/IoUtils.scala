@@ -24,7 +24,7 @@ object IoUtils:
     // A case like "0A 0A 0A 0A" in the delimited variant is impossible. It would mean that the whole message
     // is 10 bytes long, while stream options alone are 10 bytes long.
     // Yeah, it's magic. But it works.
-    val isDelimited = (
+    val isDelimited = scout.length == 3 && (
       scout(0) != 0x0A || scout(1) == 0x0A && scout(2) != 0x0A
     )
     (isDelimited, newInput)
