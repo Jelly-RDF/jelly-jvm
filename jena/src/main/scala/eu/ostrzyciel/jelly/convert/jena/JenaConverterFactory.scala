@@ -8,10 +8,7 @@ import org.apache.jena.sparql.core.Quad
 
 object JenaConverterFactory
   extends ConverterFactory[JenaProtoEncoder, JenaDecoderConverter, Node, RDFDatatype, Triple, Quad]:
-  override final def decoderConverter: JenaDecoderConverter = new JenaDecoderConverter((_, _) => ())
-
-  override final def decoderConverter(handler: (String, Node) => Unit): JenaDecoderConverter =
-    new JenaDecoderConverter(handler)
+  override final def decoderConverter: JenaDecoderConverter = new JenaDecoderConverter()
 
   override final def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): JenaProtoEncoder = 
     JenaProtoEncoder(options, enableNamespaceDeclarations)

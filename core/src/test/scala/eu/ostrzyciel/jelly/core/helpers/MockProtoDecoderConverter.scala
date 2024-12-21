@@ -6,7 +6,7 @@ import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 /**
  * Mock implementation of [[ProtoDecoder]].
  */
-class MockProtoDecoderConverter(namespaceHandler: (name: String, iri: Node) => Unit)
+class MockProtoDecoderConverter
   extends ProtoDecoderConverter[Node, Datatype, Triple, Quad]:
   def makeSimpleLiteral(lex: String) = SimpleLiteral(lex)
   def makeLangLiteral(lex: String, lang: String) = LangLiteral(lex, lang)
@@ -18,4 +18,3 @@ class MockProtoDecoderConverter(namespaceHandler: (name: String, iri: Node) => U
   def makeDefaultGraphNode(): Node = null
   def makeTriple(s: Node, p: Node, o: Node) = Triple(s, p, o)
   def makeQuad(s: Node, p: Node, o: Node, g: Node) = Quad(s, p, o, g)
-  def handleNamespaceDeclaration(name: String, iri: Node): Unit = namespaceHandler(name, iri)

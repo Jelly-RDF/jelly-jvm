@@ -13,6 +13,13 @@ object ConverterFactory:
    */
   final def defaultSupportedOptions: RdfStreamOptions = JellyOptions.defaultSupportedOptions
 
+  /**
+   * Type alias for a namespace handler function.
+   * The first argument is the namespace prefix (without a colon), the second is the IRI node.
+   * @tparam TNode Type of RDF nodes in the RDF library
+   */
+  final type NamespaceHandler[TNode] = (String, TNode) => Unit
+
 /**
  * "Main" trait to be implemented by RDF conversion modules (e.g., for Jena and RDF4J).
  * Exposes factory methods for building protobuf encoders and decoders.
@@ -33,10 +40,11 @@ trait ConverterFactory[
   TNode, TDatatype : ClassTag, TTriple, TQuad
 ]:
   import ConverterFactory.*
+  
+  final type NsHandler = NamespaceHandler[TNode]
+  final val defaultNsHandler: NsHandler = (_, _) => ()
 
   def decoderConverter: TDecConv
-
-  def decoderConverter(namespaceHandler: (name: String, iri: TNode) => Unit): TDecConv
 
   /**
    * Create a new [[TriplesDecoder]].
@@ -49,10 +57,10 @@ trait ConverterFactory[
    */
   final def triplesDecoder(
     supportedOptions: Option[RdfStreamOptions] = None,
-    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+    namespaceHandler: NsHandler = defaultNsHandler
   ):
   TriplesDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new TriplesDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
+    new TriplesDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
    * Create a new [[QuadsDecoder]].
@@ -65,10 +73,10 @@ trait ConverterFactory[
    */
   final def quadsDecoder(
     supportedOptions: Option[RdfStreamOptions] = None,
-    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+    namespaceHandler: NsHandler = defaultNsHandler
   ):
   QuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new QuadsDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
+    new QuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
    * Create a new [[GraphsAsQuadsDecoder]].
@@ -81,10 +89,10 @@ trait ConverterFactory[
    */
   final def graphsAsQuadsDecoder(
     supportedOptions: Option[RdfStreamOptions] = None,
-    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+    namespaceHandler: NsHandler = defaultNsHandler
   ):
   GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsAsQuadsDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
+    new GraphsAsQuadsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
    * Create a new [[GraphsDecoder]].
@@ -97,10 +105,10 @@ trait ConverterFactory[
    */
   final def graphsDecoder(
     supportedOptions: Option[RdfStreamOptions] = None,
-    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+    namespaceHandler: NsHandler = defaultNsHandler
   ):
   GraphsDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new GraphsDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
+    new GraphsDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
    * Create a new [[AnyStatementDecoder]].
@@ -113,10 +121,10 @@ trait ConverterFactory[
    */
   final def anyStatementDecoder(
     supportedOptions: Option[RdfStreamOptions] = None,
-    namespaceHandler: (String, TNode) => Unit = (_, _) => ()
+    namespaceHandler: NsHandler = defaultNsHandler
   ):
   AnyStatementDecoder[TNode, TDatatype, TTriple, TQuad] =
-    new AnyStatementDecoder(decoderConverter(namespaceHandler), supportedOptions.getOrElse(defaultSupportedOptions))
+    new AnyStatementDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
    * Create a new [[ProtoEncoder]]. Namespace declarations are disabled by default.

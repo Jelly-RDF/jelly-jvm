@@ -22,11 +22,3 @@ trait ProtoDecoderConverter[TNode, TDatatype : ClassTag, +TTriple, +TQuad]:
   def makeDefaultGraphNode(): TNode
   def makeTriple(s: TNode, p: TNode, o: TNode): TTriple
   def makeQuad(s: TNode, p: TNode, o: TNode, g: TNode): TQuad
-
-  /**
-   * Handle an RdfNamespaceDeclaration message in the stream.
-   * This is equivalent to the PREFIX directive in Turtle syntax.
-   * @param name short name of the namespace (without the colon)
-   * @param iri IRI of the namespace. This is always an instance returned by makeIriNode.
-   */
-  def handleNamespaceDeclaration(name: String, iri: TNode): Unit
