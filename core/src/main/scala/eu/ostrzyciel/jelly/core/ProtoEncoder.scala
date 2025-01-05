@@ -2,11 +2,12 @@ package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 
 object ProtoEncoder:
-  private val graphEnd = Seq(RdfStreamRow(RdfGraphEnd.defaultInstance))
+  private val graphEnd = RdfStreamRow(RdfGraphEnd.defaultInstance)
   private val defaultGraphStart = RdfStreamRow(RdfGraphStart(RdfDefaultGraph.defaultInstance))
+  private val emptyRowBuffer: List[RdfStreamRow] = List()
 
 /**
  * Stateful encoder of a protobuf RDF stream.
@@ -22,6 +23,7 @@ object ProtoEncoder:
 abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
   final val options: RdfStreamOptions,
   final val enableNamespaceDeclarations: Boolean,
+  final val maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = None,
 ):
   import ProtoEncoder.*
 
@@ -35,7 +37,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
   final def addTripleStatement(triple: TTriple): Iterable[RdfStreamRow] =
     handleHeader()
     val mainRow = RdfStreamRow(tripleToProto(triple))
-    extraRowsBuffer.append(mainRow).toSeq
+    appendAndReturn(mainRow)
 
   /**
    * Add an RDF quad statement to the stream.
@@ -45,7 +47,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
   final def addQuadStatement(quad: TQuad): Iterable[RdfStreamRow] =
     handleHeader()
     val mainRow = RdfStreamRow(quadToProto(quad))
-    extraRowsBuffer.append(mainRow).toSeq
+    appendAndReturn(mainRow)
 
   /**
    * Signal the start of a new (named) delimited graph in a GRAPHS stream.
@@ -60,7 +62,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
       handleHeader()
       val graphNode = graphNodeToProto(graph)
       val mainRow = RdfStreamRow(RdfGraphStart(graphNode))
-      extraRowsBuffer.append(mainRow).toSeq
+      appendAndReturn(mainRow)
 
   /**
    * Signal the start of the default delimited graph in a GRAPHS stream.
@@ -68,7 +70,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
    */
   final def startDefaultGraph(): Iterable[RdfStreamRow] =
     handleHeader()
-    extraRowsBuffer.append(defaultGraphStart).toSeq
+    appendAndReturn(defaultGraphStart)
 
   /**
    * Signal the end of a delimited graph in a GRAPHS stream.
@@ -77,7 +79,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
   final def endGraph(): Iterable[RdfStreamRow] =
     if !emittedOptions then
       throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one")
-    ProtoEncoder.graphEnd
+    appendAndReturn(graphEnd)
 
   /**
    * Declare a namespace in the stream.
@@ -94,7 +96,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
       name,
       makeIriNode(iriValue).iri
     ))
-    extraRowsBuffer.append(mainRow).toSeq
+    appendAndReturn(mainRow)
 
   // *** 2. METHODS TO IMPLEMENT ***
   // *******************************
@@ -140,7 +142,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
   // *** 3. THE PROTECTED INTERFACE ***
   // **********************************
   protected final inline def makeIriNode(iri: String): UniversalTerm =
-    nodeEncoder.encodeIri(iri, extraRowsBuffer)
+    nodeEncoder.encodeIri(iri, rowBuffer)
 
   protected final inline def makeBlankNode(label: String): UniversalTerm =
     nodeEncoder.encodeOther(label, _ => RdfTerm.Bnode(label))
@@ -152,7 +154,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
     nodeEncoder.encodeOther(lit, _ => RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang)))
 
   protected final inline def makeDtLiteral(lit: TNode, lex: String, dt: String): UniversalTerm =
-    nodeEncoder.encodeDtLiteral(lit, lex, dt, extraRowsBuffer)
+    nodeEncoder.encodeDtLiteral(lit, lex, dt, rowBuffer)
 
   protected final inline def makeTripleNode(triple: TQuoted): RdfTriple =
     quotedToProto(triple)
@@ -162,9 +164,9 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
   // *************************************
-  // We assume by default that 32 rows should be enough to encode one statement.
-  // If not, the buffer will grow.
-  private val extraRowsBuffer = new ArrayBuffer[RdfStreamRow](32)
+  private val rowBuffer: mutable.Buffer[RdfStreamRow] = maybeRowBuffer.getOrElse(mutable.ListBuffer[RdfStreamRow]())
+  // Whether the encoder is responsible for clearing the buffer.
+  private val iResponsibleForBufferClear: Boolean = maybeRowBuffer.isEmpty
   private val nodeEncoder = new NodeEncoder[TNode](
     options,
     // Make the node cache size between 256 and 1024, depending on the user's maxNameTableSize.
@@ -217,12 +219,19 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
     )
 
   private inline def handleHeader(): Unit =
-    extraRowsBuffer.clear()
+    if iResponsibleForBufferClear then
+      rowBuffer.clear()
     if !emittedOptions then emitOptions()
+    
+  private def appendAndReturn(row: RdfStreamRow): Iterable[RdfStreamRow] =
+    rowBuffer.append(row)
+    // This branch will always be correctly predicted
+    if iResponsibleForBufferClear then rowBuffer.toList
+    else emptyRowBuffer
 
   private def emitOptions(): Unit =
     emittedOptions = true
-    extraRowsBuffer.append(RdfStreamRow(
+    rowBuffer.append(RdfStreamRow(
       // Override whatever the user set in the options.
       options.withVersion(
         // If namespace declarations are enabled, we need to use Jelly 1.1.0.

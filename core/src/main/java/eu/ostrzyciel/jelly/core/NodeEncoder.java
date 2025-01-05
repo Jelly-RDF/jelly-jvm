@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core;
 
 import eu.ostrzyciel.jelly.core.proto.v1.*;
-import scala.collection.mutable.ArrayBuffer;
+import scala.collection.mutable.Buffer;
 
 import java.util.LinkedHashMap;
 import java.util.function.Function;
@@ -107,7 +107,7 @@ public final class NodeEncoder<TNode> {
      * @return The encoded literal
      */
     public UniversalTerm encodeDtLiteral(
-            TNode key, String lex, String datatypeName, ArrayBuffer<RdfStreamRow> rowsBuffer
+            TNode key, String lex, String datatypeName, Buffer<RdfStreamRow> rowsBuffer
     ) {
         var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
@@ -141,7 +141,7 @@ public final class NodeEncoder<TNode> {
      * @param rowsBuffer The buffer to which the new name and prefix lookup entries should be appended
      * @return The encoded IRI
      */
-    public UniversalTerm encodeIri(String iri, ArrayBuffer<RdfStreamRow> rowsBuffer) {
+    public UniversalTerm encodeIri(String iri, Buffer<RdfStreamRow> rowsBuffer) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
             var nameEntry = nameLookup.getOrAddEntry(iri);

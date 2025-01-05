@@ -8,7 +8,7 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter
 
 import java.io.OutputStream
 import java.util
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 /**
  * RDF4J Rio writer for Jelly RDF format.
@@ -25,7 +25,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
   // We should use Option[] here, but it's Java interop code anyway... and why bother with boxing?
   private var options: RdfStreamOptions = null
   private var encoder: Rdf4jProtoEncoder = null
-  private val buffer: ArrayBuffer[RdfStreamRow] = new ArrayBuffer[RdfStreamRow]()
+  private val buffer: ListBuffer[RdfStreamRow] = new ListBuffer[RdfStreamRow]()
   private var frameSize: Long = 256L
   private var enableNamespaceDeclarations: Boolean = false
 
@@ -70,16 +70,14 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     )
     frameSize = c.get(FRAME_SIZE).toLong
     enableNamespaceDeclarations = c.get(ENABLE_NAMESPACE_DECLARATIONS).booleanValue()
-    encoder = Rdf4jConverterFactory.encoder(options, enableNamespaceDeclarations)
+    encoder = Rdf4jConverterFactory.encoder(options, enableNamespaceDeclarations, Some(buffer))
 
   override def consumeStatement(st: Statement): Unit =
     checkWritingStarted()
-    val rows = if options.physicalType.isTriples then
+    if options.physicalType.isTriples then
       encoder.addTripleStatement(st)
     else
       encoder.addQuadStatement(st)
-
-    buffer ++= rows
     if buffer.size >= frameSize then
       flushBuffer()
 
@@ -101,6 +99,6 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
   override def handleNamespace(prefix: String, uri: String): Unit =
     checkWritingStarted()
     if enableNamespaceDeclarations then
-      buffer ++= encoder.declareNamespace(prefix, uri)
+      encoder.declareNamespace(prefix, uri)
       if buffer.size >= frameSize then
         flushBuffer()
