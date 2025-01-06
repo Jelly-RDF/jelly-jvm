@@ -3,7 +3,7 @@ package eu.ostrzyciel.jelly.core
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.annotation.switch
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 
 /**
  * Fast implementation of the ProtoTranscoder interface.
@@ -48,7 +48,7 @@ private final class ProtoTranscoderImpl(
   private var inputUsesPrefixes = false
 
   // Current output stream state
-  private val rowBuffer = new ArrayBuffer[RdfStreamRow](128)
+  private val rowBuffer = new ListBuffer[RdfStreamRow]()
   private var changeInTerms = false
   private var emittedOptions = false
 

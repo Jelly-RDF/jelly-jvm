@@ -1,8 +1,9 @@
 package eu.ostrzyciel.jelly.core
 
 import ProtoDecoderImpl.*
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions
+import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamRow}
 
+import scala.collection.mutable
 import scala.reflect.ClassTag
 
 object ConverterFactory:
@@ -127,14 +128,14 @@ trait ConverterFactory[
     new AnyStatementDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
-   * Create a new [[ProtoEncoder]]. Namespace declarations are disabled by default.
+   * Create a new [[ProtoEncoder]] which manages a row buffer on its own. Namespace declarations are disabled.
    * @param options Jelly serialization options.
    * @return encoder
    */
-  def encoder(options: RdfStreamOptions): TEncoder = encoder(options, enableNamespaceDeclarations = false)
+  def encoder(options: RdfStreamOptions): TEncoder = encoder(options, enableNamespaceDeclarations = false, None)
 
   /**
-   * Create a new [[ProtoEncoder]].
+   * Create a new [[ProtoEncoder]] which manages a row buffer on its own.
    *
    * @param options Jelly serialization options.
    * @param enableNamespaceDeclarations whether to enable namespace declarations in the stream. 
@@ -142,4 +143,23 @@ trait ConverterFactory[
    *                                    the stream version will be 1 (Jelly 1.0.0).
    * @return encoder
    */
-  def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): TEncoder
+  def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): TEncoder =
+    encoder(options, enableNamespaceDeclarations, None)
+
+  /**
+   * Create a new [[ProtoEncoder]].
+   *
+   * @param options                     Jelly serialization options.
+   * @param enableNamespaceDeclarations whether to enable namespace declarations in the stream.
+   *                                    If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
+   *                                    the stream version will be 1 (Jelly 1.0.0).
+   * @param maybeRowBuffer              optional buffer for storing stream rows that should go into a stream frame.
+   *                                    If provided, the encoder will append the rows to this buffer instead of
+   *                                    returning them, so methods like `addTripleStatement` will return Seq().
+   * @return encoder
+   */
+  def encoder(
+    options: RdfStreamOptions,
+    enableNamespaceDeclarations: Boolean,
+    maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]]
+  ): TEncoder

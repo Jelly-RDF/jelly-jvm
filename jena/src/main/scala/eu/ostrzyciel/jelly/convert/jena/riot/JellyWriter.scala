@@ -10,7 +10,7 @@ import org.apache.jena.sparql.core.{DatasetGraph, Quad}
 import org.apache.jena.sparql.util.Context
 
 import java.io.{OutputStream, Writer}
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
 
 
@@ -184,21 +184,21 @@ final class JellyStreamWriterAutodetectType(opt: JellyFormatVariant, out: Output
  * It will output the statements as in a TRIPLES/QUADS stream.
  */
 final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extends StreamRDF:
+  private val buffer: ListBuffer[RdfStreamRow] = new ListBuffer[RdfStreamRow]()
   // We don't set any options here – it is the responsibility of the caller to set
   // a valid stream type here.
-  private val encoder = JenaConverterFactory.encoder(opt.opt, opt.enableNamespaceDeclarations)
-  private val buffer: ArrayBuffer[RdfStreamRow] = new ArrayBuffer[RdfStreamRow]()
+  private val encoder = JenaConverterFactory.encoder(opt.opt, opt.enableNamespaceDeclarations, Some(buffer))
 
   // No need to handle this, the encoder will emit the header automatically anyway
   override def start(): Unit = ()
 
   override def triple(triple: Triple): Unit =
-    buffer ++= encoder.addTripleStatement(triple)
+    encoder.addTripleStatement(triple)
     if buffer.size >= opt.frameSize then
       flushBuffer()
 
   override def quad(quad: Quad): Unit =
-    buffer ++= encoder.addQuadStatement(quad)
+    encoder.addQuadStatement(quad)
     if buffer.size >= opt.frameSize then
       flushBuffer()
 
@@ -207,7 +207,7 @@ final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extend
 
   override def prefix(prefix: String, iri: String): Unit =
     if opt.enableNamespaceDeclarations then
-      buffer ++= encoder.declareNamespace(prefix, iri)
+      encoder.declareNamespace(prefix, iri)
       if buffer.size >= opt.frameSize then
         flushBuffer()
 
@@ -217,6 +217,6 @@ final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extend
       flushBuffer()
 
   private def flushBuffer(): Unit =
-    val frame = RdfStreamFrame(rows = buffer.toSeq)
+    val frame = RdfStreamFrame(rows = buffer.toList)
     frame.writeDelimitedTo(out)
     buffer.clear()
