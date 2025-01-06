@@ -8,7 +8,7 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter
 
 import java.io.OutputStream
 import java.util
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 
 /**
  * RDF4J Rio writer for Jelly RDF format.

@@ -10,7 +10,7 @@ import org.apache.jena.sparql.core.{DatasetGraph, Quad}
 import org.apache.jena.sparql.util.Context
 
 import java.io.{OutputStream, Writer}
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
 
 

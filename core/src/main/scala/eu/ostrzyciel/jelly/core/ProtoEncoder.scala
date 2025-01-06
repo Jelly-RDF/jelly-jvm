@@ -19,11 +19,14 @@ object ProtoEncoder:
  * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
  *                                    If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
  *                                    the stream version will be 1 (Jelly 1.0.0).
+ * @param maybeRowBuffer              optional buffer for storing stream rows that should go into a stream frame.
+ *                                    If provided, the encoder will append the rows to this buffer instead of
+ *                                    returning them, so methods like `addTripleStatement` will return Seq().
  */
 abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
   final val options: RdfStreamOptions,
   final val enableNamespaceDeclarations: Boolean,
-  final val maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = None,
+  final val maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]],
 ):
   import ProtoEncoder.*
 
@@ -219,14 +222,15 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
     )
 
   private inline def handleHeader(): Unit =
-    if iResponsibleForBufferClear then
-      rowBuffer.clear()
     if !emittedOptions then emitOptions()
     
   private def appendAndReturn(row: RdfStreamRow): Iterable[RdfStreamRow] =
     rowBuffer.append(row)
     // This branch will always be correctly predicted
-    if iResponsibleForBufferClear then rowBuffer.toList
+    if iResponsibleForBufferClear then
+      val list = rowBuffer.toList
+      rowBuffer.clear()
+      list
     else emptyRowBuffer
 
   private def emitOptions(): Unit =

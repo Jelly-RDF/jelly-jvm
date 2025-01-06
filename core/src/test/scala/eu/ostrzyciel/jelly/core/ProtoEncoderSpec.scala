@@ -7,6 +7,8 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import scala.collection.mutable.ListBuffer
+
 class ProtoEncoderSpec extends AnyWordSpec, Matchers:
   import ProtoTestCases.*
 
@@ -32,12 +34,42 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       assertEncoded(encoded, Triples2NsDecl.encoded(encoder.options))
     }
 
+    "encode triple statements with ns decls and an external buffer" in {
+      val buffer = ListBuffer[RdfStreamRow]()
+      val encoder = MockProtoEncoder(
+        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
+        enableNamespaceDeclarations = true, Some(buffer)
+      )
+      for triple <- Triples2NsDecl.mrl do
+        val result = triple match
+          case t: Triple => encoder.addTripleStatement(t)
+          case ns: NamespaceDecl => encoder.declareNamespace(ns.name, ns.iri)
+        // external buffer – nothing should be returned directly
+        result.size should be (0)
+
+      assertEncoded(buffer.toSeq, Triples2NsDecl.encoded(encoder.options))
+    }
+
     "encode quad statements" in {
       val encoder = MockProtoEncoder(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
       )
       val encoded = Quads1.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
       assertEncoded(encoded, Quads1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
+    }
+
+    "encode quad statements with an external buffer" in {
+      val buffer = ListBuffer[RdfStreamRow]()
+      val encoder = MockProtoEncoder(
+        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
+        false, Some(buffer)
+      )
+      for quad <- Quads1.mrl do
+        val result = encoder.addQuadStatement(quad)
+        // external buffer – nothing should be returned directly
+        result.size should be (0)
+
+      assertEncoded(buffer.toSeq, Quads1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
     }
 
     "encode quad statements (repeated default graph)" in {
@@ -58,6 +90,24 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         encoder.endGraph().toSeq
       ).flatten)
       assertEncoded(encoded, Graphs1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
+    }
+
+    "encode graphs with an external buffer" in {
+      val buffer = ListBuffer[RdfStreamRow]()
+      val encoder = MockProtoEncoder(
+        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
+        false, Some(buffer)
+      )
+      for (graphName, triples) <- Graphs1.mrl do
+        val start = encoder.startGraph(graphName)
+        start.size should be (0)
+        for triple <- triples do
+          val result = encoder.addTripleStatement(triple)
+          result.size should be (0)
+        val end = encoder.endGraph()
+        end.size should be (0)
+
+      assertEncoded(buffer.toSeq, Graphs1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
     }
 
     "not allow to end a graph before starting one" in {
