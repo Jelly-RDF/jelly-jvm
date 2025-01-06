@@ -128,14 +128,14 @@ trait ConverterFactory[
     new AnyStatementDecoder(decoderConverter, supportedOptions.getOrElse(defaultSupportedOptions), namespaceHandler)
 
   /**
-   * Create a new [[ProtoEncoder]] which manages a row buffer. Namespace declarations are disabled by default.
+   * Create a new [[ProtoEncoder]] which manages a row buffer on its own. Namespace declarations are disabled.
    * @param options Jelly serialization options.
    * @return encoder
    */
   def encoder(options: RdfStreamOptions): TEncoder = encoder(options, enableNamespaceDeclarations = false, None)
 
   /**
-   * Create a new [[ProtoEncoder]] which manages a row buffer.
+   * Create a new [[ProtoEncoder]] which manages a row buffer on its own.
    *
    * @param options Jelly serialization options.
    * @param enableNamespaceDeclarations whether to enable namespace declarations in the stream. 

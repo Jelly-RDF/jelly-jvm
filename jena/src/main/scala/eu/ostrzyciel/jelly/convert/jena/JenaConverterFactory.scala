@@ -10,8 +10,15 @@ import scala.collection.mutable
 
 object JenaConverterFactory
   extends ConverterFactory[JenaProtoEncoder, JenaDecoderConverter, Node, RDFDatatype, Triple, Quad]:
+
+  /**
+   * @inheritdoc
+   */
   override final def decoderConverter: JenaDecoderConverter = new JenaDecoderConverter()
 
+  /**
+   * @inheritdoc
+   */
   override final def encoder(
     options: RdfStreamOptions, 
     enableNamespaceDeclarations: Boolean, 

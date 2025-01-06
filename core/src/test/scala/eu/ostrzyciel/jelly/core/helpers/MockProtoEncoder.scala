@@ -10,9 +10,13 @@ import scala.collection.mutable
  * Mock implementation of ProtoEncoder
  * @param options options for this stream
  * @param enableNamespaceDeclarations whether to enable namespace declarations
+ * @param maybeRowBuffer optional buffer for storing stream rows that should go into a stream frame
  */
-class MockProtoEncoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean = false, maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = None)
-  extends ProtoEncoder[Node, Triple, Quad, Triple](options, enableNamespaceDeclarations, maybeRowBuffer):
+class MockProtoEncoder(
+  options: RdfStreamOptions,
+  enableNamespaceDeclarations: Boolean = false,
+  maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = None
+) extends ProtoEncoder[Node, Triple, Quad, Triple](options, enableNamespaceDeclarations, maybeRowBuffer):
 
   protected inline def getTstS(triple: Triple) = triple.s
   protected inline def getTstP(triple: Triple) = triple.p

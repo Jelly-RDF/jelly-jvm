@@ -9,8 +9,14 @@ import scala.collection.mutable
 object Rdf4jConverterFactory
   extends ConverterFactory[Rdf4jProtoEncoder, Rdf4jDecoderConverter, Value, Rdf4jDatatype, Statement, Statement]:
 
+  /**
+   * @inheritdoc
+   */
   override final def decoderConverter: Rdf4jDecoderConverter = new Rdf4jDecoderConverter()
 
+  /**
+   * @inheritdoc
+   */
   override final def encoder(
     options: RdfStreamOptions,
     enableNamespaceDeclarations: Boolean,
