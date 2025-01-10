@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core.helpers
 
-import eu.ostrzyciel.jelly.core.ConverterFactory
+import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoEncoder}
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamRow}
 
@@ -11,9 +11,5 @@ object MockConverterFactory extends ConverterFactory
 
   override final def decoderConverter = new MockProtoDecoderConverter()
 
-  override final def encoder(
-    options: RdfStreamOptions,
-    enableNamespaceDeclarations: Boolean,
-    maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]],
-  ) =
-    new MockProtoEncoder(options, enableNamespaceDeclarations, maybeRowBuffer)
+  override final def encoder(params: ProtoEncoder.Params) =
+    new MockProtoEncoder(params)
