@@ -11,22 +11,23 @@ import scala.collection.mutable.ListBuffer
 
 class ProtoEncoderSpec extends AnyWordSpec, Matchers:
   import ProtoTestCases.*
+  import ProtoEncoder.Params as Pep
 
   // Test body
   "a ProtoEncoder" should {
     "encode triple statements" in {
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES)
-      )
+      ))
       val encoded = Triples1.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
       assertEncoded(encoded, Triples1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
     }
 
     "encode triple statements with namespace declarations" in {
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         enableNamespaceDeclarations = true,
-      )
+      ))
       val encoded = Triples2NsDecl.mrl.flatMap {
         case t: Triple => encoder.addTripleStatement(t).toSeq
         case ns: NamespaceDecl => encoder.declareNamespace(ns.name, ns.iri).toSeq
@@ -36,10 +37,10 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode triple statements with ns decls and an external buffer" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         enableNamespaceDeclarations = true, Some(buffer)
-      )
+      ))
       for triple <- Triples2NsDecl.mrl do
         val result = triple match
           case t: Triple => encoder.addTripleStatement(t)
@@ -51,19 +52,19 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
     }
 
     "encode quad statements" in {
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
-      )
+      ))
       val encoded = Quads1.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
       assertEncoded(encoded, Quads1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
     }
 
     "encode quad statements with an external buffer" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
         false, Some(buffer)
-      )
+      ))
       for quad <- Quads1.mrl do
         val result = encoder.addQuadStatement(quad)
         // external buffer – nothing should be returned directly
@@ -73,17 +74,17 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
     }
 
     "encode quad statements (repeated default graph)" in {
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
-      )
+      ))
       val encoded = Quads2RepeatDefault.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
       assertEncoded(encoded, Quads2RepeatDefault.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
     }
 
     "encode graphs" in {
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS)
-      )
+      ))
       val encoded = Graphs1.mrl.flatMap((graphName, triples) => Seq(
         encoder.startGraph(graphName).toSeq,
         triples.flatMap(triple => encoder.addTripleStatement(triple).toSeq),
@@ -94,10 +95,10 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode graphs with an external buffer" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
         false, Some(buffer)
-      )
+      ))
       for (graphName, triples) <- Graphs1.mrl do
         val start = encoder.startGraph(graphName)
         start.size should be (0)
@@ -111,9 +112,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
     }
 
     "not allow to end a graph before starting one" in {
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
-      )
+      ))
       val error = intercept[RdfProtoSerializationError] {
         encoder.endGraph()
       }
@@ -121,9 +122,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
     }
 
     "not allow to use quoted triples as the graph name" in {
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS)
-      )
+      ))
       val error = intercept[RdfProtoSerializationError] {
         encoder.startGraph(TripleNode(
           Triple(BlankNode("S"), BlankNode("P"), BlankNode("O"))
@@ -133,10 +134,10 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
     }
 
     "not allow to use namespace declarations if they are not enabled" in {
-      val encoder = MockProtoEncoder(
+      val encoder = MockProtoEncoder(Pep(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         enableNamespaceDeclarations = false,
-      )
+      ))
       val error = intercept[RdfProtoSerializationError] {
         encoder.declareNamespace("test", "https://test.org/test/")
       }
