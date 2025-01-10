@@ -1,13 +1,18 @@
 package eu.ostrzyciel.jelly.convert.jena
 
 import eu.ostrzyciel.jelly.core.*
-import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, SpoTerm}
+import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, RdfStreamOptions, RdfStreamRow, SpoTerm}
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
 
-final class JenaProtoEncoder(params: ProtoEncoder.Params) 
-  extends ProtoEncoder[Node, Triple, Quad, Triple](params):
+import scala.collection.mutable
+
+final class JenaProtoEncoder(
+  options: RdfStreamOptions,
+  enableNamespaceDeclarations: Boolean,
+  maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = None,
+) extends ProtoEncoder[Node, Triple, Quad, Triple](options, enableNamespaceDeclarations, maybeRowBuffer):
 
   protected inline def getTstS(triple: Triple) = triple.getSubject
   protected inline def getTstP(triple: Triple) = triple.getPredicate

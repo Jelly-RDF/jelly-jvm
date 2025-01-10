@@ -1,12 +1,17 @@
 package eu.ostrzyciel.jelly.convert.rdf4j
 
 import eu.ostrzyciel.jelly.core.*
-import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, SpoTerm}
+import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, RdfStreamOptions, RdfStreamRow, SpoTerm}
 import org.eclipse.rdf4j.model.*
 import org.eclipse.rdf4j.model.vocabulary.XSD
 
-final class Rdf4jProtoEncoder(params: ProtoEncoder.Params)
-  extends ProtoEncoder[Value, Statement, Statement, Triple](params):
+import scala.collection.mutable
+
+final class Rdf4jProtoEncoder(
+  options: RdfStreamOptions,
+  enableNamespaceDeclarations: Boolean,
+  maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]],
+) extends ProtoEncoder[Value, Statement, Statement, Triple](options, enableNamespaceDeclarations, maybeRowBuffer):
 
   protected inline def getTstS(triple: Statement) = triple.getSubject
   protected inline def getTstP(triple: Statement) = triple.getPredicate

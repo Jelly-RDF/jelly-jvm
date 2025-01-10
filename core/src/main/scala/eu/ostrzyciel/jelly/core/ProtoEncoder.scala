@@ -9,54 +9,29 @@ object ProtoEncoder:
   private val defaultGraphStart = RdfStreamRow(RdfGraphStart(RdfDefaultGraph.defaultInstance))
   private val emptyRowBuffer: List[RdfStreamRow] = List()
 
-  /**
-   * Parameters passed to the Jelly encoder.
-   *
-   * New fields may be added in the future, but always with a default value and in a sequential order.
-   * However, it is still recommended to use named arguments when creating this object.
-   *
-   * @param options options for this stream (required)
-   * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
-   *                                    If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
-   *                                    the stream version will be 1 (Jelly 1.0.0).
-   * @param maybeRowBuffer              optional buffer for storing stream rows that should go into a stream frame.
-   *                                    If provided, the encoder will append the rows to this buffer instead of
-   *                                    returning them, so methods like `addTripleStatement` will return Seq().
-   */
-  final case class Params(
-    options: RdfStreamOptions,
-    enableNamespaceDeclarations: Boolean = false,
-    maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = None,
-  )
-
 /**
  * Stateful encoder of a protobuf RDF stream.
  *
  * This class supports all stream types and options, but usually does not check if the user is conforming to them.
  * It will, for example, allow the user to send generalized triples in a stream that should not have them.
  * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
- * @param params parameters object for the encoder
+ * @param options options for this stream
+ * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
+ *                                    If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
+ *                                    the stream version will be 1 (Jelly 1.0.0).
+ * @param maybeRowBuffer              optional buffer for storing stream rows that should go into a stream frame.
+ *                                    If provided, the encoder will append the rows to this buffer instead of
+ *                                    returning them, so methods like `addTripleStatement` will return Seq().
  */
-abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](params: ProtoEncoder.Params):
+abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](
+  final val options: RdfStreamOptions,
+  final val enableNamespaceDeclarations: Boolean,
+  final val maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]],
+):
   import ProtoEncoder.*
 
   // *** 1. THE PUBLIC INTERFACE ***
   // *******************************
-  /**
-   * RdfStreamOptions for this encoder.
-   */
-  final val options: RdfStreamOptions = params.options
-
-  /**
-   * Whether namespace declarations are enabled for this encoder.
-   */
-  final val enableNamespaceDeclarations: Boolean = params.enableNamespaceDeclarations
-
-  /**
-   * Buffer for storing stream rows that should go into a stream frame.
-   */
-  final val maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = params.maybeRowBuffer
-
   /**
    * Add an RDF triple statement to the stream.
    * @param triple triple to add

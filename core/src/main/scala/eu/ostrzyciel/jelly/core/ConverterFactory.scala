@@ -131,10 +131,8 @@ trait ConverterFactory[
    * Create a new [[ProtoEncoder]] which manages a row buffer on its own. Namespace declarations are disabled.
    * @param options Jelly serialization options.
    * @return encoder
-   * @deprecated since 2.6.0; use `encoder(ProtoEncoder.Params)` instead
    */
-  final def encoder(options: RdfStreamOptions): TEncoder =
-    encoder(options, enableNamespaceDeclarations = false, None)
+  def encoder(options: RdfStreamOptions): TEncoder = encoder(options, enableNamespaceDeclarations = false, None)
 
   /**
    * Create a new [[ProtoEncoder]] which manages a row buffer on its own.
@@ -144,9 +142,8 @@ trait ConverterFactory[
    *                                    If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
    *                                    the stream version will be 1 (Jelly 1.0.0).
    * @return encoder
-   * @deprecated since 2.6.0; use `encoder(ProtoEncoder.Params)` instead
    */
-  final def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): TEncoder =
+  def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): TEncoder =
     encoder(options, enableNamespaceDeclarations, None)
 
   /**
@@ -160,18 +157,9 @@ trait ConverterFactory[
    *                                    If provided, the encoder will append the rows to this buffer instead of
    *                                    returning them, so methods like `addTripleStatement` will return Seq().
    * @return encoder
-   * @deprecated since 2.6.0; use `encoder(ProtoEncoder.Params)` instead
    */
-  final def encoder(
+  def encoder(
     options: RdfStreamOptions,
     enableNamespaceDeclarations: Boolean,
     maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]]
-  ): TEncoder = encoder(ProtoEncoder.Params(options, enableNamespaceDeclarations, maybeRowBuffer))
-
-  /**
-   * Create a new [[ProtoEncoder]].
-   * @param params Parameters for the encoder.
-   * @return encoder
-   * @since 2.6.0
-   */
-  def encoder(params: ProtoEncoder.Params): TEncoder
+  ): TEncoder
