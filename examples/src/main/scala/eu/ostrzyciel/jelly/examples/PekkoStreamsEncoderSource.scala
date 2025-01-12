@@ -58,19 +58,25 @@ object PekkoStreamsEncoderSource extends shared.Example:
 
     // -------------------------------------------------------------------
     // Second example: try encoding an RDF dataset as a GRAPHS stream
+    // This time we will also preserve the namespace/prefix declarations (@prefix in Turtle) as a cosmetic feature
     val dataset = RDFDataMgr.loadDataset(File(getClass.getResource("/weather-graphs.trig").toURI).toURI.toString)
     println(s"Loaded dataset with ${dataset.asDatasetGraph.size} named graphs")
     println(s"Streaming the dataset to memory...")
 
     // Here we stream this is as a GRAPHS stream (physical type)
-    // You can also use .fromDatasetAsQuads to stream as QUADS
-    val encodedDatasetFuture = RdfSource.builder.datasetAsGraphs(dataset).source
+    // You can also use .datasetAsQuads to stream as QUADS
+    val encodedDatasetFuture = RdfSource.builder
+      .datasetAsGraphs(dataset)
+      .withNamespaceDeclarations // Include namespace declarations in the stream
+      .source
       .via(EncoderFlow.builder
         // This time we limit the number of rows in each frame to 30
         // Note that for this particular encoder, we can skip the limiter entirely – but this can lead to huge frames!
         // So, be careful with that, or may get an out-of-memory error.
         .withLimiter(StreamRowCountLimiter(30))
         .namedGraphs(JellyOptions.smallStrict)
+        // We must also allow for namespace declarations, because our source contains them
+        .withNamespaceDeclarations
         .flow
       )
       // wireTap: print the size of the frames

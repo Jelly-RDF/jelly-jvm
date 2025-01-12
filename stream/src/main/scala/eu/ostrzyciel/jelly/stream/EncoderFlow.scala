@@ -18,11 +18,24 @@ object EncoderFlow:
 
   /**
    * Flexible builder for creating encoder flows for Jelly streams.
+   *
+   * Example usage:
+   * {{{
+   * EncoderFlow.builder
+   *  .withLimiter(SizeLimiter(1000))
+   *  .flatTriples(JellyOptions.smallStrict)
+   *  .withNamespaceDeclarations
+   *  .flow
+   * }}}
+   *
+   * See more examples in the `examples` module.
+   *
    * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
    * @tparam TNode Type of nodes.
    * @tparam TTriple Type of triple statements.
    * @tparam TQuad Type of quad statements.
    * @return Encoder flow builder.
+   * @since 2.6.0
    */
   final def builder[TNode, TTriple, TQuad](using factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
   EncoderFlowBuilderImpl[TNode, TTriple, TQuad]#RootBuilder =
