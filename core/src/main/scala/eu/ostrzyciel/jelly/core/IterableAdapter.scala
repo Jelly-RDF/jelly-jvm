@@ -1,6 +1,5 @@
 package eu.ostrzyciel.jelly.core
 
-import scala.annotation.targetName
 import scala.collection.immutable
 
 object IterableAdapter:
