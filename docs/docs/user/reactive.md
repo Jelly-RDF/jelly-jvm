@@ -22,17 +22,17 @@ So, for example, an encoder flow for flat triple streams would have a type of `#
 
 `RdfStreamFrame`s can be converted to and from raw bytes using a range of methods, depending on your use case. See the sections below for examples.
 
-## Encoding a single RDF graph or dataset as a flat stream (`EncoderSource`)
-
-The easiest way to start is with flat RDF streams (i.e., flat streams of triples or quads). You can convert an RDF dataset or graph into such using the methods in {{ javadoc_link_pretty('stream', 'EncoderSource$') }}.
-
-{{ code_example('PekkoStreamsEncoderSource.scala') }}
-
 ## Encoding any RDF data as a flat or grouped stream (`EncoderFlow`)
 
-The {{ javadoc_link_pretty('stream', 'EncoderFlow$') }} provides even more options for turning RDF data into Jelly streams, including both grouped and flat streams. Every [type of RDF stream in Jelly]({{ proto_link('user-guide#stream-types') }}) can be created using this API.
+The {{ javadoc_link_pretty('stream', 'EncoderFlow$') }} provides many options for turning RDF data into Jelly streams, including both grouped and flat streams. Every [type of RDF stream in Jelly]({{ proto_link('user-guide#stream-types') }}) can be created using this API.
 
 {{ code_example('PekkoStreamsEncoderFlow.scala') }}
+
+## Encoding a single RDF graph or dataset as a flat stream (`EncoderSource`)
+
+There are also convenience methods for creating flat RDF streams (i.e., flat streams of triples or quads) from  a single graph or dataset. You can do this by chaining {{ javadoc_link_pretty('stream', 'RdfSource$') }} with {{ javadoc_link_pretty('stream', 'EncoderFlow$') }}, as shown in the example.
+
+{{ code_example('PekkoStreamsEncoderSource.scala') }}
 
 ## Decoding RDF streams (`DecoderFlow`)
 
