@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.convert.jena
 
-import eu.ostrzyciel.jelly.core.IterableAdapter
+import eu.ostrzyciel.jelly.core.{IterableAdapter, NamespaceDeclaration}
 import eu.ostrzyciel.jelly.core.IterableAdapter.IterableFromIterator
 import org.apache.jena.graph.{Graph, Node, Triple}
 import org.apache.jena.query.Dataset
@@ -40,3 +40,18 @@ object JenaIterableAdapter extends IterableAdapter[Node, Triple, Quad, Graph | M
     def asGraphs: immutable.Iterable[(Node, immutable.Iterable[Triple])] = dataset match
       case dg: DatasetGraph => datasetAsGraphs(dg)
       case d: Dataset => datasetAsGraphs(d.asDatasetGraph)
+      
+  extension (m: Graph | Model | DatasetGraph | Dataset)
+    def namespaceDeclarations: immutable.Iterable[NamespaceDeclaration] = m match
+      case g: Graph => IterableFromIterator[NamespaceDeclaration](() => {
+        g.getPrefixMapping.getNsPrefixMap.asScala.iterator.map((prefix, iri) => 
+          NamespaceDeclaration(prefix = prefix, iri = iri)
+        )
+      })
+      case m: Model => m.getGraph.namespaceDeclarations
+      case dg: DatasetGraph => IterableFromIterator[NamespaceDeclaration](() => {
+        dg.prefixes().getMapping.asScala.iterator.map((prefix, iri) =>
+          NamespaceDeclaration(prefix = prefix, iri = iri)
+        )
+      })
+      case d: Dataset => d.asDatasetGraph.namespaceDeclarations

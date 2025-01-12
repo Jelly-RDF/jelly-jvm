@@ -5,8 +5,9 @@ import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.*
 
+@deprecated("Use RdfSource.builder with EncoderFlow.builder instead", "2.6.0")
 object EncoderSource:
-  import EncoderFlow.*
+  import RdfSource.builder
 
   /**
    * A source of RDF stream frames from an RDF graph implementation.
@@ -22,11 +23,12 @@ object EncoderSource:
    * @tparam TTriple type of the RDF triple
    * @return Pekko Streams source of RDF stream frames
    */
+  @deprecated(since = "2.6.0", message = "Use RdfSource.builder with EncoderFlow.builder instead")
   def fromGraph[TGraph, TTriple](graph: TGraph, limiter: SizeLimiter, opt: RdfStreamOptions)
     (using adapter: IterableAdapter[?, TTriple, ?, TGraph, ?], factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
-    Source(adapter.asTriples(graph))
-      .via(flatTripleStream(limiter, opt))
+    builder.graphAsTriples(graph).source
+      .via(EncoderFlow.builder.withLimiter(limiter).flatTriples(opt).flow)
 
   /**
    * A source of RDF stream frames from an RDF dataset implementation (quads format).
@@ -42,11 +44,12 @@ object EncoderSource:
    * @tparam TQuad type of the RDF quad
    * @return Pekko Streams source of RDF stream frames
    */
+  @deprecated(since = "2.6.0", message = "Use RdfSource.builder with EncoderFlow.builder instead")
   def fromDatasetAsQuads[TDataset, TQuad](dataset: TDataset, limiter: SizeLimiter, opt: RdfStreamOptions)
     (using adapter: IterableAdapter[?, ?, TQuad, ?, TDataset], factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Source[RdfStreamFrame, NotUsed] =
-    Source(adapter.asQuads(dataset))
-      .via(flatQuadStream(limiter, opt))
+    builder.datasetAsQuads(dataset).source
+      .via(EncoderFlow.builder.withLimiter(limiter).flatQuads(opt).flow)
 
   /**
    * A source of RDF stream frames from an RDF dataset implementation (graphs format).
@@ -66,10 +69,11 @@ object EncoderSource:
    * @tparam TTriple type of the RDF triple
    * @return
    */
+  @deprecated(since = "2.6.0", message = "Use RdfSource.builder with EncoderFlow.builder instead")
   def fromDatasetAsGraphs[TDataset, TNode, TTriple]
   (dataset: TDataset, maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (using adapter: IterableAdapter[TNode, TTriple, ?, ?, TDataset],
       factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Source[RdfStreamFrame, NotUsed] =
-    Source(adapter.asGraphs(dataset))
-      .via(namedGraphStream(maybeLimiter, opt))
+    builder.datasetAsGraphs(dataset).source
+      .via(maybeLimiter.fold(EncoderFlow.builder)(EncoderFlow.builder.withLimiter).namedGraphs(opt).flow)

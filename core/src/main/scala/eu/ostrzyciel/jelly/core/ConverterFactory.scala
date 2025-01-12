@@ -131,8 +131,8 @@ trait ConverterFactory[
    * Create a new [[ProtoEncoder]] which manages a row buffer on its own. Namespace declarations are disabled.
    * @param options Jelly serialization options.
    * @return encoder
-   * @deprecated since 2.6.0; use `encoder(ProtoEncoder.Params)` instead
    */
+  @deprecated("Use encoder(ProtoEncoder.Params)", "2.6.0")
   final def encoder(options: RdfStreamOptions): TEncoder =
     encoder(options, enableNamespaceDeclarations = false, None)
 
@@ -144,8 +144,8 @@ trait ConverterFactory[
    *                                    If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
    *                                    the stream version will be 1 (Jelly 1.0.0).
    * @return encoder
-   * @deprecated since 2.6.0; use `encoder(ProtoEncoder.Params)` instead
    */
+  @deprecated("Use encoder(ProtoEncoder.Params)", "2.6.0")
   final def encoder(options: RdfStreamOptions, enableNamespaceDeclarations: Boolean): TEncoder =
     encoder(options, enableNamespaceDeclarations, None)
 
@@ -160,8 +160,8 @@ trait ConverterFactory[
    *                                    If provided, the encoder will append the rows to this buffer instead of
    *                                    returning them, so methods like `addTripleStatement` will return Seq().
    * @return encoder
-   * @deprecated since 2.6.0; use `encoder(ProtoEncoder.Params)` instead
    */
+  @deprecated("Use encoder(ProtoEncoder.Params)", "2.6.0")
   final def encoder(
     options: RdfStreamOptions,
     enableNamespaceDeclarations: Boolean,

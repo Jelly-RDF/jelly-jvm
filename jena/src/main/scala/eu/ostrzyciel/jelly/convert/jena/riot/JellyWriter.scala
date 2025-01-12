@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.convert.jena.riot
 
 import eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory
+import eu.ostrzyciel.jelly.core.ProtoEncoder
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.jena.graph.{Graph, Triple}
 import org.apache.jena.riot.*
@@ -187,7 +188,9 @@ final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extend
   private val buffer: ListBuffer[RdfStreamRow] = new ListBuffer[RdfStreamRow]()
   // We don't set any options here – it is the responsibility of the caller to set
   // a valid stream type here.
-  private val encoder = JenaConverterFactory.encoder(opt.opt, opt.enableNamespaceDeclarations, Some(buffer))
+  private val encoder = JenaConverterFactory.encoder(ProtoEncoder.Params(
+    opt.opt, opt.enableNamespaceDeclarations, Some(buffer)
+  ))
 
   // No need to handle this, the encoder will emit the header automatically anyway
   override def start(): Unit = ()

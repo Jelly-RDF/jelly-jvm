@@ -119,29 +119,29 @@ object PekkoStreamsEncoderFlow extends shared.Example:
 
     Await.ready(graphsFuture, 10.seconds)
 
-    EncoderFlowBuilder
+    EncoderFlow
       .builder
       .flatTriplesGrouped(JellyOptions.smallStrict)
       .flow
 
-    EncoderFlowBuilder
+    EncoderFlow
       .builder
       .withLimiter(ByteSizeLimiter(500))
       .flatTriples(JellyOptions.smallStrict)
       .flow
 
-    EncoderFlowBuilder
+    EncoderFlow
       .builder
       .withLimiter(ByteSizeLimiter(500))
       .flatTriplesGrouped(JellyOptions.smallStrict)
       .flow
     
-    EncoderFlowBuilder
+    EncoderFlow
       .builder
       .datasets(JellyOptions.smallStrict)
       .flow
     
-    val flow = EncoderFlowBuilder
+    val flow = EncoderFlow
       .builder
       .withLimiter(ByteSizeLimiter(500))
       .datasets(JellyOptions.smallStrict)

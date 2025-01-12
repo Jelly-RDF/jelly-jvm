@@ -35,7 +35,7 @@ object PekkoStreamsEncoderSource extends shared.Example:
     // Create a Pekko Streams Source from the Jena model
     // This automatically sets the physical and logical stream types.
     val encodedModelFuture = EncoderSource
-      .fromGraph(
+      .graphAsTriples(
         model,
         // Aim for frames with ~2000 bytes – may be more!
         ByteSizeLimiter(2000),
@@ -66,7 +66,7 @@ object PekkoStreamsEncoderSource extends shared.Example:
     val encodedDatasetFuture = EncoderSource
       // Here we stream this is as a GRAPHS stream (physical type)
       // You can also use .fromDatasetAsQuads to stream as QUADS
-      .fromDatasetAsGraphs(
+      .datasetAsGraphs(
         dataset,
         // This time we limit the number of rows in each frame to 30
         // Note that for this particular encoder, we can skip the limiter entirely – but this can lead to huge frames!

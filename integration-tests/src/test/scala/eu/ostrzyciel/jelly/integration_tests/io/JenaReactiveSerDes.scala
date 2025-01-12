@@ -28,7 +28,7 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
 
   override def writeQuadsJelly
   (os: OutputStream, dataset: Dataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
-    val f = EncoderSource.fromDatasetAsQuads
+    val f = EncoderSource.datasetAsQuads
       (dataset, ByteSizeLimiter(32_000), opt.getOrElse(JellyOptions.smallAllFeatures))
       (using jenaIterableAdapter, jenaConverterFactory)
       .runWith(JellyIo.toIoStream(os))
@@ -36,7 +36,7 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
 
   override def writeTriplesJelly
   (os: OutputStream, model: Model, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
-    val f = EncoderSource.fromGraph(model, ByteSizeLimiter(32_000), opt.getOrElse(JellyOptions.smallAllFeatures))
+    val f = EncoderSource.graphAsTriples(model, ByteSizeLimiter(32_000), opt.getOrElse(JellyOptions.smallAllFeatures))
       (using jenaIterableAdapter, jenaConverterFactory)
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)

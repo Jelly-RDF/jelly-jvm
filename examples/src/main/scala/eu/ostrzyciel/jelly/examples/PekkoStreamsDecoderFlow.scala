@@ -179,17 +179,17 @@ object PekkoStreamsDecoderFlow extends shared.Example:
    */
   private def getEncodedData(dataset: Dataset)(using ActorSystem, ExecutionContext):
   (Seq[Array[Byte]], Seq[Array[Byte]], Seq[Array[Byte]]) =
-    val quadStream = EncoderSource.fromDatasetAsQuads(
+    val quadStream = EncoderSource.datasetAsQuads(
       dataset,
       ByteSizeLimiter(500),
       JellyOptions.smallStrict
     )
-    val tripleStream = EncoderSource.fromGraph(
+    val tripleStream = EncoderSource.graphAsTriples(
       dataset.getDefaultModel,
       ByteSizeLimiter(250),
       JellyOptions.smallStrict
     )
-    val graphStream = EncoderSource.fromDatasetAsGraphs(
+    val graphStream = EncoderSource.datasetAsGraphs(
       dataset,
       None,
       JellyOptions.smallStrict

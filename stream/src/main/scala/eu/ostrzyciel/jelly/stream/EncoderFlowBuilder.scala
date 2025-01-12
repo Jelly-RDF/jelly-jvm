@@ -1,12 +1,11 @@
 package eu.ostrzyciel.jelly.stream
 
-import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoEncoder}
 import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.core.{ConverterFactory, NamespaceDeclaration, ProtoEncoder}
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.{Flow, Source}
 
 import scala.annotation.tailrec
-import scala.reflect.ClassTag
 
 sealed trait EncoderFlowBuilder[TIn, TChild]:
   import ProtoEncoder.Params
@@ -22,19 +21,10 @@ sealed trait EncoderFlowBuilder[TIn, TChild]:
       case None => paramMutator(p)
 
 
-object EncoderFlowBuilder:
-  final case class NsDeclaration(prefix: String, iri: String)
-
-  final def builder[TNode, TTriple, TQuad](using factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
-  EncoderFlowBuilderImpl[TNode, TTriple, TQuad]#RootBuilder =
-    new EncoderFlowBuilderImpl[TNode, TTriple, TQuad].builder
-
-
 final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
 (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
-
+  
   import ProtoEncoder.Params
-  import EncoderFlowBuilder.NsDeclaration
   
   private type TEncoder = ProtoEncoder[TNode, TTriple, TQuad, ?]
 
@@ -103,16 +93,18 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
 
 
   sealed trait ExtensibleBuilder[TIn]:
-    final def withNamespaceDeclarations: ExtensionBuilder[NsDeclaration | TIn, TIn] =
-      new ExtensionBuilder[NsDeclaration | TIn, TIn](null) {
+    final def withNamespaceDeclarations: ExtensionBuilder[NamespaceDeclaration | TIn, TIn] =
+      new ExtensionBuilder[NamespaceDeclaration | TIn, TIn](null) {
         override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder): 
-        Flow[NsDeclaration | TIn, RdfStreamFrame, NotUsed] =
-          Flow[NsDeclaration | TIn]
+        Flow[NamespaceDeclaration | TIn, RdfStreamFrame, NotUsed] =
+          Flow[NamespaceDeclaration | TIn]
             .mapConcat {
-              case ns: NsDeclaration => encoder.declareNamespace(ns.prefix, ns.iri) ; None
+              case ns: NamespaceDeclaration => encoder.declareNamespace(ns.prefix, ns.iri) ; None
               case other => Some(other.asInstanceOf[TIn])
             }
             .via(_child.flowInternal(encoder))
+
+        override protected def paramMutator(p: Params): Params = p.copy(enableNamespaceDeclarations = true)
       }
 
 
@@ -144,7 +136,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
       flatFlow(e => encoder.addTripleStatement(e), limiter)
 
     override protected def paramMutator(p: Params): Params =
-      p.copy(options = makeOptions(p.options, PhysicalStreamType.TRIPLES, LogicalStreamType.FLAT_TRIPLES))
+      p.copy(options = makeOptions(opt, PhysicalStreamType.TRIPLES, LogicalStreamType.FLAT_TRIPLES))
 
   // Grouped triples
   private final class GroupedTriplesBuilder(
@@ -155,7 +147,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
       groupedFlow(e => encoder.addTripleStatement(e), maybeLimiter)
 
     override protected def paramMutator(p: Params): Params =
-      p.copy(options = makeOptions(p.options, PhysicalStreamType.TRIPLES, lst))
+      p.copy(options = makeOptions(opt, PhysicalStreamType.TRIPLES, lst))
 
   // Flat quads
   private final class FlatQuadsBuilder(limiter: SizeLimiter, opt: RdfStreamOptions)
@@ -165,7 +157,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
       flatFlow(e => encoder.addQuadStatement(e), limiter)
 
     override protected def paramMutator(p: Params): Params =
-      p.copy(options = makeOptions(p.options, PhysicalStreamType.QUADS, LogicalStreamType.FLAT_QUADS))
+      p.copy(options = makeOptions(opt, PhysicalStreamType.QUADS, LogicalStreamType.FLAT_QUADS))
 
   // Grouped quads
   private final class GroupedQuadsBuilder(
@@ -176,7 +168,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
       groupedFlow(e => encoder.addQuadStatement(e), maybeLimiter)
 
     override protected def paramMutator(p: Params): Params =
-      p.copy(options = makeOptions(p.options, PhysicalStreamType.QUADS, lst))
+      p.copy(options = makeOptions(opt, PhysicalStreamType.QUADS, lst))
 
   // Named graphs
   private final class NamedGraphsBuilder(opt: RdfStreamOptions, maybeLimiter: Option[SizeLimiter])
@@ -189,7 +181,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
         .via(groupedFlow[(TNode, Iterable[TTriple])](graphAsIterable(encoder), maybeLimiter))
 
     override protected def paramMutator(p: Params): Params =
-      p.copy(options = makeOptions(p.options, PhysicalStreamType.GRAPHS, LogicalStreamType.NAMED_GRAPHS))
+      p.copy(options = makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.NAMED_GRAPHS))
 
   // Datasets
   private final class DatasetsBuilder(opt: RdfStreamOptions, maybeLimiter: Option[SizeLimiter])
@@ -200,7 +192,10 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
       groupedFlow(graphAsIterable(encoder), maybeLimiter)
 
     override protected def paramMutator(p: Params): Params =
-      p.copy(options = makeOptions(p.options, PhysicalStreamType.GRAPHS, LogicalStreamType.DATASETS))
+      p.copy(options = makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.DATASETS))
+
+
+
 
   /// *** HELPER METHODS *** ///
 
