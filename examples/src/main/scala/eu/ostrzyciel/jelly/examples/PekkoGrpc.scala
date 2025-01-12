@@ -89,11 +89,14 @@ object PekkoGrpc extends shared.Example:
     val client = RdfStreamServiceClient(GrpcClientSettings.fromConfig("jelly"))
 
     // First, let's try to publish some data to the server
-    val frameSource = EncoderSource.fromDatasetAsQuads(
-      dataset,
-      ByteSizeLimiter(500),
-      JellyOptions.smallStrict.withStreamName("weather")
-    )
+    val frameSource = RdfSource.builder.datasetAsQuads(dataset).source
+      // Encode the dataset as a stream of QUADS
+      .via(EncoderFlow.builder
+        .withLimiter(ByteSizeLimiter(500))
+        .flatQuads(JellyOptions.smallStrict.withStreamName("weather"))
+        .flow
+      )
+
     println("[CLIENT] Publishing data to the server...")
     val publishFuture = client.publishRdf(frameSource) map { response =>
       println(s"[CLIENT] Received acknowledgment: $response")
@@ -227,16 +230,18 @@ object PekkoGrpc extends shared.Example:
         // This server implementation only supports QUADS and GRAPHS streams... and in both cases
         // it will always the same dataset.
         // You can of course implement more complex logic here, e.g., to stream different data based on the topic.
-        case PhysicalStreamType.QUADS => EncoderSource.fromDatasetAsQuads(
-          dataset,
-          ByteSizeLimiter(16_000),
-          options
-        )
-        case PhysicalStreamType.GRAPHS => EncoderSource.fromDatasetAsGraphs(
-          dataset,
-          Some(ByteSizeLimiter(16_000)),
-          options
-        )
+        case PhysicalStreamType.QUADS => RdfSource.builder.datasetAsQuads(dataset).source
+          .via(EncoderFlow.builder
+            .withLimiter(ByteSizeLimiter(16_000))
+            .flatQuads(options)
+            .flow
+          )
+        case PhysicalStreamType.GRAPHS => RdfSource.builder.datasetAsGraphs(dataset).source
+          .via(EncoderFlow.builder
+            .withLimiter(StreamRowCountLimiter(30))
+            .namedGraphs(options)
+            .flow
+          )
         // PhysicalStreamType.TRIPLES is not supported here – the server will throw a gRPC error
         // if the client requests it.
         // This is an example of how to properly handle unsupported stream options requested by the client.

@@ -22,7 +22,11 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   "flatTripleStream" should {
     "encode triples" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
-        .via(EncoderFlow.flatTripleStream(StreamRowCountLimiter(1000), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder
+          .withLimiter(StreamRowCountLimiter(1000))
+          .flatTriples(JellyOptions.smallGeneralized)
+          .flow
+        )
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -39,7 +43,11 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
     "encode triples with max message size" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
-        .via(EncoderFlow.flatTripleStream(ByteSizeLimiter(80), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder
+          .withLimiter(ByteSizeLimiter(80))
+          .flatTriples(JellyOptions.smallGeneralized)
+          .flow
+        )
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -56,7 +64,11 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
     "encode triples with max row count" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
-        .via(EncoderFlow.flatTripleStream(StreamRowCountLimiter(4), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder
+          .withLimiter(StreamRowCountLimiter(4))
+          .flatTriples(JellyOptions.smallGeneralized)
+          .flow
+        )
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -76,7 +88,10 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode grouped triples" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .grouped(2)
-        .via(EncoderFlow.flatTripleStreamGrouped(None, JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder
+          .flatTriplesGrouped(JellyOptions.smallGeneralized)
+          .flow
+        )
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -96,7 +111,11 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode grouped triples with max row count" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .grouped(2)
-        .via(EncoderFlow.flatTripleStreamGrouped(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder
+          .withLimiter(StreamRowCountLimiter(4))
+          .flatTriplesGrouped(JellyOptions.smallGeneralized)
+          .flow
+        )
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -121,7 +140,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode graphs" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .grouped(2)
-        .via(EncoderFlow.graphStream(None, JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder.graphs(JellyOptions.smallGeneralized).flow)
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -142,7 +161,11 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   "flatQuadStream" should {
     "encode quads" in {
       val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
-        .via(EncoderFlow.flatQuadStream(StreamRowCountLimiter(1000), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder
+          .withLimiter(StreamRowCountLimiter(1000))
+          .flatQuads(JellyOptions.smallGeneralized)
+          .flow
+        )
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -162,7 +185,10 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode grouped quads" in {
       val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
         .grouped(2)
-        .via(EncoderFlow.flatQuadStreamGrouped(None, JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder
+          .flatQuadsGrouped(JellyOptions.smallGeneralized)
+          .flow
+        )
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -184,7 +210,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode datasets" in {
       val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
         .grouped(2)
-        .via(EncoderFlow.datasetStreamFromQuads(None, JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder.datasetsFromQuads(JellyOptions.smallGeneralized).flow)
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -205,7 +231,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   "namedGraphStream" should {
     "encode named graphs" in {
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
-        .via(EncoderFlow.namedGraphStream(None, JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder.namedGraphs(JellyOptions.smallGeneralized).flow)
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -222,7 +248,11 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
     "encode named graphs with max row count" in {
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
-        .via(EncoderFlow.namedGraphStream(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder
+          .withLimiter(StreamRowCountLimiter(4))
+          .namedGraphs(JellyOptions.smallGeneralized)
+          .flow
+        )
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -243,7 +273,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode datasets" in {
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
         .grouped(2)
-        .via(EncoderFlow.datasetStream(None, JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder.datasets(JellyOptions.smallGeneralized).flow)
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 
@@ -261,7 +291,11 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     "encode datasets with max row count" in {
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
         .grouped(2)
-        .via(EncoderFlow.datasetStream(Some(StreamRowCountLimiter(4)), JellyOptions.smallGeneralized))
+        .via(EncoderFlow.builder
+          .withLimiter(StreamRowCountLimiter(4))
+          .datasets(JellyOptions.smallGeneralized)
+          .flow
+        )
         .toMat(Sink.seq)(Keep.right)
         .run().futureValue
 

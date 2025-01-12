@@ -35,12 +35,20 @@ class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement
 
   override def writeTriplesJelly(os: OutputStream, model: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     val f = Source.fromIterator(() => model.iterator)
-      .via(EncoderFlow.flatTripleStream(StreamRowCountLimiter(frameSize), opt.getOrElse(JellyOptions.smallAllFeatures)))
+      .via(EncoderFlow.builder
+        .withLimiter(StreamRowCountLimiter(frameSize))
+        .flatTriples(opt.getOrElse(JellyOptions.smallAllFeatures))
+        .flow
+      )
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)
 
   override def writeQuadsJelly(os: OutputStream, dataset: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     val f = Source.fromIterator(() => dataset.iterator)
-      .via(EncoderFlow.flatQuadStream(StreamRowCountLimiter(frameSize), opt.getOrElse(JellyOptions.smallAllFeatures)))
+      .via(EncoderFlow.builder
+        .withLimiter(StreamRowCountLimiter(frameSize))
+        .flatQuads(opt.getOrElse(JellyOptions.smallAllFeatures))
+        .flow
+      )
       .runWith(JellyIo.toIoStream(os))
     Await.ready(f, 10.seconds)
