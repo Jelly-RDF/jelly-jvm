@@ -2,6 +2,7 @@ package eu.ostrzyciel.jelly.stream
 
 import eu.ostrzyciel.jelly.core.ConverterFactory
 import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.stream.impl.EncoderFlowBuilderImpl
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Flow
 

@@ -1,4 +1,4 @@
-package eu.ostrzyciel.jelly.stream
+package eu.ostrzyciel.jelly.stream.impl
 
 import eu.ostrzyciel.jelly.core.{IterableAdapter, NamespaceDeclaration}
 import org.apache.pekko.NotUsed
@@ -25,11 +25,11 @@ final class RdfSourceBuilderImpl[TGraph, TDataset, TNode, TTriple, TQuad]
     final def graphAsTriples(graph: TGraph): ExtensibleBuilder[TTriple, Nothing, TGraph] =
       new ExtensibleBuilder[TTriple, Nothing, TGraph](None, graph):
         protected def sourceInternal: Source[TTriple, NotUsed] = Source(adapter.asTriples(graph))
-      
+
     final def datasetAsQuads(dataset: TDataset): ExtensibleBuilder[TQuad, Nothing, TDataset] =
       new ExtensibleBuilder[TQuad, Nothing, TDataset](None, dataset):
         protected def sourceInternal: Source[TQuad, NotUsed] = Source(adapter.asQuads(dataset))
-        
+
     final def datasetAsGraphs(dataset: TDataset): ExtensibleBuilder[(TNode, Iterable[TTriple]), Nothing, TDataset] =
       new ExtensibleBuilder[(TNode, Iterable[TTriple]), Nothing, TDataset](None, dataset):
         protected def sourceInternal: Source[(TNode, Iterable[TTriple]), NotUsed] = Source(adapter.asGraphs(dataset))
@@ -45,5 +45,5 @@ final class RdfSourceBuilderImpl[TGraph, TDataset, TNode, TTriple, TQuad]
 
     final def withNamespaceDeclarations: ExtensibleBuilder[NamespaceDeclaration, TApp | TChild, TSrc] =
       new ExtensibleBuilder[NamespaceDeclaration, TApp | TChild, TSrc](Some(this), src):
-        protected def sourceInternal: Source[NamespaceDeclaration, NotUsed] = 
+        protected def sourceInternal: Source[NamespaceDeclaration, NotUsed] =
           Source(adapter.namespaceDeclarations(src))

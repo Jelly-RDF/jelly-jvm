@@ -30,7 +30,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
       val encoded = Triples2NsDecl.mrl.flatMap {
         case t: Triple => encoder.addTripleStatement(t).toSeq
-        case ns: NamespaceDecl => encoder.declareNamespace(ns.name, ns.iri).toSeq
+        case ns: NamespaceDeclaration => encoder.declareNamespace(ns.prefix, ns.iri).toSeq
       }
       assertEncoded(encoded, Triples2NsDecl.encoded(encoder.options))
     }
@@ -44,7 +44,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       for triple <- Triples2NsDecl.mrl do
         val result = triple match
           case t: Triple => encoder.addTripleStatement(t)
-          case ns: NamespaceDecl => encoder.declareNamespace(ns.name, ns.iri)
+          case ns: NamespaceDeclaration => encoder.declareNamespace(ns.prefix, ns.iri)
         // external buffer – nothing should be returned directly
         result.size should be (0)
 

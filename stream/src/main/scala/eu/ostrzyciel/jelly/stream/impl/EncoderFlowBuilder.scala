@@ -1,11 +1,13 @@
-package eu.ostrzyciel.jelly.stream
+package eu.ostrzyciel.jelly.stream.impl
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.{ConverterFactory, NamespaceDeclaration, ProtoEncoder}
+import eu.ostrzyciel.jelly.stream.SizeLimiter
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.{Flow, Source}
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 sealed trait EncoderFlowBuilder[TIn, TChild]:
   import ProtoEncoder.Params
@@ -14,10 +16,10 @@ sealed trait EncoderFlowBuilder[TIn, TChild]:
 
   protected def paramMutator(p: Params): Params = p
 
-  @tailrec
+  // @tailrec
   protected final def paramMutatorRec(p: Params): Params =
     child match
-      case Some(c) => c.paramMutatorRec(c.paramMutator(p))
+      case Some(c) => paramMutator(c.paramMutatorRec(p))
       case None => paramMutator(p)
 
 
@@ -67,7 +69,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
 
 
   sealed trait FlowableBuilder[TIn, TOut]
-    extends EncoderFlowBuilder[TIn, TOut], BaseFlowableBuilder, ExtensibleBuilder[TIn]:
+    extends EncoderFlowBuilder[TIn, TOut], BaseFlowableBuilder:
     
     final def flow: Flow[TIn, RdfStreamFrame, NotUsed] =
       // 1. Traverse the chain of builders to gather all the parameters
@@ -76,6 +78,23 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
       val encoder = buildEncoder(params)
       // 3. Build the flow
       flowInternal(encoder)
+
+    final def withNamespaceDeclarations: ExtensionBuilder[NamespaceDeclaration | TIn, TIn] =
+      new ExtensionBuilder[NamespaceDeclaration | TIn, TIn](this) {
+        override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder):
+        Flow[NamespaceDeclaration | TIn, RdfStreamFrame, NotUsed] =
+          Flow[NamespaceDeclaration | TIn]
+            .mapConcat {
+              // The rows will be accumulated in the buffer and flushed when the next non-namespace 
+              // declaration element is encountered. This means that unless we encounter a triple/quad,
+              // the namespace declaration will not be flushed.
+              case ns: NamespaceDeclaration => encoder.declareNamespace(ns.prefix, ns.iri) ; Nil
+              case other => other.asInstanceOf[TIn] :: Nil
+            }
+            .via(_child.flowInternal(encoder))
+
+        override protected def paramMutator(p: Params): Params = p.copy(enableNamespaceDeclarations = true)
+      }
     
     protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder):
       Flow[TIn, RdfStreamFrame, NotUsed]
@@ -90,22 +109,6 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
 
     def flatQuads(opt: RdfStreamOptions): FlowableBuilder[TQuad, Nothing] =
       new FlatQuadsBuilder(limiter, opt)
-
-
-  sealed trait ExtensibleBuilder[TIn]:
-    final def withNamespaceDeclarations: ExtensionBuilder[NamespaceDeclaration | TIn, TIn] =
-      new ExtensionBuilder[NamespaceDeclaration | TIn, TIn](null) {
-        override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder): 
-        Flow[NamespaceDeclaration | TIn, RdfStreamFrame, NotUsed] =
-          Flow[NamespaceDeclaration | TIn]
-            .mapConcat {
-              case ns: NamespaceDeclaration => encoder.declareNamespace(ns.prefix, ns.iri) ; None
-              case other => Some(other.asInstanceOf[TIn])
-            }
-            .via(_child.flowInternal(encoder))
-
-        override protected def paramMutator(p: Params): Params = p.copy(enableNamespaceDeclarations = true)
-      }
 
 
   sealed trait ExtensionBuilder[TIn, TOut](protected val _child: FlowableBuilder[TOut, ?])
@@ -123,7 +126,8 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
 
     override final protected[EncoderFlowBuilderImpl] def buildEncoder(p: Params):
     TEncoder =
-      factory.encoder(p)
+      val buffer = ListBuffer[RdfStreamRow]()
+      factory.encoder(p.copy(maybeRowBuffer = Some(buffer)))
   
 
   /// *** ENCODER BUILDERS *** ///
@@ -133,7 +137,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
     extends EncoderBuilder[TTriple](opt):
 
     override def flowInternal(encoder: TEncoder): Flow[TTriple, RdfStreamFrame, NotUsed] =
-      flatFlow(e => encoder.addTripleStatement(e), limiter)
+      flatFlow(e => encoder.addTripleStatement(e), limiter, encoder)
 
     override protected def paramMutator(p: Params): Params =
       p.copy(options = makeOptions(opt, PhysicalStreamType.TRIPLES, LogicalStreamType.FLAT_TRIPLES))
@@ -144,7 +148,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
   ) extends EncoderBuilder[IterableOnce[TTriple]](opt):
 
     override def flowInternal(encoder: TEncoder): Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
-      groupedFlow(e => encoder.addTripleStatement(e), maybeLimiter)
+      groupedFlow(e => encoder.addTripleStatement(e), maybeLimiter, encoder)
 
     override protected def paramMutator(p: Params): Params =
       p.copy(options = makeOptions(opt, PhysicalStreamType.TRIPLES, lst))
@@ -154,7 +158,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
     extends EncoderBuilder[TQuad](opt):
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder): Flow[TQuad, RdfStreamFrame, NotUsed] =
-      flatFlow(e => encoder.addQuadStatement(e), limiter)
+      flatFlow(e => encoder.addQuadStatement(e), limiter, encoder)
 
     override protected def paramMutator(p: Params): Params =
       p.copy(options = makeOptions(opt, PhysicalStreamType.QUADS, LogicalStreamType.FLAT_QUADS))
@@ -165,7 +169,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
   ) extends EncoderBuilder[IterableOnce[TQuad]](opt):
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder): Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
-      groupedFlow(e => encoder.addQuadStatement(e), maybeLimiter)
+      groupedFlow(e => encoder.addQuadStatement(e), maybeLimiter, encoder)
 
     override protected def paramMutator(p: Params): Params =
       p.copy(options = makeOptions(opt, PhysicalStreamType.QUADS, lst))
@@ -178,7 +182,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
       Flow[(TNode, Iterable[TTriple])]
         // Make each graph into a 1-element "group"
         .map(Seq(_))
-        .via(groupedFlow[(TNode, Iterable[TTriple])](graphAsIterable(encoder), maybeLimiter))
+        .via(groupedFlow[(TNode, Iterable[TTriple])](graphAsIterable(encoder), maybeLimiter, encoder))
 
     override protected def paramMutator(p: Params): Params =
       p.copy(options = makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.NAMED_GRAPHS))
@@ -189,13 +193,11 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder): 
     Flow[IterableOnce[(TNode, Iterable[TTriple])], RdfStreamFrame, NotUsed] =
-      groupedFlow(graphAsIterable(encoder), maybeLimiter)
+      groupedFlow(graphAsIterable(encoder), maybeLimiter, encoder)
 
     override protected def paramMutator(p: Params): Params =
       p.copy(options = makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.DATASETS))
-
-
-
+  
 
   /// *** HELPER METHODS *** ///
 
@@ -215,25 +217,37 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
         .concat(triples.flatMap(triple => encoder.addTripleStatement(triple)))
         .concat(encoder.endGraph())
 
-  private def flatFlow[TIn](transform: TIn => Iterable[RdfStreamRow], limiter: SizeLimiter):
+  private def flatFlow[TIn](transform: TIn => Iterable[RdfStreamRow], limiter: SizeLimiter, encoder: TEncoder):
   Flow[TIn, RdfStreamFrame, NotUsed] =
+    val buffer = encoder.maybeRowBuffer.get
     Flow[TIn]
-      .mapConcat(transform)
+      .mapConcat(e => {
+        transform(e)
+        val rows = buffer.toList
+        buffer.clear()
+        rows
+      })
       .via(limiter.flow)
       .map(rows => RdfStreamFrame(rows))
 
-  private def groupedFlow[TIn](transform: TIn => Iterable[RdfStreamRow], maybeLimiter: Option[SizeLimiter]):
-  Flow[IterableOnce[TIn], RdfStreamFrame, NotUsed] =
+  private def groupedFlow[TIn](
+    transform: TIn => Iterable[RdfStreamRow], maybeLimiter: Option[SizeLimiter], encoder: TEncoder
+  ): Flow[IterableOnce[TIn], RdfStreamFrame, NotUsed] =
+    val buffer = encoder.maybeRowBuffer.get
     maybeLimiter match
       case Some(limiter) =>
         Flow[IterableOnce[TIn]].flatMapConcat(elems => {
-          Source.fromIterator(() => elems.iterator)
-            .via(flatFlow(transform, limiter))
+          elems.iterator.foreach(transform)
+          val rows = buffer.toList
+          buffer.clear()
+          Source(rows)
+            .via(limiter.flow)
+            .map(rows => RdfStreamFrame(rows))
         })
       case None =>
         Flow[IterableOnce[TIn]].map(elems => {
-          val rows = elems.iterator
-            .flatMap(transform)
-            .toSeq
+          elems.iterator.foreach(transform)
+          val rows = buffer.toList
+          buffer.clear()
           RdfStreamFrame(rows)
         })

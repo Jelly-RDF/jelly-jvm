@@ -82,6 +82,28 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       )
       encoded.size should be (4)
     }
+
+    "encode triples with namespace declarations" in {
+      val encoded: Seq[RdfStreamFrame] = Source(Triples2NsDecl.mrl)
+        .via(EncoderFlow.builder
+          .withLimiter(StreamRowCountLimiter(4))
+          .flatTriples(JellyOptions.smallGeneralized)
+          .withNamespaceDeclarations
+          .flow
+        )
+        .toMat(Sink.seq)(Keep.right)
+        .run().futureValue
+
+      assertEncoded(
+        encoded.flatMap(_.rows),
+        Triples2NsDecl.encoded(JellyOptions.smallGeneralized
+          .withPhysicalType(PhysicalStreamType.TRIPLES)
+          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .withVersion(Constants.protoVersion)
+        )
+      )
+      encoded.size should be (3)
+    }
   }
 
   "flatTripleStreamGrouped" should {

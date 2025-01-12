@@ -87,15 +87,15 @@ object ProtoTestCases:
       ),
     ))
 
-  object Triples2NsDecl extends TestCase[Triple | NamespaceDecl]:
+  object Triples2NsDecl extends TestCase[Triple | NamespaceDeclaration]:
     val mrl = Seq(
-      NamespaceDecl("test", "https://test.org/test/"),
+      NamespaceDeclaration("test", "https://test.org/test/"),
       Triple(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
         Iri("https://test.org/ns2/object"),
       ),
-      NamespaceDecl("ns2", "https://test.org/ns2/"),
+      NamespaceDeclaration("ns2", "https://test.org/ns2/"),
       Triple(
         Iri("https://test.org/ns2/object"),
         Iri("https://test.org/test/subject"),
