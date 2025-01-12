@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.convert.rdf4j.rio
 
 import eu.ostrzyciel.jelly.convert.rdf4j.{Rdf4jConverterFactory, Rdf4jProtoEncoder}
+import eu.ostrzyciel.jelly.core.ProtoEncoder
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.rio.{RDFFormat, RioSetting}
@@ -70,7 +71,9 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     )
     frameSize = c.get(FRAME_SIZE).toLong
     enableNamespaceDeclarations = c.get(ENABLE_NAMESPACE_DECLARATIONS).booleanValue()
-    encoder = Rdf4jConverterFactory.encoder(options, enableNamespaceDeclarations, Some(buffer))
+    encoder = Rdf4jConverterFactory.encoder(ProtoEncoder.Params(
+      options, enableNamespaceDeclarations, Some(buffer)
+    ))
 
   override def consumeStatement(st: Statement): Unit =
     checkWritingStarted()

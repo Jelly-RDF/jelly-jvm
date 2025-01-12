@@ -21,7 +21,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
   )
 
   val testCases: Seq[(String, PhysicalStreamType,
-    TestCase[Mrl.Triple | Mrl.Quad | (Mrl.Node, Iterable[Mrl.Triple]) | Mrl.NamespaceDecl]
+    TestCase[Mrl.Triple | Mrl.Quad | (Mrl.Node, Iterable[Mrl.Triple]) | NamespaceDeclaration]
   )] = Seq(
     ("Triples1", PhysicalStreamType.TRIPLES, Triples1),
     ("Triples2NsDecl", PhysicalStreamType.TRIPLES, Triples2NsDecl),

@@ -52,11 +52,12 @@ object PekkoStreamsEncoderFlow extends shared.Example:
     // https://w3id.org/stax/ontology#flatQuadStream
     println(f"Encoding ${quads.size} quads as a flat RDF quad stream")
     val flatQuadsFuture = Source(quads)
-      .via(EncoderFlow.flatQuadStream(
+      .via(EncoderFlow.builder
         // This encoder requires a size limiter – otherwise a stream frame could have infinite length!
-        StreamRowCountLimiter(20),
-        JellyOptions.smallStrict,
-      ))
+        .withLimiter(StreamRowCountLimiter(20))
+        .flatQuads(JellyOptions.smallStrict)
+        .flow
+      )
       .runWith(Sink.foreach(frame => println(s"Frame with ${frame.rows.size} rows, ${frame.serializedSize} bytes")))
 
     Await.ready(flatQuadsFuture, 10.seconds)
@@ -64,11 +65,12 @@ object PekkoStreamsEncoderFlow extends shared.Example:
     // https://w3id.org/stax/ontology#flatTripleStream
     println(f"\n\nEncoding ${triples.size} triples as a flat RDF triple stream")
     val flatTriplesFuture = Source(triples)
-      .via(EncoderFlow.flatTripleStream(
+      .via(EncoderFlow.builder
         // This encoder requires a size limiter – otherwise a stream frame could have infinite length!
-        ByteSizeLimiter(500),
-        JellyOptions.smallStrict,
-      ))
+        .withLimiter(ByteSizeLimiter(500))
+        .flatTriples(JellyOptions.smallStrict)
+        .flow
+      )
       .runWith(Sink.foreach(frame => println(s"Frame with ${frame.rows.size} rows, ${frame.serializedSize} bytes")))
 
     Await.ready(flatTriplesFuture, 10.seconds)
@@ -79,11 +81,11 @@ object PekkoStreamsEncoderFlow extends shared.Example:
     println(f"\n\nEncoding ${quads.size} quads as a flat RDF quad stream, grouped in batches of 10")
     // First, group the quads into batches of 8
     val groupedQuadsFuture = Source.fromIterator(() => quads.grouped(10))
-      .via(EncoderFlow.flatQuadStreamGrouped(
+      .via(EncoderFlow.builder
         // Do not use a size limiter here – we want exactly one batch in each frame
-        None,
-        JellyOptions.smallStrict,
-      ))
+        .flatQuadsGrouped(JellyOptions.smallStrict)
+        .flow
+      )
       .runWith(Sink.foreach(frame => println(s"Frame with ${frame.rows.size} rows, ${frame.serializedSize} bytes")))
 
     Await.ready(groupedQuadsFuture, 10.seconds)
@@ -93,11 +95,11 @@ object PekkoStreamsEncoderFlow extends shared.Example:
     // https://w3id.org/stax/ontology#namedGraphStream
     println(f"\n\nEncoding ${graphs.size} graphs as a named graph stream")
     val namedGraphsFuture = Source(graphs)
-      .via(EncoderFlow.namedGraphStream(
+      .via(EncoderFlow.builder
         // Do not use a size limiter here – we want exactly one graph in each frame
-        None,
-        JellyOptions.smallStrict,
-      ))
+        .namedGraphs(JellyOptions.smallStrict)
+        .flow
+      )
       // Note that we will see exactly as many frames as there are graphs in the dataset
       .runWith(Sink.foreach(frame => println(s"Frame with ${frame.rows.size} rows, ${frame.serializedSize} bytes")))
 
@@ -109,14 +111,13 @@ object PekkoStreamsEncoderFlow extends shared.Example:
     println(f"\n\nEncoding 5 RDF graphs as a graph stream")
     val graphsFuture = Source.repeat(triples)
       .take(5)
-      .via(EncoderFlow.graphStream(
+      .via(EncoderFlow.builder
         // Do not use a size limiter here – we want exactly one graph in each frame
-        None,
-        JellyOptions.smallStrict,
-      ))
+        .graphs(JellyOptions.smallStrict)
+        .flow
+      )
       // Note that we will see exactly 5 frames – the number of graphs we streamed
       .runWith(Sink.foreach(frame => println(s"Frame with ${frame.rows.size} rows, ${frame.serializedSize} bytes")))
 
     Await.ready(graphsFuture, 10.seconds)
-
     actorSystem.terminate()

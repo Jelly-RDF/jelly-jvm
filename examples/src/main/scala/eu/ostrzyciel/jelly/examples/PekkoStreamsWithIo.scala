@@ -63,10 +63,11 @@ object PekkoStreamsWithIo extends shared.Example:
     Using.resource(new FileOutputStream("weather.jelly")) { outputStream =>
       val writeFuture = Source(decodedTriples)
         // Encode the triples to Jelly
-        .via(EncoderFlow.flatTripleStream(
-          ByteSizeLimiter(500),
-          JellyOptions.smallStrict
-        ))
+        .via(EncoderFlow.builder
+          .withLimiter(ByteSizeLimiter(500))
+          .flatTriples(JellyOptions.smallStrict)
+          .flow
+        )
         // Write the Jelly frames to a Java byte stream.
         // Under the hood it uses the RdfStreamFrame.writeDelimitedTo method.
         .runWith(JellyIo.toIoStream(outputStream))
@@ -81,10 +82,11 @@ object PekkoStreamsWithIo extends shared.Example:
     // We will again write the decoded triples to a Jelly file, but this time use Pekko's facilities.
     println("\n\nWriting the decoded triples to a new Jelly file with Pekko Streams' utilities...")
     val writeFuture = Source(decodedTriples)
-      .via(EncoderFlow.flatTripleStream(
-        ByteSizeLimiter(500),
-        JellyOptions.smallStrict
-      ))
+      .via(EncoderFlow.builder
+        .withLimiter(ByteSizeLimiter(500))
+        .flatTriples(JellyOptions.smallStrict)
+        .flow
+      )
       // Convert the frames into Pekko's byte strings.
       // Note: we are using the DELIMITED variant because we will write this to disk!
       .via(JellyIo.toBytesDelimited)
@@ -95,8 +97,3 @@ object PekkoStreamsWithIo extends shared.Example:
     println("Done writing the Jelly file.")
 
     actorSystem.terminate()
-
-
-
-
-

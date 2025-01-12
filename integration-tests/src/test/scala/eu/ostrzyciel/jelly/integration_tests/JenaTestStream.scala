@@ -2,7 +2,6 @@ package eu.ostrzyciel.jelly.integration_tests
 
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.ostrzyciel.jelly.stream.*
-import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.system.AsyncParser
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
 import org.apache.pekko.stream.scaladsl.{Flow, Keep, Sink, Source}
@@ -16,22 +15,18 @@ case object JenaTestStream extends TestStream:
 
   override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     Source.fromIterator(() => AsyncParser.asyncParseTriples(is, Lang.NT, "").asScala)
-      .via(EncoderFlow.flatTripleStream(limiter, jellyOpt))
+      .via(EncoderFlow.builder.withLimiter(limiter).flatTriples(jellyOpt).flow)
 
   override def quadSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     Source.fromIterator(() => AsyncParser.asyncParseQuads(is, Lang.NQUADS, "").asScala)
-      .via(EncoderFlow.flatQuadStream(limiter, jellyOpt))
+      .via(EncoderFlow.builder.withLimiter(limiter).flatQuads(jellyOpt).flow)
 
   override def graphSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     val ds = RDFParser.source(is)
       .lang(Lang.NQ)
       .toDatasetGraph
-    val graphs: Iterator[(Node, Iterable[Triple])] = (
-      ds.listGraphNodes().asScala.map(gNode => (gNode, Iterable.from(ds.getGraph(gNode).find.asScala))) ++
-        Iterator((null, Iterable.from(ds.getDefaultGraph.find.asScala)))
-    ).filter((_, g) => g.nonEmpty)
-    Source.fromIterator(() => graphs)
-      .via(EncoderFlow.namedGraphStream(Some(limiter), jellyOpt))
+    RdfSource.builder.datasetAsGraphs(ds).source
+      .via(EncoderFlow.builder.withLimiter(limiter).namedGraphs(jellyOpt).flow)
 
   override def tripleSink(os: OutputStream)(using ExecutionContext) =
     Flow[RdfStreamFrame]

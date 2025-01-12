@@ -53,3 +53,13 @@ trait IterableAdapter[+TNode, +TTriple, +TQuad, -TGraph, -TDataset]:
      * @return iterable of (node, Iterable[Triple]) pairs
      */
     def asGraphs: immutable.Iterable[(TNode, immutable.Iterable[TTriple])]
+
+  extension (m: TGraph | TDataset)
+    /**
+     * Returns the namespace declarations for the dataset.
+     *
+     * Implementing this is optional. If you don't need to declare namespaces, you can return an empty iterable.
+     *
+     * @return namespace declarations
+     */
+    def namespaceDeclarations: immutable.Iterable[NamespaceDeclaration]

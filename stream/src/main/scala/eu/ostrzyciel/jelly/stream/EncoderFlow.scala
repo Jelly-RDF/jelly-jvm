@@ -1,9 +1,10 @@
 package eu.ostrzyciel.jelly.stream
 
-import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoEncoder}
+import eu.ostrzyciel.jelly.core.ConverterFactory
 import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.stream.impl.EncoderFlowBuilderImpl
 import org.apache.pekko.NotUsed
-import org.apache.pekko.stream.scaladsl.{Flow, Source}
+import org.apache.pekko.stream.scaladsl.Flow
 
 /**
  * Factory of encoder flows for Jelly streams.
@@ -14,6 +15,31 @@ import org.apache.pekko.stream.scaladsl.{Flow, Source}
  * (that it adheres to the appropriate physical and logical stream type).
  */
 object EncoderFlow:
+
+  /**
+   * Flexible builder for creating encoder flows for Jelly streams.
+   *
+   * Example usage:
+   * {{{
+   * EncoderFlow.builder
+   *  .withLimiter(SizeLimiter(1000))
+   *  .flatTriples(JellyOptions.smallStrict)
+   *  .withNamespaceDeclarations
+   *  .flow
+   * }}}
+   *
+   * See more examples in the `examples` module.
+   *
+   * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+   * @tparam TNode Type of nodes.
+   * @tparam TTriple Type of triple statements.
+   * @tparam TQuad Type of quad statements.
+   * @return Encoder flow builder.
+   * @since 2.6.0
+   */
+  final def builder[TNode, TTriple, TQuad](using factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
+  EncoderFlowBuilderImpl[TNode, TTriple, TQuad]#RootBuilder =
+    new EncoderFlowBuilderImpl[TNode, TTriple, TQuad].builder
 
   /**
    * A flow converting a flat stream of triple statements into a stream of [[RdfStreamFrame]]s.
@@ -29,11 +55,11 @@ object EncoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow.
    */
+  @deprecated("Use EncoderFlow.builder instead", "2.6.0")
   final def flatTripleStream[TTriple](limiter: SizeLimiter, opt: RdfStreamOptions)
     (using factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[TTriple, RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.TRIPLES, LogicalStreamType.FLAT_TRIPLES))
-    flatFlow(e => encoder.addTripleStatement(e), limiter)
+    builder.withLimiter(limiter).flatTriples(opt).flow
 
   /**
    * A flow converting a flat stream of quad statements into a stream of [[RdfStreamFrame]]s.
@@ -49,11 +75,11 @@ object EncoderFlow:
    * @tparam TQuad Type of quad statements.
    * @return Pekko Streams flow.
    */
+  @deprecated("Use EncoderFlow.builder instead", "2.6.0")
   final def flatQuadStream[TQuad](limiter: SizeLimiter, opt: RdfStreamOptions)
     (using factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[TQuad, RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.QUADS, LogicalStreamType.FLAT_QUADS))
-    flatFlow(e => encoder.addQuadStatement(e), limiter)
+    builder.withLimiter(limiter).flatQuads(opt).flow
 
   /**
    * A flow converting a stream of iterables with triple statements into a stream of [[RdfStreamFrame]]s.
@@ -70,11 +96,11 @@ object EncoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow.
    */
+  @deprecated("Use EncoderFlow.builder instead", "2.6.0")
   final def flatTripleStreamGrouped[TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (using factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.TRIPLES, LogicalStreamType.FLAT_TRIPLES))
-    groupedFlow(e => encoder.addTripleStatement(e), maybeLimiter)
+    maybeLimiter.fold(builder)(builder.withLimiter).flatTriplesGrouped(opt).flow
 
   /**
    * A flow converting a stream of graphs (iterables with triple statements) into a stream of [[RdfStreamFrame]]s.
@@ -91,11 +117,11 @@ object EncoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow.
    */
+  @deprecated("Use EncoderFlow.builder instead", "2.6.0")
   final def graphStream[TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (using factory: ConverterFactory[?, ?, ?, ?, TTriple, ?]):
   Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.TRIPLES, LogicalStreamType.GRAPHS))
-    groupedFlow(e => encoder.addTripleStatement(e), maybeLimiter)
+    maybeLimiter.fold(builder)(builder.withLimiter).graphs(opt).flow
 
   /**
    * A flow converting a stream of iterables with quad statements into a stream of [[RdfStreamFrame]]s.
@@ -112,11 +138,11 @@ object EncoderFlow:
    * @tparam TQuad Type of quad statements.
    * @return Pekko Streams flow.
    */
+  @deprecated("Use EncoderFlow.builder instead", "2.6.0")
   final def flatQuadStreamGrouped[TQuad](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (using factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.QUADS, LogicalStreamType.FLAT_QUADS))
-    groupedFlow(e => encoder.addQuadStatement(e), maybeLimiter)
+    maybeLimiter.fold(builder)(builder.withLimiter).flatQuadsGrouped(opt).flow
 
   /**
    * A flow converting a stream of datasets (iterables with quad statements) into a stream of [[RdfStreamFrame]]s.
@@ -133,11 +159,11 @@ object EncoderFlow:
    * @tparam TQuad Type of quad statements.
    * @return Pekko Streams flow.
    */
+  @deprecated("Use EncoderFlow.builder instead", "2.6.0")
   final def datasetStreamFromQuads[TQuad](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (using factory: ConverterFactory[?, ?, ?, ?, ?, TQuad]):
   Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.QUADS, LogicalStreamType.DATASETS))
-    groupedFlow(e => encoder.addQuadStatement(e), maybeLimiter)
+    maybeLimiter.fold(builder)(builder.withLimiter).datasetsFromQuads(opt).flow
 
   /**
    * A flow converting a stream of named or unnamed graphs (node as graph name + iterable of triple statements)
@@ -157,14 +183,11 @@ object EncoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow.
    */
+  @deprecated("Use EncoderFlow.builder instead", "2.6.0")
   final def namedGraphStream[TNode, TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[(TNode, Iterable[TTriple]), RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.NAMED_GRAPHS))
-    Flow[(TNode, Iterable[TTriple])]
-      // Make each graph into a 1-element "group"
-      .map(Seq(_))
-      .via(groupedFlow[(TNode, Iterable[TTriple])](graphAsIterable(encoder), maybeLimiter))
+    maybeLimiter.fold(builder)(builder.withLimiter).namedGraphs(opt).flow
 
   /**
    * A flow converting a stream of datasets (iterables with named or unnamed graphs: node as graph name +
@@ -184,50 +207,8 @@ object EncoderFlow:
    * @tparam TTriple Type of triple statements.
    * @return Pekko Streams flow.
    */
+  @deprecated("Use EncoderFlow.builder instead", "2.6.0")
   final def datasetStream[TNode, TTriple](maybeLimiter: Option[SizeLimiter], opt: RdfStreamOptions)
     (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, ?]):
   Flow[IterableOnce[(TNode, Iterable[TTriple])], RdfStreamFrame, NotUsed] =
-    val encoder = factory.encoder(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.DATASETS))
-    groupedFlow[(TNode, Iterable[TTriple])](graphAsIterable(encoder), maybeLimiter)
-
-
-  // PRIVATE API
-
-  /**
-   * Make Jelly options while preserving the user-set logical stream type.
-   */
-  private def makeOptions(opt: RdfStreamOptions, pst: PhysicalStreamType, lst: LogicalStreamType): RdfStreamOptions =
-    opt.copy(
-      physicalType = pst,
-      logicalType = if opt.logicalType.isUnspecified then lst else opt.logicalType
-    )
-
-  private def graphAsIterable[TEncoder <: ProtoEncoder[TNode, TTriple, ?, ?], TNode, TTriple](encoder: TEncoder):
-  ((TNode, Iterable[TTriple])) => Iterable[RdfStreamRow] =
-    (graphName: TNode, triples: Iterable[TTriple]) =>
-      encoder.startGraph(graphName)
-        .concat(triples.flatMap(triple => encoder.addTripleStatement(triple)))
-        .concat(encoder.endGraph())
-
-  private def flatFlow[TIn](transform: TIn => Iterable[RdfStreamRow], limiter: SizeLimiter):
-  Flow[TIn, RdfStreamFrame, NotUsed] =
-    Flow[TIn]
-      .mapConcat(transform)
-      .via(limiter.flow)
-      .map(rows => RdfStreamFrame(rows))
-
-  private def groupedFlow[TIn](transform: TIn => Iterable[RdfStreamRow], maybeLimiter: Option[SizeLimiter]):
-  Flow[IterableOnce[TIn], RdfStreamFrame, NotUsed] =
-    maybeLimiter match
-      case Some(limiter) =>
-        Flow[IterableOnce[TIn]].flatMapConcat(elems => {
-          Source.fromIterator(() => elems.iterator)
-            .via(flatFlow(transform, limiter))
-        })
-      case None =>
-        Flow[IterableOnce[TIn]].map(elems => {
-          val rows = elems.iterator
-            .flatMap(transform)
-            .toSeq
-          RdfStreamFrame(rows)
-        })
+    maybeLimiter.fold(builder)(builder.withLimiter).datasets(opt).flow

@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory
 import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
-import eu.ostrzyciel.jelly.core.JellyOptions
+import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoEncoder}
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.integration_tests.TestCases
 import org.scalatest.matchers.should.Matchers
@@ -36,7 +36,7 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
     val originalSize = model.size()
     for preset <- presets do
       val (options, presetName) = preset
-      val encoder = JenaConverterFactory.encoder(options)
+      val encoder = JenaConverterFactory.encoder(ProtoEncoder.Params(options))
       val rows = model.getGraph.find().asScala.flatMap(encoder.addTripleStatement).toSeq
       val frame = RdfStreamFrame(rows)
       val bytes = frame.toByteArray

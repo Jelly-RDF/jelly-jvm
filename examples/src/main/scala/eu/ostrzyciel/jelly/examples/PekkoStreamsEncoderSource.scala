@@ -12,8 +12,8 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.*
 
 /**
- * Example of using the [[eu.ostrzyciel.jelly.stream.EncoderSource]] utility to convert RDF graphs and datasets
- * into Jelly streams with a single method call.
+ * Example of using the [[eu.ostrzyciel.jelly.stream.RdfSource]] and [[eu.ostrzyciel.jelly.stream.EncoderFlow]] 
+ * utilities to encode single RDF graphs and datasets as Jelly streams.
  *
  * In this example we are using Apache Jena as the RDF library (note the import:
  * `import eu.ostrzyciel.jelly.convert.jena.given`).
@@ -32,14 +32,13 @@ object PekkoStreamsEncoderSource extends shared.Example:
     println(s"Loaded model with ${model.size()} triples")
     println(s"Streaming the model to memory...")
 
-    // Create a Pekko Streams Source from the Jena model
-    // This automatically sets the physical and logical stream types.
-    val encodedModelFuture = EncoderSource
-      .fromGraph(
-        model,
-        // Aim for frames with ~2000 bytes – may be more!
-        ByteSizeLimiter(2000),
-        JellyOptions.smallStrict,
+    // Create a Pekko Streams Source[Triple] from the Jena model
+    val encodedModelFuture = RdfSource.builder.graphAsTriples(model).source
+      // Encode the stream as a flat RDF triple stream
+      .via(EncoderFlow.builder
+        .withLimiter(ByteSizeLimiter(2000))
+        .flatTriples(JellyOptions.smallStrict)
+        .flow
       )
       // wireTap: print the size of the frames
       // Notice in the output that the frames are slightly bigger than 2000 bytes.
@@ -59,20 +58,26 @@ object PekkoStreamsEncoderSource extends shared.Example:
 
     // -------------------------------------------------------------------
     // Second example: try encoding an RDF dataset as a GRAPHS stream
+    // This time we will also preserve the namespace/prefix declarations (@prefix in Turtle) as a cosmetic feature
     val dataset = RDFDataMgr.loadDataset(File(getClass.getResource("/weather-graphs.trig").toURI).toURI.toString)
     println(s"Loaded dataset with ${dataset.asDatasetGraph.size} named graphs")
     println(s"Streaming the dataset to memory...")
 
-    val encodedDatasetFuture = EncoderSource
-      // Here we stream this is as a GRAPHS stream (physical type)
-      // You can also use .fromDatasetAsQuads to stream as QUADS
-      .fromDatasetAsGraphs(
-        dataset,
+    // Here we stream this is as a GRAPHS stream (physical type)
+    // You can also use .datasetAsQuads to stream as QUADS
+    val encodedDatasetFuture = RdfSource.builder
+      .datasetAsGraphs(dataset)
+      .withNamespaceDeclarations // Include namespace declarations in the stream
+      .source
+      .via(EncoderFlow.builder
         // This time we limit the number of rows in each frame to 30
         // Note that for this particular encoder, we can skip the limiter entirely – but this can lead to huge frames!
         // So, be careful with that, or may get an out-of-memory error.
-        Some(StreamRowCountLimiter(30)),
-        JellyOptions.smallStrict,
+        .withLimiter(StreamRowCountLimiter(30))
+        .namedGraphs(JellyOptions.smallStrict)
+        // We must also allow for namespace declarations, because our source contains them
+        .withNamespaceDeclarations
+        .flow
       )
       // wireTap: print the size of the frames
       // Note that some frames smaller than the limit – this is because this encoder will always split frames
