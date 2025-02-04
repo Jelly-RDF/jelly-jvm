@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../../assets/jelly_color.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.d7758b05.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -279,6 +279,7 @@
   
   <span class="md-ellipsis">
     Home
+    
   </span>
   
 
@@ -299,6 +300,7 @@
   
   <span class="md-ellipsis">
     Getting started (Jena/RDF4J plugin)
+    
   </span>
   
 
@@ -319,6 +321,7 @@
   
   <span class="md-ellipsis">
     Getting started (application developers)
+    
   </span>
   
 
@@ -369,6 +372,7 @@
   
   <span class="md-ellipsis">
     User guide
+    
   </span>
   
 
@@ -394,6 +398,7 @@
   
   <span class="md-ellipsis">
     Apache Jena integration
+    
   </span>
   
 
@@ -415,6 +420,7 @@
   
   <span class="md-ellipsis">
     Apache Jena CLI tools
+    
   </span>
   
 
@@ -436,6 +442,7 @@
   
   <span class="md-ellipsis">
     RDF4J integration
+    
   </span>
   
 
@@ -457,6 +464,7 @@
   
   <span class="md-ellipsis">
     Reactive streaming
+    
   </span>
   
 
@@ -478,6 +486,7 @@
   
   <span class="md-ellipsis">
     gRPC
+    
   </span>
   
 
@@ -499,6 +508,7 @@
   
   <span class="md-ellipsis">
     Useful utilities
+    
   </span>
   
 
@@ -520,6 +530,7 @@
   
   <span class="md-ellipsis">
     Low-level usage
+    
   </span>
   
 
@@ -550,6 +561,7 @@
   
   <span class="md-ellipsis">
     Compatibility policy
+    
   </span>
   
 
@@ -561,6 +573,7 @@
   
   <span class="md-ellipsis">
     Compatibility policy
+    
   </span>
   
 
@@ -670,6 +683,7 @@
   
   <span class="md-ellipsis">
     Developer guide
+    
   </span>
   
 
@@ -695,6 +709,7 @@
   
   <span class="md-ellipsis">
     Releases
+    
   </span>
   
 
@@ -716,6 +731,7 @@
   
   <span class="md-ellipsis">
     Implementing Jelly for other libraries
+    
   </span>
   
 
@@ -744,6 +760,7 @@
   
   <span class="md-ellipsis">
     Contributing
+    
   </span>
   
 
@@ -764,6 +781,7 @@
   
   <span class="md-ellipsis">
     Licensing and citation
+    
   </span>
   
 
@@ -779,11 +797,12 @@
   
   
     <li class="md-nav__item">
-      <a href="https://w3id.org/jelly/1.1.0/" class="md-nav__link">
+      <a href="https://w3id.org/jelly/dev/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Back to main Jelly docs ↩
+    
   </span>
   
 
@@ -877,6 +896,7 @@
                 
                   
 
+
   
     <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/user/compatibility.md" title="Edit this page" class="md-content__button md-icon">
       
@@ -898,8 +918,8 @@
 <p>Generally, all public classes and methods in Jelly-JVM are considered part of the public API. However, there are some exceptions.</p>
 <p>Auto-generated classes in the <code>jelly-core</code> module, <code>eu.ostrzyciel.jelly.core.proto.v1</code> package are not considered part of the public API, although we will avoid any incompatibilities where possible. These classes may change between MINOR releases.</p>
 <h2 id="backward-and-forward-protocol-compatibility">Backward and forward protocol compatibility</h2>
-<p>Jelly-JVM follows <a href="https://w3id.org/jelly/1.1.0/specification/serialization#versioning">the Jelly protocol's backward compatibility policy</a>. This means that Jelly-JVM can read data serialized with older versions of Jelly. Backward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.1/integration-tests/src/test/scala/eu/ostrzyciel/jelly/integration_tests/BackCompatSpec.scala">BackCompatSpec.scala</a>.</p>
-<p>Forward compatibility is provided only in a very limited manner in Jelly-JVM. The parser is guaranteed to only parse the stream options header and reject the rest of the stream, if the used protocol version is not supported. You may choose to disable this check and try to parse the rest of the data anyway, but this is most certainly <strong>NOT</strong> recommended and may lead to unexpected results. In general, Jelly-JVM will ignore any unknown fields in the stream, but any other changes in the protocol may lead to really "funny" errors. Forward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.1/integration-tests/src/test/scala/eu/ostrzyciel/jelly/integration_tests/ForwardCompatSpec.scala">ForwardCompatSpec.scala</a>.</p>
+<p>Jelly-JVM follows <a href="https://w3id.org/jelly/dev/specification/serialization#versioning">the Jelly protocol's backward compatibility policy</a>. This means that Jelly-JVM can read data serialized with older versions of Jelly. Backward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.2/integration-tests/src/test/scala/eu/ostrzyciel/jelly/integration_tests/BackCompatSpec.scala">BackCompatSpec.scala</a>.</p>
+<p>Forward compatibility is provided only in a very limited manner in Jelly-JVM. The parser is guaranteed to only parse the stream options header and reject the rest of the stream, if the used protocol version is not supported. You may choose to disable this check and try to parse the rest of the data anyway, but this is most certainly <strong>NOT</strong> recommended and may lead to unexpected results. In general, Jelly-JVM will ignore any unknown fields in the stream, but any other changes in the protocol may lead to really "funny" errors. Forward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.2/integration-tests/src/test/scala/eu/ostrzyciel/jelly/integration_tests/ForwardCompatSpec.scala">ForwardCompatSpec.scala</a>.</p>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="https://github.com/Jelly-RDF/jelly-jvm/releases">Release notes on GitHub</a></li>
@@ -1012,7 +1032,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      <script src="../../assets/javascripts/bundle.f13b1293.min.js"></script>
       
     
   </body>

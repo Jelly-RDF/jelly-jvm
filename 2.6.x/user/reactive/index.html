@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../../assets/jelly_color.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.d7758b05.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -279,6 +279,7 @@
   
   <span class="md-ellipsis">
     Home
+    
   </span>
   
 
@@ -299,6 +300,7 @@
   
   <span class="md-ellipsis">
     Getting started (Jena/RDF4J plugin)
+    
   </span>
   
 
@@ -319,6 +321,7 @@
   
   <span class="md-ellipsis">
     Getting started (application developers)
+    
   </span>
   
 
@@ -369,6 +372,7 @@
   
   <span class="md-ellipsis">
     User guide
+    
   </span>
   
 
@@ -394,6 +398,7 @@
   
   <span class="md-ellipsis">
     Apache Jena integration
+    
   </span>
   
 
@@ -415,6 +420,7 @@
   
   <span class="md-ellipsis">
     Apache Jena CLI tools
+    
   </span>
   
 
@@ -436,6 +442,7 @@
   
   <span class="md-ellipsis">
     RDF4J integration
+    
   </span>
   
 
@@ -466,6 +473,7 @@
   
   <span class="md-ellipsis">
     Reactive streaming
+    
   </span>
   
 
@@ -477,6 +485,7 @@
   
   <span class="md-ellipsis">
     Reactive streaming
+    
   </span>
   
 
@@ -572,6 +581,7 @@
   
   <span class="md-ellipsis">
     gRPC
+    
   </span>
   
 
@@ -593,6 +603,7 @@
   
   <span class="md-ellipsis">
     Useful utilities
+    
   </span>
   
 
@@ -614,6 +625,7 @@
   
   <span class="md-ellipsis">
     Low-level usage
+    
   </span>
   
 
@@ -635,6 +647,7 @@
   
   <span class="md-ellipsis">
     Compatibility policy
+    
   </span>
   
 
@@ -679,6 +692,7 @@
   
   <span class="md-ellipsis">
     Developer guide
+    
   </span>
   
 
@@ -704,6 +718,7 @@
   
   <span class="md-ellipsis">
     Releases
+    
   </span>
   
 
@@ -725,6 +740,7 @@
   
   <span class="md-ellipsis">
     Implementing Jelly for other libraries
+    
   </span>
   
 
@@ -753,6 +769,7 @@
   
   <span class="md-ellipsis">
     Contributing
+    
   </span>
   
 
@@ -773,6 +790,7 @@
   
   <span class="md-ellipsis">
     Licensing and citation
+    
   </span>
   
 
@@ -788,11 +806,12 @@
   
   
     <li class="md-nav__item">
-      <a href="https://w3id.org/jelly/1.1.0/" class="md-nav__link">
+      <a href="https://w3id.org/jelly/dev/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Back to main Jelly docs ↩
+    
   </span>
   
 
@@ -895,6 +914,7 @@
                 
                   
 
+
   
     <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/user/reactive.md" title="Edit this page" class="md-content__button md-icon">
       
@@ -909,7 +929,7 @@
 <div class="admonition info">
 <p class="admonition-title">Prerequisites</p>
 <p>If you are unfamiliar with the concept of reactive streams or Apache Pekko Streams, we highly recommend you start from reading about the <strong><a href="https://pekko.apache.org/docs/pekko/current/stream/stream-flows-and-basics.html">basic concepts of Pekko Streams</a></strong>.</p>
-<p>We also recommend you first read about the <strong><a href="https://w3id.org/jelly/1.1.0/user-guide#stream-types">RDF stream types in Jelly</a></strong>. Otherwise, this guide may not make much sense.</p>
+<p>We also recommend you first read about the <strong><a href="https://w3id.org/jelly/dev/user-guide#stream-types">RDF stream types in Jelly</a></strong>. Otherwise, this guide may not make much sense.</p>
 </div>
 <p>You can use <code>jelly-stream</code> with any RDF library that has a Jelly integration, such as <a href="../jena/">Apache Jena</a> (using <code>jelly-jena</code>) or <a href="../rdf4j/">RDF4J</a> (using <code>jelly-rdf4j</code>). The streaming API is generic and identical across all libraries.</p>
 <h2 id="basic-concepts">Basic concepts</h2>
@@ -921,10 +941,10 @@
 <p>So, for example, an encoder flow for flat triple streams would have a type of <code class="language-scala highlight"><span class="nc">Flow</span><span class="p">[</span><span class="nc">Triple</span><span class="p">,</span><span class="w"> </span><span class="nc">RdfStreamFrame</span><span class="p">,</span><span class="w"> </span><span class="nc">NotUsed</span><span class="p">]</span></code> in Apache Jena. The opposite (a flat triple stream decoder) would have a type of <code class="language-scala highlight"><span class="nc">Flow</span><span class="p">[</span><span class="nc">RdfStreamFrame</span><span class="p">,</span><span class="w"> </span><span class="nc">Triple</span><span class="p">,</span><span class="w"> </span><span class="nc">NotUsed</span><span class="p">]</span></code>.</p>
 <p><code>RdfStreamFrame</code>s can be converted to and from raw bytes using a range of methods, depending on your use case. See the sections below for examples.</p>
 <h2 id="encoding-any-rdf-data-as-a-flat-or-grouped-stream-encoderflow">Encoding any RDF data as a flat or grouped stream (<code>EncoderFlow</code>)</h2>
-<p>The <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.1/eu/ostrzyciel/jelly/stream/EncoderFlow$.html"><code>eu.ostrzyciel.jelly.stream.EncoderFlow</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> provides many options for turning RDF data into Jelly streams, including both grouped and flat streams. Every <a href="https://w3id.org/jelly/1.1.0/user-guide#stream-types">type of RDF stream in Jelly</a> can be created using this API.</p>
+<p>The <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.2/eu/ostrzyciel/jelly/stream/EncoderFlow$.html"><code>eu.ostrzyciel.jelly.stream.EncoderFlow</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> provides many options for turning RDF data into Jelly streams, including both grouped and flat streams. Every <a href="https://w3id.org/jelly/dev/user-guide#stream-types">type of RDF stream in Jelly</a> can be created using this API.</p>
 <details class="example">
 <summary>Example: PekkoStreamsEncoderFlow.scala (click to expand)</summary>
-<p><strong><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.1/examples/src/main/scala/eu/ostrzyciel/jelly/examples/PekkoStreamsEncoderFlow.scala"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.22 4.97a.75.75 0 0 1 1.06 0l6.5 6.5a.75.75 0 0 1 0 1.06l-6.5 6.5a.749.749 0 0 1-1.275-.326.75.75 0 0 1 .215-.734L21.19 12l-5.97-5.97a.75.75 0 0 1 0-1.06m-6.44 0a.75.75 0 0 1 0 1.06L2.81 12l5.97 5.97a.749.749 0 0 1-.326 1.275.75.75 0 0 1-.734-.215l-6.5-6.5a.75.75 0 0 1 0-1.06l6.5-6.5a.75.75 0 0 1 1.06 0"/></svg></span> Source code on GitHub</a></strong></p>
+<p><strong><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.2/examples/src/main/scala/eu/ostrzyciel/jelly/examples/PekkoStreamsEncoderFlow.scala"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.22 4.97a.75.75 0 0 1 1.06 0l6.5 6.5a.75.75 0 0 1 0 1.06l-6.5 6.5a.749.749 0 0 1-1.275-.326.75.75 0 0 1 .215-.734L21.19 12l-5.97-5.97a.75.75 0 0 1 0-1.06m-6.44 0a.75.75 0 0 1 0 1.06L2.81 12l5.97 5.97a.749.749 0 0 1-.326 1.275.75.75 0 0 1-.734-.215l-6.5-6.5a.75.75 0 0 1 0-1.06l6.5-6.5a.75.75 0 0 1 1.06 0"/></svg></span> Source code on GitHub</a></strong></p>
 <div class="language-scala highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">PekkoStreamsEncoderFlow.scala</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1">  1</a></span>
 <span class="normal"><a href="#__codelineno-0-2">  2</a></span>
 <span class="normal"><a href="#__codelineno-0-3">  3</a></span>
@@ -1173,10 +1193,10 @@
 </span></code></pre></div></td></tr></table></div>
 </details>
 <h2 id="encoding-a-single-rdf-graph-or-dataset-as-a-flat-stream-encodersource">Encoding a single RDF graph or dataset as a flat stream (<code>EncoderSource</code>)</h2>
-<p>There are also convenience methods for creating flat RDF streams (i.e., flat streams of triples or quads) from  a single graph or dataset. You can do this by chaining <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.1/eu/ostrzyciel/jelly/stream/RdfSource$.html"><code>eu.ostrzyciel.jelly.stream.RdfSource</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> with <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.1/eu/ostrzyciel/jelly/stream/EncoderFlow$.html"><code>eu.ostrzyciel.jelly.stream.EncoderFlow</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>, as shown in the example.</p>
+<p>There are also convenience methods for creating flat RDF streams (i.e., flat streams of triples or quads) from  a single graph or dataset. You can do this by chaining <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.2/eu/ostrzyciel/jelly/stream/RdfSource$.html"><code>eu.ostrzyciel.jelly.stream.RdfSource</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> with <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.2/eu/ostrzyciel/jelly/stream/EncoderFlow$.html"><code>eu.ostrzyciel.jelly.stream.EncoderFlow</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>, as shown in the example.</p>
 <details class="example">
 <summary>Example: PekkoStreamsEncoderSource.scala (click to expand)</summary>
-<p><strong><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.1/examples/src/main/scala/eu/ostrzyciel/jelly/examples/PekkoStreamsEncoderSource.scala"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.22 4.97a.75.75 0 0 1 1.06 0l6.5 6.5a.75.75 0 0 1 0 1.06l-6.5 6.5a.749.749 0 0 1-1.275-.326.75.75 0 0 1 .215-.734L21.19 12l-5.97-5.97a.75.75 0 0 1 0-1.06m-6.44 0a.75.75 0 0 1 0 1.06L2.81 12l5.97 5.97a.749.749 0 0 1-.326 1.275.75.75 0 0 1-.734-.215l-6.5-6.5a.75.75 0 0 1 0-1.06l6.5-6.5a.75.75 0 0 1 1.06 0"/></svg></span> Source code on GitHub</a></strong></p>
+<p><strong><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.2/examples/src/main/scala/eu/ostrzyciel/jelly/examples/PekkoStreamsEncoderSource.scala"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.22 4.97a.75.75 0 0 1 1.06 0l6.5 6.5a.75.75 0 0 1 0 1.06l-6.5 6.5a.749.749 0 0 1-1.275-.326.75.75 0 0 1 .215-.734L21.19 12l-5.97-5.97a.75.75 0 0 1 0-1.06m-6.44 0a.75.75 0 0 1 0 1.06L2.81 12l5.97 5.97a.749.749 0 0 1-.326 1.275.75.75 0 0 1-.734-.215l-6.5-6.5a.75.75 0 0 1 0-1.06l6.5-6.5a.75.75 0 0 1 1.06 0"/></svg></span> Source code on GitHub</a></strong></p>
 <div class="language-scala highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">PekkoStreamsEncoderSource.scala</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1"> 1</a></span>
 <span class="normal"><a href="#__codelineno-1-2"> 2</a></span>
 <span class="normal"><a href="#__codelineno-1-3"> 3</a></span>
@@ -1373,10 +1393,10 @@
 </span></code></pre></div></td></tr></table></div>
 </details>
 <h2 id="decoding-rdf-streams-decoderflow">Decoding RDF streams (<code>DecoderFlow</code>)</h2>
-<p>The <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.1/eu/ostrzyciel/jelly/stream/DecoderFlow$.html"><code>eu.ostrzyciel.jelly.stream.DecoderFlow</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> provides methods for decoding flat and grouped streams. There is no opposite equivalent to <code>EncoderSource</code> for decoding, though. This would require constructing an RDF graph or dataset from statements, which is a process that can vary a lot depending on your application. You will have to do this part yourself.</p>
+<p>The <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.2/eu/ostrzyciel/jelly/stream/DecoderFlow$.html"><code>eu.ostrzyciel.jelly.stream.DecoderFlow</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a> provides methods for decoding flat and grouped streams. There is no opposite equivalent to <code>EncoderSource</code> for decoding, though. This would require constructing an RDF graph or dataset from statements, which is a process that can vary a lot depending on your application. You will have to do this part yourself.</p>
 <details class="example">
 <summary>Example: PekkoStreamsDecoderFlow.scala (click to expand)</summary>
-<p><strong><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.1/examples/src/main/scala/eu/ostrzyciel/jelly/examples/PekkoStreamsDecoderFlow.scala"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.22 4.97a.75.75 0 0 1 1.06 0l6.5 6.5a.75.75 0 0 1 0 1.06l-6.5 6.5a.749.749 0 0 1-1.275-.326.75.75 0 0 1 .215-.734L21.19 12l-5.97-5.97a.75.75 0 0 1 0-1.06m-6.44 0a.75.75 0 0 1 0 1.06L2.81 12l5.97 5.97a.749.749 0 0 1-.326 1.275.75.75 0 0 1-.734-.215l-6.5-6.5a.75.75 0 0 1 0-1.06l6.5-6.5a.75.75 0 0 1 1.06 0"/></svg></span> Source code on GitHub</a></strong></p>
+<p><strong><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.2/examples/src/main/scala/eu/ostrzyciel/jelly/examples/PekkoStreamsDecoderFlow.scala"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.22 4.97a.75.75 0 0 1 1.06 0l6.5 6.5a.75.75 0 0 1 0 1.06l-6.5 6.5a.749.749 0 0 1-1.275-.326.75.75 0 0 1 .215-.734L21.19 12l-5.97-5.97a.75.75 0 0 1 0-1.06m-6.44 0a.75.75 0 0 1 0 1.06L2.81 12l5.97 5.97a.749.749 0 0 1-.326 1.275.75.75 0 0 1-.734-.215l-6.5-6.5a.75.75 0 0 1 0-1.06l6.5-6.5a.75.75 0 0 1 1.06 0"/></svg></span> Source code on GitHub</a></strong></p>
 <div class="language-scala highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">PekkoStreamsDecoderFlow.scala</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1">  1</a></span>
 <span class="normal"><a href="#__codelineno-2-2">  2</a></span>
 <span class="normal"><a href="#__codelineno-2-3">  3</a></span>
@@ -1773,10 +1793,10 @@
 </span></code></pre></div></td></tr></table></div>
 </details>
 <h2 id="byte-streams-delimited-variant">Byte streams (delimited variant)</h2>
-<p>In all of the examples above, we used the <a href="https://w3id.org/jelly/1.1.0/user-guide#delimited-vs-non-delimited-jelly">non-delimited variant of Jelly</a>, which is appropriate for, e.g., sending Jelly data over <a href="../grpc/">gRPC</a> or Kafka. If you want to write Jelly data to a file or a socket, you will need to use the delimited variant. <code>jelly-stream</code> provides a few methods for this in <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.1/eu/ostrzyciel/jelly/stream/JellyIo.html"><code>eu.ostrzyciel.jelly.stream.JellyIo</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>.</p>
+<p>In all of the examples above, we used the <a href="https://w3id.org/jelly/dev/user-guide#delimited-vs-non-delimited-jelly">non-delimited variant of Jelly</a>, which is appropriate for, e.g., sending Jelly data over <a href="../grpc/">gRPC</a> or Kafka. If you want to write Jelly data to a file or a socket, you will need to use the delimited variant. <code>jelly-stream</code> provides a few methods for this in <a href="https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-stream_3/2.6.2/eu/ostrzyciel/jelly/stream/JellyIo.html"><code>eu.ostrzyciel.jelly.stream.JellyIo</code> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 7H5a2 2 0 0 0-2 2v8h2v-4h2v4h2V9a2 2 0 0 0-2-2m0 4H5V9h2m7-2h-4v10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2m0 4h-2V9h2m6 0v6h1v2h-4v-2h1V9h-1V7h4v2Z"/></svg></span></a>.</p>
 <details class="example">
 <summary>Example: PekkoStreamsWithIo.scala (click to expand)</summary>
-<p><strong><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.1/examples/src/main/scala/eu/ostrzyciel/jelly/examples/PekkoStreamsWithIo.scala"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.22 4.97a.75.75 0 0 1 1.06 0l6.5 6.5a.75.75 0 0 1 0 1.06l-6.5 6.5a.749.749 0 0 1-1.275-.326.75.75 0 0 1 .215-.734L21.19 12l-5.97-5.97a.75.75 0 0 1 0-1.06m-6.44 0a.75.75 0 0 1 0 1.06L2.81 12l5.97 5.97a.749.749 0 0 1-.326 1.275.75.75 0 0 1-.734-.215l-6.5-6.5a.75.75 0 0 1 0-1.06l6.5-6.5a.75.75 0 0 1 1.06 0"/></svg></span> Source code on GitHub</a></strong></p>
+<p><strong><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.6.2/examples/src/main/scala/eu/ostrzyciel/jelly/examples/PekkoStreamsWithIo.scala"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.22 4.97a.75.75 0 0 1 1.06 0l6.5 6.5a.75.75 0 0 1 0 1.06l-6.5 6.5a.749.749 0 0 1-1.275-.326.75.75 0 0 1 .215-.734L21.19 12l-5.97-5.97a.75.75 0 0 1 0-1.06m-6.44 0a.75.75 0 0 1 0 1.06L2.81 12l5.97 5.97a.749.749 0 0 1-.326 1.275.75.75 0 0 1-.734-.215l-6.5-6.5a.75.75 0 0 1 0-1.06l6.5-6.5a.75.75 0 0 1 1.06 0"/></svg></span> Source code on GitHub</a></strong></p>
 <div class="language-scala highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">PekkoStreamsWithIo.scala</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1"> 1</a></span>
 <span class="normal"><a href="#__codelineno-3-2"> 2</a></span>
 <span class="normal"><a href="#__codelineno-3-3"> 3</a></span>
@@ -2091,7 +2111,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      <script src="../../assets/javascripts/bundle.f13b1293.min.js"></script>
       
     
   </body>
