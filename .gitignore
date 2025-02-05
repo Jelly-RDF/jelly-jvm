@@ -6,3 +6,5 @@ target
 
 # Output files of example code
 /*.jelly
+
+.metals/
