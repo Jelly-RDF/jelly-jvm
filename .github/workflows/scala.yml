@@ -16,12 +16,22 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            distribution: temurin
             java: 17
           - os: ubuntu-latest
+            distribution: temurin
             java: 21
           - os: ubuntu-latest
+            distribution: temurin
             java: 23
+          - os: ubuntu-latest
+            distribution: graalvm
+            java: latest-ea
+            params: '-XX:+UnlockExperimentalVMOptions -XX:+UseCompactObjectHeaders'
+
     runs-on: ${{ matrix.os }}
+    env:
+      JAVA_OPTS: ${{ matrix.params }}
 
     steps:
     - name: Checkout
@@ -32,7 +42,7 @@ jobs:
     - name: Setup JDK
       uses: actions/setup-java@v4
       with:
-        distribution: temurin
+        distribution: ${{ matrix.distribution }}
         java-version: ${{ matrix.java }}
 
     - name: Setup SBT
