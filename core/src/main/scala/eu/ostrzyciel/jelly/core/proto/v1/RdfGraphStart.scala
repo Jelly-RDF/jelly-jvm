@@ -68,7 +68,7 @@ final case class RdfGraphStart(graph: GraphTerm = null) extends scalapb.Generate
   override def graphStart: RdfGraphStart = this
 }
 
-object RdfGraphStart extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart] {
+object RdfGraphStart extends CompanionHelper[RdfGraphStart]("RdfGraphStart") {
   implicit def messageCompanion: scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart] = this
 
   def parseFrom(_input__ : _root_.com.google.protobuf.CodedInputStream): eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart = {
@@ -104,10 +104,6 @@ object RdfGraphStart extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jel
     case _ =>
       throw new RuntimeException("Expected PMessage")
   }
-
-  def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = RdfProto.javaDescriptor.getMessageTypes().get(5)
-
-  def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = RdfProto.scalaDescriptor.messages(5)
 
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = {
     var __out: _root_.scalapb.GeneratedMessageCompanion[_] = null

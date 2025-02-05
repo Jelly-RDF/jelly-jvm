@@ -138,7 +138,7 @@ import scala.annotation.switch
   def companion: eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow.type = eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow
 }
 
-object RdfStreamRow extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow] {
+object RdfStreamRow extends CompanionHelper[RdfStreamRow]("RdfStreamRow") {
   implicit def messageCompanion: scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow] = this
   def parseFrom(_input__ : _root_.com.google.protobuf.CodedInputStream): eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow = {
     var __row: RdfStreamRowValue = null
@@ -191,10 +191,6 @@ object RdfStreamRow extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jell
     case _ =>
       throw new RuntimeException("Expected PMessage")
   }
-  
-  def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = RdfProto.javaDescriptor.getMessageTypes().get(11)
-  
-  def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = RdfProto.scalaDescriptor.messages(11)
   
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[?] = {
     var __out: _root_.scalapb.GeneratedMessageCompanion[?] = null

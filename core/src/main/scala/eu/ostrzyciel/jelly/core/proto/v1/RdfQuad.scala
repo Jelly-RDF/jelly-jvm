@@ -84,37 +84,37 @@ final case class RdfQuad(subject: SpoTerm = null, predicate: SpoTerm = null, `ob
     _root_.scala.Predef.require(__field.containingMessage eq companion.scalaDescriptor)
     (__field.number: @_root_.scala.unchecked) match {
       case 1 =>
-        if (subject.isIri) subject.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (subject != null && subject.isIri) subject.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 2 =>
-        if (subject.isBnode) _root_.scalapb.descriptors.PString(subject.bnode) else _root_.scalapb.descriptors.PEmpty
+        if (subject != null && subject.isBnode) _root_.scalapb.descriptors.PString(subject.bnode) else _root_.scalapb.descriptors.PEmpty
       case 3 =>
-        if (subject.isLiteral) subject.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (subject != null && subject.isLiteral) subject.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 4 =>
-        if (subject.isTripleTerm) subject.tripleTerm.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (subject != null && subject.isTripleTerm) subject.tripleTerm.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 5 =>
-        if (predicate.isIri) predicate.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (predicate != null && predicate.isIri) predicate.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 6 =>
-        if (predicate.isBnode) _root_.scalapb.descriptors.PString(predicate.bnode) else _root_.scalapb.descriptors.PEmpty
+        if (predicate != null && predicate.isBnode) _root_.scalapb.descriptors.PString(predicate.bnode) else _root_.scalapb.descriptors.PEmpty
       case 7 =>
-        if (predicate.isLiteral) predicate.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (predicate != null && predicate.isLiteral) predicate.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 8 =>
-        if (predicate.isTripleTerm) predicate.tripleTerm.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (predicate != null && predicate.isTripleTerm) predicate.tripleTerm.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 9 =>
-        if (`object`.isIri) `object`.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (`object` != null && `object`.isIri) `object`.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 10 =>
-        if (`object`.isBnode) _root_.scalapb.descriptors.PString(`object`.bnode) else _root_.scalapb.descriptors.PEmpty
+        if (`object` != null && `object`.isBnode) _root_.scalapb.descriptors.PString(`object`.bnode) else _root_.scalapb.descriptors.PEmpty
       case 11 =>
-        if (`object`.isLiteral) `object`.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (`object` != null && `object`.isLiteral) `object`.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 12 =>
-        if (`object`.isTripleTerm) `object`.tripleTerm.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (`object` != null && `object`.isTripleTerm) `object`.tripleTerm.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 13 =>
-        if (graph.isIri) graph.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (graph != null && graph.isIri) graph.iri.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 14 =>
-        if (graph.isBnode) _root_.scalapb.descriptors.PString(graph.bnode) else _root_.scalapb.descriptors.PEmpty
+        if (graph != null && graph.isBnode) _root_.scalapb.descriptors.PString(graph.bnode) else _root_.scalapb.descriptors.PEmpty
       case 15 =>
-        if (graph.isDefaultGraph) graph.defaultGraph.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (graph != null && graph.isDefaultGraph) graph.defaultGraph.toPMessage else _root_.scalapb.descriptors.PEmpty
       case 16 =>
-        if (graph.isLiteral) graph.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
+        if (graph != null && graph.isLiteral) graph.literal.toPMessage else _root_.scalapb.descriptors.PEmpty
     }
   }
 
@@ -129,7 +129,7 @@ final case class RdfQuad(subject: SpoTerm = null, predicate: SpoTerm = null, `ob
   override def quad: RdfQuad = this
 }
 
-object RdfQuad extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfQuad] {
+object RdfQuad extends CompanionHelper[RdfQuad]("RdfQuad") {
   implicit def messageCompanion: scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfQuad] = this
 
   def parseFrom(_input__ : _root_.com.google.protobuf.CodedInputStream): eu.ostrzyciel.jelly.core.proto.v1.RdfQuad = {
@@ -210,10 +210,6 @@ object RdfQuad extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.cor
     case _ =>
       throw new RuntimeException("Expected PMessage")
   }
-
-  def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = RdfProto.javaDescriptor.getMessageTypes().get(4)
-
-  def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = RdfProto.scalaDescriptor.messages(4)
 
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = {
     var __out: _root_.scalapb.GeneratedMessageCompanion[_] = null
