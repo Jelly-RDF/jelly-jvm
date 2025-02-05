@@ -118,7 +118,7 @@ final case class RdfTriple(subject: SpoTerm = null, predicate: SpoTerm = null, `
   override def triple: RdfTriple = this
 }
 
-object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfTriple] {
+object RdfTriple extends CompanionHelper[RdfTriple]("RdfTriple") {
   implicit def messageCompanion: scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.core.proto.v1.RdfTriple] = this
 
   def parseFrom(_input__ : _root_.com.google.protobuf.CodedInputStream): eu.ostrzyciel.jelly.core.proto.v1.RdfTriple = {
@@ -185,10 +185,6 @@ object RdfTriple extends scalapb.GeneratedMessageCompanion[eu.ostrzyciel.jelly.c
     case _ =>
       throw new RuntimeException("Expected PMessage")
   }
-
-  def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = RdfProto.javaDescriptor.getMessageTypes().get(3)
-
-  def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = RdfProto.scalaDescriptor.messages(3)
 
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = {
     var __out: _root_.scalapb.GeneratedMessageCompanion[_] = null

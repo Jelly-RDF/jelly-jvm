@@ -97,7 +97,7 @@ final case class RdfNamespaceDeclaration(
   override def namespace: RdfNamespaceDeclaration = this
 }
 
-object RdfNamespaceDeclaration extends scalapb.GeneratedMessageCompanion[RdfNamespaceDeclaration] {
+object RdfNamespaceDeclaration extends CompanionHelper[RdfNamespaceDeclaration]("RdfNamespaceDeclaration") {
   implicit def messageCompanion: scalapb.GeneratedMessageCompanion[RdfNamespaceDeclaration] = this
 
   def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): RdfNamespaceDeclaration = {
@@ -130,10 +130,6 @@ object RdfNamespaceDeclaration extends scalapb.GeneratedMessageCompanion[RdfName
       )
     case _ => throw new RuntimeException("Expected PMessage")
   }
-
-  def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = RdfProto.javaDescriptor.getMessageTypes().get(7)
-
-  def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = RdfProto.scalaDescriptor.messages(7)
 
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = {
     var __out: _root_.scalapb.GeneratedMessageCompanion[_] = null

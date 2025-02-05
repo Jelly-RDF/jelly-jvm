@@ -3,6 +3,7 @@ package eu.ostrzyciel.jelly.core
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import scalapb.descriptors.{Descriptor, FileDescriptor}
 
 /**
  * Tests for some auxiliary methods (e.g., Text Format serialization) of the generated Protobuf messages.
