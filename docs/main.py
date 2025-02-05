@@ -42,7 +42,9 @@ def define_env(env):
                 print(f'Warning: proto tag ({proto_tag_raw}) contains more than one hyphen, using dev instead')
                 return 'dev'
             else:
-                raise ValueError(f'Proto tag ({proto_tag_raw}) contains more than one hyphen, but you are trying to build a tagged release. To fix this, you must update the protobuf_shared submodule to some stable tag.')
+                new_tag = '-'.join(proto_tag_raw.split('-')[:2])
+                print(f'Warning: proto tag ({proto_tag_raw}) contains more than one hyphen. Using {new_tag} instead. To fix this, you must update the protobuf_shared submodule to some stable tag.')
+                return new_tag
         return proto_tag_raw
         
 
