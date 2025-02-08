@@ -66,8 +66,15 @@ def define_env(env):
             return jvm_tag_raw.split('-')[0].replace('v', '')
         else:
             return v
+
     
-    
+    @env.macro
+    def jvm_package_version_minor():
+        """Returns the current MINOR JVM package version, as published to Maven."""
+        v = jvm_package_version()
+        return '.'.join(v.split('.')[:2]) + ".x"
+
+
     @env.macro
     def git_tag():
         return os.environ.get('TAG', 'main')
