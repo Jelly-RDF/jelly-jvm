@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="assets/jelly_color.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.3">
     
     
       
@@ -911,38 +911,38 @@
 <p class="admonition-title">Getting started for application developers</p>
 <p>If you want to use the full feature set of Jelly-JVM in your code, see the <strong><a href="getting-started-devs/">getting started guide for application developers</a></strong>.</p>
 </div>
-<p><strong>This documentation is for Jelly-JVM version 2.6.2</strong>, which uses the <a href="https://w3id.org/jelly/dev/specification">Jelly protocol version dev</a>. If you are looking for the documentation of a different version, use the version selector on the left of the top navigation bar. See: <a href="https://w3id.org/jelly/jelly-jvm/stable">latest stable version</a>, <a href="https://w3id.org/jelly/jelly-jvm/dev">latest development version</a>.</p>
+<p><strong>This documentation is for Jelly-JVM version 2.6.4</strong>, which uses the <a href="https://w3id.org/jelly/dev/specification">Jelly protocol version dev</a>. If you are looking for the documentation of a different version, use the version selector on the left of the top navigation bar. See: <a href="https://w3id.org/jelly/jelly-jvm/stable">latest stable version</a>, <a href="https://w3id.org/jelly/jelly-jvm/dev">latest development version</a>.</p>
 <h2 id="library-modules">Library modules</h2>
 <p>The implementation is split into a few modules that can be used separately:</p>
 <ul>
 <li>
 <p><code>jelly-core</code> – implementation of the <a href="https://w3id.org/jelly/dev/specification/serialization">Jelly serialization format</a> (using the <a href="https://scalapb.github.io/">scalapb</a> library), along with generic utilities for converting the deserialized RDF data to/from the representations of RDF libraries (like Apache Jena or RDF4J). </p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core/2.6.2"><img alt="See jelly-core 2.6.2 module details" src="https://img.shields.io/badge/jelly--core-2.6.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-core_3/2.6.2"><img alt="Browse jelly-core 2.6.2 API docs" src="https://img.shields.io/badge/javadoc-2.6.2-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core/2.6.4"><img alt="See jelly-core 2.6.4 module details" src="https://img.shields.io/badge/jelly--core-2.6.4-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-core_3/2.6.4"><img alt="Browse jelly-core 2.6.4 API docs" src="https://img.shields.io/badge/javadoc-2.6.4-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-jena</code> – conversions and interop code for the <a href="https://jena.apache.org/">Apache Jena</a> library.</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena/2.6.2"><img alt="See jelly-jena 2.6.2 module details" src="https://img.shields.io/badge/jelly--jena-2.6.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-jena_3/2.6.2"><img alt="Browse jelly-jena 2.6.2 API docs" src="https://img.shields.io/badge/javadoc-2.6.2-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena/2.6.4"><img alt="See jelly-jena 2.6.4 module details" src="https://img.shields.io/badge/jelly--jena-2.6.4-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-jena_3/2.6.4"><img alt="Browse jelly-jena 2.6.4 API docs" src="https://img.shields.io/badge/javadoc-2.6.4-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-rdf4j</code> – conversions and interop code for the <a href="https://rdf4j.org/">RDF4J</a> library.</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j/2.6.2"><img alt="See jelly-rdf4j 2.6.2 module details" src="https://img.shields.io/badge/jelly--rdf4j-2.6.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-rdf4j_3/2.6.2"><img alt="Browse jelly-rdf4j 2.6.2 API docs" src="https://img.shields.io/badge/javadoc-2.6.2-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j/2.6.4"><img alt="See jelly-rdf4j 2.6.4 module details" src="https://img.shields.io/badge/jelly--rdf4j-2.6.4-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-rdf4j_3/2.6.4"><img alt="Browse jelly-rdf4j 2.6.4 API docs" src="https://img.shields.io/badge/javadoc-2.6.4-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-stream</code> – utilities for building <a href="https://www.reactive-streams.org/">Reactive Streams</a> of RDF data (based on Pekko Streams). Useful for integrating with gRPC or other streaming protocols (e.g., Kafka, MQTT).</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/2.6.2"><img alt="See jelly-stream 2.6.2 module details" src="https://img.shields.io/badge/jelly--stream-2.6.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-stream_3/2.6.2"><img alt="Browse jelly-stream 2.6.2 API docs" src="https://img.shields.io/badge/javadoc-2.6.2-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/2.6.4"><img alt="See jelly-stream 2.6.4 module details" src="https://img.shields.io/badge/jelly--stream-2.6.4-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-stream_3/2.6.4"><img alt="Browse jelly-stream 2.6.4 API docs" src="https://img.shields.io/badge/javadoc-2.6.4-brightgreen.svg" /></a></li>
 </ul>
 </li>
 <li>
 <p><code>jelly-grpc</code> – implementation of a gRPC client and server for the <a href="https://w3id.org/jelly/dev/specification/streaming">Jelly gRPC streaming protocol</a>.</p>
 <ul>
-<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc/2.6.2"><img alt="See jelly-grpc 2.6.2 module details" src="https://img.shields.io/badge/jelly--grpc-2.6.2-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-grpc_3/2.6.2"><img alt="Browse jelly-grpc 2.6.2 API docs" src="https://img.shields.io/badge/javadoc-2.6.2-brightgreen.svg" /></a></li>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc/2.6.4"><img alt="See jelly-grpc 2.6.4 module details" src="https://img.shields.io/badge/jelly--grpc-2.6.4-green.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-grpc_3/2.6.4"><img alt="Browse jelly-grpc 2.6.4 API docs" src="https://img.shields.io/badge/javadoc-2.6.4-brightgreen.svg" /></a></li>
 </ul>
 </li>
 </ul>
@@ -964,7 +964,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="https://w3id.org/jelly/jelly-jvm/2.0.x">2.0.x</a> – <a href="https://w3id.org/jelly/jelly-jvm/2.4.x"><strong>2.6.x</strong></a></td>
+<td><a href="https://w3id.org/jelly/jelly-jvm/2.0.x">2.0.x</a> – <a href="https://w3id.org/jelly/jelly-jvm/2.6.x"><strong>2.6.x</strong></a></td>
 <td style="text-align: center;">3.3.x (LTS)</td>
 <td style="text-align: center;">17+</td>
 <td style="text-align: center;">5.x.x</td>
@@ -1038,7 +1038,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">January 23, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 8, 2025</span>
   </span>
 
     
@@ -1122,7 +1122,7 @@
     <script id="__config" type="application/json">{"base": ".", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="assets/javascripts/bundle.f1b6f286.min.js"></script>
       
     
   </body>
