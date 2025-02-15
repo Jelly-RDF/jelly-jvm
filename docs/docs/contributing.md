@@ -2,6 +2,10 @@
 
 Jelly-JVM is an open project – **you are welcome to submit issues, pull requests, or just ask questions**!
 
+## User & developer chat
+
+If you have any questions or want to discuss a feature, you can join the **[Jelly Discord chat](https://discord.gg/A8sN5XwVa5)**.
+
 ## Submitting issues
 
 If you have a question, found a bug, or have an idea for a new feature, please [open an issue](https://github.com/Jelly-RDF/jelly-jvm/issues/new/choose) in the **[GitHub issue tracker](https://github.com/Jelly-RDF/jelly-jvm/issues)**.
