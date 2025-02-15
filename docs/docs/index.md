@@ -75,9 +75,11 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
 - [Release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)
 - [Main Jelly website]({{ proto_link( '' ) }}) – including the Jelly protocol specification and explanation of the various stream types.
 
-## Commercial support
+## Commercial and community support
 
 **[NeverBlink](https://neverblink.eu)** provides commercial support services for Jelly, including implementing custom features, system integrations, implementations for new frameworks, benchmarking, and more.
+
+Community support is available on the **[Jelly Discord chat](https://discord.gg/A8sN5XwVa5)**.
 
 
 [^1]: Scala 2.13-compatible builds of Jelly-JVM are available for Jelly-JVM 1.0.x. Scala 2 support was removed in subsequent versions. [See more details](https://w3id.org/jelly/jelly-jvm/1.0.x/user/scala2).
