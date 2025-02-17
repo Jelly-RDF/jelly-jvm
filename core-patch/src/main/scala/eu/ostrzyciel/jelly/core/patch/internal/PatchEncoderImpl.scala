@@ -24,7 +24,7 @@ final class PatchEncoderImpl[TNode, -TTriple, -TQuad](
 
   private[core] override def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
     // TODO
-    rowBuffer.append(RdfPatchRow(???))
+    rowBuffer.append(RdfPatchRow(???, ???))
 
   override def addTripleStatement(triple: TTriple): Unit = ???
 

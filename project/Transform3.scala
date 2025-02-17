@@ -6,36 +6,42 @@ import scala.meta.*
  */
 object Transform3 {
   val transformer: Transformer = new Transformer {
-    def copyTemplate(templ: Template, traits: Seq[String], name: String, isName: String, number: Option[Int] = None):
-    Template = {
+    def copyTemplate(
+      templ: Template,
+      traits: Seq[String],
+      name: String = "",
+      isName: String = "",
+      number: Option[Int] = None
+    ): Template = {
       templ.copy(
         inits = templ.inits ++ traits.map { tName =>
           Init.After_4_6_0(Type.Name(tName), Name.Anonymous(), Nil)
         },
         stats = templ.body.stats ++ Seq(
-          Defn.Def.After_4_7_3(
+          if (isName == "") None else Some(Defn.Def.After_4_7_3(
             List(Mod.Override()),
             Term.Name(isName),
             Nil,
             None,
             Lit.Boolean(value = true),
-          ),
-          Defn.Def.After_4_7_3(
+          )),
+          if (name == "") None else Some(Defn.Def.After_4_7_3(
             List(Mod.Override()),
             Term.Name(name),
             Nil,
             None,
             Term.This(Name.Anonymous()),
-          ),
-        ) ++ number.map { n =>
-          Defn.Def.After_4_7_3(
-            List(Mod.Override()),
-            Term.Name("streamRowValueNumber"),
-            Nil,
-            None,
-            Lit.Int(n),
-          )
-        }
+          )),
+          number.map { n =>
+            Defn.Def.After_4_7_3(
+              List(Mod.Override()),
+              Term.Name("streamRowValueNumber"),
+              Nil,
+              None,
+              Lit.Int(n),
+            )
+          },
+        ).flatten
       )
     }
 
@@ -55,11 +61,11 @@ object Transform3 {
           case "RdfDatatypeEntry" => Some(copyTemplate(templ, Seq("RdfLookupEntryRowValue"), "datatype", "isDatatype", Some(11)))
 
           // PatchValue
-          case "RdfPatchOptions" => Some(copyTemplate(templ, Seq("PatchValue"), "options", "isOptions"))
-          case "RdfPatchTransactionStart" => Some(copyTemplate(templ, Seq("PatchValue"), "transactionStart", "isTransactionStart"))
-          case "RdfPatchTransactionCommit" => Some(copyTemplate(templ, Seq("PatchValue"), "transactionCommit", "isTransactionCommit"))
-          case "RdfPatchTransactionAbort" => Some(copyTemplate(templ, Seq("PatchValue"), "transactionAbort", "isTransactionAbort"))
-          case "RdfPatchHeader" => Some(copyTemplate(templ, Seq("PatchValue"), "header", "isHeader"))
+          case "RdfPatchOptions" => Some(copyTemplate(templ, Seq("PatchValue")))
+          case "RdfPatchTransactionStart" => Some(copyTemplate(templ, Seq("PatchValue")))
+          case "RdfPatchTransactionCommit" => Some(copyTemplate(templ, Seq("PatchValue")))
+          case "RdfPatchTransactionAbort" => Some(copyTemplate(templ, Seq("PatchValue")))
+          case "RdfPatchHeader" => Some(copyTemplate(templ, Seq("PatchValue")))
 
           case _ => None
         }

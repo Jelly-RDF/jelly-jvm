@@ -9,7 +9,7 @@ object Generator {
     val finder: PathFinder = inputDir ** "*.scala"
 
     val exclusions = Seq("RdfTriple.scala", "RdfQuad.scala", "RdfGraphStart.scala", "RdfStreamRow.scala",
-      "RdfNamespaceDeclaration.scala")
+      "RdfNamespaceDeclaration.scala", "RdfPatchRow.scala")
     val fileNameFilters = Map(
       "core-patch" -> Seq("RdfPatch", "Patch"),
     )
