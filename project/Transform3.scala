@@ -50,9 +50,9 @@ object Transform3 {
           // RdfStreamRowValue
           case "RdfStreamOptions" => Some(copyTemplate(templ, Seq("RdfStreamRowValue"), "options", "isOptions", Some(1)))
           case "RdfGraphEnd" => Some(copyTemplate(templ, Seq("RdfStreamRowValue"), "graphEnd", "isGraphEnd", Some(5)))
-          case "RdfNameEntry" => Some(copyTemplate(templ, Seq("RdfStreamRowValue"), "name", "isName", Some(9)))
-          case "RdfPrefixEntry" => Some(copyTemplate(templ, Seq("RdfStreamRowValue"), "prefix", "isPrefix", Some(10)))
-          case "RdfDatatypeEntry" => Some(copyTemplate(templ, Seq("RdfStreamRowValue"), "datatype", "isDatatype", Some(11)))
+          case "RdfNameEntry" => Some(copyTemplate(templ, Seq("RdfLookupEntryRowValue"), "name", "isName", Some(9)))
+          case "RdfPrefixEntry" => Some(copyTemplate(templ, Seq("RdfLookupEntryRowValue"), "prefix", "isPrefix", Some(10)))
+          case "RdfDatatypeEntry" => Some(copyTemplate(templ, Seq("RdfLookupEntryRowValue"), "datatype", "isDatatype", Some(11)))
           case _ => None
         }
         newTempl.map(templ => tree.asInstanceOf[Defn.Class].copy(templ = templ)).getOrElse(tree)

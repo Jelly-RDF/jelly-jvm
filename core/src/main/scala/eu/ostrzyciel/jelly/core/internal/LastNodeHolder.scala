@@ -1,4 +1,4 @@
-package eu.ostrzyciel.jelly.core
+package eu.ostrzyciel.jelly.core.internal
 
 private[core] object LastNodeHolder:
   /**

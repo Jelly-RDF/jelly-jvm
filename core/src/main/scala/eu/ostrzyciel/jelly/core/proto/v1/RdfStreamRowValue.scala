@@ -23,3 +23,5 @@ private[core] trait RdfStreamRowValue:
   def name: RdfNameEntry = null
   def prefix: RdfPrefixEntry = null
   def datatype: RdfDatatypeEntry = null
+
+private[core] trait RdfLookupEntryRowValue extends RdfStreamRowValue

@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
+import eu.ostrzyciel.jelly.core.internal.{LastNodeHolder, RowBufferAppender}
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.collection.mutable
@@ -37,7 +38,9 @@ object ProtoEncoder:
  * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
  * @param params parameters object for the encoder
  */
-abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](params: ProtoEncoder.Params):
+abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](params: ProtoEncoder.Params)
+  extends RowBufferAppender:
+
   import ProtoEncoder.*
 
   // *** 1. THE PUBLIC INTERFACE ***
@@ -147,7 +150,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](params: ProtoEnco
   /**
    * Turn an RDF node (S, P, or O) into its protobuf representation.
    *
-   * Use the protected final inline make* methods in this class to create the nodes.
+   * Use the protected final make* methods in this class to create the nodes.
    *
    * @param node RDF node
    * @return the encoded term
@@ -158,7 +161,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](params: ProtoEnco
   /**
    * Turn an RDF graph node into its protobuf representation.
    *
-   * Use the protected final inline make*Graph methods in this class to create the nodes.
+   * Use the protected final make*Graph methods in this class to create the nodes.
    *
    * @param node RDF graph node
    * @return the encoded term
@@ -169,25 +172,25 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](params: ProtoEnco
 
   // *** 3. THE PROTECTED INTERFACE ***
   // **********************************
-  protected final inline def makeIriNode(iri: String): UniversalTerm =
-    nodeEncoder.encodeIri(iri, rowBuffer)
+  protected final def makeIriNode(iri: String): UniversalTerm =
+    nodeEncoder.encodeIri(iri)
 
-  protected final inline def makeBlankNode(label: String): UniversalTerm =
+  protected final def makeBlankNode(label: String): UniversalTerm =
     nodeEncoder.encodeOther(label, _ => RdfTerm.Bnode(label))
 
-  protected final inline def makeSimpleLiteral(lex: String): UniversalTerm =
+  protected final def makeSimpleLiteral(lex: String): UniversalTerm =
     nodeEncoder.encodeOther(lex, _ => RdfLiteral(lex, RdfLiteral.LiteralKind.Empty))
 
-  protected final inline def makeLangLiteral(lit: TNode, lex: String, lang: String): UniversalTerm =
+  protected final def makeLangLiteral(lit: TNode, lex: String, lang: String): UniversalTerm =
     nodeEncoder.encodeOther(lit, _ => RdfLiteral(lex, RdfLiteral.LiteralKind.Langtag(lang)))
 
-  protected final inline def makeDtLiteral(lit: TNode, lex: String, dt: String): UniversalTerm =
-    nodeEncoder.encodeDtLiteral(lit, lex, dt, rowBuffer)
+  protected final def makeDtLiteral(lit: TNode, lex: String, dt: String): UniversalTerm =
+    nodeEncoder.encodeDtLiteral(lit, lex, dt)
 
-  protected final inline def makeTripleNode(triple: TQuoted): RdfTriple =
+  protected final def makeTripleNode(triple: TQuoted): RdfTriple =
     quotedToProto(triple)
 
-  protected final inline def makeDefaultGraph: RdfDefaultGraph =
+  protected final def makeDefaultGraph: RdfDefaultGraph =
     RdfDefaultGraph.defaultInstance
 
   // *** 3. PRIVATE FIELDS AND METHODS ***
@@ -197,6 +200,7 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](params: ProtoEnco
   private val iResponsibleForBufferClear: Boolean = maybeRowBuffer.isEmpty
   private val nodeEncoder = new NodeEncoder[TNode](
     options,
+    this, // RowBufferAppender
     // Make the node cache size between 256 and 1024, depending on the user's maxNameTableSize.
     Math.max(Math.min(options.maxNameTableSize, 1024), 256),
     options.maxNameTableSize,
@@ -208,6 +212,9 @@ abstract class ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted](params: ProtoEnco
   private val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
   private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
   private var lastGraph: TNode | LastNodeHolder.NoValue.type = LastNodeHolder.NoValue
+
+  private[core] override def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
+    rowBuffer.append(RdfStreamRow(entry))
 
   private def nodeToProtoWrapped(node: TNode, lastNodeHolder: LastNodeHolder[TNode]): SpoTerm =
     if node.equals(lastNodeHolder.node) then null

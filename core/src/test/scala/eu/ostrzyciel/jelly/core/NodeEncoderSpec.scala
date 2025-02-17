@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.core
 
 import eu.ostrzyciel.jelly.core.helpers.Mrl
+import eu.ostrzyciel.jelly.core.internal.RowBufferAppender
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
@@ -18,7 +19,11 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
   private def getEncoder(prefixTableSize: Int = 8): (NodeEncoder[Mrl.Node], ListBuffer[RdfStreamRow]) =
     val buffer = new ListBuffer[RdfStreamRow]()
-    (NodeEncoder[Mrl.Node](smallOptions(prefixTableSize), 16, 16, 16), buffer)
+    val appender = new RowBufferAppender {
+      def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
+        buffer += RdfStreamRow(entry)
+    }
+    (NodeEncoder[Mrl.Node](smallOptions(prefixTableSize), appender, 16, 16, 16), buffer)
 
   "A NodeEncoder" when {
     "encoding datatype literals" should {
@@ -26,7 +31,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         val (encoder, buffer) = getEncoder()
         val node = encoder.encodeDtLiteral(
           Mrl.DtLiteral("v1", Mrl.Datatype("dt1")),
-          "v1", "dt1", buffer,
+          "v1", "dt1",
         )
         node.literal.lex should be ("v1")
         node.literal.literalKind.datatype should be (1)
@@ -42,7 +47,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 1 to 4 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
-            s"v$i", s"dt$i", buffer
+            s"v$i", s"dt$i"
           )
           node.literal.lex should be (s"v$i")
           node.literal.literalKind.datatype should be (i)
@@ -50,7 +55,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         // "dt3" datatype should be reused
         val node = encoder.encodeDtLiteral(
           Mrl.DtLiteral(s"v1000", Mrl.Datatype(s"dt3")),
-          "v1000", "dt3", buffer,
+          "v1000", "dt3",
         )
         node.literal.lex should be ("v1000")
         node.literal.literalKind.datatype should be (3)
@@ -58,7 +63,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         // "v2"^^<dt2> should be reused
         val node2 = encoder.encodeDtLiteral(
           Mrl.DtLiteral("v2", Mrl.Datatype("dt2")),
-          "v2", "dt2", buffer,
+          "v2", "dt2",
         )
         node2.literal.lex should be ("v2")
         node2.literal.literalKind.datatype should be (2)
@@ -77,7 +82,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 1 to 8 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
-            s"v$i", s"dt$i", buffer,
+            s"v$i", s"dt$i",
           )
           node.literal.lex should be(s"v$i")
           node.literal.literalKind.datatype should be(i)
@@ -85,7 +90,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         // use literal 1 again
         val node = encoder.encodeDtLiteral(
           Mrl.DtLiteral("v1", Mrl.Datatype("dt1")),
-          "v1", "dt1", buffer,
+          "v1", "dt1",
         )
         node.literal.lex should be("v1")
         node.literal.literalKind.datatype should be(1)
@@ -93,7 +98,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         // now add a new DT and see which DT is evicted
         val node2 = encoder.encodeDtLiteral(
           Mrl.DtLiteral("v9", Mrl.Datatype("dt9")),
-          "v9", "dt9", buffer,
+          "v9", "dt9",
         )
         node2.literal.lex should be("v9")
         node2.literal.literalKind.datatype should be(2)
@@ -104,7 +109,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 1 to 12 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
-            s"v$i", s"dt$i", buffer,
+            s"v$i", s"dt$i",
           )
           // first 4 datatypes should be evicted
           node.literal.lex should be (s"v$i")
@@ -113,7 +118,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 9 to 12 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
-            s"v$i", s"dt$i", buffer,
+            s"v$i", s"dt$i",
           )
           node.literal.lex should be (s"v$i")
           node.literal.literalKind.datatype should be (i - 8)
@@ -121,7 +126,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 5 to 8 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
-            s"v$i", s"dt$i", buffer,
+            s"v$i", s"dt$i",
           )
           node.literal.lex should be (s"v$i")
           node.literal.literalKind.datatype should be (i)
@@ -130,7 +135,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 13 to 16 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
-            s"v$i", s"dt$i", buffer,
+            s"v$i", s"dt$i",
           )
           node.literal.lex should be (s"v$i")
           node.literal.literalKind.datatype should be (i - 12) // 1–4
@@ -150,7 +155,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 1 to 4; j <- 1 to 4 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$j")),
-            s"v$i", s"dt$j", buffer,
+            s"v$i", s"dt$j",
           )
           node.literal.lex should be (s"v$i")
           node.literal.literalKind.datatype should be (j)
@@ -159,7 +164,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           for i <- Random.shuffle(1 to 4); j <- Random.shuffle(1 to 4) do
             val node = encoder.encodeDtLiteral(
               Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$j")),
-              s"v$i", s"dt$j", buffer,
+              s"v$i", s"dt$j",
             )
             node.literal.lex should be (s"v$i")
             node.literal.literalKind.datatype should be (j)
@@ -168,7 +173,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for j <- 101 to 104 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v100", Mrl.Datatype(s"dt${j - 100}")),
-            s"v100", s"dt${j - 100}", buffer,
+            s"v100", s"dt${j - 100}",
           )
           node.literal.lex should be ("v100")
           node.literal.literalKind.datatype should be (j - 100)
@@ -177,7 +182,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for j <- 1 to 4 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v1", Mrl.Datatype(s"dt$j")),
-            s"v1", s"dt$j", buffer,
+            s"v1", s"dt$j",
           )
           node.literal.lex should be ("v1")
           node.literal.literalKind.datatype should be (j)
@@ -188,7 +193,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 1 to 4 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
-            s"v$i", s"dt$i", buffer,
+            s"v$i", s"dt$i",
           )
           node.literal.lex should be (s"v$i")
           node.literal.literalKind.datatype should be (i)
@@ -196,7 +201,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 5 to 12 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
-            s"v$i", s"dt$i", buffer,
+            s"v$i", s"dt$i",
           )
           node.literal.lex should be (s"v$i")
           node.literal.literalKind.datatype should be ((i - 1) % 8 + 1)
@@ -204,7 +209,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         for i <- 1 to 4 do
           val node = encoder.encodeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
-            s"v$i", s"dt$i", buffer,
+            s"v$i", s"dt$i",
           )
           node.literal.lex should be (s"v$i")
           node.literal.literalKind.datatype should be (i + 4)
@@ -214,7 +219,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "encoding IRIs" should {
       "add a full IRI" in {
         val (encoder, buffer) = getEncoder()
-        val iri = encoder.encodeIri("https://test.org/Cake", buffer).asInstanceOf[RdfIri]
+        val iri = encoder.encodeIri("https://test.org/Cake").asInstanceOf[RdfIri]
         iri.nameId should be (0)
         iri.prefixId should be (1)
 
@@ -229,7 +234,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "add a prefix-only IRI" in {
         val (encoder, buffer) = getEncoder()
-        val iri = encoder.encodeIri("https://test.org/test/", buffer).asInstanceOf[RdfIri]
+        val iri = encoder.encodeIri("https://test.org/test/").asInstanceOf[RdfIri]
         iri.nameId should be (0)
         iri.prefixId should be (1)
 
@@ -245,7 +250,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "add a name-only IRI" in {
         val (encoder, buffer) = getEncoder()
-        val iri = encoder.encodeIri("testTestTest", buffer).asInstanceOf[RdfIri]
+        val iri = encoder.encodeIri("testTestTest").asInstanceOf[RdfIri]
         iri.nameId should be (0)
         iri.prefixId should be (1)
 
@@ -261,7 +266,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "add a full IRI in no-prefix table mode" in {
         val (encoder, buffer) = getEncoder(0)
-        val iri = encoder.encodeIri("https://test.org/Cake", buffer).asInstanceOf[RdfIri]
+        val iri = encoder.encodeIri("https://test.org/Cake").asInstanceOf[RdfIri]
         iri.nameId should be (0)
         iri.prefixId should be (0)
 
@@ -300,7 +305,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         for (sIri, ePrefix, eName) <- data do
-          val iri = encoder.encodeIri(sIri, buffer).asInstanceOf[RdfIri]
+          val iri = encoder.encodeIri(sIri).asInstanceOf[RdfIri]
           iri.prefixId should be (ePrefix)
           iri.nameId should be (eName)
 
@@ -347,7 +352,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         for (sIri, ePrefix, eName) <- data do
-          val iri = encoder.encodeIri(sIri, buffer).asInstanceOf[RdfIri]
+          val iri = encoder.encodeIri(sIri).asInstanceOf[RdfIri]
           iri.prefixId should be(ePrefix)
           iri.nameId should be(eName)
 
@@ -392,7 +397,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         for (sIri, ePrefix, eName) <- data do
-          val iri = encoder.encodeIri(sIri, buffer).asInstanceOf[RdfIri]
+          val iri = encoder.encodeIri(sIri).asInstanceOf[RdfIri]
           iri.prefixId should be(ePrefix)
           iri.nameId should be(eName)
       }
@@ -421,7 +426,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         for (sIri, eName) <- data do
-          val iri = encoder.encodeIri(sIri, buffer).asInstanceOf[RdfIri]
+          val iri = encoder.encodeIri(sIri).asInstanceOf[RdfIri]
           iri.prefixId should be(0)
           iri.nameId should be(eName)
       }
