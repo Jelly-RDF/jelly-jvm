@@ -1,24 +1,21 @@
 package eu.ostrzyciel.jelly.core;
 
+import eu.ostrzyciel.jelly.core.internal.RowBufferAppender;
 import eu.ostrzyciel.jelly.core.proto.v1.*;
 import scala.collection.mutable.Buffer;
 
 import java.util.LinkedHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
  * Encodes RDF nodes native to the used RDF library (e.g., Apache Jena, RDF4J) into Jelly's protobuf objects.
  * This class performs a lot of caching to avoid encoding the same node multiple times. It is absolutely NOT
  * thread-safe, and should only be ever used by a single instance of ProtoEncoder.
- * 
- * <p>
- * This class is marked as public because make* methods in ProtoEncoder are inlined, and the inlining
- * requires the NodeEncoder to be public. Do NOT use this class outside of ProtoEncoder. It is not
- * considered part of the public API.
- * </p>
+ *
  * @param <TNode> The type of RDF nodes used by the RDF library.
  */
-public final class NodeEncoder<TNode> {
+final class NodeEncoder<TNode> {
     /**
      * A cached node that depends on other lookups (RdfIri and RdfLiteral in the datatype variant).
      */
@@ -61,6 +58,8 @@ public final class NodeEncoder<TNode> {
     private final EncoderLookup prefixLookup;
     private final EncoderLookup nameLookup;
 
+    private final RowBufferAppender bufferAppender;
+
     // We split the node caches in three – the first two are for nodes that depend on the lookups
     // (IRIs and datatype literals). The third one is for nodes that don't depend on the lookups.
     private final NodeCache<Object, DependentNode> iriNodeCache;
@@ -75,11 +74,18 @@ public final class NodeEncoder<TNode> {
     /**
      * Creates a new NodeEncoder.
      * @param opt Jelly RDF stream options
+     * @param bufferAppender consumer of the lookup entry rows
      * @param nodeCacheSize The size of the node cache (for nodes that don't depend on lookups)
      * @param iriNodeCacheSize The size of the IRI dependent node cache (for prefix+name encoding)
      * @param dtLiteralNodeCacheSize The size of the datatype literal dependent node cache
      */
-    public NodeEncoder(RdfStreamOptions opt, int nodeCacheSize, int iriNodeCacheSize, int dtLiteralNodeCacheSize) {
+    public NodeEncoder(
+        RdfStreamOptions opt,
+        RowBufferAppender bufferAppender,
+        int nodeCacheSize,
+        int iriNodeCacheSize,
+        int dtLiteralNodeCacheSize
+    ) {
         datatypeLookup = new EncoderLookup(opt.maxDatatypeTableSize(), true);
         this.maxPrefixTableSize = opt.maxPrefixTableSize();
         if (maxPrefixTableSize > 0) {
@@ -96,6 +102,7 @@ public final class NodeEncoder<TNode> {
         dtLiteralNodeCache = new NodeCache<>(dtLiteralNodeCacheSize);
         nameLookup = new EncoderLookup(opt.maxNameTableSize(), maxPrefixTableSize > 0);
         nodeCache = new NodeCache<>(nodeCacheSize);
+        this.bufferAppender = bufferAppender;
     }
 
     /**
@@ -103,11 +110,10 @@ public final class NodeEncoder<TNode> {
      * @param key The literal key (the unencoded literal node)
      * @param lex The lexical form of the literal
      * @param datatypeName The name of the datatype
-     * @param rowsBuffer The buffer to which the new datatype entry should be appended
      * @return The encoded literal
      */
     public UniversalTerm encodeDtLiteral(
-            TNode key, String lex, String datatypeName, Buffer<RdfStreamRow> rowsBuffer
+        TNode key, String lex, String datatypeName
     ) {
         var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
@@ -121,15 +127,13 @@ public final class NodeEncoder<TNode> {
         // The node is not encoded, but we may already have the datatype encoded
         var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
         if (dtEntry.newEntry) {
-            rowsBuffer.append(new RdfStreamRow(
-                new RdfDatatypeEntry(dtEntry.setId, datatypeName)
-            ));
+            bufferAppender.appendLookupEntry(new RdfDatatypeEntry(dtEntry.setId, datatypeName));
         }
         int dtId = dtEntry.getId;
         cachedNode.lookupPointer1 = dtId;
         cachedNode.lookupSerial1 = datatypeLookup.serials[dtId];
         cachedNode.encoded = new RdfLiteral(
-                lex, new RdfLiteral$LiteralKind$Datatype(dtId)
+            lex, new RdfLiteral$LiteralKind$Datatype(dtId)
         );
 
         return cachedNode.encoded;
@@ -138,17 +142,14 @@ public final class NodeEncoder<TNode> {
     /**
      * Encodes an IRI using two layers of caching – both for the entire IRI, and the prefix and name tables.
      * @param iri The IRI to encode
-     * @param rowsBuffer The buffer to which the new name and prefix lookup entries should be appended
      * @return The encoded IRI
      */
-    public UniversalTerm encodeIri(String iri, Buffer<RdfStreamRow> rowsBuffer) {
+    public UniversalTerm encodeIri(String iri) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
             var nameEntry = nameLookup.getOrAddEntry(iri);
             if (nameEntry.newEntry) {
-                rowsBuffer.append(new RdfStreamRow(
-                        new RdfNameEntry(nameEntry.setId, iri)
-                ));
+                bufferAppender.appendLookupEntry(new RdfNameEntry(nameEntry.setId, iri));
             }
             int nameId = nameEntry.getId;
             if (lastIriNameId + 1 == nameId) {
@@ -192,14 +193,10 @@ public final class NodeEncoder<TNode> {
         var prefixEntry = prefixLookup.getOrAddEntry(prefix);
         var nameEntry = nameLookup.getOrAddEntry(postfix);
         if (prefixEntry.newEntry) {
-            rowsBuffer.append(new RdfStreamRow(
-                new RdfPrefixEntry(prefixEntry.setId, prefix)
-            ));
+            bufferAppender.appendLookupEntry(new RdfPrefixEntry(prefixEntry.setId, prefix));
         }
         if (nameEntry.newEntry) {
-            rowsBuffer.append(new RdfStreamRow(
-                new RdfNameEntry(nameEntry.setId, postfix)
-            ));
+            bufferAppender.appendLookupEntry(new RdfNameEntry(nameEntry.setId, postfix));
         }
         int nameId = nameEntry.getId;
         int prefixId = prefixEntry.getId;
