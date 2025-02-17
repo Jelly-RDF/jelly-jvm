@@ -96,6 +96,7 @@ lazy val core = (project in file("core"))
       Generator.gen(
         inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main",
         outputDir = sourceManaged.value / "main" / "scalapb",
+        module = "core",
       )
     }.dependsOn(rdfProtos / Compile / PB.generate),
     Compile / sourceManaged := sourceManaged.value / "main",
@@ -117,6 +118,7 @@ lazy val corePatch = (project in file("core-patch"))
       Generator.gen(
         inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main",
         outputDir = sourceManaged.value / "scalapb",
+        module = "core-patch",
       )
     }.dependsOn(rdfProtos / Compile / PB.generate),
     commonSettings,

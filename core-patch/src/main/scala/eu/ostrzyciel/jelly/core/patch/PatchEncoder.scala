@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.core.patch
 
 import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
 import scala.collection.mutable
 

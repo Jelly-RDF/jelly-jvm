@@ -1,8 +1,10 @@
-package eu.ostrzyciel.jelly.core.patch.impl
+package eu.ostrzyciel.jelly.core.patch.internal
 
-import eu.ostrzyciel.jelly.core.LastNodeHolder
+import eu.ostrzyciel.jelly.core.Constants
+import eu.ostrzyciel.jelly.core.internal.LastNodeHolder
 import eu.ostrzyciel.jelly.core.patch.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
 final class PatchEncoderImpl[TNode, -TTriple, -TQuad, -TQuoted](
   params: PatchEncoder.Params[TNode, TTriple, TQuad, TQuoted]
@@ -48,10 +50,7 @@ final class PatchEncoderImpl[TNode, -TTriple, -TQuad, -TQuoted](
 
   private def emitOptions(): Unit =
     emittedOptions = true
-    rowBuffer.append(RdfStreamRow(
-      // Override whatever the user set in the options.
-      options.withVersion(
-        // If namespace declarations are enabled, we need to use Jelly 1.1.0.
-        if enableNamespaceDeclarations then Constants.protoVersion else Constants.protoVersionNoNsDecl
-      )
-    ))
+//    rowBuffer.append(RdfStreamRow(
+//      // Override whatever the user set in the options.
+//      options.withVersion(Constants.protoVersion)
+//    ))
