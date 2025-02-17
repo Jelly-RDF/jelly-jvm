@@ -49,7 +49,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
 (using factory: ConverterFactory[?, ?, TNode, ?, TTriple, TQuad]):
   import ProtoEncoder.Params
   
-  private type TEncoder = ProtoEncoder[TNode, TTriple, TQuad, ?]
+  private type TEncoder = ProtoEncoder[TNode, TTriple, TQuad]
 
   private val emptyParams = Params(null)
 
@@ -394,7 +394,7 @@ final class EncoderFlowBuilderImpl[TNode, TTriple, TQuad]
       logicalType = if opt.logicalType.isUnspecified then lst else opt.logicalType
     )
 
-  private def graphAsIterable[TEncoder <: ProtoEncoder[TNode, TTriple, ?, ?]](encoder: TEncoder):
+  private def graphAsIterable[TEncoder <: ProtoEncoder[TNode, TTriple, ?]](encoder: TEncoder):
   ((TNode, Iterable[TTriple])) => Iterable[RdfStreamRow] =
     (graphName: TNode, triples: Iterable[TTriple]) =>
       encoder.startGraph(graphName)

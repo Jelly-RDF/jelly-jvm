@@ -10,7 +10,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.collection.mutable.ArrayBuffer
 
 class ProtoDecoderSpec extends AnyWordSpec, Matchers:
-  import ProtoDecoderImpl.*
+  import eu.ostrzyciel.jelly.core.internal.ProtoDecoderImpl.*
   import ProtoTestCases.*
 
   private val defaultOptions = ConverterFactory.defaultSupportedOptions

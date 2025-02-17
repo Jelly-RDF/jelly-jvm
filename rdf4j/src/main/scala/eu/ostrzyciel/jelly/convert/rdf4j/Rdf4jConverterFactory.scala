@@ -4,15 +4,11 @@ import eu.ostrzyciel.jelly.core.{ConverterFactory, ProtoEncoder}
 import org.eclipse.rdf4j.model.{Statement, Value}
 
 object Rdf4jConverterFactory
-  extends ConverterFactory[Rdf4jProtoEncoder, Rdf4jDecoderConverter, Value, Rdf4jDatatype, Statement, Statement]:
+  extends ConverterFactory[Rdf4jEncoderConverter, Rdf4jDecoderConverter, Value, Rdf4jDatatype, Statement, Statement]:
+
+  override lazy val encoderConverter: Rdf4jEncoderConverter = new Rdf4jEncoderConverter()
 
   /**
    * @inheritdoc
    */
-  override final def decoderConverter: Rdf4jDecoderConverter = new Rdf4jDecoderConverter()
-
-  /**
-   * @inheritdoc
-   */
-  override final def encoder(params: ProtoEncoder.Params): Rdf4jProtoEncoder =
-    Rdf4jProtoEncoder(params)
+  override lazy val decoderConverter: Rdf4jDecoderConverter = new Rdf4jDecoderConverter()

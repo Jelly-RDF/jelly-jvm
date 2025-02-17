@@ -6,15 +6,14 @@ import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.sparql.core.Quad
 
 object JenaConverterFactory
-  extends ConverterFactory[JenaProtoEncoder, JenaDecoderConverter, Node, RDFDatatype, Triple, Quad]:
+  extends ConverterFactory[JenaEncoderConverter, JenaDecoderConverter, Node, RDFDatatype, Triple, Quad]:
 
   /**
    * @inheritdoc
    */
-  override final def decoderConverter: JenaDecoderConverter = new JenaDecoderConverter()
+  override lazy val encoderConverter: JenaEncoderConverter = new JenaEncoderConverter()
 
   /**
    * @inheritdoc
    */
-  override final def encoder(params: ProtoEncoder.Params): JenaProtoEncoder =
-    JenaProtoEncoder(params)
+  override lazy val decoderConverter: JenaDecoderConverter = new JenaDecoderConverter()

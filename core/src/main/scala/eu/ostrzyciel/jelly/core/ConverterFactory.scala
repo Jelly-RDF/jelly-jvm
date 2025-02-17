@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.core
 
-import ProtoDecoderImpl.*
+import eu.ostrzyciel.jelly.core.internal.ProtoDecoderImpl.*
+import eu.ostrzyciel.jelly.core.internal.ProtoEncoderImpl
 import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamRow}
 
 import scala.collection.mutable
@@ -28,7 +29,7 @@ object ConverterFactory:
  * This should typically be implemented as an object. You should also provide a package-scoped given for your
  * implementation so that users can easily make use of the connector in the stream package.
  *
- * @tparam TEncoder Implementation of [[ProtoEncoder]] for a given RDF library.
+ * @tparam TEncConv Implementation of [[ProtoEncoderConverter]] for a given RDF library.
  * @tparam TDecConv Implementation of [[ProtoDecoderConverter]] for a given RDF library.
  * @tparam TNode Type of RDF nodes in the RDF library
  * @tparam TDatatype Type of RDF datatypes in the RDF library
@@ -36,16 +37,28 @@ object ConverterFactory:
  * @tparam TQuad Type of quad statements in the RDF library.
  */
 trait ConverterFactory[
-  +TEncoder <: ProtoEncoder[TNode, TTriple, TQuad, ?],
+  +TEncConv <: ProtoEncoderConverter[TNode, TTriple, TQuad],
   +TDecConv <: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
   TNode, TDatatype : ClassTag, TTriple, TQuad
 ]:
   import ConverterFactory.*
-  
+
+  final type TEncoder = ProtoEncoder[TNode, TTriple, TQuad]
   final type NsHandler = NamespaceHandler[TNode]
   final val defaultNsHandler: NsHandler = (_, _) => ()
 
+  /**
+   * To be implemented by subclasses. Returns an instance of ProtoDecoderConverter for the RDF library.
+   * @return
+   */
   def decoderConverter: TDecConv
+
+  /**
+   * To be implemented by subclasses. Returns an instance of ProtoEncoderConverter for the RDF library.
+   * @since 2.7.0
+   * @return
+   */
+  def encoderConverter: TEncConv
 
   /**
    * Create a new [[TriplesDecoder]].
@@ -174,4 +187,5 @@ trait ConverterFactory[
    * @return encoder
    * @since 2.6.0
    */
-  def encoder(params: ProtoEncoder.Params): TEncoder
+  final def encoder(params: ProtoEncoder.Params): TEncoder =
+    ProtoEncoderImpl(encoderConverter, params)

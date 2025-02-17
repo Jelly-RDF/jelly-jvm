@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
+import eu.ostrzyciel.jelly.core.internal.ProtoTranscoderImpl
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
 /**

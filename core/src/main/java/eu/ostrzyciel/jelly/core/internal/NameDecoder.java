@@ -1,5 +1,6 @@
-package eu.ostrzyciel.jelly.core;
+package eu.ostrzyciel.jelly.core.internal;
 
+import eu.ostrzyciel.jelly.core.JellyExceptions;
 import eu.ostrzyciel.jelly.core.proto.v1.*;
 
 import java.util.function.Function;

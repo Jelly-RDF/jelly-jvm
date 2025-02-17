@@ -1,4 +1,4 @@
-package eu.ostrzyciel.jelly.core
+package eu.ostrzyciel.jelly.core.internal
 
 import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
