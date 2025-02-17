@@ -1,29 +1,30 @@
 package eu.ostrzyciel.jelly.core.patch.internal
 
-import eu.ostrzyciel.jelly.core.Constants
-import eu.ostrzyciel.jelly.core.internal.LastNodeHolder
+import eu.ostrzyciel.jelly.core.internal.NodeEncoderFactory
 import eu.ostrzyciel.jelly.core.patch.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
+import eu.ostrzyciel.jelly.core.{NodeEncoder, ProtoEncoderConverter}
 
-final class PatchEncoderImpl[TNode, -TTriple, -TQuad, -TQuoted](
-  params: PatchEncoder.Params[TNode, TTriple, TQuad, TQuoted]
-) extends PatchEncoder[TNode, TTriple, TQuad, TQuoted]:
+final class PatchEncoderImpl[TNode, -TTriple, -TQuad](
+  protected val converter: ProtoEncoderConverter[TNode, TTriple, TQuad],
+  params: PatchEncoder.Params,
+) extends PatchEncoder[TNode, TTriple, TQuad]:
+
   override val options: RdfPatchOptions = params.options
 
   private val rowBuffer = params.rowBuffer
+  override protected val nodeEncoder: NodeEncoder[TNode] = NodeEncoderFactory.create[TNode](
+    options.maxPrefixTableSize,
+    options.maxNameTableSize,
+    options.maxDatatypeTableSize,
+    this,
+  )
   private var emittedOptions: Boolean = false
-  
-  // TODO: this shared encoder logic should be moved to a trait in core
-  
-  // TODO: the NodeEncoder in core expects us to give it a buffer of RdfStreamRows, which we
-  //     don't have here. We should refactor the NodeEncoder to work with anything that can
-  //     accept prefix/name/dt entries.
 
-  private val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
-  private val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
-  private val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
-  private var lastGraph: TNode | LastNodeHolder.NoValue.type = LastNodeHolder.NoValue
+  private[core] override def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
+    // TODO
+    rowBuffer.append(RdfPatchRow(???))
 
   override def addTripleStatement(triple: TTriple): Unit = ???
 
@@ -50,7 +51,3 @@ final class PatchEncoderImpl[TNode, -TTriple, -TQuad, -TQuoted](
 
   private def emitOptions(): Unit =
     emittedOptions = true
-//    rowBuffer.append(RdfStreamRow(
-//      // Override whatever the user set in the options.
-//      options.withVersion(Constants.protoVersion)
-//    ))

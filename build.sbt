@@ -107,13 +107,7 @@ lazy val corePatch = (project in file("core-patch"))
   .settings(
     name := "jelly-core-patch",
     description := "Core code for the RDF Patch Jelly extension.",
-//    libraryDependencies ++= Seq(
-//      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbV,
-//      "com.google.protobuf" % "protobuf-java" % protobufV,
-//    ),
     // Add the generated proto classes after transforming them with Scalameta
-    // TODO: filter the classes... Patch classes only go to the patch module
-    // TODO: put the patch classes in a separate package
     Compile / sourceGenerators += Def.task {
       Generator.gen(
         inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main",
