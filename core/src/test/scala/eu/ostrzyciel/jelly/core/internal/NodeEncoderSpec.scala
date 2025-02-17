@@ -24,7 +24,11 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
         buffer += RdfStreamRow(entry)
     }
-    (NodeEncoderImpl[Mrl.Node](smallOptions(prefixTableSize), appender, 16, 16, 16), buffer)
+    (NodeEncoderImpl[Mrl.Node](
+      prefixTableSize, 4, 8,
+      16, 16, 16, 
+      appender
+    ), buffer)
 
   "A NodeEncoder" when {
     "encoding datatype literals" should {

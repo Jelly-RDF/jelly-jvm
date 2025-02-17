@@ -53,6 +53,14 @@ object Transform3 {
           case "RdfNameEntry" => Some(copyTemplate(templ, Seq("RdfLookupEntryRowValue"), "name", "isName", Some(9)))
           case "RdfPrefixEntry" => Some(copyTemplate(templ, Seq("RdfLookupEntryRowValue"), "prefix", "isPrefix", Some(10)))
           case "RdfDatatypeEntry" => Some(copyTemplate(templ, Seq("RdfLookupEntryRowValue"), "datatype", "isDatatype", Some(11)))
+
+          // PatchValue
+          case "RdfPatchOptions" => Some(copyTemplate(templ, Seq("PatchValue"), "options", "isOptions"))
+          case "RdfPatchTransactionStart" => Some(copyTemplate(templ, Seq("PatchValue"), "transactionStart", "isTransactionStart"))
+          case "RdfPatchTransactionCommit" => Some(copyTemplate(templ, Seq("PatchValue"), "transactionCommit", "isTransactionCommit"))
+          case "RdfPatchTransactionAbort" => Some(copyTemplate(templ, Seq("PatchValue"), "transactionAbort", "isTransactionAbort"))
+          case "RdfPatchHeader" => Some(copyTemplate(templ, Seq("PatchValue"), "header", "isHeader"))
+
           case _ => None
         }
         newTempl.map(templ => tree.asInstanceOf[Defn.Class].copy(templ = templ)).getOrElse(tree)
