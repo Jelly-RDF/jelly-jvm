@@ -1,6 +1,5 @@
 package eu.ostrzyciel.jelly.core.internal
 
-import eu.ostrzyciel.jelly.core.internal.TranscoderLookup
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
