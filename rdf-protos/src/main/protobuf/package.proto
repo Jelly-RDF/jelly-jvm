@@ -2,12 +2,12 @@ syntax = "proto3";
 
 import "scalapb/scalapb.proto";
 
-package eu.ostrzyciel.jelly.core.proto;
+package eu.ostrzyciel.jelly.core.proto.v1;
 
 option (scalapb.options) = {
   scope: PACKAGE
   flat_package: true
-  package_name: "eu.ostrzyciel.jelly.core.proto.v1"
+  // package_name: "eu.ostrzyciel.jelly.core.proto.v1"
   // Disabling lenses and getters makes the generated code a bit smaller
   lenses: false
   getters: false
@@ -17,7 +17,7 @@ option (scalapb.options) = {
   scala3_sources: true
 };
 
-option java_package = "eu.ostrzyciel.jelly.core.proto.v1";
+// option java_package = "eu.ostrzyciel.jelly.core.proto.v1";
 
 // Optimize for speed
 option optimize_for = SPEED;
