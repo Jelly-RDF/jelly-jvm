@@ -1,18 +1,20 @@
 package eu.ostrzyciel.jelly.core.patch
 
+import eu.ostrzyciel.jelly.core.internal.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
 import scala.collection.mutable
 
 object PatchEncoder:
-  final case class Params[TNode, -TTriple, -TQuad, -TQuoted](
+  final case class Params(
     options: RdfPatchOptions,
     rowBuffer: mutable.Buffer[RdfPatchRow],
-    converter: PatchEncoderConverter[TNode, TTriple, TQuad, TQuoted],
   )
 
-trait PatchEncoder[TNode, -TTriple, -TQuad, -TQuoted]:
+trait PatchEncoder[TNode, -TTriple, -TQuad]
+  extends ProtoEncoderBase[TNode, TTriple, TQuad] with RowBufferAppender:
+
   val options: RdfPatchOptions
 
   def addTripleStatement(triple: TTriple): Unit

@@ -4,7 +4,6 @@ import eu.ostrzyciel.jelly.core.NodeEncoder;
 import eu.ostrzyciel.jelly.core.proto.v1.*;
 
 import java.util.LinkedHashMap;
-import java.util.function.Function;
 
 /**
  * Encodes RDF nodes native to the used RDF library (e.g., Apache Jena, RDF4J) into Jelly's protobuf objects.
@@ -71,21 +70,25 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     /**
      * Creates a new NodeEncoder.
-     * @param opt Jelly RDF stream options
-     * @param bufferAppender consumer of the lookup entry rows
+     * @param prefixTableSize The size of the prefix lookup table
+     * @param nameTableSize The size of the name lookup table
+     * @param dtTableSize The size of the datatype lookup table
      * @param nodeCacheSize The size of the node cache (for nodes that don't depend on lookups)
      * @param iriNodeCacheSize The size of the IRI dependent node cache (for prefix+name encoding)
      * @param dtLiteralNodeCacheSize The size of the datatype literal dependent node cache
+     * @param bufferAppender consumer of the lookup entry rows
      */
     public NodeEncoderImpl(
-        RdfStreamOptions opt,
-        RowBufferAppender bufferAppender,
+        int prefixTableSize,
+        int nameTableSize,
+        int dtTableSize,
         int nodeCacheSize,
         int iriNodeCacheSize,
-        int dtLiteralNodeCacheSize
+        int dtLiteralNodeCacheSize,
+        RowBufferAppender bufferAppender
     ) {
-        datatypeLookup = new EncoderLookup(opt.maxDatatypeTableSize(), true);
-        this.maxPrefixTableSize = opt.maxPrefixTableSize();
+        datatypeLookup = new EncoderLookup(dtTableSize, true);
+        this.maxPrefixTableSize = prefixTableSize;
         if (maxPrefixTableSize > 0) {
             prefixLookup = new EncoderLookup(maxPrefixTableSize, true);
             iriNodeCache = new NodeCache<>(iriNodeCacheSize);
@@ -93,12 +96,12 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             prefixLookup = null;
             iriNodeCache = null;
         }
-        nameOnlyIris = new RdfIri[opt.maxNameTableSize() + 1];
+        nameOnlyIris = new RdfIri[nameTableSize + 1];
         for (int i = 0; i < nameOnlyIris.length; i++) {
             nameOnlyIris[i] = new RdfIri(0, i);
         }
         dtLiteralNodeCache = new NodeCache<>(dtLiteralNodeCacheSize);
-        nameLookup = new EncoderLookup(opt.maxNameTableSize(), maxPrefixTableSize > 0);
+        nameLookup = new EncoderLookup(nameTableSize, maxPrefixTableSize > 0);
         nodeCache = new NodeCache<>(nodeCacheSize);
         this.bufferAppender = bufferAppender;
     }
