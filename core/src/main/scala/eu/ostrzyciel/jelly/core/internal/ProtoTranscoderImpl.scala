@@ -1,5 +1,6 @@
-package eu.ostrzyciel.jelly.core
+package eu.ostrzyciel.jelly.core.internal
 
+import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.annotation.switch
@@ -14,7 +15,7 @@ import scala.collection.mutable.ListBuffer
  * @param supportedInputOptions maximum allowable options for the input streams (optional)
  * @param outputOptions options for the output stream. This MUST have the physical stream type set.
  */
-private final class ProtoTranscoderImpl(
+private[core] final class ProtoTranscoderImpl(
   supportedInputOptions: Option[RdfStreamOptions],
   outputOptions: RdfStreamOptions
 ) extends ProtoTranscoder:

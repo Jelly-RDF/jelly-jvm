@@ -1,5 +1,6 @@
-package eu.ostrzyciel.jelly.core
+package eu.ostrzyciel.jelly.core.internal
 
+import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoDeserializationError
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

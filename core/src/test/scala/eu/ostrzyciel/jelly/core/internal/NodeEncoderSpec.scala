@@ -1,7 +1,6 @@
-package eu.ostrzyciel.jelly.core
+package eu.ostrzyciel.jelly.core.internal
 
 import eu.ostrzyciel.jelly.core.helpers.Mrl
-import eu.ostrzyciel.jelly.core.internal.RowBufferAppender
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
@@ -17,19 +16,19 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
     maxDatatypeTableSize = 8,
   )
 
-  private def getEncoder(prefixTableSize: Int = 8): (NodeEncoder[Mrl.Node], ListBuffer[RdfStreamRow]) =
+  private def getEncoder(prefixTableSize: Int = 8): (NodeEncoderImpl[Mrl.Node], ListBuffer[RdfStreamRow]) =
     val buffer = new ListBuffer[RdfStreamRow]()
     val appender = new RowBufferAppender {
       def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
         buffer += RdfStreamRow(entry)
     }
-    (NodeEncoder[Mrl.Node](smallOptions(prefixTableSize), appender, 16, 16, 16), buffer)
+    (NodeEncoderImpl[Mrl.Node](smallOptions(prefixTableSize), appender, 16, 16, 16), buffer)
 
   "A NodeEncoder" when {
     "encoding datatype literals" should {
       "encode a datatype literal" in {
         val (encoder, buffer) = getEncoder()
-        val node = encoder.encodeDtLiteral(
+        val node = encoder.makeDtLiteral(
           Mrl.DtLiteral("v1", Mrl.Datatype("dt1")),
           "v1", "dt1",
         )
@@ -45,7 +44,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "encode multiple datatype literals and reuse existing datatypes" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 4 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
             s"v$i", s"dt$i"
           )
@@ -53,7 +52,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           node.literal.literalKind.datatype should be (i)
 
         // "dt3" datatype should be reused
-        val node = encoder.encodeDtLiteral(
+        val node = encoder.makeDtLiteral(
           Mrl.DtLiteral(s"v1000", Mrl.Datatype(s"dt3")),
           "v1000", "dt3",
         )
@@ -61,7 +60,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         node.literal.literalKind.datatype should be (3)
 
         // "v2"^^<dt2> should be reused
-        val node2 = encoder.encodeDtLiteral(
+        val node2 = encoder.makeDtLiteral(
           Mrl.DtLiteral("v2", Mrl.Datatype("dt2")),
           "v2", "dt2",
         )
@@ -80,7 +79,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "not evict datatype IRIs used recently" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 8 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
             s"v$i", s"dt$i",
           )
@@ -88,7 +87,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           node.literal.literalKind.datatype should be(i)
 
         // use literal 1 again
-        val node = encoder.encodeDtLiteral(
+        val node = encoder.makeDtLiteral(
           Mrl.DtLiteral("v1", Mrl.Datatype("dt1")),
           "v1", "dt1",
         )
@@ -96,7 +95,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         node.literal.literalKind.datatype should be(1)
 
         // now add a new DT and see which DT is evicted
-        val node2 = encoder.encodeDtLiteral(
+        val node2 = encoder.makeDtLiteral(
           Mrl.DtLiteral("v9", Mrl.Datatype("dt9")),
           "v9", "dt9",
         )
@@ -107,7 +106,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "encode datatype literals while evicting old datatypes" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 12 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
             s"v$i", s"dt$i",
           )
@@ -116,7 +115,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           node.literal.literalKind.datatype should be ((i - 1) % 8 + 1)
 
         for i <- 9 to 12 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
             s"v$i", s"dt$i",
           )
@@ -124,7 +123,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           node.literal.literalKind.datatype should be (i - 8)
 
         for i <- 5 to 8 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
             s"v$i", s"dt$i",
           )
@@ -133,7 +132,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // 5–8 were used last, so they should be evicted last
         for i <- 13 to 16 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
             s"v$i", s"dt$i",
           )
@@ -153,7 +152,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "reuse already encoded literals, evicting old ones" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 4; j <- 1 to 4 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$j")),
             s"v$i", s"dt$j",
           )
@@ -162,7 +161,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         for _ <- 1 to 10 do
           for i <- Random.shuffle(1 to 4); j <- Random.shuffle(1 to 4) do
-            val node = encoder.encodeDtLiteral(
+            val node = encoder.makeDtLiteral(
               Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$j")),
               s"v$i", s"dt$j",
             )
@@ -171,7 +170,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // Add more literals to evict the old ones
         for j <- 101 to 104 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v100", Mrl.Datatype(s"dt${j - 100}")),
             s"v100", s"dt${j - 100}",
           )
@@ -180,7 +179,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // These entries should have been evicted
         for j <- 1 to 4 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v1", Mrl.Datatype(s"dt$j")),
             s"v1", s"dt$j",
           )
@@ -191,7 +190,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       "invalidate cached datatype literals when their datatypes are evicted" in {
         val (encoder, buffer) = getEncoder()
         for i <- 1 to 4 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
             s"v$i", s"dt$i",
           )
@@ -199,7 +198,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           node.literal.literalKind.datatype should be (i)
 
         for i <- 5 to 12 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
             s"v$i", s"dt$i",
           )
@@ -207,7 +206,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           node.literal.literalKind.datatype should be ((i - 1) % 8 + 1)
 
         for i <- 1 to 4 do
-          val node = encoder.encodeDtLiteral(
+          val node = encoder.makeDtLiteral(
             Mrl.DtLiteral(s"v$i", Mrl.Datatype(s"dt$i")),
             s"v$i", s"dt$i",
           )
@@ -219,7 +218,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "encoding IRIs" should {
       "add a full IRI" in {
         val (encoder, buffer) = getEncoder()
-        val iri = encoder.encodeIri("https://test.org/Cake").asInstanceOf[RdfIri]
+        val iri = encoder.makeIri("https://test.org/Cake").asInstanceOf[RdfIri]
         iri.nameId should be (0)
         iri.prefixId should be (1)
 
@@ -234,7 +233,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "add a prefix-only IRI" in {
         val (encoder, buffer) = getEncoder()
-        val iri = encoder.encodeIri("https://test.org/test/").asInstanceOf[RdfIri]
+        val iri = encoder.makeIri("https://test.org/test/").asInstanceOf[RdfIri]
         iri.nameId should be (0)
         iri.prefixId should be (1)
 
@@ -250,7 +249,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "add a name-only IRI" in {
         val (encoder, buffer) = getEncoder()
-        val iri = encoder.encodeIri("testTestTest").asInstanceOf[RdfIri]
+        val iri = encoder.makeIri("testTestTest").asInstanceOf[RdfIri]
         iri.nameId should be (0)
         iri.prefixId should be (1)
 
@@ -266,7 +265,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "add a full IRI in no-prefix table mode" in {
         val (encoder, buffer) = getEncoder(0)
-        val iri = encoder.encodeIri("https://test.org/Cake").asInstanceOf[RdfIri]
+        val iri = encoder.makeIri("https://test.org/Cake").asInstanceOf[RdfIri]
         iri.nameId should be (0)
         iri.prefixId should be (0)
 
@@ -305,7 +304,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         for (sIri, ePrefix, eName) <- data do
-          val iri = encoder.encodeIri(sIri).asInstanceOf[RdfIri]
+          val iri = encoder.makeIri(sIri).asInstanceOf[RdfIri]
           iri.prefixId should be (ePrefix)
           iri.nameId should be (eName)
 
@@ -352,7 +351,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         for (sIri, ePrefix, eName) <- data do
-          val iri = encoder.encodeIri(sIri).asInstanceOf[RdfIri]
+          val iri = encoder.makeIri(sIri).asInstanceOf[RdfIri]
           iri.prefixId should be(ePrefix)
           iri.nameId should be(eName)
 
@@ -397,7 +396,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         for (sIri, ePrefix, eName) <- data do
-          val iri = encoder.encodeIri(sIri).asInstanceOf[RdfIri]
+          val iri = encoder.makeIri(sIri).asInstanceOf[RdfIri]
           iri.prefixId should be(ePrefix)
           iri.nameId should be(eName)
       }
@@ -426,7 +425,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         )
 
         for (sIri, eName) <- data do
-          val iri = encoder.encodeIri(sIri).asInstanceOf[RdfIri]
+          val iri = encoder.makeIri(sIri).asInstanceOf[RdfIri]
           iri.prefixId should be(0)
           iri.nameId should be(eName)
       }
