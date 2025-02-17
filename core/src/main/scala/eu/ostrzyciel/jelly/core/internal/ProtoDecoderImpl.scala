@@ -1,9 +1,8 @@
 package eu.ostrzyciel.jelly.core.internal
 
-import eu.ostrzyciel.jelly.core.ConverterFactory.NamespaceHandler
-import eu.ostrzyciel.jelly.core.internal.*
-import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.*
+import eu.ostrzyciel.jelly.core.ConverterFactory.NamespaceHandler
+import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.annotation.switch
 import scala.collection.mutable.ListBuffer

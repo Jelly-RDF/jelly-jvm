@@ -259,14 +259,4 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             }
         }
     }
-
-    /**
-     * Encodes a node that is not an IRI or a datatype literal using a single layer of caching.
-     * @param key The node key (the unencoded node)
-     * @param encoder The function that encodes the node
-     * @return The encoded node
-     */
-    public UniversalTerm encodeOther(Object key, Function<Object, UniversalTerm> encoder) {
-        return nodeCache.computeIfAbsent(key, encoder);
-    }
 }
