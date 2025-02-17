@@ -2,9 +2,9 @@
 
 # Jelly-JVM
 
-Implementation of Jelly, a super-fast RDF serialization format and streaming protocol for Apache Jena and Eclipse RDF4J. Jelly-JVM was written in Scala 3 and a bit of Java.
+Implementation of [Jelly](https://w3id.org/jelly), a super-fast RDF serialization format and streaming protocol, for Apache Jena and Eclipse RDF4J. Jelly-JVM was written in Scala 3 and a bit of Java.
 
-Jelly-JVM gives you the full stack of utilities for fast and scalable RDF streaming with the [Jelly protocol](https://github.com/Jelly-RDF/specification). You can only use a part of the stack (e.g., only the serializer), or you may choose to use the full gRPC server and the reactive streaming utilities.
+Jelly-JVM gives you the full stack of utilities for fast and scalable RDF streaming with the **[Jelly protocol](https://w3id.org/jelly)**. You can only use a part of the stack (e.g., only the serializer), or you may choose to use the full gRPC server and the reactive streaming utilities.
 
 **Documentation, download links, usage guide and more: [https://w3id.org/jelly/jelly-jvm](https://w3id.org/jelly/jelly-jvm)**
 
