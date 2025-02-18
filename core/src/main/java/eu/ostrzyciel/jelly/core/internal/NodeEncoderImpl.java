@@ -118,7 +118,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             // Fast path for no prefixes
             var nameEntry = nameLookup.getOrAddEntry(iri);
             if (nameEntry.newEntry) {
-                bufferAppender.appendLookupEntry(new RdfNameEntry(nameEntry.setId, iri));
+                bufferAppender.appendNameEntry(new RdfNameEntry(nameEntry.setId, iri));
             }
             int nameId = nameEntry.getId;
             if (lastIriNameId + 1 == nameId) {
@@ -162,10 +162,10 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         var prefixEntry = prefixLookup.getOrAddEntry(prefix);
         var nameEntry = nameLookup.getOrAddEntry(postfix);
         if (prefixEntry.newEntry) {
-            bufferAppender.appendLookupEntry(new RdfPrefixEntry(prefixEntry.setId, prefix));
+            bufferAppender.appendPrefixEntry(new RdfPrefixEntry(prefixEntry.setId, prefix));
         }
         if (nameEntry.newEntry) {
-            bufferAppender.appendLookupEntry(new RdfNameEntry(nameEntry.setId, postfix));
+            bufferAppender.appendNameEntry(new RdfNameEntry(nameEntry.setId, postfix));
         }
         int nameId = nameEntry.getId;
         int prefixId = prefixEntry.getId;
@@ -224,7 +224,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         // The node is not encoded, but we may already have the datatype encoded
         var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
         if (dtEntry.newEntry) {
-            bufferAppender.appendLookupEntry(new RdfDatatypeEntry(dtEntry.setId, datatypeName));
+            bufferAppender.appendDatatypeEntry(new RdfDatatypeEntry(dtEntry.setId, datatypeName));
         }
         int dtId = dtEntry.getId;
         cachedNode.lookupPointer1 = dtId;

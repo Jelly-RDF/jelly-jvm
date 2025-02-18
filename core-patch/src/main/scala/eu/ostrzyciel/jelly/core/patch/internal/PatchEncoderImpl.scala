@@ -4,8 +4,16 @@ import eu.ostrzyciel.jelly.core.internal.NodeEncoderFactory
 import eu.ostrzyciel.jelly.core.patch.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
-import eu.ostrzyciel.jelly.core.{NodeEncoder, ProtoEncoderConverter}
+import eu.ostrzyciel.jelly.core.{Constants, NodeEncoder, ProtoEncoderConverter}
 
+/**
+ * Implementation of PatchEncoder.
+ * @param converter the converter to use
+ * @param params parameters for the encoder
+ * @tparam TNode the type of RDF nodes in the library
+ * @tparam TTriple the type of triples in the library
+ * @tparam TQuad the type of quads in the library
+ */
 final class PatchEncoderImpl[TNode, -TTriple, -TQuad](
   protected val converter: ProtoEncoderConverter[TNode, TTriple, TQuad],
   params: PatchEncoder.Params,
@@ -13,7 +21,11 @@ final class PatchEncoderImpl[TNode, -TTriple, -TQuad](
 
   override val options: RdfPatchOptions = params.options
 
+  /**
+   * In contrast to the ProtoEncoder, this buffer is ALWAYS externally managed.
+   */
   private val rowBuffer = params.rowBuffer
+
   override protected val nodeEncoder: NodeEncoder[TNode] = NodeEncoderFactory.create[TNode](
     options.maxPrefixTableSize,
     options.maxNameTableSize,
@@ -22,32 +34,67 @@ final class PatchEncoderImpl[TNode, -TTriple, -TQuad](
   )
   private var emittedOptions: Boolean = false
 
-  private[core] override def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
-    // TODO
-    rowBuffer.append(RdfPatchRow(???, ???))
+  private[core] override def appendNameEntry(entry: RdfNameEntry): Unit =
+    rowBuffer.append(RdfPatchRow.ofName(entry))
 
-  override def addTripleStatement(triple: TTriple): Unit = ???
+  private[core] override def appendPrefixEntry(entry: RdfPrefixEntry): Unit =
+    rowBuffer.append(RdfPatchRow.ofPrefix(entry))
 
-  override def deleteTripleStatement(triple: TTriple): Unit = ???
+  private[core] override def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit =
+    rowBuffer.append(RdfPatchRow.ofDatatype(entry))
 
-  override def addQuadStatement(quad: TQuad): Unit = ???
+  override def addTripleStatement(triple: TTriple): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofTripleAdd(tripleToProto(triple)))
 
-  override def deleteQuadStatement(quad: TQuad): Unit = ???
+  override def deleteTripleStatement(triple: TTriple): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofTripleDelete(tripleToProto(triple)))
 
-  override def transactionStart(): Unit = ???
+  override def addQuadStatement(quad: TQuad): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofQuadAdd(quadToProto(quad)))
 
-  override def transactionCommit(): Unit = ???
+  override def deleteQuadStatement(quad: TQuad): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofQuadDelete(quadToProto(quad)))
 
-  override def transactionAbort(): Unit = ???
+  override def transactionStart(): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofTransactionStart)
 
-  override def addNamespace(name: String, iriValue: String): Unit = ???
+  override def transactionCommit(): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofTransactionCommit)
 
-  override def deleteNamespace(name: String, iriValue: String): Unit = ???
+  override def transactionAbort(): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofTransactionAbort)
 
-  override def header(key: String, value: TNode): Unit = ???
+  override def addNamespace(name: String, iriValue: String): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofNamespaceAdd(
+      RdfNamespaceDeclaration(name, nodeEncoder.makeIri(iriValue).iri)
+    ))
 
-  private def handleHeader(): Unit =
+  override def deleteNamespace(name: String, iriValue: String): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofNamespaceDelete(
+      RdfNamespaceDeclaration(name, nodeEncoder.makeIri(iriValue).iri)
+    ))
+
+  override def header(key: String, value: TNode): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofHeader(
+      RdfPatchHeader(key, converter.nodeToProto(nodeEncoder, value))
+    ))
+
+  private inline def handleStreamStart(): Unit =
     if !emittedOptions then emitOptions()
 
   private def emitOptions(): Unit =
     emittedOptions = true
+    rowBuffer.append(RdfPatchRow.ofOptions(
+      // Override whatever the user set in the options.
+      options.withVersion(Constants.protoVersion)
+    ))

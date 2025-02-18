@@ -21,8 +21,9 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
   private def getEncoder(prefixTableSize: Int = 8): (NodeEncoderImpl[Mrl.Node], ListBuffer[RdfStreamRow]) =
     val buffer = new ListBuffer[RdfStreamRow]()
     val appender = new RowBufferAppender {
-      def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
-        buffer += RdfStreamRow(entry)
+      def appendNameEntry(entry: RdfNameEntry): Unit = buffer += RdfStreamRow(entry)
+      def appendPrefixEntry(entry: RdfPrefixEntry): Unit = buffer += RdfStreamRow(entry)
+      def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit = buffer += RdfStreamRow(entry)
     }
     (NodeEncoderImpl[Mrl.Node](
       prefixTableSize, 4, 8,

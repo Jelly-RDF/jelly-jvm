@@ -1,11 +1,16 @@
 package eu.ostrzyciel.jelly.core.proto.v1.patch
 
-import com.google.protobuf.{CodedInputStream, CodedOutputStream, Descriptors}
+import com.google.protobuf.{CodedInputStream, CodedOutputStream}
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import scalapb.GeneratedMessage
 
 import scala.annotation.switch
 
+/**
+ * Hand-optimized implementation of RdfPatchRow based on the generated code.
+ *
+ * The changes made here are very similar to RdfStreamRow in core.
+ */
 @SerialVersionUID(0L)
 final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scalapb.GeneratedMessage {
 
@@ -311,6 +316,22 @@ object RdfPatchRow extends CompanionHelper[RdfPatchRow]("RdfPatchRow") {
   final inline val PREFIX_FIELD_NUMBER = 13
   final inline val DATATYPE_FIELD_NUMBER = 14
   final inline val HEADER_FIELD_NUMBER = 15
+
+  // Factory methods -- either inline or singleton
+  inline def ofOptions(row: RdfPatchOptions): RdfPatchRow = RdfPatchRow(row, OPTIONS_FIELD_NUMBER)
+  inline def ofTripleAdd(row: RdfTriple): RdfPatchRow = RdfPatchRow(row, TRIPLE_ADD_FIELD_NUMBER)
+  inline def ofTripleDelete(row: RdfTriple): RdfPatchRow = RdfPatchRow(row, TRIPLE_DELETE_FIELD_NUMBER)
+  inline def ofQuadAdd(row: RdfQuad): RdfPatchRow = RdfPatchRow(row, QUAD_ADD_FIELD_NUMBER)
+  inline def ofQuadDelete(row: RdfQuad): RdfPatchRow = RdfPatchRow(row, QUAD_DELETE_FIELD_NUMBER)
+  inline def ofNamespaceAdd(row: RdfNamespaceDeclaration): RdfPatchRow = RdfPatchRow(row, NAMESPACE_ADD_FIELD_NUMBER)
+  inline def ofNamespaceDelete(row: RdfNamespaceDeclaration): RdfPatchRow = RdfPatchRow(row, NAMESPACE_DELETE_FIELD_NUMBER)
+  val ofTransactionStart: RdfPatchRow = RdfPatchRow(RdfPatchTransactionStart.defaultInstance, TRANSACTION_START_FIELD_NUMBER)
+  val ofTransactionCommit: RdfPatchRow = RdfPatchRow(RdfPatchTransactionCommit.defaultInstance, TRANSACTION_COMMIT_FIELD_NUMBER)
+  val ofTransactionAbort: RdfPatchRow = RdfPatchRow(RdfPatchTransactionAbort.defaultInstance, TRANSACTION_ABORT_FIELD_NUMBER)
+  inline def ofName(row: RdfNameEntry): RdfPatchRow = RdfPatchRow(row, NAME_FIELD_NUMBER)
+  inline def ofPrefix(row: RdfPrefixEntry): RdfPatchRow = RdfPatchRow(row, PREFIX_FIELD_NUMBER)
+  inline def ofDatatype(row: RdfDatatypeEntry): RdfPatchRow = RdfPatchRow(row, DATATYPE_FIELD_NUMBER)
+  inline def ofHeader(row: RdfPatchHeader): RdfPatchRow = RdfPatchRow(row, HEADER_FIELD_NUMBER)
 
   private final inline val TRANSACTION_FIELD_TOTAL_SIZE = 2
 }

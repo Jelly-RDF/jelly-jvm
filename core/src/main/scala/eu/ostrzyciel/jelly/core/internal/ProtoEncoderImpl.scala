@@ -97,7 +97,13 @@ private[core] final class ProtoEncoderImpl[TNode, -TTriple, -TQuad](
   )
   private var emittedOptions: Boolean = false
 
-  private[core] override def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
+  private[core] override def appendNameEntry(entry: RdfNameEntry): Unit =
+    rowBuffer.append(RdfStreamRow(entry))
+
+  private[core] override def appendPrefixEntry(entry: RdfPrefixEntry): Unit =
+    rowBuffer.append(RdfStreamRow(entry))
+
+  private[core] override def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit =
     rowBuffer.append(RdfStreamRow(entry))
 
   private inline def handleHeader(): Unit =

@@ -4,6 +4,12 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.annotation.switch
 
+/**
+ * A header in an RDF patch.
+ *
+ * Hand-optimized implementation analogous to the generated code.
+ * The changes made here are very similar to RdfTriple in core.
+ */
 @SerialVersionUID(0L)
 final case class RdfPatchHeader(key: String = "", value: SpoTerm = null)
   extends scalapb.GeneratedMessage with PatchValue {
@@ -121,7 +127,7 @@ object RdfPatchHeader extends CompanionHelper[RdfPatchHeader]("RdfPatchHeader") 
 
   def enumCompanionForFieldNumber(__fieldNumber: Int): _root_.scalapb.GeneratedEnumCompanion[?] = throw new MatchError(__fieldNumber)
 
-  lazy val defaultInstance = RdfPatchHeader(key = "", value = null)
+  lazy val defaultInstance: RdfPatchHeader = RdfPatchHeader(key = "", value = null)
 
   final val KEY_FIELD_NUMBER = 1
   final val H_IRI_FIELD_NUMBER = 2

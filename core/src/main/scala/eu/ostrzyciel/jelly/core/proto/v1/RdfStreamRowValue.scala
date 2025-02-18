@@ -23,5 +23,3 @@ private[core] trait RdfStreamRowValue extends RdfValue:
   def streamRowValueNumber: Int
   def isOptions: Boolean = false
   def options: RdfStreamOptions = null
-
-private[core] trait RdfLookupEntryRowValue extends RdfStreamRowValue
