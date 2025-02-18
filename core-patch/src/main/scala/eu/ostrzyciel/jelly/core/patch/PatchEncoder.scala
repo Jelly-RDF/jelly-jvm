@@ -25,6 +25,7 @@ object PatchEncoder:
  * @tparam TNode type of RDF nodes in the library
  * @tparam TTriple type of RDF triples in the library
  * @tparam TQuad type of RDF quads in the library
+ * @since 2.7.0
  */
 trait PatchEncoder[TNode, -TTriple, -TQuad]
   extends ProtoEncoderBase[TNode, TTriple, TQuad] with RowBufferAppender:
