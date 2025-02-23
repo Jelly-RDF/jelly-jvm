@@ -1,4 +1,4 @@
-libraryDependencies += "org.scalameta" %% "scalameta" % "4.13.1.1"
+libraryDependencies += "org.scalameta" %% "scalameta" % "4.13.2"
 
 scalacOptions ++= Seq(
   "-Werror",
