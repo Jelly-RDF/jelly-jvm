@@ -7,4 +7,4 @@ import org.apache.jena.sparql.core.Quad
 /**
  * Type alias for Jena-specific proto encoder, for convenience and backward compatibility.
  */
-type JenaProtoEncoder = ProtoEncoder[Node, Triple, Quad]
+type JenaProtoEncoder = ProtoEncoder[Node, Triple, Quad, ?]

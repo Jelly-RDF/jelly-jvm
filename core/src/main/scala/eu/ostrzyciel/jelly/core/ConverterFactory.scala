@@ -43,7 +43,7 @@ trait ConverterFactory[
 ]:
   import ConverterFactory.*
 
-  final type TEncoder = ProtoEncoder[TNode, TTriple, TQuad]
+  final type TEncoder = ProtoEncoder[TNode, TTriple, TQuad, ?]
   final type NsHandler = NamespaceHandler[TNode]
   final val defaultNsHandler: NsHandler = (_, _) => ()
 
