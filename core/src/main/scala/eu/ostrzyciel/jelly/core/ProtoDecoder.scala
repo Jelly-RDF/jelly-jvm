@@ -7,7 +7,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
  * 
  * See the implementation in [[eu.ostrzyciel.jelly.core.internal.ProtoDecoderImpl]].
  * 
- * @tparam TOut Type of the output of the decoder.
+ * @tparam TOut Type of the output of the decoder. Must be nullable.
  */
 trait ProtoDecoder[+TOut]:
   /**
