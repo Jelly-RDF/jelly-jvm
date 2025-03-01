@@ -26,7 +26,14 @@ object ProtoEncoder:
     maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = None,
   )
 
-trait ProtoEncoder[TNode, -TTriple, -TQuad]
+/**
+ * Base trait for RDF stream encoders.
+ * @tparam TNode type of RDF nodes in the library
+ * @tparam TTriple type of triple statements in the library
+ * @tparam TQuad type of quad statements in the library
+ * @tparam TQuoted Unused since 2.7.0. Can be set to `Nothing` or `?`.
+ */
+trait ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted]
   extends ProtoEncoderBase[TNode, TTriple, TQuad] with RowBufferAppender:
 
   /**

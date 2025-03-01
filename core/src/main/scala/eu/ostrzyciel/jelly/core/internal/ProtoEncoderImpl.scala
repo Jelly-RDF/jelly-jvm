@@ -23,7 +23,7 @@ private[core] object ProtoEncoderImpl:
 private[core] final class ProtoEncoderImpl[TNode, -TTriple, -TQuad](
   protected val converter: ProtoEncoderConverter[TNode, TTriple, TQuad],
   params: ProtoEncoder.Params,
-) extends ProtoEncoder[TNode, TTriple, TQuad]:
+) extends ProtoEncoder[TNode, TTriple, TQuad, ?]:
 
   import ProtoEncoderImpl.*
 
