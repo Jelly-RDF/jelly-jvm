@@ -5,6 +5,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.*
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
 /**
@@ -69,6 +70,8 @@ trait DecoderFlowOps:
   private def flatStream[TOut](decoder: ProtoDecoder[TOut]): Flow[RdfStreamFrame, TOut, NotUsed] =
     Flow[RdfStreamFrame]
       .mapConcat(frame => frame.rows)
+      // We use the null-safe ingestRow here to play nice with Pekko Streams
+      // The alternative would be a custom flow stage... but that's a bit overkill
       .mapConcat(row => decoder.ingestRow(row))
 
 
@@ -76,7 +79,13 @@ trait DecoderFlowOps:
   Flow[RdfStreamFrame, IterableOnce[TOut], NotUsed] =
     Flow[RdfStreamFrame]
       .map(frame => {
-        frame.rows.flatMap(decoder.ingestRow)
+        val buffer = ListBuffer[TOut]()
+        frame.rows.foreach(row => {
+          // Use ingestRowFlat to avoid the Option creation overhead
+          val flat = decoder.ingestRowFlat(row)
+          if flat != null then buffer += flat.asInstanceOf[TOut]
+        })
+        buffer.result()
       })
 
   private sealed trait DecoderIngestFlowOps:
