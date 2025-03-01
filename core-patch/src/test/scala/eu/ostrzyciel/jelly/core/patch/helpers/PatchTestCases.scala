@@ -171,3 +171,132 @@ object PatchTestCases:
       R.ofNamespaceDelete(RdfNamespaceDeclaration("ns2", RdfIri(2, 1))),
       R.ofTransactionCommit,
     )
+
+  object Quads1 extends PatchTestCase:
+    val mrl = Seq(
+      TxStart,
+      Add(NamespaceDeclaration("test", "https://test.org/test/")),
+      Add(Quad(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        LangLiteral("test", "en-gb"),
+        Iri("https://test.org/ns3/graph"),
+      )),
+      Add(Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        Iri("https://test.org/ns3/graph"),
+      )),
+      Add(Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        BlankNode("blank"),
+      )),
+      Delete(Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        BlankNode("blank"),
+      )),
+      TxCommit,
+      TxStart,
+      Delete(Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        Iri("https://test.org/ns3/graph"),
+      )),
+      Add(Quad(
+        Iri("https://test.org/test/subject"),
+        BlankNode("blank"),
+        SimpleLiteral("test"),
+        SimpleLiteral("test"),
+      )),
+      Delete(NamespaceDeclaration("test", "https://test.org/test/")),
+      TxAbort,
+    )
+
+    override def encoded(opt: RdfPatchOptions): Seq[RdfPatchRow] = Seq(
+      R.ofOptions(opt),
+      R.ofTransactionStart,
+      R.ofPrefix(RdfPrefixEntry(0, "https://test.org/test/")),
+      R.ofName(RdfNameEntry(0, "")),
+      R.ofNamespaceAdd(RdfNamespaceDeclaration("test", RdfIri(1, 0))),
+      R.ofName(RdfNameEntry(0, "subject")),
+      R.ofName(RdfNameEntry(0, "predicate")),
+      R.ofPrefix(RdfPrefixEntry(0, "https://test.org/ns3/")),
+      R.ofName(RdfNameEntry(0, "graph")),
+      R.ofQuadAdd(RdfQuad(
+        RdfIri(0, 0),
+        RdfIri(0, 0),
+        RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")),
+        RdfIri(2, 0),
+      )),
+      R.ofQuadAdd(RdfQuad(
+        null,
+        RdfTerm.Bnode("blank"),
+        RdfLiteral("test"),
+        null,
+      )),
+      R.ofQuadAdd(RdfQuad(
+        null,
+        null,
+        null,
+        RdfTerm.Bnode("blank"),
+      )),
+      R.ofQuadDelete(RdfQuad(
+        null,
+        null,
+        null,
+        null,
+      )),
+      R.ofTransactionCommit,
+      R.ofTransactionStart,
+      R.ofQuadDelete(RdfQuad(
+        null,
+        null,
+        null,
+        RdfIri(0, 4),
+      )),
+      R.ofQuadAdd(RdfQuad(
+        null,
+        null,
+        null,
+        RdfLiteral("test"),
+      )),
+      R.ofNamespaceDelete(RdfNamespaceDeclaration("test", RdfIri(1, 1))),
+      R.ofTransactionAbort,
+    )
+
+  /**
+   * Some nonsensical transactions that should be simply ignored and encoded as usual.
+   *
+   * The validity of transactions is not checked on this layer. Jelly only does the serialization.
+   */
+  object MalformedTransactions extends PatchTestCase:
+    val mrl = Seq(
+      TxAbort,
+      TxAbort,
+      TxAbort,
+      TxStart,
+      TxStart,
+      TxCommit,
+      TxCommit,
+      TxAbort,
+      TxStart,
+    )
+
+    override def encoded(opt: RdfPatchOptions): Seq[RdfPatchRow] = Seq(
+      R.ofOptions(opt),
+      R.ofTransactionAbort,
+      R.ofTransactionAbort,
+      R.ofTransactionAbort,
+      R.ofTransactionStart,
+      R.ofTransactionStart,
+      R.ofTransactionCommit,
+      R.ofTransactionCommit,
+      R.ofTransactionAbort,
+      R.ofTransactionStart,
+    )
