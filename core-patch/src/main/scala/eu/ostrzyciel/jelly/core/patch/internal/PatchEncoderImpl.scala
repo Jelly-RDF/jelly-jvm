@@ -4,7 +4,7 @@ import eu.ostrzyciel.jelly.core.internal.NodeEncoderFactory
 import eu.ostrzyciel.jelly.core.patch.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
-import eu.ostrzyciel.jelly.core.{Constants, NodeEncoder, ProtoEncoderConverter}
+import eu.ostrzyciel.jelly.core.{NodeEncoder, ProtoEncoderConverter}
 
 /**
  * Implementation of PatchEncoder.
@@ -96,5 +96,5 @@ final class PatchEncoderImpl[TNode, -TTriple, -TQuad](
     emittedOptions = true
     rowBuffer.append(RdfPatchRow.ofOptions(
       // Override whatever the user set in the options.
-      options.withVersion(Constants.protoVersion)
+      options.withVersion(PatchConstants.protoVersion)
     ))
