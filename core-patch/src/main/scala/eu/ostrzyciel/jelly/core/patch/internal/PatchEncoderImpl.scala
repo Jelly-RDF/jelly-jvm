@@ -43,21 +43,37 @@ final class PatchEncoderImpl[TNode, -TTriple, -TQuad](
   private[core] override def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit =
     rowBuffer.append(RdfPatchRow.ofDatatype(entry))
 
-  override def addTripleStatement(triple: TTriple): Unit =
+  override def addTriple(triple: TTriple): Unit =
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofTripleAdd(tripleToProto(triple)))
 
-  override def deleteTripleStatement(triple: TTriple): Unit =
+  override def addTriple(s: TNode, p: TNode, o: TNode): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofTripleAdd(tripleToProto(s, p, o)))
+
+  override def deleteTriple(triple: TTriple): Unit =
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofTripleDelete(tripleToProto(triple)))
 
-  override def addQuadStatement(quad: TQuad): Unit =
+  override def deleteTriple(s: TNode, p: TNode, o: TNode): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofTripleDelete(tripleToProto(s, p, o)))
+
+  override def addQuad(quad: TQuad): Unit =
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofQuadAdd(quadToProto(quad)))
 
-  override def deleteQuadStatement(quad: TQuad): Unit =
+  override def addQuad(s: TNode, p: TNode, o: TNode, g: TNode): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofQuadAdd(quadToProto(s, p, o, g)))
+
+  override def deleteQuad(quad: TQuad): Unit =
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofQuadDelete(quadToProto(quad)))
+
+  override def deleteQuad(s: TNode, p: TNode, o: TNode, g: TNode): Unit =
+    handleStreamStart()
+    rowBuffer.append(RdfPatchRow.ofQuadDelete(quadToProto(s, p, o, g)))
 
   override def transactionStart(): Unit =
     handleStreamStart()

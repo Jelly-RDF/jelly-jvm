@@ -18,15 +18,15 @@ object Mpl:
   final case class Add(statement: Statement | NamespaceDeclaration) extends PatchStatement:
     def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
       statement match
-        case s: Triple => encoder.addTripleStatement(s)
-        case s: Quad => encoder.addQuadStatement(s)
+        case s: Triple => encoder.addTriple(s)
+        case s: Quad => encoder.addQuad(s)
         case ns: NamespaceDeclaration => encoder.addNamespace(ns.prefix, ns.iri)
 
   final case class Delete(statement: Statement | NamespaceDeclaration) extends PatchStatement:
     def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
       statement match
-        case s: Triple => encoder.deleteTripleStatement(s)
-        case s: Quad => encoder.deleteQuadStatement(s)
+        case s: Triple => encoder.deleteTriple(s)
+        case s: Quad => encoder.deleteQuad(s)
         case ns: NamespaceDeclaration => encoder.deleteNamespace(ns.prefix, ns.iri)
 
   case object TxStart extends PatchStatement:

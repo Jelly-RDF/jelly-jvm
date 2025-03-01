@@ -22,80 +22,19 @@ object PatchEncoder:
 /**
  * Encoder for RDF-Patch streams.
  *
+ * See [[PatchHandler]] for the basic operations that can be performed on the patch stream.
+ *
  * @tparam TNode type of RDF nodes in the library
  * @tparam TTriple type of RDF triples in the library
  * @tparam TQuad type of RDF quads in the library
  * @since 2.7.0
  */
-trait PatchEncoder[TNode, -TTriple, -TQuad]
-  extends ProtoEncoderBase[TNode, TTriple, TQuad] with RowBufferAppender:
+trait PatchEncoder[TNode, -TTriple, -TQuad] extends
+  ProtoEncoderBase[TNode, TTriple, TQuad],
+  ExtendedPatchHandler[TNode, TTriple, TQuad],
+  RowBufferAppender:
 
   /**
    * RdfPatchOptions for this encoder.
    */
   val options: RdfPatchOptions
-
-  /**
-   * Add RDF triple command. (A Triple)
-   * @param triple the triple to add
-   */
-  def addTripleStatement(triple: TTriple): Unit
-
-  /**
-   * Delete RDF triple command. (D Triple)
-   * @param triple the triple to delete
-   */
-  def deleteTripleStatement(triple: TTriple): Unit
-
-  /**
-   * Add RDF quad command. (A Quad)
-   * @param quad the quad to add
-   */
-  def addQuadStatement(quad: TQuad): Unit
-
-  /**
-   * Delete RDF quad command. (D Quad)
-   * @param quad the quad to delete
-   */
-  def deleteQuadStatement(quad: TQuad): Unit
-
-  /**
-   * Start a new transaction. (TX)
-   */
-  def transactionStart(): Unit
-
-  /**
-   * Commit the current transaction. (TC)
-   */
-  def transactionCommit(): Unit
-
-  /**
-   * Abort the current transaction. (TA)
-   */
-  def transactionAbort(): Unit
-
-  /**
-   * Add a namespace declaration to the patch stream.
-   * This is called "prefix add" in RDF Patch. (PA)
-   *
-   * @param name the name of the namespace (without the trailing colon)
-   * @param iriValue the IRI value of the namespace
-   */
-  def addNamespace(name: String, iriValue: String): Unit
-
-  /**
-   * Delete a namespace declaration from the patch stream.
-   * This is called "prefix delete" in RDF Patch. (PD)
-   *
-   * @param name the name of the namespace (without the trailing colon)
-   * @param iriValue the IRI value of the namespace
-   */
-  def deleteNamespace(name: String, iriValue: String): Unit
-
-  /**
-   * Add a header to the patch stream. (H)
-   *
-   * @param key the key of the header
-   * @param value the value of the header
-   */
-  def header(key: String, value: TNode): Unit
