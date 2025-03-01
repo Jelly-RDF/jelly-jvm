@@ -45,9 +45,10 @@ final class JellyParser extends AbstractRDFParser:
     )
     inline def processFrame(f: RdfStreamFrame): Unit =
       for row <- f.rows do
-        decoder.ingestRow(row) match
-          case Some(st) => rdfHandler.handleStatement(st)
-          case None => ()
+        // Use the flat interface to skip the Option creation overhead
+        decoder.ingestRowFlat(row) match
+          case null => ()
+          case st => rdfHandler.handleStatement(st)
 
     rdfHandler.startRDF()
     try {

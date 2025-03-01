@@ -37,10 +37,11 @@ object JellyReader extends ReaderRIOT:
     )
     inline def processFrame(f: RdfStreamFrame): Unit =
       for row <- f.rows do
-        decoder.ingestRow(row) match
-          case Some(st: Triple) => output.triple(st)
-          case Some(st: Quad) => output.quad(st)
-          case None => ()
+        // Use the flat interface to skip the Option creation overhead
+        decoder.ingestRowFlat(row) match
+          case null => ()
+          case st: Triple => output.triple(st)
+          case st: Quad => output.quad(st)
 
     output.start()
     try {
