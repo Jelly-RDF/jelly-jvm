@@ -37,10 +37,25 @@ private[core] trait ProtoEncoderBase[TNode, -TTriple, -TQuad]:
       `object` = nodeToProtoWrapped(converter.getTstO(triple), lastObject),
     )
 
+  protected final def tripleToProto(s: TNode, p: TNode, o: TNode): RdfTriple =
+    RdfTriple(
+      subject = nodeToProtoWrapped(s, lastSubject),
+      predicate = nodeToProtoWrapped(p, lastPredicate),
+      `object` = nodeToProtoWrapped(o, lastObject),
+    )
+
   protected final def quadToProto(quad: TQuad): RdfQuad =
     RdfQuad(
       subject = nodeToProtoWrapped(converter.getQstS(quad), lastSubject),
       predicate = nodeToProtoWrapped(converter.getQstP(quad), lastPredicate),
       `object` = nodeToProtoWrapped(converter.getQstO(quad), lastObject),
       graph = graphNodeToProtoWrapped(converter.getQstG(quad)),
+    )
+
+  protected final def quadToProto(s: TNode, p: TNode, o: TNode, g: TNode): RdfQuad =
+    RdfQuad(
+      subject = nodeToProtoWrapped(s, lastSubject),
+      predicate = nodeToProtoWrapped(p, lastPredicate),
+      `object` = nodeToProtoWrapped(o, lastObject),
+      graph = graphNodeToProtoWrapped(g),
     )
