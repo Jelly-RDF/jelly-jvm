@@ -9,7 +9,7 @@ import java.util.function.Function;
  * Class for decoding RDF IRIs from their Jelly representation.
  * @param <TIri> The type of the IRI in the target RDF library.
  */
-final class NameDecoder<TIri> {
+final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
     private static final class NameLookupEntry {
         // Primary: the actual name
         public String name;
@@ -44,7 +44,7 @@ final class NameDecoder<TIri> {
      * @param nameTableSize The size of the name lookup table.
      * @param iriFactory A function that creates an IRI from a string.
      */
-    public NameDecoder(int prefixTableSize, int nameTableSize, Function<String, TIri> iriFactory) {
+    public NameDecoderImpl(int prefixTableSize, int nameTableSize, Function<String, TIri> iriFactory) {
         this.iriFactory = iriFactory;
         nameLookup = new NameLookupEntry[nameTableSize + 1];
         prefixLookup = new PrefixLookupEntry[prefixTableSize + 1];

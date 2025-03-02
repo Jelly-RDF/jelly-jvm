@@ -7,16 +7,23 @@ import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, PhysicalStreamType,
  * None of the presets specifies the stream type – do that with the .withPhysicalType method.
  */
 object JellyOptions:
+  private[core] inline val bigNameTableSize = 4000
+  private[core] inline val bigPrefixTableSize = 150
+  private[core] inline val bigDtTableSize = 32
+  
+  private[core] inline val smallNameTableSize = 128
+  private[core] inline val smallPrefixTableSize = 16
+  private[core] inline val smallDtTableSize = 16
 
   /**
    * "Big" preset suitable for high-volume streams and larger machines.
    * Does not allow generalized RDF statements.
    * @return
    */
-  def bigStrict: RdfStreamOptions = RdfStreamOptions(
-    maxNameTableSize = 4000,
-    maxPrefixTableSize = 150,
-    maxDatatypeTableSize = 32,
+  lazy val bigStrict: RdfStreamOptions = RdfStreamOptions(
+    maxNameTableSize = bigNameTableSize,
+    maxPrefixTableSize = bigPrefixTableSize,
+    maxDatatypeTableSize = bigDtTableSize,
   )
 
   /**
@@ -24,7 +31,7 @@ object JellyOptions:
    * Allows generalized RDF statements.
    * @return
    */
-  def bigGeneralized: RdfStreamOptions =
+  lazy val bigGeneralized: RdfStreamOptions =
     bigStrict.withGeneralizedStatements(true)
 
   /**
@@ -32,7 +39,7 @@ object JellyOptions:
    * Allows RDF-star statements.
    * @return
    */
-  def bigRdfStar: RdfStreamOptions =
+  lazy val bigRdfStar: RdfStreamOptions =
     bigStrict.withRdfStar(true)
 
   /**
@@ -40,7 +47,7 @@ object JellyOptions:
    * Allows all protocol features (including generalized RDF statements and RDF-star statements).
    * @return
    */
-  def bigAllFeatures: RdfStreamOptions =
+  lazy val bigAllFeatures: RdfStreamOptions =
     bigStrict.withGeneralizedStatements(true).withRdfStar(true)
 
   /**
@@ -48,10 +55,10 @@ object JellyOptions:
    * Does not allow generalized RDF statements.
    * @return
    */
-  def smallStrict: RdfStreamOptions = RdfStreamOptions(
-    maxNameTableSize = 128,
-    maxPrefixTableSize = 16,
-    maxDatatypeTableSize = 16,
+  lazy val smallStrict: RdfStreamOptions = RdfStreamOptions(
+    maxNameTableSize = smallNameTableSize,
+    maxPrefixTableSize = smallPrefixTableSize,
+    maxDatatypeTableSize = smallDtTableSize,
   )
 
   /**
@@ -59,7 +66,7 @@ object JellyOptions:
    * Allows generalized RDF statements.
    * @return
    */
-  def smallGeneralized: RdfStreamOptions =
+  lazy val smallGeneralized: RdfStreamOptions =
     smallStrict.withGeneralizedStatements(true)
     
   /**
@@ -67,7 +74,7 @@ object JellyOptions:
     * Allows RDF-star statements.
     * @return
     */
-  def smallRdfStar: RdfStreamOptions =
+  lazy val smallRdfStar: RdfStreamOptions =
     smallStrict.withRdfStar(true)
 
   /**
@@ -75,7 +82,7 @@ object JellyOptions:
    * Allows all protocol features (including generalized RDF statements and RDF-star statements).
    * @return
    */
-  def smallAllFeatures: RdfStreamOptions =
+  lazy val smallAllFeatures: RdfStreamOptions =
     smallStrict.withGeneralizedStatements(true).withRdfStar(true)
 
   /**
@@ -96,7 +103,7 @@ object JellyOptions:
    * 
    * @return
    */
-  def defaultSupportedOptions: RdfStreamOptions = RdfStreamOptions(
+  lazy val defaultSupportedOptions: RdfStreamOptions = RdfStreamOptions(
     generalizedStatements = true,
     rdfStar = true,
     maxNameTableSize = 4096,
