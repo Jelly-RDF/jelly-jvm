@@ -12,24 +12,22 @@ import scala.reflect.ClassTag
  * Base class for stateful decoders of protobuf RDF streams.
  *
  * See the base (extendable) trait: [[ProtoDecoder]].
+ * See also [[ProtoDecoderBase]] for common methods shared by all decoders.
  */
 sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +TQuad, +TOut](
-  converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
+  protected final val converter: ProtoDecoderConverter[TNode, TDatatype, TTriple, TQuad],
   supportedOptions: RdfStreamOptions,
   nsHandler: NamespaceHandler[TNode],
-) extends ProtoDecoder[TOut]:
+) extends ProtoDecoder[TOut], ProtoDecoderBase[TNode, TDatatype, TTriple, TQuad]:
 
   private var streamOpt: Option[RdfStreamOptions] = None
-  private lazy val nameDecoder = {
-    val opt = streamOpt getOrElse JellyOptions.smallStrict
-    new NameDecoder(opt.maxPrefixTableSize, opt.maxNameTableSize, converter.makeIriNode)
-  }
-  private lazy val dtLookup = new DecoderLookup[TDatatype](streamOpt.map(o => o.maxDatatypeTableSize) getOrElse 20)
 
-  protected final val lastSubject: LastNodeHolder[TNode] = new LastNodeHolder()
-  protected final val lastPredicate: LastNodeHolder[TNode] = new LastNodeHolder()
-  protected final val lastObject: LastNodeHolder[TNode] = new LastNodeHolder()
-  protected final val lastGraph: LastNodeHolder[TNode] = new LastNodeHolder()
+  protected final override def getNameTableSize: Int =
+    streamOpt.map(_.maxNameTableSize) getOrElse JellyOptions.smallNameTableSize
+  protected final override def getPrefixTableSize: Int =
+    streamOpt.map(_.maxPrefixTableSize) getOrElse JellyOptions.smallPrefixTableSize
+  protected final override def getDatatypeTableSize: Int =
+    streamOpt.map(_.maxDatatypeTableSize) getOrElse 20
 
   /**
    * Returns the received stream options from the producer.
@@ -44,85 +42,6 @@ sealed abstract class ProtoDecoderImpl[TNode, TDatatype : ClassTag, +TTriple, +T
   private final def setStreamOpt(opt: RdfStreamOptions): Unit =
     if streamOpt.isEmpty then
       streamOpt = Some(opt)
-
-  private final def convertLiteral(literal: RdfLiteral): TNode = literal.literalKind match
-    case RdfLiteral.LiteralKind.Empty =>
-      converter.makeSimpleLiteral(literal.lex)
-    case RdfLiteral.LiteralKind.Langtag(lang) =>
-      converter.makeLangLiteral(literal.lex, lang)
-    case RdfLiteral.LiteralKind.Datatype(dtId) =>
-      converter.makeDtLiteral(literal.lex, dtLookup.get(dtId))
-
-
-  private final def convertTerm(term: SpoTerm): TNode =
-    if term == null then
-      throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.")
-    else if term.isIri then
-      nameDecoder.decode(term.iri)
-    else if term.isBnode then
-      converter.makeBlankNode(term.bnode)
-    else if term.isLiteral then
-      convertLiteral(term.literal)
-    else if term.isTripleTerm then
-      val inner = term.tripleTerm
-      // ! No support for repeated terms in quoted triples
-      converter.makeTripleNode(
-        convertTerm(inner.subject),
-        convertTerm(inner.predicate),
-        convertTerm(inner.`object`),
-      )
-    else
-      throw new RdfProtoDeserializationError("Unknown term type.")
-
-
-  protected final def convertGraphTerm(graph: GraphTerm): TNode =
-    if graph == null then
-      throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.")
-    else if graph.isIri then
-      nameDecoder.decode(graph.iri)
-    else if graph.isDefaultGraph then
-      converter.makeDefaultGraphNode()
-    else if graph.isBnode then
-      converter.makeBlankNode(graph.bnode)
-    else if graph.isLiteral then
-      convertLiteral(graph.literal)
-    else
-      throw new RdfProtoDeserializationError("Unknown graph term type.")
-
-  protected final def convertTermWrapped(term: SpoTerm, lastNodeHolder: LastNodeHolder[TNode]): TNode =
-    if term == null then
-      lastNodeHolder.node match
-        case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("Empty term without previous term.")
-        case n => n.asInstanceOf[TNode]
-    else
-      val node = convertTerm(term)
-      lastNodeHolder.node = node
-      node
-
-  protected final def convertGraphTermWrapped(graph: GraphTerm): TNode =
-    if graph == null then
-      lastGraph.node match
-        case LastNodeHolder.NoValue => throw new RdfProtoDeserializationError("Empty term without previous graph term.")
-        case n => n.asInstanceOf[TNode]
-    else
-      val node = convertGraphTerm(graph)
-      lastGraph.node = node
-      node
-
-  protected final def convertTriple(triple: RdfTriple): TTriple =
-    converter.makeTriple(
-      convertTermWrapped(triple.subject, lastSubject),
-      convertTermWrapped(triple.predicate, lastPredicate),
-      convertTermWrapped(triple.`object`, lastObject),
-    )
-
-  protected final def convertQuad(quad: RdfQuad): TQuad =
-    converter.makeQuad(
-      convertTermWrapped(quad.subject, lastSubject),
-      convertTermWrapped(quad.predicate, lastPredicate),
-      convertTermWrapped(quad.`object`, lastObject),
-      convertGraphTermWrapped(quad.graph),
-    )
 
   final override def ingestRowFlat(row: RdfStreamRow): TOut | Null =
     val r = row.row
