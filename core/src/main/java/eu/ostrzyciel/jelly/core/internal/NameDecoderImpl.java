@@ -62,6 +62,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      * @param nameEntry name row
      * @throws ArrayIndexOutOfBoundsException if the identifier is out of bounds
      */
+    @Override
     public void updateNames(RdfNameEntry nameEntry) {
         int id = nameEntry.id();
         // Branchless! Equivalent to:
@@ -82,6 +83,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      * @param prefixEntry prefix row
      * @throws ArrayIndexOutOfBoundsException if the identifier is out of bounds
      */
+    @Override
     public void updatePrefixes(RdfPrefixEntry prefixEntry) {
         int id = prefixEntry.id();
         lastPrefixIdSet = ((lastPrefixIdSet + 1) & ((id - 1) >> 31)) + id;
@@ -99,6 +101,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      * @throws NullPointerException if the IRI reference is invalid
      */
     @SuppressWarnings("unchecked")
+    @Override
     public TIri decode(RdfIri iri) {
         int nameId = iri.nameId();
         lastNameIdReference = ((lastNameIdReference + 1) & ((nameId - 1) >> 31)) + nameId;
