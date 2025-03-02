@@ -5,7 +5,7 @@ import java.util.Arrays;
 /**
  * A wrapper around EncoderLookup that is used in proto transcoders to remap input stream IDs to output stream IDs.
  */
-class TranscoderLookup {
+final class TranscoderLookup {
     // The size of the output lookup table
     private final int outputSize;
     // Mapping input IDs to output IDs
