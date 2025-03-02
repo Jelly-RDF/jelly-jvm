@@ -1,6 +1,6 @@
-package eu.ostrzyciel.jelly.core.patch
+package eu.ostrzyciel.jelly.core.patch.handler
 
-trait ExtendedPatchHandler[TNode, -TTriple, -TQuad] extends PatchHandler[TNode]:
+trait ExtendedPatchHandler[TNode, -TTriple, -TQuad] extends AnyPatchHandler[TNode]:
   /**
    * Add RDF triple command. (A Triple)
    *

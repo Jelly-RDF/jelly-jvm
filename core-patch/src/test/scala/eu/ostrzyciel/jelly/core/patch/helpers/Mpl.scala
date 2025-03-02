@@ -1,6 +1,5 @@
 package eu.ostrzyciel.jelly.core.patch.helpers
 
-import eu.ostrzyciel.jelly.core.NamespaceDeclaration
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 import eu.ostrzyciel.jelly.core.patch.PatchEncoder
 
@@ -8,6 +7,8 @@ import eu.ostrzyciel.jelly.core.patch.PatchEncoder
  * "Mpl" stands for "mock RDF patch library".
  */
 object Mpl:
+  final case class NsDecl(prefix: String, iri: Iri)
+  
   sealed trait PatchStatement:
     /**
      * Apply this patch statement to the given encoder.
@@ -15,19 +16,19 @@ object Mpl:
      */
     def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit
 
-  final case class Add(statement: Statement | NamespaceDeclaration) extends PatchStatement:
+  final case class Add(statement: Statement | NsDecl) extends PatchStatement:
     def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
       statement match
         case s: Triple => encoder.addTriple(s)
         case s: Quad => encoder.addQuad(s)
-        case ns: NamespaceDeclaration => encoder.addNamespace(ns.prefix, ns.iri)
+        case ns: NsDecl => encoder.addNamespace(ns.prefix, ns.iri)
 
-  final case class Delete(statement: Statement | NamespaceDeclaration) extends PatchStatement:
+  final case class Delete(statement: Statement | NsDecl) extends PatchStatement:
     def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
       statement match
         case s: Triple => encoder.deleteTriple(s)
         case s: Quad => encoder.deleteQuad(s)
-        case ns: NamespaceDeclaration => encoder.deleteNamespace(ns.prefix, ns.iri)
+        case ns: NsDecl => encoder.deleteNamespace(ns.prefix, ns.iri)
 
   case object TxStart extends PatchStatement:
     def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =

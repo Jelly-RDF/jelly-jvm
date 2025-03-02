@@ -87,16 +87,16 @@ final class PatchEncoderImpl[TNode, -TTriple, -TQuad](
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofTransactionAbort)
 
-  override def addNamespace(name: String, iriValue: String): Unit =
+  override def addNamespace(name: String, iriValue: TNode): Unit =
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofNamespaceAdd(
-      RdfNamespaceDeclaration(name, nodeEncoder.makeIri(iriValue).iri)
+      RdfNamespaceDeclaration(name, converter.nodeToProto(nodeEncoder, iriValue).iri)
     ))
 
-  override def deleteNamespace(name: String, iriValue: String): Unit =
+  override def deleteNamespace(name: String, iriValue: TNode): Unit =
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofNamespaceDelete(
-      RdfNamespaceDeclaration(name, nodeEncoder.makeIri(iriValue).iri)
+      RdfNamespaceDeclaration(name, converter.nodeToProto(nodeEncoder, iriValue).iri)
     ))
 
   override def header(key: String, value: TNode): Unit =

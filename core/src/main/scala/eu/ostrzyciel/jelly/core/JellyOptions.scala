@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
-import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, PhysicalStreamType, RdfStreamOptions}
+import eu.ostrzyciel.jelly.core.proto.v1.{BaseJellyOptions, LogicalStreamType, PhysicalStreamType, RdfStreamOptions}
 
 /**
  * A collection of convenient streaming option presets.
@@ -143,37 +143,10 @@ object JellyOptions:
    *
    * @param requestedOptions Requested options of the stream.
    * @param supportedOptions Options that can be safely supported.
+   * @throws RdfProtoDeserializationError on validation error
    */
   def checkCompatibility(requestedOptions: RdfStreamOptions, supportedOptions: RdfStreamOptions): Unit =
-    if requestedOptions.version > supportedOptions.version || requestedOptions.version > Constants.protoVersion then
-      throw new RdfProtoDeserializationError(s"Unsupported proto version: ${requestedOptions.version}. " +
-        s"Was expecting at most version ${supportedOptions.version}. " +
-        s"This library version supports up to version ${Constants.protoVersion}.")
-
-    if requestedOptions.generalizedStatements && !supportedOptions.generalizedStatements then
-      throw new RdfProtoDeserializationError(s"The stream uses generalized statements, which are not supported. " +
-        s"Either disable generalized statements or enable them in the supportedOptions.")
-
-    if requestedOptions.rdfStar && !supportedOptions.rdfStar then
-      throw new RdfProtoDeserializationError(s"The stream uses RDF-star, which is not supported. Either disable" +
-        s" RDF-star or enable it in the supportedOptions.")
-
-    def checkTableSize(name: String, size: Int, supportedSize: Int, minSize: Int = 0): Unit =
-      if size > supportedSize then
-        throw new RdfProtoDeserializationError(s"The stream uses a ${name.toLowerCase} table size of $size, which is " +
-          s"larger than the maximum supported size of $supportedSize."
-        )
-      if size < minSize then
-        throw new RdfProtoDeserializationError(s"The stream uses a ${name.toLowerCase} table size of $size, which is " +
-          s"smaller than the minimum supported size of $minSize."
-        )
-
-    // The minimum sizes are hard-coded because it would be impossible to reliably encode the stream
-    // with smaller tables, especially if RDF-star is used.
-    checkTableSize("Name", requestedOptions.maxNameTableSize, supportedOptions.maxNameTableSize, 16)
-    checkTableSize("Prefix", requestedOptions.maxPrefixTableSize, supportedOptions.maxPrefixTableSize)
-    checkTableSize("Datatype", requestedOptions.maxDatatypeTableSize, supportedOptions.maxDatatypeTableSize, 8)
-
+    BaseJellyOptions.checkCompatibility(requestedOptions, supportedOptions, Constants.protoVersion)
     checkLogicalStreamType(requestedOptions, supportedOptions.logicalType)
 
   /**
@@ -182,6 +155,7 @@ object JellyOptions:
    *
    * @param options        Options of the stream.
    * @param expLogicalType Expected logical stream type. If UNSPECIFIED, no check is performed.
+   * @throws RdfProtoDeserializationError on validation error
    */
   private def checkLogicalStreamType(options: RdfStreamOptions, expLogicalType: LogicalStreamType): Unit =
     val baseLogicalType = options.logicalType.toBaseType
