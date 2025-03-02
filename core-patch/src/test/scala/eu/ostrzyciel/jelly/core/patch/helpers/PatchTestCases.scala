@@ -1,6 +1,5 @@
 package eu.ostrzyciel.jelly.core.patch.helpers
 
-import eu.ostrzyciel.jelly.core.NamespaceDeclaration
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 import eu.ostrzyciel.jelly.core.patch.helpers.Mpl.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
@@ -118,15 +117,15 @@ object PatchTestCases:
       Header("note", LangLiteral("chrząszcz", "pl")), // Polish is a beautiful language
       Header("id", BlankNode("b1")),
       TxStart,
-      Add(NamespaceDeclaration("test", "https://test.org/test/")),
-      Add(NamespaceDeclaration("ns2", "https://test.org/ns2/")),
+      Add(NsDecl("test", Iri("https://test.org/test/"))),
+      Add(NsDecl("ns2", Iri("https://test.org/ns2/"))),
       Add(Triple(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
         Iri("https://test.org/ns2/object"),
       )),
-      Add(NamespaceDeclaration("test2", "https://test.org/test2/")),
-      Delete(NamespaceDeclaration("test2", "https://test.org/test2/")),
+      Add(NsDecl("test2", Iri("https://test.org/test2/"))),
+      Delete(NsDecl("test2", Iri("https://test.org/test2/"))),
       TxCommit,
       TxStart,
       Delete(Triple(
@@ -134,8 +133,8 @@ object PatchTestCases:
         Iri("https://test.org/test/predicate"),
         Iri("https://test.org/ns2/object"),
       )),
-      Delete(NamespaceDeclaration("test", "https://test.org/test/")),
-      Delete(NamespaceDeclaration("ns2", "https://test.org/ns2/")),
+      Delete(NsDecl("test", Iri("https://test.org/test/"))),
+      Delete(NsDecl("ns2", Iri("https://test.org/ns2/"))),
       TxCommit,
     )
 
@@ -175,7 +174,7 @@ object PatchTestCases:
   object Quads1 extends PatchTestCase:
     val mrl = Seq(
       TxStart,
-      Add(NamespaceDeclaration("test", "https://test.org/test/")),
+      Add(NsDecl("test", Iri("https://test.org/test/"))),
       Add(Quad(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -214,7 +213,7 @@ object PatchTestCases:
         SimpleLiteral("test"),
         SimpleLiteral("test"),
       )),
-      Delete(NamespaceDeclaration("test", "https://test.org/test/")),
+      Delete(NsDecl("test", Iri("https://test.org/test/"))),
       TxAbort,
     )
 

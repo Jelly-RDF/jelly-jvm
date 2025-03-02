@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core.patch
 
 import eu.ostrzyciel.jelly.core.JellyOptions
-import eu.ostrzyciel.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
+import eu.ostrzyciel.jelly.core.proto.v1.{BaseJellyOptions, PhysicalStreamType, RdfStreamOptions}
 import eu.ostrzyciel.jelly.core.proto.v1.patch.{PatchPhysicalType, RdfPatchOptions}
 
 /**
@@ -18,8 +18,15 @@ object JellyPatchOptions:
    * @return RdfPatchOptions
    */
   def fromJellyOptions(opt: RdfStreamOptions): RdfPatchOptions =
+    fromBaseOptions(opt).withPhysicalType(fromJellyPhysicalType(opt.physicalType))
+
+  /**
+   * Convert a BaseJellyOptions instance to a Jelly Patch RdfPatchOptions.
+   * @param opt BaseJellyOptions
+   * @return RdfPatchOptions
+   */
+  def fromBaseOptions(opt: BaseJellyOptions): RdfPatchOptions =
     RdfPatchOptions(
-      physicalType = fromJellyPhysicalType(opt.physicalType),
       generalizedStatements = opt.generalizedStatements,
       rdfStar = opt.rdfStar,
       maxNameTableSize = opt.maxNameTableSize,
@@ -27,6 +34,29 @@ object JellyPatchOptions:
       maxDatatypeTableSize = opt.maxDatatypeTableSize,
       version = PatchConstants.protoVersion,
     )
+
+  /**
+   * Checks if the requested stream options are supported. Throws an exception if not.
+   *
+   * The usage and motivation is analogous to [[JellyOptions.checkCompatibility]].
+   *
+   * We check:
+   * - version (must be <= PatchConstants.protoVersion and <= supportedOptions.version)
+   * - generalized statements (must be <= supportedOptions.generalizedStatements)
+   * - RDF star (must be <= supportedOptions.rdfStar)
+   * - max name table size (must be <= supportedOptions.maxNameTableSize and >= 16).
+   * - max prefix table size (must be <= supportedOptions.maxPrefixTableSize)
+   * - max datatype table size (must be <= supportedOptions.maxDatatypeTableSize and >= 8)
+   *
+   * We don't check:
+   * - physical stream type (this is done by the implementations of PatchDecoderImpl)
+   *
+   * @param requestedOptions Requested options of the stream.
+   * @param supportedOptions Options that can be safely supported.
+   * @throws RdfProtoDeserializationError on validation error
+   */
+  def checkCompatibility(requestedOptions: RdfPatchOptions, supportedOptions: RdfPatchOptions): Unit =
+    BaseJellyOptions.checkCompatibility(requestedOptions, supportedOptions, PatchConstants.protoVersion)
 
   /**
    * Convert a Jelly-RDF physical type to a Jelly-Patch physical type.
