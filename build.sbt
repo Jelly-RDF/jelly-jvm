@@ -27,7 +27,7 @@ lazy val jenaV = "5.3.0"
 lazy val rdf4jV = "5.1.2"
 // !! When updating ScalaPB also change the version of the plugin in plugins.sbt
 lazy val scalapbV = "0.11.17"
-lazy val protobufV = "4.29.3"
+lazy val protobufV = "4.30.0"
 
 // List of exclusions for the grpc module and its dependencies
 lazy val grpcExclusions = Seq(
