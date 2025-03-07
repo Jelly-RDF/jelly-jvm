@@ -3,8 +3,8 @@ package eu.ostrzyciel.jelly.core.proto.future;
 
 // Jelly RDF serialization with Protocol Buffers.
 // Specification document:
-// https://w3id.org/jelly/1.1.0/specification/serialization
-// Protocol version: 1.1.0
+// https://w3id.org/jelly/1.1.1/specification/serialization
+// Protocol version: 1.1.1
 // !!! MODIFIED FOR FORWARD COMPATIBILITY TESTING !!!
 // !!! DO NOT USE IN PRODUCTION !!!
 
@@ -388,6 +388,12 @@ message RdfStreamRow {
 message RdfStreamFrame {
   // Stream rows
   repeated RdfStreamRow rows = 1;
+  // Arbitrary metadata
+  // The keys are UTF-8 encoded strings, the values are byte arrays.
+  // This may be used by implementations in any way they see fit.
+  // The metadata does not affect the RDF data in any way, treat it
+  // as comments in a text file.
+  map<string, bytes> metadata = 15;
 
   // !!! ADDED FOR FORWARD COMPATIBILITY TESTING
   // This is very similar to a feature introduced in Jelly-RDF 1.1.1
