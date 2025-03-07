@@ -388,4 +388,9 @@ message RdfStreamRow {
 message RdfStreamFrame {
   // Stream rows
   repeated RdfStreamRow rows = 1;
+
+  // !!! ADDED FOR FORWARD COMPATIBILITY TESTING
+  // This is very similar to a feature introduced in Jelly-RDF 1.1.1
+  // See: https://github.com/Jelly-RDF/jelly-protobuf/issues/32
+  map<string, bytes> future_metadata = 115;
 }
