@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.integration_tests
 
+import com.google.protobuf.ByteString
 import eu.ostrzyciel.jelly.convert.jena.JenaConverterFactory
 import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
 import eu.ostrzyciel.jelly.core.*
@@ -47,8 +48,29 @@ class ForwardCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       )
     )),
   ))
+  // Third test case: everything is supported by this version of Jelly,
+  // only a new metadata field is added to RdfStreamFrame.
+  // This tests adding a feature like the one added in Jelly-RDF 1.1.1:
+  // https://github.com/Jelly-RDF/jelly-protobuf/issues/32
+  private val futureFrame3 = future.RdfStreamFrame(
+    Seq(future.RdfStreamRow(future.RdfStreamRow.Row.Options(
+      future.RdfStreamOptions(
+        physicalType = future.PhysicalStreamType.TRIPLES,
+        logicalType = future.LogicalStreamType.FLAT_TRIPLES,
+        maxNameTableSize = 1000,
+        maxPrefixTableSize = 200,
+        maxDatatypeTableSize = 32,
+        version = 2,
+      )
+    ))),
+    futureMetadata = Map(
+      "key" -> ByteString.copyFromUtf8("value"),
+      "key2" -> ByteString.copyFrom(Array.ofDim[Byte](100))
+    ),
+  )
   private val futureFrameBytes: Array[Byte] = futureFrame.toByteArray
   private val futureFrameBytes2: Array[Byte] = futureFrame2.toByteArray
+  private val futureFrameBytes3: Array[Byte] = futureFrame3.toByteArray
 
   "current Jelly version" should {
     "be 2" in {
@@ -124,5 +146,15 @@ class ForwardCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
         decoder.ingestRow(parsed.rows.head)
       }
       error.getMessage should include("Unsupported proto version: 123")
+    }
+  }
+
+  "RdfStreamFrame" should {
+    "ignore unknown metadata field" in {
+      // This tests forward compat with changes like those introduced in Jelly-RDF 1.1.1:
+      // https://github.com/Jelly-RDF/jelly-protobuf/issues/32
+      val parsed = v1.RdfStreamFrame.parseFrom(futureFrameBytes3)
+      parsed.rows.size should be (1)
+      parsed.rows.head.row.isOptions should be (true)
     }
   }
