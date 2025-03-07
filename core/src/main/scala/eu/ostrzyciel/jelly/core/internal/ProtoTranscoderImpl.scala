@@ -35,7 +35,10 @@ private[core] final class ProtoTranscoderImpl(
     rowBuffer.clear()
     for row <- frame.rows do
       processRow(row)
-    val newFrame = RdfStreamFrame(rowBuffer.toSeq)
+    val newFrame = RdfStreamFrame(
+      rows = rowBuffer.toSeq,
+      metadata = frame.metadata, // Preserve metadata, if present
+    )
     newFrame
 
   // Transcoder state

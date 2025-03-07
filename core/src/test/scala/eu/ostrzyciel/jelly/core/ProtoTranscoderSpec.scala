@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
+import com.google.protobuf.ByteString
 import eu.ostrzyciel.jelly.core.ProtoTestCases.*
 import eu.ostrzyciel.jelly.core.helpers.{MockConverterFactory, Mrl}
 import eu.ostrzyciel.jelly.core.proto.v1.*
@@ -279,5 +280,33 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
         .withPhysicalType(PhysicalStreamType.TRIPLES)
         .withMaxPrefixTableSize(0)
       transcoder.ingestRow(RdfStreamRow(inputOptions))
+    }
+
+    "preserve lack of metadata in a frame (1.1.1)" in {
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.smallStrict)
+      val input = RdfStreamFrame(
+        rows = Seq(RdfStreamRow(
+          JellyOptions.smallStrict.withVersion(Constants.protoVersion_1_1_x)
+        )),
+      )
+      val output = transcoder.ingestFrame(input)
+      output.metadata.size should be (0)
+    }
+
+    "preserve metadata in a frame (1.1.1)" in {
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.smallStrict)
+      val input = RdfStreamFrame(
+        rows = Seq(RdfStreamRow(
+          JellyOptions.smallStrict.withVersion(Constants.protoVersion_1_1_x)
+        )),
+        metadata = Map(
+          "key1" -> ByteString.copyFromUtf8("value"),
+          "key2" -> ByteString.copyFromUtf8("value2"),
+        ),
+      )
+      val output = transcoder.ingestFrame(input)
+      output.metadata.size should be (2)
+      output.metadata("key1").toStringUtf8 should be ("value")
+      output.metadata("key2").toStringUtf8 should be ("value2")
     }
   }
