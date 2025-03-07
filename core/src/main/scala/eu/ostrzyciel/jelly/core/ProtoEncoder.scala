@@ -24,6 +24,7 @@ object ProtoEncoder:
     options: RdfStreamOptions,
     enableNamespaceDeclarations: Boolean = false,
     maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = None,
+    enableStreamFrameMetadata: Boolean = false,
   )
 
 /**

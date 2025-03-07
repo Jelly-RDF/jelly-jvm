@@ -184,6 +184,6 @@ private[core] final class ProtoTranscoderImpl(
     if !emittedOptions then
       emittedOptions = true
       rowBuffer.append(RdfStreamRow(outputOptions.copy(
-        version = if inputOptions.version == Constants.protoVersionNoNsDecl then
-          Constants.protoVersionNoNsDecl else Constants.protoVersion,
+        version = if inputOptions.version == Constants.protoVersion_1_0_x then
+          Constants.protoVersion_1_0_x else Constants.protoVersion,
       )))

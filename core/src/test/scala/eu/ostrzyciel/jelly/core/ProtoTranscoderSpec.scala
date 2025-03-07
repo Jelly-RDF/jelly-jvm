@@ -203,7 +203,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     }
 
     "maintain protocol version 1 if input uses it" in {
-      val options = JellyOptions.smallStrict.withVersion(Constants.protoVersionNoNsDecl)
+      val options = JellyOptions.smallStrict.withVersion(Constants.protoVersion_1_0_x)
       val input = RdfStreamRow(options)
       val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(options.withVersion(Constants.protoVersion))
       val output = transcoder.ingestRow(input)
