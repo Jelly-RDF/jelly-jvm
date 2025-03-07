@@ -23,6 +23,7 @@ object BackCompatSpec:
   val versionToNumber = Map(
     "v1_0_0" -> 1,
     "v1_1_0" -> 2,
+    "v1_1_1" -> 2,
   )
 
   lazy val testCases: Seq[(String, String, Seq[String])] =

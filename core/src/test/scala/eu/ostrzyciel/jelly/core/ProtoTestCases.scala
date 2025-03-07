@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
+import com.google.protobuf.ByteString
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
@@ -19,11 +20,13 @@ object ProtoTestCases:
   trait TestCase[+TStatement]:
     def mrl: Seq[TStatement]
     def encoded(opt: RdfStreamOptions): Seq[RdfStreamRowValue]
-    def encodedFull(opt: RdfStreamOptions, groupByN: Int) =
+    def encodedFull(
+      opt: RdfStreamOptions, groupByN: Int, metadata: Map[String, ByteString] = Map.empty
+    ) =
       encoded(opt)
         .map(row => RdfStreamRow(row))
         .grouped(groupByN)
-        .map(rows => RdfStreamFrame(rows))
+        .map(rows => RdfStreamFrame(rows, metadata = metadata))
         .toSeq
 
   object Triples1 extends TestCase[Triple]:

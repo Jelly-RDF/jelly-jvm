@@ -20,7 +20,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES)
       ))
       val encoded = Triples1.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
-      assertEncoded(encoded, Triples1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
+      assertEncoded(encoded, Triples1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
     }
 
     "encode triple statements with namespace declarations" in {
@@ -56,7 +56,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
       ))
       val encoded = Quads1.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
-      assertEncoded(encoded, Quads1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
+      assertEncoded(encoded, Quads1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
     }
 
     "encode quad statements with an external buffer" in {
@@ -70,7 +70,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         // external buffer – nothing should be returned directly
         result.size should be (0)
 
-      assertEncoded(buffer.toSeq, Quads1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
+      assertEncoded(buffer.toSeq, Quads1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
     }
 
     "encode quad statements (repeated default graph)" in {
@@ -78,7 +78,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
       ))
       val encoded = Quads2RepeatDefault.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
-      assertEncoded(encoded, Quads2RepeatDefault.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
+      assertEncoded(encoded, Quads2RepeatDefault.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
     }
 
     "encode graphs" in {
@@ -90,7 +90,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         triples.flatMap(triple => encoder.addTripleStatement(triple).toSeq),
         encoder.endGraph().toSeq
       ).flatten)
-      assertEncoded(encoded, Graphs1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
+      assertEncoded(encoded, Graphs1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
     }
 
     "encode graphs with an external buffer" in {
@@ -108,7 +108,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         val end = encoder.endGraph()
         end.size should be (0)
 
-      assertEncoded(buffer.toSeq, Graphs1.encoded(encoder.options.withVersion(Constants.protoVersionNoNsDecl)))
+      assertEncoded(buffer.toSeq, Graphs1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
     }
 
     "not allow to end a graph before starting one" in {

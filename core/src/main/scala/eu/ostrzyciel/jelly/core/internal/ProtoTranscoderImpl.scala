@@ -35,7 +35,10 @@ private[core] final class ProtoTranscoderImpl(
     rowBuffer.clear()
     for row <- frame.rows do
       processRow(row)
-    val newFrame = RdfStreamFrame(rowBuffer.toSeq)
+    val newFrame = RdfStreamFrame(
+      rows = rowBuffer.toSeq,
+      metadata = frame.metadata, // Preserve metadata, if present
+    )
     newFrame
 
   // Transcoder state
@@ -184,6 +187,6 @@ private[core] final class ProtoTranscoderImpl(
     if !emittedOptions then
       emittedOptions = true
       rowBuffer.append(RdfStreamRow(outputOptions.copy(
-        version = if inputOptions.version == Constants.protoVersionNoNsDecl then
-          Constants.protoVersionNoNsDecl else Constants.protoVersion,
+        version = if inputOptions.version == Constants.protoVersion_1_0_x then
+          Constants.protoVersion_1_0_x else Constants.protoVersion,
       )))

@@ -110,7 +110,8 @@ private[core] final class ProtoEncoderImpl[TNode, -TTriple, -TQuad](
     rowBuffer.append(RdfStreamRow(
       // Override whatever the user set in the options.
       options.withVersion(
-        // If namespace declarations are enabled, we need to use Jelly 1.1.0.
-        if enableNamespaceDeclarations then Constants.protoVersion else Constants.protoVersionNoNsDecl
+        // If namespace declarations are enabled, we need to use Jelly 1.1.x.
+        if enableNamespaceDeclarations then Constants.protoVersion_1_1_x
+        else Constants.protoVersion_1_0_x
       )
     ))

@@ -98,6 +98,6 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
           if enableNsDecls.isDefined && enableNsDecls.get then
             options.version should be(Constants.protoVersion)
           else
-            options.version should be (Constants.protoVersionNoNsDecl)
+            options.version should be (Constants.protoVersion_1_0_x)
         }
     }

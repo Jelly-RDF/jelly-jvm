@@ -85,7 +85,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     options.maxNameTableSize should be (expOpt.maxNameTableSize)
     options.maxPrefixTableSize should be (expOpt.maxPrefixTableSize)
     options.maxDatatypeTableSize should be (expOpt.maxDatatypeTableSize)
-    options.version should be (Constants.protoVersionNoNsDecl)
+    options.version should be (Constants.protoVersion_1_0_x)
 
   runTest(JenaSerDes, JenaSerDes)
   runTest(JenaSerDes, JenaStreamSerDes)
