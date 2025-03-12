@@ -32,19 +32,15 @@ private[core] final class ProtoEncoderImpl[TNode, -TTriple, -TQuad](
   override val maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = params.maybeRowBuffer
 
   /** @inheritdoc */
-  override def addTripleStatement(
-    subject: TNode, predicate: TNode, `object`: TNode
-  ): Iterable[RdfStreamRow] =
+  override def addTripleStatement(triple: TTriple): Iterable[RdfStreamRow] =
     handleHeader()
-    val mainRow = RdfStreamRow(tripleToProto(subject, predicate, `object`))
+    val mainRow = RdfStreamRow(tripleToProto(triple))
     appendAndReturn(mainRow)
 
   /** @inheritdoc */
-  override def addQuadStatement(
-    subject: TNode, predicate: TNode, `object`: TNode, graph: TNode
-  ): Iterable[RdfStreamRow] =
+  override def addQuadStatement(quad: TQuad): Iterable[RdfStreamRow] =
     handleHeader()
-    val mainRow = RdfStreamRow(quadToProto(subject, predicate, `object`, graph))
+    val mainRow = RdfStreamRow(quadToProto(quad))
     appendAndReturn(mainRow)
 
   /** @inheritdoc */

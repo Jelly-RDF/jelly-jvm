@@ -56,53 +56,16 @@ trait ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted]
    *
    * @param triple triple to add
    * @return iterable of stream rows
-   * @throws NotImplementedError if the RDF library does not support triple objects
-   *                             (use `addTripleStatement(subject, predicate, object)` instead)
    */
-  final def addTripleStatement(triple: TTriple): Iterable[RdfStreamRow] =
-    addTripleStatement(
-      converter.getTstS(triple),
-      converter.getTstP(triple),
-      converter.getTstO(triple)
-    )
-
-  /**
-   * Add an RDF triple statement to the stream.
-   * @param subject subject
-   * @param predicate predicate
-   * @param `object` object
-   * @return iterable of stream rows
-   * @since 2.9.0
-   */
-  def addTripleStatement(subject: TNode, predicate: TNode, `object`: TNode): Iterable[RdfStreamRow]
+  def addTripleStatement(triple: TTriple): Iterable[RdfStreamRow]
 
   /**
    * Add an RDF quad statement to the stream.
    *
    * @param quad quad to add
    * @return iterable of stream rows
-   * @throws NotImplementedError if the RDF library does not support quad objects
-   *                             (use `addQuadStatement(subject, predicate, object, graph)` instead)
    */
-  final def addQuadStatement(quad: TQuad): Iterable[RdfStreamRow] =
-    addQuadStatement(
-      converter.getQstS(quad),
-      converter.getQstP(quad),
-      converter.getQstO(quad),
-      converter.getQstG(quad)
-    )
-
-  /**
-   * Add an RDF quad statement to the stream.
-   *
-   * @param subject subject
-   * @param predicate predicate
-   * @param `object` object
-   * @param graph graph
-   * @return iterable of stream rows
-   * @since 2.9.0
-   */
-  def addQuadStatement(subject: TNode, predicate: TNode, `object`: TNode, graph: TNode): Iterable[RdfStreamRow]
+  def addQuadStatement(quad: TQuad): Iterable[RdfStreamRow]
 
   /**
    * Signal the start of a new (named) delimited graph in a GRAPHS stream.

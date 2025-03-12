@@ -30,19 +30,17 @@ private[core] trait ProtoEncoderBase[TNode, -TTriple, -TQuad]:
       lastGraph = node
       converter.graphNodeToProto(nodeEncoder, node)
 
-  protected final def tripleToProto(subject: TNode, predicate: TNode, `object`: TNode): RdfTriple =
+  protected final def tripleToProto(triple: TTriple): RdfTriple =
     RdfTriple(
-      subject = nodeToProtoWrapped(subject, lastSubject),
-      predicate = nodeToProtoWrapped(predicate, lastPredicate),
-      `object` = nodeToProtoWrapped(`object`, lastObject),
+      subject = nodeToProtoWrapped(converter.getTstS(triple), lastSubject),
+      predicate = nodeToProtoWrapped(converter.getTstP(triple), lastPredicate),
+      `object` = nodeToProtoWrapped(converter.getTstO(triple), lastObject),
     )
 
-  protected final def quadToProto(
-    subject: TNode, predicate: TNode, `object`: TNode, graph: TNode
-  ): RdfQuad =
+  protected final def quadToProto(quad: TQuad): RdfQuad =
     RdfQuad(
-      subject = nodeToProtoWrapped(subject, lastSubject),
-      predicate = nodeToProtoWrapped(predicate, lastPredicate),
-      `object` = nodeToProtoWrapped(`object`, lastObject),
-      graph = graphNodeToProtoWrapped(graph),
+      subject = nodeToProtoWrapped(converter.getQstS(quad), lastSubject),
+      predicate = nodeToProtoWrapped(converter.getQstP(quad), lastPredicate),
+      `object` = nodeToProtoWrapped(converter.getQstO(quad), lastObject),
+      graph = graphNodeToProtoWrapped(converter.getQstG(quad)),
     )
