@@ -16,6 +16,7 @@ trait ProtoEncoderConverter[TNode, -TTriple, -TQuad]:
    * Get the subject of the triple.
    * @param triple triple
    * @return
+   * @throws NotImplementedError if the RDF library does not support triple objects
    */
   def getTstS(triple: TTriple): TNode
 
@@ -23,6 +24,7 @@ trait ProtoEncoderConverter[TNode, -TTriple, -TQuad]:
    * Get the predicate of the triple.
    * @param triple triple
    * @return
+   * @throws NotImplementedError if the RDF library does not support triple objects
    */
   def getTstP(triple: TTriple): TNode
 
@@ -30,6 +32,7 @@ trait ProtoEncoderConverter[TNode, -TTriple, -TQuad]:
    * Get the object of the triple.
    * @param triple triple
    * @return
+   * @throws NotImplementedError if the RDF library does not support triple objects
    */
   def getTstO(triple: TTriple): TNode
 
@@ -37,6 +40,7 @@ trait ProtoEncoderConverter[TNode, -TTriple, -TQuad]:
    * Get the subject of the quad.
    * @param quad quad
    * @return
+   * @throws NotImplementedError if the RDF library does not support quad objects
    */
   def getQstS(quad: TQuad): TNode
 
@@ -44,6 +48,7 @@ trait ProtoEncoderConverter[TNode, -TTriple, -TQuad]:
    * Get the predicate of the quad.
    * @param quad quad
    * @return
+   * @throws NotImplementedError if the RDF library does not support quad objects
    */
   def getQstP(quad: TQuad): TNode
 
@@ -51,6 +56,7 @@ trait ProtoEncoderConverter[TNode, -TTriple, -TQuad]:
    * Get the graph of the quad.
    * @param quad quad
    * @return
+   * @throws NotImplementedError if the RDF library does not support quad objects
    */
   def getQstO(quad: TQuad): TNode
 
@@ -58,6 +64,7 @@ trait ProtoEncoderConverter[TNode, -TTriple, -TQuad]:
    * Get the graph name of the quad.
    * @param quad quad
    * @return
+   * @throws NotImplementedError if the RDF library does not support quad objects
    */
   def getQstG(quad: TQuad): TNode
 
