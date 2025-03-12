@@ -7,7 +7,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 import java.io.OutputStream;
 
 /**
- * High-level writer for the Jelly-RDF format.
+ * Writer for the Jelly-RDF format implemented in Titanium RDF API.
  * If you need fine-grained control over the stream frames, their metadata, or how they are
  * written to bytes, use the lower-level TitaniumJellyEncoder instead.
  */
