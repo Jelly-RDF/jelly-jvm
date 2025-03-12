@@ -5,18 +5,17 @@ import eu.ostrzyciel.jelly.convert.titanium.internal.TitaniumConverterFactory
 import eu.ostrzyciel.jelly.convert.titanium.internal.TitaniumRdf.*
 import eu.ostrzyciel.jelly.core.RdfProtoSerializationError
 import eu.ostrzyciel.jelly.core.ProtoEncoder
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamOptions, RdfStreamRow}
+import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.collection.immutable
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
 
-private final class TitaniumJellyEncoderImpl(options: RdfStreamOptions) extends TitaniumJellyEncoder:
-
+private class TitaniumJellyEncoderImpl(options: RdfStreamOptions) extends TitaniumJellyEncoder:
   private val buffer: ListBuffer[RdfStreamRow] = new ListBuffer[RdfStreamRow]()
-  // We don't set any options here – it is the responsibility of the caller!
   private val encoder = TitaniumConverterFactory.encoder(ProtoEncoder.Params(
-    options = options,
+    // We set the stream type to QUADS, as this is the only type supported by Titanium.
+    options = options.withPhysicalType(PhysicalStreamType.QUADS),
     enableNamespaceDeclarations = false,
     maybeRowBuffer = Some(buffer),
   ))
@@ -48,14 +47,14 @@ private final class TitaniumJellyEncoderImpl(options: RdfStreamOptions) extends 
     }
     this
 
-  override def getRowCount: Int = buffer.size
+  final override def getRowCount: Int = buffer.size
 
-  override def getRowsScala: immutable.Iterable[RdfStreamRow] =
+  final override def getRowsScala: Seq[RdfStreamRow] =
     val list = buffer.toList
     buffer.clear()
     list
 
-  override def getRowsJava: java.lang.Iterable[RdfStreamRow] =
+  final override def getRowsJava: java.lang.Iterable[RdfStreamRow] =
     val list = buffer.toList
     buffer.clear()
     list.asJava
