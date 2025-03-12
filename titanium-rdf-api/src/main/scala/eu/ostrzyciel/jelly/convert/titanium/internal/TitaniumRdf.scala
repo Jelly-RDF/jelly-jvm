@@ -10,6 +10,6 @@ private[titanium] object TitaniumRdf:
   // No support for RDF 1.2 directionality... yet.
   final case class LangLiteral(lex: String, lang: String) extends Literal
   final case class DtLiteral(lex: String, dt: String) extends Literal
-  
+
   final case class Triple(s: String, p: String, o: Node)
   final case class Quad(s: String, p: String, o: Node, g: String)
