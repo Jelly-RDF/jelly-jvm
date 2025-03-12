@@ -46,4 +46,10 @@ public interface TitaniumJellyWriter extends RdfQuadConsumer {
      * @return RdfStreamOptions
      */
     RdfStreamOptions getOptions();
+    
+    /**
+     * Returns the frame size that this writer uses.
+     * @return int
+     */
+    int getFrameSize();
 }

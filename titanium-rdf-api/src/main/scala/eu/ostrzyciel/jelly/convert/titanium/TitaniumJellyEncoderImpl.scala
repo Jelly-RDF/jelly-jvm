@@ -60,4 +60,4 @@ private class TitaniumJellyEncoderImpl(options: RdfStreamOptions) extends Titani
     buffer.clear()
     list.asJava
 
-  final override def getOptions: RdfStreamOptions = options
+  final override def getOptions: RdfStreamOptions = encoder.options

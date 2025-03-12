@@ -11,7 +11,7 @@ import java.io.InputStream;
  * If you need fine-grained control over how the data is read, use the lower-level
  * TitaniumJellyDecoder instead.
  */
-public interface TitaniumJellyParser {
+public interface TitaniumJellyReader {
 
     /**
      * Factory method to create a new TitaniumJellyParser instance.
@@ -21,8 +21,8 @@ public interface TitaniumJellyParser {
      *                         JellyOptions.defaultSupportedOptions() and then modify them as needed.
      * @return TitaniumJellyParser
      */
-    static TitaniumJellyParser factory(RdfStreamOptions supportedOptions) {
-        return new TitaniumJellyParserImpl(supportedOptions);
+    static TitaniumJellyReader factory(RdfStreamOptions supportedOptions) {
+        return new TitaniumJellyReaderImpl(supportedOptions);
     }
 
     /**
@@ -30,7 +30,7 @@ public interface TitaniumJellyParser {
      * This method uses the default supported options.
      * @return TitaniumJellyParser
      */
-    static TitaniumJellyParser factory() {
+    static TitaniumJellyReader factory() {
         return factory(JellyOptions$.MODULE$.defaultSupportedOptions());
     }
 

@@ -6,9 +6,8 @@ import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import java.io.OutputStream
 
 class TitaniumJellyWriterImpl(
-  outputStream: OutputStream, options: RdfStreamOptions, frameSize: Int, 
+  outputStream: OutputStream, options: RdfStreamOptions, frameSize: Int,
 ) extends TitaniumJellyEncoderImpl(options) with TitaniumJellyWriter:
-  override def getOutputStream: OutputStream = outputStream
 
   override def quad(
     subject: String,
@@ -24,3 +23,7 @@ class TitaniumJellyWriterImpl(
       val frame = RdfStreamFrame(getRowsScala)
       frame.writeDelimitedTo(outputStream)
     this
+
+  override def getOutputStream: OutputStream = outputStream
+
+  final override def getFrameSize: Int = frameSize
