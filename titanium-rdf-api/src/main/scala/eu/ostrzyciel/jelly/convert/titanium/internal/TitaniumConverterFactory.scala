@@ -4,7 +4,7 @@ import eu.ostrzyciel.jelly.convert.titanium.internal.TitaniumRdf.*
 import eu.ostrzyciel.jelly.core.ConverterFactory
 
 private[titanium] object TitaniumConverterFactory
-  extends ConverterFactory[TitaniumEncoderConverter, TitaniumDecoderConverter, Node, String, Triple, Quad]:
+  extends ConverterFactory[TitaniumEncoderConverter, TitaniumDecoderConverter, Node, String, Quad, Quad]:
 
   /**
    * @inheritdoc

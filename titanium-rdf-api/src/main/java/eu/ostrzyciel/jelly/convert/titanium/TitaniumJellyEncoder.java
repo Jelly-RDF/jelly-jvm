@@ -26,7 +26,7 @@ public interface TitaniumJellyEncoder extends RdfQuadConsumer {
      * @return TitaniumJellyEncoder
      */
     static TitaniumJellyEncoder factory() {
-        return new TitaniumJellyEncoderImpl(JellyOptions$.MODULE$.smallStrict());
+        return factory(JellyOptions$.MODULE$.smallStrict());
     }
 
     /**
@@ -46,4 +46,10 @@ public interface TitaniumJellyEncoder extends RdfQuadConsumer {
      * @return java.util.Iterable<RdfStreamRow>
      */
     Iterable<RdfStreamRow> getRowsJava();
+    
+    /**
+     * Returns the options that this encoder uses.
+     * @return RdfStreamOptions
+     */
+    RdfStreamOptions getOptions();
 }

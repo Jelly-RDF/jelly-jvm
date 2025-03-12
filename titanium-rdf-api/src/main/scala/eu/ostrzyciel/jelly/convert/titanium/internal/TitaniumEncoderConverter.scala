@@ -8,17 +8,17 @@ import eu.ostrzyciel.jelly.core.proto.v1.{GraphTerm, SpoTerm}
 /**
  * Converter for translating between Titanium RDF API nodes/terms and Jelly proto objects.
  *
- * Triple/Quad classes are used here, but they are not intended to be used with the encoder.
- * The only reason they are here is to satisfy the type signature of the trait.
+ * Quad class is used here, but is not intended to be used with the encoder.
+ * The only reason it's here is to satisfy the type signature of the trait.
  */
-private[titanium] final class TitaniumEncoderConverter extends ProtoEncoderConverter[Node, Triple, Quad]:
+private[titanium] final class TitaniumEncoderConverter extends ProtoEncoderConverter[Node, Quad, Quad]:
   private def err: Node =
     throw new NotImplementedError("The titanium-rdf-api implementation of Jelly does not support " +
       "triple and quad objects. Use the term-based API instead.")
   
-  override def getTstS(triple: Triple): Node = err
-  override def getTstP(triple: Triple): Node = err
-  override def getTstO(triple: Triple): Node = err
+  override def getTstS(triple: Quad): Node = err
+  override def getTstP(triple: Quad): Node = err
+  override def getTstO(triple: Quad): Node = err
 
   override def getQstS(quad: Quad): Node = err
   override def getQstP(quad: Quad): Node = err

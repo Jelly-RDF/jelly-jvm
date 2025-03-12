@@ -39,5 +39,11 @@ public interface TitaniumJellyWriter extends RdfQuadConsumer {
      * Returns the output stream that this writer writes to.
      * @return OutputStream
      */
-    public OutputStream getOutputStream();
+    OutputStream getOutputStream();
+    
+    /**
+     * Returns the options that this writer uses.
+     * @return RdfStreamOptions
+     */
+    RdfStreamOptions getOptions();
 }

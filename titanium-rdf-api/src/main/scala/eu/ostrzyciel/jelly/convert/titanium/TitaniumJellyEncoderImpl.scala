@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.convert.titanium
 
 import com.apicatalog.rdf.api.{RdfConsumerException, RdfQuadConsumer}
+import eu.ostrzyciel.jelly.convert.titanium.Constants.DT_STRING
 import eu.ostrzyciel.jelly.convert.titanium.internal.TitaniumConverterFactory
 import eu.ostrzyciel.jelly.convert.titanium.internal.TitaniumRdf.*
 import eu.ostrzyciel.jelly.core.RdfProtoSerializationError
@@ -35,7 +36,7 @@ private class TitaniumJellyEncoderImpl(options: RdfStreamOptions) extends Titani
       if RdfQuadConsumer.isLiteral(datatype, language, direction) then
         val literal = if RdfQuadConsumer.isLangString(datatype, language, direction) then
           LangLiteral(`object`, language)
-        else if datatype == "http://www.w3.org/2001/XMLSchema#string" then
+        else if datatype == DT_STRING then
           SimpleLiteral(`object`)
         else
           DtLiteral(`object`, datatype)
@@ -58,3 +59,5 @@ private class TitaniumJellyEncoderImpl(options: RdfStreamOptions) extends Titani
     val list = buffer.toList
     buffer.clear()
     list.asJava
+
+  final override def getOptions: RdfStreamOptions = options
