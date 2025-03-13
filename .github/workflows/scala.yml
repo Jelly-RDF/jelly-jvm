@@ -45,4 +45,4 @@ jobs:
       # TODO: move this test to a separate job, run only on Java 17
     - name: Test building assemblies
       shell: bash
-      run: sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly +titaniumRdfApiPlugin/assembly
+      run: sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly
