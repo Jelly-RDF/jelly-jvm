@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://jelly-rdf.github.io/jelly-jvm/dev/user/reactive/">
       
       
-        <link rel="prev" href="../rdf4j/">
+        <link rel="prev" href="../titanium/">
       
       
         <link rel="next" href="../grpc/">
@@ -320,7 +320,7 @@
         
   
   <span class="md-ellipsis">
-    Getting started (application developers)
+    Getting started (app developers)
     
   </span>
   
@@ -340,6 +340,8 @@
   
     
     
+      
+        
       
         
       
@@ -442,6 +444,28 @@
   
   <span class="md-ellipsis">
     RDF4J integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../titanium/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Titanium RDF API integration
     
   </span>
   
@@ -931,7 +955,7 @@
 <p>If you are unfamiliar with the concept of reactive streams or Apache Pekko Streams, we highly recommend you start from reading about the <strong><a href="https://pekko.apache.org/docs/pekko/current/stream/stream-flows-and-basics.html">basic concepts of Pekko Streams</a></strong>.</p>
 <p>We also recommend you first read about the <strong><a href="https://w3id.org/jelly/dev/user-guide#stream-types">RDF stream types in Jelly</a></strong>. Otherwise, this guide may not make much sense.</p>
 </div>
-<p>You can use <code>jelly-stream</code> with any RDF library that has a Jelly integration, such as <a href="../jena/">Apache Jena</a> (using <code>jelly-jena</code>) or <a href="../rdf4j/">RDF4J</a> (using <code>jelly-rdf4j</code>). The streaming API is generic and identical across all libraries.</p>
+<p>You can use <code>jelly-stream</code> with any RDF library that has a full Jelly integration, such as <a href="../jena/">Apache Jena</a> (using <code>jelly-jena</code>) or <a href="../rdf4j/">RDF4J</a> (using <code>jelly-rdf4j</code>)<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. The streaming API is generic and identical across all libraries.</p>
 <h2 id="basic-concepts">Basic concepts</h2>
 <p>A key notion of this API are the encoders and decoders.</p>
 <ul>
@@ -1095,7 +1119,7 @@
 </span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="cm"> * `import eu.ostrzyciel.jelly.convert.jena.given`).</span>
 </span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="cm"> * The same can be achieved with RDF4J just by importing a different module.</span>
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="cm"> */</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="k">object</span><span class="w"> </span><span class="nc">PekkoStreamsEncoderFlow</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">Example</span><span class="p">:</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="k">object</span><span class="w"> </span><span class="nc">PekkoStreamsEncoderFlow</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">ScalaExample</span><span class="p">:</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">:</span><span class="w"> </span><span class="nc">Array</span><span class="p">[</span><span class="nc">String</span><span class="p">]):</span><span class="w"> </span><span class="nc">Unit</span><span class="w"> </span><span class="o">=</span>
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="w">    </span><span class="c1">// We will need a Pekko actor system to run the streams</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="w">    </span><span class="k">given</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">:</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="p">()</span>
@@ -1314,7 +1338,7 @@
 </span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19"></a><span class="cm"> * `import eu.ostrzyciel.jelly.convert.jena.given`).</span>
 </span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20"></a><span class="cm"> * The same can be achieved with RDF4J just by importing a different module.</span>
 </span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21"></a><span class="cm"> */</span>
-</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22"></a><span class="k">object</span><span class="w"> </span><span class="nc">PekkoStreamsEncoderSource</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">Example</span><span class="p">:</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22"></a><span class="k">object</span><span class="w"> </span><span class="nc">PekkoStreamsEncoderSource</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">ScalaExample</span><span class="p">:</span>
 </span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23"></a><span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">:</span><span class="w"> </span><span class="nc">Array</span><span class="p">[</span><span class="nc">String</span><span class="p">]):</span><span class="w"> </span><span class="nc">Unit</span><span class="w"> </span><span class="o">=</span>
 </span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24"></a><span class="w">    </span><span class="c1">// We will need a Pekko actor system to run the streams</span>
 </span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25"></a><span class="w">    </span><span class="k">given</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">:</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="p">()</span>
@@ -1618,7 +1642,7 @@
 </span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23"></a><span class="cm"> * `import eu.ostrzyciel.jelly.convert.jena.given`).</span>
 </span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24"></a><span class="cm"> * The same can be achieved with RDF4J just by importing a different module.</span>
 </span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25"></a><span class="cm"> */</span>
-</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26"></a><span class="k">object</span><span class="w"> </span><span class="nc">PekkoStreamsDecoderFlow</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">Example</span><span class="p">:</span>
+</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26"></a><span class="k">object</span><span class="w"> </span><span class="nc">PekkoStreamsDecoderFlow</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">ScalaExample</span><span class="p">:</span>
 </span><span id="__span-2-27"><a id="__codelineno-2-27" name="__codelineno-2-27"></a><span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">:</span><span class="w"> </span><span class="nc">Array</span><span class="p">[</span><span class="nc">String</span><span class="p">]):</span><span class="w"> </span><span class="nc">Unit</span><span class="w"> </span><span class="o">=</span>
 </span><span id="__span-2-28"><a id="__codelineno-2-28" name="__codelineno-2-28"></a><span class="w">    </span><span class="c1">// We will need a Pekko actor system to run the streams</span>
 </span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29"></a><span class="w">    </span><span class="k">given</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">:</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="p">()</span>
@@ -1929,7 +1953,7 @@
 </span><span id="__span-3-32"><a id="__codelineno-3-32" name="__codelineno-3-32"></a><span class="cm"> * `import eu.ostrzyciel.jelly.convert.jena.given`).</span>
 </span><span id="__span-3-33"><a id="__codelineno-3-33" name="__codelineno-3-33"></a><span class="cm"> * The same can be achieved with RDF4J just by importing a different module.</span>
 </span><span id="__span-3-34"><a id="__codelineno-3-34" name="__codelineno-3-34"></a><span class="cm"> */</span>
-</span><span id="__span-3-35"><a id="__codelineno-3-35" name="__codelineno-3-35"></a><span class="k">object</span><span class="w"> </span><span class="nc">PekkoStreamsWithIo</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">Example</span><span class="p">:</span>
+</span><span id="__span-3-35"><a id="__codelineno-3-35" name="__codelineno-3-35"></a><span class="k">object</span><span class="w"> </span><span class="nc">PekkoStreamsWithIo</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">ScalaExample</span><span class="p">:</span>
 </span><span id="__span-3-36"><a id="__codelineno-3-36" name="__codelineno-3-36"></a><span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">:</span><span class="w"> </span><span class="nc">Array</span><span class="p">[</span><span class="nc">String</span><span class="p">]):</span><span class="w"> </span><span class="nc">Unit</span><span class="w"> </span><span class="o">=</span>
 </span><span id="__span-3-37"><a id="__codelineno-3-37" name="__codelineno-3-37"></a><span class="w">    </span><span class="c1">// We will need a Pekko actor system to run the streams</span>
 </span><span id="__span-3-38"><a id="__codelineno-3-38" name="__codelineno-3-38"></a><span class="w">    </span><span class="k">given</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">:</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="p">()</span>
@@ -2005,6 +2029,14 @@
 </li>
 <li><a href="../low-level/">Low-level usage</a></li>
 </ul>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>There is no support for the Pekko Streams API in the <a href="../titanium/"><code>jelly-titanium-rdf-api</code> module</a>. You will need to use a full RDF library like Jena or RDF4J to access it.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 
 
 
@@ -2027,7 +2059,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">January 12, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 13, 2025</span>
   </span>
 
     

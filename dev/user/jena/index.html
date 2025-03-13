@@ -320,7 +320,7 @@
         
   
   <span class="md-ellipsis">
-    Getting started (application developers)
+    Getting started (app developers)
     
   </span>
   
@@ -340,6 +340,8 @@
   
     
     
+      
+        
       
         
       
@@ -515,6 +517,28 @@
   
   <span class="md-ellipsis">
     RDF4J integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../titanium/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Titanium RDF API integration
     
   </span>
   
@@ -1025,7 +1049,7 @@
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="cm"> *</span>
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="cm"> * See also: https://jena.apache.org/documentation/io/</span>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="cm"> */</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="k">object</span><span class="w"> </span><span class="nc">JenaRiot</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">Example</span><span class="p">:</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="k">object</span><span class="w"> </span><span class="nc">JenaRiot</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">ScalaExample</span><span class="p">:</span>
 </span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">:</span><span class="w"> </span><span class="nc">Array</span><span class="p">[</span><span class="nc">String</span><span class="p">]):</span><span class="w"> </span><span class="nc">Unit</span><span class="w"> </span><span class="o">=</span>
 </span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="w">    </span><span class="c1">// Load the RDF graph from an N-Triples file</span>
 </span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">RDFDataMgr</span><span class="p">.</span><span class="n">loadModel</span><span class="p">(</span><span class="nc">File</span><span class="p">(</span><span class="n">getClass</span><span class="p">.</span><span class="n">getResource</span><span class="p">(</span><span class="s">&quot;/weather.nt&quot;</span><span class="p">).</span><span class="n">toURI</span><span class="p">).</span><span class="n">toURI</span><span class="p">.</span><span class="n">toString</span><span class="p">)</span>
@@ -1244,7 +1268,7 @@
 </span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15"></a><span class="cm"> *</span>
 </span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16"></a><span class="cm"> * See also: https://jena.apache.org/documentation/io/streaming-io.html</span>
 </span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17"></a><span class="cm"> */</span>
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18"></a><span class="k">object</span><span class="w"> </span><span class="nc">JenaRiotStreaming</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">Example</span><span class="p">:</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18"></a><span class="k">object</span><span class="w"> </span><span class="nc">JenaRiotStreaming</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="n">shared</span><span class="p">.</span><span class="nc">ScalaExample</span><span class="p">:</span>
 </span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19"></a><span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">:</span><span class="w"> </span><span class="nc">Array</span><span class="p">[</span><span class="nc">String</span><span class="p">]):</span><span class="w"> </span><span class="nc">Unit</span><span class="w"> </span><span class="o">=</span>
 </span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20"></a><span class="w">    </span><span class="c1">// Initialize a Jena StreamRDF to consume the statements</span>
 </span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">readerStream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">StreamRDFLib</span><span class="p">.</span><span class="n">count</span><span class="p">()</span>

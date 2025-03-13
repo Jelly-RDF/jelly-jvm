@@ -29,7 +29,7 @@ import scala.util.{Failure, Success}
  * `import eu.ostrzyciel.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoGrpc extends shared.Example:
+object PekkoGrpc extends shared.ScalaExample:
   // Create a config for Pekko gRPC.
   // We can use the same config for the client and the server, as we are communicating on localhost.
   // This would usually be loaded from a configuration file (e.g., application.conf).

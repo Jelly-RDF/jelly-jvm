@@ -402,7 +402,7 @@
         
   
   <span class="md-ellipsis">
-    Getting started (application developers)
+    Getting started (app developers)
     
   </span>
   
@@ -420,6 +420,8 @@
   
     
     
+      
+        
       
         
       
@@ -522,6 +524,28 @@
   
   <span class="md-ellipsis">
     RDF4J integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user/titanium/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Titanium RDF API integration
     
   </span>
   
@@ -901,7 +925,7 @@
 
 
 <h1 id="jelly-jvm">Jelly-JVM</h1>
-<p><strong>Jelly-JVM</strong> is an implementation of the <a href="https://w3id.org/jelly/dev/">Jelly serialization format and gRPC streaming protocol</a> for the Java Virtual Machine (JVM), written in Scala 3<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. The supported RDF libraries are <a href="https://jena.apache.org/">Apache Jena</a> and <a href="https://rdf4j.org/">Eclipse RDF4J</a>.</p>
+<p><strong>Jelly-JVM</strong> is an implementation of the <a href="https://w3id.org/jelly/dev/">Jelly serialization format and gRPC streaming protocol</a> for the Java Virtual Machine (JVM), written in Scala 3<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. It supports <a href="https://jena.apache.org/">Apache Jena</a>, <a href="https://rdf4j.org/">Eclipse RDF4J</a>, and the <a href="https://github.com/filip26/titanium-rdf-api">Titanium RDF API</a>.</p>
 <p>Jelly-JVM provides a <strong>full stack</strong> of utilities for fast and scalable RDF streaming with the <a href="https://w3id.org/jelly/dev/specification">Jelly protocol</a>. Oh, and <a href="https://w3id.org/jelly/dev/performance"><strong>it's <em>blazing-fast</em></strong></a>, too!</p>
 <div class="admonition tip">
 <p class="admonition-title">Getting started with plugins – no code required</p>
@@ -916,25 +940,31 @@
 <p>The implementation is split into a few modules that can be used separately:</p>
 <ul>
 <li>
-<p><code>jelly-core</code> – implementation of the <a href="https://w3id.org/jelly/dev/specification/serialization">Jelly serialization format</a> (using the <a href="https://scalapb.github.io/">scalapb</a> library), along with generic utilities for converting the deserialized RDF data to/from the representations of RDF libraries (like Apache Jena or RDF4J). </p>
+<p><code>jelly-core</code> – core generic code for serializing/deserializing Jelly data. You need an additional module (like <code>jelly-jena</code>) to integrate it with a specific RDF library.</p>
 <ul>
 <li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core"><img alt="Browse jelly-core versions" src="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core/latest.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-core_3"><img alt="Browse latest jelly-core API docs" src="https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-core_3/javadoc.svg" /></a></li>
 </ul>
 </li>
 <li>
-<p><code>jelly-jena</code> – conversions and interop code for the <a href="https://jena.apache.org/">Apache Jena</a> library.</p>
+<p><code>jelly-jena</code> – interop code for the <a href="https://jena.apache.org/">Apache Jena</a> library.</p>
 <ul>
 <li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena"><img alt="Browse jelly-jena versions" src="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena/latest.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-jena_3"><img alt="Browse latest jelly-jena API docs" src="https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-jena_3/javadoc.svg" /></a></li>
 </ul>
 </li>
 <li>
-<p><code>jelly-rdf4j</code> – conversions and interop code for the <a href="https://rdf4j.org/">RDF4J</a> library.</p>
+<p><code>jelly-rdf4j</code> – interop code for the <a href="https://rdf4j.org/">Eclipse RDF4J</a> library.</p>
 <ul>
 <li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j"><img alt="Browse jelly-rdf4j versions" src="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j/latest.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-rdf4j_3"><img alt="Browse latest jelly-rdf4j API docs" src="https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-rdf4j_3/javadoc.svg" /></a></li>
 </ul>
 </li>
 <li>
-<p><code>jelly-stream</code> – utilities for building <a href="https://www.reactive-streams.org/">Reactive Streams</a> of RDF data (based on Pekko Streams). Useful for integrating with gRPC or other streaming protocols (e.g., Kafka, MQTT).</p>
+<p><code>jelly-titanium-rdf-api</code> – integration with the minimalistic <a href="https://github.com/filip26/titanium-rdf-api">Titanium RDF API</a>.</p>
+<ul>
+<li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-titanium-rdf-api"><img alt="Browse jelly-titanium-rdf-api versions" src="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-titanium-rdf-api/latest.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-titanium-rdf-api_3"><img alt="Browse latest jelly-titanium-rdf-api API docs" src="https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-titanium-rdf-api_3/javadoc.svg" /></a></li>
+</ul>
+</li>
+<li>
+<p><code>jelly-stream</code> – utilities for building <a href="https://www.reactive-streams.org/">Reactive Streams</a> of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT...</p>
 <ul>
 <li><a href="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream"><img alt="Browse jelly-stream versions" src="https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/latest.svg" /></a> <a href="https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-stream_3"><img alt="Browse latest jelly-stream API docs" src="https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-stream_3/javadoc.svg" /></a></li>
 </ul>
@@ -990,6 +1020,7 @@
 <li>User guide<ul>
 <li><a href="user/jena/">Apache Jena integration</a></li>
 <li><a href="user/rdf4j/">RDF4J integration</a></li>
+<li><a href="user/titanium/">Titanium RDF API integration</a> <strong>(new in 2.9.0!)</strong></li>
 <li><a href="user/reactive/">Reactive streaming</a></li>
 <li><a href="user/grpc/">gRPC</a></li>
 <li><a href="user/utilities/">Useful utilities</a></li>
@@ -1039,7 +1070,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 15, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 13, 2025</span>
   </span>
 
     

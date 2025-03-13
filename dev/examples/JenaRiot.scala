@@ -14,7 +14,7 @@ import scala.util.Using
  *
  * See also: https://jena.apache.org/documentation/io/
  */
-object JenaRiot extends shared.Example:
+object JenaRiot extends shared.ScalaExample:
   def main(args: Array[String]): Unit =
     // Load the RDF graph from an N-Triples file
     val model = RDFDataMgr.loadModel(File(getClass.getResource("/weather.nt").toURI).toURI.toString)

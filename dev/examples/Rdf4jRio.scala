@@ -16,7 +16,7 @@ import scala.util.Using
  *
  * See also: https://rdf4j.org/documentation/programming/rio/
  */
-object Rdf4jRio extends shared.Example:
+object Rdf4jRio extends shared.ScalaExample:
   def main(args: Array[String]): Unit =
     // Load the RDF graph from an N-Triples file
     val inputFile = File(getClass.getResource("/weather.nt").toURI)
