@@ -12,6 +12,7 @@ import java.io.OutputStream;
  * written to bytes, use the lower-level TitaniumJellyEncoder instead.
  * <p>
  * The close() method MUST be called at the end to flush the buffer and write the last frame.
+ * @since 2.9.0
  */
 public interface TitaniumJellyWriter extends RdfQuadConsumer, AutoCloseable {
     /**

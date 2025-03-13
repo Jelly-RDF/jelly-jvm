@@ -9,6 +9,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 /**
  * Low-level decoder of Jelly data. You can use this for implementing your own Jelly deserializers.
  * Alternatively, you can use the ready-made TitaniumJellyReader for a higher-level API.
+ * @since 2.9.0
  */
 public interface TitaniumJellyDecoder {
 

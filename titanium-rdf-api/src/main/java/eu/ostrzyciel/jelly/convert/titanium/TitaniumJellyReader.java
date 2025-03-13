@@ -10,6 +10,7 @@ import java.io.InputStream;
  * Parser for the Jelly-RDF format implemented in Titanium RDF API.
  * If you need fine-grained control over how the data is read, use the lower-level
  * TitaniumJellyDecoder instead.
+ * @since 2.9.0
  */
 public interface TitaniumJellyReader {
 

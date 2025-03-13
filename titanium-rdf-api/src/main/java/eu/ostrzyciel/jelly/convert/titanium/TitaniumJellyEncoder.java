@@ -8,6 +8,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 /**
  * Low-level encoder of Jelly data. You can use this for implementing your own Jelly serializers.
  * Alternatively, you can use the ready-made TitaniumJellyWriter for a higher-level API.
+ * @since 2.9.0
  */
 public interface TitaniumJellyEncoder extends RdfQuadConsumer {
 
