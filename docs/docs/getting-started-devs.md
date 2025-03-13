@@ -85,6 +85,8 @@ var writer = TitaniumJellyWriter.factory(outputStream);
 writer.quad(subject, predicate, object, ...);
 ```
 
+Where `outputStream` is a Java `OutputStream` hooked up to, for example, a file on disk.
+
 And read it like this, pointing the reader to an `RdfQuadConsumer`:
 
 ```java title="Titanium reader example (Java)"
