@@ -173,18 +173,6 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   )
   .dependsOn(core)
 
-lazy val titaniumRdfApiPlugin = (project in file("titanium-rdf-api-plugin"))
-  .settings(
-    name := "jelly-titanium-rdf-api-plugin",
-    libraryDependencies ++= Seq(
-      "com.apicatalog" % "titanium-rdf-api" % titaniumApiV % "provided,test",
-    ),
-    // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
-    publishArtifact := false,
-    commonSettings,
-  )
-  .dependsOn(core)
-
 lazy val stream = (project in file("stream"))
   .settings(
     name := "jelly-stream",
