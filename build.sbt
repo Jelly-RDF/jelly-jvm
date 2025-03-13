@@ -25,6 +25,7 @@ lazy val pekkoV = "1.1.3"
 lazy val pekkoGrpcV = "1.1.1"
 lazy val jenaV = "5.3.0"
 lazy val rdf4jV = "5.1.2"
+lazy val titaniumApiV = "1.0.0"
 // !! When updating ScalaPB also change the version of the plugin in plugins.sbt
 lazy val scalapbV = "0.11.17"
 lazy val protobufV = "4.30.0"
@@ -163,16 +164,26 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
     name := "jelly-titanium-rdf-api",
     description := "Implementation of the Titanium RDF API for Jelly-JVM. " +
       "See: https://github.com/filip26/titanium-rdf-api \n\n" +
-      "Note that this API is not intended for very performance-sensitive applications. " +
-      "You can obtain better performance with Eclipse RDF4J or Apache Jena integrations.",
+      "If you are already using RDF4J or Jena, it's recommended to use their dedicated " +
+      "integration modules instead of this one for better performance and more features.",
     libraryDependencies ++= Seq(
-      "com.apicatalog" % "titanium-rdf-api" % "1.0.0",
+      "com.apicatalog" % "titanium-rdf-api" % titaniumApiV,
     ),
     commonSettings,
   )
   .dependsOn(core)
 
-// TODO: plugin for Titanium RDF API
+lazy val titaniumRdfApiPlugin = (project in file("titanium-rdf-api-plugin"))
+  .settings(
+    name := "jelly-titanium-rdf-api-plugin",
+    libraryDependencies ++= Seq(
+      "com.apicatalog" % "titanium-rdf-api" % titaniumApiV % "provided,test",
+    ),
+    // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
+    publishArtifact := false,
+    commonSettings,
+  )
+  .dependsOn(core)
 
 lazy val stream = (project in file("stream"))
   .settings(

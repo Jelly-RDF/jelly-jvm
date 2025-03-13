@@ -47,7 +47,7 @@ jobs:
 
       - name: 'Build plugins'
         run: |
-          sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly
+          sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly +titaniumRdfApiPlugin/assembly
           LATEST_SCALA_VERSION=`ls -1 jena-plugin/target | grep scala- | sort -V | tail -n1`
           echo "LATEST_SCALA_VERSION=$LATEST_SCALA_VERSION" >> $GITHUB_ENV
 
@@ -62,7 +62,10 @@ jobs:
           makeLatest: false
           tag: dev
           name: "Development build"
-          artifacts: 'jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar'
+          artifacts: >-
+            jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            titanium-rdf-api-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
           generateReleaseNotes: true
 
       - name: 'Publish plugins (tagged release)'
@@ -74,7 +77,10 @@ jobs:
           makeLatest: true
           tag: "${{ github.ref_name }}"
           name: "${{ github.ref_name }}"
-          artifacts: 'jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar'
+          artifacts: >-
+            jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            titanium-rdf-api-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
           generateReleaseNotes: true
 
   publish-docs:
