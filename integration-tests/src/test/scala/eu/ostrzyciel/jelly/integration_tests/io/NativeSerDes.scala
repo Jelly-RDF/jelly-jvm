@@ -19,3 +19,5 @@ trait NativeSerDes[TModel : Measure, TDataset : Measure]:
   def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): TDataset
   def writeTriplesJelly(os: OutputStream, model: TModel, opt: Option[RdfStreamOptions], frameSize: Int): Unit
   def writeQuadsJelly(os: OutputStream, dataset: TDataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit
+  def supportsRdfStar: Boolean = true
+  def supportsGeneralizedStatements: Boolean = true

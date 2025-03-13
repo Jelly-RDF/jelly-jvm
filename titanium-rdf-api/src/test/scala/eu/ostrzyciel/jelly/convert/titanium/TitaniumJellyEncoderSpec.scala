@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.convert.titanium
 
 import eu.ostrzyciel.jelly.core.{JellyOptions, Constants as CoreConstants}
-import eu.ostrzyciel.jelly.core.proto.v1.PhysicalStreamType
+import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, PhysicalStreamType}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -18,6 +18,7 @@ class TitaniumJellyEncoderSpec extends AnyWordSpec, Matchers:
       encoder.getOptions should be (
         JellyOptions.smallStrict
           .withPhysicalType(PhysicalStreamType.QUADS)
+          .withLogicalType(LogicalStreamType.FLAT_QUADS)
           .withVersion(CoreConstants.protoVersion_1_0_x)
       )
       encoder.getRowCount should be (0)
@@ -30,6 +31,7 @@ class TitaniumJellyEncoderSpec extends AnyWordSpec, Matchers:
       encoder.getOptions should be (
         JellyOptions.bigStrict
           .withPhysicalType(PhysicalStreamType.QUADS)
+          .withLogicalType(LogicalStreamType.FLAT_QUADS)
           .withVersion(CoreConstants.protoVersion_1_0_x)
       )
       encoder.getRowCount should be (0)

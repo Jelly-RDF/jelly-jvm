@@ -1,5 +1,10 @@
 package eu.ostrzyciel.jelly.convert.titanium.internal
 
+/**
+ * Internal representations of RDF data inside the Titanium converter.
+ *
+ * These are not intended to be used outside of the converter's code.
+ */
 private[titanium] object TitaniumRdf:
   // String used to represent IRIs and blank nodes
   type Node = Literal | String

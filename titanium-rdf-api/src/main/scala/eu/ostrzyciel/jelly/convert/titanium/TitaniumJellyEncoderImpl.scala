@@ -16,7 +16,9 @@ private class TitaniumJellyEncoderImpl(options: RdfStreamOptions) extends Titani
   private val buffer: ListBuffer[RdfStreamRow] = new ListBuffer[RdfStreamRow]()
   private val encoder = TitaniumConverterFactory.encoder(ProtoEncoder.Params(
     // We set the stream type to QUADS, as this is the only type supported by Titanium.
-    options = options.withPhysicalType(PhysicalStreamType.QUADS),
+    options = options
+      .withPhysicalType(PhysicalStreamType.QUADS)
+      .withLogicalType(LogicalStreamType.FLAT_QUADS),
     enableNamespaceDeclarations = false,
     maybeRowBuffer = Some(buffer),
   ))

@@ -10,8 +10,10 @@ import java.io.OutputStream;
  * Writer for the Jelly-RDF format implemented in Titanium RDF API.
  * If you need fine-grained control over the stream frames, their metadata, or how they are
  * written to bytes, use the lower-level TitaniumJellyEncoder instead.
+ * <p>
+ * The close() method MUST be called at the end to flush the buffer and write the last frame.
  */
-public interface TitaniumJellyWriter extends RdfQuadConsumer {
+public interface TitaniumJellyWriter extends RdfQuadConsumer, AutoCloseable {
     /**
      * Factory method to create a new TitaniumJellyWriter instance.
      * @param outputStream The output stream to write to.

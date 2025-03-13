@@ -7,7 +7,7 @@ import java.io.OutputStream
 
 class TitaniumJellyWriterImpl(
   outputStream: OutputStream, options: RdfStreamOptions, frameSize: Int,
-) extends TitaniumJellyEncoderImpl(options) with TitaniumJellyWriter:
+) extends TitaniumJellyEncoderImpl(options), TitaniumJellyWriter, AutoCloseable:
 
   override def quad(
     subject: String,
@@ -23,6 +23,12 @@ class TitaniumJellyWriterImpl(
       val frame = RdfStreamFrame(getRowsScala)
       frame.writeDelimitedTo(outputStream)
     this
+
+  override def close(): Unit =
+    if getRowCount > 0 then
+      val frame = RdfStreamFrame(getRowsScala)
+      frame.writeDelimitedTo(outputStream)
+    outputStream.close()
 
   override def getOutputStream: OutputStream = outputStream
 
