@@ -32,7 +32,7 @@ import scala.util.Using
  * `import eu.ostrzyciel.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoStreamsWithIo extends shared.Example:
+object PekkoStreamsWithIo extends shared.ScalaExample:
   def main(args: Array[String]): Unit =
     // We will need a Pekko actor system to run the streams
     given actorSystem: ActorSystem = ActorSystem()

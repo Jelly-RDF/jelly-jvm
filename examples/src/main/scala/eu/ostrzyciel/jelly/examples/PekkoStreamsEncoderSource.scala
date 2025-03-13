@@ -19,7 +19,7 @@ import scala.concurrent.duration.*
  * `import eu.ostrzyciel.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoStreamsEncoderSource extends shared.Example:
+object PekkoStreamsEncoderSource extends shared.ScalaExample:
   def main(args: Array[String]): Unit =
     // We will need a Pekko actor system to run the streams
     given actorSystem: ActorSystem = ActorSystem()

@@ -31,6 +31,9 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-rdf4j` – conversions and interop code for the [RDF4J](https://rdf4j.org/) library.
     - {{ module_badges('rdf4j') }}
 
+- `jelly-titanium-rdf-api` – integration with the minimalistic [Titanium RDF API](https://github.com/filip26/titanium-rdf-api).
+    - {{ module_badges('titanium-rdf-api') }}
+
 - `jelly-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data (based on Pekko Streams). Useful for integrating with gRPC or other streaming protocols (e.g., Kafka, MQTT).
     - {{ module_badges('stream') }}
 
@@ -39,7 +42,7 @@ The implementation is split into a few modules that can be used separately:
 
 ## Plugin JARs
 
-We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](https://jena.apache.org/) and [RDF4J](https://rdf4j.org/) just by dropping the JARs into the classpath. **[Find out more about using the plugins](getting-started-plugins.md)**.
+We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](https://jena.apache.org/), [RDF4J](https://rdf4j.org/), and [Titanium RDF API](https://github.com/filip26/titanium-rdf-api) just by dropping the JARs into the classpath. **[Find out more about using the plugins](getting-started-plugins.md)**.
 
 ## Compatibility
 
@@ -63,6 +66,7 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
 - User guide
     - [Apache Jena integration](user/jena.md)
     - [RDF4J integration](user/rdf4j.md)
+    - [Titanium RDF API integration](user/titanium.md) (**new in 2.9.0!**)
     - [Reactive streaming](user/reactive.md)
     - [gRPC](user/grpc.md)
     - [Useful utilities](user/utilities.md)

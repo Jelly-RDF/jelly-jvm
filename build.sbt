@@ -26,6 +26,7 @@ lazy val pekkoGrpcV = "1.1.1"
 lazy val jenaV = "5.3.0"
 lazy val rdf4jV = "5.1.2"
 lazy val titaniumApiV = "1.0.0"
+lazy val titaniumNqV = "1.0.0"
 // !! When updating ScalaPB also change the version of the plugin in plugins.sbt
 lazy val scalapbV = "0.11.17"
 lazy val protobufV = "4.30.0"
@@ -218,7 +219,7 @@ lazy val integrationTests = (project in file("integration-tests"))
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
-      "com.apicatalog" % "titanium-rdf-n-quads" % "1.0.0" % Test,
+      "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV % Test,
       "com.apicatalog" % "titanium-json-ld" % "1.6.0" % Test,
     ),
     libraryDependencies ++= protobufCompilerDeps,
@@ -236,8 +237,9 @@ lazy val examples = (project in file("examples"))
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
+      "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV,
     ),
     excludeDependencies ++= grpcExclusions,
     commonSettings,
   )
-  .dependsOn(grpc, stream, jena % "compile->compile;test->test", rdf4j)
+  .dependsOn(grpc, stream, jena % "compile->compile;test->test", rdf4j, titaniumRdfApi)
