@@ -1,12 +1,12 @@
 # Jelly-JVM – getting started for developers
 
-*If you don't want to code anything and only use Jelly with your Apache Jena/RDF4J/Titanium application, see [the dedicated guide](getting-started-plugins.md) about using Jelly-JVM as a plugin.*
+*If you don't want to code anything and only use Jelly with your Apache Jena/RDF4J application, see [the dedicated guide](getting-started-plugins.md) about using Jelly-JVM as a plugin.*
 
 This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. Jelly-JVM is written in Scala, but it can be used from Java as well. However, in this guide, we will focus on **Scala 3**.
 
 ## Quick start – plain old files
 
-Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: `jelly-jena`, `jelly-rdf4j`, `jelly-titanium-rdf-api`[^1]. In our examples we will use Jena, so let's add this to your `build.sbt` file:
+Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: `jelly-jena`, `jelly-rdf4j`, [`jelly-titanium-rdf-api`](user/titanium.md)[^1]. In our examples we will use Jena, so let's add this to your `build.sbt` file:
 
 ```scala title="build.sbt"
 lazy val jellyVersion = "{{ jvm_package_version() }}"
@@ -60,11 +60,11 @@ Using.resource(new FileOutputStream("metadata.jelly")) { out =>
 }
 ```
 
-[:octicons-arrow-right-24: Read more about using Jelly-JVM with Apache Jena](user/jena.md)
+[:octicons-arrow-right-24: Use Jelly-JVM with Apache Jena](user/jena.md)
 
-[:octicons-arrow-right-24: Read more about using Jelly-JVM with RDF4J](user/rdf4j.md)
+[:octicons-arrow-right-24: Use Jelly-JVM with RDF4J](user/rdf4j.md)
 
-[:octicons-arrow-right-24: Read more about using Jelly-JVM with Titanium RDF API](user/titanium.md)
+[:octicons-arrow-right-24: Use Jelly-JVM with Titanium RDF API](user/titanium.md)
 
 ## RDF streams
 
