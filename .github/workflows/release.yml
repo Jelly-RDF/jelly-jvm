@@ -62,7 +62,9 @@ jobs:
           makeLatest: false
           tag: dev
           name: "Development build"
-          artifacts: 'jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar'
+          artifacts: >-
+            jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
           generateReleaseNotes: true
 
       - name: 'Publish plugins (tagged release)'
@@ -74,7 +76,9 @@ jobs:
           makeLatest: true
           tag: "${{ github.ref_name }}"
           name: "${{ github.ref_name }}"
-          artifacts: 'jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar'
+          artifacts: >-
+            jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
           generateReleaseNotes: true
 
   publish-docs:

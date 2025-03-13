@@ -87,6 +87,14 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     options.maxDatatypeTableSize should be (expOpt.maxDatatypeTableSize)
     options.version should be (Constants.protoVersion_1_0_x)
 
+  /**
+   * Check if a given Jelly implementation supports the given options (RDF-star and gen. statements).
+   */
+  private def checkImplOptSupport(impl: NativeSerDes[?, ?], opt: Option[RdfStreamOptions]) =
+    (if opt.isEmpty || opt.get.rdfStar then impl.supportsRdfStar else true) &&
+    (if opt.isEmpty || opt.get.generalizedStatements then impl.supportsGeneralizedStatements else true)
+
+
   runTest(JenaSerDes, JenaSerDes)
   runTest(JenaSerDes, JenaStreamSerDes)
   runTest(JenaSerDes, Rdf4jSerDes)
@@ -113,6 +121,20 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   runTest(JenaReactiveSerDes(), Rdf4jSerDes)
   runTest(JenaReactiveSerDes(), Rdf4jReactiveSerDes())
 
+  // Titanium as serializer
+  runTest(TitaniumSerDes, TitaniumSerDes)
+  runTest(TitaniumSerDes, JenaSerDes)
+  runTest(TitaniumSerDes, JenaStreamSerDes)
+  runTest(TitaniumSerDes, Rdf4jSerDes)
+  runTest(TitaniumSerDes, Rdf4jReactiveSerDes())
+  runTest(TitaniumSerDes, JenaReactiveSerDes())
+
+  // Titanium as deserializer
+  runTest(JenaSerDes, TitaniumSerDes)
+  runTest(JenaStreamSerDes, TitaniumSerDes)
+  runTest(Rdf4jSerDes, TitaniumSerDes)
+  runTest(Rdf4jReactiveSerDes(), TitaniumSerDes)
+  runTest(JenaReactiveSerDes(), TitaniumSerDes)
 
   private def runTest[TMSer : Measure, TDSer : Measure, TMDes : Measure, TDDes : Measure](
     ser: NativeSerDes[TMSer, TDSer],
@@ -120,7 +142,9 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   ) =
     f"${ser.name} serializer + ${des.name} deserializer" should {
       for (encOptions, decOptions, presetName) <- presetsUnsupported do
-      for (name, file) <- TestCases.triples do
+        for (name, file) <- TestCases.triples.filter(
+          f => ser.supportsRdfStar && des.supportsRdfStar || !f._1.contains("star")
+        ) do
         s"not accept unsupported options (file $name, $presetName)" in {
           val model = ser.readTriplesW3C(FileInputStream(file))
           val originalSize = summon[Measure[TMSer]].size(model)
@@ -138,8 +162,12 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
           }
         }
 
-      for (preset, size, presetName) <- presets do
-        for (name, file) <- TestCases.triples do
+      for (preset, size, presetName) <- presets.filter(
+        p => checkImplOptSupport(ser, p._1) && checkImplOptSupport(des, p._1)
+      ) do
+        for (name, file) <- TestCases.triples.filter(
+          f => ser.supportsRdfStar && des.supportsRdfStar || !f._1.contains("star")
+        ) do
           s"ser/des file $name with preset $presetName, frame size $size" in {
             val model = ser.readTriplesW3C(FileInputStream(file))
             val originalSize = summon[Measure[TMSer]].size(model)
@@ -153,7 +181,8 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             data.size should be > 0
             // In case we are leaving the default settings, RDF4J has no way of knowing if the data is
             // triples or quads, so it's going to default to quads.
-            val mayBeQuads = ser.name == "RDF4J" && preset.isEmpty
+            // Titanium just always does quads.
+            val mayBeQuads = ser.name == "RDF4J" && preset.isEmpty || ser.name == "Titanium"
             checkStreamOptions(data, if mayBeQuads then "quads" else "triples", preset)
 
             // Do not test this if we are encoding with RDF4J with default settings with the streaming Jena parser,

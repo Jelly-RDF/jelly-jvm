@@ -143,4 +143,11 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       }
       error.getMessage should include ("Namespace declarations are not enabled in this stream")
     }
+
+    "return options with the correct version" in {
+      val encoder = MockConverterFactory.encoder(Pep(
+        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES)
+      ))
+      encoder.options.version should be (Constants.protoVersion_1_0_x)
+    }
   }

@@ -26,9 +26,14 @@ private[core] final class ProtoEncoderImpl[TNode, -TTriple, -TQuad](
 ) extends ProtoEncoder[TNode, TTriple, TQuad, ?]:
 
   import ProtoEncoderImpl.*
-
-  override val options: RdfStreamOptions = params.options
+  
   override val enableNamespaceDeclarations: Boolean = params.enableNamespaceDeclarations
+  // Override whatever the user set in the options.
+  override val options: RdfStreamOptions = params.options.withVersion(
+    // If namespace declarations are enabled, we need to use Jelly 1.1.x.
+    if enableNamespaceDeclarations then Constants.protoVersion_1_1_x
+    else Constants.protoVersion_1_0_x
+  )
   override val maybeRowBuffer: Option[mutable.Buffer[RdfStreamRow]] = params.maybeRowBuffer
 
   /** @inheritdoc */
@@ -111,11 +116,4 @@ private[core] final class ProtoEncoderImpl[TNode, -TTriple, -TQuad](
 
   private def emitOptions(): Unit =
     emittedOptions = true
-    rowBuffer.append(RdfStreamRow(
-      // Override whatever the user set in the options.
-      options.withVersion(
-        // If namespace declarations are enabled, we need to use Jelly 1.1.x.
-        if enableNamespaceDeclarations then Constants.protoVersion_1_1_x
-        else Constants.protoVersion_1_0_x
-      )
-    ))
+    rowBuffer.append(RdfStreamRow(options))
