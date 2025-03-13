@@ -121,14 +121,20 @@ def define_env(env):
     @env.macro
     def code_example(file_name):
         prefix = 'examples/src/main/scala/eu/ostrzyciel/jelly/examples/'
-        with open(f'docs/examples/{file_name}', 'r') as f:
+        if file_name.endswith('.java'):
+            dir_name = 'examples_java'
+            lang = 'java'
+        else: 
+            dir_name = 'examples'
+            lang = 'scala'
+        with open(f'docs/{dir_name}/{file_name}', 'r') as f:
             code = f.read()
         return f"""
 ??? example "Example: {file_name} (click to expand)"
 
     **[:octicons-code-24: Source code on GitHub]({git_link(prefix + file_name)})**
 
-    ```scala title="{file_name}" linenums="1"
+    ```{lang} title="{file_name}" linenums="1"
     {code.replace('\n', '\n    ')}
     ```
 """

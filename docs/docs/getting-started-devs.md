@@ -1,12 +1,12 @@
 # Jelly-JVM – getting started for developers
 
-*If you don't want to code anything and only use Jelly with your Apache Jena/RDF4J application, see [the dedicated guide](getting-started-plugins.md) about using Jelly-JVM as a plugin.*
+*If you don't want to code anything and only use Jelly with your Apache Jena/RDF4J/Titanium application, see [the dedicated guide](getting-started-plugins.md) about using Jelly-JVM as a plugin.*
 
 This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. Jelly-JVM is written in Scala, but it can be used from Java as well. However, in this guide, we will focus on **Scala 3**.
 
 ## Quick start – plain old files
 
-Depending on your RDF library of choice (Apache Jena or RDF4J), you should import one of two dependencies: `jelly-jena` or `jelly-rdf4j`[^1]. In our examples we will use Jena, so let's add this to your `build.sbt` file (this would be the same for other build tools like Maven or Gradle):
+Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: `jelly-jena`, `jelly-rdf4j`, `jelly-titanium-rdf-api`[^1]. In our examples we will use Jena, so let's add this to your `build.sbt` file:
 
 ```scala title="build.sbt"
 lazy val jellyVersion = "{{ jvm_package_version() }}"
@@ -14,6 +14,16 @@ lazy val jellyVersion = "{{ jvm_package_version() }}"
 libraryDependencies ++= Seq(
   "eu.ostrzyciel.jelly" %% "jelly-jena" % jellyVersion,
 )
+```
+
+If you are working with Maven, add this to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>eu.ostrzyciel.jelly</groupId>
+    <artifactId>jelly-jena_3</artifactId>
+    <version>{{ jvm_package_version() }}</version>
+</dependency>
 ```
 
 Now you can serialize/deserialize Jelly data with Apache Jena. Jelly is fully integrated with Jena, so it should all just magically work. Here is a simple example of reading a `.jelly` file (in this case, a metadata file from [RiverBench](https://w3id.org/riverbench/)) with [RIOT](https://jena.apache.org/documentation/io/):
@@ -53,6 +63,8 @@ Using.resource(new FileOutputStream("metadata.jelly")) { out =>
 [:octicons-arrow-right-24: Read more about using Jelly-JVM with Apache Jena](user/jena.md)
 
 [:octicons-arrow-right-24: Read more about using Jelly-JVM with RDF4J](user/rdf4j.md)
+
+[:octicons-arrow-right-24: Read more about using Jelly-JVM with Titanium RDF API](user/titanium.md)
 
 ## RDF streams
 
@@ -128,6 +140,7 @@ Jelly is a bit more than just a serialization format – it also defines a [gRPC
 
 - [Using Jelly-JVM with Apache Jena](user/jena.md)
 - [Using Jelly-JVM with RDF4J](user/rdf4j.md)
+- [Using Jelly-JVM with Titanium RDF API](user/titanium.md)
 - [Reactive streaming with Jelly-JVM](user/reactive.md) – using the `jelly-stream` module and [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html)
 - [Using Jelly gRPC protocol servers and clients](user/grpc.md)
 - [Other useful utilities in Jelly-JVM](user/utilities.md)
@@ -140,7 +153,7 @@ Jelly is a bit more than just a serialization format – it also defines a [gRPC
 - [RiverBench ci-worker](https://github.com/RiverBench/ci-worker) – a real-world application that is used for processing large RDF datasets in a CI/CD pipeline. It uses Jelly-JVM for serialization and deserialization with Apache Jena. It also uses extensively Apache Pekko Streams.
 
 
-[^1]: There is nothing stopping you from using both at the same time. You can also pretty easily add support for any other Java-based RDF library by implementing a few interfaces. [More details here](dev/implementing.md).
+[^1]: There is nothing stopping you from using more than one at the same time. You can also pretty easily add support for any other Java-based RDF library by implementing a few interfaces. [More details here](dev/implementing.md).
 
 ## Questions?
 
