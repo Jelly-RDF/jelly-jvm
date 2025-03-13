@@ -941,24 +941,24 @@
 
 
 <h1 id="jelly-jvm-getting-started-with-jenardf4j-plugins">Jelly-JVM – getting started with Jena/RDF4J plugins</h1>
-<p>This guide explains how to use Jelly-JVM with Apache Jena or RDF4J as a plugin, <strong>without writing a single line of code</strong>. Jelly-JVM provides plugin JARs that you can simply drop in the appropriate directory to get Jelly format support in your application.</p>
+<p>This guide explains how to use Jelly-JVM with Apache Jena or RDF4J as a plugin, <strong>without writing a single line of code</strong>. We provide plugin JARs that you can simply drop in the appropriate directory to get Jelly format support in your application.</p>
 <h2 id="installation">Installation</h2>
 <h3 id="apache-jena-apache-jena-fuseki">Apache Jena, Apache Jena Fuseki</h3>
-<p>You can simply add Jelly format support to <a href="https://jena.apache.org/index.html">Apache Jena</a> or <a href="https://jena.apache.org/documentation/fuseki2/index.html">Apacha Jena Fuseki</a> with Jelly's plugin JAR.</p>
+<p>You can use <a href="https://jena.apache.org/index.html">Apache Jena</a> or <a href="https://jena.apache.org/documentation/fuseki2/index.html">Apacha Jena Fuseki</a> with Jelly's plugin JAR.</p>
 <ul>
-<li>First, download the plugin JAR. You can download the 
-<strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/dev/jelly-jena-plugin.jar">latest development version from here</a></strong>,
- or you can go the the <a href="https://github.com/Jelly-RDF/jelly-jvm/releases">releases page</a> on GitHub to download a different version of the <code>jelly-jena-plugin.jar</code> file.<ul>
-<li>Note that the Jelly version must be compatible with your Apache Jena version. Consult the <a href="../#compatibility">compatibility table</a>.</li>
+<li>Download the plugin JAR: 
+<strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/dev/jelly-jena-plugin.jar">latest development version</a></strong>,
+ or you can go to the <a href="https://github.com/Jelly-RDF/jelly-jvm/releases">releases page</a> on GitHub to download a different version of the <code>jelly-jena-plugin.jar</code> file.<ul>
+<li>The plugin must be compatible with your Apache Jena version. Consult the <a href="../#compatibility">compatibility table</a>.</li>
 </ul>
 </li>
 <li>Place the file in your classpath:<ul>
-<li>For Apache Jena Fuseki, simply place the file in <code>$FUSEKI_BASE/extra/</code> directory. <code>$FUSEKI_BASE</code> is the directory usually called <code>run</code> where you have files such as <code>config.ttl</code> and <code>shiro.ini</code>. You will most likely need to create the <code>extra</code> directory yourself.</li>
+<li>For Apache Jena Fuseki, place it in the <code>$FUSEKI_BASE/extra/</code> directory. <code>$FUSEKI_BASE</code> is the directory usually called <code>run</code> where you have files such as <code>config.ttl</code> and <code>shiro.ini</code>. You will most likely need to create the <code>extra</code> directory yourself.</li>
 <li>For Apache Jena, place the file in the <code>lib/</code> directory of your Jena installation.</li>
 <li>For other applications, consult the manual of the application.</li>
 </ul>
 </li>
-<li>You can now use the Jelly format for parsing, serialization, and streaming serialization in your Jena application.</li>
+<li>You can now use the Jelly format for parsing, serialization, and streaming serialization in your application!</li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">Content negotiation in Fuseki</p>
@@ -969,12 +969,11 @@
 <p>Jelly-JVM fully supports Apache Jena's command-line interface (CLI) utilities. See the <strong><a href="../user/jena-cli/">dedicated guide</a></strong> for more information.</p>
 </div>
 <h3 id="eclipse-rdf4j">Eclipse RDF4J</h3>
-<p>You can simply add Jelly format support to an application based on RDF4J with Jelly's plugin JAR.</p>
 <ul>
-<li>First, download the plugin JAR. You can download the 
-<strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/dev/jelly-rdf4j-plugin.jar">latest development version from here</a></strong>,
+<li>Download the plugin JAR: 
+<strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/dev/jelly-rdf4j-plugin.jar">latest development version</a></strong>,
  or you can go the the <a href="https://github.com/Jelly-RDF/jelly-jvm/releases">releases page</a> on GitHub to download a specific version of the <code>jelly-rdf4j-plugin.jar</code> file.<ul>
-<li>Note that the Jelly version must be compatible with your RDF4J version. Consult the <a href="../#compatibility">compatibility table</a>.</li>
+<li>The plugin must be compatible with your RDF4J version. Consult the <a href="../#compatibility">compatibility table</a>.</li>
 </ul>
 </li>
 <li>Place the file in your classpath:<ul>
@@ -982,14 +981,13 @@
 <li>For other applications, consult the manual of your application for the exact location.</li>
 </ul>
 </li>
-<li>You can now use the Jelly format for parsing and serialization in your RDF4J application.</li>
+<li>You can now use the Jelly format for parsing and serialization in your application!</li>
 </ul>
 <h2 id="supported-features">Supported features</h2>
-<p>The Jelly-JVM plugin JARs provide the following features:</p>
 <ul>
 <li>Full support for parsing and serialization of RDF data (triples and quads) in the Jelly format.<ul>
 <li>The parser will automatically detect if the input data <a href="https://w3id.org/jelly/dev/user-guide#delimited-vs-non-delimited-jelly">is delimited or not</a>. Both delimited and non-delimited Jelly data can be parsed.</li>
-<li>In Apache Jena also the stream serialization is supported.</li>
+<li>In Apache Jena also the stream serialization API is supported (<code>StreamRDF</code>).</li>
 </ul>
 </li>
 <li>Recognizing the <code>.jelly</code> file extension.</li>
@@ -1022,7 +1020,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">November 15, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 13, 2025</span>
   </span>
 
     
