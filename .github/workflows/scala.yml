@@ -10,6 +10,7 @@ permissions:
   contents: read
 
 jobs:
+  # Run scalatest
   test:
     strategy:
       fail-fast: false
@@ -41,8 +42,26 @@ jobs:
     - name: Build and test
       shell: bash
       run: sbt -v +test
+  
+  # Test building assemblies
+  test-assembly:
+    runs-on: ubuntu-latest
 
-      # TODO: move this test to a separate job, run only on Java 17
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
+
     - name: Test building assemblies
       shell: bash
       run: sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly
