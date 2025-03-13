@@ -26,11 +26,15 @@ Full example of integration with the [`titanium-rdf-n-quads`](https://github.com
 
 ## Low-level usage
 
-Titanium RDF API does not implement types for RDF primitives, so the Jelly integration with it is a bit different from the ones for Jena and RDF4J. Currently, the Pekko Streams API is not supported, and the `ConverterFactory` for Titanium is not part of the public API.
+Titanium RDF API does not implement types for RDF primitives, so the Jelly integration with it is a bit different from the ones for Jena and RDF4J. Currently, the [Pekko Streams API](reactive.md) is not supported, and the `ConverterFactory` for Titanium is not part of the public API.
 
 But, you can still access a part of the low-level API directly. This would be useful if you wanted to integrate Titanium with Kafka or some other custom serialization pipeline.
 
 To do this, use the {{ javadoc_link_pretty('titanium', 'JellyTitaniumDecoder') }} and {{ javadoc_link_pretty('titanium', 'JellyTitaniumEncoder') }} classes directly.
+
+## Integrations
+
+Jelly-JVM implements the `RdfQuadConsumer` interface, so you can hook it up to any library that does the same. This includes formats like: [JSON-LD](https://github.com/filip26/titanium-json-ld), [CBOR-LD](https://github.com/filip26/iridium-cbor-ld), [N-Quads](https://github.com/filip26/titanium-rdf-n-quads).
 
 ## See also
 

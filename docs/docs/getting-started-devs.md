@@ -2,9 +2,9 @@
 
 *If you don't want to code anything and only use Jelly with your Apache Jena/RDF4J application, see [the dedicated guide](getting-started-plugins.md) about using Jelly-JVM as a plugin.*
 
-This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. Jelly-JVM is written in Scala, but it can be used from Java as well. However, in this guide, we will focus on **Scala 3**.
+This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. Jelly-JVM is written in Scala, but it [can be used from Java as well](#quick-start-java-titanium-rdf-api).
 
-## Quick start – plain old files
+## Quick start – Scala & Apache Jena
 
 Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: `jelly-jena`, `jelly-rdf4j`, [`jelly-titanium-rdf-api`](user/titanium.md)[^1]. In our examples we will use Jena, so let's add this to your `build.sbt` file:
 
@@ -65,6 +65,37 @@ Using.resource(new FileOutputStream("metadata.jelly")) { out =>
 [:octicons-arrow-right-24: Use Jelly-JVM with RDF4J](user/rdf4j.md)
 
 [:octicons-arrow-right-24: Use Jelly-JVM with Titanium RDF API](user/titanium.md)
+
+## Quick start – Java & Titanium RDF API
+
+If you aren't using a big RDF library like Jena or RDF4J, the simplest way to get started is to use the [Titanium RDF API](user/titanium.md):
+
+```xml
+<dependency>
+    <groupId>eu.ostrzyciel.jelly</groupId>
+    <artifactId>jelly-titanium-rdf-api</artifactId>
+    <version>{{ jvm_package_version() }}</version>
+</dependency>
+```
+
+You can write a Jelly file like this, using the simple `RdfQuadConsumer` interface:
+
+```java title="Titanium writer example (Java)"
+var writer = TitaniumJellyWriter.factory(outputStream);
+writer.quad(subject, predicate, object, ...);
+```
+
+And read it like this, pointing the reader to an `RdfQuadConsumer`:
+
+```java title="Titanium reader example (Java)"
+var reader = TitaniumJellyReader.factory();
+reader.parseAll(quadConsumer, inputStream);
+```
+
+In this way, you can simply convert between Jelly, [JSON-LD](https://github.com/filip26/titanium-json-ld), [CBOR-LD](https://github.com/filip26/iridium-cbor-ld), [N-Quads](https://github.com/filip26/titanium-rdf-n-quads) and other libraries supporting the `RdfQuadConsumer` interface.
+
+[:octicons-arrow-right-24: More on using Jelly-JVM with Titanium RDF API](user/titanium.md)
+
 
 ## RDF streams
 

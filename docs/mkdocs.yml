@@ -86,7 +86,7 @@ extra:
 nav:
   - Home: 'index.md'
   - Getting started (Jena/RDF4J plugin): 'getting-started-plugins.md'
-  - Getting started (application developers): 'getting-started-devs.md'
+  - Getting started (app developers): 'getting-started-devs.md'
   - User guide:
     - Apache Jena integration: 'user/jena.md'
     - Apache Jena CLI tools: 'user/jena-cli.md'
