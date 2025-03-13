@@ -34,8 +34,12 @@ class TitaniumJellyEncoderSpec extends AnyWordSpec, Matchers:
           .withLogicalType(LogicalStreamType.FLAT_QUADS)
           .withVersion(CoreConstants.protoVersion_1_0_x)
       )
-      encoder.getRowCount should be (0)
-      encoder.getRowsJava.asScala.size should be (0)
-      encoder.getRowsScala.size should be (0)
+      encoder.quad("s", "p", "o", null, null, null, "g")
+      encoder.getRowCount should be > (1)
+      encoder.getRowsJava.asScala.size should be > (1)
+
+      encoder.quad("s", "p", "o", null, null, null, "g")
+      encoder.getRowCount should be (1)
+      encoder.getRowsScala.size should be (1)
     }
   }

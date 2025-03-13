@@ -87,6 +87,9 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     options.maxDatatypeTableSize should be (expOpt.maxDatatypeTableSize)
     options.version should be (Constants.protoVersion_1_0_x)
 
+  /**
+   * Check if a given Jelly implementation supports the given options (RDF-star and gen. statements).
+   */
   private def checkImplOptSupport(impl: NativeSerDes[?, ?], opt: Option[RdfStreamOptions]) =
     (if opt.isEmpty || opt.get.rdfStar then impl.supportsRdfStar else true) &&
     (if opt.isEmpty || opt.get.generalizedStatements then impl.supportsGeneralizedStatements else true)

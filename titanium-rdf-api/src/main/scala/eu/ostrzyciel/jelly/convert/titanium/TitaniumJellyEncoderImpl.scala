@@ -57,9 +57,6 @@ private class TitaniumJellyEncoderImpl(options: RdfStreamOptions) extends Titani
     buffer.clear()
     list
 
-  final override def getRowsJava: java.lang.Iterable[RdfStreamRow] =
-    val list = buffer.toList
-    buffer.clear()
-    list.asJava
+  final override def getRowsJava: java.lang.Iterable[RdfStreamRow] = getRowsScala.asJava
 
   final override def getOptions: RdfStreamOptions = encoder.options
