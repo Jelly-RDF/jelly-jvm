@@ -15,7 +15,7 @@ import scala.util.Using
  *
  * See also: https://jena.apache.org/documentation/io/streaming-io.html
  */
-object JenaRiotStreaming extends shared.Example:
+object JenaRiotStreaming extends shared.ScalaExample:
   def main(args: Array[String]): Unit =
     // Initialize a Jena StreamRDF to consume the statements
     val readerStream = StreamRDFLib.count()

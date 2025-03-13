@@ -1,6 +1,6 @@
 # Jelly-JVM
 
-**Jelly-JVM** is an implementation of the [Jelly serialization format and gRPC streaming protocol]({{ proto_link() }}) for the Java Virtual Machine (JVM), written in Scala 3[^1]. The supported RDF libraries are [Apache Jena](https://jena.apache.org/) and [Eclipse RDF4J](https://rdf4j.org/).
+**Jelly-JVM** is an implementation of the [Jelly serialization format and gRPC streaming protocol]({{ proto_link() }}) for the Java Virtual Machine (JVM), written in Scala 3[^1]. It supports [Apache Jena](https://jena.apache.org/), [Eclipse RDF4J](https://rdf4j.org/), and the [Titanium RDF API](https://github.com/filip26/titanium-rdf-api).
 
 Jelly-JVM provides a **full stack** of utilities for fast and scalable RDF streaming with the [Jelly protocol]({{ proto_link( 'specification' ) }}). Oh, and [**it's *blazing-fast***]({{ proto_link('performance') }}), too!
 
@@ -22,16 +22,19 @@ Jelly-JVM provides a **full stack** of utilities for fast and scalable RDF strea
 
 The implementation is split into a few modules that can be used separately:
 
-- `jelly-core` – implementation of the [Jelly serialization format]({{ proto_link( 'specification/serialization' ) }}) (using the [scalapb](https://scalapb.github.io/) library), along with generic utilities for converting the deserialized RDF data to/from the representations of RDF libraries (like Apache Jena or RDF4J). 
+- `jelly-core` – core generic code for serializing/deserializing Jelly data. You need an additional module (like `jelly-jena`) to integrate it with a specific RDF library.
     - {{ module_badges('core') }}
 
-- `jelly-jena` – conversions and interop code for the [Apache Jena](https://jena.apache.org/) library.
+- `jelly-jena` – interop code for the [Apache Jena](https://jena.apache.org/) library.
     - {{ module_badges('jena') }}
 
-- `jelly-rdf4j` – conversions and interop code for the [RDF4J](https://rdf4j.org/) library.
+- `jelly-rdf4j` – interop code for the [Eclipse RDF4J](https://rdf4j.org/) library.
     - {{ module_badges('rdf4j') }}
 
-- `jelly-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data (based on Pekko Streams). Useful for integrating with gRPC or other streaming protocols (e.g., Kafka, MQTT).
+- `jelly-titanium-rdf-api` – integration with the minimalistic [Titanium RDF API](https://github.com/filip26/titanium-rdf-api).
+    - {{ module_badges('titanium-rdf-api') }}
+
+- `jelly-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT...
     - {{ module_badges('stream') }}
 
 - `jelly-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}).
@@ -63,6 +66,7 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
 - User guide
     - [Apache Jena integration](user/jena.md)
     - [RDF4J integration](user/rdf4j.md)
+    - [Titanium RDF API integration](user/titanium.md) **(new in 2.9.0!)**
     - [Reactive streaming](user/reactive.md)
     - [gRPC](user/grpc.md)
     - [Useful utilities](user/utilities.md)
