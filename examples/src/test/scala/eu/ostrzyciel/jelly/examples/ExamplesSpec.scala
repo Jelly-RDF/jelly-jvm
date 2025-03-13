@@ -19,6 +19,6 @@ class ExamplesSpec extends AnyWordSpec, Matchers, JenaTest:
   for example <- examples do
     f"Example ${example.getClass.getName}" should {
       "run without exceptions" in {
-        example.main(Array[String]())
+        example.run(Array[String]())
       }
     }

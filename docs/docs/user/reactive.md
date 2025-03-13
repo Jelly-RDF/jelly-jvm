@@ -9,7 +9,7 @@ This guide explains the reactive streaming functionalities of the `jelly-stream`
     We also recommend you first read about the **[RDF stream types in Jelly]({{ proto_link('user-guide#stream-types') }})**. Otherwise, this guide may not make much sense.
 
 
-You can use `jelly-stream` with any RDF library that has a Jelly integration, such as [Apache Jena](jena.md) (using `jelly-jena`) or [RDF4J](rdf4j.md) (using `jelly-rdf4j`). The streaming API is generic and identical across all libraries.
+You can use `jelly-stream` with any RDF library that has a full Jelly integration, such as [Apache Jena](jena.md) (using `jelly-jena`) or [RDF4J](rdf4j.md) (using `jelly-rdf4j`)[^1]. The streaming API is generic and identical across all libraries.
 
 ## Basic concepts
 
@@ -52,3 +52,6 @@ In all of the examples above, we used the [non-delimited variant of Jelly]({{ pr
 - [Useful utilities](utilities.md)
     - [Using Typesafe config to configure Jelly](utilities.md#jelly-configuration-from-typesafe-config)
 - [Low-level usage](low-level.md)
+
+
+[^1]: There is no support for the Pekko Streams API in the [`jelly-titanium-rdf-api` module](titanium.md). You will need to use a full RDF library like Jena or RDF4J to access it.
