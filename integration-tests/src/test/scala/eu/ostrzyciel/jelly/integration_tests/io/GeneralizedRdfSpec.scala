@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
 /**
  * Separate tests for handling generalized RDF.
  *
- * Normally this would be included with the IoSerDesSpec, but RDF libraries have very patch support
+ * Normally this would be included with the IoSerDesSpec, but RDF libraries have very patchy support
  * for generalized RDF.
  */
 class GeneralizedRdfSpec extends AnyWordSpec, Matchers:
