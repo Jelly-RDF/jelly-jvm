@@ -17,6 +17,8 @@ class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement
 
   override def name: String = "Reactive (RDF4J)"
 
+  override def supportsGeneralizedStatements: Boolean = false
+
   override def readTriplesW3C(is: InputStream): Seq[Statement] = Rdf4jSerDes.readTriplesW3C(is)
 
   override def readQuadsW3C(is: InputStream): Seq[Statement] = Rdf4jSerDes.readQuadsW3C(is)

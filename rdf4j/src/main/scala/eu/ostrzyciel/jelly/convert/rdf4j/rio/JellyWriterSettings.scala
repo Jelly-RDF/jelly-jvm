@@ -21,7 +21,6 @@ object JellyWriterSettings:
     c.set(ENABLE_NAMESPACE_DECLARATIONS, enableNamespaceDeclarations)
     c.set(STREAM_NAME, opt.streamName)
     c.set(PHYSICAL_TYPE, opt.physicalType)
-    c.set(ALLOW_GENERALIZED_STATEMENTS, opt.generalizedStatements)
     c.set(ALLOW_RDF_STAR, opt.rdfStar)
     c.set(MAX_NAME_TABLE_SIZE, opt.maxNameTableSize.toLong)
     c.set(MAX_PREFIX_TABLE_SIZE, opt.maxPrefixTableSize.toLong)
@@ -56,11 +55,13 @@ object JellyWriterSettings:
     PhysicalStreamType.QUADS
   )
 
+  @deprecated("Generalized statements are not supported by RDF4J Rio", "2.9.0")
   val ALLOW_GENERALIZED_STATEMENTS = new BooleanRioSetting(
     "eu.ostrzyciel.jelly.convert.rdf4j.rio.allowGeneralizedStatements",
-    "Allow generalized statements. Enabled by default, because we cannot know this in advance. " +
-      "If your data does not contain generalized statements, it is recommended that you set this to false.",
-    true
+    "DEPRECATED since Jelly-JVM 2.9.0: Allow generalized statements. Disabled by default, because " +
+      "RDF4J Rio does not really support generalized statements. This option was mistakenly " +
+      "included in previous versions on the assumption that it does.",
+    false
   )
   
   val ALLOW_RDF_STAR = new BooleanRioSetting(

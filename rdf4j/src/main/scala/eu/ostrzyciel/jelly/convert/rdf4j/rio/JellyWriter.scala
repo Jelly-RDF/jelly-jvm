@@ -9,6 +9,7 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter
 
 import java.io.OutputStream
 import java.util
+import scala.annotation.nowarn
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -32,6 +33,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
 
   override def getRDFFormat: RDFFormat = JELLY
 
+  @nowarn("cat=deprecation")
   override def getSupportedSettings: util.HashSet[RioSetting[_]] =
     val s = new util.HashSet[RioSetting[_]](super.getSupportedSettings)
     s.add(STREAM_NAME)
@@ -62,7 +64,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     options = RdfStreamOptions(
       streamName = c.get(STREAM_NAME),
       physicalType = pType,
-      generalizedStatements = c.get(ALLOW_GENERALIZED_STATEMENTS).booleanValue(),
+      generalizedStatements = false, // option to set it is deprecated
       rdfStar = c.get(ALLOW_RDF_STAR).booleanValue(),
       maxNameTableSize = c.get(MAX_NAME_TABLE_SIZE).toInt,
       maxPrefixTableSize = c.get(MAX_PREFIX_TABLE_SIZE).toInt,
@@ -75,7 +77,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
       options, enableNamespaceDeclarations, Some(buffer)
     ))
 
-  override def consumeStatement(st: Statement): Unit =
+  override protected def consumeStatement(st: Statement): Unit =
     checkWritingStarted()
     if options.physicalType.isTriples then
       encoder.addTripleStatement(st)

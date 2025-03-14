@@ -141,7 +141,9 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     des: NativeSerDes[TMDes, TDDes],
   ) =
     f"${ser.name} serializer + ${des.name} deserializer" should {
-      for (encOptions, decOptions, presetName) <- presetsUnsupported do
+      for (encOptions, decOptions, presetName) <- presetsUnsupported.filter(
+        p => checkImplOptSupport(ser, Some(p._1))
+      ) do
         for (name, file) <- TestCases.triples.filter(
           f => ser.supportsRdfStar && des.supportsRdfStar || !f._1.contains("star")
         ) do
