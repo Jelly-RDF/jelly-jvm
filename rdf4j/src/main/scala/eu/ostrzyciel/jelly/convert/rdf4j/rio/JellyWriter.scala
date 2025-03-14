@@ -77,7 +77,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
       options, enableNamespaceDeclarations, Some(buffer)
     ))
 
-  override def consumeStatement(st: Statement): Unit =
+  override protected def consumeStatement(st: Statement): Unit =
     checkWritingStarted()
     if options.physicalType.isTriples then
       encoder.addTripleStatement(st)

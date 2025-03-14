@@ -15,6 +15,8 @@ given seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
 object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
   val name = "RDF4J"
 
+  override def supportsGeneralizedStatements: Boolean = false
+
   private def read(is: InputStream, format: RDFFormat, supportedOptions: Option[RdfStreamOptions] = None): 
   Seq[Statement] =
     val parser = Rio.createParser(format)
