@@ -42,4 +42,14 @@ class TitaniumJellyEncoderSpec extends AnyWordSpec, Matchers:
       encoder.getRowCount should be (1)
       encoder.getRowsScala.size should be (1)
     }
+
+    "ignore enabling RDF-star and generalized statements" in {
+      val encoder = TitaniumJellyEncoder.factory(JellyOptions.bigAllFeatures)
+      encoder.getOptions should be (
+        JellyOptions.bigStrict
+          .withPhysicalType(PhysicalStreamType.QUADS)
+          .withLogicalType(LogicalStreamType.FLAT_QUADS)
+          .withVersion(CoreConstants.protoVersion_1_0_x)
+      )
+    }
   }
