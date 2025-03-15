@@ -29,7 +29,7 @@ lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.0"
 // !! When updating ScalaPB also change the version of the plugin in plugins.sbt
 lazy val scalapbV = "0.11.17"
-lazy val protobufV = "4.30.0"
+lazy val protobufV = "4.30.1"
 
 // List of exclusions for the grpc module and its dependencies
 lazy val grpcExclusions = Seq(
