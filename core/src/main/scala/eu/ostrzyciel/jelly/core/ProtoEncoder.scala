@@ -54,10 +54,12 @@ trait ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted]
   /**
    * Add an RDF triple statement to the stream.
    *
+   * If your library does not support quad objects, use `addTripleStatement(s, p, o)` instead.
+   *
    * @param triple triple to add
    * @return iterable of stream rows
-   * @throws NotImplementedError if the RDF library does not support triple objects
-   *                             (use `addTripleStatement(subject, predicate, object)` instead)
+   * @throws RdfProtoSerializationError if the library does not support triple objects or
+   *                                    if a serialization error occurs.
    */
   final def addTripleStatement(triple: TTriple): Iterable[RdfStreamRow] =
     addTripleStatement(
@@ -73,16 +75,19 @@ trait ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted]
    * @param `object` object
    * @return iterable of stream rows
    * @since 2.9.0
+   * @throws RdfProtoSerializationError if a serialization error occurs
    */
   def addTripleStatement(subject: TNode, predicate: TNode, `object`: TNode): Iterable[RdfStreamRow]
 
   /**
    * Add an RDF quad statement to the stream.
    *
+   * If your library does not support quad objects, use `addQuadStatement(s, p, o, g)` instead.
+   *
    * @param quad quad to add
    * @return iterable of stream rows
-   * @throws NotImplementedError if the RDF library does not support quad objects
-   *                             (use `addQuadStatement(subject, predicate, object, graph)` instead)
+   * @throws RdfProtoSerializationError if the library does not support quad objects or
+   *                                    if a serialization error occurs.
    */
   final def addQuadStatement(quad: TQuad): Iterable[RdfStreamRow] =
     addQuadStatement(
@@ -101,6 +106,7 @@ trait ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted]
    * @param graph graph
    * @return iterable of stream rows
    * @since 2.9.0
+   * @throws RdfProtoSerializationError if a serialization error occurs
    */
   def addQuadStatement(subject: TNode, predicate: TNode, `object`: TNode, graph: TNode): Iterable[RdfStreamRow]
 
@@ -110,6 +116,7 @@ trait ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted]
    *
    * @param graph graph node
    * @return iterable of stream rows
+   * @throws RdfProtoSerializationError if a serialization error occurs
    */
   def startGraph(graph: TNode): Iterable[RdfStreamRow]
 
@@ -117,6 +124,7 @@ trait ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted]
    * Signal the start of the default delimited graph in a GRAPHS stream.
    *
    * @return iterable of stream rows
+   * @throws RdfProtoSerializationError if a serialization error occurs
    */
   def startDefaultGraph(): Iterable[RdfStreamRow]
 
@@ -124,6 +132,7 @@ trait ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted]
    * Signal the end of a delimited graph in a GRAPHS stream.
    *
    * @return iterable of stream rows (always of length 1)
+   * @throws RdfProtoSerializationError if a serialization error occurs
    */
   def endGraph(): Iterable[RdfStreamRow]
 
@@ -134,5 +143,6 @@ trait ProtoEncoder[TNode, -TTriple, -TQuad, -TQuoted]
    * @param name     short name of the namespace (without the colon)
    * @param iriValue IRI of the namespace
    * @return iterable of stream rows
+   * @throws RdfProtoSerializationError if a serialization error occurs
    */
   def declareNamespace(name: String, iriValue: String): Iterable[RdfStreamRow]

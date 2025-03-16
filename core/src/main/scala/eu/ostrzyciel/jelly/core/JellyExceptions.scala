@@ -1,11 +1,17 @@
 package eu.ostrzyciel.jelly.core
 
 private trait JellyExceptions:
-  final class RdfProtoDeserializationError(msg: String) extends Error(msg)
+  sealed abstract class RdfProtoError(msg: String, cause: Option[Throwable]) extends Error(msg):
+    if cause.isDefined then initCause(cause.get)
+  
+  final class RdfProtoDeserializationError(msg: String, cause: Option[Throwable] = None) 
+    extends RdfProtoError(msg, cause)
 
-  final class RdfProtoSerializationError(msg: String) extends Error(msg)
+  final class RdfProtoSerializationError(msg: String, cause: Option[Throwable] = None) 
+    extends RdfProtoError(msg, cause)
 
-  final class RdfProtoTranscodingError(msg: String) extends Error(msg)
+  final class RdfProtoTranscodingError(msg: String, cause: Option[Throwable] = None) 
+    extends RdfProtoError(msg, cause)
   
 private object JellyExceptions extends JellyExceptions:
   /**

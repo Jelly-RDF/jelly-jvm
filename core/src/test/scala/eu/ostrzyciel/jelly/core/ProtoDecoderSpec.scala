@@ -269,6 +269,26 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val r = decoder.ingestRow(data(1))
       r.get.o should be (a[SimpleLiteral])
     }
+
+    // The tests for this logic are in internal.NameDecoderSpec
+    // Here we are just testing if the exceptions are rethrown correctly.
+    "throw exception on out-of-bounds references to lookups" in {
+      val decoder = MockConverterFactory.triplesDecoder(None)
+      val data = wrapEncodedFull(Seq(
+        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
+        RdfTriple(
+          RdfTerm.Bnode("1"),
+          RdfTerm.Bnode("2"),
+          RdfIri(10000, 0),
+        ),
+      ))
+      decoder.ingestRow(data.head)
+      val error = intercept[RdfProtoDeserializationError] {
+        decoder.ingestRow(data(1))
+      }
+      error.getMessage should include ("Error while decoding term")
+      error.getCause shouldBe a [ArrayIndexOutOfBoundsException]
+    }
   }
 
   "a QuadsDecoder" should {
@@ -437,6 +457,24 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
       error.getMessage should include ("Triple in stream without preceding graph start")
+    }
+
+    // The tests for this logic are in internal.NameDecoderSpec
+    // Here we are just testing if the exceptions are rethrown correctly.
+    "throw exception on out-of-bounds references to lookups (graph term)" in {
+      val decoder = MockConverterFactory.graphsAsQuadsDecoder(None)
+      val data = wrapEncodedFull(Seq(
+        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
+        RdfGraphStart(
+          RdfIri(10000, 0),
+        ),
+      ))
+      decoder.ingestRow(data.head)
+      val error = intercept[RdfProtoDeserializationError] {
+        decoder.ingestRow(data(1))
+      }
+      error.getMessage should include ("Error while decoding graph term")
+      error.getCause shouldBe a [ArrayIndexOutOfBoundsException]
     }
   }
 
