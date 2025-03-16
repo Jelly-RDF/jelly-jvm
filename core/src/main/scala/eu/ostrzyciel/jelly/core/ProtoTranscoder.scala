@@ -41,6 +41,7 @@ trait ProtoTranscoder:
    *
    * @param row the row to ingest
    * @return zero or more rows
+   * @throws RdfProtoTranscodingError if the row can't be transcoded
    */
   def ingestRow(row: RdfStreamRow): Iterable[RdfStreamRow]
 
@@ -49,5 +50,6 @@ trait ProtoTranscoder:
    *
    * @param frame the frame to ingest
    * @return the frame
+   * @throws RdfProtoTranscodingError if the frame can't be transcoded
    */
   def ingestFrame(frame: RdfStreamFrame): RdfStreamFrame

@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.integration_tests.io
 
 import eu.ostrzyciel.jelly.core.JellyOptions
+import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.pekko.actor.ActorSystem
 import org.scalatest.matchers.should.Matchers
@@ -94,23 +95,34 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers:
       md.size(graphs2) should be(1)
     }
 
-  def parsingFailureTests[TErr <: AnyRef : ClassTag](impl: NativeSerDes[?, ?]): Unit =
+  /**
+   * Tests for parsing failures.
+   * @param impl the implementation to test
+   * @param boxed whether the exception is expected to be boxed in another exception
+   */
+  def parsingFailureTests(impl: NativeSerDes[?, ?], boxed: Boolean = false): Unit =
+    def checkException(e: Throwable): Unit =
+      val e1 = if boxed then e.getCause else e
+      e1 shouldBe a[RdfProtoDeserializationError]
+      e1.getMessage should include("generalized")
+      e1.getCause shouldBe a[ClassCastException]
+
     "fail to parse triples" in {
-      intercept[TErr] {
+      checkException(intercept[Throwable] {
         impl.readTriplesJelly(ByteArrayInputStream(bytesTriples), None)
-      }
+      })
     }
 
     "fail to parse quads" in {
-      intercept[TErr] {
+      checkException(intercept[Throwable] {
         impl.readQuadsJelly(ByteArrayInputStream(bytesQuads), None)
-      }
+      })
     }
 
     "fail to parse graphs" in {
-      intercept[TErr] {
+      checkException(intercept[Throwable] {
         impl.readQuadsJelly(ByteArrayInputStream(bytesGraphs), None)
-      }
+      })
     }
 
   "Jena RIOT implementation" should {
@@ -126,13 +138,13 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers:
   }
 
   "RDF4J implementation" should {
-    parsingFailureTests[ClassCastException](Rdf4jSerDes)
+    parsingFailureTests(Rdf4jSerDes)
   }
 
   "RDF4J reactive implementation" should {
-    parsingFailureTests[ClassCastException](Rdf4jReactiveSerDes())
+    parsingFailureTests(Rdf4jReactiveSerDes(), boxed = true)
   }
   
   "Titanium implementation" should {
-    parsingFailureTests[ClassCastException](TitaniumSerDes)
+    parsingFailureTests(TitaniumSerDes)
   }

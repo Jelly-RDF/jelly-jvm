@@ -2,6 +2,7 @@ package eu.ostrzyciel.jelly.convert.titanium.internal
 
 import eu.ostrzyciel.jelly.convert.titanium.internal.TitaniumRdf.*
 import eu.ostrzyciel.jelly.core.ProtoDecoderConverter
+import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError
 
 /**
  * A Jelly decoder converter for the titanium-rdf-api.
@@ -18,16 +19,26 @@ private[titanium] final class TitaniumDecoderConverter extends ProtoDecoderConve
       "quoted triples.")
   override def makeDefaultGraphNode(): Node = null
 
-  override def makeTriple(s: Node, p: Node, o: Node): Quad = Quad(
-    s.asInstanceOf[String],
-    p.asInstanceOf[String],
-    o,
-    null
-  )
+  override def makeTriple(s: Node, p: Node, o: Node): Quad = try {
+    Quad(
+      s.asInstanceOf[String],
+      p.asInstanceOf[String],
+      o,
+      null
+    )
+  } catch
+    case e: ClassCastException => throw new RdfProtoDeserializationError(
+      s"Cannot create generalized triple with $s, $p, $o", Some(e)
+    )
 
-  override def makeQuad(s: Node, p: Node, o: Node, g: Node): Quad = Quad(
-    s.asInstanceOf[String],
-    p.asInstanceOf[String],
-    o,
-    g.asInstanceOf[String]
-  )
+  override def makeQuad(s: Node, p: Node, o: Node, g: Node): Quad = try {
+    Quad(
+      s.asInstanceOf[String],
+      p.asInstanceOf[String],
+      o,
+      g.asInstanceOf[String]
+    )
+  } catch
+    case e: ClassCastException => throw new RdfProtoDeserializationError(
+      s"Cannot create generalized quad with $s, $p, $o, $g", Some(e)
+    )

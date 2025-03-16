@@ -37,20 +37,26 @@ private[core] trait ProtoDecoderBase[TNode, TDatatype : ClassTag, +TTriple, +TQu
    * Convert a GraphTerm message to a node.
    * @param graph graph term to convert
    * @return converted node
+   * @throws RdfProtoDeserializationError if the graph term can't be decoded
    */
   protected final def convertGraphTerm(graph: GraphTerm): TNode =
-    if graph == null then
-      throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.")
-    else if graph.isIri then
-      nameDecoder.decode(graph.iri)
-    else if graph.isDefaultGraph then
-      converter.makeDefaultGraphNode()
-    else if graph.isBnode then
-      converter.makeBlankNode(graph.bnode)
-    else if graph.isLiteral then
-      convertLiteral(graph.literal)
-    else
-      throw new RdfProtoDeserializationError("Unknown graph term type.")
+    try {
+      if graph == null then
+        throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.")
+      else if graph.isIri then
+        nameDecoder.decode(graph.iri)
+      else if graph.isDefaultGraph then
+        converter.makeDefaultGraphNode()
+      else if graph.isBnode then
+        converter.makeBlankNode(graph.bnode)
+      else if graph.isLiteral then
+        convertLiteral(graph.literal)
+      else
+        throw new RdfProtoDeserializationError("Unknown graph term type.")
+    } catch
+      case e: Exception =>
+        throw new RdfProtoDeserializationError(s"Error while decoding graph term", Some(e))
+
 
   /**
    * Convert an SpoTerm message to a node, while respecting repeated terms.
@@ -119,22 +125,30 @@ private[core] trait ProtoDecoderBase[TNode, TDatatype : ClassTag, +TTriple, +TQu
     case RdfLiteral.LiteralKind.Datatype(dtId) =>
       converter.makeDtLiteral(literal.lex, dtLookup.get(dtId))
 
+  /**
+   * @throws RdfProtoDeserializationError if the term can't be decoded
+   */
   private final def convertTerm(term: SpoTerm): TNode =
-    if term == null then
-      throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.")
-    else if term.isIri then
-      nameDecoder.decode(term.iri)
-    else if term.isBnode then
-      converter.makeBlankNode(term.bnode)
-    else if term.isLiteral then
-      convertLiteral(term.literal)
-    else if term.isTripleTerm then
-      val inner = term.tripleTerm
-      // ! No support for repeated terms in quoted triples
-      converter.makeTripleNode(
-        convertTerm(inner.subject),
-        convertTerm(inner.predicate),
-        convertTerm(inner.`object`),
-      )
-    else
-      throw new RdfProtoDeserializationError("Unknown term type.")
+    try {
+      if term == null then
+        throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.")
+      else if term.isIri then
+        nameDecoder.decode(term.iri)
+      else if term.isBnode then
+        converter.makeBlankNode(term.bnode)
+      else if term.isLiteral then
+        convertLiteral(term.literal)
+      else if term.isTripleTerm then
+        val inner = term.tripleTerm
+        // ! No support for repeated terms in quoted triples
+        converter.makeTripleNode(
+          convertTerm(inner.subject),
+          convertTerm(inner.predicate),
+          convertTerm(inner.`object`),
+        )
+      else
+        throw new RdfProtoDeserializationError("Unknown term type.")
+    }
+    catch
+      case e: Exception =>
+        throw new RdfProtoDeserializationError(s"Error while decoding term", Some(e))

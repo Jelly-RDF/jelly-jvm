@@ -143,6 +143,8 @@ object JellyOptions:
    *
    * @param requestedOptions Requested options of the stream.
    * @param supportedOptions Options that can be safely supported.
+   *
+   * @throws RdfProtoDeserializationError if the requested options are not supported.
    */
   def checkCompatibility(requestedOptions: RdfStreamOptions, supportedOptions: RdfStreamOptions): Unit =
     if requestedOptions.version > supportedOptions.version || requestedOptions.version > Constants.protoVersion then
@@ -182,6 +184,8 @@ object JellyOptions:
    *
    * @param options        Options of the stream.
    * @param expLogicalType Expected logical stream type. If UNSPECIFIED, no check is performed.
+   *
+   * @throws RdfProtoDeserializationError if the requested options are not supported.
    */
   private def checkLogicalStreamType(options: RdfStreamOptions, expLogicalType: LogicalStreamType): Unit =
     val baseLogicalType = options.logicalType.toBaseType
