@@ -13,7 +13,7 @@ def define_env(env):
         try:
             proto_tag_raw = subprocess.run(
                 ['git', 'describe', '--tags'],
-                cwd='../rdf-protos/src/main/protobuf_shared',
+                cwd='../submodules/protobuf',
                 check=True,
                 capture_output=True,
             ).stdout.decode().strip()
