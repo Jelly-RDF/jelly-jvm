@@ -95,9 +95,10 @@ lazy val core = (project in file("core"))
     Compile / sourceGenerators += Def.task {
       Generator.gen(
         inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main",
-        outputDir = sourceManaged.value / "scalapb",
+        outputDir = sourceManaged.value / "main" / "scalapb",
       )
     }.dependsOn(rdfProtos / Compile / PB.generate),
+    Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
   )
 
