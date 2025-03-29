@@ -9,7 +9,7 @@ If you are already using Jena or RDF4J, you should use the [`jelly-jena`](jena.m
 ```xml
 <dependency>
     <groupId>eu.ostrzyciel.jelly</groupId>
-    <artifactId>jelly-titanium-rdf-api</artifactId>
+    <artifactId>jelly-titanium-rdf-api_3</artifactId>
     <version>{{ jvm_package_version() }}</version>
 </dependency>
 ```
