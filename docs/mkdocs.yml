@@ -101,6 +101,6 @@ nav:
     - Releases: 'dev/releases.md'
     - Implementing Jelly for other libraries: 'dev/implementing.md'
   - Contributing: 'contributing.md'
-  - Code of Conduct: 'code_of_conduct.md'
+  - Code of conduct: 'code_of_conduct.md'
   - Licensing and citation: 'licensing.md'
   - Back to main Jelly docs ↩: 'https://w3id.org/jelly/'

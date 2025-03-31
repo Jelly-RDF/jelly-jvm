@@ -6,9 +6,9 @@ Jelly-JVM is an open project – **you are welcome to submit issues, pull reques
 
 If you have any questions or want to discuss a feature, you can join the **[Jelly Discord chat](https://discord.gg/A8sN5XwVa5)**.
 
-## Code of Conduct
+## Code of conduct
 
-By participating in this project, you are expected to follow our [Code of Conduct](./code_of_conduct.md). Be kind, inclusive, and constructive.
+By participating in this project, you are expected to follow our [Code of conduct](./code_of_conduct.md). Be kind, inclusive, and constructive.
 
 ## Submitting issues
 
