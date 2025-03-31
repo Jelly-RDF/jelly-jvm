@@ -28,7 +28,7 @@ object IoUtils:
     // is 10 bytes long, while stream options alone are 10 bytes long.
     //
     // It's not possible to have a long varint starting with 0A, because its most significant bit
-    // have to be 1 (continuation bit). So, we don't need to worry about that case.
+    // would have to be 1 (continuation bit). So, we don't need to worry about that case.
     //
     // Yeah, it's magic. But it works.
     val isDelimited = scout.length == 3 && (
