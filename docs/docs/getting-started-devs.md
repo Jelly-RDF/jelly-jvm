@@ -73,7 +73,7 @@ If you aren't using a big RDF library like Jena or RDF4J, the simplest way to ge
 ```xml
 <dependency>
     <groupId>eu.ostrzyciel.jelly</groupId>
-    <artifactId>jelly-titanium-rdf-api</artifactId>
+    <artifactId>jelly-titanium-rdf-api_3</artifactId>
     <version>{{ jvm_package_version() }}</version>
 </dependency>
 ```
