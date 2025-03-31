@@ -8,7 +8,7 @@ If you have any questions or want to discuss a feature, you can join the **[Jell
 
 ## Code of Conduct
 
-Please note that by participating in this project, you are expected to follow our [Code of Conduct](./code_of_conduct.md). Be kind, inclusive, and constructive.
+By participating in this project, you are expected to follow our [Code of Conduct](./code_of_conduct.md). Be kind, inclusive, and constructive.
 
 ## Submitting issues
 

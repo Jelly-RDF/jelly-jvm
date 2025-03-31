@@ -1,5 +1,8 @@
 # Contributor Covenant Code of Conduct
 
+_This Code of Conduct is adapted from the [Contributor Covenant][homepage],_
+_version 2.1, available at [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html][v2.1]._
+
 ## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in our
@@ -113,10 +116,6 @@ individual, or aggression toward or disparagement of classes of individuals.
 community.
 
 ## Attribution
-
-This Code of Conduct is adapted from the [Contributor Covenant][homepage],
-version 2.1, available at
-[https://www.contributor-covenant.org/version/2/1/code_of_conduct.html][v2.1].
 
 Community Impact Guidelines were inspired by
 [Mozilla's code of conduct enforcement ladder][Mozilla CoC].
