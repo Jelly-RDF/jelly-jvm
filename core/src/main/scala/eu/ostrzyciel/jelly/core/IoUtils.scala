@@ -26,6 +26,10 @@ object IoUtils:
     //
     // A case like "0A 0A 0A 0A" in the delimited variant is impossible. It would mean that the whole message
     // is 10 bytes long, while stream options alone are 10 bytes long.
+    //
+    // It's not possible to have a long varint starting with 0A, because its most significant bit
+    // have to be 1 (continuation bit). So, we don't need to worry about that case.
+    //
     // Yeah, it's magic. But it works.
     val isDelimited = scout.length == 3 && (
       scout(0) != 0x0A || scout(1) == 0x0A && scout(2) != 0x0A
