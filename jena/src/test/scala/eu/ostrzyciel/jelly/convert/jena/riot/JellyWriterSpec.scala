@@ -1,12 +1,15 @@
 package eu.ostrzyciel.jelly.convert.jena.riot
 
 import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
-import org.apache.commons.io.output.NullWriter
+import eu.ostrzyciel.jelly.core.IoUtils
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame
+import org.apache.commons.io.output.{ByteArrayOutputStream, NullWriter}
+import org.apache.jena.graph.{NodeFactory, Triple}
 import org.apache.jena.riot.RiotException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.OutputStream
+import java.io.{ByteArrayInputStream, OutputStream}
 
 /**
  * Tests covering rare edge cases in the Jelly writer.
@@ -16,6 +19,12 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
   val streamWriters = Seq(
     ("JellyStreamWriter", (opt, out) => JellyStreamWriter(opt, out)),
     ("JellyStreamWriterAutodetectType", (opt, out) => JellyStreamWriterAutodetectType(opt, out)),
+  )
+
+  val testTriple = Triple.create(
+    NodeFactory.createURI("http://example.com/s"),
+    NodeFactory.createURI("http://example.com/p"),
+    NodeFactory.createURI("http://example.com/o")
   )
 
   for (writerName, writerFactory) <- streamWriters do
@@ -33,6 +42,60 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
             case "prefix" => writer.prefix("ex", "http://example.com")
           mutations should be (0)
         }
+
+      "write delimited frames by default" in {
+        val out = new ByteArrayOutputStream()
+        val writer = writerFactory(JellyFormatVariant(), out)
+        writer.start()
+        writer.triple(testTriple)
+        writer.finish()
+        val bytes = out.toByteArray
+        bytes.size should be > 10
+        val (delimited, _) = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
+        delimited should be (true)
+      }
+
+      "write non-delimited frames if requested" in {
+        val out = new ByteArrayOutputStream()
+        val writer = writerFactory(JellyFormatVariant(delimited = false), out)
+        writer.start()
+        writer.triple(testTriple)
+        writer.finish()
+        val bytes = out.toByteArray
+        bytes.size should be > (10)
+        val (delimited, _) = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
+        delimited should be (false)
+      }
+
+      "split stream in multiple frames if it's delimited" in {
+        val out = new ByteArrayOutputStream()
+        val writer = writerFactory(JellyFormatVariant(frameSize = 1), out)
+        writer.start()
+        for _ <- 1 to 100 do
+          writer.triple(testTriple)
+        writer.finish()
+        val bytes = out.toByteArray
+        val (delimited, is) = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
+        delimited should be (true)
+        for i <- 0 until 100 do
+          val f = RdfStreamFrame.parseDelimitedFrom(is)
+          f.isDefined should be (true)
+          f.get.rows.size should be > 0
+      }
+
+      "not split stream into multiple frames if it's non-delimited" in {
+        val out = new ByteArrayOutputStream()
+        val writer = writerFactory(JellyFormatVariant(frameSize = 1, delimited = false), out)
+        writer.start()
+        for _ <- 1 to 10_000 do
+          writer.triple(testTriple)
+        writer.finish()
+        val bytes = out.toByteArray
+        val (delimited, is) = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
+        delimited should be (false)
+        val f = RdfStreamFrame.parseFrom(is)
+        f.rows.size should be > 10_000
+      }
     }
 
   "JellyStreamWriterAutodetectType" should {

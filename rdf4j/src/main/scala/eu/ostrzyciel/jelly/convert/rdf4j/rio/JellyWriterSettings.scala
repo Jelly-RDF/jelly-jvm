@@ -14,11 +14,15 @@ object JellyWriterSettings:
     c
 
   def configFromOptions(
-    opt: RdfStreamOptions, frameSize: Long = 256L, enableNamespaceDeclarations: Boolean = false
+    opt: RdfStreamOptions,
+    frameSize: Long = 256L,
+    enableNamespaceDeclarations: Boolean = false,
+    delimited: Boolean = true,
   ): WriterConfig =
     val c = new WriterConfig()
     c.set(FRAME_SIZE, frameSize)
     c.set(ENABLE_NAMESPACE_DECLARATIONS, enableNamespaceDeclarations)
+    c.set(DELIMITED_OUTPUT, delimited)
     c.set(STREAM_NAME, opt.streamName)
     c.set(PHYSICAL_TYPE, opt.physicalType)
     c.set(ALLOW_RDF_STAR, opt.rdfStar)
@@ -41,6 +45,15 @@ object JellyWriterSettings:
       "It is only useful when you want to preserve the namespace declarations in the output. " +
       "Enabling this causes the stream to be written in protocol version 2 (Jelly 1.1.0) instead of 1.",
     false
+  )
+
+  val DELIMITED_OUTPUT = new BooleanRioSetting(
+    "eu.ostrzyciel.jelly.convert.rdf4j.rio.delimitedOutput",
+    "Write the output as delimited frames. Note: files saved to disk are recommended to be delimited, " +
+      "for better interoperability with other implementations. In a non-delimited file you can have ONLY ONE FRAME. " +
+      "If the input data is large, this will lead to an out-of-memory error. So, this makes sense only for small data. " +
+      "**Disable this only if you know what you are doing.**",
+    true
   )
 
   val STREAM_NAME = new StringRioSetting(

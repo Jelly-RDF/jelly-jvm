@@ -30,6 +30,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
   private val buffer: ListBuffer[RdfStreamRow] = new ListBuffer[RdfStreamRow]()
   private var frameSize: Long = 256L
   private var enableNamespaceDeclarations: Boolean = false
+  private var delimited: Boolean = true
 
   override def getRDFFormat: RDFFormat = JELLY
 
@@ -45,6 +46,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     s.add(MAX_DATATYPE_TABLE_SIZE)
     s.add(FRAME_SIZE)
     s.add(ENABLE_NAMESPACE_DECLARATIONS)
+    s.add(DELIMITED_OUTPUT)
     s
 
   override def startRDF(): Unit =
@@ -73,6 +75,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     )
     frameSize = c.get(FRAME_SIZE).toLong
     enableNamespaceDeclarations = c.get(ENABLE_NAMESPACE_DECLARATIONS).booleanValue()
+    delimited = c.get(DELIMITED_OUTPUT).booleanValue()
     encoder = Rdf4jConverterFactory.encoder(ProtoEncoder.Params(
       options, enableNamespaceDeclarations, Some(buffer)
     ))
@@ -83,7 +86,7 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
       encoder.addTripleStatement(st)
     else
       encoder.addQuadStatement(st)
-    if buffer.size >= frameSize then
+    if delimited && buffer.size >= frameSize then
       flushBuffer()
 
   private def flushBuffer(): Unit =
@@ -93,7 +96,11 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
 
   override def endRDF(): Unit =
     checkWritingStarted()
-    if buffer.nonEmpty then
+    if !delimited then
+      // Non-delimited variant – whole stream in one frame
+      val frame = RdfStreamFrame(rows = buffer.toList)
+      frame.writeTo(out)
+    else if buffer.nonEmpty then
       flushBuffer()
     out.flush()
 
@@ -105,5 +112,5 @@ final class JellyWriter(out: OutputStream) extends AbstractRDFWriter:
     checkWritingStarted()
     if enableNamespaceDeclarations then
       encoder.declareNamespace(prefix, uri)
-      if buffer.size >= frameSize then
+      if delimited && buffer.size >= frameSize then
         flushBuffer()
