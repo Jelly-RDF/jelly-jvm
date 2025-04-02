@@ -45,7 +45,8 @@ private[riot] object Util:
       frameSize = context.getInt(JellyLanguage.SYMBOL_FRAME_SIZE, baseVariant.frameSize),
       enableNamespaceDeclarations = context.isTrue(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS) ||
         baseVariant.enableNamespaceDeclarations,
-      delimited = context.isTrue(JellyLanguage.SYMBOL_DELIMITED_OUTPUT) || baseVariant.delimited,
+      // undef -> true, true -> true, false -> false
+      delimited = context.isTrueOrUndef(JellyLanguage.SYMBOL_DELIMITED_OUTPUT),
     )
 
 /**

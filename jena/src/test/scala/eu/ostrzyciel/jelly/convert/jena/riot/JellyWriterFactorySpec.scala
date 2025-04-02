@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.convert.jena.riot
 
 import eu.ostrzyciel.jelly.convert.jena.traits.JenaTest
-import eu.ostrzyciel.jelly.core.Constants
+import eu.ostrzyciel.jelly.core.{Constants, IoUtils}
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.apache.jena.graph.{NodeFactory, Triple}
 import org.apache.jena.riot.RDFFormat
@@ -100,4 +100,16 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
           else
             options.version should be (Constants.protoVersion_1_0_x)
         }
+
+      "apply the `delimited` parameter set to false" in {
+        val os = new ByteArrayOutputStream()
+        val format = RDFFormat(JellyLanguage.JELLY)
+        val ctx = new Context()
+        ctx.set(JellyLanguage.SYMBOL_DELIMITED_OUTPUT, false)
+        factory(format, ctx, os)
+        val bytes = os.toByteArray
+        bytes should not be empty
+        val is = new ByteArrayInputStream(bytes)
+        IoUtils.autodetectDelimiting(is)._1 should be(false)
+      }
     }
