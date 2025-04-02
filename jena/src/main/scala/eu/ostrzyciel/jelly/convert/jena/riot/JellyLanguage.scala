@@ -92,6 +92,18 @@ object JellyLanguage:
   val SYMBOL_ENABLE_NAMESPACE_DECLARATIONS: util.Symbol =
     org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "enableNamespaceDeclarations")
 
+  /**
+   * Symbol for enabling/disabling delimiters between frames in the output. (ENABLED by default)
+   *
+   * Note: files saved to disk are recommended to be delimited, for better interoperability with other
+   * implementations. In a non-delimited file you can have ONLY ONE FRAME. If the input data is large,
+   * this will lead to an out-of-memory error. So, this makes sense only for small data.
+   *
+   * **Set this option to "false" only if you know what you are doing.**
+   */
+  val SYMBOL_DELIMITED_OUTPUT: util.Symbol =
+    org.apache.jena.sparql.util.Symbol.create(SYMBOL_NS + "delimitedOutput")
+
   private var registered = false
 
   register()

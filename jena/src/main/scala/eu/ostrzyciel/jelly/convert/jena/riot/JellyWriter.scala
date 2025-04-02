@@ -45,6 +45,7 @@ private[riot] object Util:
       frameSize = context.getInt(JellyLanguage.SYMBOL_FRAME_SIZE, baseVariant.frameSize),
       enableNamespaceDeclarations = context.isTrue(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS) ||
         baseVariant.enableNamespaceDeclarations,
+      delimited = context.isTrue(JellyLanguage.SYMBOL_DELIMITED_OUTPUT) || baseVariant.delimited,
     )
 
 /**
@@ -197,12 +198,12 @@ final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extend
 
   override def triple(triple: Triple): Unit =
     encoder.addTripleStatement(triple)
-    if buffer.size >= opt.frameSize then
+    if opt.delimited && buffer.size >= opt.frameSize then
       flushBuffer()
 
   override def quad(quad: Quad): Unit =
     encoder.addQuadStatement(quad)
-    if buffer.size >= opt.frameSize then
+    if opt.delimited && buffer.size >= opt.frameSize then
       flushBuffer()
 
   // Not supported
@@ -211,13 +212,18 @@ final class JellyStreamWriter(opt: JellyFormatVariant, out: OutputStream) extend
   override def prefix(prefix: String, iri: String): Unit =
     if opt.enableNamespaceDeclarations then
       encoder.declareNamespace(prefix, iri)
-      if buffer.size >= opt.frameSize then
+      if opt.delimited && buffer.size >= opt.frameSize then
         flushBuffer()
 
-  // Flush the buffer
+  // Flush the buffer and finish the stream
   override def finish(): Unit =
-    if buffer.nonEmpty then
+    if !opt.delimited then
+      // Non-delimited variant – whole stream in one frame
+      val frame = RdfStreamFrame(rows = buffer.toList)
+      frame.writeTo(out)
+    else if buffer.nonEmpty then
       flushBuffer()
+    out.flush()
 
   private def flushBuffer(): Unit =
     val frame = RdfStreamFrame(rows = buffer.toList)
