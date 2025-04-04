@@ -30,4 +30,4 @@ Forward compatibility is provided only in a very limited manner in Jelly-JVM. Th
 
 - [Release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)
 - [Making Jelly-JVM releases](../dev/releases.md)
-- [Contributing to Jelly-JVM](../contributing.md)
+- [Contributing to Jelly-JVM](../contributing/index.md)

@@ -74,7 +74,7 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
 - Developer guide
     - [Releases](dev/releases.md)
     - [Implementing Jelly for other libraries](dev/implementing.md)
-- [Contributing to Jelly-JVM](contributing.md)
+- [Contributing to Jelly-JVM](contributing/index.md)
 - [License and citation](licensing.md)
 - [Release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)
 - [Main Jelly website]({{ proto_link( '' ) }}) – including the Jelly protocol specification and explanation of the various stream types.

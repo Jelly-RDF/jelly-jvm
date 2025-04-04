@@ -30,8 +30,8 @@ Jelly-JVM uses the exact same documentation system as the main [Jelly documentat
 
 ## Releases
 
-See the [dedicated page on making releases](dev/releases.md).
+See the [dedicated page on making releases](../dev/releases.md).
 
 ## See also
 
-- [Licensing and citation](licensing.md)
+- [Licensing and citation](../licensing.md)
