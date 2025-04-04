@@ -30,4 +30,4 @@ Jelly-JVM was created and is maintained by [Piotr Sowiński (Ostrzyciel)](https:
 
 ## See also
 
-- [Contributing to Jelly-JVM](contributing.md)
+- [Contributing to Jelly-JVM](contributing/index.md)
