@@ -185,7 +185,7 @@ Jelly is a bit more than just a serialization format – it also defines a [gRPC
 - [`jelly-cli` command-line utility](https://github.com/Jelly-RDF/cli) can help you convert to/from Jelly, as well as validate and debug Jelly files.
 - Nanopub [Registry](https://github.com/knowledgepixels/nanopub-registry) and [Query](https://github.com/knowledgepixels/nanopub-query) are production applications of Jelly. They use Jelly-JVM for inter-service communication, using the RDF4J integration.
 - [RiverBench ci-worker](https://github.com/RiverBench/ci-worker) – a real-world application that is used for processing large RDF datasets in a CI/CD pipeline. It uses Jelly-JVM for serialization and deserialization with Apache Jena. It also uses extensively Apache Pekko Streams.
-- [Jelly JVM benchmarks](https://github.com/Jelly-RDF/jvm-benchmarks/tree/main) – research software for testing the performance of Jelly-JVM and other RDF serializations in Apache Jena. It uses most Jelly-JVM features.
+- [Jelly JVM benchmarks](https://github.com/Jelly-RDF/jvm-benchmarks/tree/main) – research software for testing the performance of Jelly-JVM and other RDF serializations in Apache Jena. It uses most of Jelly-JVM's features.
 
 
 [^1]: There is nothing stopping you from using more than one at the same time. You can also pretty easily add support for any other Java-based RDF library by implementing a few interfaces. [More details here](dev/implementing.md).
