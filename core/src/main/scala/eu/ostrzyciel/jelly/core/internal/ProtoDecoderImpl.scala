@@ -249,19 +249,18 @@ object ProtoDecoderImpl:
       // Reset the logical type to UNSPECIFIED to ignore checking if it's supported by the inner decoder
       val newSupportedOptions = supportedOptions.copy(logicalType = LogicalStreamType.UNSPECIFIED)
       JellyOptions.checkCompatibility(opts, newSupportedOptions)
-      if inner.isDefined then
-        throw new RdfProtoDeserializationError("Stream options are already set. " +
-          "The physical type of the stream cannot be inferred.")
-      val dec = opts.physicalType match
-        case PhysicalStreamType.TRIPLES =>
-          new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter, newSupportedOptions, nsHandler)
-        case PhysicalStreamType.QUADS =>
-          new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, newSupportedOptions, nsHandler)
-        case PhysicalStreamType.GRAPHS =>
-          new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, newSupportedOptions, nsHandler)
-        case PhysicalStreamType.UNSPECIFIED =>
-          throw new RdfProtoDeserializationError("Incoming physical stream type is not set.")
-        case _ =>
-          throw new RdfProtoDeserializationError("Incoming physical stream type is not recognized.")
+      // If options already set, ignore them
+      if inner.isEmpty then
+        val dec = opts.physicalType match
+          case PhysicalStreamType.TRIPLES =>
+            new TriplesDecoder[TNode, TDatatype, TTriple, TQuad](converter, newSupportedOptions, nsHandler)
+          case PhysicalStreamType.QUADS =>
+            new QuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, newSupportedOptions, nsHandler)
+          case PhysicalStreamType.GRAPHS =>
+            new GraphsAsQuadsDecoder[TNode, TDatatype, TTriple, TQuad](converter, newSupportedOptions, nsHandler)
+          case PhysicalStreamType.UNSPECIFIED =>
+            throw new RdfProtoDeserializationError("Incoming physical stream type is not set.")
+          case _ =>
+            throw new RdfProtoDeserializationError("Incoming physical stream type is not recognized.")
 
-      inner = Some(dec.asInstanceOf[ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple | TQuad]])
+        inner = Some(dec.asInstanceOf[ProtoDecoderImpl[TNode, TDatatype, TTriple, TQuad, TTriple | TQuad]])
