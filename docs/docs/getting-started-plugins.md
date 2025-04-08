@@ -55,3 +55,4 @@ The Jelly format is registered under the name `jelly` in the RDF libraries, so y
 ## See also
 
 - **[Getting started for developers](getting-started-devs.md)** – if you want to get your hands dirty with code and get more features out of Jelly.
+- **[`jelly-cli` command-line tool](https://github.com/Jelly-RDF/cli)** – useful for converting things to/from Jelly.
