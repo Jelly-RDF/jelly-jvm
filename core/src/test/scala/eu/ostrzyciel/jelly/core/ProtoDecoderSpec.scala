@@ -518,17 +518,21 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       error.getMessage should include ("Stream options are not set")
     }
 
-    "should throw when encountering stream options twice" in {
+    "should ignore multiple stream options" in {
       val decoder = MockConverterFactory.anyStatementDecoder()
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
+        RdfTriple(
+          RdfTerm.Bnode("1"),
+          RdfTerm.Bnode("2"),
+          RdfTerm.Bnode("3"),
+        ),
       ))
       decoder.ingestRow(data.head)
-      val error = intercept[RdfProtoDeserializationError] {
-        decoder.ingestRow(data(1))
-      }
-      error.getMessage should include ("Stream options are already set")
+      decoder.ingestRow(data(1))
+      val t = decoder.ingestRow(data(2))
+      t.get should be (a[Triple])
     }
   }
 
