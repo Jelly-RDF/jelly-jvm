@@ -170,11 +170,11 @@ object JellyOptions:
           s"smaller than the minimum supported size of $minSize."
         )
 
-    // The minimum sizes are hard-coded because it would be impossible to reliably encode the stream
-    // with smaller tables, especially if RDF-star is used.
-    checkTableSize("Name", requestedOptions.maxNameTableSize, supportedOptions.maxNameTableSize, 16)
+    // The minimum size of the name lookup is hard-coded in the spec.
+    checkTableSize("Name", requestedOptions.maxNameTableSize, supportedOptions.maxNameTableSize, 8)
     checkTableSize("Prefix", requestedOptions.maxPrefixTableSize, supportedOptions.maxPrefixTableSize)
-    checkTableSize("Datatype", requestedOptions.maxDatatypeTableSize, supportedOptions.maxDatatypeTableSize, 8)
+    // The datatype lookup can be empty if the stream does not use datatype literals.
+    checkTableSize("Datatype", requestedOptions.maxDatatypeTableSize, supportedOptions.maxDatatypeTableSize)
 
     checkLogicalStreamType(requestedOptions, supportedOptions.logicalType)
 
