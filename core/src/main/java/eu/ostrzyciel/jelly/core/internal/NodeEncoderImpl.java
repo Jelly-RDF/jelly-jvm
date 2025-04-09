@@ -1,10 +1,10 @@
 package eu.ostrzyciel.jelly.core.internal;
 
+import eu.ostrzyciel.jelly.core.JellyExceptions;
 import eu.ostrzyciel.jelly.core.NodeEncoder;
 import eu.ostrzyciel.jelly.core.proto.v1.*;
 
 import java.util.LinkedHashMap;
-import java.util.function.Function;
 
 /**
  * Encodes RDF nodes native to the used RDF library (e.g., Apache Jena, RDF4J) into Jelly's protobuf objects.
@@ -203,6 +203,11 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      */
     @Override
     public UniversalTerm makeDtLiteral(TNode key, String lex, String datatypeName) {
+        if (datatypeLookup.size == 0) {
+            throw JellyExceptions.rdfProtoSerializationError("Datatype literals cannot be " +
+                    "encoded when the datatype table is disabled. Set the datatype table size " +
+                    "to a positive value.");
+        }
         var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
         if (cachedNode.encoded != null &&

@@ -1,5 +1,7 @@
 package eu.ostrzyciel.jelly.core.internal
 
+import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoSerializationError
+import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.helpers.Mrl
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.Inspectors
@@ -212,6 +214,19 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           )
           node.literal.lex should be (s"v$i")
           node.literal.literalKind.datatype should be (i + 4)
+      }
+
+      "throw exception if datatype table size = 0" in {
+        val encoder = NodeEncoderImpl[Mrl.Node](
+          JellyOptions.smallStrict.withMaxDatatypeTableSize(0), null, 16, 16, 16
+        )
+        val e = intercept[RdfProtoSerializationError] {
+          encoder.makeDtLiteral(
+            Mrl.DtLiteral("v1", Mrl.Datatype("dt1")),
+            "v1", "dt1",
+          )
+        }
+        e.getMessage should include ("Datatype literals cannot be encoded when the datatype table")
       }
     }
 

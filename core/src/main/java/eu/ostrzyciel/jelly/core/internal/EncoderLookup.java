@@ -53,7 +53,7 @@ final class EncoderLookup {
     // Tail pointer for the table.
     private int tail;
     // Maximum size of the lookup.
-    private final int size;
+    final int size;
     // Current size of the lookup (how many entries are used).
     // This will monotonically increase until it reaches the maximum size.
     private int used;
