@@ -13,18 +13,18 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
   import PatchEncoder.Params as Pep
 
   val testCases = Seq(
-    ("a triple patch", Triples1, PatchPhysicalType.TRIPLES),
-    ("a triple patch with namespace declarations", Triples2NsDecl, PatchPhysicalType.TRIPLES),
-    ("a quad patch", Quads1, PatchPhysicalType.QUADS),
-    ("nonsensical transaction commands", MalformedTransactions, PatchPhysicalType.TRIPLES),
+    ("a triple patch", Triples1, PatchStatementType.TRIPLES),
+    ("a triple patch with namespace declarations", Triples2NsDecl, PatchStatementType.TRIPLES),
+    ("a quad patch", Quads1, PatchStatementType.QUADS),
+    ("nonsensical transaction commands", MalformedTransactions, PatchStatementType.TRIPLES),
   )
   
   "a PatchEncoder" should {
-    testCases.foreach { case (desc, testCase, physicalType) =>
+    testCases.foreach { case (desc, testCase, statementType) =>
       s"encode $desc" in {
         val buffer = ListBuffer[RdfPatchRow]()
         val encoder = MockPatchConverterFactory.patchEncoder(Pep(
-          JellyPatchOptions.smallGeneralized.withPhysicalType(physicalType),
+          JellyPatchOptions.smallGeneralized.withStatementType(statementType),
           buffer
         ))
         testCase.mrl.foreach(_.apply(encoder))

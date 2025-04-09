@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core.patch
 
 import eu.ostrzyciel.jelly.core.internal.*
-import eu.ostrzyciel.jelly.core.patch.handler.{ExtendedPatchHandler, PatchHandler}
+import eu.ostrzyciel.jelly.core.patch.handler.{AnyPatchHandler, PatchHandler}
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
@@ -26,13 +26,11 @@ object PatchEncoder:
  * See [[PatchHandler]] for the basic operations that can be performed on the patch stream.
  *
  * @tparam TNode type of RDF nodes in the library
- * @tparam TTriple type of RDF triples in the library
- * @tparam TQuad type of RDF quads in the library
- * @since 2.7.0
+ * @since 2.11.0
  */
-trait PatchEncoder[TNode, -TTriple, -TQuad] extends
-  ProtoEncoderBase[TNode, TTriple, TQuad],
-  ExtendedPatchHandler[TNode, TTriple, TQuad],
+trait PatchEncoder[TNode] extends
+  ProtoEncoderBase[TNode, ?, ?],
+  AnyPatchHandler[TNode],
   RowBufferAppender:
 
   /**

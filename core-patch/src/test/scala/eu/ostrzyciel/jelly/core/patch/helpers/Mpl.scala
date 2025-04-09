@@ -14,34 +14,34 @@ object Mpl:
      * Apply this patch statement to the given encoder.
      * @param encoder the encoder to apply the patch statement to
      */
-    def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit
+    def apply(encoder: PatchEncoder[Node]): Unit
 
   final case class Add(statement: Statement | NsDecl) extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
+    def apply(encoder: PatchEncoder[Node]): Unit =
       statement match
-        case s: Triple => encoder.addTriple(s)
-        case s: Quad => encoder.addQuad(s)
+        case s: Triple => encoder.addTriple(s.s, s.p, s.o)
+        case s: Quad => encoder.addQuad(s.s, s.p, s.o, s.g)
         case ns: NsDecl => encoder.addNamespace(ns.prefix, ns.iri)
 
   final case class Delete(statement: Statement | NsDecl) extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
+    def apply(encoder: PatchEncoder[Node]): Unit =
       statement match
-        case s: Triple => encoder.deleteTriple(s)
-        case s: Quad => encoder.deleteQuad(s)
+        case s: Triple => encoder.deleteTriple(s.s, s.p, s.o)
+        case s: Quad => encoder.deleteQuad(s.s, s.p, s.o, s.g)
         case ns: NsDecl => encoder.deleteNamespace(ns.prefix, ns.iri)
 
   case object TxStart extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
+    def apply(encoder: PatchEncoder[Node]): Unit =
       encoder.transactionStart()
 
   case object TxCommit extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
+    def apply(encoder: PatchEncoder[Node]): Unit =
       encoder.transactionCommit()
 
   case object TxAbort extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
+    def apply(encoder: PatchEncoder[Node]): Unit =
       encoder.transactionAbort()
 
   final case class Header(key: String, value: Node) extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node, Triple, Quad]): Unit =
+    def apply(encoder: PatchEncoder[Node]): Unit =
       encoder.header(key, value)

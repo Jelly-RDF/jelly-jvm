@@ -1,8 +1,8 @@
 package eu.ostrzyciel.jelly.core.patch
 
 import eu.ostrzyciel.jelly.core.JellyOptions
-import eu.ostrzyciel.jelly.core.proto.v1.{BaseJellyOptions, PhysicalStreamType, RdfStreamOptions}
-import eu.ostrzyciel.jelly.core.proto.v1.patch.{PatchPhysicalType, RdfPatchOptions}
+import eu.ostrzyciel.jelly.core.proto.v1.*
+import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
 /**
  * Utilities for working with RdfPatchOptions.
@@ -18,7 +18,7 @@ object JellyPatchOptions:
    * @return RdfPatchOptions
    */
   def fromJellyOptions(opt: RdfStreamOptions): RdfPatchOptions =
-    fromBaseOptions(opt).withPhysicalType(fromJellyPhysicalType(opt.physicalType))
+    fromBaseOptions(opt).withStatementType(fromJellyPhysicalType(opt.physicalType))
 
   /**
    * Convert a BaseJellyOptions instance to a Jelly Patch RdfPatchOptions.
@@ -64,13 +64,13 @@ object JellyPatchOptions:
    * GRAPHS physical type is converted to QUADS.
    *
    * @param t PhysicalStreamType
-   * @return PatchPhysicalType
+   * @return PatchStatementType
    */
-  def fromJellyPhysicalType(t: PhysicalStreamType): PatchPhysicalType = t match
-    case PhysicalStreamType.TRIPLES => PatchPhysicalType.TRIPLES
-    case PhysicalStreamType.QUADS => PatchPhysicalType.QUADS
-    case PhysicalStreamType.GRAPHS => PatchPhysicalType.QUADS
-    case _ => PatchPhysicalType.UNSPECIFIED
+  def fromJellyPhysicalType(t: PhysicalStreamType): PatchStatementType = t match
+    case PhysicalStreamType.TRIPLES => PatchStatementType.TRIPLES
+    case PhysicalStreamType.QUADS => PatchStatementType.QUADS
+    case PhysicalStreamType.GRAPHS => PatchStatementType.QUADS
+    case _ => PatchStatementType.UNSPECIFIED
 
   /** See: [[JellyOptions.bigStrict]] */
   lazy val bigStrict: RdfPatchOptions = fromJellyOptions(JellyOptions.bigStrict)

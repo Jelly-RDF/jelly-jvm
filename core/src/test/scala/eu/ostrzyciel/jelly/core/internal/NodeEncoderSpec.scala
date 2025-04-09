@@ -223,7 +223,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "throw exception if datatype table size = 0" in {
         val encoder = NodeEncoderImpl[Mrl.Node](
-          JellyOptions.smallStrict.withMaxDatatypeTableSize(0), null, 16, 16, 16
+          16, 16, 0, 16, 16, 16, null
         )
         val e = intercept[RdfProtoSerializationError] {
           encoder.makeDtLiteral(
