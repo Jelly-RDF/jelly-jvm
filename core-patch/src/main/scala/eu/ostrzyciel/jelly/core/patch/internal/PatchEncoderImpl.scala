@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core.patch.internal
 
+import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoSerializationError
 import eu.ostrzyciel.jelly.core.internal.NodeEncoderFactory
 import eu.ostrzyciel.jelly.core.patch.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
@@ -89,6 +90,12 @@ final class PatchEncoderImpl[TNode](
     rowBuffer.append(RdfPatchRow.ofHeader(
       RdfPatchHeader(key, converter.nodeToProto(nodeEncoder, value))
     ))
+
+  override def punctuation(): Unit =
+    handleStreamStart()
+    if !options.streamType.isPunctuated then
+      throw new RdfProtoSerializationError("Punctuation is not allowed in this stream type.")
+    rowBuffer.append(RdfPatchRow.ofPunctuation)
 
   private inline def handleStreamStart(): Unit =
     if !emittedOptions then emitOptions()

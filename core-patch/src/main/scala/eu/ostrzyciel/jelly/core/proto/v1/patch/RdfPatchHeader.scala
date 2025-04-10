@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core.proto.v1.patch
 
+import com.google.protobuf.CodedOutputStream
 import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.annotation.switch
@@ -17,7 +18,10 @@ final case class RdfPatchHeader(key: String = "", value: SpoTerm = null)
   @transient private var __serializedSizeMemoized: Int = 0
 
   private def __computeSerializedSize(): Int = {
-    spoTermSerializedSize(value, 1)
+    var size = 0
+    val __key = key
+    if __key.nonEmpty then size += CodedOutputStream.computeStringSize(1, __key)
+    size + spoTermSerializedSize(value, 1)
   }
 
   override def serializedSize: Int = {
@@ -30,6 +34,8 @@ final case class RdfPatchHeader(key: String = "", value: SpoTerm = null)
   }
 
   def writeTo(_output__ : _root_.com.google.protobuf.CodedOutputStream): Unit = {
+    val __key = key
+    if __key.nonEmpty then _output__.writeString(1, __key)
     spoTermWriteTo(value, 1, _output__)
   }
 
@@ -66,7 +72,7 @@ final case class RdfPatchHeader(key: String = "", value: SpoTerm = null)
   def companion: RdfPatchHeader.type = RdfPatchHeader
 }
 
-object RdfPatchHeader extends CompanionHelper[RdfPatchHeader]("RdfPatchHeader") {
+object RdfPatchHeader extends patch.CompanionHelper[RdfPatchHeader]("RdfPatchHeader") {
   implicit def messageCompanion: scalapb.GeneratedMessageCompanion[RdfPatchHeader] = this
 
   def parseFrom(_input__ : _root_.com.google.protobuf.CodedInputStream): RdfPatchHeader = {

@@ -3,6 +3,7 @@ package eu.ostrzyciel.jelly.core.proto.v1.patch
 import com.google.protobuf.{CodedInputStream, CodedOutputStream}
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import scalapb.GeneratedMessage
+import scalapb.descriptors.PEmpty
 
 import scala.annotation.switch
 
@@ -57,7 +58,7 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
       case PUNCTUATION_FIELD_NUMBER => TRANSACTION_FIELD_TOTAL_SIZE
       case OPTIONS_FIELD_NUMBER =>
         val __value = row.asInstanceOf[RdfPatchOptions]
-        1 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
+        2 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
       case _ => 0
   }
 
@@ -154,9 +155,12 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
 
   def getFieldByNumber(__fieldNumber: Int): GeneratedMessage = {
     (__fieldNumber: @unchecked @switch) match {
-      case TRIPLE_ADD_FIELD_NUMBER | TRIPLE_DELETE_FIELD_NUMBER => row.triple
-      case QUAD_ADD_FIELD_NUMBER | QUAD_DELETE_FIELD_NUMBER => row.quad
-      case NAMESPACE_ADD_FIELD_NUMBER | NAMESPACE_DELETE_FIELD_NUMBER => row.namespace
+      case TRIPLE_ADD_FIELD_NUMBER => row.triple
+      case TRIPLE_DELETE_FIELD_NUMBER => row.triple
+      case QUAD_ADD_FIELD_NUMBER => row.quad
+      case QUAD_DELETE_FIELD_NUMBER => row.quad
+      case NAMESPACE_ADD_FIELD_NUMBER => row.namespace
+      case NAMESPACE_DELETE_FIELD_NUMBER => row.namespace
       case TRANSACTION_START_FIELD_NUMBER => RdfPatchTransactionStart.defaultInstance
       case TRANSACTION_COMMIT_FIELD_NUMBER => RdfPatchTransactionCommit.defaultInstance
       case TRANSACTION_ABORT_FIELD_NUMBER => RdfPatchTransactionAbort.defaultInstance
@@ -171,7 +175,9 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
 
   def getField(__field: _root_.scalapb.descriptors.FieldDescriptor): _root_.scalapb.descriptors.PValue = {
     Predef.require(__field.containingMessage eq companion.scalaDescriptor)
-    getFieldByNumber(__field.number).toPMessage
+    if __field.number == rowType then
+      getFieldByNumber(__field.number).toPMessage
+    else PEmpty
   }
 
   def toProtoString: Predef.String =
@@ -181,7 +187,7 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
     RdfPatchRow
 }
 
-object RdfPatchRow extends CompanionHelper[RdfPatchRow]("RdfPatchRow") {
+object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
   implicit def messageCompanion: scalapb.GeneratedMessageCompanion[RdfPatchRow] = this
 
   def parseFrom(_input__ : CodedInputStream): RdfPatchRow = {

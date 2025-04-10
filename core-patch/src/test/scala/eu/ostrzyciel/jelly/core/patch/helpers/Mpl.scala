@@ -48,3 +48,7 @@ object Mpl:
   final case class Header(key: String, value: Node) extends PatchStatement:
     def apply(encoder: PatchEncoder[Node]): Unit =
       encoder.header(key, value)
+
+  case object Punctuation extends PatchStatement:
+    def apply(encoder: PatchEncoder[Node]): Unit =
+      encoder.punctuation()

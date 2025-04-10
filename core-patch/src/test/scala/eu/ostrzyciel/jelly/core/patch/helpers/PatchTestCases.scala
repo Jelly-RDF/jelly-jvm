@@ -11,6 +11,13 @@ object PatchTestCases:
   import Mpl.*
   import RdfPatchRow as R
 
+  val testCases: Seq[(String, PatchTestCase, PatchStatementType.Recognized)] = Seq(
+    ("a triple patch", Triples1, PatchStatementType.TRIPLES),
+    ("a triple patch with namespace declarations", Triples2NsDecl, PatchStatementType.TRIPLES),
+    ("a quad patch", Quads1, PatchStatementType.QUADS),
+    ("nonsensical transaction commands", MalformedTransactions, PatchStatementType.TRIPLES),
+  )
+
   trait PatchTestCase:
     def mrl: Seq[PatchStatement]
     def encoded(opt: RdfPatchOptions): Seq[RdfPatchRow]

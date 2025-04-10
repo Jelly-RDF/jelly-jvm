@@ -20,6 +20,7 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
 ) extends PatchDecoder, ProtoDecoderBase[TNode, TDatatype, Any, Any]:
 
   private var streamOpt: Option[RdfPatchOptions] = None
+  private var isFrameStreamType: Boolean = false
 
   protected final override def getNameTableSize: Int =
     streamOpt.map(_.maxNameTableSize) getOrElse JellyOptions.smallNameTableSize
@@ -33,6 +34,13 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
   private final def setPatchOpt(opt: RdfPatchOptions): Unit =
     if streamOpt.isEmpty then
       streamOpt = Some(opt)
+      isFrameStreamType = opt.streamType.isFrame
+
+  override final def ingestFrame(frame: RdfPatchFrame): Unit =
+    for row <- frame.rows do
+      ingestRow(row)
+    if isFrameStreamType then
+      handler.punctuation()
 
   override def ingestRow(row: RdfPatchRow): Unit =
     val r = row.row
@@ -55,8 +63,11 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
       case RdfPatchRow.DATATYPE_FIELD_NUMBER =>
         val dtRow = r.datatype
         dtLookup.update(dtRow.id, converter.makeDatatype(dtRow.value))
-//      case RdfPatchRow.HEADER_FIELD_NUMBER => 
-//        val hRow = r.
+      case RdfPatchRow.HEADER_FIELD_NUMBER =>
+        val hRow = r.asInstanceOf[RdfPatchHeader]
+        // ! No support for repeated terms in the header
+        handler.header(hRow.key, convertTerm(hRow.value))
+      case RdfPatchRow.PUNCTUATION_FIELD_NUMBER => handler.punctuation()
       case RdfPatchRow.OPTIONS_FIELD_NUMBER => handleOptions(r.asInstanceOf[RdfPatchOptions])
       case _ =>
         throw new RdfProtoDeserializationError("Row kind is not set or unknown: " + row.rowType)

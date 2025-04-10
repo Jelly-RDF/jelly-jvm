@@ -10,7 +10,7 @@ import scala.annotation.experimental
  * @tparam TNode type of RDF nodes in the library
  */
 @experimental
-trait PatchHandler[TNode]:
+trait PatchHandler[-TNode]:
   /**
    * Start a new transaction. (TX)
    */
@@ -51,3 +51,11 @@ trait PatchHandler[TNode]:
    * @param value the value of the header
    */
   def header(key: String, value: TNode): Unit
+
+  /**
+   * Emit a punctuation mark.
+   *
+   * This is only used in PUNCTUATED streams, and indicates the end of one patch and the start of
+   * another.
+   */
+  def punctuation(): Unit

@@ -8,4 +8,4 @@ import scala.annotation.experimental
  * @tparam TNode type of RDF nodes in the library
  */
 @experimental
-trait AnyPatchHandler[TNode] extends TriplePatchHandler[TNode], QuadPatchHandler[TNode]
+trait AnyPatchHandler[-TNode] extends TriplePatchHandler[TNode], QuadPatchHandler[TNode]

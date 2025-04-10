@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core.patch
 
+import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoDeserializationError
 import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
@@ -45,14 +46,15 @@ object JellyPatchOptions:
    *
    * We check:
    * - version (must be <= PatchConstants.protoVersion and <= supportedOptions.version)
-   * - generalized statements (must be <= supportedOptions.generalizedStatements)
+   * - stream type (must be == supportedOptions.streamType if set)
+   * - generalized statements (must be < supportedOptions.generalizedStatements)
    * - RDF star (must be <= supportedOptions.rdfStar)
    * - max name table size (must be <= supportedOptions.maxNameTableSize and >= 16).
    * - max prefix table size (must be <= supportedOptions.maxPrefixTableSize)
    * - max datatype table size (must be <= supportedOptions.maxDatatypeTableSize and >= 8)
    *
    * We don't check:
-   * - physical stream type (this is done by the implementations of PatchDecoderImpl)
+   * - statement type (this is done by the implementations of PatchDecoderImpl)
    *
    * @param requestedOptions Requested options of the stream.
    * @param supportedOptions Options that can be safely supported.
@@ -60,6 +62,13 @@ object JellyPatchOptions:
    */
   def checkCompatibility(requestedOptions: RdfPatchOptions, supportedOptions: RdfPatchOptions): Unit =
     BaseJellyOptions.checkCompatibility(requestedOptions, supportedOptions, PatchConstants.protoVersion)
+    if requestedOptions.streamType.isUnspecified then
+      throw new RdfProtoDeserializationError("The patch stream type is unspecified. " +
+        "The stream_type field is required and must be set to a valid value.")
+    if !supportedOptions.streamType.isUnspecified && supportedOptions.streamType != requestedOptions.streamType then
+      throw new RdfProtoDeserializationError(
+        s"The requested stream type ${requestedOptions.streamType} is not supported. " +
+          s"Only ${supportedOptions.streamType} is supported.")
 
   /**
    * Convert a Jelly-RDF physical type to a Jelly-Patch physical type.

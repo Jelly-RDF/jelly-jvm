@@ -8,7 +8,7 @@ import scala.annotation.experimental
  * @tparam TNode type of RDF nodes in the library
  */
 @experimental
-trait TriplePatchHandler[TNode] extends PatchHandler[TNode]:
+trait TriplePatchHandler[-TNode] extends PatchHandler[TNode]:
   /**
    * Add a triple to the patch stream. (A Triple)
    *

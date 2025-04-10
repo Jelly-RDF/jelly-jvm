@@ -1,13 +1,11 @@
 package eu.ostrzyciel.jelly.core.patch
 
-import eu.ostrzyciel.jelly.core.proto.v1.patch.*
+import eu.ostrzyciel.jelly.core.proto.v1.patch.{RdfPatchFrame, RdfPatchOptions}
 
 import scala.annotation.experimental
 
 @experimental
-trait PatchDecoder:
+trait PatchFrameDecoder:
   def getPatchOpt: Option[RdfPatchOptions]
-
-  def ingestRow(row: RdfPatchRow): Unit
 
   def ingestFrame(frame: RdfPatchFrame): Unit
