@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core.patch.helpers
 
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
-import eu.ostrzyciel.jelly.core.patch.PatchEncoder
+import eu.ostrzyciel.jelly.core.patch.handler.AnyPatchHandler
 
 import scala.annotation.experimental
 
@@ -14,41 +14,41 @@ object Mpl:
   
   sealed trait PatchStatement:
     /**
-     * Apply this patch statement to the given encoder.
-     * @param encoder the encoder to apply the patch statement to
+     * Apply this patch statement to the given patch handler.
+     * @param handler the handler to apply the patch statement to
      */
-    def apply(encoder: PatchEncoder[Node]): Unit
+    def apply(handler: AnyPatchHandler[Node]): Unit
 
   final case class Add(statement: Statement | NsDecl) extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node]): Unit =
+    def apply(handler: AnyPatchHandler[Node]): Unit =
       statement match
-        case s: Triple => encoder.addTriple(s.s, s.p, s.o)
-        case s: Quad => encoder.addQuad(s.s, s.p, s.o, s.g)
-        case ns: NsDecl => encoder.addNamespace(ns.prefix, ns.iri)
+        case s: Triple => handler.addTriple(s.s, s.p, s.o)
+        case s: Quad => handler.addQuad(s.s, s.p, s.o, s.g)
+        case ns: NsDecl => handler.addNamespace(ns.prefix, ns.iri)
 
   final case class Delete(statement: Statement | NsDecl) extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node]): Unit =
+    def apply(handler: AnyPatchHandler[Node]): Unit =
       statement match
-        case s: Triple => encoder.deleteTriple(s.s, s.p, s.o)
-        case s: Quad => encoder.deleteQuad(s.s, s.p, s.o, s.g)
-        case ns: NsDecl => encoder.deleteNamespace(ns.prefix, ns.iri)
+        case s: Triple => handler.deleteTriple(s.s, s.p, s.o)
+        case s: Quad => handler.deleteQuad(s.s, s.p, s.o, s.g)
+        case ns: NsDecl => handler.deleteNamespace(ns.prefix, ns.iri)
 
   case object TxStart extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node]): Unit =
-      encoder.transactionStart()
+    def apply(handler: AnyPatchHandler[Node]): Unit =
+      handler.transactionStart()
 
   case object TxCommit extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node]): Unit =
-      encoder.transactionCommit()
+    def apply(handler: AnyPatchHandler[Node]): Unit =
+      handler.transactionCommit()
 
   case object TxAbort extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node]): Unit =
-      encoder.transactionAbort()
+    def apply(handler: AnyPatchHandler[Node]): Unit =
+      handler.transactionAbort()
 
   final case class Header(key: String, value: Node) extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node]): Unit =
-      encoder.header(key, value)
+    def apply(handler: AnyPatchHandler[Node]): Unit =
+      handler.header(key, value)
 
   case object Punctuation extends PatchStatement:
-    def apply(encoder: PatchEncoder[Node]): Unit =
-      encoder.punctuation()
+    def apply(handler: AnyPatchHandler[Node]): Unit =
+      handler.punctuation()

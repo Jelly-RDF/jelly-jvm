@@ -21,6 +21,7 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
 
   private var streamOpt: Option[RdfPatchOptions] = None
   private var isFrameStreamType: Boolean = false
+  private var isPunctuatedStreamType: Boolean = false
 
   protected final override def getNameTableSize: Int =
     streamOpt.map(_.maxNameTableSize) getOrElse JellyOptions.smallNameTableSize
@@ -29,12 +30,13 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
   protected final override def getDatatypeTableSize: Int =
     streamOpt.map(_.maxDatatypeTableSize) getOrElse 20
 
-  final override def getPatchOpt: Option[RdfPatchOptions] = streamOpt
+  override def getPatchOpt: Option[RdfPatchOptions] = streamOpt
 
   private final def setPatchOpt(opt: RdfPatchOptions): Unit =
     if streamOpt.isEmpty then
       streamOpt = Some(opt)
       isFrameStreamType = opt.streamType.isFrame
+      isPunctuatedStreamType = opt.streamType.isPunctuated
 
   override final def ingestFrame(frame: RdfPatchFrame): Unit =
     for row <- frame.rows do
@@ -67,7 +69,11 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
         val hRow = r.asInstanceOf[RdfPatchHeader]
         // ! No support for repeated terms in the header
         handler.header(hRow.key, convertTerm(hRow.value))
-      case RdfPatchRow.PUNCTUATION_FIELD_NUMBER => handler.punctuation()
+      case RdfPatchRow.PUNCTUATION_FIELD_NUMBER =>
+        if this.isPunctuatedStreamType then handler.punctuation()
+        else throw new RdfProtoDeserializationError(
+          "Unexpected punctuation row in non-punctuated stream."
+        )
       case RdfPatchRow.OPTIONS_FIELD_NUMBER => handleOptions(r.asInstanceOf[RdfPatchOptions])
       case _ =>
         throw new RdfProtoDeserializationError("Row kind is not set or unknown: " + row.rowType)
@@ -154,6 +160,9 @@ object PatchDecoderImpl:
   ) extends PatchDecoderImpl[TNode, TDatatype](converter, handler, supportedOptions):
     private var inner: PatchDecoderImpl[TNode, TDatatype] = uninitialized
 
+    override def getPatchOpt: Option[RdfPatchOptions] =
+      if inner == null then None else inner.getPatchOpt
+
     override def ingestRow(row: RdfPatchRow): Unit =
       if inner == null then
         if row.rowType != RdfPatchRow.OPTIONS_FIELD_NUMBER then
@@ -161,6 +170,9 @@ object PatchDecoderImpl:
             "The first row in the stream must be an RdfPatchOptions row.")
         else
           val opt = row.row.asInstanceOf[RdfPatchOptions]
+          // We must call this in both this instance and the child instance to make sure
+          // both know how to handle punctuations.
+          handleOptions(opt)
           createInnerDecoder(opt)
           inner.ingestRow(row)
       else
