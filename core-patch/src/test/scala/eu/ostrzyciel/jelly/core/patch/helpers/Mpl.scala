@@ -3,9 +3,12 @@ package eu.ostrzyciel.jelly.core.patch.helpers
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
 import eu.ostrzyciel.jelly.core.patch.PatchEncoder
 
+import scala.annotation.experimental
+
 /**
  * "Mpl" stands for "mock RDF patch library".
  */
+@experimental
 object Mpl:
   final case class NsDecl(prefix: String, iri: Iri)
   

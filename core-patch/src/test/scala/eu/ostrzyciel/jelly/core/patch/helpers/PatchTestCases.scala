@@ -1,11 +1,14 @@
 package eu.ostrzyciel.jelly.core.patch.helpers
 
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
-import eu.ostrzyciel.jelly.core.patch.helpers.Mpl.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
+import scala.annotation.experimental
+
+@experimental
 object PatchTestCases:
+  import Mpl.*
   import RdfPatchRow as R
 
   trait PatchTestCase:

@@ -37,7 +37,6 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
   override def ingestRow(row: RdfPatchRow): Unit =
     val r = row.row
     (row.rowType: @switch) match
-      case RdfPatchRow.OPTIONS_FIELD_NUMBER => handleOptions(r.asInstanceOf[RdfPatchOptions])
       case RdfPatchRow.TRIPLE_ADD_FIELD_NUMBER => handleTripleAdd(r.triple)
       case RdfPatchRow.TRIPLE_DELETE_FIELD_NUMBER => handleTripleDelete(r.triple)
       case RdfPatchRow.QUAD_ADD_FIELD_NUMBER => handleQuadAdd(r.quad)
@@ -56,6 +55,9 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
       case RdfPatchRow.DATATYPE_FIELD_NUMBER =>
         val dtRow = r.datatype
         dtLookup.update(dtRow.id, converter.makeDatatype(dtRow.value))
+//      case RdfPatchRow.HEADER_FIELD_NUMBER => 
+//        val hRow = r.
+      case RdfPatchRow.OPTIONS_FIELD_NUMBER => handleOptions(r.asInstanceOf[RdfPatchOptions])
       case _ =>
         throw new RdfProtoDeserializationError("Row kind is not set or unknown: " + row.rowType)
 

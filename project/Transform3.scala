@@ -70,6 +70,7 @@ object Transform3 {
           case "RdfPatchTransactionCommit" => Some(copyTemplate(templ, Seq("PatchValue")))
           case "RdfPatchTransactionAbort" => Some(copyTemplate(templ, Seq("PatchValue")))
           case "RdfPatchHeader" => Some(copyTemplate(templ, Seq("PatchValue")))
+          case "RdfPatchPunctuation" => Some(copyTemplate(templ, Seq("PatchValue")))
 
           case _ => None
         }
