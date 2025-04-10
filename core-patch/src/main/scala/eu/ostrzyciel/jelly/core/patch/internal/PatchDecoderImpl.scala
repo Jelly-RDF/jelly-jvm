@@ -180,15 +180,14 @@ object PatchDecoderImpl:
 
     private def createInnerDecoder(opt: RdfPatchOptions): Unit =
       JellyPatchOptions.checkCompatibility(opt, supportedOptions)
-      if inner == null then
-        inner = opt.statementType match
-          case PatchStatementType.TRIPLES =>
-            new TriplesDecoder(converter, handler.asInstanceOf[TriplePatchHandler[TNode]], opt)
-          case PatchStatementType.QUADS =>
-            new QuadsDecoder(converter, handler.asInstanceOf[QuadPatchHandler[TNode]], opt)
-          case PatchStatementType.UNSPECIFIED =>
-            throw new RdfProtoDeserializationError("Incoming stream has no statement type set.")
-          case _ =>
-            throw new RdfProtoDeserializationError(
-              f"Incoming stream with statement type ${opt.statementType} cannot be decoded by this " +
-              f"decoder. Only TRIPLES and QUADS streams are accepted.")
+      inner = opt.statementType match
+        case PatchStatementType.TRIPLES =>
+          new TriplesDecoder(converter, handler.asInstanceOf[TriplePatchHandler[TNode]], opt)
+        case PatchStatementType.QUADS =>
+          new QuadsDecoder(converter, handler.asInstanceOf[QuadPatchHandler[TNode]], opt)
+        case PatchStatementType.UNSPECIFIED =>
+          throw new RdfProtoDeserializationError("Incoming stream has no statement type set.")
+        case _ =>
+          throw new RdfProtoDeserializationError(
+            f"Incoming stream with statement type ${opt.statementType} cannot be decoded by this " +
+            f"decoder. Only TRIPLES and QUADS streams are accepted.")

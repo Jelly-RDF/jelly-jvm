@@ -3,7 +3,8 @@ package eu.ostrzyciel.jelly.core.patch
 import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoDeserializationError
 import eu.ostrzyciel.jelly.core.helpers.Mrl
 import eu.ostrzyciel.jelly.core.patch.handler.*
-import eu.ostrzyciel.jelly.core.patch.helpers.{MockPatchConverterFactory, Mpl, PatchCollector, PatchTestCases}
+import eu.ostrzyciel.jelly.core.patch.helpers.*
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -158,4 +159,233 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestFrame(input2)
         out.statements.result() shouldBe Seq()
       }
+
+    "throw exception on unknown row type" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
+          .withStatementType(stType)
+          .withStreamType(PatchStreamType.FLAT)
+        ),
+        RdfPatchRow(null, 100),
+      ))
+      val decoder = decFactory(null, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Row kind is not set or unknown: 100")
+    }
+  }
+
+  "TriplesDecoder" should {
+    "decode triples (1)" in {
+      val input = PatchTestCases.Triples1.encodedFull(
+        JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.TRIPLES)
+          .withStreamType(PatchStreamType.FLAT),
+        10_000
+      ).head
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.triplesDecoder(out, None)
+      decoder.ingestFrame(input)
+      out.statements.result() shouldBe PatchTestCases.Triples1.mrl
+    }
+
+    "decode triples (2) with namespace declarations" in {
+      val input = PatchTestCases.Triples2NsDecl.encodedFull(
+        JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.TRIPLES)
+          .withStreamType(PatchStreamType.FLAT),
+        10_000
+      ).head
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.triplesDecoder(out, None)
+      decoder.ingestFrame(input)
+      out.statements.result() shouldBe PatchTestCases.Triples2NsDecl.mrl
+    }
+
+    "not accept quads (add)" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.TRIPLES)
+          .withStreamType(PatchStreamType.FLAT)
+        ),
+        RdfPatchRow.ofQuadAdd(RdfQuad()),
+      ))
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.triplesDecoder(out, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Unexpected quad add row in stream")
+    }
+
+    "not accept quads (delete)" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.TRIPLES)
+          .withStreamType(PatchStreamType.FLAT)
+        ),
+        RdfPatchRow.ofQuadDelete(RdfQuad()),
+      ))
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.triplesDecoder(out, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Unexpected quad delete row in stream")
+    }
+
+    "not accept a stream with statement type QUADS" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.QUADS)
+          .withStreamType(PatchStreamType.FLAT)
+        ),
+      ))
+      val decoder = MockPatchConverterFactory.triplesDecoder(null, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Incoming stream with statement type")
+      e.getMessage should include("cannot be decoded by this decoder")
+    }
+  }
+
+  "QuadsDecoder" should {
+    "decode quads (1)" in {
+      val input = PatchTestCases.Quads1.encodedFull(
+        JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.QUADS)
+          .withStreamType(PatchStreamType.FLAT),
+        10_000
+      ).head
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.quadsDecoder(out, None)
+      decoder.ingestFrame(input)
+      out.statements.result() shouldBe PatchTestCases.Quads1.mrl
+    }
+
+    "not accept triples (add)" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.QUADS)
+          .withStreamType(PatchStreamType.FLAT)
+        ),
+        RdfPatchRow.ofTripleAdd(RdfTriple()),
+      ))
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.quadsDecoder(out, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Unexpected triple add row in stream")
+    }
+
+    "not accept triples (delete)" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.QUADS)
+          .withStreamType(PatchStreamType.FLAT)
+        ),
+        RdfPatchRow.ofTripleDelete(RdfTriple()),
+      ))
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.quadsDecoder(out, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Unexpected triple delete row in stream")
+    }
+
+    "not accept a stream with statement type TRIPLES" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.TRIPLES)
+          .withStreamType(PatchStreamType.FLAT)
+        ),
+      ))
+      val decoder = MockPatchConverterFactory.quadsDecoder(null, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Incoming stream with statement type")
+      e.getMessage should include("cannot be decoded by this decoder")
+    }
+  }
+
+  "AnyStatementDecoder" should {
+    "return no options if the inner decoder is not initialized" in {
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
+      decoder.getPatchOpt shouldBe None
+    }
+
+    "throw exception if the first row in the stream is not options" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofTripleAdd(RdfTriple()),
+      ))
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("The first row in the stream must be an RdfPatchOptions row")
+    }
+
+    "ignore multiple options rows" in {
+      val opt = JellyPatchOptions.smallStrict
+        .withStatementType(PatchStatementType.TRIPLES)
+        .withStreamType(PatchStreamType.FLAT)
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(opt),
+        RdfPatchRow.ofOptions(opt),
+        RdfPatchRow.ofOptions(opt),
+      ))
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
+      decoder.ingestFrame(input)
+      decoder.getPatchOpt shouldBe Some(opt)
+    }
+
+    "decode quads" in {
+      val input = PatchTestCases.Quads1.encodedFull(
+        JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.QUADS)
+          .withStreamType(PatchStreamType.FLAT),
+        10_000
+      ).head
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
+      decoder.ingestFrame(input)
+      out.statements.result() shouldBe PatchTestCases.Quads1.mrl
+    }
+
+    "throw exception if the statement type is not set" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
+          .withStreamType(PatchStreamType.FLAT)
+        ),
+      ))
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Incoming stream has no statement type set")
+    }
+
+    "throw exception if the statement type is not supported" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.Unrecognized(100))
+          .withStreamType(PatchStreamType.FLAT)
+        ),
+      ))
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Incoming stream with statement type UNRECOGNIZED cannot be decoded by this decoder")
+    }
   }
