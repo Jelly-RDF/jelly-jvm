@@ -147,7 +147,7 @@ object PatchDecoderImpl:
         convertGraphTermWrapped(quad.graph),
       )
 
-  private[core] final class AnyPatchDecoder[TNode, TDatatype : ClassTag](
+  private[core] final class AnyStatementDecoder[TNode, TDatatype : ClassTag](
     converter: ProtoDecoderConverter[TNode, TDatatype, ?, ?],
     handler: AnyPatchHandler[TNode],
     supportedOptions: RdfPatchOptions,

@@ -17,12 +17,12 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
 
   val streamTypes = Seq(PatchStreamType.FLAT, PatchStreamType.FRAME, PatchStreamType.PUNCTUATED)
   
-  "a PatchEncoder" should {
+  "PatchEncoder" should {
     for streamType <- streamTypes do f"with stream type $streamType" when {
       testCases.foreach { case (desc, testCase, statementType) =>
         s"encode $desc" in {
           val buffer = ListBuffer[RdfPatchRow]()
-          val encoder = MockPatchConverterFactory.patchEncoder(Pep(
+          val encoder = MockPatchConverterFactory.encoder(Pep(
             JellyPatchOptions.smallGeneralized
               .withStatementType(statementType)
               .withStreamType(streamType),
@@ -38,7 +38,7 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
       for st <- Seq(PatchStreamType.FLAT, PatchStreamType.FRAME) do
         s"stream type $st" in {
           val buffer = ListBuffer[RdfPatchRow]()
-          val encoder = MockPatchConverterFactory.patchEncoder(Pep(
+          val encoder = MockPatchConverterFactory.encoder(Pep(
             JellyPatchOptions.smallGeneralized
               .withStatementType(PatchStatementType.TRIPLES)
               .withStreamType(st),
@@ -55,7 +55,7 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
       testCases.foreach { case (desc, testCase, statementType) =>
         s"encoding $desc" in {
           val buffer = ListBuffer[RdfPatchRow]()
-          val encoder = MockPatchConverterFactory.patchEncoder(Pep(
+          val encoder = MockPatchConverterFactory.encoder(Pep(
             JellyPatchOptions.smallGeneralized
               .withStatementType(statementType)
               .withStreamType(PatchStreamType.PUNCTUATED),
