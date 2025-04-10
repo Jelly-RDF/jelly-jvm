@@ -1,5 +1,8 @@
 package eu.ostrzyciel.jelly.core.patch
 
+import scala.annotation.experimental
+
+@experimental
 object PatchConstants:
   val jellyPatchName = "Jelly-Patch"
   val jellyPatchFileExtension = "jelly-patch"

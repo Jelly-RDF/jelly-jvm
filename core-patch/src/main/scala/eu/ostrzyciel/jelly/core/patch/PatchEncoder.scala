@@ -5,8 +5,10 @@ import eu.ostrzyciel.jelly.core.patch.handler.{AnyPatchHandler, PatchHandler}
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
+import scala.annotation.experimental
 import scala.collection.mutable
 
+@experimental
 object PatchEncoder:
   /**
    * Parameters passed to the Jelly-Patch encoder.
@@ -28,6 +30,7 @@ object PatchEncoder:
  * @tparam TNode type of RDF nodes in the library
  * @since 2.11.0
  */
+@experimental
 trait PatchEncoder[TNode] extends
   ProtoEncoderBase[TNode, ?, ?],
   AnyPatchHandler[TNode],

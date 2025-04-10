@@ -3,6 +3,8 @@ package eu.ostrzyciel.jelly.core.patch
 import eu.ostrzyciel.jelly.core.ConverterFactory
 import eu.ostrzyciel.jelly.core.patch.internal.PatchEncoderImpl
 
+import scala.annotation.experimental
+
 /**
  * Factory for creating RDF-Patch encoders and decoders.
  *
@@ -12,6 +14,7 @@ import eu.ostrzyciel.jelly.core.patch.internal.PatchEncoderImpl
  * @tparam TNode Type of RDF nodes in the RDF library
  * @since 2.11.0
  */
+@experimental
 trait PatchConverterFactory[TNode](
   converterFactory: ConverterFactory[?, ?, TNode, ?, ?, ?]
 ):

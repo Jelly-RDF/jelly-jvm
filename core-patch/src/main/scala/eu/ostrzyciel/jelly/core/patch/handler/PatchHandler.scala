@@ -1,5 +1,7 @@
 package eu.ostrzyciel.jelly.core.patch.handler
 
+import scala.annotation.experimental
+
 /**
  * Abstract handler of RDF Patch operations.
  *
@@ -7,6 +9,7 @@ package eu.ostrzyciel.jelly.core.patch.handler
  *
  * @tparam TNode type of RDF nodes in the library
  */
+@experimental
 trait PatchHandler[TNode]:
   /**
    * Start a new transaction. (TX)

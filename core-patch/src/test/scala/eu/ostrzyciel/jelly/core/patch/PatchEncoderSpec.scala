@@ -6,8 +6,10 @@ import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import scala.annotation.experimental
 import scala.collection.mutable.ListBuffer
 
+@experimental
 class PatchEncoderSpec extends AnyWordSpec, Matchers:
   import eu.ostrzyciel.jelly.core.patch.helpers.PatchTestCases.*
   import PatchEncoder.Params as Pep

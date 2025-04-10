@@ -1,9 +1,13 @@
 package eu.ostrzyciel.jelly.core.patch.handler
 
+import scala.annotation.experimental
+
 /**
  * A patch handler that can handle quads.
+ *
  * @tparam TNode type of RDF nodes in the library
  */
+@experimental
 trait QuadPatchHandler[TNode] extends PatchHandler[TNode]:
   /**
    * Add a quad to the patch stream. (A Quad)

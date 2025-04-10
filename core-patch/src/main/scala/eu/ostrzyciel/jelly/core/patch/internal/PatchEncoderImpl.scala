@@ -6,12 +6,15 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 import eu.ostrzyciel.jelly.core.{NodeEncoder, ProtoEncoderConverter}
 
+import scala.annotation.experimental
+
 /**
  * Implementation of PatchEncoder.
  * @param converter the converter to use
  * @param params parameters for the encoder
  * @tparam TNode the type of RDF nodes in the library
  */
+@experimental
 final class PatchEncoderImpl[TNode](
   protected val converter: ProtoEncoderConverter[TNode, ?, ?],
   params: PatchEncoder.Params,

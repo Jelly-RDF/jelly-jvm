@@ -4,13 +4,15 @@ import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoDeserializationError
 import eu.ostrzyciel.jelly.core.internal.*
 import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.patch.*
-import eu.ostrzyciel.jelly.core.patch.handler.PatchHandler
+import eu.ostrzyciel.jelly.core.patch.handler.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
-import scala.annotation.switch
+import scala.annotation.{experimental, switch}
+import scala.compiletime.uninitialized
 import scala.reflect.ClassTag
 
+@experimental
 sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
   protected override val converter: ProtoDecoderConverter[TNode, TDatatype, ?, ?],
   handler: PatchHandler[TNode],
@@ -32,7 +34,7 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
     if streamOpt.isEmpty then
       streamOpt = Some(opt)
 
-  final override def ingestRow(row: RdfPatchRow): Unit =
+  override def ingestRow(row: RdfPatchRow): Unit =
     val r = row.row
     (row.rowType: @switch) match
       case RdfPatchRow.OPTIONS_FIELD_NUMBER => handleOptions(r.asInstanceOf[RdfPatchOptions])
@@ -74,6 +76,94 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
     throw new RdfProtoDeserializationError("Unexpected quad delete row in stream.")
 
 
+@experimental
 object PatchDecoderImpl:
-  ???
-  // TODO
+  private[core] final class TriplesDecoder[TNode, TDatatype : ClassTag](
+    converter: ProtoDecoderConverter[TNode, TDatatype, ?, ?],
+    handler: TriplePatchHandler[TNode],
+    supportedOptions: RdfPatchOptions,
+  ) extends PatchDecoderImpl[TNode, TDatatype](converter, handler, supportedOptions):
+
+    override protected def handleOptions(opt: RdfPatchOptions): Unit =
+      if !opt.statementType.isTriples then
+        throw new RdfProtoDeserializationError(
+          f"Incoming stream with statement type ${opt.statementType} cannot be decoded by this " +
+          f"decoder. Only TRIPLES streams are accepted.")
+      super.handleOptions(opt)
+
+    override protected def handleTripleAdd(triple: RdfTriple): Unit =
+      handler.addTriple(
+        convertTermWrapped(triple.subject, lastSubject),
+        convertTermWrapped(triple.predicate, lastPredicate),
+        convertTermWrapped(triple.`object`, lastObject),
+      )
+
+    override protected def handleTripleDelete(triple: RdfTriple): Unit =
+      handler.deleteTriple(
+        convertTermWrapped(triple.subject, lastSubject),
+        convertTermWrapped(triple.predicate, lastPredicate),
+        convertTermWrapped(triple.`object`, lastObject),
+      )
+
+  private[core] final class QuadsDecoder[TNode, TDatatype : ClassTag](
+    converter: ProtoDecoderConverter[TNode, TDatatype, ?, ?],
+    handler: QuadPatchHandler[TNode],
+    supportedOptions: RdfPatchOptions,
+  ) extends PatchDecoderImpl[TNode, TDatatype](converter, handler, supportedOptions):
+
+    override protected def handleOptions(opt: RdfPatchOptions): Unit =
+      if !opt.statementType.isQuads then
+        throw new RdfProtoDeserializationError(
+          f"Incoming stream with statement type ${opt.statementType} cannot be decoded by this " +
+          f"decoder. Only QUADS streams are accepted.")
+      super.handleOptions(opt)
+
+    override protected def handleQuadAdd(quad: RdfQuad): Unit =
+      handler.addQuad(
+        convertTermWrapped(quad.subject, lastSubject),
+        convertTermWrapped(quad.predicate, lastPredicate),
+        convertTermWrapped(quad.`object`, lastObject),
+        convertGraphTermWrapped(quad.graph),
+      )
+
+    override protected def handleQuadDelete(quad: RdfQuad): Unit =
+      handler.deleteQuad(
+        convertTermWrapped(quad.subject, lastSubject),
+        convertTermWrapped(quad.predicate, lastPredicate),
+        convertTermWrapped(quad.`object`, lastObject),
+        convertGraphTermWrapped(quad.graph),
+      )
+
+  private[core] final class AnyPatchDecoder[TNode, TDatatype : ClassTag](
+    converter: ProtoDecoderConverter[TNode, TDatatype, ?, ?],
+    handler: AnyPatchHandler[TNode],
+    supportedOptions: RdfPatchOptions,
+  ) extends PatchDecoderImpl[TNode, TDatatype](converter, handler, supportedOptions):
+    private var inner: PatchDecoderImpl[TNode, TDatatype] = uninitialized
+
+    override def ingestRow(row: RdfPatchRow): Unit =
+      if inner == null then
+        if row.rowType != RdfPatchRow.OPTIONS_FIELD_NUMBER then
+          throw new RdfProtoDeserializationError(
+            "The first row in the stream must be an RdfPatchOptions row.")
+        else
+          val opt = row.row.asInstanceOf[RdfPatchOptions]
+          createInnerDecoder(opt)
+          inner.ingestRow(row)
+      else
+        inner.ingestRow(row)
+
+    private def createInnerDecoder(opt: RdfPatchOptions): Unit =
+      JellyPatchOptions.checkCompatibility(opt, supportedOptions)
+      if inner == null then
+        inner = opt.statementType match
+          case PatchStatementType.TRIPLES =>
+            new TriplesDecoder(converter, handler.asInstanceOf[TriplePatchHandler[TNode]], opt)
+          case PatchStatementType.QUADS =>
+            new QuadsDecoder(converter, handler.asInstanceOf[QuadPatchHandler[TNode]], opt)
+          case PatchStatementType.UNSPECIFIED =>
+            throw new RdfProtoDeserializationError("Incoming stream has no statement type set.")
+          case _ =>
+            throw new RdfProtoDeserializationError(
+              f"Incoming stream with statement type ${opt.statementType} cannot be decoded by this " +
+              f"decoder. Only TRIPLES and QUADS streams are accepted.")

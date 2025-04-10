@@ -4,9 +4,12 @@ import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
+import scala.annotation.experimental
+
 /**
  * Utilities for working with RdfPatchOptions.
  */
+@experimental
 object JellyPatchOptions:
   /**
    * Convert a Jelly RdfStreamOptions to a Jelly Patch RdfPatchOptions.
