@@ -153,6 +153,18 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
   )
   .dependsOn(core)
 
+lazy val jenaPatch = (project in file("jena-patch"))
+  .settings(
+    name := "jelly-jena-patch",
+    description := "Jelly-Patch integration for Apache Jena.",
+    libraryDependencies ++= Seq(
+      "org.apache.jena" % "jena-rdfpatch" % jenaV,
+      // TODO: other integrations?
+    ),
+    commonSettings,
+  )
+  .dependsOn(corePatch, jena)
+
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
