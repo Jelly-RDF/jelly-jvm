@@ -283,16 +283,32 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
       decoder.getPatchOpt shouldBe None
     }
 
-    "throw exception if the first row in the stream is not options" in {
+    "throw exception if the first row in the stream is not options (add)" in {
       val input = RdfPatchFrame(Seq(
-        RdfPatchRow.ofStatementAdd(RdfQuad()),
+        RdfPatchRow.ofStatementAdd(RdfQuad(
+          RdfTerm.Bnode(""), RdfTerm.Bnode(""), RdfTerm.Bnode(""), RdfTerm.Bnode("")
+        )),
       ))
       val out = PatchCollector()
       val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
       val e = intercept[RdfProtoDeserializationError] {
         decoder.ingestFrame(input)
       }
-      e.getMessage should include("The first row in the stream must be an RdfPatchOptions row")
+      e.getMessage should include("Statement type is not set, statement add command cannot be decoded")
+    }
+
+    "throw exception if the first row in the stream is not options (delete)" in {
+      val input = RdfPatchFrame(Seq(
+        RdfPatchRow.ofStatementDelete(RdfQuad(
+          RdfTerm.Bnode(""), RdfTerm.Bnode(""), RdfTerm.Bnode(""), RdfTerm.Bnode("")
+        )),
+      ))
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(input)
+      }
+      e.getMessage should include("Statement type is not set, statement delete command cannot be decoded")
     }
 
     "ignore multiple options rows" in {
@@ -321,6 +337,19 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
       decoder.ingestFrame(input)
       out.statements.result() shouldBe PatchTestCases.Quads1.mrl
+    }
+
+    "decode triples" in {
+      val input = PatchTestCases.Triples1.encodedFull(
+        JellyPatchOptions.smallStrict
+          .withStatementType(PatchStatementType.TRIPLES)
+          .withStreamType(PatchStreamType.FLAT),
+        10_000
+      ).head
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)
+      decoder.ingestFrame(input)
+      out.statements.result() shouldBe PatchTestCases.Triples1.mrl
     }
 
     "throw exception if the statement type is not set" in {

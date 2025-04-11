@@ -1,15 +1,14 @@
 package eu.ostrzyciel.jelly.core.patch.internal
 
+import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoDeserializationError
 import eu.ostrzyciel.jelly.core.internal.*
-import eu.ostrzyciel.jelly.core.*
 import eu.ostrzyciel.jelly.core.patch.*
 import eu.ostrzyciel.jelly.core.patch.handler.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 
 import scala.annotation.{experimental, switch}
-import scala.compiletime.uninitialized
 import scala.reflect.ClassTag
 
 @experimental
@@ -30,7 +29,7 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
   protected final override def getDatatypeTableSize: Int =
     streamOpt.map(_.maxDatatypeTableSize) getOrElse 20
 
-  override def getPatchOpt: Option[RdfPatchOptions] = streamOpt
+  override final def getPatchOpt: Option[RdfPatchOptions] = streamOpt
 
   private final def setPatchOpt(opt: RdfPatchOptions): Unit =
     if streamOpt.isEmpty then
@@ -44,7 +43,7 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
     if isFrameStreamType then
       handler.punctuation()
 
-  override def ingestRow(row: RdfPatchRow): Unit =
+  override final def ingestRow(row: RdfPatchRow): Unit =
     val r = row.row
     (row.rowType: @switch) match
       case RdfPatchRow.OPTIONS_FIELD_NUMBER => handleOptions(r.asInstanceOf[RdfPatchOptions])
@@ -148,41 +147,43 @@ object PatchDecoderImpl:
     handler: AnyPatchHandler[TNode],
     supportedOptions: RdfPatchOptions,
   ) extends PatchDecoderImpl[TNode, TDatatype](converter, handler, supportedOptions):
-    private var inner: PatchDecoderImpl[TNode, TDatatype] = uninitialized
+    private var statementType: Int = -1
 
-    override def getPatchOpt: Option[RdfPatchOptions] =
-      if inner == null then None else inner.getPatchOpt
+    override protected def handleOptions(opt: RdfPatchOptions): Unit =
+      if opt.statementType.isUnspecified then
+        throw new RdfProtoDeserializationError(
+          "Incoming stream has no statement type set. Cannot decode.")
+      else if opt.statementType.isUnrecognized then
+        throw new RdfProtoDeserializationError(
+          f"Incoming stream with statement type ${opt.statementType} cannot be decoded by this " +
+          f"decoder. Only TRIPLES and QUADS streams are accepted.")
+      this.statementType = opt.statementType.value
+      super.handleOptions(opt)
 
-    override def ingestRow(row: RdfPatchRow): Unit =
-      if inner == null then
-        if row.rowType != RdfPatchRow.OPTIONS_FIELD_NUMBER then
-          throw new RdfProtoDeserializationError(
-            "The first row in the stream must be an RdfPatchOptions row.")
-        else
-          val opt = row.row.asInstanceOf[RdfPatchOptions]
-          // We must call this in both this instance and the child instance to make sure
-          // both know how to handle punctuations.
-          handleOptions(opt)
-          createInnerDecoder(opt)
-          inner.ingestRow(row)
-      else
-        inner.ingestRow(row)
-
-    // Should not be called.
-    // We made these methods abstract to avoid the overhead of virtual function calls.
-    override def handleStatementAdd(statement: RdfQuad): Unit = ()
-    override def handleStatementDelete(statement: RdfQuad): Unit = ()
-
-    private def createInnerDecoder(opt: RdfPatchOptions): Unit =
-      JellyPatchOptions.checkCompatibility(opt, supportedOptions)
-      inner = opt.statementType match
-        case PatchStatementType.TRIPLES =>
-          new TriplesDecoder(converter, handler.asInstanceOf[TriplePatchHandler[TNode]], opt)
-        case PatchStatementType.QUADS =>
-          new QuadsDecoder(converter, handler.asInstanceOf[QuadPatchHandler[TNode]], opt)
-        case PatchStatementType.UNSPECIFIED =>
-          throw new RdfProtoDeserializationError("Incoming stream has no statement type set.")
+    override def handleStatementAdd(statement: RdfQuad): Unit =
+      val s = convertTermWrapped(statement.subject, lastSubject)
+      val p = convertTermWrapped(statement.predicate, lastPredicate)
+      val o = convertTermWrapped(statement.`object`, lastObject)
+      (statementType : @switch) match
+        case PatchStatementType.TRIPLES.value =>
+          handler.addTriple(s, p, o)
+        case PatchStatementType.QUADS.value =>
+          val g = convertGraphTermWrapped(statement.graph)
+          handler.addQuad(s, p, o, g)
         case _ =>
           throw new RdfProtoDeserializationError(
-            f"Incoming stream with statement type ${opt.statementType} cannot be decoded by this " +
-            f"decoder. Only TRIPLES and QUADS streams are accepted.")
+            f"Statement type is not set, statement add command cannot be decoded.")
+
+    override def handleStatementDelete(statement: RdfQuad): Unit =
+      val s = convertTermWrapped(statement.subject, lastSubject)
+      val p = convertTermWrapped(statement.predicate, lastPredicate)
+      val o = convertTermWrapped(statement.`object`, lastObject)
+      (statementType : @switch) match
+        case PatchStatementType.TRIPLES.value =>
+          handler.deleteTriple(s, p, o)
+        case PatchStatementType.QUADS.value =>
+          val g = convertGraphTermWrapped(statement.graph)
+          handler.deleteQuad(s, p, o, g)
+        case _ =>
+          throw new RdfProtoDeserializationError(
+            f"Statement type is not set, statement delete command cannot be decoded.")
