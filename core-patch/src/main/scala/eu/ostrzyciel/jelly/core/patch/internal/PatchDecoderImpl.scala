@@ -47,10 +47,9 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
   override def ingestRow(row: RdfPatchRow): Unit =
     val r = row.row
     (row.rowType: @switch) match
-      case RdfPatchRow.TRIPLE_ADD_FIELD_NUMBER => handleTripleAdd(r.triple)
-      case RdfPatchRow.TRIPLE_DELETE_FIELD_NUMBER => handleTripleDelete(r.triple)
-      case RdfPatchRow.QUAD_ADD_FIELD_NUMBER => handleQuadAdd(r.quad)
-      case RdfPatchRow.QUAD_DELETE_FIELD_NUMBER => handleQuadDelete(r.quad)
+      case RdfPatchRow.OPTIONS_FIELD_NUMBER => handleOptions(r.asInstanceOf[RdfPatchOptions])
+      case RdfPatchRow.STATEMENT_ADD_FIELD_NUMBER => handleStatementAdd(r.quad)
+      case RdfPatchRow.STATEMENT_DELETE_FIELD_NUMBER => handleStatementDelete(r.quad)
       case RdfPatchRow.NAMESPACE_ADD_FIELD_NUMBER =>
         val nsRow = r.namespace
         handler.addNamespace(nsRow.nsName, nameDecoder.decode(nsRow.value))
@@ -74,7 +73,6 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
         else throw new RdfProtoDeserializationError(
           "Unexpected punctuation row in non-punctuated stream."
         )
-      case RdfPatchRow.OPTIONS_FIELD_NUMBER => handleOptions(r.asInstanceOf[RdfPatchOptions])
       case _ =>
         throw new RdfProtoDeserializationError("Row kind is not set or unknown: " + row.rowType)
 
@@ -82,17 +80,9 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
     JellyPatchOptions.checkCompatibility(opt, supportedOptions)
     setPatchOpt(opt)
 
-  protected def handleTripleAdd(triple: RdfTriple): Unit =
-    throw new RdfProtoDeserializationError("Unexpected triple add row in stream.")
+  protected def handleStatementAdd(statement: RdfQuad): Unit
 
-  protected def handleTripleDelete(triple: RdfTriple): Unit =
-    throw new RdfProtoDeserializationError("Unexpected triple delete row in stream.")
-
-  protected def handleQuadAdd(quad: RdfQuad): Unit =
-    throw new RdfProtoDeserializationError("Unexpected quad add row in stream.")
-
-  protected def handleQuadDelete(quad: RdfQuad): Unit =
-    throw new RdfProtoDeserializationError("Unexpected quad delete row in stream.")
+  protected def handleStatementDelete(statement: RdfQuad): Unit
 
 
 @experimental
@@ -110,18 +100,18 @@ object PatchDecoderImpl:
           f"decoder. Only TRIPLES streams are accepted.")
       super.handleOptions(opt)
 
-    override protected def handleTripleAdd(triple: RdfTriple): Unit =
+    override protected def handleStatementAdd(statement: RdfQuad): Unit =
       handler.addTriple(
-        convertTermWrapped(triple.subject, lastSubject),
-        convertTermWrapped(triple.predicate, lastPredicate),
-        convertTermWrapped(triple.`object`, lastObject),
+        convertTermWrapped(statement.subject, lastSubject),
+        convertTermWrapped(statement.predicate, lastPredicate),
+        convertTermWrapped(statement.`object`, lastObject),
       )
 
-    override protected def handleTripleDelete(triple: RdfTriple): Unit =
+    override protected def handleStatementDelete(statement: RdfQuad): Unit =
       handler.deleteTriple(
-        convertTermWrapped(triple.subject, lastSubject),
-        convertTermWrapped(triple.predicate, lastPredicate),
-        convertTermWrapped(triple.`object`, lastObject),
+        convertTermWrapped(statement.subject, lastSubject),
+        convertTermWrapped(statement.predicate, lastPredicate),
+        convertTermWrapped(statement.`object`, lastObject),
       )
 
   private[core] final class QuadsDecoder[TNode, TDatatype : ClassTag](
@@ -137,20 +127,20 @@ object PatchDecoderImpl:
           f"decoder. Only QUADS streams are accepted.")
       super.handleOptions(opt)
 
-    override protected def handleQuadAdd(quad: RdfQuad): Unit =
+    override protected def handleStatementAdd(statement: RdfQuad): Unit =
       handler.addQuad(
-        convertTermWrapped(quad.subject, lastSubject),
-        convertTermWrapped(quad.predicate, lastPredicate),
-        convertTermWrapped(quad.`object`, lastObject),
-        convertGraphTermWrapped(quad.graph),
+        convertTermWrapped(statement.subject, lastSubject),
+        convertTermWrapped(statement.predicate, lastPredicate),
+        convertTermWrapped(statement.`object`, lastObject),
+        convertGraphTermWrapped(statement.graph),
       )
 
-    override protected def handleQuadDelete(quad: RdfQuad): Unit =
+    override protected def handleStatementDelete(statement: RdfQuad): Unit =
       handler.deleteQuad(
-        convertTermWrapped(quad.subject, lastSubject),
-        convertTermWrapped(quad.predicate, lastPredicate),
-        convertTermWrapped(quad.`object`, lastObject),
-        convertGraphTermWrapped(quad.graph),
+        convertTermWrapped(statement.subject, lastSubject),
+        convertTermWrapped(statement.predicate, lastPredicate),
+        convertTermWrapped(statement.`object`, lastObject),
+        convertGraphTermWrapped(statement.graph),
       )
 
   private[core] final class AnyStatementDecoder[TNode, TDatatype : ClassTag](
@@ -177,6 +167,11 @@ object PatchDecoderImpl:
           inner.ingestRow(row)
       else
         inner.ingestRow(row)
+
+    // Should not be called.
+    // We made these methods abstract to avoid the overhead of virtual function calls.
+    override def handleStatementAdd(statement: RdfQuad): Unit = ()
+    override def handleStatementDelete(statement: RdfQuad): Unit = ()
 
     private def createInnerDecoder(opt: RdfPatchOptions): Unit =
       JellyPatchOptions.checkCompatibility(opt, supportedOptions)

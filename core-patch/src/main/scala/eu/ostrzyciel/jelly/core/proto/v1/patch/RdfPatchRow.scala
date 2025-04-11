@@ -21,16 +21,13 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
 
   private def __computeSerializedSize(): Int = {
     (rowType: @switch) match
-      case TRIPLE_ADD_FIELD_NUMBER =>
-        val __value = row.triple
+      case OPTIONS_FIELD_NUMBER =>
+        val __value = row.asInstanceOf[RdfPatchOptions]
         1 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
-      case TRIPLE_DELETE_FIELD_NUMBER =>
-        val __value = row.triple
-        1 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
-      case QUAD_ADD_FIELD_NUMBER =>
+      case STATEMENT_ADD_FIELD_NUMBER =>
         val __value = row.quad
         1 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
-      case QUAD_DELETE_FIELD_NUMBER =>
+      case STATEMENT_DELETE_FIELD_NUMBER =>
         val __value = row.quad
         1 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
       case NAMESPACE_ADD_FIELD_NUMBER =>
@@ -56,9 +53,6 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
         val __value = row.asInstanceOf[RdfPatchHeader]
         1 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
       case PUNCTUATION_FIELD_NUMBER => TRANSACTION_FIELD_TOTAL_SIZE
-      case OPTIONS_FIELD_NUMBER =>
-        val __value = row.asInstanceOf[RdfPatchOptions]
-        2 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
       case _ => 0
   }
 
@@ -73,24 +67,19 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
 
   def writeTo(_output__ : CodedOutputStream): Unit = {
     (rowType: @switch) match
-      case TRIPLE_ADD_FIELD_NUMBER =>
-        val __m = row.triple
-        _output__.writeTag(TRIPLE_ADD_FIELD_NUMBER, 2)
+      case OPTIONS_FIELD_NUMBER =>
+        val __m = row.asInstanceOf[RdfPatchOptions]
+        _output__.writeTag(OPTIONS_FIELD_NUMBER, 2)
         _output__.writeUInt32NoTag(__m.serializedSize)
         __m.writeTo(_output__)
-      case TRIPLE_DELETE_FIELD_NUMBER =>
-        val __m = row.triple
-        _output__.writeTag(TRIPLE_DELETE_FIELD_NUMBER, 2)
-        _output__.writeUInt32NoTag(__m.serializedSize)
-        __m.writeTo(_output__)
-      case QUAD_ADD_FIELD_NUMBER =>
+      case STATEMENT_ADD_FIELD_NUMBER =>
         val __m = row.quad
-        _output__.writeTag(QUAD_ADD_FIELD_NUMBER, 2)
+        _output__.writeTag(STATEMENT_ADD_FIELD_NUMBER, 2)
         _output__.writeUInt32NoTag(__m.serializedSize)
         __m.writeTo(_output__)
-      case QUAD_DELETE_FIELD_NUMBER =>
+      case STATEMENT_DELETE_FIELD_NUMBER =>
         val __m = row.quad
-        _output__.writeTag(QUAD_DELETE_FIELD_NUMBER, 2)
+        _output__.writeTag(STATEMENT_DELETE_FIELD_NUMBER, 2)
         _output__.writeUInt32NoTag(__m.serializedSize)
         __m.writeTo(_output__)
       case NAMESPACE_ADD_FIELD_NUMBER =>
@@ -103,23 +92,12 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
         _output__.writeTag(NAMESPACE_DELETE_FIELD_NUMBER, 2)
         _output__.writeUInt32NoTag(__m.serializedSize)
         __m.writeTo(_output__)
-      // TODO: transaction and punctuation fields are always the exact same byte sequence...
-      //   optimize this?
-      case TRANSACTION_START_FIELD_NUMBER =>
-        val __m = row.asInstanceOf[RdfPatchTransactionStart]
-        _output__.writeTag(TRANSACTION_START_FIELD_NUMBER, 2)
-        _output__.writeUInt32NoTag(__m.serializedSize)
-        __m.writeTo(_output__)
-      case TRANSACTION_COMMIT_FIELD_NUMBER =>
-        val __m = row.asInstanceOf[RdfPatchTransactionCommit]
-        _output__.writeTag(TRANSACTION_COMMIT_FIELD_NUMBER, 2)
-        _output__.writeUInt32NoTag(__m.serializedSize)
-        __m.writeTo(_output__)
-      case TRANSACTION_ABORT_FIELD_NUMBER =>
-        val __m = row.asInstanceOf[RdfPatchTransactionAbort]
-        _output__.writeTag(TRANSACTION_ABORT_FIELD_NUMBER, 2)
-        _output__.writeUInt32NoTag(__m.serializedSize)
-        __m.writeTo(_output__)
+      // Trick: the transaction* and punctuation fields are all the same size, and are always
+      // encoded by the same bytes (tag + \0). We can replace the writing logic with a single
+      // write call, which is faster.
+      case TRANSACTION_START_FIELD_NUMBER => _output__.write(transactionStartTag, 0, 2)
+      case TRANSACTION_COMMIT_FIELD_NUMBER => _output__.write(transactionCommitTag, 0, 2)
+      case TRANSACTION_ABORT_FIELD_NUMBER => _output__.write(transactionAbortTag, 0, 2)
       case NAME_FIELD_NUMBER =>
         val __m = row.name
         _output__.writeTag(NAME_FIELD_NUMBER, 2)
@@ -140,25 +118,14 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
         _output__.writeTag(HEADER_FIELD_NUMBER, 2)
         _output__.writeUInt32NoTag(__m.serializedSize)
         __m.writeTo(_output__)
-      // TODO: this is always the same byte sequence, optimize it?
-      case PUNCTUATION_FIELD_NUMBER =>
-        val __m = row.asInstanceOf[RdfPatchPunctuation]
-        _output__.writeTag(PUNCTUATION_FIELD_NUMBER, 2)
-        _output__.writeUInt32NoTag(__m.serializedSize)
-        __m.writeTo(_output__)
-      case OPTIONS_FIELD_NUMBER =>
-        val __m = row.asInstanceOf[RdfPatchOptions]
-        _output__.writeTag(OPTIONS_FIELD_NUMBER, 2)
-        _output__.writeUInt32NoTag(__m.serializedSize)
-        __m.writeTo(_output__)
+      case PUNCTUATION_FIELD_NUMBER => _output__.write(punctuationTag, 0, 2)
   }
 
   def getFieldByNumber(__fieldNumber: Int): GeneratedMessage = {
     (__fieldNumber: @unchecked @switch) match {
-      case TRIPLE_ADD_FIELD_NUMBER => row.triple
-      case TRIPLE_DELETE_FIELD_NUMBER => row.triple
-      case QUAD_ADD_FIELD_NUMBER => row.quad
-      case QUAD_DELETE_FIELD_NUMBER => row.quad
+      case OPTIONS_FIELD_NUMBER => row.asInstanceOf[RdfPatchOptions]
+      case STATEMENT_ADD_FIELD_NUMBER => row.quad
+      case STATEMENT_DELETE_FIELD_NUMBER => row.quad
       case NAMESPACE_ADD_FIELD_NUMBER => row.namespace
       case NAMESPACE_DELETE_FIELD_NUMBER => row.namespace
       case TRANSACTION_START_FIELD_NUMBER => RdfPatchTransactionStart.defaultInstance
@@ -169,7 +136,6 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
       case DATATYPE_FIELD_NUMBER => row.datatype
       case HEADER_FIELD_NUMBER => row.asInstanceOf[RdfPatchHeader]
       case PUNCTUATION_FIELD_NUMBER => RdfPatchPunctuation.defaultInstance
-      case OPTIONS_FIELD_NUMBER => row.asInstanceOf[RdfPatchOptions]
     }
   }
 
@@ -200,35 +166,32 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
         case 0 =>
           _done__ = true
         case 10 =>
-          __type = TRIPLE_ADD_FIELD_NUMBER
-          __row = _root_.scalapb.LiteParser.readMessage[RdfTriple](_input__)
+          __type = OPTIONS_FIELD_NUMBER
+          __row = _root_.scalapb.LiteParser.readMessage[RdfPatchOptions](_input__)
         case 18 =>
-          __type = TRIPLE_DELETE_FIELD_NUMBER
-          __row = _root_.scalapb.LiteParser.readMessage[RdfTriple](_input__)
+          __type = STATEMENT_ADD_FIELD_NUMBER
+          __row = _root_.scalapb.LiteParser.readMessage[RdfQuad](_input__)
         case 26 =>
-          __type = QUAD_ADD_FIELD_NUMBER
+          __type = STATEMENT_DELETE_FIELD_NUMBER
           __row = _root_.scalapb.LiteParser.readMessage[RdfQuad](_input__)
         case 34 =>
-          __type = QUAD_DELETE_FIELD_NUMBER
-          __row = _root_.scalapb.LiteParser.readMessage[RdfQuad](_input__)
-        case 42 =>
           __type = NAMESPACE_ADD_FIELD_NUMBER
           __row = _root_.scalapb.LiteParser.readMessage[RdfNamespaceDeclaration](_input__)
-        case 50 =>
+        case 42 =>
           __type = NAMESPACE_DELETE_FIELD_NUMBER
           __row = _root_.scalapb.LiteParser.readMessage[RdfNamespaceDeclaration](_input__)
-        case 58 =>
+        case 50 =>
           __type = TRANSACTION_START_FIELD_NUMBER
           __row = RdfPatchTransactionStart.defaultInstance
           // Trick: we know that we need to skip exactly one byte here (it's \0).
           // Doing this directly is faster than using .skipField(58)
           // The same trick is used in the other transaction and punctuation fields.
           _input__.skipRawBytes(1)
-        case 66 =>
+        case 58 =>
           __type = TRANSACTION_COMMIT_FIELD_NUMBER
           __row = RdfPatchTransactionCommit.defaultInstance
           _input__.skipRawBytes(1)
-        case 74 =>
+        case 66 =>
           __type = TRANSACTION_ABORT_FIELD_NUMBER
           __row = RdfPatchTransactionAbort.defaultInstance
           _input__.skipRawBytes(1)
@@ -248,9 +211,6 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
           __type = PUNCTUATION_FIELD_NUMBER
           __row = RdfPatchPunctuation.defaultInstance
           _input__.skipRawBytes(1)
-        case 130 =>
-          __type = OPTIONS_FIELD_NUMBER
-          __row = _root_.scalapb.LiteParser.readMessage[RdfPatchOptions](_input__)
         case tag =>
           _input__.skipField(tag)
       }
@@ -262,10 +222,8 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
       val (rowType, row) = __fieldsMap.get(scalaDescriptor.findFieldByNumber(OPTIONS_FIELD_NUMBER).get).map(f => (OPTIONS_FIELD_NUMBER, f.as[RdfPatchOptions]))
-        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(TRIPLE_ADD_FIELD_NUMBER).get).map(f => (TRIPLE_ADD_FIELD_NUMBER, f.as[RdfTriple])))
-        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(TRIPLE_DELETE_FIELD_NUMBER).get).map(f => (TRIPLE_DELETE_FIELD_NUMBER, f.as[RdfTriple])))
-        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(QUAD_ADD_FIELD_NUMBER).get).map(f => (QUAD_ADD_FIELD_NUMBER, f.as[RdfQuad])))
-        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(QUAD_DELETE_FIELD_NUMBER).get).map(f => (QUAD_DELETE_FIELD_NUMBER, f.as[RdfQuad])))
+        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(STATEMENT_ADD_FIELD_NUMBER).get).map(f => (STATEMENT_ADD_FIELD_NUMBER, f.as[RdfQuad])))
+        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(STATEMENT_DELETE_FIELD_NUMBER).get).map(f => (STATEMENT_DELETE_FIELD_NUMBER, f.as[RdfQuad])))
         .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(NAMESPACE_ADD_FIELD_NUMBER).get).map(f => (NAMESPACE_ADD_FIELD_NUMBER, f.as[RdfNamespaceDeclaration])))
         .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(NAMESPACE_DELETE_FIELD_NUMBER).get).map(f => (NAMESPACE_DELETE_FIELD_NUMBER, f.as[RdfNamespaceDeclaration])))
         .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(TRANSACTION_START_FIELD_NUMBER).get).map(f => (TRANSACTION_START_FIELD_NUMBER, f.as[RdfPatchTransactionStart])))
@@ -287,9 +245,11 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
 
   def messageCompanionForFieldNumber(__number: Int): _root_.scalapb.GeneratedMessageCompanion[?] = {
     (__number: @unchecked @switch) match {
-      case TRIPLE_ADD_FIELD_NUMBER | TRIPLE_DELETE_FIELD_NUMBER => RdfTriple
-      case QUAD_ADD_FIELD_NUMBER | QUAD_DELETE_FIELD_NUMBER => RdfQuad
-      case NAMESPACE_ADD_FIELD_NUMBER | NAMESPACE_DELETE_FIELD_NUMBER => RdfNamespaceDeclaration
+      case OPTIONS_FIELD_NUMBER => RdfPatchOptions
+      case STATEMENT_ADD_FIELD_NUMBER => RdfQuad
+      case STATEMENT_DELETE_FIELD_NUMBER => RdfQuad
+      case NAMESPACE_ADD_FIELD_NUMBER => RdfNamespaceDeclaration
+      case NAMESPACE_DELETE_FIELD_NUMBER => RdfNamespaceDeclaration
       case TRANSACTION_START_FIELD_NUMBER => RdfPatchTransactionStart
       case TRANSACTION_COMMIT_FIELD_NUMBER => RdfPatchTransactionCommit
       case TRANSACTION_ABORT_FIELD_NUMBER => RdfPatchTransactionAbort
@@ -298,7 +258,6 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
       case DATATYPE_FIELD_NUMBER => RdfDatatypeEntry
       case HEADER_FIELD_NUMBER => RdfPatchHeader
       case PUNCTUATION_FIELD_NUMBER => RdfPatchPunctuation
-      case OPTIONS_FIELD_NUMBER => RdfPatchOptions
       case _ => null
     }
   }
@@ -309,27 +268,23 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
 
   val defaultInstance: RdfPatchRow = RdfPatchRow(row = null, rowType = 0)
 
-  final inline val TRIPLE_ADD_FIELD_NUMBER = 1
-  final inline val TRIPLE_DELETE_FIELD_NUMBER = 2
-  final inline val QUAD_ADD_FIELD_NUMBER = 3
-  final inline val QUAD_DELETE_FIELD_NUMBER = 4
-  final inline val NAMESPACE_ADD_FIELD_NUMBER = 5
-  final inline val NAMESPACE_DELETE_FIELD_NUMBER = 6
-  final inline val TRANSACTION_START_FIELD_NUMBER = 7
-  final inline val TRANSACTION_COMMIT_FIELD_NUMBER = 8
-  final inline val TRANSACTION_ABORT_FIELD_NUMBER = 9
+  final inline val OPTIONS_FIELD_NUMBER = 1
+  final inline val STATEMENT_ADD_FIELD_NUMBER = 2
+  final inline val STATEMENT_DELETE_FIELD_NUMBER = 3
+  final inline val NAMESPACE_ADD_FIELD_NUMBER = 4
+  final inline val NAMESPACE_DELETE_FIELD_NUMBER = 5
+  final inline val TRANSACTION_START_FIELD_NUMBER = 6
+  final inline val TRANSACTION_COMMIT_FIELD_NUMBER = 7
+  final inline val TRANSACTION_ABORT_FIELD_NUMBER = 8
   final inline val NAME_FIELD_NUMBER = 11
   final inline val PREFIX_FIELD_NUMBER = 12
   final inline val DATATYPE_FIELD_NUMBER = 13
   final inline val HEADER_FIELD_NUMBER = 14
   final inline val PUNCTUATION_FIELD_NUMBER = 15
-  final inline val OPTIONS_FIELD_NUMBER = 16
 
   // Factory methods -- either inline or singleton
-  inline def ofTripleAdd(row: RdfTriple): RdfPatchRow = RdfPatchRow(row, TRIPLE_ADD_FIELD_NUMBER)
-  inline def ofTripleDelete(row: RdfTriple): RdfPatchRow = RdfPatchRow(row, TRIPLE_DELETE_FIELD_NUMBER)
-  inline def ofQuadAdd(row: RdfQuad): RdfPatchRow = RdfPatchRow(row, QUAD_ADD_FIELD_NUMBER)
-  inline def ofQuadDelete(row: RdfQuad): RdfPatchRow = RdfPatchRow(row, QUAD_DELETE_FIELD_NUMBER)
+  inline def ofStatementAdd(row: RdfQuad): RdfPatchRow = RdfPatchRow(row, STATEMENT_ADD_FIELD_NUMBER)
+  inline def ofStatementDelete(row: RdfQuad): RdfPatchRow = RdfPatchRow(row, STATEMENT_DELETE_FIELD_NUMBER)
   inline def ofNamespaceAdd(row: RdfNamespaceDeclaration): RdfPatchRow = RdfPatchRow(row, NAMESPACE_ADD_FIELD_NUMBER)
   inline def ofNamespaceDelete(row: RdfNamespaceDeclaration): RdfPatchRow = RdfPatchRow(row, NAMESPACE_DELETE_FIELD_NUMBER)
   val ofTransactionStart: RdfPatchRow = RdfPatchRow(RdfPatchTransactionStart.defaultInstance, TRANSACTION_START_FIELD_NUMBER)
@@ -344,8 +299,13 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
 
   private final inline val TRANSACTION_FIELD_TOTAL_SIZE = 2
 
-  private final def makeTransactionTag(fieldNumber: Int): Int = {
+  private final def makeTransactionTag(fieldNumber: Int): Array[Byte] =
+    // Field number is left-shifted by 3 bits, and then we add the field type (2 for length-delimited)
     val tag = fieldNumber << 3
-    tag | 2
-  }
+    Array((tag | 2).toByte, 0)
+
+  private val transactionStartTag: Array[Byte] = makeTransactionTag(TRANSACTION_START_FIELD_NUMBER)
+  private val transactionCommitTag: Array[Byte] = makeTransactionTag(TRANSACTION_COMMIT_FIELD_NUMBER)
+  private val transactionAbortTag: Array[Byte] = makeTransactionTag(TRANSACTION_ABORT_FIELD_NUMBER)
+  private val punctuationTag: Array[Byte] = makeTransactionTag(PUNCTUATION_FIELD_NUMBER)
 }

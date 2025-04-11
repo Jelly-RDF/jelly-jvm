@@ -47,19 +47,19 @@ final class PatchEncoderImpl[TNode](
 
   override def addTriple(s: TNode, p: TNode, o: TNode): Unit =
     handleStreamStart()
-    rowBuffer.append(RdfPatchRow.ofTripleAdd(tripleToProto(s, p, o)))
+    rowBuffer.append(RdfPatchRow.ofStatementAdd(tripleInQuadToProto(s, p, o)))
 
   override def deleteTriple(s: TNode, p: TNode, o: TNode): Unit =
     handleStreamStart()
-    rowBuffer.append(RdfPatchRow.ofTripleDelete(tripleToProto(s, p, o)))
+    rowBuffer.append(RdfPatchRow.ofStatementDelete(tripleInQuadToProto(s, p, o)))
 
   override def addQuad(s: TNode, p: TNode, o: TNode, g: TNode): Unit =
     handleStreamStart()
-    rowBuffer.append(RdfPatchRow.ofQuadAdd(quadToProto(s, p, o, g)))
+    rowBuffer.append(RdfPatchRow.ofStatementAdd(quadToProto(s, p, o, g)))
 
   override def deleteQuad(s: TNode, p: TNode, o: TNode, g: TNode): Unit =
     handleStreamStart()
-    rowBuffer.append(RdfPatchRow.ofQuadDelete(quadToProto(s, p, o, g)))
+    rowBuffer.append(RdfPatchRow.ofStatementDelete(quadToProto(s, p, o, g)))
 
   override def transactionStart(): Unit =
     handleStreamStart()

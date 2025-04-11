@@ -203,36 +203,31 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
       out.statements.result() shouldBe PatchTestCases.Triples2NsDecl.mrl
     }
 
-    "not accept quads (add)" in {
+    "ignore graph names in quads" in {
       val input = RdfPatchFrame(Seq(
         RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
           .withStatementType(PatchStatementType.TRIPLES)
           .withStreamType(PatchStreamType.FLAT)
         ),
-        RdfPatchRow.ofQuadAdd(RdfQuad()),
+        RdfPatchRow.ofStatementAdd(RdfQuad(
+          RdfTerm.Bnode("b1"), RdfTerm.Bnode("b1"), RdfTerm.Bnode("b1"), RdfTerm.Bnode("b1")
+        )),
+        RdfPatchRow.ofStatementDelete(RdfQuad(
+          RdfTerm.Bnode("b1"), RdfTerm.Bnode("b1"), RdfTerm.Bnode("b1"), RdfTerm.Bnode("b1")
+        )),
       ))
       val out = PatchCollector()
       val decoder = MockPatchConverterFactory.triplesDecoder(out, None)
-      val e = intercept[RdfProtoDeserializationError] {
-        decoder.ingestFrame(input)
-      }
-      e.getMessage should include("Unexpected quad add row in stream")
-    }
-
-    "not accept quads (delete)" in {
-      val input = RdfPatchFrame(Seq(
-        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
-          .withStatementType(PatchStatementType.TRIPLES)
-          .withStreamType(PatchStreamType.FLAT)
-        ),
-        RdfPatchRow.ofQuadDelete(RdfQuad()),
+      decoder.ingestFrame(input)
+      out.statements.size should be (2)
+      out.statements should be (Seq(
+        Mpl.Add(Mrl.Triple(
+          Mrl.BlankNode("b1"), Mrl.BlankNode("b1"), Mrl.BlankNode("b1")
+        )),
+        Mpl.Delete(Mrl.Triple(
+          Mrl.BlankNode("b1"), Mrl.BlankNode("b1"), Mrl.BlankNode("b1")
+        )),
       ))
-      val out = PatchCollector()
-      val decoder = MockPatchConverterFactory.triplesDecoder(out, None)
-      val e = intercept[RdfProtoDeserializationError] {
-        decoder.ingestFrame(input)
-      }
-      e.getMessage should include("Unexpected quad delete row in stream")
     }
 
     "not accept a stream with statement type QUADS" in {
@@ -265,38 +260,6 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
       out.statements.result() shouldBe PatchTestCases.Quads1.mrl
     }
 
-    "not accept triples (add)" in {
-      val input = RdfPatchFrame(Seq(
-        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
-          .withStatementType(PatchStatementType.QUADS)
-          .withStreamType(PatchStreamType.FLAT)
-        ),
-        RdfPatchRow.ofTripleAdd(RdfTriple()),
-      ))
-      val out = PatchCollector()
-      val decoder = MockPatchConverterFactory.quadsDecoder(out, None)
-      val e = intercept[RdfProtoDeserializationError] {
-        decoder.ingestFrame(input)
-      }
-      e.getMessage should include("Unexpected triple add row in stream")
-    }
-
-    "not accept triples (delete)" in {
-      val input = RdfPatchFrame(Seq(
-        RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
-          .withStatementType(PatchStatementType.QUADS)
-          .withStreamType(PatchStreamType.FLAT)
-        ),
-        RdfPatchRow.ofTripleDelete(RdfTriple()),
-      ))
-      val out = PatchCollector()
-      val decoder = MockPatchConverterFactory.quadsDecoder(out, None)
-      val e = intercept[RdfProtoDeserializationError] {
-        decoder.ingestFrame(input)
-      }
-      e.getMessage should include("Unexpected triple delete row in stream")
-    }
-
     "not accept a stream with statement type TRIPLES" in {
       val input = RdfPatchFrame(Seq(
         RdfPatchRow.ofOptions(JellyPatchOptions.smallStrict
@@ -322,7 +285,7 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "throw exception if the first row in the stream is not options" in {
       val input = RdfPatchFrame(Seq(
-        RdfPatchRow.ofTripleAdd(RdfTriple()),
+        RdfPatchRow.ofStatementAdd(RdfQuad()),
       ))
       val out = PatchCollector()
       val decoder = MockPatchConverterFactory.anyStatementDecoder(out, None)

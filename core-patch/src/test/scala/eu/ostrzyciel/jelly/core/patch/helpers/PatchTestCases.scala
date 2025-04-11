@@ -77,18 +77,18 @@ object PatchTestCases:
       R.ofName(RdfNameEntry(0, "predicate")),
       R.ofPrefix(RdfPrefixEntry(0, "https://test.org/ns2/")),
       R.ofName(RdfNameEntry(0, "object")),
-      R.ofTripleAdd(RdfTriple(
+      R.ofStatementAdd(RdfQuad(
         RdfIri(0, 1),
         RdfIri(0, 0),
         RdfIri(2, 0),
       )),
       R.ofDatatype(RdfDatatypeEntry(0, "https://test.org/xsd/integer")),
-      R.ofTripleAdd(RdfTriple(
+      R.ofStatementAdd(RdfQuad(
         null,
         null,
         RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)),
       )),
-      R.ofTripleDelete(RdfTriple(
+      R.ofStatementDelete(RdfQuad(
         null,
         null,
         RdfIri(0, 3),
@@ -98,7 +98,7 @@ object PatchTestCases:
       R.ofPrefix(RdfPrefixEntry(0, "")),
       R.ofName(RdfNameEntry(0, "b")),
       R.ofName(RdfNameEntry(0, "c")),
-      R.ofTripleAdd(RdfTriple(
+      R.ofStatementAdd(RdfQuad(
         null,
         null,
         RdfTriple(
@@ -109,12 +109,12 @@ object PatchTestCases:
       )),
       R.ofTransactionAbort,
       R.ofTransactionStart,
-      R.ofTripleAdd(RdfTriple(
+      R.ofStatementAdd(RdfQuad(
         RdfIri(1, 2),
         RdfIri(0, 1),
         null,
       )),
-      R.ofTripleDelete(RdfTriple(
+      R.ofStatementDelete(RdfQuad(
         null,
         null,
         null,
@@ -161,7 +161,7 @@ object PatchTestCases:
       R.ofName(RdfNameEntry(0, "subject")),
       R.ofName(RdfNameEntry(0, "predicate")),
       R.ofName(RdfNameEntry(0, "object")),
-      R.ofTripleAdd(RdfTriple(
+      R.ofStatementAdd(RdfQuad(
         RdfIri(1, 0),
         RdfIri(0, 0),
         RdfIri(2, 0),
@@ -171,7 +171,7 @@ object PatchTestCases:
       R.ofNamespaceDelete(RdfNamespaceDeclaration("test2", RdfIri(0, 1))),
       R.ofTransactionCommit,
       R.ofTransactionStart,
-      R.ofTripleDelete(RdfTriple(
+      R.ofStatementDelete(RdfQuad(
         null,
         null,
         null,
@@ -237,25 +237,25 @@ object PatchTestCases:
       R.ofName(RdfNameEntry(0, "predicate")),
       R.ofPrefix(RdfPrefixEntry(0, "https://test.org/ns3/")),
       R.ofName(RdfNameEntry(0, "graph")),
-      R.ofQuadAdd(RdfQuad(
+      R.ofStatementAdd(RdfQuad(
         RdfIri(0, 0),
         RdfIri(0, 0),
         RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")),
         RdfIri(2, 0),
       )),
-      R.ofQuadAdd(RdfQuad(
+      R.ofStatementAdd(RdfQuad(
         null,
         RdfTerm.Bnode("blank"),
         RdfLiteral("test"),
         null,
       )),
-      R.ofQuadAdd(RdfQuad(
+      R.ofStatementAdd(RdfQuad(
         null,
         null,
         null,
         RdfTerm.Bnode("blank"),
       )),
-      R.ofQuadDelete(RdfQuad(
+      R.ofStatementDelete(RdfQuad(
         null,
         null,
         null,
@@ -263,13 +263,13 @@ object PatchTestCases:
       )),
       R.ofTransactionCommit,
       R.ofTransactionStart,
-      R.ofQuadDelete(RdfQuad(
+      R.ofStatementDelete(RdfQuad(
         null,
         null,
         null,
         RdfIri(0, 4),
       )),
-      R.ofQuadAdd(RdfQuad(
+      R.ofStatementAdd(RdfQuad(
         null,
         null,
         null,
