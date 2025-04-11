@@ -220,16 +220,18 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
         case 58 =>
           __type = TRANSACTION_START_FIELD_NUMBER
           __row = RdfPatchTransactionStart.defaultInstance
-          // TODO: replace with skipRawBytes, here and also in the punctuation
-          _input__.skipField(58)
+          // Trick: we know that we need to skip exactly one byte here (it's \0).
+          // Doing this directly is faster than using .skipField(58)
+          // The same trick is used in the other transaction and punctuation fields.
+          _input__.skipRawBytes(1)
         case 66 =>
           __type = TRANSACTION_COMMIT_FIELD_NUMBER
           __row = RdfPatchTransactionCommit.defaultInstance
-          _input__.skipField(66)
+          _input__.skipRawBytes(1)
         case 74 =>
           __type = TRANSACTION_ABORT_FIELD_NUMBER
           __row = RdfPatchTransactionAbort.defaultInstance
-          _input__.skipField(74)
+          _input__.skipRawBytes(1)
         case 90 =>
           __type = NAME_FIELD_NUMBER
           __row = _root_.scalapb.LiteParser.readMessage[RdfNameEntry](_input__)
@@ -245,7 +247,7 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
         case 122 =>
           __type = PUNCTUATION_FIELD_NUMBER
           __row = RdfPatchPunctuation.defaultInstance
-          _input__.skipField(122)
+          _input__.skipRawBytes(1)
         case 130 =>
           __type = OPTIONS_FIELD_NUMBER
           __row = _root_.scalapb.LiteParser.readMessage[RdfPatchOptions](_input__)
@@ -341,4 +343,9 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
   inline def ofOptions(row: RdfPatchOptions): RdfPatchRow = RdfPatchRow(row, OPTIONS_FIELD_NUMBER)
 
   private final inline val TRANSACTION_FIELD_TOTAL_SIZE = 2
+
+  private final def makeTransactionTag(fieldNumber: Int): Int = {
+    val tag = fieldNumber << 3
+    tag | 2
+  }
 }

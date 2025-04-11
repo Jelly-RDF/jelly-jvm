@@ -55,7 +55,7 @@ trait PatchHandler[-TNode]:
   /**
    * Emit a punctuation mark.
    *
-   * This is only used in PUNCTUATED streams, and indicates the end of one patch and the start of
-   * another.
+   * This is used in PUNCTUATED and FRAME streams, and indicates the end of one patch and the
+   * start of another.
    */
   def punctuation(): Unit
