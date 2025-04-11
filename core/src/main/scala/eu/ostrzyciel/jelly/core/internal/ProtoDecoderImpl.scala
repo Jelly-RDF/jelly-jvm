@@ -219,7 +219,7 @@ object ProtoDecoderImpl:
   /**
    * A decoder that reads streams of any type and outputs a sequence of triples or quads.
    *
-   * The type of the stream is detected automatically based on the options row, 
+   * The type of the stream is detected automatically based on the options row,
    * which must be at the start of the stream. If the options row is not present or the stream changes its type
    * in the middle, an error is thrown.
    *

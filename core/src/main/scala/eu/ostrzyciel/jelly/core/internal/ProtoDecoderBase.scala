@@ -128,7 +128,7 @@ private[core] trait ProtoDecoderBase[TNode, TDatatype : ClassTag, +TTriple, +TQu
   /**
    * @throws RdfProtoDeserializationError if the term can't be decoded
    */
-  private final def convertTerm(term: SpoTerm): TNode =
+  protected final def convertTerm(term: SpoTerm): TNode =
     try {
       if term == null then
         throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.")

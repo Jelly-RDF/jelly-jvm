@@ -21,10 +21,15 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
   private def getEncoder(prefixTableSize: Int = 8): (NodeEncoderImpl[Mrl.Node], ListBuffer[RdfStreamRow]) =
     val buffer = new ListBuffer[RdfStreamRow]()
     val appender = new RowBufferAppender {
-      def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
-        buffer += RdfStreamRow(entry)
+      def appendNameEntry(entry: RdfNameEntry): Unit = buffer += RdfStreamRow(entry)
+      def appendPrefixEntry(entry: RdfPrefixEntry): Unit = buffer += RdfStreamRow(entry)
+      def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit = buffer += RdfStreamRow(entry)
     }
-    (NodeEncoderImpl[Mrl.Node](smallOptions(prefixTableSize), appender, 16, 16, 16), buffer)
+    (NodeEncoderImpl[Mrl.Node](
+      prefixTableSize, 4, 8,
+      16, 16, 16, 
+      appender
+    ), buffer)
 
   "A NodeEncoder" when {
     "encoding datatype literals" should {
@@ -218,7 +223,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "throw exception if datatype table size = 0" in {
         val encoder = NodeEncoderImpl[Mrl.Node](
-          JellyOptions.smallStrict.withMaxDatatypeTableSize(0), null, 16, 16, 16
+          16, 16, 0, 16, 16, 16, null
         )
         val e = intercept[RdfProtoSerializationError] {
           encoder.makeDtLiteral(

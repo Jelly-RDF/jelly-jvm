@@ -89,17 +89,21 @@ private[core] final class ProtoEncoderImpl[TNode, -TTriple, -TQuad](
   private val rowBuffer: mutable.Buffer[RdfStreamRow] = maybeRowBuffer.getOrElse(mutable.ListBuffer[RdfStreamRow]())
   // Whether the encoder is responsible for clearing the buffer.
   private val iResponsibleForBufferClear: Boolean = maybeRowBuffer.isEmpty
-  override protected val nodeEncoder: NodeEncoderImpl[TNode] = new NodeEncoderImpl[TNode](
-    options,
-    this, // RowBufferAppender
-    // Make the node cache size between 256 and 1024, depending on the user's maxNameTableSize.
-    Math.max(Math.min(options.maxNameTableSize, 1024), 256),
+  override protected val nodeEncoder: NodeEncoder[TNode] = NodeEncoderFactory.create[TNode](
+    options.maxPrefixTableSize,
     options.maxNameTableSize,
-    Math.max(Math.min(options.maxNameTableSize, 1024), 256),
+    options.maxDatatypeTableSize,
+    this,
   )
   private var emittedOptions: Boolean = false
 
-  private[core] override def appendLookupEntry(entry: RdfLookupEntryRowValue): Unit =
+  private[core] override def appendNameEntry(entry: RdfNameEntry): Unit =
+    rowBuffer.append(RdfStreamRow(entry))
+
+  private[core] override def appendPrefixEntry(entry: RdfPrefixEntry): Unit =
+    rowBuffer.append(RdfStreamRow(entry))
+
+  private[core] override def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit =
     rowBuffer.append(RdfStreamRow(entry))
 
   private inline def handleHeader(): Unit =

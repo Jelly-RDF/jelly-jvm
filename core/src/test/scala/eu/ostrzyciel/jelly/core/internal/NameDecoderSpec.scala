@@ -9,7 +9,7 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
   val smallOptions = RdfStreamOptions(maxNameTableSize = 16, maxPrefixTableSize = 8)
   
   def makeDecoder(opt: RdfStreamOptions) =
-    NameDecoder(opt.maxPrefixTableSize, opt.maxNameTableSize, identity)
+    NameDecoderImpl(opt.maxPrefixTableSize, opt.maxNameTableSize, identity)
 
   "A NameDecoder" when {
     "empty" should {

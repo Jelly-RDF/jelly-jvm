@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core
 
-import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, PhysicalStreamType, RdfStreamOptions}
+import eu.ostrzyciel.jelly.core.proto.v1.{BaseJellyOptions, LogicalStreamType, PhysicalStreamType, RdfStreamOptions}
 
 /**
  * A collection of convenient streaming option presets.
@@ -147,35 +147,7 @@ object JellyOptions:
    * @throws RdfProtoDeserializationError if the requested options are not supported.
    */
   def checkCompatibility(requestedOptions: RdfStreamOptions, supportedOptions: RdfStreamOptions): Unit =
-    if requestedOptions.version > supportedOptions.version || requestedOptions.version > Constants.protoVersion then
-      throw new RdfProtoDeserializationError(s"Unsupported proto version: ${requestedOptions.version}. " +
-        s"Was expecting at most version ${supportedOptions.version}. " +
-        s"This library version supports up to version ${Constants.protoVersion}.")
-
-    if requestedOptions.generalizedStatements && !supportedOptions.generalizedStatements then
-      throw new RdfProtoDeserializationError(s"The stream uses generalized statements, which are not supported. " +
-        s"Either disable generalized statements or enable them in the supportedOptions.")
-
-    if requestedOptions.rdfStar && !supportedOptions.rdfStar then
-      throw new RdfProtoDeserializationError(s"The stream uses RDF-star, which is not supported. Either disable" +
-        s" RDF-star or enable it in the supportedOptions.")
-
-    def checkTableSize(name: String, size: Int, supportedSize: Int, minSize: Int = 0): Unit =
-      if size > supportedSize then
-        throw new RdfProtoDeserializationError(s"The stream uses a ${name.toLowerCase} table size of $size, which is " +
-          s"larger than the maximum supported size of $supportedSize."
-        )
-      if size < minSize then
-        throw new RdfProtoDeserializationError(s"The stream uses a ${name.toLowerCase} table size of $size, which is " +
-          s"smaller than the minimum supported size of $minSize."
-        )
-
-    // The minimum size of the name lookup is hard-coded in the spec.
-    checkTableSize("Name", requestedOptions.maxNameTableSize, supportedOptions.maxNameTableSize, 8)
-    checkTableSize("Prefix", requestedOptions.maxPrefixTableSize, supportedOptions.maxPrefixTableSize)
-    // The datatype lookup can be empty if the stream does not use datatype literals.
-    checkTableSize("Datatype", requestedOptions.maxDatatypeTableSize, supportedOptions.maxDatatypeTableSize)
-
+    BaseJellyOptions.checkCompatibility(requestedOptions, supportedOptions, Constants.protoVersion)
     checkLogicalStreamType(requestedOptions, supportedOptions.logicalType)
 
   /**

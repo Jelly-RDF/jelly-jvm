@@ -39,10 +39,23 @@ private[core] trait ProtoEncoderBase[TNode, -TTriple, -TQuad]:
 
   protected final def quadToProto(
     subject: TNode, predicate: TNode, `object`: TNode, graph: TNode
-  ): RdfQuad =
-    RdfQuad(
-      subject = nodeToProtoWrapped(subject, lastSubject),
-      predicate = nodeToProtoWrapped(predicate, lastPredicate),
-      `object` = nodeToProtoWrapped(`object`, lastObject),
-      graph = graphNodeToProtoWrapped(graph),
-    )
+  ): RdfQuad = RdfQuad(
+    subject = nodeToProtoWrapped(subject, lastSubject),
+    predicate = nodeToProtoWrapped(predicate, lastPredicate),
+    `object` = nodeToProtoWrapped(`object`, lastObject),
+    graph = graphNodeToProtoWrapped(graph),
+  )
+
+  /**
+   * Converts a triple to an RdfQuad object with a null graph.
+   *
+   * Used in RDF-Patch for triple add/delete operations.
+   */
+  protected final def tripleInQuadToProto(
+    subject: TNode, predicate: TNode, `object`: TNode
+  ): RdfQuad = RdfQuad(
+    subject = nodeToProtoWrapped(subject, lastSubject),
+    predicate = nodeToProtoWrapped(predicate, lastPredicate),
+    `object` = nodeToProtoWrapped(`object`, lastObject),
+    graph = null,
+  )

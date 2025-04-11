@@ -71,21 +71,25 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     /**
      * Creates a new NodeEncoder.
-     * @param opt Jelly RDF stream options
-     * @param bufferAppender consumer of the lookup entry rows
+     * @param prefixTableSize The size of the prefix lookup table
+     * @param nameTableSize The size of the name lookup table
+     * @param dtTableSize The size of the datatype lookup table
      * @param nodeCacheSize The size of the node cache (for nodes that don't depend on lookups)
      * @param iriNodeCacheSize The size of the IRI dependent node cache (for prefix+name encoding)
      * @param dtLiteralNodeCacheSize The size of the datatype literal dependent node cache
+     * @param bufferAppender consumer of the lookup entry rows
      */
     public NodeEncoderImpl(
-        RdfStreamOptions opt,
-        RowBufferAppender bufferAppender,
+        int prefixTableSize,
+        int nameTableSize,
+        int dtTableSize,
         int nodeCacheSize,
         int iriNodeCacheSize,
-        int dtLiteralNodeCacheSize
+        int dtLiteralNodeCacheSize,
+        RowBufferAppender bufferAppender
     ) {
-        datatypeLookup = new EncoderLookup(opt.maxDatatypeTableSize(), true);
-        this.maxPrefixTableSize = opt.maxPrefixTableSize();
+        datatypeLookup = new EncoderLookup(dtTableSize, true);
+        this.maxPrefixTableSize = prefixTableSize;
         if (maxPrefixTableSize > 0) {
             prefixLookup = new EncoderLookup(maxPrefixTableSize, true);
             iriNodeCache = new NodeCache<>(iriNodeCacheSize);
@@ -93,12 +97,12 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             prefixLookup = null;
             iriNodeCache = null;
         }
-        nameOnlyIris = new RdfIri[opt.maxNameTableSize() + 1];
+        nameOnlyIris = new RdfIri[nameTableSize + 1];
         for (int i = 0; i < nameOnlyIris.length; i++) {
             nameOnlyIris[i] = new RdfIri(0, i);
         }
         dtLiteralNodeCache = new NodeCache<>(dtLiteralNodeCacheSize);
-        nameLookup = new EncoderLookup(opt.maxNameTableSize(), maxPrefixTableSize > 0);
+        nameLookup = new EncoderLookup(nameTableSize, maxPrefixTableSize > 0);
         nodeCache = new NodeCache<>(nodeCacheSize);
         this.bufferAppender = bufferAppender;
     }
@@ -114,7 +118,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             // Fast path for no prefixes
             var nameEntry = nameLookup.getOrAddEntry(iri);
             if (nameEntry.newEntry) {
-                bufferAppender.appendLookupEntry(new RdfNameEntry(nameEntry.setId, iri));
+                bufferAppender.appendNameEntry(new RdfNameEntry(nameEntry.setId, iri));
             }
             int nameId = nameEntry.getId;
             if (lastIriNameId + 1 == nameId) {
@@ -158,10 +162,10 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         var prefixEntry = prefixLookup.getOrAddEntry(prefix);
         var nameEntry = nameLookup.getOrAddEntry(postfix);
         if (prefixEntry.newEntry) {
-            bufferAppender.appendLookupEntry(new RdfPrefixEntry(prefixEntry.setId, prefix));
+            bufferAppender.appendPrefixEntry(new RdfPrefixEntry(prefixEntry.setId, prefix));
         }
         if (nameEntry.newEntry) {
-            bufferAppender.appendLookupEntry(new RdfNameEntry(nameEntry.setId, postfix));
+            bufferAppender.appendNameEntry(new RdfNameEntry(nameEntry.setId, postfix));
         }
         int nameId = nameEntry.getId;
         int prefixId = prefixEntry.getId;
@@ -220,7 +224,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         // The node is not encoded, but we may already have the datatype encoded
         var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
         if (dtEntry.newEntry) {
-            bufferAppender.appendLookupEntry(new RdfDatatypeEntry(dtEntry.setId, datatypeName));
+            bufferAppender.appendDatatypeEntry(new RdfDatatypeEntry(dtEntry.setId, datatypeName));
         }
         int dtId = dtEntry.getId;
         cachedNode.lookupPointer1 = dtId;
