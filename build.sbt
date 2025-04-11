@@ -118,7 +118,7 @@ lazy val corePatch = (project in file("core-patch"))
     Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val jena = (project in file("jena"))
   .settings(
