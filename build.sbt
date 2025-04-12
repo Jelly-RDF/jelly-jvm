@@ -134,6 +134,18 @@ lazy val jena = (project in file("jena"))
   )
   .dependsOn(core)
 
+lazy val jenaPatch = (project in file("jena-patch"))
+  .settings(
+    name := "jelly-jena-patch",
+    description := "Jelly-Patch integration for Apache Jena.",
+    libraryDependencies ++= Seq(
+      "org.apache.jena" % "jena-rdfpatch" % jenaV,
+      // TODO: other integrations?
+    ),
+    commonSettings,
+  )
+  .dependsOn(corePatch, jena)
+
 // jena-plugin is a dummy directory that contains only a symlink (src) to the source code
 // in the jena directory. This way sbt won't shout at us for having two projects in the
 // same directory.
@@ -151,19 +163,8 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
     publishArtifact := false,
     commonSettings,
   )
+  // TODO: should this instead depend on jena and jena-patch?
   .dependsOn(core)
-
-lazy val jenaPatch = (project in file("jena-patch"))
-  .settings(
-    name := "jelly-jena-patch",
-    description := "Jelly-Patch integration for Apache Jena.",
-    libraryDependencies ++= Seq(
-      "org.apache.jena" % "jena-rdfpatch" % jenaV,
-      // TODO: other integrations?
-    ),
-    commonSettings,
-  )
-  .dependsOn(corePatch, jena)
 
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
@@ -176,6 +177,14 @@ lazy val rdf4j = (project in file("rdf4j"))
     commonSettings,
   )
   .dependsOn(core)
+
+lazy val rdf4jPatch = (project in file("rdf4j-patch"))
+  .settings(
+    name := "jelly-rdf4j-patch",
+    description := "Jelly-Patch integration for RDF4J.",
+    commonSettings,
+  )
+  .dependsOn(corePatch, rdf4j)
 
 lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
   .settings(
@@ -259,7 +268,14 @@ lazy val integrationTests = (project in file("integration-tests"))
     ),
     commonSettings,
   )
-  .dependsOn(stream, jena % "compile->compile;test->test", rdf4j, titaniumRdfApi)
+  .dependsOn(
+    stream,
+    jena % "compile->compile;test->test",
+    jenaPatch,
+    rdf4j,
+    rdf4jPatch,
+    titaniumRdfApi,
+  )
 
 lazy val examples = (project in file("examples"))
   .settings(

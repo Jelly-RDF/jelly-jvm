@@ -19,7 +19,7 @@ import scala.reflect.ClassTag
  * @since 2.11.0
  */
 @experimental
-trait PatchConverterFactory[TNode, TDatatype : ClassTag](
+trait PatchConverterFactory[TNode >: Null, TDatatype : ClassTag](
   converterFactory: ConverterFactory[?, ?, TNode, TDatatype, ?, ?]
 ):
   /**

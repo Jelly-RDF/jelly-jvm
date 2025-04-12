@@ -83,7 +83,7 @@ trait ProtoEncoderConverter[TNode, -TTriple, -TQuad]:
   /**
    * Turn an RDF graph node into its protobuf representation.
    *
-   * Use the protected make* methods in the provided encoder to create the nodes.
+   * Use the make* methods in the provided encoder to create the nodes.
    *
    * @param encoder node encoder
    * @param node RDF graph node

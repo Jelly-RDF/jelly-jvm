@@ -31,10 +31,10 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
         val __value = row.quad
         1 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
       case NAMESPACE_ADD_FIELD_NUMBER =>
-        val __value = row.namespace
+        val __value = row.asInstanceOf[RdfPatchNamespace]
         1 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
       case NAMESPACE_DELETE_FIELD_NUMBER =>
-        val __value = row.namespace
+        val __value = row.asInstanceOf[RdfPatchNamespace]
         1 + CodedOutputStream.computeUInt32SizeNoTag(__value.serializedSize) + __value.serializedSize
       // Transaction fields are all the same size
       case TRANSACTION_START_FIELD_NUMBER => TRANSACTION_FIELD_TOTAL_SIZE
@@ -83,12 +83,12 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
         _output__.writeUInt32NoTag(__m.serializedSize)
         __m.writeTo(_output__)
       case NAMESPACE_ADD_FIELD_NUMBER =>
-        val __m = row.namespace
+        val __m = row.asInstanceOf[RdfPatchNamespace]
         _output__.writeTag(NAMESPACE_ADD_FIELD_NUMBER, 2)
         _output__.writeUInt32NoTag(__m.serializedSize)
         __m.writeTo(_output__)
       case NAMESPACE_DELETE_FIELD_NUMBER =>
-        val __m = row.namespace
+        val __m = row.asInstanceOf[RdfPatchNamespace]
         _output__.writeTag(NAMESPACE_DELETE_FIELD_NUMBER, 2)
         _output__.writeUInt32NoTag(__m.serializedSize)
         __m.writeTo(_output__)
@@ -126,8 +126,8 @@ final case class RdfPatchRow(row: RdfPatchRowValue, rowType: Byte) extends scala
       case OPTIONS_FIELD_NUMBER => row.asInstanceOf[RdfPatchOptions]
       case STATEMENT_ADD_FIELD_NUMBER => row.quad
       case STATEMENT_DELETE_FIELD_NUMBER => row.quad
-      case NAMESPACE_ADD_FIELD_NUMBER => row.namespace
-      case NAMESPACE_DELETE_FIELD_NUMBER => row.namespace
+      case NAMESPACE_ADD_FIELD_NUMBER => row.asInstanceOf[RdfPatchNamespace]
+      case NAMESPACE_DELETE_FIELD_NUMBER => row.asInstanceOf[RdfPatchNamespace]
       case TRANSACTION_START_FIELD_NUMBER => RdfPatchTransactionStart.defaultInstance
       case TRANSACTION_COMMIT_FIELD_NUMBER => RdfPatchTransactionCommit.defaultInstance
       case TRANSACTION_ABORT_FIELD_NUMBER => RdfPatchTransactionAbort.defaultInstance
@@ -176,10 +176,10 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
           __row = _root_.scalapb.LiteParser.readMessage[RdfQuad](_input__)
         case 34 =>
           __type = NAMESPACE_ADD_FIELD_NUMBER
-          __row = _root_.scalapb.LiteParser.readMessage[RdfNamespaceDeclaration](_input__)
+          __row = _root_.scalapb.LiteParser.readMessage[RdfPatchNamespace](_input__)
         case 42 =>
           __type = NAMESPACE_DELETE_FIELD_NUMBER
-          __row = _root_.scalapb.LiteParser.readMessage[RdfNamespaceDeclaration](_input__)
+          __row = _root_.scalapb.LiteParser.readMessage[RdfPatchNamespace](_input__)
         case 50 =>
           __type = TRANSACTION_START_FIELD_NUMBER
           __row = RdfPatchTransactionStart.defaultInstance
@@ -224,8 +224,8 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
       val (rowType, row) = __fieldsMap.get(scalaDescriptor.findFieldByNumber(OPTIONS_FIELD_NUMBER).get).map(f => (OPTIONS_FIELD_NUMBER, f.as[RdfPatchOptions]))
         .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(STATEMENT_ADD_FIELD_NUMBER).get).map(f => (STATEMENT_ADD_FIELD_NUMBER, f.as[RdfQuad])))
         .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(STATEMENT_DELETE_FIELD_NUMBER).get).map(f => (STATEMENT_DELETE_FIELD_NUMBER, f.as[RdfQuad])))
-        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(NAMESPACE_ADD_FIELD_NUMBER).get).map(f => (NAMESPACE_ADD_FIELD_NUMBER, f.as[RdfNamespaceDeclaration])))
-        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(NAMESPACE_DELETE_FIELD_NUMBER).get).map(f => (NAMESPACE_DELETE_FIELD_NUMBER, f.as[RdfNamespaceDeclaration])))
+        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(NAMESPACE_ADD_FIELD_NUMBER).get).map(f => (NAMESPACE_ADD_FIELD_NUMBER, f.as[RdfPatchNamespace])))
+        .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(NAMESPACE_DELETE_FIELD_NUMBER).get).map(f => (NAMESPACE_DELETE_FIELD_NUMBER, f.as[RdfPatchNamespace])))
         .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(TRANSACTION_START_FIELD_NUMBER).get).map(f => (TRANSACTION_START_FIELD_NUMBER, f.as[RdfPatchTransactionStart])))
         .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(TRANSACTION_COMMIT_FIELD_NUMBER).get).map(f => (TRANSACTION_COMMIT_FIELD_NUMBER, f.as[RdfPatchTransactionCommit])))
         .orElse(__fieldsMap.get(scalaDescriptor.findFieldByNumber(TRANSACTION_ABORT_FIELD_NUMBER).get).map(f => (TRANSACTION_ABORT_FIELD_NUMBER, f.as[RdfPatchTransactionAbort])))
@@ -248,8 +248,8 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
       case OPTIONS_FIELD_NUMBER => RdfPatchOptions
       case STATEMENT_ADD_FIELD_NUMBER => RdfQuad
       case STATEMENT_DELETE_FIELD_NUMBER => RdfQuad
-      case NAMESPACE_ADD_FIELD_NUMBER => RdfNamespaceDeclaration
-      case NAMESPACE_DELETE_FIELD_NUMBER => RdfNamespaceDeclaration
+      case NAMESPACE_ADD_FIELD_NUMBER => RdfPatchNamespace
+      case NAMESPACE_DELETE_FIELD_NUMBER => RdfPatchNamespace
       case TRANSACTION_START_FIELD_NUMBER => RdfPatchTransactionStart
       case TRANSACTION_COMMIT_FIELD_NUMBER => RdfPatchTransactionCommit
       case TRANSACTION_ABORT_FIELD_NUMBER => RdfPatchTransactionAbort
@@ -285,8 +285,8 @@ object RdfPatchRow extends patch.CompanionHelper[RdfPatchRow]("RdfPatchRow") {
   // Factory methods -- either inline or singleton
   inline def ofStatementAdd(row: RdfQuad): RdfPatchRow = RdfPatchRow(row, STATEMENT_ADD_FIELD_NUMBER)
   inline def ofStatementDelete(row: RdfQuad): RdfPatchRow = RdfPatchRow(row, STATEMENT_DELETE_FIELD_NUMBER)
-  inline def ofNamespaceAdd(row: RdfNamespaceDeclaration): RdfPatchRow = RdfPatchRow(row, NAMESPACE_ADD_FIELD_NUMBER)
-  inline def ofNamespaceDelete(row: RdfNamespaceDeclaration): RdfPatchRow = RdfPatchRow(row, NAMESPACE_DELETE_FIELD_NUMBER)
+  inline def ofNamespaceAdd(row: RdfPatchNamespace): RdfPatchRow = RdfPatchRow(row, NAMESPACE_ADD_FIELD_NUMBER)
+  inline def ofNamespaceDelete(row: RdfPatchNamespace): RdfPatchRow = RdfPatchRow(row, NAMESPACE_DELETE_FIELD_NUMBER)
   val ofTransactionStart: RdfPatchRow = RdfPatchRow(RdfPatchTransactionStart.defaultInstance, TRANSACTION_START_FIELD_NUMBER)
   val ofTransactionCommit: RdfPatchRow = RdfPatchRow(RdfPatchTransactionCommit.defaultInstance, TRANSACTION_COMMIT_FIELD_NUMBER)
   val ofTransactionAbort: RdfPatchRow = RdfPatchRow(RdfPatchTransactionAbort.defaultInstance, TRANSACTION_ABORT_FIELD_NUMBER)

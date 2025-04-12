@@ -12,7 +12,7 @@ import scala.annotation.{experimental, switch}
 import scala.reflect.ClassTag
 
 @experimental
-sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
+sealed abstract class PatchDecoderImpl[TNode >: Null, TDatatype : ClassTag](
   protected override val converter: ProtoDecoderConverter[TNode, TDatatype, ?, ?],
   handler: PatchHandler[TNode],
   supportedOptions: RdfPatchOptions,
@@ -50,11 +50,19 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
       case RdfPatchRow.STATEMENT_ADD_FIELD_NUMBER => handleStatementAdd(r.quad)
       case RdfPatchRow.STATEMENT_DELETE_FIELD_NUMBER => handleStatementDelete(r.quad)
       case RdfPatchRow.NAMESPACE_ADD_FIELD_NUMBER =>
-        val nsRow = r.namespace
-        handler.addNamespace(nsRow.nsName, nameDecoder.decode(nsRow.value))
+        val nsRow = r.asInstanceOf[RdfPatchNamespace]
+        handler.addNamespace(
+          nsRow.nsName,
+          nameDecoder.decode(nsRow.value),
+          decodeNsIri(nsRow.graph),
+        )
       case RdfPatchRow.NAMESPACE_DELETE_FIELD_NUMBER =>
-        val nsRow = r.namespace
-        handler.deleteNamespace(nsRow.nsName, nameDecoder.decode(nsRow.value))
+        val nsRow = r.asInstanceOf[RdfPatchNamespace]
+        handler.deleteNamespace(
+          nsRow.nsName,
+          decodeNsIri(nsRow.value),
+          decodeNsIri(nsRow.graph),
+        )
       case RdfPatchRow.TRANSACTION_START_FIELD_NUMBER => handler.transactionStart()
       case RdfPatchRow.TRANSACTION_COMMIT_FIELD_NUMBER => handler.transactionCommit()
       case RdfPatchRow.TRANSACTION_ABORT_FIELD_NUMBER => handler.transactionAbort()
@@ -75,6 +83,10 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
       case _ =>
         throw new RdfProtoDeserializationError("Row kind is not set or unknown: " + row.rowType)
 
+  private def decodeNsIri(iri: RdfIri): TNode =
+    if iri == null then null
+    else nameDecoder.decode(iri)
+
   protected def handleOptions(opt: RdfPatchOptions): Unit =
     JellyPatchOptions.checkCompatibility(opt, supportedOptions)
     setPatchOpt(opt)
@@ -86,7 +98,7 @@ sealed abstract class PatchDecoderImpl[TNode, TDatatype : ClassTag](
 
 @experimental
 object PatchDecoderImpl:
-  private[core] final class TriplesDecoder[TNode, TDatatype : ClassTag](
+  private[core] final class TriplesDecoder[TNode >: Null, TDatatype : ClassTag](
     converter: ProtoDecoderConverter[TNode, TDatatype, ?, ?],
     handler: TriplePatchHandler[TNode],
     supportedOptions: RdfPatchOptions,
@@ -113,7 +125,7 @@ object PatchDecoderImpl:
         convertTermWrapped(statement.`object`, lastObject),
       )
 
-  private[core] final class QuadsDecoder[TNode, TDatatype : ClassTag](
+  private[core] final class QuadsDecoder[TNode >: Null, TDatatype : ClassTag](
     converter: ProtoDecoderConverter[TNode, TDatatype, ?, ?],
     handler: QuadPatchHandler[TNode],
     supportedOptions: RdfPatchOptions,
@@ -142,7 +154,7 @@ object PatchDecoderImpl:
         convertGraphTermWrapped(statement.graph),
       )
 
-  private[core] final class AnyStatementDecoder[TNode, TDatatype : ClassTag](
+  private[core] final class AnyStatementDecoder[TNode >: Null, TDatatype : ClassTag](
     converter: ProtoDecoderConverter[TNode, TDatatype, ?, ?],
     handler: AnyPatchHandler[TNode],
     supportedOptions: RdfPatchOptions,

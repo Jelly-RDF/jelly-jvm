@@ -16,7 +16,7 @@ import scala.annotation.experimental
  * @tparam TNode the type of RDF nodes in the library
  */
 @experimental
-final class PatchEncoderImpl[TNode](
+final class PatchEncoderImpl[TNode >: Null](
   protected val converter: ProtoEncoderConverter[TNode, ?, ?],
   params: PatchEncoder.Params,
 ) extends PatchEncoder[TNode]:
@@ -73,16 +73,24 @@ final class PatchEncoderImpl[TNode](
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofTransactionAbort)
 
-  override def addNamespace(name: String, iriValue: TNode): Unit =
+  override def addNamespace(name: String, iriValue: TNode, graph: TNode): Unit =
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofNamespaceAdd(
-      RdfNamespaceDeclaration(name, converter.nodeToProto(nodeEncoder, iriValue).iri)
+      RdfPatchNamespace(
+        name,
+        converter.nodeToProto(nodeEncoder, iriValue).iri,
+        encodeNsIri(graph),
+      )
     ))
 
-  override def deleteNamespace(name: String, iriValue: TNode): Unit =
+  override def deleteNamespace(name: String, iriValue: TNode, graph: TNode): Unit =
     handleStreamStart()
     rowBuffer.append(RdfPatchRow.ofNamespaceDelete(
-      RdfNamespaceDeclaration(name, converter.nodeToProto(nodeEncoder, iriValue).iri)
+      RdfPatchNamespace(
+        name,
+        encodeNsIri(iriValue),
+        encodeNsIri(graph),
+      )
     ))
 
   override def header(key: String, value: TNode): Unit =
@@ -96,7 +104,11 @@ final class PatchEncoderImpl[TNode](
     if !options.streamType.isPunctuated then
       throw new RdfProtoSerializationError("Punctuation is not allowed in this stream type.")
     rowBuffer.append(RdfPatchRow.ofPunctuation)
-
+  
+  private def encodeNsIri(iri: TNode): RdfIri =
+    if iri == null then null
+    else converter.nodeToProto(nodeEncoder, iri).iri
+  
   private inline def handleStreamStart(): Unit =
     if !emittedOptions then emitOptions()
 

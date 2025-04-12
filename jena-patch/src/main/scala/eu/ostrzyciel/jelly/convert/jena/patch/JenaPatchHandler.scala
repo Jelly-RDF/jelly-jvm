@@ -27,15 +27,12 @@ private object JenaPatchHandler:
 
     def transactionAbort(): Unit = jenaStream.txnAbort()
 
-    // TODO: Jena has a graph name here as well? Makes sense because of how Jena works, associating
-    //   prefixes with graphs. But we don't have that. Ask Andy?
     // TODO: we encode the IRI here as a Node, but we should probably use a String
-    def addNamespace(name: String, iriValue: Node): Unit =
-      jenaStream.addPrefix(null, name, iriValue.getURI)
+    def addNamespace(name: String, iriValue: Node, graph: Node): Unit =
+      jenaStream.addPrefix(graph, name, iriValue.getURI)
 
-    // TODO: Jena doesn't use the value in this case..... the spec is unclear on how to handle this
-    def deleteNamespace(name: String, iriValue: Node): Unit =
-      jenaStream.deletePrefix(null, name)
+    def deleteNamespace(name: String, iriValue: Node, graph: Node): Unit =
+      jenaStream.deletePrefix(graph, name)
 
     def header(key: String, value: Node): Unit = jenaStream.header(key, value)
 
@@ -57,10 +54,10 @@ private object JenaPatchHandler:
     def txnAbort(): Unit = jellyStream.transactionAbort()
 
     def addPrefix(g: Node, prefix: String, uriValue: String): Unit =
-      jellyStream.addNamespace(prefix, NodeFactory.createURI(uriValue))
+      jellyStream.addNamespace(prefix, NodeFactory.createURI(uriValue), g)
 
     def deletePrefix(g: Node, prefix: String): Unit =
-      jellyStream.deleteNamespace(prefix, null)
+      jellyStream.deleteNamespace(prefix, null, g)
 
     def header(field: String, value: Node): Unit = jellyStream.header(field, value)
 

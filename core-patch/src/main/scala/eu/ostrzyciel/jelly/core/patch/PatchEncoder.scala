@@ -31,7 +31,7 @@ object PatchEncoder:
  * @since 2.11.0
  */
 @experimental
-trait PatchEncoder[TNode] extends
+trait PatchEncoder[TNode >: Null] extends
   ProtoEncoderBase[TNode, ?, ?],
   AnyPatchHandler[TNode],
   RowBufferAppender:

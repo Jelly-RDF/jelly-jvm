@@ -10,7 +10,7 @@ import scala.annotation.experimental
  * @tparam TNode type of RDF nodes in the library
  */
 @experimental
-trait PatchHandler[-TNode]:
+trait PatchHandler[-TNode >: Null]:
   /**
    * Start a new transaction. (TX)
    */
@@ -30,19 +30,21 @@ trait PatchHandler[-TNode]:
    * Add a namespace declaration to the patch stream.
    * This is called "prefix add" in RDF Patch. (PA)
    *
-   * @param name     the name of the namespace (without the trailing colon)
-   * @param iriValue the IRI value of the namespace
+   * @param name     the name of the namespace (without the trailing colon, required)
+   * @param iriValue the IRI value of the namespace (required)
+   * @param graph    the named graph to which the namespace belongs (optional)
    */
-  def addNamespace(name: String, iriValue: TNode): Unit
+  def addNamespace(name: String, iriValue: TNode, graph: TNode): Unit
 
   /**
    * Delete a namespace declaration from the patch stream.
    * This is called "prefix delete" in RDF Patch. (PD)
    *
-   * @param name     the name of the namespace (without the trailing colon)
-   * @param iriValue the IRI value of the namespace
+   * @param name     the name of the namespace (without the trailing colon, required)
+   * @param iriValue the IRI value of the namespace (optional)
+   * @param graph    the named graph to which the namespace belongs (optional)
    */
-  def deleteNamespace(name: String, iriValue: TNode): Unit
+  def deleteNamespace(name: String, iriValue: TNode, graph: TNode): Unit
 
   /**
    * Add a header to the patch stream. (H)
