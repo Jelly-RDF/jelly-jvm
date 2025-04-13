@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.integration_tests.patch
 
-import eu.ostrzyciel.jelly.core.patch.JellyPatchOptions
-import eu.ostrzyciel.jelly.core.proto.v1.patch.RdfPatchOptions
+import eu.ostrzyciel.jelly.core.patch.{JellyPatchOptions, PatchConstants}
+import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 import eu.ostrzyciel.jelly.integration_tests.patch.impl.{*, given}
 import eu.ostrzyciel.jelly.integration_tests.patch.traits.RdfPatchImplementation
 import eu.ostrzyciel.jelly.integration_tests.util.TestComparable
@@ -14,9 +14,18 @@ import scala.annotation.experimental
 
 @experimental
 class CrossPatchSpec extends AnyWordSpec, Matchers:
+  import eu.ostrzyciel.jelly.core.proto.v1.patch.PatchStatementType.{TRIPLES, QUADS}
+  import eu.ostrzyciel.jelly.core.proto.v1.patch.PatchStreamType.{FLAT, FRAME, PUNCTUATED}
+
   val presets: Seq[(Option[RdfPatchOptions], Int, String)] = Seq(
-    (Some(JellyPatchOptions.smallStrict), 100, "small strict"),
-    // TODO: more presets
+    (Some(JellyPatchOptions.smallStrict.copy(streamType = FLAT)), 100, "small strict, FLAT"),
+    (Some(JellyPatchOptions.smallRdfStar.copy(streamType = FRAME)), 100, "small RDF-star, FRAME"),
+    (Some(JellyPatchOptions.smallGeneralized.copy(streamType = FRAME)), 10, "small generalized, FRAME"),
+    (Some(JellyPatchOptions.smallAllFeatures.copy(streamType = PUNCTUATED)), 1000, "small all features, PUNCTUATED"),
+    (Some(JellyPatchOptions.bigStrict.copy(streamType = PUNCTUATED)), 5, "big strict, PUNCTUATED"),
+    (Some(JellyPatchOptions.bigRdfStar.copy(streamType = FLAT)), 5, "big RDF-star, FLAT"),
+    (Some(JellyPatchOptions.bigGeneralized.copy(streamType = PUNCTUATED)), 5, "big generalized, PUNCTUATED"),
+    (Some(JellyPatchOptions.bigAllFeatures.copy(streamType = FRAME)), 5, "big all features, FRAME"),
     (None, 10, "no options"),
   )
 
@@ -26,6 +35,37 @@ class CrossPatchSpec extends AnyWordSpec, Matchers:
   
   runTest(JenaImplementation, JenaImplementation)
 
+  private def checkOptionsAndPunctuation(
+    bytes: Array[Byte],
+    expectedStatementType: PatchStatementType,
+    expectedOpt: Option[RdfPatchOptions],
+    expectedPatches: Int,
+  ): Unit =
+    val expOpt = expectedOpt.getOrElse(JellyPatchOptions.bigAllFeatures.withStreamType(PUNCTUATED))
+    val in = ByteArrayInputStream(bytes)
+    val frames = Iterator.continually(RdfPatchFrame.parseDelimitedFrom(in))
+      .takeWhile(_.isDefined).map(_.get).toSeq
+    // Check option validity
+    frames.head.rows.head.rowType should be (RdfPatchRow.OPTIONS_FIELD_NUMBER)
+    val opt = frames.head.rows.head.row.asInstanceOf[RdfPatchOptions]
+    opt.statementType should be (expectedStatementType)
+    opt.streamType should be (expOpt.streamType)
+    opt.maxNameTableSize should be (expOpt.maxNameTableSize)
+    opt.maxPrefixTableSize should be (expOpt.maxPrefixTableSize)
+    opt.maxDatatypeTableSize should be (expOpt.maxDatatypeTableSize)
+    opt.rdfStar should be (expOpt.rdfStar)
+    opt.generalizedStatements should be (expOpt.generalizedStatements)
+    opt.version should be (PatchConstants.protoVersion_1_0_x)
+    // Check punctuation
+    val punctMarks = frames.flatMap(_.rows).count(_.rowType == RdfPatchRow.PUNCTUATION_FIELD_NUMBER)
+    if expOpt.streamType.isFrame then
+      frames.size should be (expectedPatches)
+      punctMarks should be (0)
+    else if expOpt.streamType.isPunctuated || expOpt.streamType.isUnspecified then
+      punctMarks should be (expectedPatches)
+    else // FLAT
+      punctMarks should be (0)
+
   private def runTest[T1 : TestComparable, T2 : TestComparable](
     impl1: RdfPatchImplementation[T1],
     impl2: RdfPatchImplementation[T2],
@@ -34,40 +74,42 @@ class CrossPatchSpec extends AnyWordSpec, Matchers:
     val c2 = summon[TestComparable[T2]]
     f"${impl1.name} serializer + ${impl2.name} deserializer" should {
       for
+        (name, files) <- TestCases.cases
+        statementType <- Seq(TRIPLES, QUADS, PatchStatementType.UNSPECIFIED)
         (preset, size, presetName) <- presets
-        (name, file) <- TestCases.triples
-      do
-        f"ser/des file $name with preset $presetName, frame size $size" in {
-          val m1 = impl1.readRdf(FileInputStream(file))
-          val originalSize = c1.size(m1)
-          originalSize should be > 0L
+      do f"ser/des file $name with preset $presetName, frame size $size" in {
+        val m1 = impl1.readRdf(files, preset.exists(_.streamType.isFlat))
+        val originalSize = c1.size(m1)
+        originalSize should be > 0L
 
-          val os = ByteArrayOutputStream()
-          impl1.writeJelly(os, m1, preset, size)
-          os.close()
-          val bytes = os.toByteArray
-          bytes.size should be > 0
+        val os = ByteArrayOutputStream()
+        impl1.writeJelly(os, m1, preset, size)
+        os.close()
+        val bytes = os.toByteArray
+        bytes.size should be > 0
+        checkOptionsAndPunctuation(bytes, statementType, preset, files.size)
 
-          // Try parsing what impl1 wrote with impl2
-          val m2 = impl2.readJelly(ByteArrayInputStream(bytes), None)
-          c2.size(m2) shouldEqual originalSize
-          
-          // If the two implementations are comparable directly, do that
-          if c1 == c2 then
-            c1.compare(m1, m2.asInstanceOf[T1])
+        // Try parsing what impl1 wrote with impl2
+        val m2 = impl2.readJelly(ByteArrayInputStream(bytes), None)
+        c2.size(m2) shouldEqual originalSize
 
-          // We additionally round-trip data from impl2 to impl2...
-          val os2 = ByteArrayOutputStream()
-          impl2.writeJelly(os2, m2, preset, size)
-          os2.close()
-          val bytes2 = os2.toByteArray
-          bytes2.size should be > 0
-          
-          val m2_b = impl2.readJelly(ByteArrayInputStream(bytes2), None)
-          c2.compare(m2, m2_b) // Compare the two impl2 outputs
-            
-          // ...and from impl2 to impl1
-          val m1_b = impl1.readJelly(ByteArrayInputStream(bytes2), None)
-          c1.compare(m1, m1_b) // Compare the two impl1 outputs
-        }
+        // If the two implementations are comparable directly, do that
+        if c1 == c2 then
+          c1.compare(m1, m2.asInstanceOf[T1])
+
+        // We additionally round-trip data from impl2 to impl2...
+        val os2 = ByteArrayOutputStream()
+        impl2.writeJelly(os2, m2, preset, size)
+        os2.close()
+        val bytes2 = os2.toByteArray
+        bytes2.size should be > 0
+
+        val m2_b = impl2.readJelly(ByteArrayInputStream(bytes2), None)
+        c2.compare(m2, m2_b) // Compare the two impl2 outputs
+        checkOptionsAndPunctuation(bytes2, statementType, preset, files.size)
+
+        // ...and from impl2 to impl1
+        val m1_b = impl1.readJelly(ByteArrayInputStream(bytes2), None)
+        c1.compare(m1, m1_b) // Compare the two impl1 outputs
+      }
     }

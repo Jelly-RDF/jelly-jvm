@@ -1,10 +1,10 @@
 package eu.ostrzyciel.jelly.convert.jena.patch
 
+import eu.ostrzyciel.jelly.convert.jena.patch.impl.JenaChangesCollector
 import eu.ostrzyciel.jelly.core.patch.{JellyPatchOptions, PatchEncoder}
-import eu.ostrzyciel.jelly.core.proto.v1.patch.{PatchStatementType, PatchStreamType, RdfPatchFrame, RdfPatchOptions, RdfPatchRow}
+import eu.ostrzyciel.jelly.core.proto.v1.patch.*
 import org.apache.jena.graph.Node
 import org.apache.jena.rdfpatch.RDFChanges
-import org.apache.jena.rdfpatch.changes.RDFChangesCollector
 
 import java.io.OutputStream
 import scala.annotation.experimental
@@ -26,7 +26,7 @@ final class RdfPatchWriterJellyAutodetectType(
     if !opt.jellyOpt.statementType.isUnspecified then RdfPatchWriterJelly(opt, out)
     // We don't know yet if this is a TRIPLES or QUADS stream, so we need to buffer the data
     else null
-  private lazy val backlog: RDFChangesCollector = RDFChangesCollector()
+  private lazy val backlog = JenaChangesCollector()
 
   def header(field: String, value: Node): Unit =
     if inner == null then backlog.header(field, value)
@@ -34,11 +34,11 @@ final class RdfPatchWriterJellyAutodetectType(
 
   def add(g: Node, s: Node, p: Node, o: Node): Unit =
     if inner == null then makeInner(g)
-    else inner.add(g, s, p, o)
+    inner.add(g, s, p, o)
 
   def delete(g: Node, s: Node, p: Node, o: Node): Unit =
     if inner == null then makeInner(g)
-    else inner.delete(g, s, p, o)
+    inner.delete(g, s, p, o)
 
   private def makeInner(g: Node): Unit =
     // Now we can tell if this is a TRIPLES or QUADS stream
@@ -47,7 +47,8 @@ final class RdfPatchWriterJellyAutodetectType(
     inner = RdfPatchWriterJelly(opt.copy(
       jellyOpt = opt.jellyOpt.copy(statementType = t)
     ), out)
-    backlog.getRDFPatch.apply(inner)
+    // Don't call `finish()` on the backlog, as it will call `finish()` on the inner stream
+    backlog.replay(inner, callStartFinish = false)
 
   def addPrefix(gn: Node, prefix: String, uriStr: String): Unit =
     if inner == null then backlog.addPrefix(gn, prefix, uriStr)
@@ -79,8 +80,7 @@ final class RdfPatchWriterJellyAutodetectType(
     if inner == null then
       // We have not seen any triple/quad data yet, so we can just write the backlog
       inner = RdfPatchWriterJelly(opt, out)
-      backlog.getRDFPatch.apply(inner)
-      inner.finish()
+      backlog.replay(inner, callStartFinish = true)
     else
       inner.finish()
 
@@ -98,12 +98,12 @@ final class RdfPatchWriterJelly(opt: RdfPatchWriterJelly.Options, out: OutputStr
   // We don't set any options here – it is the responsibility of the caller to set
   // a valid stream and statement type here.
   private val enc = JenaPatchConverterFactory.encoder(PatchEncoder.Params(
-    opt.jellyOpt, buffer
+    jellyOpt, buffer
   ))
   private val inner: RDFChanges = JellyPatchOps.fromJenaToJelly(enc)
   // For the FLAT and PUNCTUATED types, we will split the stream in frames by row count.
   // This does not apply if we are doing an undelimited stream.
-  private val splitByCount = !opt.jellyOpt.streamType.isFrame && opt.delimited
+  private val splitByCount = !jellyOpt.streamType.isFrame && opt.delimited
 
   def header(field: String, value: Node): Unit =
     inner.header(field, value)
@@ -138,11 +138,12 @@ final class RdfPatchWriterJelly(opt: RdfPatchWriterJelly.Options, out: OutputStr
     afterWrite()
 
   def segment(): Unit =
-    if opt.jellyOpt.streamType.isPunctuated then
+    if jellyOpt.streamType.isPunctuated then
       inner.segment()
       afterWrite()
     // If FRAME or FLAT intercept and emit frame
-    else flushBuffer()
+    // Only if the stream is delimited, otherwise we wait for finish()
+    else if opt.delimited then flushBuffer()
 
   def start(): Unit = ()
 
