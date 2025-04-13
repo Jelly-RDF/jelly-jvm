@@ -5,6 +5,10 @@ import eu.ostrzyciel.jelly.integration_tests.util.TestComparable
 
 import java.io.{InputStream, OutputStream}
 
+/**
+ * Interface for Jelly-Patch implementations (e.g., jelly-jena-patch).
+ * @tparam TPatch The type of the patch.
+ */
 trait JellyPatchImplementation[TPatch : TestComparable]:
   def readJelly(in: InputStream, supportedOptions: Option[RdfPatchOptions] = None): TPatch
 

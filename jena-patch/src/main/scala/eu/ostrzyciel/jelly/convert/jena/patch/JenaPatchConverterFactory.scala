@@ -7,6 +7,9 @@ import org.apache.jena.graph.Node
 
 import scala.annotation.experimental
 
+/**
+ * Factory for Jena-based Jelly-Patch encoders and decoders.
+ */
 @experimental
 object JenaPatchConverterFactory extends PatchConverterFactory[Node, RDFDatatype](
   JenaConverterFactory

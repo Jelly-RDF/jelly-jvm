@@ -12,6 +12,9 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.ByteArrayInputStream
 import scala.annotation.experimental
 
+/**
+ * Cross-testing Jelly-Patch implementations in end-to-end test cases.
+ */
 @experimental
 class CrossPatchSpec extends AnyWordSpec, Matchers:
   import eu.ostrzyciel.jelly.core.proto.v1.patch.PatchStatementType.{QUADS, TRIPLES}

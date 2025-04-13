@@ -29,6 +29,10 @@ object JenaChangesCollector:
   case object Segment extends JenaChangesItem:
     def apply(c: RDFChanges): Unit = c.segment()
 
+/**
+ * Helper class to collect and replay items from Jena RDFChanges streams.
+ * @param stType The statement type of the Jelly-Patch stream.
+ */
 final class JenaChangesCollector(stType: PatchStatementType) extends RDFChanges:
   import JenaChangesCollector.*
 

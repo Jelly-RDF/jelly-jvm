@@ -9,17 +9,29 @@ import java.io.InputStream
 import scala.annotation.experimental
 
 object RdfPatchReaderJelly:
+  /**
+   * Options for the Jelly-Patch reader.
+   * @param supportedOptions The options supported by the reader. Default: `JellyPatchOptions.defaultSupportedOptions`.
+   */
   final case class Options(
     supportedOptions: RdfPatchOptions = JellyPatchOptions.defaultSupportedOptions,
   )
 
+/**
+ * Reader for Jelly-Patch byte streams. Use the `apply()` method to read the stream and send the
+ * changes to the destination.
+ *
+ * You can also use the convenience methods in `JellyPatchOps` to create readers more easily.
+ *
+ * @param opt The options for the reader.
+ * @param in The input stream to read from.
+ */
 @experimental
 final class RdfPatchReaderJelly(opt: RdfPatchReaderJelly.Options, in: InputStream) extends PatchProcessor:
 
   def apply(destination: RDFChanges): Unit =
     val handler = JellyPatchOps.fromJellyToJena(destination)
     val decoder = JenaPatchConverterFactory.anyStatementDecoder(handler, Some(opt.supportedOptions))
-
     destination.start()
     try
       IoUtils.autodetectDelimiting(in) match

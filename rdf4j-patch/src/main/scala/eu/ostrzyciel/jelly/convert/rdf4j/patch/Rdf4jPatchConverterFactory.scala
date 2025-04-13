@@ -6,6 +6,9 @@ import org.eclipse.rdf4j.model.Value
 
 import scala.annotation.experimental
 
+/**
+ * Factory for RDF4J-based Jelly-Patch encoders and decoders.
+ */
 @experimental
 object Rdf4jPatchConverterFactory extends PatchConverterFactory[Value, Rdf4jDatatype](
   Rdf4jConverterFactory

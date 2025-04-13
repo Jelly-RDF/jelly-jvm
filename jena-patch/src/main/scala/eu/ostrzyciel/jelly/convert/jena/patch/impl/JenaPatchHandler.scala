@@ -1,4 +1,4 @@
-package eu.ostrzyciel.jelly.convert.jena.patch
+package eu.ostrzyciel.jelly.convert.jena.patch.impl
 
 import eu.ostrzyciel.jelly.core.patch.handler.AnyPatchHandler
 import eu.ostrzyciel.jelly.core.proto.v1.patch.PatchStatementType
@@ -7,8 +7,13 @@ import org.apache.jena.rdfpatch.RDFChanges
 
 import scala.annotation.{experimental, switch}
 
+/**
+ * Internal converters between Jelly-Patch streams and Jena RDFChanges streams.
+ *
+ * Use `JellyPatchOps` for public API to create these converters.
+ */
 @experimental
-private object JenaPatchHandler:
+private[patch] object JenaPatchHandler:
   private[patch] class JellyToJena(jenaStream: RDFChanges) extends AnyPatchHandler[Node]:
     def addQuad(s: Node, p: Node, o: Node, g: Node): Unit =
       jenaStream.add(g, s, p, o)
@@ -28,7 +33,6 @@ private object JenaPatchHandler:
 
     def transactionAbort(): Unit = jenaStream.txnAbort()
 
-    // TODO: we encode the IRI here as a Node, but we should probably use a String
     def addNamespace(name: String, iriValue: Node, graph: Node): Unit =
       jenaStream.addPrefix(graph, name, iriValue.getURI)
 

@@ -10,6 +10,17 @@ import scala.annotation.experimental
 import scala.collection.mutable.ListBuffer
 
 object RdfPatchWriterJelly:
+  /**
+   * Options for the Jelly-Patch writer.
+   * @param jellyOpt The options for the Jelly-Patch writer. Default: `JellyPatchOptions.bigAllFeatures`.
+   *                 The default stream type is PUNCTUATED, which allows for unlimited patch sizes.
+   * @param frameSize The size of the frames to be written. This is ignored for the FRAME stream
+   *                  type, where frame sizes are decided by segment() calls. Default: 512.
+   * @param delimited Whether to write the stream in delimited format. Setting this to false will
+   *                  force the entire patch to be in a single stream frame, which may cause
+   *                  out-of-memory errors. Disable this only if you know what you are doing.
+   *                  Default: true.
+   */
   final case class Options(
     jellyOpt: RdfPatchOptions = JellyPatchOptions.bigAllFeatures,
     frameSize: Int = 512, // ignored if FRAME type
@@ -17,11 +28,16 @@ object RdfPatchWriterJelly:
   )
 
 /**
+ * Writer for Jelly-Patch byte streams. It exposes the RDFChanges interface, which allows you to
+ * hook it up to any Jena-based RDFChanges stream.
+ * 
+ * You can also use the convenience methods in `JellyPatchOps` to create writers more easily.
+ * 
  * You MUST call `finish()` at the end of the stream to ensure that all data is written.
  */
 @experimental
 final class RdfPatchWriterJelly(opt: RdfPatchWriterJelly.Options, out: OutputStream) extends RDFChanges:
-  import JenaPatchHandler.JenaToJelly
+  import eu.ostrzyciel.jelly.convert.jena.patch.impl.JenaPatchHandler.JenaToJelly
 
   private val jellyOpt = opt.jellyOpt.copy(
     // If no stream type is set, we default to PUNCTUATED, as it's the safest option.
