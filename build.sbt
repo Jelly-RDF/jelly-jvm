@@ -140,7 +140,6 @@ lazy val jenaPatch = (project in file("jena-patch"))
     description := "Jelly-Patch integration for Apache Jena.",
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-rdfpatch" % jenaV,
-      // TODO: other integrations?
     ),
     commonSettings,
   )
@@ -163,7 +162,6 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
     publishArtifact := false,
     commonSettings,
   )
-  // TODO: should this instead depend on jena and jena-patch?
   .dependsOn(core)
 
 lazy val rdf4j = (project in file("rdf4j"))
@@ -271,7 +269,7 @@ lazy val integrationTests = (project in file("integration-tests"))
   .dependsOn(
     stream,
     jena % "compile->compile;test->test",
-    jenaPatch,
+    jenaPatch % "compile->compile;test->test",
     rdf4j,
     rdf4jPatch,
     titaniumRdfApi,
