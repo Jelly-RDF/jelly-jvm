@@ -30,8 +30,6 @@ class CrossPatchSpec extends AnyWordSpec, Matchers:
   )
 
   // TODO: unsupported presets
-
-  // TODO: RDF-star, generalized statements, etc.
   
   runTest(JenaImplementation, JenaImplementation)
 
