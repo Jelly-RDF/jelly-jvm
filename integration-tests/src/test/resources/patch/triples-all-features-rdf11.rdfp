@@ -1,0 +1,27 @@
+H id <uuid:bbe2edae-325e-11ec-abcc-a70bbba0dfb1> .
+H label "All features test" .
+H blank _:b1 .
+H number "12"^^<http://www.w3.org/2001/XMLSchema#integer> .
+H label-pl "chrząszcz"@pl .
+TX .
+PA "rdf" <http://www.w3.org/2000/01/rdf-schema#> .
+PA "" <http://example.org#> .
+PD "rdf" .
+PD "" .
+A <http://example/s> <http://example/p1> <http://example/o1> .
+A <http://example/s> <http://example/p1> <http://example/o2> .
+A <http://example/s> <http://example/p2> <http://example/o2> .
+A <http://example/s> <http://example/p3> "language literal"@en .
+A <http://example/s> <http://example/p3> "simple literal" .
+A <http://example/s> <http://example/p3> "12"^^<http://www.w3.org/2001/XMLSchema#integer> .
+A _:b1 <http://example/p3> _:b2 .
+TC .
+TX .
+D <http://example/s> <http://example/p1> <http://example/o1> .
+D <http://example/s> <http://example/p1> <http://example/o2> .
+D <http://example/s> <http://example/p2> <http://example/o2> .
+D <http://example/s> <http://example/p3> "language literal"@en .
+D <http://example/s> <http://example/p3> "simple literal" .
+D <http://example/s> <http://example/p3> "12"^^<http://www.w3.org/2001/XMLSchema#integer> .
+D _:b1 <http://example/p3> _:b2 .
+TA .

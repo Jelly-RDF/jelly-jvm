@@ -144,7 +144,7 @@ object PatchTestCases:
         Iri("https://test.org/ns2/object"),
       )),
       Delete(NsDecl("test", Iri("https://test.org/test/"))),
-      Delete(NsDecl("ns2", Iri("https://test.org/ns2/"))),
+      Delete(NsDecl("ns2")),
       TxCommit,
     )
 
@@ -155,9 +155,9 @@ object PatchTestCases:
       R.ofTransactionStart,
       R.ofPrefix(RdfPrefixEntry(0, "https://test.org/test/")),
       R.ofName(RdfNameEntry(0, "")),
-      R.ofNamespaceAdd(RdfNamespaceDeclaration("test", RdfIri(1, 0))),
+      R.ofNamespaceAdd(RdfPatchNamespace("test", RdfIri(1, 0))),
       R.ofPrefix(RdfPrefixEntry(0, "https://test.org/ns2/")),
-      R.ofNamespaceAdd(RdfNamespaceDeclaration("ns2", RdfIri(2, 1))),
+      R.ofNamespaceAdd(RdfPatchNamespace("ns2", RdfIri(2, 1))),
       R.ofName(RdfNameEntry(0, "subject")),
       R.ofName(RdfNameEntry(0, "predicate")),
       R.ofName(RdfNameEntry(0, "object")),
@@ -167,8 +167,8 @@ object PatchTestCases:
         RdfIri(2, 0),
       )),
       R.ofPrefix(RdfPrefixEntry(0, "https://test.org/test2/")),
-      R.ofNamespaceAdd(RdfNamespaceDeclaration("test2", RdfIri(3, 1))),
-      R.ofNamespaceDelete(RdfNamespaceDeclaration("test2", RdfIri(0, 1))),
+      R.ofNamespaceAdd(RdfPatchNamespace("test2", RdfIri(3, 1))),
+      R.ofNamespaceDelete(RdfPatchNamespace("test2", RdfIri(0, 1))),
       R.ofTransactionCommit,
       R.ofTransactionStart,
       R.ofStatementDelete(RdfQuad(
@@ -176,14 +176,16 @@ object PatchTestCases:
         null,
         null,
       )),
-      R.ofNamespaceDelete(RdfNamespaceDeclaration("test", RdfIri(1, 1))),
-      R.ofNamespaceDelete(RdfNamespaceDeclaration("ns2", RdfIri(2, 1))),
+      R.ofNamespaceDelete(RdfPatchNamespace("test", RdfIri(1, 1))),
+      // IRI not set this time
+      R.ofNamespaceDelete(RdfPatchNamespace("ns2")),
       R.ofTransactionCommit,
     )
 
   object Quads1 extends PatchTestCase:
     val mrl = Seq(
       TxStart,
+      Add(NsDecl("test", Iri("https://test.org/test/"), Iri("https://test.org/test/"))),
       Add(NsDecl("test", Iri("https://test.org/test/"))),
       Add(Quad(
         Iri("https://test.org/test/subject"),
@@ -223,7 +225,8 @@ object PatchTestCases:
         SimpleLiteral("test"),
         SimpleLiteral("test"),
       )),
-      Delete(NsDecl("test", Iri("https://test.org/test/"))),
+      Delete(NsDecl("test", null, Iri("https://test.org/test/"))),
+      Delete(NsDecl("test")),
       TxAbort,
     )
 
@@ -232,7 +235,8 @@ object PatchTestCases:
       R.ofTransactionStart,
       R.ofPrefix(RdfPrefixEntry(0, "https://test.org/test/")),
       R.ofName(RdfNameEntry(0, "")),
-      R.ofNamespaceAdd(RdfNamespaceDeclaration("test", RdfIri(1, 0))),
+      R.ofNamespaceAdd(RdfPatchNamespace("test", RdfIri(1, 0), RdfIri(0, 1))),
+      R.ofNamespaceAdd(RdfPatchNamespace("test", RdfIri(0, 1))),
       R.ofName(RdfNameEntry(0, "subject")),
       R.ofName(RdfNameEntry(0, "predicate")),
       R.ofPrefix(RdfPrefixEntry(0, "https://test.org/ns3/")),
@@ -275,7 +279,8 @@ object PatchTestCases:
         null,
         RdfLiteral("test"),
       )),
-      R.ofNamespaceDelete(RdfNamespaceDeclaration("test", RdfIri(1, 1))),
+      R.ofNamespaceDelete(RdfPatchNamespace("test", null, RdfIri(1, 1))),
+      R.ofNamespaceDelete(RdfPatchNamespace("test", null, null)),
       R.ofTransactionAbort,
     )
 

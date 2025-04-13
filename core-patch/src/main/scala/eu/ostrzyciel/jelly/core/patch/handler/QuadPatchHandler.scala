@@ -8,7 +8,7 @@ import scala.annotation.experimental
  * @tparam TNode type of RDF nodes in the library
  */
 @experimental
-trait QuadPatchHandler[-TNode] extends PatchHandler[TNode]:
+trait QuadPatchHandler[-TNode >: Null] extends PatchHandler[TNode]:
   /**
    * Add a quad to the patch stream. (A Quad)
    *
