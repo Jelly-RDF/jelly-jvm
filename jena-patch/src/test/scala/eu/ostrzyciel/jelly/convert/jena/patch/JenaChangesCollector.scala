@@ -1,7 +1,9 @@
 package eu.ostrzyciel.jelly.convert.jena.patch
 
+import eu.ostrzyciel.jelly.core.proto.v1.patch.PatchStatementType
 import org.apache.jena.graph.Node
 import org.apache.jena.rdfpatch.RDFChanges
+import org.apache.jena.sparql.core.Quad
 
 import scala.collection.mutable.ListBuffer
 
@@ -27,7 +29,7 @@ object JenaChangesCollector:
   case object Segment extends JenaChangesItem:
     def apply(c: RDFChanges): Unit = c.segment()
 
-final class JenaChangesCollector extends RDFChanges:
+final class JenaChangesCollector(stType: PatchStatementType) extends RDFChanges:
   import JenaChangesCollector.*
 
   private val changes: ListBuffer[JenaChangesItem] = ListBuffer.empty
@@ -38,19 +40,24 @@ final class JenaChangesCollector extends RDFChanges:
   def size: Int =
     changes.size
 
-  def replay(c: RDFChanges): Unit =
-    c.start()
+  def replay(c: RDFChanges, callStartFinish: Boolean): Unit =
+    if callStartFinish then c.start()
     getChanges.foreach(_.apply(c))
-    c.finish()
+    if callStartFinish then c.finish()
 
   def header(field: String, value: Node): Unit =
     changes += Header(field, value)
 
   def add(g: Node, s: Node, p: Node, o: Node): Unit =
-    changes += Add(g, s, p, o)
+    changes += Add(coerceGraph(g), s, p, o)
 
   def delete(g: Node, s: Node, p: Node, o: Node): Unit =
-    changes += Delete(g, s, p, o)
+    changes += Delete(coerceGraph(g), s, p, o)
+
+  private def coerceGraph(g: Node): Node =
+    if g == null && stType.isQuads then Quad.defaultGraphNodeGenerated
+    else if stType.isTriples then null
+    else g
 
   def addPrefix(gn: Node, prefix: String, uriStr: String): Unit =
     changes += AddPrefix(gn, prefix, uriStr)

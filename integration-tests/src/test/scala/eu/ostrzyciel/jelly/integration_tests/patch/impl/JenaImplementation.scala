@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.integration_tests.patch.impl
 
 import eu.ostrzyciel.jelly.convert.jena.patch.*
 import eu.ostrzyciel.jelly.core.patch.JellyPatchOptions
-import eu.ostrzyciel.jelly.core.proto.v1.patch.RdfPatchOptions
+import eu.ostrzyciel.jelly.core.proto.v1.patch.{PatchStatementType, RdfPatchOptions}
 import eu.ostrzyciel.jelly.integration_tests.patch.traits.*
 import eu.ostrzyciel.jelly.integration_tests.util.TestComparable
 import org.apache.jena.rdfpatch.text.RDFPatchReaderText
@@ -26,13 +26,13 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
 
   override def name: String = "Jena"
 
-  override def readRdf(in: InputStream): JenaChangesCollector =
-    val collector = JenaChangesCollector()
+  override def readRdf(in: InputStream, stType: PatchStatementType): JenaChangesCollector =
+    val collector = JenaChangesCollector(stType)
     RDFPatchReaderText(in).apply(collector)
     collector
 
-  override def readRdf(files: Seq[File], flat: Boolean): JenaChangesCollector =
-    val collector = JenaChangesCollector()
+  override def readRdf(files: Seq[File], stType: PatchStatementType, flat: Boolean): JenaChangesCollector =
+    val collector = JenaChangesCollector(stType)
     for filename <- files do
       val in = new FileInputStream(filename)
       RDFPatchReaderText(in).apply(collector)
@@ -41,7 +41,7 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
     collector
 
   override def readJelly(in: InputStream, supportedOptions: Option[RdfPatchOptions]): JenaChangesCollector =
-    val collector = JenaChangesCollector()
+    val collector = JenaChangesCollector(PatchStatementType.UNSPECIFIED)
     JellyPatchOps.read(in, collector, RdfPatchReaderJelly.Options(
       supportedOptions.getOrElse(JellyPatchOptions.defaultSupportedOptions)
     ))
@@ -54,7 +54,7 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
       options.getOrElse(RdfPatchWriterJelly.Options().jellyOpt),
       frameSize = frameSize
     ))
-    patch.replay(w)
+    patch.replay(w, callStartFinish = true)
 
   override def supportsGeneralizedStatements: Boolean = true
 

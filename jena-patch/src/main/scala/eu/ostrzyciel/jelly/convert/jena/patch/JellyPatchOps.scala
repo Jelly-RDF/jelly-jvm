@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.convert.jena.patch
 
 import eu.ostrzyciel.jelly.core.patch.handler.AnyPatchHandler
+import eu.ostrzyciel.jelly.core.proto.v1.patch.PatchStatementType
 import org.apache.jena.graph.Node
 import org.apache.jena.rdfpatch.{RDFChanges, RDFPatch}
 
@@ -13,7 +14,17 @@ object JellyPatchOps:
 
   def fromJellyToJena(jenaStream: RDFChanges): AnyPatchHandler[Node] = JellyToJena(jenaStream)
 
-  def fromJenaToJelly(jellyStream: AnyPatchHandler[Node]): RDFChanges = JenaToJelly(jellyStream)
+  def fromJenaToJelly(jellyStream: AnyPatchHandler[Node]): RDFChanges = JenaToJelly(
+    jellyStream, PatchStatementType.UNSPECIFIED
+  )
+
+  def fromJenaToJellyTriples(jellyStream: AnyPatchHandler[Node]): RDFChanges = JenaToJelly(
+    jellyStream, PatchStatementType.TRIPLES
+  )
+
+  def fromJenaToJellyQuads(jellyStream: AnyPatchHandler[Node]): RDFChanges = JenaToJelly(
+    jellyStream, PatchStatementType.QUADS
+  )
 
   def read(in: InputStream, destination: RDFChanges): Unit =
     read(in, destination, RdfPatchReaderJelly.Options())
@@ -34,4 +45,4 @@ object JellyPatchOps:
     writer(out, RdfPatchWriterJelly.Options())
 
   def writer(out: OutputStream, opt: RdfPatchWriterJelly.Options): RDFChanges =
-    RdfPatchWriterJellyAutodetectType(opt, out)
+    RdfPatchWriterJelly(opt, out)
