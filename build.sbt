@@ -57,6 +57,7 @@ lazy val commonSettings = Seq(
     "-unchecked",
   ),
   javacOptions ++= Seq(
+    "-source", "17",
     "-Werror",
     // TODO: enable more warnings
     "-Xlint:unchecked",
@@ -83,6 +84,19 @@ lazy val rdfProtos = (project in file("rdf-protos"))
     publishArtifact := false,
   )
 
+// Intermediate project that generates the Scala code from the protobuf files
+lazy val rdfProtosJava = (project in file("rdf-protos-java"))
+  .enablePlugins(ProtobufPlugin)
+  .settings(
+    name := "jelly-javameta",
+    libraryDependencies ++= Seq(
+      "com.google.protobuf" % "protobuf-java" % protobufV,
+    ),
+    ProtobufConfig / sourceDirectory := baseDirectory.value / "src" / "main" / "protobuf",
+    ProtobufConfig / protobufExcludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "grpc.proto"),
+    publishArtifact := false,
+  )
+
 lazy val core = (project in file("core"))
   .settings(
     name := "jelly-core",
@@ -99,6 +113,29 @@ lazy val core = (project in file("core"))
         module = "core",
       )
     }.dependsOn(rdfProtos / Compile / PB.generate),
+    Compile / sourceManaged := sourceManaged.value / "main",
+    commonSettings,
+  )
+
+lazy val coreJava = (project in file("core-java"))
+  .settings(
+    name := "jelly-core-java",
+    description := "Core code for serializing and deserializing RDF data in the Jelly format. Java edition.",
+    libraryDependencies ++= Seq(
+      "com.google.protobuf" % "protobuf-java" % protobufV,
+    ),
+    Compile / sourceGenerators += Def.task {
+      // Copy from the managed source directory to the output directory
+      val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main"
+      val outputDir = sourceManaged.value / "main" / "protobuf"
+      val javaFiles = (inputDir ** "*.java").get
+      javaFiles.map { file =>
+        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+        IO.copyFile(file, outputFile)
+        outputFile
+      }
+
+    }.dependsOn(rdfProtosJava / Compile / PB.generate),
     Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
   )
