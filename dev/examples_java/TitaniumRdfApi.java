@@ -5,11 +5,11 @@ import com.apicatalog.rdf.nquads.NQuadsWriter;
 import eu.ostrzyciel.jelly.convert.titanium.TitaniumJellyReader;
 import eu.ostrzyciel.jelly.convert.titanium.TitaniumJellyWriter;
 import eu.ostrzyciel.jelly.examples.shared.Example;
-
 import java.io.*;
 import java.net.URISyntaxException;
 
 public class TitaniumRdfApi implements Example {
+
     public static void main(String[] args) {
         try {
             new TitaniumRdfApi().run(args);
@@ -26,10 +26,7 @@ public class TitaniumRdfApi implements Example {
         System.out.println("Converting " + inputFile + " to " + nquadsOutput + " ...");
 
         // Open the I/O streams
-        try (
-            var fis = new FileInputStream(inputFile);
-            var fos = new FileWriter(nquadsOutput)
-        ) {
+        try (var fis = new FileInputStream(inputFile); var fos = new FileWriter(nquadsOutput)) {
             var jellyReader = TitaniumJellyReader.factory();
             // Parse the entire Jelly file and immediately write the N-Quads to the output file
             jellyReader.parseAll(new NQuadsWriter(fos), fis);
