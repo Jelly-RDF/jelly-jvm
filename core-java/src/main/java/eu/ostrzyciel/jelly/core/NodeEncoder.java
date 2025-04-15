@@ -1,5 +1,7 @@
 package eu.ostrzyciel.jelly.core;
 
+import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+
 /**
  * Interface exposed to RDF library interop modules for encoding RDF terms.
  * @param <TNode> The type of RDF nodes used by the RDF library.
@@ -10,21 +12,21 @@ public interface NodeEncoder<TNode> {
      * @param iri The IRI to encode.
      * @return The encoded IRI node.
      */
-    UniversalTerm makeIri(String iri);
+    RdfTerm makeIri(String iri);
 
     /**
      * Encode a blank node.
      * @param label The label of the blank node.
      * @return The encoded blank node.
      */
-    UniversalTerm makeBlankNode(String label);
+    RdfTerm makeBlankNode(String label);
 
     /**
      * Encode a simple literal (of type xsd:string).
      * @param lex The lexical form of the literal.
      * @return The encoded literal.
      */
-    UniversalTerm makeSimpleLiteral(String lex);
+    RdfTerm makeSimpleLiteral(String lex);
 
     /**
      * Encode a language-tagged literal.
@@ -33,7 +35,7 @@ public interface NodeEncoder<TNode> {
      * @param lang The language tag.
      * @return The encoded literal.
      */
-    UniversalTerm makeLangLiteral(TNode lit, String lex, String lang);
+    RdfTerm makeLangLiteral(TNode lit, String lex, String lang);
 
     /**
      * Encode a datatype literal (not xsd:string and not language-tagged).
@@ -42,7 +44,7 @@ public interface NodeEncoder<TNode> {
      * @param dt The datatype IRI.
      * @return The encoded literal.
      */
-    UniversalTerm makeDtLiteral(TNode lit, String lex, String dt);
+    RdfTerm makeDtLiteral(TNode lit, String lex, String dt);
 
     /**
      * Encode a quoted triple node (RDF-star).
@@ -53,13 +55,13 @@ public interface NodeEncoder<TNode> {
      * @param o The object of the triple.
      * @return The encoded triple node.
      */
-    SpoTerm makeQuotedTriple(SpoTerm s, SpoTerm p, SpoTerm o);
+    RdfTerm.SpoTerm makeQuotedTriple(RdfTerm.SpoTerm s, RdfTerm.SpoTerm p, RdfTerm.SpoTerm o);
 
     /**
      * Encode a default graph node.
      * @return The encoded default graph node.
      */
-    static GraphTerm makeDefaultGraph() {
-        return RdfDefaultGraph$.MODULE$.defaultInstance();
+    static RdfTerm.GraphTerm makeDefaultGraph() {
+        return new RdfTerm.DefaultGraph();
     }
 }
