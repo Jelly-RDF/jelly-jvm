@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "prettier-plugin-java": "^2.6.7",
+    "prettier": "^3.4.2"
+  },
+  "scripts": {
+    "format:fix": "prettier **/*.java --write --log-level silent",
+    "format:check": "prettier **/*.java --check"
+  }
+}

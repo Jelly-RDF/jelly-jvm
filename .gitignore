@@ -1,3 +1,4 @@
+# Java/Scala
 target
 *.class
 *.log
@@ -8,3 +9,21 @@ target
 /*.jelly
 
 .metals/
+
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+.env
+
+# Sonar
+.scannerwork
+
+# IJIdea
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Node
+node_modules

@@ -8,10 +8,12 @@ import java.util.HashMap;
  * The table is implemented as a doubly linked list in an array.
  */
 final class EncoderLookup {
+
     /**
      * Represents an entry in the lookup table.
      */
     static final class LookupEntry {
+
         /** The ID of the entry used for referencing it from RdfIri and RdfLiteral objects. */
         public int getId;
         /** The ID of the entry used for adding the lookup entry to the RDF stream. */

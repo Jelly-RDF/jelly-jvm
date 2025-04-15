@@ -12,7 +12,6 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
  * @since 2.9.0
  */
 public interface TitaniumJellyDecoder {
-
     /**
      * Factory method to create a new TitaniumJellyDecoder instance.
      * @param supportedOptions Maximum supported options of the Jelly parser. You can use this to

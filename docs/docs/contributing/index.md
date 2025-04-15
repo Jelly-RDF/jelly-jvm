@@ -24,6 +24,24 @@ Pull requests are welcome! Simply fork the **[GitHub repository](https://github.
 
 If you are working on a larger feature or a significant change, it is recommended to open an issue first to discuss the idea.
 
+## Formatting your code
+
+We use prettier and JHipster's [`prettier-plugin-java`](https://github.com/jhipster/prettier-java) to format our Java code. You can run the formatter with the following command:
+
+```bash
+npm install
+npm run format:fix
+```
+
+The pull requests are expected to be formatted before being submitted. For IntellIJ users, you can set up the formatter to run automatically on save. To do this:
+
+- Open Settings -> Languages & Frameworks -> JavaScript -> Prettier
+    - Select `Manual Prettier configuration`
+    - Select `node_modules/prettier` from project directory for `Prettier Package`
+    - Check `Run on 'Reformat Code' action`
+    - Check `Run on save`
+    - Replace `Run for files` glob pattern with `**/*.{java}`
+
 ## Documentation
 
 Jelly-JVM uses the exact same documentation system as the main [Jelly documentation]({{ proto_link() }}). Further information on editing the documentation can be found in the [Contributing to the Jelly documentation]({{ proto_link('contributing') }}) guide.

@@ -2,7 +2,6 @@ package eu.ostrzyciel.jelly.core.internal;
 
 import eu.ostrzyciel.jelly.core.JellyExceptions;
 import eu.ostrzyciel.jelly.core.proto.v1.*;
-
 import java.util.function.Function;
 
 /**
@@ -10,7 +9,9 @@ import java.util.function.Function;
  * @param <TIri> The type of the IRI in the target RDF library.
  */
 final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
+
     private static final class NameLookupEntry {
+
         // Primary: the actual name
         public String name;
         // Secondary values (may be mutated without invalidating the primary value)
@@ -23,6 +24,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
     }
 
     private static final class PrefixLookupEntry {
+
         public String prefix;
         public int serial = -1;
     }
@@ -126,15 +128,13 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             }
             if (nameEntry.lastIri == null) {
                 throw JellyExceptions.rdfProtoDeserializationError(
-                        "Encountered an invalid IRI reference. " +
-                                "Prefix ID: " + iri.prefixId() + ", Name ID: " + nameId
+                    "Encountered an invalid IRI reference. " + "Prefix ID: " + iri.prefixId() + ", Name ID: " + nameId
                 );
             }
         } else if (nameEntry.lastIri == null) {
             if (nameEntry.name == null) {
                 throw JellyExceptions.rdfProtoDeserializationError(
-                        "Encountered an invalid IRI reference. " +
-                        "No prefix, Name ID: " + nameId
+                    "Encountered an invalid IRI reference. " + "No prefix, Name ID: " + nameId
                 );
             }
             // Name only, no need to check the prefix lookup
