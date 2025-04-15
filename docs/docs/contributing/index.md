@@ -32,11 +32,11 @@ We use prettier and JHipster's [`prettier-plugin-java`](https://github.com/jhips
 npm run format:fix
 ```
 
-The pull requests are expected to be formatted before being submitted. For IntellIJ users, you can set up the formatter to run automatically on save. 
-To do this:
-- open Settings -> Language & Frameworks -> JavaScript -> Prettier
+The pull requests are expected to be formatted before being submitted. For IntellIJ users, you can set up the formatter to run automatically on save. To do this:
+
+- Open Settings -> Languages & Frameworks -> JavaScript -> Prettier
     - Select `Manual Prettier configuration`
-    - Select `node_module/prettier` from project directory for `Prettier Package`
+    - Select `node_modules/prettier` from project directory for `Prettier Package`
     - Check `Run on 'Reformat Code' action`
     - Check `Run on save`
     - Replace `Run for files` glob pattern with `**/*.{java}`
