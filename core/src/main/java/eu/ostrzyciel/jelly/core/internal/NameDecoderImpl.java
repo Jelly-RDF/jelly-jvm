@@ -123,8 +123,11 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             nameEntry = nameLookup[lastNameIdReference];
         } catch (ArrayIndexOutOfBoundsException e) {
             throw JellyExceptions.rdfProtoDeserializationError(
-                    "Encountered an invalid name table reference (out of bounds). " +
-                            "Name ID: " + nameId + ", Prefix ID: " + iri.prefixId()
+                "Encountered an invalid name table reference (out of bounds). " +
+                "Name ID: " +
+                nameId +
+                ", Prefix ID: " +
+                iri.prefixId()
             );
         }
         int prefixId = iri.prefixId();
@@ -140,8 +143,11 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                 prefixEntry = prefixLookup[prefixId];
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw JellyExceptions.rdfProtoDeserializationError(
-                        "Encountered an invalid prefix table reference (out of bounds). " +
-                                "Prefix ID: " + prefixId + ", Name ID: " + nameId
+                    "Encountered an invalid prefix table reference (out of bounds). " +
+                    "Prefix ID: " +
+                    prefixId +
+                    ", Name ID: " +
+                    nameId
                 );
             }
             if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
