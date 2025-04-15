@@ -29,6 +29,7 @@ If you are working on a larger feature or a significant change, it is recommende
 We use prettier and JHipster's [`prettier-plugin-java`](https://github.com/jhipster/prettier-java) to format our Java code. You can run the formatter with the following command:
 
 ```bash
+npm install
 npm run format:fix
 ```
 
