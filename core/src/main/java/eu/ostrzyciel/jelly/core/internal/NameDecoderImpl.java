@@ -81,7 +81,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             entry.lastIri = null;
         } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
             throw JellyExceptions.rdfProtoDeserializationError(
-                "Name entry with ID " + id + " is out of bounds of the name lookup table."
+                "Name entry with ID %d is out of bounds of the name lookup table.".formatted(id)
             );
         }
     }
@@ -101,7 +101,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             entry.serial++;
         } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
             throw JellyExceptions.rdfProtoDeserializationError(
-                "Prefix entry with ID " + id + " is out of bounds of the prefix lookup table."
+                "Prefix entry with ID %d is out of bounds of the prefix lookup table.".formatted(id)
             );
         }
     }
@@ -123,11 +123,8 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             nameEntry = nameLookup[lastNameIdReference];
         } catch (ArrayIndexOutOfBoundsException e) {
             throw JellyExceptions.rdfProtoDeserializationError(
-                "Encountered an invalid name table reference (out of bounds). " +
-                "Name ID: " +
-                nameId +
-                ", Prefix ID: " +
-                iri.prefixId()
+                ("Encountered an invalid name table reference (out of bounds). " +
+                    "Name ID: %d, Prefix ID: %d").formatted(nameId, iri.prefixId())
             );
         }
         int prefixId = iri.prefixId();
@@ -143,11 +140,8 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                 prefixEntry = prefixLookup[prefixId];
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw JellyExceptions.rdfProtoDeserializationError(
-                    "Encountered an invalid prefix table reference (out of bounds). " +
-                    "Prefix ID: " +
-                    prefixId +
-                    ", Name ID: " +
-                    nameId
+                    ("Encountered an invalid prefix table reference (out of bounds). " +
+                        "Prefix ID: %d, Name ID: %d").formatted(prefixId, nameId)
                 );
             }
             if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
@@ -160,13 +154,13 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             }
             if (nameEntry.lastIri == null) {
                 throw JellyExceptions.rdfProtoDeserializationError(
-                    "Encountered an invalid IRI reference. " + "Prefix ID: " + iri.prefixId() + ", Name ID: " + nameId
+                    "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(iri.prefixId(), nameId)
                 );
             }
         } else if (nameEntry.lastIri == null) {
             if (nameEntry.name == null) {
                 throw JellyExceptions.rdfProtoDeserializationError(
-                    "Encountered an invalid IRI reference. " + "No prefix, Name ID: " + nameId
+                    "Encountered an invalid IRI reference. No prefix, Name ID: %d".formatted(nameId)
                 );
             }
             // Name only, no need to check the prefix lookup
