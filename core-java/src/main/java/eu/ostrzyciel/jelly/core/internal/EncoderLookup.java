@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.core.internal;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * A lookup table for NodeEncoder, used for indexing datatypes, IRI prefixes, and IRI names.
@@ -107,8 +108,8 @@ final class EncoderLookup {
 
     /**
      * One branch of the getOrAddEntry method. Should be inlined by the JIT.
-     * @param key
-     * @param id
+     * @param key The key of the entry.
+     * @param id The ID of the entry.
      */
     private final void addEntrySequential(String key, int id) {
         int base = id * 2;
@@ -125,8 +126,8 @@ final class EncoderLookup {
 
     /**
      * Another branch of the getOrAddEntry method. Should be inlined by the JIT.
-     * @param key
-     * @param id
+     * @param key The key of the entry.
+     * @param id The ID of the entry.
      */
     private final void addEntryEvicting(String key, int id) {
         // Remove the entry from the map
@@ -167,7 +168,7 @@ final class EncoderLookup {
             // Increment the serial number
             // We save some memory accesses by not doing this if the serials are not used.
             // The if should be very predictable and have no negative performance impact.
-            ++serials[id];
+            ++Objects.requireNonNull(serials)[id];
         }
         entryForReturns.getId = id;
         return entryForReturns;
