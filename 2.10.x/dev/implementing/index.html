@@ -897,7 +897,7 @@
 <ul>
 <li><code>get*</code> methods deconstruct triple and quad statements.</li>
 <li><code>nodeToProto</code> and <code>graphToProto</code> should translate into Jelly's representation all possible variations of RDF terms in the SPO and G positions, respectively.</li>
-<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.10.1/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaEncoderConverter.scala">JenaEncoderConverter</a></li>
+<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.10.2/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaEncoderConverter.scala">JenaEncoderConverter</a></li>
 <li>You can skip implementing this trait if you don't need serialization.</li>
 <li>You can also skip implementing some methods (make them throw an exception or return null) if, for example, you don't want to work with quads.</li>
 </ul>
@@ -906,7 +906,7 @@
 <p><strong>ProtoDecoderConverter (deserialization)</strong></p>
 <ul>
 <li>The <code>make*</code> methods should construct new RDF terms and statements. You can make them <code>inline</code>.</li>
-<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.10.1/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaDecoderConverter.scala">JenaDecoderConverter</a></li>
+<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.10.2/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaDecoderConverter.scala">JenaDecoderConverter</a></li>
 <li>You can skip implementing this trait if you don't need deserialization.</li>
 <li>You can also skip implementing some methods (make them throw an exception or return null) if, for example, you don't want to work with quads or RDF-star.</li>
 </ul>
@@ -915,7 +915,7 @@
 <p><strong>ConverterFactory</strong> – wrapper that allows other modules to use your converter.</p>
 <ul>
 <li>The methods should just return new instances (or singletons, if appropriate for your use case) of your <code>ProtoEncoderConverter</code> and <code>ProtoDecoderConverter</code> implementations.</li>
-<li>Example for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.10.1/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory.scala">JenaConverterFactory</a></li>
+<li>Example for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v2.10.2/jena/src/main/scala/eu/ostrzyciel/jelly/convert/jena/JenaConverterFactory.scala">JenaConverterFactory</a></li>
 </ul>
 </li>
 </ul>
