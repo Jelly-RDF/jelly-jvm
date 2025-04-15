@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core.internal
 
+import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoTranscodingError
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -11,7 +12,7 @@ class TranscoderLookupSpec extends AnyWordSpec, Matchers:
   "TranscoderLookup" should {
     "throw an exception when trying to set input lookup size greater than the output" in {
       val tl = TranscoderLookup(false, 100)
-      val ex = intercept[IllegalArgumentException] {
+      val ex = intercept[RdfProtoTranscodingError] {
         tl.newInputStream(120)
       }
       ex.getMessage should include ("Input lookup size cannot be greater than the output lookup size")

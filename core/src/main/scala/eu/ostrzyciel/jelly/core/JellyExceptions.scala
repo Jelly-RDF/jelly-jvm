@@ -30,4 +30,12 @@ private object JellyExceptions extends JellyExceptions:
   private[core] def rdfProtoSerializationError(msg: String): RdfProtoSerializationError =
     new RdfProtoSerializationError(msg)
 
+  /**
+   * Helper method to allow Java code to throw a [[RdfProtoTranscodingError]].
+   * @param msg error message
+   * @return an instance of [[RdfProtoTranscodingError]]
+   */
+  private[core] def rdfProtoTranscodingError(msg: String): RdfProtoTranscodingError =
+    new RdfProtoTranscodingError(msg)
+
 export JellyExceptions.*

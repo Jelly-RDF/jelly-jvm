@@ -62,7 +62,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
     /**
      * Update the name table with a new entry.
      * @param nameEntry name row
-     * @throws ArrayIndexOutOfBoundsException if the identifier is out of bounds
+     * @throws RdfProtoDeserializationError if the identifier is out of bounds
      */
     @Override
     public void updateNames(RdfNameEntry nameEntry) {
@@ -72,33 +72,44 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         //   else lastNameIdSet = id;
         // Same code is used in the methods below.
         lastNameIdSet = ((lastNameIdSet + 1) & ((id - 1) >> 31)) + id;
-        NameLookupEntry entry = nameLookup[lastNameIdSet];
-        entry.name = nameEntry.value();
-        // Enough to invalidate the last IRI – we don't have to touch the serial number.
-        entry.lastPrefixId = 0;
-        // Set to null is required to avoid a false positive in the decode method for cases without a prefix.
-        entry.lastIri = null;
+        try {
+            NameLookupEntry entry = nameLookup[lastNameIdSet];
+            entry.name = nameEntry.value();
+            // Enough to invalidate the last IRI – we don't have to touch the serial number.
+            entry.lastPrefixId = 0;
+            // Set to null is required to avoid a false positive in the decode method for cases without a prefix.
+            entry.lastIri = null;
+        } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
+            throw JellyExceptions.rdfProtoDeserializationError(
+                "Name entry with ID " + id + " is out of bounds of the name lookup table."
+            );
+        }
     }
 
     /**
      * Update the prefix table with a new entry.
      * @param prefixEntry prefix row
-     * @throws ArrayIndexOutOfBoundsException if the identifier is out of bounds
+     * @throws RdfProtoDeserializationError if the identifier is out of bounds
      */
     @Override
     public void updatePrefixes(RdfPrefixEntry prefixEntry) {
         int id = prefixEntry.id();
         lastPrefixIdSet = ((lastPrefixIdSet + 1) & ((id - 1) >> 31)) + id;
-        PrefixLookupEntry entry = prefixLookup[lastPrefixIdSet];
-        entry.prefix = prefixEntry.value();
-        entry.serial++;
+        try {
+            PrefixLookupEntry entry = prefixLookup[lastPrefixIdSet];
+            entry.prefix = prefixEntry.value();
+            entry.serial++;
+        } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
+            throw JellyExceptions.rdfProtoDeserializationError(
+                "Prefix entry with ID " + id + " is out of bounds of the prefix lookup table."
+            );
+        }
     }
 
     /**
      * Reconstruct an IRI from its prefix and name ids.
      * @param iri IRI row from the Jelly proto
      * @return full IRI combining the prefix and the name
-     * @throws ArrayIndexOutOfBoundsException if IRI had indices out of lookup table bounds
      * @throws RdfProtoDeserializationError if the IRI reference is invalid
      * @throws NullPointerException if the IRI reference is invalid
      */
@@ -107,8 +118,15 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
     public TIri decode(RdfIri iri) {
         int nameId = iri.nameId();
         lastNameIdReference = ((lastNameIdReference + 1) & ((nameId - 1) >> 31)) + nameId;
-        NameLookupEntry nameEntry = nameLookup[lastNameIdReference];
-
+        NameLookupEntry nameEntry;
+        try {
+            nameEntry = nameLookup[lastNameIdReference];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw JellyExceptions.rdfProtoDeserializationError(
+                    "Encountered an invalid name table reference (out of bounds). " +
+                            "Name ID: " + nameId + ", Prefix ID: " + iri.prefixId()
+            );
+        }
         int prefixId = iri.prefixId();
         // Branchless way to update the prefix ID
         // Equivalent to:
@@ -117,7 +135,15 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         lastPrefixIdReference = prefixId = (((prefixId - 1) >> 31) & lastPrefixIdReference) + prefixId;
         if (prefixId != 0) {
             // Name and prefix
-            PrefixLookupEntry prefixEntry = prefixLookup[prefixId];
+            PrefixLookupEntry prefixEntry;
+            try {
+                prefixEntry = prefixLookup[prefixId];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw JellyExceptions.rdfProtoDeserializationError(
+                        "Encountered an invalid prefix table reference (out of bounds). " +
+                                "Prefix ID: " + prefixId + ", Name ID: " + nameId
+                );
+            }
             if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
                 // Update the last prefix
                 nameEntry.lastPrefixId = prefixId;

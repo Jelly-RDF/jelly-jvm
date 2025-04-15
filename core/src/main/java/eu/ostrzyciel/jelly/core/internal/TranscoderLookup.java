@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core.internal;
 
+import eu.ostrzyciel.jelly.core.JellyExceptions;
 import java.util.Arrays;
 
 /**
@@ -101,7 +102,9 @@ final class TranscoderLookup {
      */
     void newInputStream(int size) {
         if (size > outputSize) {
-            throw new IllegalArgumentException("Input lookup size cannot be greater than the output lookup size");
+            throw JellyExceptions.rdfProtoTranscodingError(
+                "Input lookup size cannot be greater than the output lookup size"
+            );
         }
         if (table != null) {
             // Only set this for streams 2 and above (counting from 1)
