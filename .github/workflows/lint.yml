@@ -1,0 +1,28 @@
+name: Lint
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    strategy:
+      fail-fast: true
+    runs-on: ubuntu-latest
+
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+    - name: Install dependencies
+      run: npm install
+    - name: Run prettier
+      run: npm run format:check

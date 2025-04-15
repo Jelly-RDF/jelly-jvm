@@ -1,0 +1,10 @@
+overrides:
+  - files:
+      - '*.java'
+    options:
+      printWidth: 120
+      tabWidth: 4
+      useTabs: false
+      endOfLine: lf
+plugins:
+  - "prettier-plugin-java"
