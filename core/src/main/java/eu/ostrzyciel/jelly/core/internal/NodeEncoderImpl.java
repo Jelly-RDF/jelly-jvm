@@ -3,7 +3,6 @@ package eu.ostrzyciel.jelly.core.internal;
 import eu.ostrzyciel.jelly.core.JellyExceptions;
 import eu.ostrzyciel.jelly.core.NodeEncoder;
 import eu.ostrzyciel.jelly.core.proto.v1.*;
-
 import java.util.LinkedHashMap;
 
 /**
@@ -14,10 +13,12 @@ import java.util.LinkedHashMap;
  * @param <TNode> The type of RDF nodes used by the RDF library.
  */
 final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
+
     /**
      * A cached node that depends on other lookups (RdfIri and RdfLiteral in the datatype variant).
      */
     static final class DependentNode {
+
         // The actual cached node
         public UniversalTerm encoded;
         // 1: datatypes and IRI names
@@ -36,6 +37,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @param <V> Value type
      */
     private static final class NodeCache<K, V> extends LinkedHashMap<K, V> {
+
         private final int maxSize;
 
         public NodeCache(int maxSize) {
@@ -133,9 +135,10 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         // Slow path, with splitting out the prefix
         var cachedNode = iriNodeCache.computeIfAbsent(iri, k -> new DependentNode());
         // Check if the value is still valid
-        if (cachedNode.encoded != null &&
-                cachedNode.lookupSerial1 == nameLookup.serials[cachedNode.lookupPointer1] &&
-                cachedNode.lookupSerial2 == prefixLookup.serials[cachedNode.lookupPointer2]
+        if (
+            cachedNode.encoded != null &&
+            cachedNode.lookupSerial1 == nameLookup.serials[cachedNode.lookupPointer1] &&
+            cachedNode.lookupSerial2 == prefixLookup.serials[cachedNode.lookupPointer2]
         ) {
             nameLookup.onAccess(cachedNode.lookupPointer1);
             prefixLookup.onAccess(cachedNode.lookupPointer2);
@@ -184,18 +187,12 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     @Override
     public UniversalTerm makeSimpleLiteral(String lex) {
-        return nodeCache.computeIfAbsent(
-            lex,
-            k -> new RdfLiteral(lex, RdfLiteral$LiteralKind$Empty$.MODULE$)
-        );
+        return nodeCache.computeIfAbsent(lex, k -> new RdfLiteral(lex, RdfLiteral$LiteralKind$Empty$.MODULE$));
     }
 
     @Override
     public UniversalTerm makeLangLiteral(TNode lit, String lex, String lang) {
-        return nodeCache.computeIfAbsent(
-            lit,
-            k -> new RdfLiteral(lex, new RdfLiteral$LiteralKind$Langtag(lang))
-        );
+        return nodeCache.computeIfAbsent(lit, k -> new RdfLiteral(lex, new RdfLiteral$LiteralKind$Langtag(lang)));
     }
 
     /**
@@ -208,14 +205,16 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     @Override
     public UniversalTerm makeDtLiteral(TNode key, String lex, String datatypeName) {
         if (datatypeLookup.size == 0) {
-            throw JellyExceptions.rdfProtoSerializationError("Datatype literals cannot be " +
-                    "encoded when the datatype table is disabled. Set the datatype table size " +
-                    "to a positive value.");
+            throw JellyExceptions.rdfProtoSerializationError(
+                "Datatype literals cannot be " +
+                "encoded when the datatype table is disabled. Set the datatype table size " +
+                "to a positive value."
+            );
         }
         var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
-        if (cachedNode.encoded != null &&
-                cachedNode.lookupSerial1 == datatypeLookup.serials[cachedNode.lookupPointer1]
+        if (
+            cachedNode.encoded != null && cachedNode.lookupSerial1 == datatypeLookup.serials[cachedNode.lookupPointer1]
         ) {
             datatypeLookup.onAccess(cachedNode.lookupPointer1);
             return cachedNode.encoded;
@@ -229,9 +228,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         int dtId = dtEntry.getId;
         cachedNode.lookupPointer1 = dtId;
         cachedNode.lookupSerial1 = datatypeLookup.serials[dtId];
-        cachedNode.encoded = new RdfLiteral(
-                lex, new RdfLiteral$LiteralKind$Datatype(dtId)
-        );
+        cachedNode.encoded = new RdfLiteral(lex, new RdfLiteral$LiteralKind$Datatype(dtId));
 
         return cachedNode.encoded;
     }

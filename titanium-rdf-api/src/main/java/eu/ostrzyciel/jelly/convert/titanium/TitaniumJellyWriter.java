@@ -3,7 +3,6 @@ package eu.ostrzyciel.jelly.convert.titanium;
 import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.ostrzyciel.jelly.core.JellyOptions$;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
-
 import java.io.OutputStream;
 
 /**
@@ -22,12 +21,10 @@ public interface TitaniumJellyWriter extends RdfQuadConsumer, AutoCloseable {
      * @param frameSize Maximum number of rows to buffer before writing to the output stream.
      * @return TitaniumJellyWriter
      */
-    static TitaniumJellyWriter factory(
-            OutputStream outputStream, RdfStreamOptions options, int frameSize
-    ) {
+    static TitaniumJellyWriter factory(OutputStream outputStream, RdfStreamOptions options, int frameSize) {
         return new TitaniumJellyWriterImpl(outputStream, options, frameSize);
     }
-    
+
     /**
      * Factory method to create a new TitaniumJellyWriter instance.
      * This method uses the default options (small preset) and a frame size of 256.
@@ -37,19 +34,19 @@ public interface TitaniumJellyWriter extends RdfQuadConsumer, AutoCloseable {
     static TitaniumJellyWriter factory(OutputStream outputStream) {
         return factory(outputStream, JellyOptions$.MODULE$.smallStrict(), 256);
     }
-    
+
     /**
      * Returns the output stream that this writer writes to.
      * @return OutputStream
      */
     OutputStream getOutputStream();
-    
+
     /**
      * Returns the options that this writer uses.
      * @return RdfStreamOptions
      */
     RdfStreamOptions getOptions();
-    
+
     /**
      * Returns the frame size that this writer uses.
      * @return int

@@ -11,7 +11,6 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
  * @since 2.9.0
  */
 public interface TitaniumJellyEncoder extends RdfQuadConsumer {
-
     /**
      * Factory method to create a new TitaniumJellyEncoder instance.
      * @param options The options to use for encoding.
@@ -47,7 +46,7 @@ public interface TitaniumJellyEncoder extends RdfQuadConsumer {
      * @return java.util.Iterable<RdfStreamRow>
      */
     Iterable<RdfStreamRow> getRowsJava();
-    
+
     /**
      * Returns the options that this encoder uses.
      * @return RdfStreamOptions

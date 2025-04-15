@@ -3,7 +3,6 @@ package eu.ostrzyciel.jelly.convert.titanium;
 import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.ostrzyciel.jelly.core.JellyOptions$;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
-
 import java.io.InputStream;
 
 /**
@@ -13,7 +12,6 @@ import java.io.InputStream;
  * @since 2.9.0
  */
 public interface TitaniumJellyReader {
-
     /**
      * Factory method to create a new TitaniumJellyParser instance.
      * @param supportedOptions Maximum supported options of the Jelly parser. You can use this to
