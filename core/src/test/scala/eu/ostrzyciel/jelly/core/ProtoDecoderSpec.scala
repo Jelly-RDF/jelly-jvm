@@ -272,22 +272,26 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
 
     // The tests for this logic are in internal.NameDecoderSpec
     // Here we are just testing if the exceptions are rethrown correctly.
-    "throw exception on out-of-bounds references to lookups" in {
+    "throw exception on an invalid IRI term" in {
       val decoder = MockConverterFactory.triplesDecoder(None)
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
+        RdfPrefixEntry(0, null),
+        RdfNameEntry(0, null),
         RdfTriple(
           RdfTerm.Bnode("1"),
           RdfTerm.Bnode("2"),
-          RdfIri(10000, 0),
+          RdfIri(1, 1),
         ),
       ))
       decoder.ingestRow(data.head)
+      decoder.ingestRow(data(1))
+      decoder.ingestRow(data(2))
       val error = intercept[RdfProtoDeserializationError] {
-        decoder.ingestRow(data(1))
+        decoder.ingestRow(data(3))
       }
       error.getMessage should include ("Error while decoding term")
-      error.getCause shouldBe a [ArrayIndexOutOfBoundsException]
+      error.getCause shouldBe a [NullPointerException]
     }
   }
 
@@ -461,20 +465,28 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
 
     // The tests for this logic are in internal.NameDecoderSpec
     // Here we are just testing if the exceptions are rethrown correctly.
-    "throw exception on out-of-bounds references to lookups (graph term)" in {
-      val decoder = MockConverterFactory.graphsAsQuadsDecoder(None)
+    "throw exception on an invalid IRI term" in {
+      val decoder = MockConverterFactory.graphsAsQuadsDecoder()
       val data = wrapEncodedFull(Seq(
         JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
-        RdfGraphStart(
-          RdfIri(10000, 0),
+        RdfPrefixEntry(0, null),
+        RdfNameEntry(0, null),
+        RdfGraphStart(RdfDefaultGraph.defaultInstance),
+        RdfTriple(
+          RdfTerm.Bnode("1"),
+          RdfTerm.Bnode("2"),
+          RdfIri(1, 1),
         ),
       ))
       decoder.ingestRow(data.head)
+      decoder.ingestRow(data(1))
+      decoder.ingestRow(data(2))
+      decoder.ingestRow(data(3))
       val error = intercept[RdfProtoDeserializationError] {
-        decoder.ingestRow(data(1))
+        decoder.ingestRow(data(4))
       }
-      error.getMessage should include ("Error while decoding graph term")
-      error.getCause shouldBe a [ArrayIndexOutOfBoundsException]
+      error.getMessage should include("Error while decoding term")
+      error.getCause shouldBe a[NullPointerException]
     }
   }
 
