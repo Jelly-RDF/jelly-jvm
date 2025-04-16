@@ -35,7 +35,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "splice two identical streams" when {
       for (caseName, streamType, testCase) <- testCases do
         s"input is $caseName" in {
-          val options: RdfStreamOptions = JellyOptions.smallAllFeatures.withPhysicalType(streamType)
+          val options: RdfStreamOptions = JellyOptions.SMALL_ALL_FEATURES.withPhysicalType(streamType)
           val input: RdfStreamFrame = testCase.encodedFull(options, 100).head
           val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(options)
           // First frame should be returned as is
@@ -80,7 +80,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "splice multiple identical streams" when {
       for (caseName, streamType, testCase) <- testCases do
         s"input is $caseName" in {
-          val options: RdfStreamOptions = JellyOptions.smallAllFeatures.withPhysicalType(streamType)
+          val options: RdfStreamOptions = JellyOptions.SMALL_ALL_FEATURES.withPhysicalType(streamType)
           val input: RdfStreamFrame = testCase.encodedFull(options, 100).head
           val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(options)
           val out1 = transcoder.ingestFrame(input)
@@ -105,7 +105,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
       for seed <- 1 to 20 do
         f"random seed is $seed" in {
           val decoder = MockConverterFactory.quadsDecoder(None)
-          val options = JellyOptions.smallAllFeatures.withPhysicalType(PhysicalStreamType.QUADS)
+          val options = JellyOptions.SMALL_ALL_FEATURES.withPhysicalType(PhysicalStreamType.QUADS)
           val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(options)
           val possibleCases = Seq(Quads1, Quads2RepeatDefault)
           val random = Random(seed)
@@ -131,7 +131,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     }
 
     "handle named graphs" in {
-      val options = JellyOptions.smallStrict
+      val options = JellyOptions.SMALL_STRICT
         .withMaxPrefixTableSize(0)
         .withPhysicalType(PhysicalStreamType.GRAPHS)
         .withVersion(Constants.protoVersion)
@@ -155,7 +155,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     }
 
     "remap prefix, name, and datatype IDs" in {
-      val options = JellyOptions.smallStrict.withVersion(Constants.protoVersion)
+      val options = JellyOptions.SMALL_STRICT.withVersion(Constants.protoVersion)
       val input = Seq(
         RdfStreamRow(options),
         RdfStreamRow(RdfNameEntry(4, "some name")),
@@ -204,7 +204,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     }
 
     "maintain protocol version 1 if input uses it" in {
-      val options = JellyOptions.smallStrict.withVersion(Constants.protoVersion_1_0_x)
+      val options = JellyOptions.SMALL_STRICT.withVersion(Constants.protoVersion_1_0_x)
       val input = RdfStreamRow(options)
       val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(options.withVersion(Constants.protoVersion))
       val output = transcoder.ingestRow(input)
@@ -212,7 +212,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     }
 
     "throw an exception on a null row" in {
-      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.smallStrict)
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.SMALL_STRICT)
       val ex = intercept[RdfProtoTranscodingError] {
         transcoder.ingestRow(RdfStreamRow())
       }
@@ -221,12 +221,12 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
     "throw an exception on mismatched physical types if checking is enabled" in {
       val transcoder = ProtoTranscoder.fastMergingTranscoder(
-        JellyOptions.defaultSupportedOptions,
-        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
+        JellyOptions.SMALL_STRICT.withPhysicalType(PhysicalStreamType.TRIPLES)
       )
       val ex = intercept[RdfProtoTranscodingError] {
         transcoder.ingestRow(RdfStreamRow(
-          JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.QUADS)
+          JellyOptions.SMALL_STRICT.withPhysicalType(PhysicalStreamType.QUADS)
         ))
       }
       ex.getMessage should include ("Input stream has a different physical type than the output")
@@ -236,22 +236,22 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
     "not throw an exception on mismatched physical types if checking is disabled" in {
       val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(
-        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+        JellyOptions.SMALL_STRICT.withPhysicalType(PhysicalStreamType.TRIPLES)
       )
       transcoder.ingestRow(RdfStreamRow(
-        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.QUADS)
+        JellyOptions.SMALL_STRICT.withPhysicalType(PhysicalStreamType.QUADS)
       ))
     }
 
     "throw an exception on unsupported options if checking is enabled" in {
       val transcoder = ProtoTranscoder.fastMergingTranscoder(
         // Mark the prefix table as disabled
-        JellyOptions.defaultSupportedOptions.withMaxPrefixTableSize(0),
-        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS.withMaxPrefixTableSize(0),
+        JellyOptions.SMALL_STRICT.withPhysicalType(PhysicalStreamType.TRIPLES)
       )
       val ex = intercept[RdfProtoDeserializationError] {
         transcoder.ingestRow(RdfStreamRow(
-          JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+          JellyOptions.SMALL_STRICT.withPhysicalType(PhysicalStreamType.TRIPLES)
         ))
       }
       ex.getMessage should include ("larger than the maximum supported size")
@@ -259,11 +259,11 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
     "throw an exception if the input does not use prefixes but the output does" in {
       val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(
-        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+        JellyOptions.SMALL_STRICT.withPhysicalType(PhysicalStreamType.TRIPLES)
       )
       val ex = intercept[RdfProtoTranscodingError] {
         transcoder.ingestRow(RdfStreamRow(
-          JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES)
+          JellyOptions.SMALL_STRICT.withPhysicalType(PhysicalStreamType.TRIPLES)
             .withMaxPrefixTableSize(0)
         ))
       }
@@ -273,20 +273,20 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "accept an input stream with valid options if checking is enabled" in {
       val transcoder = ProtoTranscoder.fastMergingTranscoder(
         // Mark the prefix table as disabled
-        JellyOptions.defaultSupportedOptions.withMaxPrefixTableSize(0),
-        JellyOptions.smallStrict.withPhysicalType(PhysicalStreamType.TRIPLES).withMaxPrefixTableSize(0),
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS.withMaxPrefixTableSize(0),
+        JellyOptions.SMALL_STRICT.withPhysicalType(PhysicalStreamType.TRIPLES).withMaxPrefixTableSize(0),
       )
-      val inputOptions = JellyOptions.smallStrict
+      val inputOptions = JellyOptions.SMALL_STRICT
         .withPhysicalType(PhysicalStreamType.TRIPLES)
         .withMaxPrefixTableSize(0)
       transcoder.ingestRow(RdfStreamRow(inputOptions))
     }
 
     "preserve lack of metadata in a frame (1.1.1)" in {
-      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.smallStrict)
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.SMALL_STRICT)
       val input = RdfStreamFrame(
         rows = Seq(RdfStreamRow(
-          JellyOptions.smallStrict.withVersion(Constants.protoVersion_1_1_x)
+          JellyOptions.SMALL_STRICT.withVersion(Constants.protoVersion_1_1_x)
         )),
       )
       val output = transcoder.ingestFrame(input)
@@ -294,10 +294,10 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     }
 
     "preserve metadata in a frame (1.1.1)" in {
-      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.smallStrict)
+      val transcoder = ProtoTranscoder.fastMergingTranscoderUnsafe(JellyOptions.SMALL_STRICT)
       val input = RdfStreamFrame(
         rows = Seq(RdfStreamRow(
-          JellyOptions.smallStrict.withVersion(Constants.protoVersion_1_1_x)
+          JellyOptions.SMALL_STRICT.withVersion(Constants.protoVersion_1_1_x)
         )),
         metadata = Map(
           "key1" -> ByteString.copyFromUtf8("value"),

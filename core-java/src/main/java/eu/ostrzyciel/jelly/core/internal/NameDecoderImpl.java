@@ -2,7 +2,6 @@ package eu.ostrzyciel.jelly.core.internal;
 
 import eu.ostrzyciel.jelly.core.JellyException;
 import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
-
 import java.util.function.Function;
 
 /**
@@ -10,7 +9,9 @@ import java.util.function.Function;
  * @param <TIri> The type of the IRI in the target RDF library.
  */
 final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
+
     private static final class NameLookupEntry {
+
         // Primary: the actual name
         public String name;
         // Secondary values (may be mutated without invalidating the primary value)
@@ -23,6 +24,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
     }
 
     private static final class PrefixLookupEntry {
+
         public String prefix;
         public int serial = -1;
     }
@@ -94,7 +96,8 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     /**
      * Reconstruct an IRI from its prefix and name ids.
-     * @param iri IRI row from the Jelly proto
+     * @param nameId name ID
+     * @param prefixId prefix ID
      * @return full IRI combining the prefix and the name
      * @throws ArrayIndexOutOfBoundsException if IRI had indices out of lookup table bounds
      * @throws JellyException.RdfProtoDeserializationError if the IRI reference is invalid
@@ -102,12 +105,10 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      */
     @SuppressWarnings("unchecked")
     @Override
-    public TIri decode(Rdf.RdfIri iri) {
-        int nameId = iri.getNameId();
+    public TIri decode(int nameId, int prefixId) {
         lastNameIdReference = ((lastNameIdReference + 1) & ((nameId - 1) >> 31)) + nameId;
         NameLookupEntry nameEntry = nameLookup[lastNameIdReference];
 
-        int prefixId = iri.getPrefixId();
         // Branchless way to update the prefix ID
         // Equivalent to:
         //   if (prefixId == 0) prefixId = lastPrefixIdReference;
@@ -126,15 +127,13 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             }
             if (nameEntry.lastIri == null) {
                 throw JellyException.rdfProtoDeserializationError(
-                        "Encountered an invalid IRI reference. " +
-                                "Prefix ID: " + iri.getPrefixId() + ", Name ID: " + nameId
+                    "Encountered an invalid IRI reference. " + "Prefix ID: " + prefixId + ", Name ID: " + nameId
                 );
             }
         } else if (nameEntry.lastIri == null) {
             if (nameEntry.name == null) {
                 throw JellyException.rdfProtoDeserializationError(
-                        "Encountered an invalid IRI reference. " +
-                        "No prefix, Name ID: " + nameId
+                    "Encountered an invalid IRI reference. " + "No prefix, Name ID: " + nameId
                 );
             }
             // Name only, no need to check the prefix lookup
