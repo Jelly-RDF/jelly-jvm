@@ -1,6 +1,5 @@
 package eu.ostrzyciel.jelly.core;
 
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
 
 /**
  * Interface exposed to RDF library interop modules for encoding RDF terms.
@@ -12,21 +11,21 @@ public interface NodeEncoder<TNode> {
      * @param iri The IRI to encode.
      * @return The encoded IRI node.
      */
-    RdfTerm makeIri(String iri);
+    RdfTerm.Iri makeIri(String iri);
 
     /**
      * Encode a blank node.
      * @param label The label of the blank node.
      * @return The encoded blank node.
      */
-    RdfTerm makeBlankNode(String label);
+    RdfTerm.BNode makeBlankNode(String label);
 
     /**
      * Encode a simple literal (of type xsd:string).
      * @param lex The lexical form of the literal.
      * @return The encoded literal.
      */
-    RdfTerm makeSimpleLiteral(String lex);
+    RdfTerm.SimpleLiteral makeSimpleLiteral(String lex);
 
     /**
      * Encode a language-tagged literal.
@@ -35,7 +34,7 @@ public interface NodeEncoder<TNode> {
      * @param lang The language tag.
      * @return The encoded literal.
      */
-    RdfTerm makeLangLiteral(TNode lit, String lex, String lang);
+    RdfTerm.LanguageLiteral makeLangLiteral(TNode lit, String lex, String lang);
 
     /**
      * Encode a datatype literal (not xsd:string and not language-tagged).
@@ -44,7 +43,7 @@ public interface NodeEncoder<TNode> {
      * @param dt The datatype IRI.
      * @return The encoded literal.
      */
-    RdfTerm makeDtLiteral(TNode lit, String lex, String dt);
+    RdfTerm.DtLiteral makeDtLiteral(TNode lit, String lex, String dt);
 
     /**
      * Encode a quoted triple node (RDF-star).
@@ -55,7 +54,7 @@ public interface NodeEncoder<TNode> {
      * @param o The object of the triple.
      * @return The encoded triple node.
      */
-    RdfTerm.SpoTerm makeQuotedTriple(RdfTerm.SpoTerm s, RdfTerm.SpoTerm p, RdfTerm.SpoTerm o);
+    RdfTerm.Triple makeQuotedTriple(RdfTerm.SpoTerm s, RdfTerm.SpoTerm p, RdfTerm.SpoTerm o);
 
     /**
      * Encode a default graph node.

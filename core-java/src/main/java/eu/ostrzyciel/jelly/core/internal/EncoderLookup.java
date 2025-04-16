@@ -9,10 +9,12 @@ import java.util.Objects;
  * The table is implemented as a doubly linked list in an array.
  */
 final class EncoderLookup {
+
     /**
      * Represents an entry in the lookup table.
      */
     static final class LookupEntry {
+
         /** The ID of the entry used for referencing it from RdfIri and RdfLiteral objects. */
         public int getId;
         /** The ID of the entry used for adding the lookup entry to the RDF stream. */
@@ -111,7 +113,7 @@ final class EncoderLookup {
      * @param key The key of the entry.
      * @param id The ID of the entry.
      */
-    private final void addEntrySequential(String key, int id) {
+    private void addEntrySequential(String key, int id) {
         int base = id * 2;
         // Set the left to the tail
         table[base] = tail;
@@ -129,7 +131,7 @@ final class EncoderLookup {
      * @param key The key of the entry.
      * @param id The ID of the entry.
      */
-    private final void addEntryEvicting(String key, int id) {
+    private void addEntryEvicting(String key, int id) {
         // Remove the entry from the map
         LookupEntry oldEntry = map.remove(names[id]);
         // Insert the new entry

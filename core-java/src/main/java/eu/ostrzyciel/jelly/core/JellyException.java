@@ -19,18 +19,21 @@ public sealed class JellyException extends RuntimeException {
     }
 
     public static final class RdfProtoDeserializationError extends JellyException {
+
         public RdfProtoDeserializationError(String msg) {
             super(msg);
         }
     }
 
     public static final class RdfProtoSerializationError extends JellyException {
+
         public RdfProtoSerializationError(String msg) {
             super(msg);
         }
     }
 
     public static final class RdfProtoTranscodingError extends JellyException {
+
         public RdfProtoTranscodingError(String msg) {
             super(msg);
         }

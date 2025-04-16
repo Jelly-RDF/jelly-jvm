@@ -11,7 +11,7 @@ import org.scalatest.wordspec.AnyWordSpec
 class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
   import ProtoTestCases.*
 
-  val opt = JellyOptions.smallGeneralized
+  val opt = JellyOptions.SMALL_GENERALIZED
   val testCasesRaw: Seq[(String, TestCase[?], Map[String, ByteString])] = Seq(
     ("Triples1", Triples1, Map.empty),
     ("Triples2NsDecl", Triples2NsDecl, Map("key" -> ByteString.copyFromUtf8("test"))),
