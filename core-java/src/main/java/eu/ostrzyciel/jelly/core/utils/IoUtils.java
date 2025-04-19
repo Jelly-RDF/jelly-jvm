@@ -7,9 +7,9 @@ public class IoUtils {
 
     private IoUtils() {}
 
-    record AutodetectDelimitingResponse(boolean isDelimited, InputStream newInput) {}
+    public record AutodetectDelimitingResponse(boolean isDelimited, InputStream newInput) {}
 
-    AutodetectDelimitingResponse autodetectDelimiting(InputStream inputStream) throws IOException {
+    public static AutodetectDelimitingResponse autodetectDelimiting(InputStream inputStream) throws IOException {
         var scout = inputStream.readNBytes(3);
         var scoutIn = new ByteArrayInputStream(scout);
         var newInput = new SequenceInputStream(scoutIn, inputStream);
@@ -32,7 +32,7 @@ public class IoUtils {
         return new AutodetectDelimitingResponse(isDelimited, newInput);
     }
 
-    void writeFrameAsDelimited(byte[] nonDelimitedFrame, OutputStream output) throws IOException {
+    public static void writeFrameAsDelimited(byte[] nonDelimitedFrame, OutputStream output) throws IOException {
         // Don't worry, the buffer won't really have 0-size. It will be of minimal size able to fit the varint.
         var codedOutput = CodedOutputStream.newInstance(output, 0);
         codedOutput.writeUInt32NoTag(nonDelimitedFrame.length);

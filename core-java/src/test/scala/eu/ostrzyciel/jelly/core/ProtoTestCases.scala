@@ -1,31 +1,37 @@
 package eu.ostrzyciel.jelly.core
 
-object ProtoTestCases
+import com.google.protobuf.ByteString
+import eu.ostrzyciel.jelly.core.helpers.Mrl.*
+import eu.ostrzyciel.jelly.core.proto.v1.Rdf.*
+import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.*
 
-  def wrapEncoded(rows: Seq[RdfStreamRowValue]): Seq[RdfStreamRowValue] = rows map {
-    case v: RdfStreamOptions => v.version match
-      // If the version is not set, set it to the current version
-      case 0 => v.withVersion(Constants.protoVersion)
-      // Otherwise assume we are checking version compatibility
-      case _ => v
-    case v => v
-  }
+object ProtoTestCases:
+  def wrapEncoded(rows: Seq[RdfStreamRowValue]): Seq[RdfStreamRow] = rows
+    .map {
+      case v: RdfStreamOptions => v.getVersion match
+        // If the version is not set, set it to the current version
+        case 0 => v.toBuilder
+          .setVersion(JellyConstants.PROTO_VERSION)
+          .build()
+        // Otherwise assume we are checking version compatibility
+        case _ => v
+      case v => v
+    }
+    .map(rdfStreamRowFromValue)
 
-  def wrapEncodedFull(rows: Seq[RdfStreamRowValue]): Seq[RdfStreamRow] =
-    wrapEncoded(rows).map(row => RdfStreamRow(row)):
-    trait TestCase[+TStatement]
+  trait TestCase[+TStatement]:
     def mrl: Seq[TStatement]
-    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRowValue]
-
-  def encodedFull(
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow]
+    def encodedFull(
       opt: RdfStreamOptions, groupByN: Int, metadata: Map[String, ByteString] = Map.empty
-    ) =
+    ): Seq[RdfStreamFrame] =
       encoded(opt)
-        .map(row => RdfStreamRow(row))
         .grouped(groupByN)
-        .map(rows => RdfStreamFrame(rows, metadata = metadata))
-        .toSeq:
-    val object Triples1 extends TestCase[Triple] = Seq(
+        .map(rows => rdfStreamFrame(rows, metadata = metadata))
+        .toSeq
+
+  object Triples1 extends TestCase[Triple]:
+    val mrl = Seq(
       Triple(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -48,45 +54,45 @@ object ProtoTestCases
       ),
     )
 
-    mrl
-
-  def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(0, "https://test.org/test/"),
-      RdfNameEntry(0, "subject"),
-      RdfNameEntry(0, "predicate"),
-      RdfPrefixEntry(0, "https://test.org/ns2/"),
-      RdfNameEntry(0, "object"),
-      RdfTriple(
-        RdfIri(1, 0),
-        RdfIri(0, 0),
-        RdfIri(2, 0),
+      rdfPrefixEntry(0, "https://test.org/test/"),
+      rdfNameEntry(0, "subject"),
+      rdfNameEntry(0, "predicate"),
+      rdfPrefixEntry(0, "https://test.org/ns2/"),
+      rdfNameEntry(0, "object"),
+      rdfTriple(
+        rdfIri(1, 0),
+        rdfIri(0, 0),
+        rdfIri(2, 0),
       ),
-      RdfDatatypeEntry(0, "https://test.org/xsd/integer"),
-      RdfTriple(
+      rdfDatatypeEntry(0, "https://test.org/xsd/integer"),
+      rdfTriple(
         null,
         null,
-        RdfLiteral("123", RdfLiteral.LiteralKind.Datatype(1)),
+        rdfLiteral("123", 1),
       ),
-      RdfPrefixEntry(0, ""),
-      RdfNameEntry(0, "b"),
-      RdfNameEntry(0, "c"),
-      RdfTriple(
+      rdfPrefixEntry(0, ""),
+      rdfNameEntry(0, "b"),
+      rdfNameEntry(0, "c"),
+      rdfTriple(
         null,
         null,
-        RdfTriple(
-          RdfIri(1, 1),
-          RdfIri(3, 4),
-          RdfIri(0, 0),
+        rdfTriple(
+          rdfIri(1, 1),
+          rdfIri(3, 4),
+          rdfIri(0, 0),
         )
       ),
-      RdfTriple(
-        RdfIri(1, 2),
-        RdfIri(0, 1),
+      rdfTriple(
+        rdfIri(1, 2),
+        rdfIri(0, 1),
         null,
       ),
-    )):
-    val object Triples2NsDecl extends TestCase[Triple | NamespaceDeclaration] = Seq(
+    ))
+
+  object Triples2NsDecl extends TestCase[Triple | NamespaceDeclaration]:
+    val mrl = Seq(
       NamespaceDeclaration("test", "https://test.org/test/"),
       Triple(
         Iri("https://test.org/test/subject"),
@@ -101,30 +107,30 @@ object ProtoTestCases
       ),
     )
 
-    mrl
-
-  def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(0, "https://test.org/test/"),
-      RdfNameEntry(0, ""),
-      RdfNamespaceDeclaration("test", RdfIri(1, 0)),
-      RdfNameEntry(0, "subject"),
-      RdfNameEntry(0, "predicate"),
-      RdfPrefixEntry(0, "https://test.org/ns2/"),
-      RdfNameEntry(0, "object"),
-      RdfTriple(
-        RdfIri(0, 0),
-        RdfIri(0, 0),
-        RdfIri(2, 0),
+      rdfPrefixEntry(0, "https://test.org/test/"),
+      rdfNameEntry(0, ""),
+      rdfNamespaceDeclaration("test", rdfIri(1, 0)),
+      rdfNameEntry(0, "subject"),
+      rdfNameEntry(0, "predicate"),
+      rdfPrefixEntry(0, "https://test.org/ns2/"),
+      rdfNameEntry(0, "object"),
+      rdfTriple(
+        rdfIri(0, 0),
+        rdfIri(0, 0),
+        rdfIri(2, 0),
       ),
-      RdfNamespaceDeclaration("ns2", RdfIri(0, 1)),
-      RdfTriple(
-        RdfIri(0, 4),
-        RdfIri(1, 2),
-        RdfIri(0, 0),
+      rdfNamespaceDeclaration("ns2", rdfIri(0, 1)),
+      rdfTriple(
+        rdfIri(0, 4),
+        rdfIri(1, 2),
+        rdfIri(0, 0),
       ),
-    )):
-    val object Quads1 extends TestCase[Quad] = Seq(
+    ))
+
+  object Quads1 extends TestCase[Quad]:
+    val mrl = Seq(
       Quad(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -152,45 +158,41 @@ object ProtoTestCases
       ),
     )
 
-    mrl
-
-  def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(0, "https://test.org/test/"),
-      RdfNameEntry(0, "subject"),
-      RdfNameEntry(0, "predicate"),
-      RdfPrefixEntry(0, "https://test.org/ns3/"),
-      RdfNameEntry(0, "graph"),
-      RdfQuad(
-        RdfIri(1, 0),
-        RdfIri(0, 0),
-        RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")),
-        RdfIri(2, 0),
+      rdfPrefixEntry(0, "https://test.org/test/"),
+      rdfNameEntry(0, "subject"),
+      rdfNameEntry(0, "predicate"),
+      rdfPrefixEntry(0, "https://test.org/ns3/"),
+      rdfNameEntry(0, "graph"),
+      rdfQuad(
+        rdfIri(1, 0),
+        rdfIri(0, 0),
+        rdfLiteral("test", "en-gb"),
+        rdfIri(2, 0),
       ),
-      RdfQuad(
+      rdfQuad(
         null,
-        RdfTerm.Bnode("blank"),
-        RdfLiteral(
-          "test", RdfLiteral.LiteralKind.Empty
-        ),
+        "blank",
+        rdfLiteral("test"),
         null,
       ),
-      RdfQuad(
+      rdfQuad(
         null,
         null,
         null,
-        RdfTerm.Bnode("blank"),
+        "blank",
       ),
-      RdfQuad(
+      rdfQuad(
         null,
         null,
         null,
-        RdfLiteral(
-          "test", RdfLiteral.LiteralKind.Empty
-        ),
+        rdfLiteral("test"),
       ),
-    )):
-    val object Quads2RepeatDefault extends TestCase[Quad] = Seq(
+    ))
+
+  object Quads2RepeatDefault extends TestCase[Quad]:
+    val mrl = Seq(
       Quad(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -205,27 +207,27 @@ object ProtoTestCases
       ),
     )
 
-    mrl
-
-  def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
       opt,
-      RdfPrefixEntry(0, "https://test.org/test/"),
-      RdfNameEntry(0, "subject"),
-      RdfNameEntry(0, "predicate"),
-      RdfQuad(
-        RdfIri(1, 0),
-        RdfIri(0, 0),
-        RdfLiteral("test", RdfLiteral.LiteralKind.Langtag("en-gb")),
-        RdfDefaultGraph(),
+      rdfPrefixEntry(0, "https://test.org/test/"),
+      rdfNameEntry(0, "subject"),
+      rdfNameEntry(0, "predicate"),
+      rdfQuad(
+        rdfIri(1, 0),
+        rdfIri(0, 0),
+        rdfLiteral("test", "en-gb"),
+        rdfDefaultGraph(),
       ),
-      RdfQuad(
+      rdfQuad(
         null,
         RdfTerm.Bnode("blank"),
-        RdfLiteral("test", RdfLiteral.LiteralKind.Empty),
+        rdfLiteral("test"),
         null,
       ),
-    )):
-    val object Graphs1 extends TestCase[(Node, Iterable[Triple])] = Seq(
+    ))
+
+  object Graphs1 extends TestCase[(Node, Iterable[Triple])]:
+    val mrl = Seq(
       (
         null,
         Seq(
@@ -253,7 +255,7 @@ object ProtoTestCases
       ),
     )
 
-    val mrl = Seq(
+    val mrlQuads = Seq(
       Quad(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -274,4 +276,37 @@ object ProtoTestCases
       ),
     )
 
-    mrlQuads
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
+      rdfGraphStart(
+        rdfDefaultGraph()
+      ),
+      rdfPrefixEntry(0, "https://test.org/test/"),
+      rdfNameEntry(0, "subject"),
+      rdfNameEntry(0, "predicate"),
+      rdfPrefixEntry(0, "https://test.org/ns2/"),
+      rdfNameEntry(0, "object"),
+      rdfTriple(
+        rdfIri(1, 0),
+        rdfIri(0, 0),
+        rdfIri(2, 0),
+      ),
+      rdfDatatypeEntry(0, "https://test.org/xsd/integer"),
+      rdfTriple(
+        null,
+        null,
+        rdfLiteral("123", 1),
+      ),
+      rdfGraphEnd(),
+      rdfPrefixEntry(0, "https://test.org/ns3/"),
+      rdfNameEntry(0, "graph"),
+      rdfGraphStart(
+        rdfIri(3, 0)
+      ),
+      rdfTriple(
+        null,
+        null,
+        rdfIri(2, 3),
+      ),
+      rdfGraphEnd(),
+    ))

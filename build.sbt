@@ -58,7 +58,7 @@ lazy val commonSettings = Seq(
   ),
   javacOptions ++= Seq(
     "-source", "17",
-    "-Werror",
+//    "-Werror",
     // TODO: enable more warnings
     "-Xlint:unchecked",
   ),

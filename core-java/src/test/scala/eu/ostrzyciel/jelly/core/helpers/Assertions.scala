@@ -1,23 +1,26 @@
 package eu.ostrzyciel.jelly.core.helpers
 
 import eu.ostrzyciel.jelly.core.helpers.Mrl.Statement
-import eu.ostrzyciel.jelly.core.proto.v1.{RdfStreamRow, RdfStreamRowValue}
+import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.extractRdfStreamRow
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import eu.ostrzyciel.jelly.core.proto.v1.Rdf
 
 object Assertions extends AnyWordSpec, Matchers:
-  def assertEncoded(observed: Seq[RdfStreamRow], expected: Seq[RdfStreamRowValue]): Unit =
+  def assertEncoded(observed: Seq[Rdf.RdfStreamRow], expected: Seq[Rdf.RdfStreamRow]): Unit =
     for ix <- 0 until observed.size.min(expected.size) do
-      val obsRow = observed.applyOrElse(ix, null)
       withClue(s"Row $ix:") {
-        obsRow.row should be (expected.applyOrElse(ix, null))
+        val obsRow = extractRdfStreamRow(observed.applyOrElse(ix, null))
+        val expRow = extractRdfStreamRow(expected.applyOrElse(ix, null))
+        obsRow should be(expRow)
       }
     observed.size should be(expected.size)
 
   def assertDecoded(observed: Seq[Statement], expected: Seq[Statement]): Unit =
     for ix <- 0 until observed.size.min(expected.size) do
-      val obsRow = observed.applyOrElse(ix, null)
       withClue(s"Row $ix:") {
-        obsRow should be (expected.applyOrElse(ix, null))
+        val obsRow = observed.applyOrElse(ix, null)
+        val expRow = expected.applyOrElse(ix, null)
+        obsRow should be(expRow)
       }
-    observed.size should be (expected.size)
+    observed.size should be(expected.size)

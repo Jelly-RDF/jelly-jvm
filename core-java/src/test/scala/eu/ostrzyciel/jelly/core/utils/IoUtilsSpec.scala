@@ -1,5 +1,6 @@
-package eu.ostrzyciel.jelly.core
+package eu.ostrzyciel.jelly.core.utils
 
+import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.*
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -7,19 +8,19 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 class IoUtilsSpec extends AnyWordSpec, Matchers:
-  private val frameLarge = RdfStreamFrame(Seq(
-    RdfStreamRow(
-      RdfNameEntry(1, "name name name name")
+  private val frameLarge = rdfStreamFrame(Seq(
+    rdfStreamRow(
+      rdfNameEntry(1, "name name name name")
     )
   ))
-  private val frameSize10 = RdfStreamFrame(Seq(
-    RdfStreamRow(
-      RdfNameEntry(0, "name")
+  private val frameSize10 = rdfStreamFrame(Seq(
+    rdfStreamRow(
+      rdfNameEntry(0, "name")
     )
   ))
-  private val frameOptionsSize10 = RdfStreamFrame(Seq(
-    RdfStreamRow(
-      RdfStreamOptions(streamName = "name12")
+  private val frameOptionsSize10 = rdfStreamFrame(Seq(
+    rdfStreamRow(
+      rdfStreamOptions(streamName = "name12")
     )
   ))
 
@@ -31,9 +32,9 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(1) should not be 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
-        isDelimited shouldBe false
-        newIn.readAllBytes() shouldBe bytes
+        val response = IoUtils.autodetectDelimiting(in)
+        response.isDelimited shouldBe false
+        response.newInput.readAllBytes() shouldBe bytes
       }
 
       "input stream is a delimited Jelly message (size >10)" in {
@@ -44,9 +45,9 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(1) shouldBe 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
-        isDelimited shouldBe true
-        newIn.readAllBytes() shouldBe bytes
+        val response = IoUtils.autodetectDelimiting(in)
+        response.isDelimited shouldBe true
+        response.newInput.readAllBytes() shouldBe bytes
       }
 
       "input stream is a non-delimited Jelly message (size=10)" in {
@@ -56,9 +57,9 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(1) should not be 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
-        isDelimited shouldBe false
-        newIn.readAllBytes() shouldBe bytes
+        val response = IoUtils.autodetectDelimiting(in)
+        response.isDelimited shouldBe false
+        response.newInput.readAllBytes() shouldBe bytes
       }
 
       "input stream is a delimited Jelly message (size=10)" in {
@@ -71,22 +72,22 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(2) should not be 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
-        isDelimited shouldBe true
-        newIn.readAllBytes() shouldBe bytes
+        val response = IoUtils.autodetectDelimiting(in)
+        response.isDelimited shouldBe false
+        response.newInput.readAllBytes() shouldBe bytes
       }
 
       "input stream is a non-delimited Jelly message (options size =10)" in {
-        frameOptionsSize10.rows(0).toByteArray.size shouldBe 10
+        frameOptionsSize10.getRows(0).toByteArray.size shouldBe 10
         val bytes = frameOptionsSize10.toByteArray
         bytes(0) shouldBe 0x0A
         bytes(1) shouldBe 0x0A
         bytes(2) shouldBe 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
-        isDelimited shouldBe false
-        newIn.readAllBytes() shouldBe bytes
+        val response = IoUtils.autodetectDelimiting(in)
+        response.isDelimited shouldBe false
+        response.newInput.readAllBytes() shouldBe bytes
       }
 
       "input stream is a delimited Jelly message (options size =10)" in {
@@ -99,24 +100,24 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         bytes(3) shouldBe 0x0A
 
         val in = new ByteArrayInputStream(bytes)
-        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
-        isDelimited shouldBe true
-        newIn.readAllBytes() shouldBe bytes
+        val response = IoUtils.autodetectDelimiting(in)
+        response.isDelimited shouldBe false
+        response.newInput.readAllBytes() shouldBe bytes
       }
 
       "input stream is empty" in {
         val in = new ByteArrayInputStream(Array.emptyByteArray)
-        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
-        isDelimited shouldBe false
-        newIn.readAllBytes() shouldBe Array.emptyByteArray
+        val response = IoUtils.autodetectDelimiting(in)
+        response.isDelimited shouldBe false
+        response.newInput.readAllBytes() shouldBe Array.emptyByteArray
       }
 
       "input stream has only 2 bytes" in {
         // some messed-up data
         val in = new ByteArrayInputStream(Array[Byte](0x12, 0x34))
-        val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
-        isDelimited shouldBe false
-        newIn.readAllBytes() shouldBe Array[Byte](0x12, 0x34)
+        val response = IoUtils.autodetectDelimiting(in)
+        response.isDelimited shouldBe false
+        response.newInput.readAllBytes() shouldBe Array[Byte](0x12, 0x34)
       }
     }
     
@@ -126,8 +127,8 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
       val bytes = os.toByteArray
       
       val in = new ByteArrayInputStream(bytes)
-      val (isDelimited, newIn) = IoUtils.autodetectDelimiting(in)
-      isDelimited shouldBe true
-      RdfStreamFrame.parseDelimitedFrom(newIn).get shouldBe frameLarge
+      val response = IoUtils.autodetectDelimiting(in)
+      response.isDelimited shouldBe true
+      Rdf.RdfStreamFrame.parseDelimitedFrom(response.newInput) shouldBe frameLarge
     }
   }

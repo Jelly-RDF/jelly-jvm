@@ -1,7 +1,10 @@
 package eu.ostrzyciel.jelly.core.utils;
 
+import eu.ostrzyciel.jelly.core.ProtoDecoderConverter;
 import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class LogicalStreamTypeUtils {
 
@@ -50,5 +53,30 @@ public class LogicalStreamTypeUtils {
             );
             default -> Optional.empty();
         };
+    }
+
+    public static <TNode, TDatatype, TTriple, TQuad> List<TTriple> getRdfStaxAnnotation(
+        ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
+        Rdf.LogicalStreamType logicalType,
+        TNode subjectNode
+    ) {
+        return getRdfStaxType(logicalType)
+            .map(typeIri -> {
+                TNode bNode = converter.makeBlankNode(UUID.randomUUID().toString());
+                return List.of(
+                    converter.makeTriple(subjectNode, converter.makeIriNode(STAX_PREFIX + "hasStreamTypeUsage"), bNode),
+                    converter.makeTriple(
+                        bNode,
+                        converter.makeIriNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                        converter.makeIriNode(STAX_PREFIX + "RdfStreamTypeUsage")
+                    ),
+                    converter.makeTriple(
+                        bNode,
+                        converter.makeIriNode(STAX_PREFIX + "hasStreamType"),
+                        converter.makeIriNode(typeIri)
+                    )
+                );
+            })
+            .orElseThrow(() -> new IllegalArgumentException("Unsupported logical stream type: " + logicalType));
     }
 }
