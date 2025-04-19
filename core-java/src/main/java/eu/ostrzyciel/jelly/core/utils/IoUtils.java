@@ -10,9 +10,9 @@ public class IoUtils {
     public record AutodetectDelimitingResponse(boolean isDelimited, InputStream newInput) {}
 
     public static AutodetectDelimitingResponse autodetectDelimiting(InputStream inputStream) throws IOException {
-        var scout = inputStream.readNBytes(3);
-        var scoutIn = new ByteArrayInputStream(scout);
-        var newInput = new SequenceInputStream(scoutIn, inputStream);
+        final var scout = inputStream.readNBytes(3);
+        final var scoutIn = new ByteArrayInputStream(scout);
+        final var newInput = new SequenceInputStream(scoutIn, inputStream);
 
         // Truth table (notation: 0A = 0x0A, NN = not 0x0A, ?? = don't care):
         // NN ?? ?? -> delimited (all non-delimited start with 0A)
@@ -28,13 +28,13 @@ public class IoUtils {
 
         // Yeah, it's magic. But it works.
 
-        var isDelimited = scout.length == 3 && (scout[0] != 0x0A || (scout[1] == 0x0A && scout[2] != 0x0A));
+        final var isDelimited = scout.length == 3 && (scout[0] != 0x0A || (scout[1] == 0x0A && scout[2] != 0x0A));
         return new AutodetectDelimitingResponse(isDelimited, newInput);
     }
 
     public static void writeFrameAsDelimited(byte[] nonDelimitedFrame, OutputStream output) throws IOException {
         // Don't worry, the buffer won't really have 0-size. It will be of minimal size able to fit the varint.
-        var codedOutput = CodedOutputStream.newInstance(output, 0);
+        final var codedOutput = CodedOutputStream.newInstance(output, 0);
         codedOutput.writeUInt32NoTag(nonDelimitedFrame.length);
         codedOutput.flush();
         output.write(nonDelimitedFrame);

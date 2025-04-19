@@ -118,7 +118,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     public UniversalTerm makeIri(String iri) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
-            var nameEntry = nameLookup.getOrAddEntry(iri);
+            final var nameEntry = nameLookup.getOrAddEntry(iri);
             if (nameEntry.newEntry) {
                 bufferAppender.appendNameEntry(new RdfNameEntry(nameEntry.setId, iri));
             }
@@ -133,7 +133,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
 
         // Slow path, with splitting out the prefix
-        var cachedNode = iriNodeCache.computeIfAbsent(iri, k -> new DependentNode());
+        final var cachedNode = iriNodeCache.computeIfAbsent(iri, k -> new DependentNode());
         // Check if the value is still valid
         if (
             cachedNode.encoded != null &&
@@ -162,8 +162,8 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             postfix = iri.substring(i + 1);
         }
 
-        var prefixEntry = prefixLookup.getOrAddEntry(prefix);
-        var nameEntry = nameLookup.getOrAddEntry(postfix);
+        final var prefixEntry = prefixLookup.getOrAddEntry(prefix);
+        final var nameEntry = nameLookup.getOrAddEntry(postfix);
         if (prefixEntry.newEntry) {
             bufferAppender.appendPrefixEntry(new RdfPrefixEntry(prefixEntry.setId, prefix));
         }
@@ -211,7 +211,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 "to a positive value."
             );
         }
-        var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
+        final var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
         if (
             cachedNode.encoded != null && cachedNode.lookupSerial1 == datatypeLookup.serials[cachedNode.lookupPointer1]
@@ -221,7 +221,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
 
         // The node is not encoded, but we may already have the datatype encoded
-        var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
+        final var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
         if (dtEntry.newEntry) {
             bufferAppender.appendDatatypeEntry(new RdfDatatypeEntry(dtEntry.setId, datatypeName));
         }

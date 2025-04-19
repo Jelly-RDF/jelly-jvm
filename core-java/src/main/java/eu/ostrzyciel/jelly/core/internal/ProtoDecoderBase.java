@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core.internal;
 
-import eu.ostrzyciel.jelly.core.JellyException;
 import eu.ostrzyciel.jelly.core.ProtoDecoderConverter;
+import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError;
 import eu.ostrzyciel.jelly.core.RdfTerm;
 
 public abstract class ProtoDecoderBase<TNode, TDatatype, TTriple, TQuad> {
@@ -36,7 +36,7 @@ public abstract class ProtoDecoderBase<TNode, TDatatype, TTriple, TQuad> {
 
     protected final TNode convertGraphTerm(RdfTerm.GraphTerm graph) {
         if (graph == null) {
-            throw new JellyException.RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.");
+            throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.");
         } else if (graph instanceof RdfTerm.Iri iri) {
             return nameDecoder.decode(iri.nameId(), iri.prefixId());
         } else if (graph instanceof RdfTerm.DefaultGraph) {
@@ -50,13 +50,13 @@ public abstract class ProtoDecoderBase<TNode, TDatatype, TTriple, TQuad> {
         } else if (graph instanceof RdfTerm.SimpleLiteral simpleLiteral) {
             return converter.makeSimpleLiteral(simpleLiteral.lex());
         } else {
-            throw new JellyException.RdfProtoDeserializationError("Unknown graph term type.");
+            throw new RdfProtoDeserializationError("Unknown graph term type.");
         }
     }
 
     protected final TNode convertTerm(RdfTerm.SpoTerm term) {
         if (term == null) {
-            throw new JellyException.RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
+            throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
         } else if (term instanceof RdfTerm.Iri iri) {
             return nameDecoder.decode(iri.nameId(), iri.prefixId());
         } else if (term instanceof RdfTerm.BNode bnode) {
@@ -74,7 +74,7 @@ public abstract class ProtoDecoderBase<TNode, TDatatype, TTriple, TQuad> {
                 convertTerm(triple.object())
             );
         } else {
-            throw new JellyException.RdfProtoDeserializationError("Unknown term type.");
+            throw new RdfProtoDeserializationError("Unknown term type.");
         }
     }
 
@@ -82,7 +82,7 @@ public abstract class ProtoDecoderBase<TNode, TDatatype, TTriple, TQuad> {
         if (term == null) {
             return lastNodeHolder.node == null ? null : lastNodeHolder.node;
         } else {
-            var node = convertTerm(term);
+            final var node = convertTerm(term);
             lastNodeHolder.node = node;
             return node;
         }
@@ -92,7 +92,7 @@ public abstract class ProtoDecoderBase<TNode, TDatatype, TTriple, TQuad> {
         if (graph == null) {
             return lastGraph.node == null ? null : lastGraph.node;
         } else {
-            var node = convertGraphTerm(graph);
+            final var node = convertGraphTerm(graph);
             lastGraph.node = node;
             return node;
         }
