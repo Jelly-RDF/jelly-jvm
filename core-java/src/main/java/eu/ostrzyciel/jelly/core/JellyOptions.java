@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.core;
 
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+import eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 import eu.ostrzyciel.jelly.core.utils.LogicalStreamTypeUtils;
 
 public class JellyOptions {
@@ -15,27 +16,27 @@ public class JellyOptions {
     public static final int SMALL_PREFIX_TABLE_SIZE = 16;
     public static final int SMALL_DT_TABLE_SIZE = 16;
 
-    public static final Rdf.RdfStreamOptions BIG_STRICT = Rdf.RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions BIG_STRICT = RdfStreamOptions.newBuilder()
         .setMaxNameTableSize(BIG_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(BIG_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(BIG_DT_TABLE_SIZE)
         .build();
 
-    public static final Rdf.RdfStreamOptions BIG_GENERALIZED = Rdf.RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions BIG_GENERALIZED = RdfStreamOptions.newBuilder()
         .setMaxNameTableSize(BIG_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(BIG_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(BIG_DT_TABLE_SIZE)
         .setGeneralizedStatements(true)
         .build();
 
-    public static final Rdf.RdfStreamOptions BIG_RDF_STAR = Rdf.RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions BIG_RDF_STAR = RdfStreamOptions.newBuilder()
         .setMaxNameTableSize(BIG_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(BIG_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(BIG_DT_TABLE_SIZE)
         .setRdfStar(true)
         .build();
 
-    public static final Rdf.RdfStreamOptions BIG_ALL_FEATURES = Rdf.RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions BIG_ALL_FEATURES = RdfStreamOptions.newBuilder()
         .setMaxNameTableSize(BIG_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(BIG_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(BIG_DT_TABLE_SIZE)
@@ -43,27 +44,27 @@ public class JellyOptions {
         .setRdfStar(true)
         .build();
 
-    public static final Rdf.RdfStreamOptions SMALL_STRICT = Rdf.RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions SMALL_STRICT = RdfStreamOptions.newBuilder()
         .setMaxNameTableSize(SMALL_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(SMALL_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(SMALL_DT_TABLE_SIZE)
         .build();
 
-    public static final Rdf.RdfStreamOptions SMALL_GENERALIZED = Rdf.RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions SMALL_GENERALIZED = RdfStreamOptions.newBuilder()
         .setMaxNameTableSize(SMALL_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(SMALL_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(SMALL_DT_TABLE_SIZE)
         .setGeneralizedStatements(true)
         .build();
 
-    public static final Rdf.RdfStreamOptions SMALL_RDF_STAR = Rdf.RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions SMALL_RDF_STAR = RdfStreamOptions.newBuilder()
         .setMaxNameTableSize(SMALL_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(SMALL_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(SMALL_DT_TABLE_SIZE)
         .setRdfStar(true)
         .build();
 
-    public static final Rdf.RdfStreamOptions SMALL_ALL_FEATURES = Rdf.RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions SMALL_ALL_FEATURES = RdfStreamOptions.newBuilder()
         .setMaxNameTableSize(SMALL_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(SMALL_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(SMALL_DT_TABLE_SIZE)
@@ -71,7 +72,7 @@ public class JellyOptions {
         .setRdfStar(true)
         .build();
 
-    public static final Rdf.RdfStreamOptions DEFAULT_SUPPORTED_OPTIONS = Rdf.RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions DEFAULT_SUPPORTED_OPTIONS = RdfStreamOptions.newBuilder()
         .setGeneralizedStatements(true)
         .setRdfStar(true)
         .setMaxNameTableSize(4096)
@@ -79,17 +80,14 @@ public class JellyOptions {
         .setMaxDatatypeTableSize(256)
         .build();
 
-    public static void checkCompatibility(
-        Rdf.RdfStreamOptions requestedOptions,
-        Rdf.RdfStreamOptions supportedOptions
-    ) {
+    public static void checkCompatibility(RdfStreamOptions requestedOptions, RdfStreamOptions supportedOptions) {
         checkBaseCompatibility(requestedOptions, supportedOptions, JellyConstants.PROTO_VERSION);
         checkLogicalStreamType(requestedOptions, supportedOptions.getLogicalType());
     }
 
     private static void checkBaseCompatibility(
-        Rdf.RdfStreamOptions requestedOptions,
-        Rdf.RdfStreamOptions supportedOptions,
+        RdfStreamOptions requestedOptions,
+        RdfStreamOptions supportedOptions,
         int systemSupportedVersion
     ) {
         if (
@@ -156,10 +154,7 @@ public class JellyOptions {
         checkTableSize(name, size, supportedSize, 0);
     }
 
-    private static void checkLogicalStreamType(
-        Rdf.RdfStreamOptions options,
-        Rdf.LogicalStreamType expectedLogicalType
-    ) {
+    private static void checkLogicalStreamType(RdfStreamOptions options, LogicalStreamType expectedLogicalType) {
         var logicalType = options.getLogicalType();
         var physicalType = options.getPhysicalType();
 

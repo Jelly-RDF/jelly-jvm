@@ -4,7 +4,7 @@ import eu.ostrzyciel.jelly.core.JellyException.RdfProtoSerializationError
 import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.core.helpers.Mrl
 import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.*
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf.*
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

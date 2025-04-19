@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core.utils;
 
 import eu.ostrzyciel.jelly.core.ProtoDecoderConverter;
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+import eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,15 +12,15 @@ public class LogicalStreamTypeUtils {
 
     private LogicalStreamTypeUtils() {}
 
-    public static Rdf.LogicalStreamType toBaseType(Rdf.LogicalStreamType logicalType) {
-        return Rdf.LogicalStreamType.forNumber(logicalType.getNumber() % 10);
+    public static LogicalStreamType toBaseType(LogicalStreamType logicalType) {
+        return LogicalStreamType.forNumber(logicalType.getNumber() % 10);
     }
 
-    public static boolean isEqualOrSubtypeOf(Rdf.LogicalStreamType logicalType, Rdf.LogicalStreamType other) {
+    public static boolean isEqualOrSubtypeOf(LogicalStreamType logicalType, LogicalStreamType other) {
         return logicalType == other || logicalType.getNumber() % 10 == other.getNumber();
     }
 
-    public static Optional<String> getRdfStaxType(Rdf.LogicalStreamType logicalType) {
+    public static Optional<String> getRdfStaxType(LogicalStreamType logicalType) {
         return switch (logicalType) {
             case LOGICAL_STREAM_TYPE_FLAT_TRIPLES -> Optional.of(STAX_PREFIX + "flatTripleStream");
             case LOGICAL_STREAM_TYPE_FLAT_QUADS -> Optional.of(STAX_PREFIX + "flatQuadStream");
@@ -35,21 +35,21 @@ public class LogicalStreamTypeUtils {
         };
     }
 
-    public static Optional<Rdf.LogicalStreamType> fromOntologyIri(String iri) {
+    public static Optional<LogicalStreamType> fromOntologyIri(String iri) {
         if (!iri.startsWith(STAX_PREFIX)) {
             return Optional.empty();
         }
 
         String typeName = iri.substring(STAX_PREFIX.length());
         return switch (typeName) {
-            case "flatTripleStream" -> Optional.of(Rdf.LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES);
-            case "flatQuadStream" -> Optional.of(Rdf.LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS);
-            case "graphStream" -> Optional.of(Rdf.LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS);
-            case "subjectGraphStream" -> Optional.of(Rdf.LogicalStreamType.LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS);
-            case "datasetStream" -> Optional.of(Rdf.LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS);
-            case "namedGraphStream" -> Optional.of(Rdf.LogicalStreamType.LOGICAL_STREAM_TYPE_NAMED_GRAPHS);
+            case "flatTripleStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES);
+            case "flatQuadStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS);
+            case "graphStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS);
+            case "subjectGraphStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS);
+            case "datasetStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS);
+            case "namedGraphStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_NAMED_GRAPHS);
             case "timestampedNamedGraphStream" -> Optional.of(
-                Rdf.LogicalStreamType.LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS
+                LogicalStreamType.LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS
             );
             default -> Optional.empty();
         };
@@ -57,7 +57,7 @@ public class LogicalStreamTypeUtils {
 
     public static <TNode, TDatatype, TTriple, TQuad> List<TTriple> getRdfStaxAnnotation(
         ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
-        Rdf.LogicalStreamType logicalType,
+        LogicalStreamType logicalType,
         TNode subjectNode
     ) {
         return getRdfStaxType(logicalType)

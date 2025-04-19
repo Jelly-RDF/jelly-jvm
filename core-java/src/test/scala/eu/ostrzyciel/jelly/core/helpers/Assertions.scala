@@ -4,10 +4,10 @@ import eu.ostrzyciel.jelly.core.helpers.Mrl.Statement
 import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.extractRdfStreamRow
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf
+import eu.ostrzyciel.jelly.core.proto.v1.*
 
 object Assertions extends AnyWordSpec, Matchers:
-  def assertEncoded(observed: Seq[Rdf.RdfStreamRow], expected: Seq[Rdf.RdfStreamRow]): Unit =
+  def assertEncoded(observed: Seq[RdfStreamRow], expected: Seq[RdfStreamRow]): Unit =
     for ix <- 0 until observed.size.min(expected.size) do
       withClue(s"Row $ix:") {
         val obsRow = extractRdfStreamRow(observed.applyOrElse(ix, null))

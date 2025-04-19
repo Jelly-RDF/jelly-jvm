@@ -1,8 +1,9 @@
 package eu.ostrzyciel.jelly.core;
 
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 
 public interface ProtoTranscoder {
-    Iterable<Rdf.RdfStreamRow> ingestRow(Rdf.RdfStreamRow row);
-    Iterable<Rdf.RdfStreamFrame> ingestFrame(Rdf.RdfStreamFrame frame);
+    Iterable<RdfStreamRow> ingestRow(RdfStreamRow row);
+    Iterable<RdfStreamFrame> ingestFrame(RdfStreamFrame frame);
 }

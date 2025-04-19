@@ -2,7 +2,7 @@ package eu.ostrzyciel.jelly.core
 
 import com.google.protobuf.ByteString
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf.*
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.*
 
 object ProtoTestCases:
@@ -220,7 +220,7 @@ object ProtoTestCases:
       ),
       rdfQuad(
         null,
-        RdfTerm.Bnode("blank"),
+        "blank",
         rdfLiteral("test"),
         null,
       ),

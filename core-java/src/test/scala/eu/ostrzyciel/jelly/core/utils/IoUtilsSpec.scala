@@ -129,6 +129,6 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
       val in = new ByteArrayInputStream(bytes)
       val response = IoUtils.autodetectDelimiting(in)
       response.isDelimited shouldBe true
-      Rdf.RdfStreamFrame.parseDelimitedFrom(response.newInput) shouldBe frameLarge
+      RdfStreamFrame.parseDelimitedFrom(response.newInput) shouldBe frameLarge
     }
   }

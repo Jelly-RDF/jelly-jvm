@@ -3,7 +3,7 @@ package eu.ostrzyciel.jelly.core.utils
 import eu.ostrzyciel.jelly.core.helpers.Assertions.*
 import eu.ostrzyciel.jelly.core.helpers.MockConverterFactory
 import eu.ostrzyciel.jelly.core.helpers.Mrl.*
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf.*
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

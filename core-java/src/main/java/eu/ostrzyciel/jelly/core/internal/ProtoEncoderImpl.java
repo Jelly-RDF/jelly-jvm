@@ -1,7 +1,11 @@
 package eu.ostrzyciel.jelly.core.internal;
 
 import eu.ostrzyciel.jelly.core.*;
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfDatatypeEntry;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfNamespaceDeclaration;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +13,7 @@ import java.util.Optional;
 public class ProtoEncoderImpl<TNode, TTriple, TQuad> extends ProtoEncoder<TNode, TTriple, TQuad> {
 
     private boolean hasEmittedOptions = false;
-    private final List<Rdf.RdfStreamRow> rowBuffer;
+    private final List<RdfStreamRow> rowBuffer;
 
     protected ProtoEncoderImpl(
         NodeEncoder<TNode> nodeEncoder,
@@ -21,48 +25,48 @@ public class ProtoEncoderImpl<TNode, TTriple, TQuad> extends ProtoEncoder<TNode,
     }
 
     @Override
-    public Iterable<Rdf.RdfStreamRow> addTripleStatement(TNode subject, TNode predicate, TNode object) {
+    public Iterable<RdfStreamRow> addTripleStatement(TNode subject, TNode predicate, TNode object) {
         emitOptions();
         var triple = tripleToProto(subject, predicate, object);
-        var mainRow = Rdf.RdfStreamRow.newBuilder().setTriple(triple.toProto()).build();
+        var mainRow = RdfStreamRow.newBuilder().setTriple(triple.toProto()).build();
         return appendAndReturn(mainRow);
     }
 
     @Override
-    public Iterable<Rdf.RdfStreamRow> addQuadStatement(TNode subject, TNode predicate, TNode object, TNode graph) {
+    public Iterable<RdfStreamRow> addQuadStatement(TNode subject, TNode predicate, TNode object, TNode graph) {
         emitOptions();
         var quad = quadToProto(subject, predicate, object, graph);
-        var mainRow = Rdf.RdfStreamRow.newBuilder().setQuad(quad.toProto()).build();
+        var mainRow = RdfStreamRow.newBuilder().setQuad(quad.toProto()).build();
         return appendAndReturn(mainRow);
     }
 
     @Override
-    public Iterable<Rdf.RdfStreamRow> startGraph(TNode graph) {
+    public Iterable<RdfStreamRow> startGraph(TNode graph) {
         emitOptions();
         var graphNode = converter.graphNodeToProto(nodeEncoder, graph);
         var graphStart = new RdfTerm.GraphStart(graphNode);
-        var graphRow = Rdf.RdfStreamRow.newBuilder().setGraphStart(graphStart.toProto()).build();
+        var graphRow = RdfStreamRow.newBuilder().setGraphStart(graphStart.toProto()).build();
         return appendAndReturn(graphRow);
     }
 
     @Override
-    public Iterable<Rdf.RdfStreamRow> startDefaultGraph() {
+    public Iterable<RdfStreamRow> startDefaultGraph() {
         emitOptions();
         var defaultGraph = new RdfTerm.DefaultGraph();
         var graphStart = new RdfTerm.GraphStart(defaultGraph);
-        var graphRow = Rdf.RdfStreamRow.newBuilder().setGraphStart(graphStart.toProto()).build();
+        var graphRow = RdfStreamRow.newBuilder().setGraphStart(graphStart.toProto()).build();
         return appendAndReturn(graphRow);
     }
 
     @Override
-    public Iterable<Rdf.RdfStreamRow> endGraph() {
+    public Iterable<RdfStreamRow> endGraph() {
         var graphEnd = new RdfTerm.GraphEnd();
-        var graphRow = Rdf.RdfStreamRow.newBuilder().setGraphEnd(graphEnd.toProto()).build();
+        var graphRow = RdfStreamRow.newBuilder().setGraphEnd(graphEnd.toProto()).build();
         return appendAndReturn(graphRow);
     }
 
     @Override
-    public Iterable<Rdf.RdfStreamRow> declareNamespace(String name, String iriValue) {
+    public Iterable<RdfStreamRow> declareNamespace(String name, String iriValue) {
         if (!enableNamespaceDeclarations) {
             throw new JellyException.RdfProtoSerializationError(
                 "Namespace declarations are not enabled in this stream"
@@ -71,29 +75,29 @@ public class ProtoEncoderImpl<TNode, TTriple, TQuad> extends ProtoEncoder<TNode,
 
         emitOptions();
         var iri = nodeEncoder.makeIri(iriValue);
-        var mainRow = Rdf.RdfStreamRow.newBuilder()
-            .setNamespace(Rdf.RdfNamespaceDeclaration.newBuilder().setName(name).setValue(iri.toProto()).build())
+        var mainRow = RdfStreamRow.newBuilder()
+            .setNamespace(RdfNamespaceDeclaration.newBuilder().setName(name).setValue(iri.toProto()).build())
             .build();
 
         return appendAndReturn(mainRow);
     }
 
     @Override
-    public void appendNameEntry(Rdf.RdfNameEntry nameEntry) {
-        rowBuffer.add(Rdf.RdfStreamRow.newBuilder().setName(nameEntry).build());
+    public void appendNameEntry(RdfNameEntry nameEntry) {
+        rowBuffer.add(RdfStreamRow.newBuilder().setName(nameEntry).build());
     }
 
     @Override
-    public void appendPrefixEntry(Rdf.RdfPrefixEntry prefixEntry) {
-        rowBuffer.add(Rdf.RdfStreamRow.newBuilder().setPrefix(prefixEntry).build());
+    public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
+        rowBuffer.add(RdfStreamRow.newBuilder().setPrefix(prefixEntry).build());
     }
 
     @Override
-    public void appendDatatypeEntry(Rdf.RdfDatatypeEntry datatypeEntry) {
-        rowBuffer.add(Rdf.RdfStreamRow.newBuilder().setDatatype(datatypeEntry).build());
+    public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
+        rowBuffer.add(RdfStreamRow.newBuilder().setDatatype(datatypeEntry).build());
     }
 
-    private Iterable<Rdf.RdfStreamRow> appendAndReturn(Rdf.RdfStreamRow row) {
+    private Iterable<RdfStreamRow> appendAndReturn(RdfStreamRow row) {
         rowBuffer.add(row);
         if (hasEmittedOptions) {
             var list = new ArrayList<>(rowBuffer);
@@ -110,6 +114,6 @@ public class ProtoEncoderImpl<TNode, TTriple, TQuad> extends ProtoEncoder<TNode,
         }
 
         hasEmittedOptions = true;
-        rowBuffer.add(Rdf.RdfStreamRow.newBuilder().setOptions(options).build());
+        rowBuffer.add(RdfStreamRow.newBuilder().setOptions(options).build());
     }
 }
