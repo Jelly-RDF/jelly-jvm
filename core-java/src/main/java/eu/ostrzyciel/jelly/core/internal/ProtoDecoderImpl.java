@@ -21,13 +21,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
     private RdfStreamOptions supportedOptions;
 
     public ProtoDecoderImpl(
-        Class<TDatatype> datatypeClass,
         ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
         NameDecoder<TNode> nameDecoder,
         BiConsumer<String, TNode> namespaceHandler,
         RdfStreamOptions supportedOptions
     ) {
-        super(datatypeClass, converter, nameDecoder);
+        super(converter, nameDecoder);
         this.namespaceHandler = namespaceHandler;
         this.supportedOptions = supportedOptions;
     }
@@ -54,8 +53,8 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
     }
 
     @Override
-    public Optional<RdfStreamOptions> getStreamOptions() {
-        return Optional.ofNullable(supportedOptions);
+    public RdfStreamOptions getStreamOptions() {
+        return supportedOptions;
     }
 
     public void setStreamOptions(RdfStreamOptions options) {
@@ -63,7 +62,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
     }
 
     @Override
-    public TOut ingestRowFlat(RdfStreamRow row) {
+    public TOut ingestRow(RdfStreamRow row) {
         if (row == null) {
             throw new RdfProtoDeserializationError("Row kind is not set.");
         }
@@ -125,13 +124,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         extends ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TTriple> {
 
         public TriplesDecoder(
-            Class<TDatatype> datatypeClass,
             ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
             NameDecoder<TNode> nameDecoder,
             RdfStreamOptions supportedOptions,
             BiConsumer<String, TNode> nsHandler
         ) {
-            super(datatypeClass, converter, nameDecoder, nsHandler, supportedOptions);
+            super(converter, nameDecoder, nsHandler, supportedOptions);
         }
 
         @Override
@@ -152,13 +150,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         extends ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TQuad> {
 
         public QuadsDecoder(
-            Class<TDatatype> datatypeClass,
             ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
             NameDecoder<TNode> nameDecoder,
             RdfStreamOptions supportedOptions,
             BiConsumer<String, TNode> nsHandler
         ) {
-            super(datatypeClass, converter, nameDecoder, nsHandler, supportedOptions);
+            super(converter, nameDecoder, nsHandler, supportedOptions);
         }
 
         @Override
@@ -181,13 +178,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         private TNode currentGraph = null;
 
         public GraphsAsQuadsDecoder(
-            Class<TDatatype> datatypeClass,
             ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
             NameDecoder<TNode> nameDecoder,
             RdfStreamOptions supportedOptions,
             BiConsumer<String, TNode> nsHandler
         ) {
-            super(datatypeClass, converter, nameDecoder, nsHandler, supportedOptions);
+            super(converter, nameDecoder, nsHandler, supportedOptions);
         }
 
         @Override
@@ -236,13 +232,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         private List<TTriple> buffer = new ArrayList<>();
 
         public GraphsDecoder(
-            Class<TDatatype> datatypeClass,
             ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
             NameDecoder<TNode> nameDecoder,
             RdfStreamOptions supportedOptions,
             BiConsumer<String, TNode> nsHandler
         ) {
-            super(datatypeClass, converter, nameDecoder, nsHandler, supportedOptions);
+            super(converter, nameDecoder, nsHandler, supportedOptions);
         }
 
         @Override

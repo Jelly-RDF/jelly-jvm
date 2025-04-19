@@ -1,6 +1,5 @@
 package eu.ostrzyciel.jelly.core;
 
-
 /**
  * Interface exposed to RDF library interop modules for encoding RDF terms.
  * @param <TNode> The type of RDF nodes used by the RDF library.
@@ -61,6 +60,6 @@ public interface NodeEncoder<TNode> {
      * @return The encoded default graph node.
      */
     static RdfTerm.GraphTerm makeDefaultGraph() {
-        return new RdfTerm.DefaultGraph();
+        return RdfTerm.DefaultGraph.INSTANCE;
     }
 }
