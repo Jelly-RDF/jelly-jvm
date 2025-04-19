@@ -4,7 +4,7 @@ import eu.ostrzyciel.jelly.core.internal.ProtoEncoderBase;
 import eu.ostrzyciel.jelly.core.internal.RowBufferAppender;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
-import java.util.List;
+import java.util.Collection;
 
 public abstract class ProtoEncoder<TNode, TTriple, TQuad>
     extends ProtoEncoderBase<TNode, TTriple, TQuad>
@@ -13,12 +13,12 @@ public abstract class ProtoEncoder<TNode, TTriple, TQuad>
     public record Params(
         RdfStreamOptions options,
         boolean enableNamespaceDeclarations,
-        List<RdfStreamRow> appendableRowBuffer
+        Collection<RdfStreamRow> appendableRowBuffer
     ) {}
 
     protected final RdfStreamOptions options;
     protected final boolean enableNamespaceDeclarations;
-    protected final List<RdfStreamRow> appendableRowBuffer;
+    protected final Collection<RdfStreamRow> appendableRowBuffer;
 
     protected ProtoEncoder(
         NodeEncoder<TNode> nodeEncoder,
@@ -31,14 +31,14 @@ public abstract class ProtoEncoder<TNode, TTriple, TQuad>
         this.appendableRowBuffer = params.appendableRowBuffer;
     }
 
-    public final Iterable<RdfStreamRow> addTripleStatement(TTriple triple) {
-        return addTripleStatement(converter.getTstS(triple), converter.getTstP(triple), converter.getTstO(triple));
+    public final void addTripleStatement(TTriple triple) {
+        addTripleStatement(converter.getTstS(triple), converter.getTstP(triple), converter.getTstO(triple));
     }
 
-    public abstract Iterable<RdfStreamRow> addTripleStatement(TNode subject, TNode predicate, TNode object);
+    public abstract void addTripleStatement(TNode subject, TNode predicate, TNode object);
 
-    public final Iterable<RdfStreamRow> addQuadStatement(TQuad quad) {
-        return addQuadStatement(
+    public final void addQuadStatement(TQuad quad) {
+        addQuadStatement(
             converter.getQstS(quad),
             converter.getQstP(quad),
             converter.getQstO(quad),
@@ -46,13 +46,13 @@ public abstract class ProtoEncoder<TNode, TTriple, TQuad>
         );
     }
 
-    public abstract Iterable<RdfStreamRow> addQuadStatement(TNode subject, TNode predicate, TNode object, TNode graph);
+    public abstract void addQuadStatement(TNode subject, TNode predicate, TNode object, TNode graph);
 
-    public abstract Iterable<RdfStreamRow> startGraph(TNode graph);
+    public abstract void startGraph(TNode graph);
 
-    public abstract Iterable<RdfStreamRow> startDefaultGraph();
+    public abstract void startDefaultGraph();
 
-    public abstract Iterable<RdfStreamRow> endGraph();
+    public abstract void endGraph();
 
-    public abstract Iterable<RdfStreamRow> declareNamespace(String name, String iriValue);
+    public abstract void declareNamespace(String name, String iriValue);
 }

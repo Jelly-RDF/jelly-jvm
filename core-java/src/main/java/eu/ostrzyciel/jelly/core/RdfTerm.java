@@ -1,12 +1,12 @@
 package eu.ostrzyciel.jelly.core;
 
+import eu.ostrzyciel.jelly.core.proto.v1.RdfDefaultGraph;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfGraphEnd;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfIri;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral;
-import eu.ostrzyciel.jelly.core.proto.v1.RdfTriple;
-import eu.ostrzyciel.jelly.core.proto.v1.RdfGraphEnd;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfQuad;
-import eu.ostrzyciel.jelly.core.proto.v1.RdfDefaultGraph;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfTriple;
 
 public sealed interface RdfTerm {
     static Iri from(RdfIri iri) {
@@ -158,7 +158,7 @@ public sealed interface RdfTerm {
         public void writeSubject(RdfTriple.Builder builder) {
             builder.setSIri(toProto());
         }
-        
+
         @Override
         public void writeSubject(RdfQuad.Builder builder) {
             builder.setSIri(toProto());
@@ -168,7 +168,7 @@ public sealed interface RdfTerm {
         public void writePredicate(RdfTriple.Builder builder) {
             builder.setPIri(toProto());
         }
-        
+
         @Override
         public void writePredicate(RdfQuad.Builder builder) {
             builder.setPIri(toProto());
@@ -178,7 +178,7 @@ public sealed interface RdfTerm {
         public void writeObject(RdfTriple.Builder builder) {
             builder.setOIri(toProto());
         }
-        
+
         @Override
         public void writeObject(RdfQuad.Builder builder) {
             builder.setOIri(toProto());
@@ -196,11 +196,10 @@ public sealed interface RdfTerm {
     }
 
     record BNode(String bNode) implements SpoOrGraphTerm {
-
         public String toProto() {
             return bNode;
         }
-        
+
         @Override
         public void writeSubject(RdfTriple.Builder builder) {
             builder.setSBnode(toProto());
@@ -437,6 +436,8 @@ public sealed interface RdfTerm {
     }
 
     record DefaultGraph() implements GraphMarkerOrGraphTerm {
+        public static final DefaultGraph INSTANCE = new DefaultGraph();
+
         public RdfDefaultGraph toProto() {
             return RdfDefaultGraph.getDefaultInstance();
         }

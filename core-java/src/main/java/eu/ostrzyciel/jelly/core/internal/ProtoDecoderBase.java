@@ -9,23 +9,19 @@ public abstract class ProtoDecoderBase<TNode, TDatatype, TTriple, TQuad> {
     protected final ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter;
     protected final NameDecoder<TNode> nameDecoder;
     protected final DecoderLookup<TDatatype> datatypeLookup;
-
-    protected final Class<TDatatype> datatypeClass;
-
+    
     protected final LastNodeHolder<TNode> lastSubject = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastPredicate = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastGraph = new LastNodeHolder<>();
 
     protected ProtoDecoderBase(
-        Class<TDatatype> datatypeClass,
         ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
         NameDecoder<TNode> nameDecoder
     ) {
-        this.datatypeClass = datatypeClass;
         this.converter = converter;
         this.nameDecoder = nameDecoder;
-        this.datatypeLookup = new DecoderLookup<>(datatypeClass, getDatatypeTableSize());
+        this.datatypeLookup = new DecoderLookup<>(getDatatypeTableSize());
     }
 
     protected abstract int getNameTableSize();
