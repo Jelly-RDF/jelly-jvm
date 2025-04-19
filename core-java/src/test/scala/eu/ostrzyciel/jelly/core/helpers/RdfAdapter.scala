@@ -1,131 +1,132 @@
 package eu.ostrzyciel.jelly.core.helpers
 
 import com.google.protobuf.ByteString
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf
+import eu.ostrzyciel.jelly.core.proto.v1.*
 
 import scala.jdk.CollectionConverters.*
 
 
 object RdfAdapter:
 
-  def rdfNameEntry(id: Int, value: String): Rdf.RdfNameEntry =
-    Rdf.RdfNameEntry.newBuilder()
+  def rdfNameEntry(id: Int, value: String): RdfNameEntry =
+    RdfNameEntry.newBuilder()
       .setId(id)
       .setValue(value)
       .build()
 
-  def rdfPrefixEntry(id: Int, value: String): Rdf.RdfPrefixEntry =
-    Rdf.RdfPrefixEntry.newBuilder()
+  def rdfPrefixEntry(id: Int, value: String): RdfPrefixEntry =
+    RdfPrefixEntry.newBuilder()
       .setId(id)
       .setValue(value)
       .build()
 
-  def rdfDatatypeEntry(id: Int, value: String): Rdf.RdfDatatypeEntry =
-    Rdf.RdfDatatypeEntry.newBuilder()
+  def rdfDatatypeEntry(id: Int, value: String): RdfDatatypeEntry =
+    RdfDatatypeEntry.newBuilder()
       .setId(id)
       .setValue(value)
       .build()
 
-  def rdfNamespaceDeclaration(name: String, value: Rdf.RdfIri): Rdf.RdfNamespaceDeclaration =
-    Rdf.RdfNamespaceDeclaration.newBuilder()
+  def rdfNamespaceDeclaration(name: String, value: RdfIri): RdfNamespaceDeclaration =
+    RdfNamespaceDeclaration.newBuilder()
       .setName(name)
       .setValue(value)
       .build()
 
-  def rdfLiteral(lex: String): Rdf.RdfLiteral =
-    Rdf.RdfLiteral.newBuilder()
+  def rdfLiteral(lex: String): RdfLiteral =
+    RdfLiteral.newBuilder()
       .setLex(lex)
       .build()
 
-  def rdfLiteral(lex: String, langtag: String): Rdf.RdfLiteral =
-    Rdf.RdfLiteral.newBuilder()
+  def rdfLiteral(lex: String, langtag: String): RdfLiteral =
+    RdfLiteral.newBuilder()
       .setLex(lex)
       .setLangtag(langtag)
       .build()
 
-  def rdfLiteral(lex: String, datatype: Int): Rdf.RdfLiteral =
-    Rdf.RdfLiteral.newBuilder()
+  def rdfLiteral(lex: String, datatype: Int): RdfLiteral =
+    RdfLiteral.newBuilder()
       .setLex(lex)
       .setDatatype(datatype)
       .build()
 
-  def rdfIri(id: Int, prefixId: Int): Rdf.RdfIri =
-    Rdf.RdfIri.newBuilder()
+  def rdfIri(id: Int, prefixId: Int): RdfIri =
+    RdfIri.newBuilder()
       .setNameId(id)
       .setPrefixId(prefixId)
       .build()
 
-  def rdfStreamFrame(rows: Seq[Rdf.RdfStreamRow], metadata: Map[String, ByteString] = Map.empty): Rdf.RdfStreamFrame =
-    Rdf.RdfStreamFrame.newBuilder()
+  def rdfStreamFrame(rows: Seq[RdfStreamRow], metadata: Map[String, ByteString] = Map.empty): RdfStreamFrame =
+    RdfStreamFrame.newBuilder()
       .addAllRows(rows.asJava)
       .putAllMetadata(metadata.asJava)
       .build()
 
   type RdfStreamRowValue =
-    Rdf.RdfStreamOptions
-      | Rdf.RdfTriple
-      | Rdf.RdfQuad
-      | Rdf.RdfGraphStart
-      | Rdf.RdfGraphEnd
-      | Rdf.RdfNamespaceDeclaration
-      | Rdf.RdfNameEntry
-      | Rdf.RdfPrefixEntry
-      | Rdf.RdfDatatypeEntry
+    RdfStreamOptions
+      | RdfTriple
+      | RdfQuad
+      | RdfGraphStart
+      | RdfGraphEnd
+      | RdfNamespaceDeclaration
+      | RdfNameEntry
+      | RdfPrefixEntry
+      | RdfDatatypeEntry
 
-  def rdfStreamRowFromValue(value: RdfStreamRowValue): Rdf.RdfStreamRow =
-    val row = value match
-      case v: Rdf.RdfStreamOptions => rdfStreamRow(v)
-      case v: Rdf.RdfTriple => rdfStreamRow(v)
-      case v: Rdf.RdfQuad => rdfStreamRow(v)
-      case v: Rdf.RdfGraphStart => rdfStreamRow(v)
-      case v: Rdf.RdfGraphEnd => rdfStreamRow(v)
-      case v: Rdf.RdfNamespaceDeclaration => rdfStreamRow(v)
-      case v: Rdf.RdfNameEntry => rdfStreamRow(v)
-      case v: Rdf.RdfPrefixEntry => rdfStreamRow(v)
-      case v: Rdf.RdfDatatypeEntry => rdfStreamRow(v)
+  def rdfStreamRowFromValue(value: RdfStreamRowValue): RdfStreamRow =
+    value match {
+      case v: RdfStreamOptions => rdfStreamRow(v)
+      case v: RdfTriple => rdfStreamRow(v)
+      case v: RdfQuad => rdfStreamRow(v)
+      case v: RdfGraphStart => rdfStreamRow(v)
+      case v: RdfGraphEnd => rdfStreamRow(v)
+      case v: RdfNamespaceDeclaration => rdfStreamRow(v)
+      case v: RdfNameEntry => rdfStreamRow(v)
+      case v: RdfPrefixEntry => rdfStreamRow(v)
+      case v: RdfDatatypeEntry => rdfStreamRow(v)
+    }
 
-  def rdfStreamRow(row: Rdf.RdfNameEntry): Rdf.RdfStreamRow =
-    Rdf.RdfStreamRow.newBuilder()
+  def rdfStreamRow(row: RdfNameEntry): RdfStreamRow =
+    RdfStreamRow.newBuilder()
       .setName(row)
       .build()
 
-  def rdfStreamRow(row: Rdf.RdfPrefixEntry): Rdf.RdfStreamRow =
-    Rdf.RdfStreamRow.newBuilder()
+  def rdfStreamRow(row: RdfPrefixEntry): RdfStreamRow =
+    RdfStreamRow.newBuilder()
       .setPrefix(row)
       .build()
 
-  def rdfStreamRow(row: Rdf.RdfStreamOptions): Rdf.RdfStreamRow =
-    Rdf.RdfStreamRow.newBuilder()
+  def rdfStreamRow(row: RdfStreamOptions): RdfStreamRow =
+    RdfStreamRow.newBuilder()
       .setOptions(row)
       .build()
 
-  def rdfStreamRow(row: Rdf.RdfTriple): Rdf.RdfStreamRow =
-    Rdf.RdfStreamRow.newBuilder()
+  def rdfStreamRow(row: RdfTriple): RdfStreamRow =
+    RdfStreamRow.newBuilder()
       .setTriple(row)
       .build()
 
-  def rdfStreamRow(row: Rdf.RdfQuad): Rdf.RdfStreamRow =
-    Rdf.RdfStreamRow.newBuilder()
+  def rdfStreamRow(row: RdfQuad): RdfStreamRow =
+    RdfStreamRow.newBuilder()
       .setQuad(row)
       .build()
 
-  def rdfStreamRow(row: Rdf.RdfGraphStart): Rdf.RdfStreamRow =
-    Rdf.RdfStreamRow.newBuilder()
+  def rdfStreamRow(row: RdfGraphStart): RdfStreamRow =
+    RdfStreamRow.newBuilder()
       .setGraphStart(row)
       .build()
 
-  def rdfStreamRow(row: Rdf.RdfGraphEnd): Rdf.RdfStreamRow =
-    Rdf.RdfStreamRow.newBuilder()
+  def rdfStreamRow(row: RdfGraphEnd): RdfStreamRow =
+    RdfStreamRow.newBuilder()
       .setGraphEnd(row)
       .build()
 
-  def rdfStreamRow(row: Rdf.RdfNamespaceDeclaration): Rdf.RdfStreamRow =
-    Rdf.RdfStreamRow.newBuilder()
+  def rdfStreamRow(row: RdfNamespaceDeclaration): RdfStreamRow =
+    RdfStreamRow.newBuilder()
       .setNamespace(row)
       .build()
 
-  def rdfStreamRow(row: Rdf.RdfDatatypeEntry): Rdf.RdfStreamRow =
-    Rdf.RdfStreamRow.newBuilder()
+  def rdfStreamRow(row: RdfDatatypeEntry): RdfStreamRow =
+    RdfStreamRow.newBuilder()
       .setDatatype(row)
       .build()
 
@@ -134,45 +135,101 @@ object RdfAdapter:
     maxNameTableSize: Int = 1,
     maxPrefixTableSize: Int = 1,
     maxDatatypeTableSize: Int = 1,
-  ): Rdf.RdfStreamOptions =
-    Rdf.RdfStreamOptions.newBuilder()
+  ): RdfStreamOptions =
+    RdfStreamOptions.newBuilder()
       .setStreamName(streamName)
       .setMaxNameTableSize(maxNameTableSize)
       .setMaxPrefixTableSize(maxPrefixTableSize)
       .setMaxDatatypeTableSize(maxDatatypeTableSize)
       .build()
 
-  type RdfSpoValue =
-    Rdf.RdfIri
+  def rdfDefaultGraph(): RdfDefaultGraph =
+    RdfDefaultGraph.newBuilder()
+      .build()
+
+  type RdfGraphValue =
+    RdfIri
     | String
-    | Rdf.RdfLiteral
-    | Rdf.RdfTriple
+    | RdfDefaultGraph
+    | RdfLiteral
 
-  def rdfTriple(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue): Rdf.RdfTriple = {
-    var builder = Rdf.RdfTriple.newBuilder()
+  def rdfGraphStart(graph: RdfGraphValue): RdfGraphStart = {
+    val builder = RdfGraphStart.newBuilder()
 
-    subject match
-      case s: Rdf.RdfIri => builder = builder.setSIri(s)
-      case s: String => builder = builder.setSBnode(s)
-      case s: Rdf.RdfLiteral => builder = builder.setSLiteral(s)
-      case s: Rdf.RdfTriple => builder = builder.setSTripleTerm(s)
-
-    predicate match
-      case p: Rdf.RdfIri => builder = builder.setPIri(p)
-      case p: String => builder = builder.setPBnode(p)
-      case p: Rdf.RdfLiteral => builder = builder.setPLiteral(p)
-      case p: Rdf.RdfTriple => builder = builder.setPTripleTerm(p)
-
-    `object` match
-      case o: Rdf.RdfIri => builder = builder.setOIri(o)
-      case o: String => builder = builder.setOBnode(o)
-      case o: Rdf.RdfLiteral => builder = builder.setOLiteral(o)
-      case o: Rdf.RdfTriple => builder = builder.setOTripleTerm(o)
+    graph match
+      case g: RdfIri => builder.setGIri(g)
+      case g: String => builder.setGBnode(g)
+      case g: RdfDefaultGraph => builder.setGDefaultGraph(g)
+      case g: RdfLiteral => builder.setGLiteral(g)
 
     builder.build()
   }
 
-  def extractRdfStreamRow(row: Rdf.RdfStreamRow): RdfStreamRowValue | Null =
+  def rdfGraphEnd(): RdfGraphEnd =
+    RdfGraphEnd.newBuilder()
+      .build()
+
+  def rdfQuad(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue, graph: RdfGraphValue): RdfQuad = {
+    var builder = RdfQuad.newBuilder()
+
+    subject match
+      case s: RdfIri => builder = builder.setSIri(s)
+      case s: String => builder = builder.setSBnode(s)
+      case s: RdfLiteral => builder = builder.setSLiteral(s)
+      case s: RdfTriple => builder = builder.setSTripleTerm(s)
+
+    predicate match
+      case p: RdfIri => builder = builder.setPIri(p)
+      case p: String => builder = builder.setPBnode(p)
+      case p: RdfLiteral => builder = builder.setPLiteral(p)
+      case p: RdfTriple => builder = builder.setPTripleTerm(p)
+
+    `object` match
+      case o: RdfIri => builder = builder.setOIri(o)
+      case o: String => builder = builder.setOBnode(o)
+      case o: RdfLiteral => builder = builder.setOLiteral(o)
+      case o: RdfTriple => builder = builder.setOTripleTerm(o)
+
+    graph match
+      case g: RdfIri => builder = builder.setGIri(g)
+      case g: String => builder = builder.setGBnode(g)
+      case g: RdfDefaultGraph => builder = builder.setGDefaultGraph(g)
+      case g: RdfLiteral => builder = builder.setGLiteral(g)
+
+    builder.build()
+  }
+
+  type RdfSpoValue =
+    RdfIri
+    | String
+    | RdfLiteral
+    | RdfTriple
+
+  def rdfTriple(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue): RdfTriple = {
+    var builder = RdfTriple.newBuilder()
+
+    subject match
+      case s: RdfIri => builder = builder.setSIri(s)
+      case s: String => builder = builder.setSBnode(s)
+      case s: RdfLiteral => builder = builder.setSLiteral(s)
+      case s: RdfTriple => builder = builder.setSTripleTerm(s)
+
+    predicate match
+      case p: RdfIri => builder = builder.setPIri(p)
+      case p: String => builder = builder.setPBnode(p)
+      case p: RdfLiteral => builder = builder.setPLiteral(p)
+      case p: RdfTriple => builder = builder.setPTripleTerm(p)
+
+    `object` match
+      case o: RdfIri => builder = builder.setOIri(o)
+      case o: String => builder = builder.setOBnode(o)
+      case o: RdfLiteral => builder = builder.setOLiteral(o)
+      case o: RdfTriple => builder = builder.setOTripleTerm(o)
+
+    builder.build()
+  }
+
+  def extractRdfStreamRow(row: RdfStreamRow): RdfStreamRowValue | Null =
     if row.hasOptions then
       row.getOptions
     else if row.hasName then

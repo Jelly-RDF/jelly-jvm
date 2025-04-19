@@ -1,9 +1,15 @@
 package eu.ostrzyciel.jelly.core;
 
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfIri;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfLiteral;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfTriple;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfGraphEnd;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfQuad;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfDefaultGraph;
 
 public sealed interface RdfTerm {
-    static Iri from(Rdf.RdfIri iri) {
+    static Iri from(RdfIri iri) {
         return new Iri(iri.getPrefixId(), iri.getNameId());
     }
 
@@ -11,7 +17,7 @@ public sealed interface RdfTerm {
         return new BNode(bNode);
     }
 
-    static LiteralTerm from(Rdf.RdfLiteral literal) {
+    static LiteralTerm from(RdfLiteral literal) {
         if (literal.hasLangtag()) {
             return new LanguageLiteral(literal.getLex(), literal.getLangtag());
         } else if (literal.hasDatatype()) {
@@ -21,7 +27,7 @@ public sealed interface RdfTerm {
         }
     }
 
-    static Triple from(Rdf.RdfTriple triple) {
+    static Triple from(RdfTriple triple) {
         var subject =
             switch (triple.getSubjectCase()) {
                 case S_IRI -> from(triple.getSIri());
@@ -52,7 +58,7 @@ public sealed interface RdfTerm {
         return new Triple(subject, predicate, object);
     }
 
-    static GraphStart from(Rdf.RdfGraphStart graphStart) {
+    static GraphStart from(RdfGraphStart graphStart) {
         var graph =
             switch (graphStart.getGraphCase()) {
                 case G_IRI -> from(graphStart.getGIri());
@@ -65,15 +71,15 @@ public sealed interface RdfTerm {
         return new GraphStart(graph);
     }
 
-    static GraphEnd from(Rdf.RdfGraphEnd ignoredGraphEnd) {
+    static GraphEnd from(RdfGraphEnd ignoredGraphEnd) {
         return new GraphEnd();
     }
 
-    static DefaultGraph from(Rdf.RdfDefaultGraph ignoredDefaultGraph) {
+    static DefaultGraph from(RdfDefaultGraph ignoredDefaultGraph) {
         return new DefaultGraph();
     }
 
-    static Quad from(Rdf.RdfQuad quad) {
+    static Quad from(RdfQuad quad) {
         var subject =
             switch (quad.getSubjectCase()) {
                 case S_IRI -> from(quad.getSIri());
@@ -114,25 +120,25 @@ public sealed interface RdfTerm {
     }
 
     sealed interface SpoTerm extends RdfTerm {
-        void writeSubject(Rdf.RdfTriple.Builder builder);
+        void writeSubject(RdfTriple.Builder builder);
 
-        void writeSubject(Rdf.RdfQuad.Builder builder);
+        void writeSubject(RdfQuad.Builder builder);
 
-        void writePredicate(Rdf.RdfTriple.Builder builder);
+        void writePredicate(RdfTriple.Builder builder);
 
-        void writePredicate(Rdf.RdfQuad.Builder builder);
+        void writePredicate(RdfQuad.Builder builder);
 
-        void writeObject(Rdf.RdfTriple.Builder builder);
+        void writeObject(RdfTriple.Builder builder);
 
-        void writeObject(Rdf.RdfQuad.Builder builder);
+        void writeObject(RdfQuad.Builder builder);
     }
 
     sealed interface GraphMarkerTerm extends RdfTerm {}
 
     sealed interface GraphTerm extends RdfTerm {
-        void writeGraph(Rdf.RdfGraphStart.Builder builder);
+        void writeGraph(RdfGraphStart.Builder builder);
 
-        void writeGraph(Rdf.RdfQuad.Builder builder);
+        void writeGraph(RdfQuad.Builder builder);
     }
 
     sealed interface SpoOrGraphTerm extends SpoTerm, GraphTerm {}
@@ -144,47 +150,47 @@ public sealed interface RdfTerm {
     sealed interface GraphMarkerOrGraphTerm extends GraphMarkerTerm, GraphTerm {}
 
     record Iri(int prefixId, int nameId) implements SpoOrGraphTerm {
-        public Rdf.RdfIri toProto() {
-            return Rdf.RdfIri.newBuilder().setPrefixId(prefixId).setNameId(nameId).build();
+        public RdfIri toProto() {
+            return RdfIri.newBuilder().setPrefixId(prefixId).setNameId(nameId).build();
         }
 
         @Override
-        public void writeSubject(Rdf.RdfTriple.Builder builder) {
+        public void writeSubject(RdfTriple.Builder builder) {
             builder.setSIri(toProto());
         }
         
         @Override
-        public void writeSubject(Rdf.RdfQuad.Builder builder) {
+        public void writeSubject(RdfQuad.Builder builder) {
             builder.setSIri(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfTriple.Builder builder) {
+        public void writePredicate(RdfTriple.Builder builder) {
             builder.setPIri(toProto());
         }
         
         @Override
-        public void writePredicate(Rdf.RdfQuad.Builder builder) {
+        public void writePredicate(RdfQuad.Builder builder) {
             builder.setPIri(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfTriple.Builder builder) {
+        public void writeObject(RdfTriple.Builder builder) {
             builder.setOIri(toProto());
         }
         
         @Override
-        public void writeObject(Rdf.RdfQuad.Builder builder) {
+        public void writeObject(RdfQuad.Builder builder) {
             builder.setOIri(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfGraphStart.Builder builder) {
+        public void writeGraph(RdfGraphStart.Builder builder) {
             builder.setGIri(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfQuad.Builder builder) {
+        public void writeGraph(RdfQuad.Builder builder) {
             builder.setGIri(toProto());
         }
     }
@@ -196,187 +202,187 @@ public sealed interface RdfTerm {
         }
         
         @Override
-        public void writeSubject(Rdf.RdfTriple.Builder builder) {
+        public void writeSubject(RdfTriple.Builder builder) {
             builder.setSBnode(toProto());
         }
 
         @Override
-        public void writeSubject(Rdf.RdfQuad.Builder builder) {
+        public void writeSubject(RdfQuad.Builder builder) {
             builder.setSBnode(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfTriple.Builder builder) {
+        public void writePredicate(RdfTriple.Builder builder) {
             builder.setPBnode(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfQuad.Builder builder) {
+        public void writePredicate(RdfQuad.Builder builder) {
             builder.setPBnode(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfTriple.Builder builder) {
+        public void writeObject(RdfTriple.Builder builder) {
             builder.setOBnode(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfQuad.Builder builder) {
+        public void writeObject(RdfQuad.Builder builder) {
             builder.setOBnode(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfGraphStart.Builder builder) {
+        public void writeGraph(RdfGraphStart.Builder builder) {
             builder.setGBnode(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfQuad.Builder builder) {
+        public void writeGraph(RdfQuad.Builder builder) {
             builder.setGBnode(toProto());
         }
     }
 
     record LanguageLiteral(String lex, String langtag) implements LiteralTerm {
-        public Rdf.RdfLiteral toProto() {
-            return Rdf.RdfLiteral.newBuilder().setLex(lex).setLangtag(langtag).build();
+        public RdfLiteral toProto() {
+            return RdfLiteral.newBuilder().setLex(lex).setLangtag(langtag).build();
         }
 
         @Override
-        public void writeSubject(Rdf.RdfTriple.Builder builder) {
+        public void writeSubject(RdfTriple.Builder builder) {
             builder.setSLiteral(toProto());
         }
 
         @Override
-        public void writeSubject(Rdf.RdfQuad.Builder builder) {
+        public void writeSubject(RdfQuad.Builder builder) {
             builder.setSLiteral(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfTriple.Builder builder) {
+        public void writePredicate(RdfTriple.Builder builder) {
             builder.setPLiteral(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfQuad.Builder builder) {
+        public void writePredicate(RdfQuad.Builder builder) {
             builder.setPLiteral(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfTriple.Builder builder) {
+        public void writeObject(RdfTriple.Builder builder) {
             builder.setOLiteral(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfQuad.Builder builder) {
+        public void writeObject(RdfQuad.Builder builder) {
             builder.setOLiteral(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfGraphStart.Builder builder) {
+        public void writeGraph(RdfGraphStart.Builder builder) {
             builder.setGLiteral(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfQuad.Builder builder) {
+        public void writeGraph(RdfQuad.Builder builder) {
             builder.setGLiteral(toProto());
         }
     }
 
     record DtLiteral(String lex, int datatype) implements LiteralTerm {
-        public Rdf.RdfLiteral toProto() {
-            return Rdf.RdfLiteral.newBuilder().setLex(lex).setDatatype(datatype).build();
+        public RdfLiteral toProto() {
+            return RdfLiteral.newBuilder().setLex(lex).setDatatype(datatype).build();
         }
 
         @Override
-        public void writeSubject(Rdf.RdfTriple.Builder builder) {
+        public void writeSubject(RdfTriple.Builder builder) {
             builder.setSLiteral(toProto());
         }
 
         @Override
-        public void writeSubject(Rdf.RdfQuad.Builder builder) {
+        public void writeSubject(RdfQuad.Builder builder) {
             builder.setSLiteral(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfTriple.Builder builder) {
+        public void writePredicate(RdfTriple.Builder builder) {
             builder.setPLiteral(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfQuad.Builder builder) {
+        public void writePredicate(RdfQuad.Builder builder) {
             builder.setPLiteral(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfTriple.Builder builder) {
+        public void writeObject(RdfTriple.Builder builder) {
             builder.setOLiteral(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfQuad.Builder builder) {
+        public void writeObject(RdfQuad.Builder builder) {
             builder.setOLiteral(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfGraphStart.Builder builder) {
+        public void writeGraph(RdfGraphStart.Builder builder) {
             builder.setGLiteral(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfQuad.Builder builder) {
+        public void writeGraph(RdfQuad.Builder builder) {
             builder.setGLiteral(toProto());
         }
     }
 
     record SimpleLiteral(String lex) implements LiteralTerm {
-        public Rdf.RdfLiteral toProto() {
-            return Rdf.RdfLiteral.newBuilder().setLex(lex).build();
+        public RdfLiteral toProto() {
+            return RdfLiteral.newBuilder().setLex(lex).build();
         }
 
         @Override
-        public void writeSubject(Rdf.RdfTriple.Builder builder) {
+        public void writeSubject(RdfTriple.Builder builder) {
             builder.setSLiteral(toProto());
         }
 
         @Override
-        public void writeSubject(Rdf.RdfQuad.Builder builder) {
+        public void writeSubject(RdfQuad.Builder builder) {
             builder.setSLiteral(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfTriple.Builder builder) {
+        public void writePredicate(RdfTriple.Builder builder) {
             builder.setPLiteral(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfQuad.Builder builder) {
+        public void writePredicate(RdfQuad.Builder builder) {
             builder.setPLiteral(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfTriple.Builder builder) {
+        public void writeObject(RdfTriple.Builder builder) {
             builder.setOLiteral(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfQuad.Builder builder) {
+        public void writeObject(RdfQuad.Builder builder) {
             builder.setOLiteral(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfGraphStart.Builder builder) {
+        public void writeGraph(RdfGraphStart.Builder builder) {
             builder.setGLiteral(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfQuad.Builder builder) {
+        public void writeGraph(RdfQuad.Builder builder) {
             builder.setGLiteral(toProto());
         }
     }
 
     record Triple(SpoTerm subject, SpoTerm predicate, SpoTerm object) implements SpoTerm {
-        public Rdf.RdfTriple toProto() {
-            var tripleBuilder = Rdf.RdfTriple.newBuilder();
+        public RdfTriple toProto() {
+            var tripleBuilder = RdfTriple.newBuilder();
 
             subject.writeSubject(tripleBuilder);
             predicate.writePredicate(tripleBuilder);
@@ -386,69 +392,69 @@ public sealed interface RdfTerm {
         }
 
         @Override
-        public void writeSubject(Rdf.RdfTriple.Builder builder) {
+        public void writeSubject(RdfTriple.Builder builder) {
             builder.setSTripleTerm(toProto());
         }
 
         @Override
-        public void writeSubject(Rdf.RdfQuad.Builder builder) {
+        public void writeSubject(RdfQuad.Builder builder) {
             builder.setSTripleTerm(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfTriple.Builder builder) {
+        public void writePredicate(RdfTriple.Builder builder) {
             builder.setPTripleTerm(toProto());
         }
 
         @Override
-        public void writePredicate(Rdf.RdfQuad.Builder builder) {
+        public void writePredicate(RdfQuad.Builder builder) {
             builder.setPTripleTerm(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfTriple.Builder builder) {
+        public void writeObject(RdfTriple.Builder builder) {
             builder.setOTripleTerm(toProto());
         }
 
         @Override
-        public void writeObject(Rdf.RdfQuad.Builder builder) {
+        public void writeObject(RdfQuad.Builder builder) {
             builder.setOTripleTerm(toProto());
         }
     }
 
     record GraphStart(GraphTerm graph) implements GraphMarkerTerm {
-        public Rdf.RdfGraphStart toProto() {
-            var graphBuilder = Rdf.RdfGraphStart.newBuilder();
+        public RdfGraphStart toProto() {
+            var graphBuilder = RdfGraphStart.newBuilder();
             graph.writeGraph(graphBuilder);
             return graphBuilder.build();
         }
     }
 
     record GraphEnd() implements GraphMarkerTerm {
-        public Rdf.RdfGraphEnd toProto() {
-            return Rdf.RdfGraphEnd.getDefaultInstance();
+        public RdfGraphEnd toProto() {
+            return RdfGraphEnd.getDefaultInstance();
         }
     }
 
     record DefaultGraph() implements GraphMarkerOrGraphTerm {
-        public Rdf.RdfDefaultGraph toProto() {
-            return Rdf.RdfDefaultGraph.getDefaultInstance();
+        public RdfDefaultGraph toProto() {
+            return RdfDefaultGraph.getDefaultInstance();
         }
 
         @Override
-        public void writeGraph(Rdf.RdfGraphStart.Builder builder) {
+        public void writeGraph(RdfGraphStart.Builder builder) {
             builder.setGDefaultGraph(toProto());
         }
 
         @Override
-        public void writeGraph(Rdf.RdfQuad.Builder builder) {
+        public void writeGraph(RdfQuad.Builder builder) {
             builder.setGDefaultGraph(toProto());
         }
     }
 
     record Quad(SpoTerm subject, SpoTerm predicate, SpoTerm object, GraphTerm graph) implements RdfTerm {
-        public Rdf.RdfQuad toProto() {
-            var quadBuilder = Rdf.RdfQuad.newBuilder();
+        public RdfQuad toProto() {
+            var quadBuilder = RdfQuad.newBuilder();
 
             subject.writeSubject(quadBuilder);
             predicate.writePredicate(quadBuilder);

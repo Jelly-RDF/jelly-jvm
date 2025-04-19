@@ -1,7 +1,9 @@
 package eu.ostrzyciel.jelly.core.internal;
 
 import eu.ostrzyciel.jelly.core.JellyException;
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
+
 import java.util.function.Function;
 
 /**
@@ -65,7 +67,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      * @throws ArrayIndexOutOfBoundsException if the identifier is out of bounds
      */
     @Override
-    public void updateNames(Rdf.RdfNameEntry nameEntry) {
+    public void updateNames(RdfNameEntry nameEntry) {
         int id = nameEntry.getId();
         // Branchless! Equivalent to:
         //   if (id == 0) lastNameIdSet++;
@@ -86,7 +88,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      * @throws ArrayIndexOutOfBoundsException if the identifier is out of bounds
      */
     @Override
-    public void updatePrefixes(Rdf.RdfPrefixEntry prefixEntry) {
+    public void updatePrefixes(RdfPrefixEntry prefixEntry) {
         int id = prefixEntry.getId();
         lastPrefixIdSet = ((lastPrefixIdSet + 1) & ((id - 1) >> 31)) + id;
         PrefixLookupEntry entry = prefixLookup[lastPrefixIdSet];

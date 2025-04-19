@@ -1,7 +1,7 @@
 package eu.ostrzyciel.jelly.core
 
 import com.google.protobuf.ByteString
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf.*
+import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

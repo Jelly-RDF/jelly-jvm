@@ -4,6 +4,9 @@ import eu.ostrzyciel.jelly.core.JellyException;
 import eu.ostrzyciel.jelly.core.NodeEncoder;
 import eu.ostrzyciel.jelly.core.RdfTerm;
 import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfDatatypeEntry;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
@@ -122,9 +125,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             // Fast path for no prefixes
             var nameEntry = nameLookup.getOrAddEntry(iri);
             if (nameEntry.newEntry) {
-                bufferAppender.appendNameEntry(
-                    Rdf.RdfNameEntry.newBuilder().setId(nameEntry.setId).setValue(iri).build()
-                );
+                bufferAppender.appendNameEntry(RdfNameEntry.newBuilder().setId(nameEntry.setId).setValue(iri).build());
             }
             int nameId = nameEntry.getId;
             if (lastIriNameId + 1 == nameId) {
@@ -171,13 +172,11 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         var nameEntry = nameLookup.getOrAddEntry(postfix);
         if (prefixEntry.newEntry) {
             bufferAppender.appendPrefixEntry(
-                Rdf.RdfPrefixEntry.newBuilder().setId(prefixEntry.setId).setValue(prefix).build()
+                RdfPrefixEntry.newBuilder().setId(prefixEntry.setId).setValue(prefix).build()
             );
         }
         if (nameEntry.newEntry) {
-            bufferAppender.appendNameEntry(
-                Rdf.RdfNameEntry.newBuilder().setId(nameEntry.setId).setValue(postfix).build()
-            );
+            bufferAppender.appendNameEntry(RdfNameEntry.newBuilder().setId(nameEntry.setId).setValue(postfix).build());
         }
         int nameId = nameEntry.getId;
         int prefixId = prefixEntry.getId;
@@ -234,7 +233,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
         if (dtEntry.newEntry) {
             bufferAppender.appendDatatypeEntry(
-                Rdf.RdfDatatypeEntry.newBuilder().setId(dtEntry.setId).setValue(datatypeName).build()
+                RdfDatatypeEntry.newBuilder().setId(dtEntry.setId).setValue(datatypeName).build()
             );
         }
         int dtId = dtEntry.getId;

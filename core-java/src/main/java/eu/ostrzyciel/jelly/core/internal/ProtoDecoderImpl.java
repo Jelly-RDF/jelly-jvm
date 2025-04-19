@@ -3,7 +3,12 @@ package eu.ostrzyciel.jelly.core.internal;
 import static eu.ostrzyciel.jelly.core.JellyOptions.*;
 
 import eu.ostrzyciel.jelly.core.*;
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
+import eu.ostrzyciel.jelly.core.proto.v1.PhysicalStreamType;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfQuad;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfTriple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -13,14 +18,14 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
     extends ProtoDecoder<TNode, TDatatype, TTriple, TQuad, TOut> {
 
     protected final BiConsumer<String, TNode> namespaceHandler;
-    private Rdf.RdfStreamOptions supportedOptions;
+    private RdfStreamOptions supportedOptions;
 
     public ProtoDecoderImpl(
         Class<TDatatype> datatypeClass,
         ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
         NameDecoder<TNode> nameDecoder,
         BiConsumer<String, TNode> namespaceHandler,
-        Rdf.RdfStreamOptions supportedOptions
+        RdfStreamOptions supportedOptions
     ) {
         super(datatypeClass, converter, nameDecoder);
         this.namespaceHandler = namespaceHandler;
@@ -30,35 +35,35 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
     @Override
     protected int getNameTableSize() {
         return Optional.ofNullable(supportedOptions)
-            .map(Rdf.RdfStreamOptions::getMaxNameTableSize)
+            .map(RdfStreamOptions::getMaxNameTableSize)
             .orElse(SMALL_NAME_TABLE_SIZE);
     }
 
     @Override
     protected int getPrefixTableSize() {
         return Optional.ofNullable(supportedOptions)
-            .map(Rdf.RdfStreamOptions::getMaxPrefixTableSize)
+            .map(RdfStreamOptions::getMaxPrefixTableSize)
             .orElse(SMALL_PREFIX_TABLE_SIZE);
     }
 
     @Override
     protected int getDatatypeTableSize() {
         return Optional.ofNullable(supportedOptions)
-            .map(Rdf.RdfStreamOptions::getMaxDatatypeTableSize)
+            .map(RdfStreamOptions::getMaxDatatypeTableSize)
             .orElse(SMALL_DT_TABLE_SIZE);
     }
 
     @Override
-    public Optional<Rdf.RdfStreamOptions> getStreamOptions() {
+    public Optional<RdfStreamOptions> getStreamOptions() {
         return Optional.ofNullable(supportedOptions);
     }
 
-    public void setStreamOptions(Rdf.RdfStreamOptions options) {
+    public void setStreamOptions(RdfStreamOptions options) {
         this.supportedOptions = options;
     }
 
     @Override
-    public TOut ingestRowFlat(Rdf.RdfStreamRow row) {
+    public TOut ingestRowFlat(RdfStreamRow row) {
         if (row == null) {
             throw new JellyException.RdfProtoDeserializationError("Row kind is not set.");
         }
@@ -95,20 +100,20 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         };
     }
 
-    protected void handleOptions(Rdf.RdfStreamOptions opts) {
+    protected void handleOptions(RdfStreamOptions opts) {
         checkCompatibility(opts, supportedOptions);
         setStreamOptions(opts);
     }
 
-    protected TOut handleTriple(Rdf.RdfTriple triple) {
+    protected TOut handleTriple(RdfTriple triple) {
         throw new JellyException.RdfProtoDeserializationError("Unexpected triple row in stream.");
     }
 
-    protected TOut handleQuad(Rdf.RdfQuad quad) {
+    protected TOut handleQuad(RdfQuad quad) {
         throw new JellyException.RdfProtoDeserializationError("Unexpected quad row in stream.");
     }
 
-    protected TOut handleGraphStart(Rdf.RdfGraphStart graphStart) {
+    protected TOut handleGraphStart(RdfGraphStart graphStart) {
         throw new JellyException.RdfProtoDeserializationError("Unexpected graph start row in stream.");
     }
 
@@ -123,22 +128,22 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
             Class<TDatatype> datatypeClass,
             ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
             NameDecoder<TNode> nameDecoder,
-            Rdf.RdfStreamOptions supportedOptions,
+            RdfStreamOptions supportedOptions,
             BiConsumer<String, TNode> nsHandler
         ) {
             super(datatypeClass, converter, nameDecoder, nsHandler, supportedOptions);
         }
 
         @Override
-        protected void handleOptions(Rdf.RdfStreamOptions opts) {
-            if (!opts.getPhysicalType().equals(Rdf.PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)) {
+        protected void handleOptions(RdfStreamOptions opts) {
+            if (!opts.getPhysicalType().equals(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)) {
                 throw new JellyException.RdfProtoDeserializationError("Incoming stream type is not TRIPLES.");
             }
             super.handleOptions(opts);
         }
 
         @Override
-        protected TTriple handleTriple(Rdf.RdfTriple triple) {
+        protected TTriple handleTriple(RdfTriple triple) {
             return convertTriple(RdfTerm.from(triple));
         }
     }
@@ -150,22 +155,22 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
             Class<TDatatype> datatypeClass,
             ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
             NameDecoder<TNode> nameDecoder,
-            Rdf.RdfStreamOptions supportedOptions,
+            RdfStreamOptions supportedOptions,
             BiConsumer<String, TNode> nsHandler
         ) {
             super(datatypeClass, converter, nameDecoder, nsHandler, supportedOptions);
         }
 
         @Override
-        protected void handleOptions(Rdf.RdfStreamOptions opts) {
-            if (!opts.getPhysicalType().equals(Rdf.PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)) {
+        protected void handleOptions(RdfStreamOptions opts) {
+            if (!opts.getPhysicalType().equals(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)) {
                 throw new JellyException.RdfProtoDeserializationError("Incoming stream type is not QUADS.");
             }
             super.handleOptions(opts);
         }
 
         @Override
-        protected TQuad handleQuad(Rdf.RdfQuad quad) {
+        protected TQuad handleQuad(RdfQuad quad) {
             return convertQuad(RdfTerm.from(quad));
         }
     }
@@ -179,22 +184,22 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
             Class<TDatatype> datatypeClass,
             ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
             NameDecoder<TNode> nameDecoder,
-            Rdf.RdfStreamOptions supportedOptions,
+            RdfStreamOptions supportedOptions,
             BiConsumer<String, TNode> nsHandler
         ) {
             super(datatypeClass, converter, nameDecoder, nsHandler, supportedOptions);
         }
 
         @Override
-        protected void handleOptions(Rdf.RdfStreamOptions opts) {
-            if (!opts.getPhysicalType().equals(Rdf.PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS)) {
+        protected void handleOptions(RdfStreamOptions opts) {
+            if (!opts.getPhysicalType().equals(PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS)) {
                 throw new JellyException.RdfProtoDeserializationError("Incoming stream type is not GRAPHS.");
             }
             super.handleOptions(opts);
         }
 
         @Override
-        protected TQuad handleGraphStart(Rdf.RdfGraphStart graphStart) {
+        protected TQuad handleGraphStart(RdfGraphStart graphStart) {
             var graphStartTerm = RdfTerm.from(graphStart);
             currentGraph = convertGraphTerm(graphStartTerm.graph());
             return null;
@@ -207,7 +212,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         }
 
         @Override
-        protected TQuad handleTriple(Rdf.RdfTriple triple) {
+        protected TQuad handleTriple(RdfTriple triple) {
             if (currentGraph == null) {
                 throw new JellyException.RdfProtoDeserializationError(
                     "Triple in stream without preceding graph start."
@@ -236,22 +241,22 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
             Class<TDatatype> datatypeClass,
             ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
             NameDecoder<TNode> nameDecoder,
-            Rdf.RdfStreamOptions supportedOptions,
+            RdfStreamOptions supportedOptions,
             BiConsumer<String, TNode> nsHandler
         ) {
             super(datatypeClass, converter, nameDecoder, nsHandler, supportedOptions);
         }
 
         @Override
-        protected void handleOptions(Rdf.RdfStreamOptions opts) {
-            if (!opts.getPhysicalType().equals(Rdf.PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS)) {
+        protected void handleOptions(RdfStreamOptions opts) {
+            if (!opts.getPhysicalType().equals(PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS)) {
                 throw new JellyException.RdfProtoDeserializationError("Incoming stream type is not GRAPHS.");
             }
             super.handleOptions(opts);
         }
 
         @Override
-        protected GraphsDecoderOut<TNode, TTriple> handleGraphStart(Rdf.RdfGraphStart graphStart) {
+        protected GraphsDecoderOut<TNode, TTriple> handleGraphStart(RdfGraphStart graphStart) {
             var toEmit = emitBuffer();
             buffer = new ArrayList<>();
             currentGraph = convertGraphTerm(RdfTerm.from(graphStart).graph());
@@ -267,7 +272,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         }
 
         @Override
-        protected GraphsDecoderOut<TNode, TTriple> handleTriple(Rdf.RdfTriple triple) {
+        protected GraphsDecoderOut<TNode, TTriple> handleTriple(RdfTriple triple) {
             if (currentGraph == null) {
                 throw new JellyException.RdfProtoDeserializationError(
                     "Triple in stream without preceding graph start."
