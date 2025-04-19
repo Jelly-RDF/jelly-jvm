@@ -4,17 +4,17 @@ import eu.ostrzyciel.jelly.core.NodeEncoder;
 import eu.ostrzyciel.jelly.core.ProtoEncoderConverter;
 import eu.ostrzyciel.jelly.core.RdfTerm;
 
-public abstract class ProtoEncoderBase<TNode, TTriple, TQuad> {
+public abstract class ProtoEncoderBase<TNode> {
 
     protected final NodeEncoder<TNode> nodeEncoder;
-    protected final ProtoEncoderConverter<TNode, TTriple, TQuad> converter;
+    protected final ProtoEncoderConverter<TNode> converter;
 
     protected final LastNodeHolder<TNode> lastSubject = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastPredicate = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
     protected TNode lastGraph = null;
 
-    protected ProtoEncoderBase(NodeEncoder<TNode> nodeEncoder, ProtoEncoderConverter<TNode, TTriple, TQuad> converter) {
+    protected ProtoEncoderBase(NodeEncoder<TNode> nodeEncoder, ProtoEncoderConverter<TNode> converter) {
         this.nodeEncoder = nodeEncoder;
         this.converter = converter;
     }

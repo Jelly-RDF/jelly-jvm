@@ -3,7 +3,6 @@ package eu.ostrzyciel.jelly.core.utils;
 import eu.ostrzyciel.jelly.core.ProtoDecoderConverter;
 import eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class LogicalStreamTypeUtils {
@@ -20,63 +19,60 @@ public class LogicalStreamTypeUtils {
         return logicalType == other || logicalType.getNumber() % 10 == other.getNumber();
     }
 
-    public static Optional<String> getRdfStaxType(LogicalStreamType logicalType) {
+    public static String getRdfStaxType(LogicalStreamType logicalType) {
         return switch (logicalType) {
-            case LOGICAL_STREAM_TYPE_FLAT_TRIPLES -> Optional.of(STAX_PREFIX + "flatTripleStream");
-            case LOGICAL_STREAM_TYPE_FLAT_QUADS -> Optional.of(STAX_PREFIX + "flatQuadStream");
-            case LOGICAL_STREAM_TYPE_GRAPHS -> Optional.of(STAX_PREFIX + "graphStream");
-            case LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS -> Optional.of(STAX_PREFIX + "subjectGraphStream");
-            case LOGICAL_STREAM_TYPE_DATASETS -> Optional.of(STAX_PREFIX + "datasetStream");
-            case LOGICAL_STREAM_TYPE_NAMED_GRAPHS -> Optional.of(STAX_PREFIX + "namedGraphStream");
-            case LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS -> Optional.of(
-                STAX_PREFIX + "timestampedNamedGraphStream"
-            );
-            default -> Optional.empty();
+            case LOGICAL_STREAM_TYPE_FLAT_TRIPLES -> STAX_PREFIX + "flatTripleStream";
+            case LOGICAL_STREAM_TYPE_FLAT_QUADS -> STAX_PREFIX + "flatQuadStream";
+            case LOGICAL_STREAM_TYPE_GRAPHS -> STAX_PREFIX + "graphStream";
+            case LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS -> STAX_PREFIX + "subjectGraphStream";
+            case LOGICAL_STREAM_TYPE_DATASETS -> STAX_PREFIX + "datasetStream";
+            case LOGICAL_STREAM_TYPE_NAMED_GRAPHS -> STAX_PREFIX + "namedGraphStream";
+            case LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS -> STAX_PREFIX + "timestampedNamedGraphStream";
+            default -> null;
         };
     }
 
-    public static Optional<LogicalStreamType> fromOntologyIri(String iri) {
+    public static LogicalStreamType fromOntologyIri(String iri) {
         if (!iri.startsWith(STAX_PREFIX)) {
-            return Optional.empty();
+            return null;
         }
 
         String typeName = iri.substring(STAX_PREFIX.length());
         return switch (typeName) {
-            case "flatTripleStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES);
-            case "flatQuadStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS);
-            case "graphStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS);
-            case "subjectGraphStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS);
-            case "datasetStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS);
-            case "namedGraphStream" -> Optional.of(LogicalStreamType.LOGICAL_STREAM_TYPE_NAMED_GRAPHS);
-            case "timestampedNamedGraphStream" -> Optional.of(
-                LogicalStreamType.LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS
-            );
-            default -> Optional.empty();
+            case "flatTripleStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES;
+            case "flatQuadStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS;
+            case "graphStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS;
+            case "subjectGraphStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS;
+            case "datasetStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS;
+            case "namedGraphStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_NAMED_GRAPHS;
+            case "timestampedNamedGraphStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS;
+            default -> null;
         };
     }
 
-    public static <TNode, TDatatype, TTriple, TQuad> List<TTriple> getRdfStaxAnnotation(
-        ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
+    public static <TNode, TDatatype> List<TNode> getRdfStaxAnnotation(
+        ProtoDecoderConverter<TNode, TDatatype> converter,
         LogicalStreamType logicalType,
         TNode subjectNode
     ) {
-        return getRdfStaxType(logicalType)
-            .map(typeIri -> {
-                TNode bNode = converter.makeBlankNode(UUID.randomUUID().toString());
-                return List.of(
-                    converter.makeTriple(subjectNode, converter.makeIriNode(STAX_PREFIX + "hasStreamTypeUsage"), bNode),
-                    converter.makeTriple(
-                        bNode,
-                        converter.makeIriNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
-                        converter.makeIriNode(STAX_PREFIX + "RdfStreamTypeUsage")
-                    ),
-                    converter.makeTriple(
-                        bNode,
-                        converter.makeIriNode(STAX_PREFIX + "hasStreamType"),
-                        converter.makeIriNode(typeIri)
-                    )
-                );
-            })
-            .orElseThrow(() -> new IllegalArgumentException("Unsupported logical stream type: " + logicalType));
+        var typeIri = getRdfStaxType(logicalType);
+        if (typeIri == null) {
+            throw new IllegalArgumentException("Unsupported logical stream type: " + logicalType);
+        }
+
+        TNode bNode = converter.makeBlankNode(UUID.randomUUID().toString());
+        return List.of(
+            converter.makeTriple(subjectNode, converter.makeIriNode(STAX_PREFIX + "hasStreamTypeUsage"), bNode),
+            converter.makeTriple(
+                bNode,
+                converter.makeIriNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                converter.makeIriNode(STAX_PREFIX + "RdfStreamTypeUsage")
+            ),
+            converter.makeTriple(
+                bNode,
+                converter.makeIriNode(STAX_PREFIX + "hasStreamType"),
+                converter.makeIriNode(typeIri)
+            )
+        );
     }
 }

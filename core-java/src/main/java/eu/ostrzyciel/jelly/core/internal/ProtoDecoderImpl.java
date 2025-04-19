@@ -3,6 +3,7 @@ package eu.ostrzyciel.jelly.core.internal;
 import static eu.ostrzyciel.jelly.core.JellyOptions.*;
 
 import eu.ostrzyciel.jelly.core.*;
+import eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType;
 import eu.ostrzyciel.jelly.core.proto.v1.PhysicalStreamType;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfQuad;
@@ -11,17 +12,17 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfTriple;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 
-public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
-    extends ProtoDecoder<TNode, TDatatype, TTriple, TQuad, TOut> {
+public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNode, TDatatype> {
 
     protected final BiConsumer<String, TNode> namespaceHandler;
-    private RdfStreamOptions supportedOptions;
+    protected final RdfStreamOptions supportedOptions;
+
+    private RdfStreamOptions currentOptions = null;
 
     public ProtoDecoderImpl(
-        ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
+        ProtoDecoderConverter<TNode, TDatatype> converter,
         NameDecoder<TNode> nameDecoder,
         BiConsumer<String, TNode> namespaceHandler,
         RdfStreamOptions supportedOptions
@@ -33,103 +34,105 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
 
     @Override
     protected int getNameTableSize() {
-        return Optional.ofNullable(supportedOptions)
-            .map(RdfStreamOptions::getMaxNameTableSize)
-            .orElse(SMALL_NAME_TABLE_SIZE);
+        if (currentOptions == null) {
+            return SMALL_NAME_TABLE_SIZE;
+        }
+
+        return currentOptions.getMaxNameTableSize();
     }
 
     @Override
     protected int getPrefixTableSize() {
-        return Optional.ofNullable(supportedOptions)
-            .map(RdfStreamOptions::getMaxPrefixTableSize)
-            .orElse(SMALL_PREFIX_TABLE_SIZE);
+        if (currentOptions == null) {
+            return SMALL_PREFIX_TABLE_SIZE;
+        }
+
+        return currentOptions.getMaxPrefixTableSize();
     }
 
     @Override
     protected int getDatatypeTableSize() {
-        return Optional.ofNullable(supportedOptions)
-            .map(RdfStreamOptions::getMaxDatatypeTableSize)
-            .orElse(SMALL_DT_TABLE_SIZE);
+        if (currentOptions == null) {
+            return SMALL_DT_TABLE_SIZE;
+        }
+
+        return currentOptions.getMaxDatatypeTableSize();
     }
 
     @Override
     public RdfStreamOptions getStreamOptions() {
-        return supportedOptions;
+        return currentOptions;
     }
 
-    public void setStreamOptions(RdfStreamOptions options) {
-        this.supportedOptions = options;
+    private void setStreamOptions(RdfStreamOptions options) {
+        if (currentOptions != null) {
+            return;
+        }
+
+        this.currentOptions = options;
     }
 
     @Override
-    public TOut ingestRow(RdfStreamRow row) {
+    public void ingestRow(RdfStreamRow row) {
         if (row == null) {
             throw new RdfProtoDeserializationError("Row kind is not set.");
         }
 
-        return switch (row.getRowCase()) {
-            case OPTIONS -> {
-                handleOptions(row.getOptions());
-                yield null;
-            }
-            case NAME -> {
-                nameDecoder.updateNames(row.getName());
-                yield null;
-            }
-            case PREFIX -> {
-                nameDecoder.updatePrefixes(row.getPrefix());
-                yield null;
-            }
+        switch (row.getRowCase()) {
+            case OPTIONS -> handleOptions(row.getOptions());
+            case NAME -> nameDecoder.updateNames(row.getName());
+            case PREFIX -> nameDecoder.updatePrefixes(row.getPrefix());
             case DATATYPE -> {
                 final var dtRow = row.getDatatype();
                 datatypeLookup.update(dtRow.getId(), converter.makeDatatype(dtRow.getValue()));
-                yield null;
+            }
+            case NAMESPACE -> {
+                final var nsRow = row.getNamespace();
+                final var iri = nsRow.getValue();
+                namespaceHandler.accept(nsRow.getName(), nameDecoder.decode(iri.getNameId(), iri.getPrefixId()));
             }
             case TRIPLE -> handleTriple(row.getTriple());
             case QUAD -> handleQuad(row.getQuad());
             case GRAPH_START -> handleGraphStart(row.getGraphStart());
             case GRAPH_END -> handleGraphEnd();
-            case NAMESPACE -> {
-                final var nsRow = row.getNamespace();
-                final var iri = nsRow.getValue();
-                namespaceHandler.accept(nsRow.getName(), nameDecoder.decode(iri.getNameId(), iri.getPrefixId()));
-                yield null;
-            }
             case ROW_NOT_SET -> throw new RdfProtoDeserializationError("Row kind is not set.");
-        };
+        }
     }
 
-    protected void handleOptions(RdfStreamOptions opts) {
-        checkCompatibility(opts, supportedOptions);
-        setStreamOptions(opts);
+    protected void handleOptions(RdfStreamOptions options) {
+        checkCompatibility(options, supportedOptions);
+        setStreamOptions(options);
     }
 
-    protected TOut handleTriple(RdfTriple triple) {
+    protected void handleTriple(RdfTriple triple) {
         throw new RdfProtoDeserializationError("Unexpected triple row in stream.");
     }
 
-    protected TOut handleQuad(RdfQuad quad) {
+    protected void handleQuad(RdfQuad quad) {
         throw new RdfProtoDeserializationError("Unexpected quad row in stream.");
     }
 
-    protected TOut handleGraphStart(RdfGraphStart graphStart) {
+    protected void handleGraphStart(RdfGraphStart graphStart) {
         throw new RdfProtoDeserializationError("Unexpected graph start row in stream.");
     }
 
-    protected TOut handleGraphEnd() {
+    protected void handleGraphEnd() {
         throw new RdfProtoDeserializationError("Unexpected graph end row in stream.");
     }
 
-    public static final class TriplesDecoder<TNode, TDatatype, TTriple, TQuad>
-        extends ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TTriple> {
+    public static final class TriplesDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
+
+        private final ProtoHandler.TripleProtoHandler<TNode> protoHandler;
 
         public TriplesDecoder(
-            ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
+            ProtoDecoderConverter<TNode, TDatatype> converter,
             NameDecoder<TNode> nameDecoder,
             RdfStreamOptions supportedOptions,
-            BiConsumer<String, TNode> nsHandler
+            BiConsumer<String, TNode> nsHandler,
+            ProtoHandler.TripleProtoHandler<TNode> protoHandler
         ) {
             super(converter, nameDecoder, nsHandler, supportedOptions);
+            this.protoHandler = protoHandler;
         }
 
         @Override
@@ -141,21 +144,29 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         }
 
         @Override
-        protected TTriple handleTriple(RdfTriple triple) {
-            return convertTriple(RdfTerm.from(triple));
+        protected void handleTriple(RdfTriple triple) {
+            final var tripleTerm = RdfTerm.from(triple);
+            protoHandler.handleTriple(
+                convertSubjectTermWrapped(tripleTerm.subject()),
+                convertPredicateTermWrapped(tripleTerm.predicate()),
+                convertObjectTermWrapped(tripleTerm.object())
+            );
         }
     }
 
-    public static final class QuadsDecoder<TNode, TDatatype, TTriple, TQuad>
-        extends ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TQuad> {
+    public static final class QuadsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
+
+        private final ProtoHandler.QuadProtoHandler<TNode> protoHandler;
 
         public QuadsDecoder(
-            ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
+            ProtoDecoderConverter<TNode, TDatatype> converter,
             NameDecoder<TNode> nameDecoder,
             RdfStreamOptions supportedOptions,
-            BiConsumer<String, TNode> nsHandler
+            BiConsumer<String, TNode> nsHandler,
+            ProtoHandler.QuadProtoHandler<TNode> protoHandler
         ) {
             super(converter, nameDecoder, nsHandler, supportedOptions);
+            this.protoHandler = protoHandler;
         }
 
         @Override
@@ -167,23 +178,31 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         }
 
         @Override
-        protected TQuad handleQuad(RdfQuad quad) {
-            return convertQuad(RdfTerm.from(quad));
+        protected void handleQuad(RdfQuad quad) {
+            final var quadTerm = RdfTerm.from(quad);
+            protoHandler.handleQuad(
+                convertSubjectTermWrapped(quadTerm.subject()),
+                convertPredicateTermWrapped(quadTerm.predicate()),
+                convertObjectTermWrapped(quadTerm.object()),
+                convertGraphTerm(quadTerm.graph())
+            );
         }
     }
 
-    public static final class GraphsAsQuadsDecoder<TNode, TDatatype, TTriple, TQuad>
-        extends ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TQuad> {
+    public static final class GraphsAsQuadsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
+        private final ProtoHandler.QuadProtoHandler<TNode> protoHandler;
         private TNode currentGraph = null;
 
         public GraphsAsQuadsDecoder(
-            ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
+            ProtoDecoderConverter<TNode, TDatatype> converter,
             NameDecoder<TNode> nameDecoder,
             RdfStreamOptions supportedOptions,
-            BiConsumer<String, TNode> nsHandler
+            BiConsumer<String, TNode> nsHandler,
+            ProtoHandler.QuadProtoHandler<TNode> protoHandler
         ) {
             super(converter, nameDecoder, nsHandler, supportedOptions);
+            this.protoHandler = protoHandler;
         }
 
         @Override
@@ -195,49 +214,47 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         }
 
         @Override
-        protected TQuad handleGraphStart(RdfGraphStart graphStart) {
+        protected void handleGraphStart(RdfGraphStart graphStart) {
             final var graphStartTerm = RdfTerm.from(graphStart);
             currentGraph = convertGraphTerm(graphStartTerm.graph());
-            return null;
         }
 
         @Override
-        protected TQuad handleGraphEnd() {
+        protected void handleGraphEnd() {
             currentGraph = null;
-            return null;
         }
 
         @Override
-        protected TQuad handleTriple(RdfTriple triple) {
+        protected void handleTriple(RdfTriple triple) {
             if (currentGraph == null) {
                 throw new RdfProtoDeserializationError("Triple in stream without preceding graph start.");
             }
 
             final var tripleTerm = RdfTerm.from(triple);
-            return converter.makeQuad(
-                convertTermWrapped(tripleTerm.subject(), lastSubject),
-                convertTermWrapped(tripleTerm.predicate(), lastPredicate),
-                convertTermWrapped(tripleTerm.object(), lastObject),
+            protoHandler.handleQuad(
+                convertSubjectTermWrapped(tripleTerm.subject()),
+                convertPredicateTermWrapped(tripleTerm.predicate()),
+                convertObjectTermWrapped(tripleTerm.object()),
                 currentGraph
             );
         }
     }
 
-    public record GraphsDecoderOut<TNode, TTriple>(TNode graph, List<TTriple> triples) {}
+    public static final class GraphsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-    public static final class GraphsDecoder<TNode, TDatatype, TTriple, TQuad>
-        extends ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, GraphsDecoderOut<TNode, TTriple>> {
-
+        private final ProtoHandler.GraphProtoHandler<TNode> protoHandler;
         private TNode currentGraph = null;
-        private List<TTriple> buffer = new ArrayList<>();
+        private final List<TNode> buffer = new ArrayList<>();
 
         public GraphsDecoder(
-            ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> converter,
+            ProtoDecoderConverter<TNode, TDatatype> converter,
             NameDecoder<TNode> nameDecoder,
             RdfStreamOptions supportedOptions,
-            BiConsumer<String, TNode> nsHandler
+            BiConsumer<String, TNode> nsHandler,
+            ProtoHandler.GraphProtoHandler<TNode> protoHandler
         ) {
             super(converter, nameDecoder, nsHandler, supportedOptions);
+            this.protoHandler = protoHandler;
         }
 
         @Override
@@ -249,40 +266,137 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype, TTriple, TQuad, TOut>
         }
 
         @Override
-        protected GraphsDecoderOut<TNode, TTriple> handleGraphStart(RdfGraphStart graphStart) {
-            final var toEmit = emitBuffer();
-            buffer = new ArrayList<>();
+        protected void handleGraphStart(RdfGraphStart graphStart) {
+            emitBuffer();
+            buffer.clear();
             currentGraph = convertGraphTerm(RdfTerm.from(graphStart).graph());
-            return toEmit;
         }
 
         @Override
-        protected GraphsDecoderOut<TNode, TTriple> handleGraphEnd() {
-            final var toEmit = emitBuffer();
-            buffer = new ArrayList<>();
+        protected void handleGraphEnd() {
+            emitBuffer();
+            buffer.clear();
             currentGraph = null;
-            return toEmit;
         }
 
         @Override
-        protected GraphsDecoderOut<TNode, TTriple> handleTriple(RdfTriple triple) {
+        protected void handleTriple(RdfTriple triple) {
             if (currentGraph == null) {
                 throw new RdfProtoDeserializationError("Triple in stream without preceding graph start.");
             }
 
             buffer.add(convertTriple(RdfTerm.from(triple)));
+        }
+
+        private void emitBuffer() {
+            if (buffer.isEmpty()) {
+                return;
+            }
+
+            if (currentGraph == null) {
+                throw new RdfProtoDeserializationError("End of graph encountered before a start.");
+            }
+
+            protoHandler.handleGraph(currentGraph, buffer);
+        }
+    }
+
+    public static final class AnyStatementDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
+
+        private final ProtoHandler.AnyProtoHandler<TNode> protoHandler;
+        private ProtoDecoderImpl<TNode, TDatatype> delegateDecoder = null;
+
+        public AnyStatementDecoder(
+            ProtoDecoderConverter<TNode, TDatatype> converter,
+            NameDecoder<TNode> nameDecoder,
+            BiConsumer<String, TNode> namespaceHandler,
+            RdfStreamOptions supportedOptions,
+            ProtoHandler.AnyProtoHandler<TNode> protoHandler
+        ) {
+            super(converter, nameDecoder, namespaceHandler, supportedOptions);
+            this.protoHandler = protoHandler;
+        }
+
+        @Override
+        public RdfStreamOptions getStreamOptions() {
+            if (delegateDecoder != null) {
+                return delegateDecoder.getStreamOptions();
+            }
+
             return null;
         }
 
-        private GraphsDecoderOut<TNode, TTriple> emitBuffer() {
-            if (buffer.isEmpty()) {
-                return null;
-            } else if (currentGraph == null) {
-                throw new RdfProtoDeserializationError("End of graph encountered before a start.");
-            } else {
-                return new GraphsDecoderOut<>(currentGraph, List.copyOf(buffer));
+        @Override
+        public void ingestRow(RdfStreamRow row) {
+            if (row.hasOptions()) {
+                handleOptions(row.getOptions());
+                delegateDecoder.ingestRow(row);
+                return;
+            }
+
+            if (delegateDecoder == null) {
+                throw new RdfProtoDeserializationError("Stream options are not set.");
+            }
+
+            delegateDecoder.ingestRow(row);
+        }
+
+        @Override
+        protected void handleOptions(RdfStreamOptions options) {
+            final var newSupportedOptions = supportedOptions
+                .toBuilder()
+                .setLogicalType(LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED)
+                .build();
+
+            checkCompatibility(options, newSupportedOptions);
+            if (delegateDecoder != null) {
+                return;
+            }
+
+            switch (options.getPhysicalType()) {
+                case PHYSICAL_STREAM_TYPE_TRIPLES -> delegateDecoder = new TriplesDecoder<>(
+                    converter,
+                    nameDecoder,
+                    options,
+                    namespaceHandler,
+                    protoHandler
+                );
+                case PHYSICAL_STREAM_TYPE_QUADS -> delegateDecoder = new QuadsDecoder<>(
+                    converter,
+                    nameDecoder,
+                    options,
+                    namespaceHandler,
+                    protoHandler
+                );
+                case PHYSICAL_STREAM_TYPE_GRAPHS -> delegateDecoder = new GraphsAsQuadsDecoder<>(
+                    converter,
+                    nameDecoder,
+                    options,
+                    namespaceHandler,
+                    protoHandler
+                );
+                default -> throw new RdfProtoDeserializationError("Incoming physical stream type is not recognized.");
             }
         }
+
+        @Override
+        protected void handleTriple(RdfTriple triple) {
+            delegateDecoder.handleTriple(triple);
+        }
+
+        @Override
+        protected void handleQuad(RdfQuad quad) {
+            delegateDecoder.handleQuad(quad);
+        }
+
+        @Override
+        protected void handleGraphStart(RdfGraphStart graphStart) {
+            delegateDecoder.handleGraphStart(graphStart);
+        }
+
+        @Override
+        protected void handleGraphEnd() {
+            delegateDecoder.handleGraphEnd();
+        }
     }
-    // TODO: AnyStatementDecoder - no idea how to implement Triple Or Quad, we are not in scala world
 }

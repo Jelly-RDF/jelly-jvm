@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core;
 
-public interface ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> {
+public interface ProtoDecoderConverter<TNode, TDatatype> {
     TNode makeSimpleLiteral(String lex);
     TNode makeLangLiteral(String lex, String lang);
     TNode makeDtLiteral(String lex, TDatatype dt);
@@ -9,6 +9,6 @@ public interface ProtoDecoderConverter<TNode, TDatatype, TTriple, TQuad> {
     TNode makeIriNode(String iri);
     TNode makeTripleNode(TNode s, TNode p, TNode o);
     TNode makeDefaultGraphNode();
-    TTriple makeTriple(TNode s, TNode p, TNode o);
-    TQuad makeQuad(TNode s, TNode p, TNode o, TNode g);
+    TNode makeTriple(TNode s, TNode p, TNode o);
+    TNode makeQuad(TNode s, TNode p, TNode o, TNode g);
 }

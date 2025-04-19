@@ -6,9 +6,7 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 import java.util.Collection;
 
-public abstract class ProtoEncoder<TNode, TTriple, TQuad>
-    extends ProtoEncoderBase<TNode, TTriple, TQuad>
-    implements RowBufferAppender {
+public abstract class ProtoEncoder<TNode> extends ProtoEncoderBase<TNode> implements RowBufferAppender, ProtoHandler.AnyProtoHandler<TNode> {
 
     public record Params(
         RdfStreamOptions options,
@@ -20,24 +18,20 @@ public abstract class ProtoEncoder<TNode, TTriple, TQuad>
     protected final boolean enableNamespaceDeclarations;
     protected final Collection<RdfStreamRow> appendableRowBuffer;
 
-    protected ProtoEncoder(
-        NodeEncoder<TNode> nodeEncoder,
-        ProtoEncoderConverter<TNode, TTriple, TQuad> converter,
-        Params params
-    ) {
+    protected ProtoEncoder(NodeEncoder<TNode> nodeEncoder, ProtoEncoderConverter<TNode> converter, Params params) {
         super(nodeEncoder, converter);
         this.options = params.options;
         this.enableNamespaceDeclarations = params.enableNamespaceDeclarations;
         this.appendableRowBuffer = params.appendableRowBuffer;
     }
 
-    public final void addTripleStatement(TTriple triple) {
+    public final void addTripleStatement(TNode triple) {
         addTripleStatement(converter.getTstS(triple), converter.getTstP(triple), converter.getTstO(triple));
     }
 
     public abstract void addTripleStatement(TNode subject, TNode predicate, TNode object);
 
-    public final void addQuadStatement(TQuad quad) {
+    public final void addQuadStatement(TNode quad) {
         addQuadStatement(
             converter.getQstS(quad),
             converter.getQstP(quad),

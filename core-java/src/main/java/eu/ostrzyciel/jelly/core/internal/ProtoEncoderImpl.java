@@ -8,14 +8,14 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 import java.util.Collection;
 
-public class ProtoEncoderImpl<TNode, TTriple, TQuad> extends ProtoEncoder<TNode, TTriple, TQuad> {
+public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;
     private final Collection<RdfStreamRow> rowBuffer;
 
     protected ProtoEncoderImpl(
         NodeEncoder<TNode> nodeEncoder,
-        ProtoEncoderConverter<TNode, TTriple, TQuad> converter,
+        ProtoEncoderConverter<TNode> converter,
         ProtoEncoder.Params params
     ) {
         super(nodeEncoder, converter, params);
@@ -91,6 +91,25 @@ public class ProtoEncoderImpl<TNode, TTriple, TQuad> extends ProtoEncoder<TNode,
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
         rowBuffer.add(RdfStreamRow.newBuilder().setDatatype(datatypeEntry).build());
+    }
+
+    @Override
+    public void handleGraph(TNode graph, Collection<TNode> triples) {
+        startGraph(graph);
+        for (TNode triple : triples) {
+            addTripleStatement(triple);
+        }
+        endGraph();
+    }
+
+    @Override
+    public void handleQuad(TNode subject, TNode predicate, TNode object, TNode graph) {
+        addQuadStatement(subject, predicate, object, graph);
+    }
+
+    @Override
+    public void handleTriple(TNode subject, TNode predicate, TNode object) {
+        addTripleStatement(subject, predicate, object);
     }
 
     private void emitOptions() {
