@@ -22,7 +22,7 @@ public abstract class ProtoDecoder<TNode, TDatatype, TTriple, TQuad, TOut>
     public abstract TOut ingestRowFlat(RdfStreamRow row);
 
     public final Optional<TOut> ingestRow(RdfStreamRow row) {
-        var flat = ingestRowFlat(row);
+        final var flat = ingestRowFlat(row);
         return Optional.ofNullable(flat);
     }
 }

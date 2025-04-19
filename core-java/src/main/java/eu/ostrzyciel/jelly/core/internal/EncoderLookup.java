@@ -150,7 +150,7 @@ final class EncoderLookup {
      * @return The entry.
      */
     public LookupEntry getOrAddEntry(String key) {
-        var value = map.get(key);
+        final var value = map.get(key);
         if (value != null) {
             // The entry is already in the table, just update the access order
             onAccess(value.getId);
@@ -184,7 +184,7 @@ final class EncoderLookup {
      * @return The entry.
      */
     public LookupEntry getOrAddEntryTranscoder(String key, int evictHint) {
-        var value = map.get(key);
+        final var value = map.get(key);
         if (value != null) {
             onAccess(value.getId);
             return value;

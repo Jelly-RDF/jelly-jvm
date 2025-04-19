@@ -155,10 +155,10 @@ public class JellyOptions {
     }
 
     private static void checkLogicalStreamType(RdfStreamOptions options, LogicalStreamType expectedLogicalType) {
-        var logicalType = options.getLogicalType();
-        var physicalType = options.getPhysicalType();
+        final var logicalType = options.getLogicalType();
+        final var physicalType = options.getPhysicalType();
 
-        var conflict =
+        final var conflict =
             switch (logicalType) {
                 case LOGICAL_STREAM_TYPE_FLAT_TRIPLES, LOGICAL_STREAM_TYPE_GRAPHS -> switch (physicalType) {
                     case PHYSICAL_STREAM_TYPE_QUADS, PHYSICAL_STREAM_TYPE_GRAPHS -> true;

@@ -1,9 +1,8 @@
 package eu.ostrzyciel.jelly.core.internal;
 
-import eu.ostrzyciel.jelly.core.JellyException;
 import eu.ostrzyciel.jelly.core.NodeEncoder;
+import eu.ostrzyciel.jelly.core.RdfProtoSerializationError;
 import eu.ostrzyciel.jelly.core.RdfTerm;
-import eu.ostrzyciel.jelly.core.proto.v1.Rdf;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
@@ -123,7 +122,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     public RdfTerm.Iri makeIri(String iri) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
-            var nameEntry = nameLookup.getOrAddEntry(iri);
+            final var nameEntry = nameLookup.getOrAddEntry(iri);
             if (nameEntry.newEntry) {
                 bufferAppender.appendNameEntry(RdfNameEntry.newBuilder().setId(nameEntry.setId).setValue(iri).build());
             }
@@ -138,7 +137,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
 
         // Slow path, with splitting out the prefix
-        var cachedNode = Objects.requireNonNull(iriNodeCache).computeIfAbsent(iri, k -> new DependentNode());
+        final var cachedNode = Objects.requireNonNull(iriNodeCache).computeIfAbsent(iri, k -> new DependentNode());
         // Check if the value is still valid
         if (
             cachedNode.encoded != null &&
@@ -168,8 +167,8 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             postfix = iri.substring(i + 1);
         }
 
-        var prefixEntry = Objects.requireNonNull(prefixLookup).getOrAddEntry(prefix);
-        var nameEntry = nameLookup.getOrAddEntry(postfix);
+        final var prefixEntry = Objects.requireNonNull(prefixLookup).getOrAddEntry(prefix);
+        final var nameEntry = nameLookup.getOrAddEntry(postfix);
         if (prefixEntry.newEntry) {
             bufferAppender.appendPrefixEntry(
                 RdfPrefixEntry.newBuilder().setId(prefixEntry.setId).setValue(prefix).build()
@@ -213,13 +212,13 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     @Override
     public RdfTerm.DtLiteral makeDtLiteral(TNode key, String lex, String datatypeName) {
         if (datatypeLookup.size == 0) {
-            throw JellyException.rdfProtoSerializationError(
+            throw new RdfProtoSerializationError(
                 "Datatype literals cannot be " +
                 "encoded when the datatype table is disabled. Set the datatype table size " +
                 "to a positive value."
             );
         }
-        var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
+        final var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode());
         // Check if the value is still valid
         if (
             cachedNode.encoded != null &&
@@ -230,7 +229,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
 
         // The node is not encoded, but we may already have the datatype encoded
-        var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
+        final var dtEntry = datatypeLookup.getOrAddEntry(datatypeName);
         if (dtEntry.newEntry) {
             bufferAppender.appendDatatypeEntry(
                 RdfDatatypeEntry.newBuilder().setId(dtEntry.setId).setValue(datatypeName).build()

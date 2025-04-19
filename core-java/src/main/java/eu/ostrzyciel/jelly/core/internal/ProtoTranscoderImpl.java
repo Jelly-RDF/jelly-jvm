@@ -47,7 +47,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
         for (RdfStreamRow row : frame.getRowsList()) {
             processRow(row);
         }
-        var newFrame = RdfStreamFrame.newBuilder().addAllRows(rowBuffer).putAllMetadata(frame.getMetadataMap()).build();
+        final var newFrame = RdfStreamFrame.newBuilder().addAllRows(rowBuffer).putAllMetadata(frame.getMetadataMap()).build();
         rowBuffer.clear();
         return List.of(newFrame);
     }
@@ -63,13 +63,13 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
             case NAME -> handleName(row);
             case PREFIX -> handlePrefix(row);
             case DATATYPE -> handleDatatype(row);
-            case ROW_NOT_SET -> throw new JellyException.RdfProtoTranscodingError("Row not set");
+            case ROW_NOT_SET -> throw new RdfProtoTranscodingError("Row not set");
         }
     }
 
     private void handleName(RdfStreamRow row) {
-        var name = row.getName();
-        var entry = nameLookup.addEntry(name.getId(), name.getValue());
+        final var name = row.getName();
+        final var entry = nameLookup.addEntry(name.getId(), name.getValue());
         if (!entry.newEntry) {
             return;
         }
@@ -79,13 +79,13 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
             return;
         }
 
-        var newName = RdfNameEntry.newBuilder().setId(entry.setId).setValue(name.getValue()).build();
+        final var newName = RdfNameEntry.newBuilder().setId(entry.setId).setValue(name.getValue()).build();
         rowBuffer.add(RdfStreamRow.newBuilder().setName(newName).build());
     }
 
     private void handlePrefix(RdfStreamRow row) {
-        var prefix = row.getPrefix();
-        var entry = prefixLookup.addEntry(prefix.getId(), prefix.getValue());
+        final var prefix = row.getPrefix();
+        final var entry = prefixLookup.addEntry(prefix.getId(), prefix.getValue());
         if (!entry.newEntry) {
             return;
         }
@@ -95,13 +95,13 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
             return;
         }
 
-        var newPrefix = RdfPrefixEntry.newBuilder().setId(entry.setId).setValue(prefix.getValue()).build();
+        final var newPrefix = RdfPrefixEntry.newBuilder().setId(entry.setId).setValue(prefix.getValue()).build();
         rowBuffer.add(RdfStreamRow.newBuilder().setPrefix(newPrefix).build());
     }
 
     private void handleDatatype(RdfStreamRow row) {
-        var datatype = row.getDatatype();
-        var entry = datatypeLookup.addEntry(datatype.getId(), datatype.getValue());
+        final var datatype = row.getDatatype();
+        final var entry = datatypeLookup.addEntry(datatype.getId(), datatype.getValue());
         if (!entry.newEntry) {
             return;
         }
@@ -111,7 +111,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
             return;
         }
 
-        var newDatatype = RdfDatatypeEntry.newBuilder().setId(entry.setId).setValue(datatype.getValue()).build();
+        final var newDatatype = RdfDatatypeEntry.newBuilder().setId(entry.setId).setValue(datatype.getValue()).build();
         rowBuffer.add(RdfStreamRow.newBuilder().setDatatype(newDatatype).build());
     }
 
@@ -122,50 +122,50 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
 
     private void handleTriple(RdfStreamRow row) {
         this.hasChangedTerms = false;
-        var triple = RdfTerm.from(row.getTriple());
+        final var triple = RdfTerm.from(row.getTriple());
 
-        var s1 = handleSpoTerm(triple.subject());
-        var p1 = handleSpoTerm(triple.predicate());
-        var o1 = handleSpoTerm(triple.object());
+        final var s1 = handleSpoTerm(triple.subject());
+        final var p1 = handleSpoTerm(triple.predicate());
+        final var o1 = handleSpoTerm(triple.object());
 
         if (!hasChangedTerms) {
             rowBuffer.add(row);
             return;
         }
 
-        var newTriple = new RdfTerm.Triple(s1, p1, o1);
+        final var newTriple = new RdfTerm.Triple(s1, p1, o1);
         rowBuffer.add(RdfStreamRow.newBuilder().setTriple(newTriple.toProto()).build());
     }
 
     private void handleQuad(RdfStreamRow row) {
         this.hasChangedTerms = false;
-        var quad = RdfTerm.from(row.getQuad());
+        final var quad = RdfTerm.from(row.getQuad());
 
-        var s1 = handleSpoTerm(quad.subject());
-        var p1 = handleSpoTerm(quad.predicate());
-        var o1 = handleSpoTerm(quad.object());
-        var g1 = handleGraphTerm(quad.graph());
+        final var s1 = handleSpoTerm(quad.subject());
+        final var p1 = handleSpoTerm(quad.predicate());
+        final var o1 = handleSpoTerm(quad.object());
+        final var g1 = handleGraphTerm(quad.graph());
 
         if (!hasChangedTerms) {
             rowBuffer.add(row);
             return;
         }
 
-        var newQuad = new RdfTerm.Quad(s1, p1, o1, g1);
+        final var newQuad = new RdfTerm.Quad(s1, p1, o1, g1);
         rowBuffer.add(RdfStreamRow.newBuilder().setQuad(newQuad.toProto()).build());
     }
 
     private void handleGraphStart(RdfStreamRow row) {
         this.hasChangedTerms = false;
-        var graphStart = RdfTerm.from(row.getGraphStart());
+        final var graphStart = RdfTerm.from(row.getGraphStart());
 
-        var g1 = handleGraphTerm(graphStart.graph());
+        final var g1 = handleGraphTerm(graphStart.graph());
         if (!hasChangedTerms) {
             rowBuffer.add(row);
             return;
         }
 
-        var newGraphStart = new RdfTerm.GraphStart(g1);
+        final var newGraphStart = new RdfTerm.GraphStart(g1);
         rowBuffer.add(RdfStreamRow.newBuilder().setGraphStart(newGraphStart.toProto()).build());
     }
 
@@ -250,7 +250,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
     private void handleOptions(RdfStreamOptions options) {
         if (supportedInputOptions != null) {
             if (outputOptions.getPhysicalType() != options.getPhysicalType()) {
-                throw new JellyException.RdfProtoDeserializationError(
+                throw new RdfProtoDeserializationError(
                     "Input stream has a different physical type than the output. Input: %s output: %s".formatted(
                             options.getPhysicalType(),
                             outputOptions.getPhysicalType()
@@ -265,7 +265,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
         if (inputUsesPrefixes) {
             prefixLookup.newInputStream(options.getMaxPrefixTableSize());
         } else if (outputOptions.getMaxPrefixTableSize() > 0) {
-            throw new JellyException.RdfProtoTranscodingError(
+            throw new RdfProtoTranscodingError(
                 "Output stream uses prefixes, but the input stream does not."
             );
         }

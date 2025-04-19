@@ -28,7 +28,7 @@ public sealed interface RdfTerm {
     }
 
     static Triple from(RdfTriple triple) {
-        var subject =
+        final var subject =
             switch (triple.getSubjectCase()) {
                 case S_IRI -> from(triple.getSIri());
                 case S_BNODE -> from(triple.getSBnode());
@@ -37,7 +37,7 @@ public sealed interface RdfTerm {
                 case SUBJECT_NOT_SET -> null;
             };
 
-        var predicate =
+        final var predicate =
             switch (triple.getPredicateCase()) {
                 case P_IRI -> from(triple.getPIri());
                 case P_BNODE -> from(triple.getPBnode());
@@ -46,7 +46,7 @@ public sealed interface RdfTerm {
                 case PREDICATE_NOT_SET -> null;
             };
 
-        var object =
+        final var object =
             switch (triple.getObjectCase()) {
                 case O_IRI -> from(triple.getOIri());
                 case O_BNODE -> from(triple.getOBnode());
@@ -59,7 +59,7 @@ public sealed interface RdfTerm {
     }
 
     static GraphStart from(RdfGraphStart graphStart) {
-        var graph =
+        final var graph =
             switch (graphStart.getGraphCase()) {
                 case G_IRI -> from(graphStart.getGIri());
                 case G_BNODE -> from(graphStart.getGBnode());
@@ -80,7 +80,7 @@ public sealed interface RdfTerm {
     }
 
     static Quad from(RdfQuad quad) {
-        var subject =
+        final var subject =
             switch (quad.getSubjectCase()) {
                 case S_IRI -> from(quad.getSIri());
                 case S_BNODE -> from(quad.getSBnode());
@@ -89,7 +89,7 @@ public sealed interface RdfTerm {
                 case SUBJECT_NOT_SET -> null;
             };
 
-        var predicate =
+        final var predicate =
             switch (quad.getPredicateCase()) {
                 case P_IRI -> from(quad.getPIri());
                 case P_BNODE -> from(quad.getPBnode());
@@ -98,7 +98,7 @@ public sealed interface RdfTerm {
                 case PREDICATE_NOT_SET -> null;
             };
 
-        var object =
+        final var object =
             switch (quad.getObjectCase()) {
                 case O_IRI -> from(quad.getOIri());
                 case O_BNODE -> from(quad.getOBnode());
@@ -107,7 +107,7 @@ public sealed interface RdfTerm {
                 case OBJECT_NOT_SET -> null;
             };
 
-        var graph =
+        final var graph =
             switch (quad.getGraphCase()) {
                 case G_IRI -> from(quad.getGIri());
                 case G_BNODE -> from(quad.getGBnode());
@@ -382,7 +382,7 @@ public sealed interface RdfTerm {
 
     record Triple(SpoTerm subject, SpoTerm predicate, SpoTerm object) implements SpoTerm {
         public RdfTriple toProto() {
-            var tripleBuilder = RdfTriple.newBuilder();
+            final var tripleBuilder = RdfTriple.newBuilder();
 
             subject.writeSubject(tripleBuilder);
             predicate.writePredicate(tripleBuilder);
@@ -424,7 +424,7 @@ public sealed interface RdfTerm {
 
     record GraphStart(GraphTerm graph) implements GraphMarkerTerm {
         public RdfGraphStart toProto() {
-            var graphBuilder = RdfGraphStart.newBuilder();
+            final var graphBuilder = RdfGraphStart.newBuilder();
             graph.writeGraph(graphBuilder);
             return graphBuilder.build();
         }
@@ -454,7 +454,7 @@ public sealed interface RdfTerm {
 
     record Quad(SpoTerm subject, SpoTerm predicate, SpoTerm object, GraphTerm graph) implements RdfTerm {
         public RdfQuad toProto() {
-            var quadBuilder = RdfQuad.newBuilder();
+            final var quadBuilder = RdfQuad.newBuilder();
 
             subject.writeSubject(quadBuilder);
             predicate.writePredicate(quadBuilder);
