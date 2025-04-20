@@ -10,14 +10,26 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfTriple;
 
 public sealed interface RdfTerm {
     static Iri from(RdfIri iri) {
+        if (iri == null) {
+            return null;
+        }
+
         return new Iri(iri.getPrefixId(), iri.getNameId());
     }
 
     static BNode from(String bNode) {
+        if (bNode == null) {
+            return null;
+        }
+
         return new BNode(bNode);
     }
 
     static LiteralTerm from(RdfLiteral literal) {
+        if (literal == null) {
+            return null;
+        }
+
         if (literal.hasLangtag()) {
             return new LanguageLiteral(literal.getLex(), literal.getLangtag());
         } else if (literal.hasDatatype()) {
@@ -28,6 +40,10 @@ public sealed interface RdfTerm {
     }
 
     static Triple from(RdfTriple triple) {
+        if (triple == null) {
+            return null;
+        }
+
         final var subject =
             switch (triple.getSubjectCase()) {
                 case S_IRI -> from(triple.getSIri());
@@ -59,6 +75,10 @@ public sealed interface RdfTerm {
     }
 
     static GraphStart from(RdfGraphStart graphStart) {
+        if (graphStart == null) {
+            return null;
+        }
+
         final var graph =
             switch (graphStart.getGraphCase()) {
                 case G_IRI -> from(graphStart.getGIri());
@@ -80,6 +100,10 @@ public sealed interface RdfTerm {
     }
 
     static Quad from(RdfQuad quad) {
+        if (quad == null) {
+            return null;
+        }
+
         final var subject =
             switch (quad.getSubjectCase()) {
                 case S_IRI -> from(quad.getSIri());
@@ -383,9 +407,17 @@ public sealed interface RdfTerm {
         public RdfTriple toProto() {
             final var tripleBuilder = RdfTriple.newBuilder();
 
-            subject.writeSubject(tripleBuilder);
-            predicate.writePredicate(tripleBuilder);
-            object.writeObject(tripleBuilder);
+            if (subject != null) {
+                subject.writeSubject(tripleBuilder);
+            }
+
+            if (predicate != null) {
+                predicate.writePredicate(tripleBuilder);
+            }
+
+            if (object != null) {
+                object.writeObject(tripleBuilder);
+            }
 
             return tripleBuilder.build();
         }
@@ -424,7 +456,11 @@ public sealed interface RdfTerm {
     record GraphStart(GraphTerm graph) implements GraphMarkerTerm {
         public RdfGraphStart toProto() {
             final var graphBuilder = RdfGraphStart.newBuilder();
-            graph.writeGraph(graphBuilder);
+
+            if (graph != null) {
+                graph.writeGraph(graphBuilder);
+            }
+
             return graphBuilder.build();
         }
     }
@@ -457,10 +493,21 @@ public sealed interface RdfTerm {
         public RdfQuad toProto() {
             final var quadBuilder = RdfQuad.newBuilder();
 
-            subject.writeSubject(quadBuilder);
-            predicate.writePredicate(quadBuilder);
-            object.writeObject(quadBuilder);
-            graph.writeGraph(quadBuilder);
+            if (subject != null) {
+                subject.writeSubject(quadBuilder);
+            }
+
+            if (predicate != null) {
+                predicate.writePredicate(quadBuilder);
+            }
+
+            if (object != null) {
+                object.writeObject(quadBuilder);
+            }
+
+            if (graph != null) {
+                graph.writeGraph(quadBuilder);
+            }
 
             return quadBuilder.build();
         }

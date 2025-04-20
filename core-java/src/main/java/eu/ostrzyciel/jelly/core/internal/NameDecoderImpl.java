@@ -4,6 +4,7 @@ import eu.ostrzyciel.jelly.core.NameDecoder;
 import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
+
 import java.util.function.Function;
 
 /**
@@ -98,8 +99,8 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     /**
      * Reconstruct an IRI from its prefix and name ids.
-     * @param nameId name ID
      * @param prefixId prefix ID
+     * @param nameId name ID
      * @return full IRI combining the prefix and the name
      * @throws ArrayIndexOutOfBoundsException if IRI had indices out of lookup table bounds
      * @throws RdfProtoDeserializationError if the IRI reference is invalid
@@ -107,7 +108,9 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      */
     @SuppressWarnings("unchecked")
     @Override
-    public TIri decode(int nameId, int prefixId) {
+    public TIri decode(int prefixId, int nameId) {
+        final var originalPrefixId = prefixId;
+
         lastNameIdReference = ((lastNameIdReference + 1) & ((nameId - 1) >> 31)) + nameId;
         NameLookupEntry nameEntry = nameLookup[lastNameIdReference];
 
@@ -129,7 +132,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             }
             if (nameEntry.lastIri == null) {
                 throw new RdfProtoDeserializationError(
-                    "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(prefixId, nameId)
+                    "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(originalPrefixId, nameId)
                 );
             }
         } else if (nameEntry.lastIri == null) {

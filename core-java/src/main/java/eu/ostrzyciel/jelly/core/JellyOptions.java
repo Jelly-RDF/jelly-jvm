@@ -73,6 +73,7 @@ public class JellyOptions {
         .build();
 
     public static final RdfStreamOptions DEFAULT_SUPPORTED_OPTIONS = RdfStreamOptions.newBuilder()
+        .setVersion(JellyConstants.PROTO_VERSION)
         .setGeneralizedStatements(true)
         .setRdfStar(true)
         .setMaxNameTableSize(4096)
@@ -81,25 +82,21 @@ public class JellyOptions {
         .build();
 
     public static void checkCompatibility(RdfStreamOptions requestedOptions, RdfStreamOptions supportedOptions) {
-        checkBaseCompatibility(requestedOptions, supportedOptions, JellyConstants.PROTO_VERSION);
+        checkBaseCompatibility(requestedOptions, supportedOptions);
         checkLogicalStreamType(requestedOptions, supportedOptions.getLogicalType());
     }
 
-    private static void checkBaseCompatibility(
-        RdfStreamOptions requestedOptions,
-        RdfStreamOptions supportedOptions,
-        int systemSupportedVersion
-    ) {
+    private static void checkBaseCompatibility(RdfStreamOptions requestedOptions, RdfStreamOptions supportedOptions) {
         if (
             requestedOptions.getVersion() > supportedOptions.getVersion() ||
-            requestedOptions.getVersion() > systemSupportedVersion
+            requestedOptions.getVersion() > JellyConstants.PROTO_VERSION
         ) {
             throw new IllegalArgumentException(
                 ("Unsupported proto version: %s. Was expecting at most version %s. " +
                     "This library version supports up to version %s.").formatted(
                         requestedOptions.getVersion(),
                         supportedOptions.getVersion(),
-                        systemSupportedVersion
+                        JellyConstants.PROTO_VERSION
                     )
             );
         }

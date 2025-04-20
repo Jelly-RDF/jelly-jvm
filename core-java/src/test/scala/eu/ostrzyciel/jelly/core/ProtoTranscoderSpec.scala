@@ -46,7 +46,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
           val transcoder = new ProtoTranscoderImpl(null, options)
           // First frame should be returned as is
           val out1 = transcoder.ingestFrame(input)
-          out1 shouldBe input
+          out1 shouldEqual input
           // What's more, the rows should be the exact same objects (except the options)
           forAll(asScala(input.getRowsList).zip(asScala(out1.getRowsList)).drop(1)) { case (in, out) =>
             in eq out shouldBe true // reference equality
@@ -83,7 +83,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
           val collector2 = ProtoCollector()
           val decoder2 = MockConverterFactory.anyDecoder(collector2)
           asScala(out2.getRowsList).foreach(decoder2.ingestRow)
-          collector1.statements shouldBe collector2.statements
+          collector1.statements shouldEqual collector2.statements
         }
     }
 
@@ -275,7 +275,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
       }
 
       ex.getMessage should include ("Input stream has a different physical type than the output")
-      ex.getMessage should include ("PHYSICAL_STREAM_TYPE_PHYSICAL_STREAM_TYPE_QUADS")
+      ex.getMessage should include ("PHYSICAL_STREAM_TYPE_QUADS")
       ex.getMessage should include ("PHYSICAL_STREAM_TYPE_TRIPLES")
     }
 

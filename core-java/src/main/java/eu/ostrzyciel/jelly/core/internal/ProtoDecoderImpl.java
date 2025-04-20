@@ -88,7 +88,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
             case NAMESPACE -> {
                 final var nsRow = row.getNamespace();
                 final var iri = nsRow.getValue();
-                namespaceHandler.accept(nsRow.getName(), nameDecoder.decode(iri.getNameId(), iri.getPrefixId()));
+                namespaceHandler.accept(nsRow.getName(), nameDecoder.decode(iri.getPrefixId(), iri.getNameId()));
             }
             case TRIPLE -> handleTriple(row.getTriple());
             case QUAD -> handleQuad(row.getQuad());

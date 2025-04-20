@@ -2,12 +2,13 @@ package eu.ostrzyciel.jelly.core.utils;
 
 import eu.ostrzyciel.jelly.core.ProtoDecoderConverter;
 import eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame;
 import java.util.List;
 import java.util.UUID;
 
 public class LogicalStreamTypeUtils {
 
-    private static final String STAX_PREFIX = "http://www.w3.org/2001/rdf-stax#";
+    private static final String STAX_PREFIX = "https://w3id.org/stax/ontology#";
 
     private LogicalStreamTypeUtils() {}
 

@@ -2,13 +2,12 @@ package eu.ostrzyciel.jelly.core.internal
 
 import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError
 import eu.ostrzyciel.jelly.core.proto.v1.*
-import eu.ostrzyciel.jelly.core.RdfTerm
 import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class NameDecoderSpec extends AnyWordSpec, Matchers:
-  var smallOptions = RdfStreamOptions.newBuilder()
+  var smallOptions: RdfStreamOptions = RdfStreamOptions.newBuilder()
     .setMaxNameTableSize(16)
     .setMaxPrefixTableSize(8)
     .build()

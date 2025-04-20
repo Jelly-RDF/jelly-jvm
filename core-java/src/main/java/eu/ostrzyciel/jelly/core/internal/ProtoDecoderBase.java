@@ -32,7 +32,7 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
         if (graph == null) {
             throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.");
         } else if (graph instanceof RdfTerm.Iri iri) {
-            return nameDecoder.decode(iri.nameId(), iri.prefixId());
+            return nameDecoder.decode(iri.prefixId(), iri.nameId());
         } else if (graph instanceof RdfTerm.DefaultGraph) {
             return converter.makeDefaultGraphNode();
         } else if (graph instanceof RdfTerm.BNode bnode) {
@@ -52,7 +52,7 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
         if (term == null) {
             throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
         } else if (term instanceof RdfTerm.Iri iri) {
-            return nameDecoder.decode(iri.nameId(), iri.prefixId());
+            return nameDecoder.decode(iri.prefixId(), iri.nameId());
         } else if (term instanceof RdfTerm.BNode bnode) {
             return converter.makeBlankNode(bnode.bNode());
         } else if (term instanceof RdfTerm.LanguageLiteral languageLiteral) {

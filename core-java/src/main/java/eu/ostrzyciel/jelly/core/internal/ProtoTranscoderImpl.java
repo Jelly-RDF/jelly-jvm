@@ -62,7 +62,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
             case NAME -> handleName(row);
             case PREFIX -> handlePrefix(row);
             case DATATYPE -> handleDatatype(row);
-            case ROW_NOT_SET -> throw new RdfProtoTranscodingError("Row not set");
+            case ROW_NOT_SET -> throw new RdfProtoTranscodingError("Row kind is not set");
         }
     }
 
@@ -249,7 +249,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
     private void handleOptions(RdfStreamOptions options) {
         if (supportedInputOptions != null) {
             if (outputOptions.getPhysicalType() != options.getPhysicalType()) {
-                throw new RdfProtoDeserializationError(
+                throw new RdfProtoTranscodingError(
                     "Input stream has a different physical type than the output. Input: %s output: %s".formatted(
                             options.getPhysicalType(),
                             outputOptions.getPhysicalType()

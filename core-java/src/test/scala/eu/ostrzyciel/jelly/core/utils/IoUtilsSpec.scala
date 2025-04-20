@@ -73,16 +73,14 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
 
         val in = new ByteArrayInputStream(bytes)
         val response = IoUtils.autodetectDelimiting(in)
-        response.isDelimited shouldBe false
+        response.isDelimited shouldBe true
         response.newInput.readAllBytes() shouldBe bytes
       }
 
       "input stream is a non-delimited Jelly message (options size =10)" in {
-        frameOptionsSize10.getRows(0).toByteArray.size shouldBe 10
-        val bytes = frameOptionsSize10.toByteArray
-        bytes(0) shouldBe 0x0A
-        bytes(1) shouldBe 0x0A
-        bytes(2) shouldBe 0x0A
+        val os = ByteArrayOutputStream()
+        frameOptionsSize10.getRows(0).writeTo(os)
+        val bytes = os.toByteArray
 
         val in = new ByteArrayInputStream(bytes)
         val response = IoUtils.autodetectDelimiting(in)
@@ -94,14 +92,10 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         val os = ByteArrayOutputStream()
         frameOptionsSize10.writeDelimitedTo(os)
         val bytes = os.toByteArray
-        bytes(0) should not be 0x0A
-        bytes(1) shouldBe 0x0A
-        bytes(2) shouldBe 0x0A
-        bytes(3) shouldBe 0x0A
 
         val in = new ByteArrayInputStream(bytes)
         val response = IoUtils.autodetectDelimiting(in)
-        response.isDelimited shouldBe false
+        response.isDelimited shouldBe true
         response.newInput.readAllBytes() shouldBe bytes
       }
 

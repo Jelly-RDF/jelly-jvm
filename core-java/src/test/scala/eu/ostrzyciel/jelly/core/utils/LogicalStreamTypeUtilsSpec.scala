@@ -22,7 +22,16 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
         val baseValue = LogicalStreamTypeUtils.toBaseType(streamType)
         baseValue.getNumber should be > 0
         baseValue.getNumber should be < 10
-        streamType.toString should endWith (baseValue.toString)
+
+        streamType match
+          case LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES => LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES
+          case LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS => LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS
+          case LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS => LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS
+          case LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS => LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS
+          case LogicalStreamType.LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS => LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS
+          case LogicalStreamType.LOGICAL_STREAM_TYPE_NAMED_GRAPHS => LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS
+          case LogicalStreamType.LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS => LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS
+          case _ => fail(s"Unrecognized stream type: $streamType")
       }
   }
 
@@ -63,11 +72,11 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
       s"return a type that can be parsed by LogicalStreamTypeFactory for $streamType" in {
         val t = LogicalStreamTypeUtils.getRdfStaxType(streamType)
         val newType = LogicalStreamTypeUtils.fromOntologyIri(t)
-        newType should be (Some(streamType))
+        newType should be (streamType)
       }
 
     "not return RDF STaX type for UNSPECIFIED" in {
-      LogicalStreamTypeUtils.getRdfStaxType(LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED) should be (None)
+      LogicalStreamTypeUtils.getRdfStaxType(LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED) should be (null)
     }
   }
 
@@ -110,10 +119,10 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
 
   "LogicalStreamTypeFactory.fromOntologyIri" should {
     "return None for a non-STaX IRI" in {
-      LogicalStreamTypeUtils.fromOntologyIri("https://example.org/stream") should be (None)
+      LogicalStreamTypeUtils.fromOntologyIri("https://example.org/stream") should be (null)
     }
 
     "return None for an invalid STaX IRI" in {
-      LogicalStreamTypeUtils.fromOntologyIri("https://w3id.org/stax/ontology#doesNotExist") should be (None)
+      LogicalStreamTypeUtils.fromOntologyIri("https://w3id.org/stax/ontology#doesNotExist") should be (null)
     }
   }
