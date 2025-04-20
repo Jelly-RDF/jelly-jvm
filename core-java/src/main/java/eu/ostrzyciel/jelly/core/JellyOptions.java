@@ -91,9 +91,8 @@ public class JellyOptions {
             requestedOptions.getVersion() > supportedOptions.getVersion() ||
             requestedOptions.getVersion() > JellyConstants.PROTO_VERSION
         ) {
-            throw new IllegalArgumentException(
-                ("Unsupported proto version: %s. Was expecting at most version %s. " +
-                    "This library version supports up to version %s.").formatted(
+            throw new RdfProtoDeserializationError(
+                "Unsupported proto version: %s. Was expecting at most version %s. This library version supports up to version %s.".formatted(
                         requestedOptions.getVersion(),
                         supportedOptions.getVersion(),
                         JellyConstants.PROTO_VERSION
@@ -101,15 +100,15 @@ public class JellyOptions {
             );
         }
         if (requestedOptions.getGeneralizedStatements() && !supportedOptions.getGeneralizedStatements()) {
-            throw new IllegalArgumentException(
+            throw new RdfProtoDeserializationError(
                 "The stream uses generalized statements, which are not supported. " +
-                "Either disable generalized statements or enable them in the supported options."
+                "Either disable generalized statements or enable them in the supportedOptions."
             );
         }
         if (requestedOptions.getRdfStar() && !supportedOptions.getRdfStar()) {
-            throw new IllegalArgumentException(
-                "The stream uses RDF-star, which is not supported. Either disable" +
-                " RDF-star or enable it in the supported options."
+            throw new RdfProtoDeserializationError(
+                "The stream uses RDF-star, which is not supported. " +
+                "Either disable RDF-star or enable it in the supportedOptions."
             );
         }
 
@@ -124,25 +123,21 @@ public class JellyOptions {
 
     private static void checkTableSize(String name, int size, int supportedSize, int minSize) {
         if (size > supportedSize) {
-            throw new IllegalArgumentException(
-                "The stream uses a " +
-                name.toLowerCase() +
-                " table size of " +
-                size +
-                ", which is larger than the maximum supported size of " +
-                supportedSize +
-                "."
+            throw new RdfProtoDeserializationError(
+                "The stream uses a %s table size of %s, which is larger than the maximum supported size of %s.".formatted(
+                        name.toLowerCase(),
+                        size,
+                        supportedSize
+                    )
             );
         }
         if (size < minSize) {
-            throw new IllegalArgumentException(
-                "The stream uses a " +
-                name.toLowerCase() +
-                " table size of " +
-                size +
-                ", which is smaller than the minimum supported size of " +
-                minSize +
-                "."
+            throw new RdfProtoDeserializationError(
+                "The stream uses a %s table size of %s, which is smaller than the minimum supported size of %s.".formatted(
+                        name.toLowerCase(),
+                        size,
+                        minSize
+                    )
             );
         }
     }
@@ -153,10 +148,11 @@ public class JellyOptions {
 
     private static void checkLogicalStreamType(RdfStreamOptions options, LogicalStreamType expectedLogicalType) {
         final var logicalType = options.getLogicalType();
+        final var baseLogicalType = LogicalStreamTypeUtils.toBaseType(logicalType);
         final var physicalType = options.getPhysicalType();
 
         final var conflict =
-            switch (logicalType) {
+            switch (baseLogicalType) {
                 case LOGICAL_STREAM_TYPE_FLAT_TRIPLES, LOGICAL_STREAM_TYPE_GRAPHS -> switch (physicalType) {
                     case PHYSICAL_STREAM_TYPE_QUADS, PHYSICAL_STREAM_TYPE_GRAPHS -> true;
                     default -> false;
@@ -169,18 +165,20 @@ public class JellyOptions {
             };
 
         if (conflict) {
-            throw new IllegalArgumentException(
+            throw new RdfProtoDeserializationError(
                 "Logical stream type %s is incompatible with physical stream type %s.".formatted(
                         logicalType,
-                        options.getPhysicalType()
+                        physicalType
                     )
             );
         }
 
         if (!LogicalStreamTypeUtils.isEqualOrSubtypeOf(logicalType, expectedLogicalType)) {
-            throw new IllegalArgumentException(
-                "Logical stream type %s is incompatible with expected logical stream type %s.".formatted(
-                        options.getLogicalType(),
+            throw new RdfProtoDeserializationError(
+                "Expected logical stream type %s, got %s. %s is not a subtype of %s.".formatted(
+                        expectedLogicalType,
+                        logicalType,
+                        logicalType,
                         expectedLogicalType
                     )
             );

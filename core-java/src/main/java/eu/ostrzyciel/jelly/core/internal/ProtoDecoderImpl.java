@@ -5,29 +5,30 @@ import static eu.ostrzyciel.jelly.core.JellyOptions.*;
 import eu.ostrzyciel.jelly.core.*;
 import eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType;
 import eu.ostrzyciel.jelly.core.proto.v1.PhysicalStreamType;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfGraphStart;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfNamespaceDeclaration;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfQuad;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfTriple;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNode, TDatatype> {
 
-    protected final BiConsumer<String, TNode> namespaceHandler;
+    protected final ProtoHandler<TNode> protoHandler;
     protected final RdfStreamOptions supportedOptions;
 
     private RdfStreamOptions currentOptions = null;
 
     public ProtoDecoderImpl(
         ProtoDecoderConverter<TNode, TDatatype> converter,
-        BiConsumer<String, TNode> namespaceHandler,
+        ProtoHandler<TNode> protoHandler,
         RdfStreamOptions supportedOptions
     ) {
         super(converter);
-        this.namespaceHandler = namespaceHandler;
+        this.protoHandler = protoHandler;
         this.supportedOptions = supportedOptions;
     }
 
@@ -81,15 +82,8 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
             case OPTIONS -> handleOptions(row.getOptions());
             case NAME -> nameDecoder.updateNames(row.getName());
             case PREFIX -> nameDecoder.updatePrefixes(row.getPrefix());
-            case DATATYPE -> {
-                final var dtRow = row.getDatatype();
-                datatypeLookup.update(dtRow.getId(), converter.makeDatatype(dtRow.getValue()));
-            }
-            case NAMESPACE -> {
-                final var nsRow = row.getNamespace();
-                final var iri = nsRow.getValue();
-                namespaceHandler.accept(nsRow.getName(), nameDecoder.decode(iri.getPrefixId(), iri.getNameId()));
-            }
+            case DATATYPE -> handleDatatype(row.getDatatype());
+            case NAMESPACE -> handleNamespace(row.getNamespace());
             case TRIPLE -> handleTriple(row.getTriple());
             case QUAD -> handleQuad(row.getQuad());
             case GRAPH_START -> handleGraphStart(row.getGraphStart());
@@ -101,6 +95,18 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
     protected void handleOptions(RdfStreamOptions options) {
         checkCompatibility(options, supportedOptions);
         setStreamOptions(options);
+    }
+
+    protected void handleDatatype(RdfDatatypeEntry datatype) {
+        datatypeLookup.update(datatype.getId(), converter.makeDatatype(datatype.getValue()));
+    }
+
+    protected void handleNamespace(RdfNamespaceDeclaration namespace) {
+        final var iri = namespace.getValue();
+        protoHandler.handleNamespace(
+            namespace.getName(),
+            nameDecoder.decode(iri.getPrefixId(), iri.getNameId())
+        );
     }
 
     protected void handleTriple(RdfTriple triple) {
@@ -125,11 +131,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         public TriplesDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            BiConsumer<String, TNode> nsHandler,
-            RdfStreamOptions supportedOptions,
-            ProtoHandler.TripleProtoHandler<TNode> protoHandler
+            ProtoHandler.TripleProtoHandler<TNode> protoHandler,
+            RdfStreamOptions supportedOptions
         ) {
-            super(converter, nsHandler, supportedOptions);
+            super(converter, protoHandler, supportedOptions);
             this.protoHandler = protoHandler;
         }
 
@@ -158,11 +163,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         public QuadsDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            BiConsumer<String, TNode> nsHandler,
-            RdfStreamOptions supportedOptions,
-            ProtoHandler.QuadProtoHandler<TNode> protoHandler
+            ProtoHandler.QuadProtoHandler<TNode> protoHandler,
+            RdfStreamOptions supportedOptions
         ) {
-            super(converter, nsHandler, supportedOptions);
+            super(converter, protoHandler, supportedOptions);
             this.protoHandler = protoHandler;
         }
 
@@ -181,7 +185,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
                 convertSubjectTermWrapped(quadTerm.subject()),
                 convertPredicateTermWrapped(quadTerm.predicate()),
                 convertObjectTermWrapped(quadTerm.object()),
-                convertGraphTerm(quadTerm.graph())
+                convertGraphTermWrapped(quadTerm.graph())
             );
         }
     }
@@ -193,11 +197,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         public GraphsAsQuadsDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            BiConsumer<String, TNode> nsHandler,
-            RdfStreamOptions supportedOptions,
-            ProtoHandler.QuadProtoHandler<TNode> protoHandler
+            ProtoHandler.QuadProtoHandler<TNode> protoHandler,
+            RdfStreamOptions supportedOptions
         ) {
-            super(converter, nsHandler, supportedOptions);
+            super(converter, protoHandler, supportedOptions);
             this.protoHandler = protoHandler;
         }
 
@@ -244,11 +247,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         public GraphsDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            BiConsumer<String, TNode> nsHandler,
-            RdfStreamOptions supportedOptions,
-            ProtoHandler.GraphProtoHandler<TNode> protoHandler
+            ProtoHandler.GraphProtoHandler<TNode> protoHandler,
+            RdfStreamOptions supportedOptions
         ) {
-            super(converter, nsHandler, supportedOptions);
+            super(converter, protoHandler, supportedOptions);
             this.protoHandler = protoHandler;
         }
 
@@ -264,7 +266,8 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         protected void handleGraphStart(RdfGraphStart graphStart) {
             emitBuffer();
             buffer.clear();
-            currentGraph = convertGraphTerm(RdfTerm.from(graphStart).graph());
+            final var graphStartTerm = RdfTerm.from(graphStart);
+            currentGraph = convertGraphTerm(graphStartTerm.graph());
         }
 
         @Override
@@ -303,11 +306,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         public AnyDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            BiConsumer<String, TNode> namespaceHandler,
-            RdfStreamOptions supportedOptions,
-            ProtoHandler.AnyProtoHandler<TNode> protoHandler
+            ProtoHandler.AnyProtoHandler<TNode> protoHandler,
+            RdfStreamOptions supportedOptions
         ) {
-            super(converter, namespaceHandler, supportedOptions);
+            super(converter, protoHandler, supportedOptions);
             this.protoHandler = protoHandler;
         }
 
@@ -350,21 +352,18 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
             switch (options.getPhysicalType()) {
                 case PHYSICAL_STREAM_TYPE_TRIPLES -> delegateDecoder = new TriplesDecoder<>(
                     converter,
-                    namespaceHandler,
-                    options,
-                    protoHandler
+                    protoHandler,
+                    options
                 );
                 case PHYSICAL_STREAM_TYPE_QUADS -> delegateDecoder = new QuadsDecoder<>(
                     converter,
-                    namespaceHandler,
-                    options,
-                    protoHandler
+                    protoHandler,
+                    options
                 );
                 case PHYSICAL_STREAM_TYPE_GRAPHS -> delegateDecoder = new GraphsAsQuadsDecoder<>(
                     converter,
-                    namespaceHandler,
-                    options,
-                    protoHandler
+                    protoHandler,
+                    options
                 );
                 default -> throw new RdfProtoDeserializationError("Incoming physical stream type is not recognized.");
             }

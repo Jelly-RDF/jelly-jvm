@@ -39,5 +39,5 @@ class MockProtoEncoderConverter extends ProtoEncoderConverter[Node]:
     case LangLiteral(lex, lang) => encoder.makeLangLiteral(node, lex, lang)
     case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt)
     case BlankNode(label) => encoder.makeBlankNode(label)
-    case null => NodeEncoder.makeDefaultGraph
+    case DefaultGraphNode() => NodeEncoder.makeDefaultGraph
     case _ => throw RdfProtoSerializationError(s"Cannot encode graph node: $node")

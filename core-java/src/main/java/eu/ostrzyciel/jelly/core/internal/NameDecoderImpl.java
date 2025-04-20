@@ -4,11 +4,11 @@ import eu.ostrzyciel.jelly.core.NameDecoder;
 import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
-
 import java.util.function.Function;
 
 /**
  * Class for decoding RDF IRIs from their Jelly representation.
+ *
  * @param <TIri> The type of the IRI in the target RDF library.
  */
 final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
@@ -45,9 +45,10 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     /**
      * Creates a new NameDecoder.
+     *
      * @param prefixTableSize The size of the prefix lookup table.
-     * @param nameTableSize The size of the name lookup table.
-     * @param iriFactory A function that creates an IRI from a string.
+     * @param nameTableSize   The size of the name lookup table.
+     * @param iriFactory      A function that creates an IRI from a string.
      */
     public NameDecoderImpl(int prefixTableSize, int nameTableSize, Function<String, TIri> iriFactory) {
         this.iriFactory = iriFactory;
@@ -64,6 +65,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     /**
      * Update the name table with a new entry.
+     *
      * @param nameEntry name row
      * @throws ArrayIndexOutOfBoundsException if the identifier is out of bounds
      */
@@ -85,6 +87,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     /**
      * Update the prefix table with a new entry.
+     *
      * @param prefixEntry prefix row
      * @throws ArrayIndexOutOfBoundsException if the identifier is out of bounds
      */
@@ -99,12 +102,13 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     /**
      * Reconstruct an IRI from its prefix and name ids.
+     *
      * @param prefixId prefix ID
-     * @param nameId name ID
+     * @param nameId   name ID
      * @return full IRI combining the prefix and the name
      * @throws ArrayIndexOutOfBoundsException if IRI had indices out of lookup table bounds
-     * @throws RdfProtoDeserializationError if the IRI reference is invalid
-     * @throws NullPointerException if the IRI reference is invalid
+     * @throws RdfProtoDeserializationError   if the IRI reference is invalid
+     * @throws NullPointerException           if the IRI reference is invalid
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -132,7 +136,10 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             }
             if (nameEntry.lastIri == null) {
                 throw new RdfProtoDeserializationError(
-                    "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(originalPrefixId, nameId)
+                    "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(
+                            originalPrefixId,
+                            nameId
+                        )
                 );
             }
         } else if (nameEntry.lastIri == null) {

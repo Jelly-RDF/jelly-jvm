@@ -22,55 +22,25 @@ trait MockConverterFactory:
 
   final def triplesDecoder(
     handler: TripleProtoHandler[Node],
-    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
-    namespaceHandler: (String, Node) => Unit = (_, _) => ()
-  ): TriplesDecoder[Node, Datatype] = TriplesDecoder[Node, Datatype](
-    decoderConverter,
-    namespaceHandler.asJava,
-    options,
-    handler
-  )
+    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+  ): TriplesDecoder[Node, Datatype] = TriplesDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def quadsDecoder(
     handler: QuadProtoHandler[Node],
-    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
-    namespaceHandler: (String, Node) => Unit = (_, _) => ()
-  ): QuadsDecoder[Node, Datatype] = QuadsDecoder[Node, Datatype](
-    decoderConverter,
-    namespaceHandler.asJava,
-    options,
-    handler
-  )
+    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+  ): QuadsDecoder[Node, Datatype] = QuadsDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def graphsDecoder(
      handler: GraphProtoHandler[Node],
-     options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
-     namespaceHandler: (String, Node) => Unit = (_, _) => ()
-  ): GraphsDecoder[Node, Datatype] = GraphsDecoder[Node, Datatype](
-    decoderConverter,
-    namespaceHandler.asJava,
-    options,
-    handler
-  )
+     options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+  ): GraphsDecoder[Node, Datatype] = GraphsDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def graphsAsQuadsDecoder(
     handler: QuadProtoHandler[Node],
-    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
-    namespaceHandler: (String, Node) => Unit = (_, _) => ()
-  ): GraphsAsQuadsDecoder[Node, Datatype] = GraphsAsQuadsDecoder[Node, Datatype](
-    decoderConverter,
-    namespaceHandler.asJava,
-    options,
-    handler
-  )
+    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+  ): GraphsAsQuadsDecoder[Node, Datatype] = GraphsAsQuadsDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def anyDecoder(
     handler: AnyProtoHandler[Node],
-    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
-    namespaceHandler: (String, Node) => Unit = (_, _) => ()
-  ): AnyDecoder[Node, Datatype] = AnyDecoder[Node, Datatype](
-    decoderConverter,
-    namespaceHandler.asJava,
-    options,
-    handler
-  )
+    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+  ): AnyDecoder[Node, Datatype] = AnyDecoder[Node, Datatype](decoderConverter, handler, options)

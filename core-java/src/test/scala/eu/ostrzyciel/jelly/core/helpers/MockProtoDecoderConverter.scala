@@ -15,6 +15,6 @@ class MockProtoDecoderConverter
   def makeBlankNode(label: String) = BlankNode(label)
   def makeIriNode(iri: String) = Iri(iri)
   def makeTripleNode(s: Node, p: Node, o: Node) = Triple(s, p, o)
-  def makeDefaultGraphNode(): Node = null
+  def makeDefaultGraphNode(): Node = DefaultGraphNode()
   def makeTriple(s: Node, p: Node, o: Node) = Triple(s, p, o)
   def makeQuad(s: Node, p: Node, o: Node, g: Node) = Quad(s, p, o, g)

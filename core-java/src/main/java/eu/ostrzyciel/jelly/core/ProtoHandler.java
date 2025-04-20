@@ -3,6 +3,10 @@ package eu.ostrzyciel.jelly.core;
 import java.util.Collection;
 
 public interface ProtoHandler<TNode> {
+    default void handleNamespace(String prefix, TNode namespace) {
+        // No-op
+    }
+
     interface TripleProtoHandler<TNode> extends ProtoHandler<TNode> {
         void handleTriple(TNode subject, TNode predicate, TNode object);
     }

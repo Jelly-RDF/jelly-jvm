@@ -197,13 +197,13 @@ object ProtoTestCases:
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
         LangLiteral("test", "en-gb"),
-        null,
+        DefaultGraphNode(),
       ),
       Quad(
         Iri("https://test.org/test/subject"),
         BlankNode("blank"),
         SimpleLiteral("test"),
-        null,
+        DefaultGraphNode(),
       ),
     )
 
@@ -229,7 +229,7 @@ object ProtoTestCases:
   object Graphs1 extends TestCase[(Node, Iterable[Triple])]:
     val mrl = Seq(
       (
-        null,
+        DefaultGraphNode(),
         Seq(
           Triple(
             Iri("https://test.org/test/subject"),
@@ -260,13 +260,13 @@ object ProtoTestCases:
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
         Iri("https://test.org/ns2/object"),
-        null
+        DefaultGraphNode()
       ),
       Quad(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
         DtLiteral("123", Datatype("https://test.org/xsd/integer")),
-        null
+        DefaultGraphNode()
       ),
       Quad(
         Iri("https://test.org/test/subject"),

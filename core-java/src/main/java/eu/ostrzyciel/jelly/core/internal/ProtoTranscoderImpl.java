@@ -22,6 +22,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
 
     private final List<RdfStreamRow> rowBuffer = new ArrayList<>();
 
+    private RdfStreamOptions inputOptions = null;
     private boolean inputUsesPrefixes = false;
     private boolean hasChangedTerms = false;
     private boolean hasEmittedOptions = false;
@@ -270,13 +271,16 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
         nameLookup.newInputStream(options.getMaxNameTableSize());
         datatypeLookup.newInputStream(options.getMaxDatatypeTableSize());
 
+        // Set the input options
+        inputOptions = options;
+        
         // Update the input options
         if (hasEmittedOptions) {
             return;
         }
 
         hasEmittedOptions = true;
-        var version = options.getVersion() == JellyConstants.PROTO_VERSION
+        var version = inputOptions.getVersion() == JellyConstants.PROTO_VERSION_1_0_X
             ? JellyConstants.PROTO_VERSION_1_0_X
             : JellyConstants.PROTO_VERSION;
 

@@ -9,7 +9,11 @@ import scala.jdk.javaapi.CollectionConverters
 import scala.jdk.javaapi.CollectionConverters.asScala
 
 final class ProtoCollector extends AnyProtoHandler[Node]:
+  val namespaces: mutable.ListBuffer[(String, Node)] = mutable.ListBuffer.empty
   val statements: mutable.ListBuffer[Node] = mutable.ListBuffer.empty
+
+  override def handleNamespace(prefix: String, namespace: Node): Unit =
+    namespaces += ((prefix, namespace))
 
   override def handleTriple(subject: Node, predicate: Node, `object`: Node): Unit =
     statements += Triple(subject, predicate, `object`)
@@ -19,3 +23,7 @@ final class ProtoCollector extends AnyProtoHandler[Node]:
 
   override def handleGraph(graph: Node, triples: util.Collection[Node]): Unit =
     statements += Graph(graph, asScala(triples).toSeq)
+
+  def clear(): Unit =
+    namespaces.clear()
+    statements.clear()

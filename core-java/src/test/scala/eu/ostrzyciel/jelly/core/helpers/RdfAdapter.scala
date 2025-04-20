@@ -49,9 +49,9 @@ object RdfAdapter:
       .setDatatype(datatype)
       .build()
 
-  def rdfIri(id: Int, prefixId: Int): RdfIri =
+  def rdfIri(prefixId: Int, nameId: Int): RdfIri =
     RdfIri.newBuilder()
-      .setNameId(id)
+      .setNameId(nameId)
       .setPrefixId(prefixId)
       .build()
 

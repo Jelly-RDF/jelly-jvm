@@ -76,14 +76,14 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
           identicalRows shouldBe > (0)
 
           // Decode the output
-          val collector1 = ProtoCollector()
-          val decoder1 = MockConverterFactory.anyDecoder(collector1)
-          asScala(out1.getRowsList).foreach(decoder1.ingestRow)
+          val collector = ProtoCollector()
+          val decoder = MockConverterFactory.anyDecoder(collector)
+          asScala(out1.getRowsList).foreach(decoder.ingestRow)
+          asScala(out2.getRowsList).foreach(decoder.ingestRow)
 
-          val collector2 = ProtoCollector()
-          val decoder2 = MockConverterFactory.anyDecoder(collector2)
-          asScala(out2.getRowsList).foreach(decoder2.ingestRow)
-          collector1.statements shouldEqual collector2.statements
+          val statements1 = collector.statements.slice(0, collector.statements.size / 2)
+          val statements2 = collector.statements.slice(collector.statements.size / 2, collector.statements.size)
+          statements1 shouldEqual statements2
         }
     }
 
@@ -127,6 +127,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
           val possibleCases = Seq(Quads1, Quads2RepeatDefault)
           val random = Random(seed)
           val usedIndices = Array.ofDim[Int](possibleCases.size)
+
           for i <- 1 to 100 do
             val index = random.nextInt(possibleCases.size)
             usedIndices(index) += 1
@@ -144,6 +145,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
             asScala(out.getRowsList).foreach(decoder.ingestRow)
             collector.statements shouldBe testCase.mrl
+            collector.clear()
         }
     }
 

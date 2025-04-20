@@ -6,5 +6,5 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
 public interface NameDecoder<TIri> {
     void updateNames(RdfNameEntry nameEntry);
     void updatePrefixes(RdfPrefixEntry prefixEntry);
-    TIri decode(int nameId, int prefixId);
+    TIri decode(int prefixId, int nameId);
 }

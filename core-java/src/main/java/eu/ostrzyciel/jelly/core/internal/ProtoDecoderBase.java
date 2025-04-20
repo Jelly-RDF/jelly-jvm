@@ -29,46 +29,54 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
     protected abstract int getDatatypeTableSize();
 
     protected final TNode convertGraphTerm(RdfTerm.GraphTerm graph) {
-        if (graph == null) {
-            throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.");
-        } else if (graph instanceof RdfTerm.Iri iri) {
-            return nameDecoder.decode(iri.prefixId(), iri.nameId());
-        } else if (graph instanceof RdfTerm.DefaultGraph) {
-            return converter.makeDefaultGraphNode();
-        } else if (graph instanceof RdfTerm.BNode bnode) {
-            return converter.makeBlankNode(bnode.bNode());
-        } else if (graph instanceof RdfTerm.LanguageLiteral languageLiteral) {
-            return converter.makeLangLiteral(languageLiteral.lex(), languageLiteral.langtag());
-        } else if (graph instanceof RdfTerm.DtLiteral dtLiteral) {
-            return converter.makeDtLiteral(dtLiteral.lex(), datatypeLookup.get(dtLiteral.datatype()));
-        } else if (graph instanceof RdfTerm.SimpleLiteral simpleLiteral) {
-            return converter.makeSimpleLiteral(simpleLiteral.lex());
-        } else {
-            throw new RdfProtoDeserializationError("Unknown graph term type.");
+        try {
+            if (graph == null) {
+                throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.");
+            } else if (graph instanceof RdfTerm.Iri iri) {
+                return nameDecoder.decode(iri.prefixId(), iri.nameId());
+            } else if (graph instanceof RdfTerm.DefaultGraph) {
+                return converter.makeDefaultGraphNode();
+            } else if (graph instanceof RdfTerm.BNode bnode) {
+                return converter.makeBlankNode(bnode.bNode());
+            } else if (graph instanceof RdfTerm.LanguageLiteral languageLiteral) {
+                return converter.makeLangLiteral(languageLiteral.lex(), languageLiteral.langtag());
+            } else if (graph instanceof RdfTerm.DtLiteral dtLiteral) {
+                return converter.makeDtLiteral(dtLiteral.lex(), datatypeLookup.get(dtLiteral.datatype()));
+            } else if (graph instanceof RdfTerm.SimpleLiteral simpleLiteral) {
+                return converter.makeSimpleLiteral(simpleLiteral.lex());
+            } else {
+                throw new RdfProtoDeserializationError("Unknown graph term type.");
+            }
+        } catch (Exception e) {
+            throw new RdfProtoDeserializationError("Error while decoding term %s".formatted(e), e);
         }
     }
 
     protected final TNode convertTerm(RdfTerm.SpoTerm term) {
-        if (term == null) {
-            throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
-        } else if (term instanceof RdfTerm.Iri iri) {
-            return nameDecoder.decode(iri.prefixId(), iri.nameId());
-        } else if (term instanceof RdfTerm.BNode bnode) {
-            return converter.makeBlankNode(bnode.bNode());
-        } else if (term instanceof RdfTerm.LanguageLiteral languageLiteral) {
-            return converter.makeLangLiteral(languageLiteral.lex(), languageLiteral.langtag());
-        } else if (term instanceof RdfTerm.DtLiteral dtLiteral) {
-            return converter.makeDtLiteral(dtLiteral.lex(), datatypeLookup.get(dtLiteral.datatype()));
-        } else if (term instanceof RdfTerm.SimpleLiteral simpleLiteral) {
-            return converter.makeSimpleLiteral(simpleLiteral.lex());
-        } else if (term instanceof RdfTerm.Triple triple) {
-            return converter.makeTripleNode(
-                convertTerm(triple.subject()),
-                convertTerm(triple.predicate()),
-                convertTerm(triple.object())
-            );
-        } else {
-            throw new RdfProtoDeserializationError("Unknown term type.");
+        try {
+            if (term == null) {
+                throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
+            } else if (term instanceof RdfTerm.Iri iri) {
+                return nameDecoder.decode(iri.prefixId(), iri.nameId());
+            } else if (term instanceof RdfTerm.BNode bnode) {
+                return converter.makeBlankNode(bnode.bNode());
+            } else if (term instanceof RdfTerm.LanguageLiteral languageLiteral) {
+                return converter.makeLangLiteral(languageLiteral.lex(), languageLiteral.langtag());
+            } else if (term instanceof RdfTerm.DtLiteral dtLiteral) {
+                return converter.makeDtLiteral(dtLiteral.lex(), datatypeLookup.get(dtLiteral.datatype()));
+            } else if (term instanceof RdfTerm.SimpleLiteral simpleLiteral) {
+                return converter.makeSimpleLiteral(simpleLiteral.lex());
+            } else if (term instanceof RdfTerm.Triple triple) {
+                return converter.makeTripleNode(
+                    convertTerm(triple.subject()),
+                    convertTerm(triple.predicate()),
+                    convertTerm(triple.object())
+                );
+            } else {
+                throw new RdfProtoDeserializationError("Unknown term type.");
+            }
+        } catch (Exception e) {
+            throw new RdfProtoDeserializationError("Error while decoding term %s".formatted(e), e);
         }
     }
 
