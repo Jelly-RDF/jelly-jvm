@@ -8,6 +8,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.mutable.ListBuffer
+import scala.jdk.CollectionConverters.*
 
 class ProtoEncoderSpec extends AnyWordSpec, Matchers:
   import ProtoTestCases.*
@@ -16,138 +17,170 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
   // Test body
   "a ProtoEncoder" should {
     "encode triple statements" in {
-      val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES)
-      ))
-      val encoded = Triples1.mrl.flatMap(triple => encoder.addTripleStatement(triple).toSeq)
-      assertEncoded(encoded, Triples1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
-    }
+      val buffer = ListBuffer[RdfStreamRow]()
+      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
+        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
+        .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
+        .build()
 
-    "encode triple statements with namespace declarations" in {
       val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
-        enableNamespaceDeclarations = true,
+        options,
+        enableNamespaceDeclarations = false,
+        appendableRowBuffer = buffer.asJava
       ))
-      val encoded = Triples2NsDecl.mrl.flatMap {
-        case t: Triple => encoder.addTripleStatement(t).toSeq
-        case ns: NamespaceDeclaration => encoder.declareNamespace(ns.prefix, ns.iri).toSeq
-      }
-      assertEncoded(encoded, Triples2NsDecl.encoded(encoder.options))
+      Triples1.mrl.foreach(triple => encoder.addTripleStatement(triple))
+      assertEncoded(buffer.toSeq, Triples1.encoded(options))
     }
 
     "encode triple statements with ns decls and an external buffer" in {
       val buffer = ListBuffer[RdfStreamRow]()
+      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
+        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
+        .build()
+
       val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
-        enableNamespaceDeclarations = true, Some(buffer)
+        options,
+        enableNamespaceDeclarations = true,
+        appendableRowBuffer = buffer.asJava
       ))
+
       for triple <- Triples2NsDecl.mrl do
-        val result = triple match
+        triple match
           case t: Triple => encoder.addTripleStatement(t)
           case ns: NamespaceDeclaration => encoder.declareNamespace(ns.prefix, ns.iri)
-        // external buffer – nothing should be returned directly
-        result.size should be (0)
 
-      assertEncoded(buffer.toSeq, Triples2NsDecl.encoded(encoder.options))
+      assertEncoded(buffer.toSeq, Triples2NsDecl.encoded(options))
     }
 
     "encode quad statements" in {
+      val buffer = ListBuffer[RdfStreamRow]()
+      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
+        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
+        .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
+        .build()
+
       val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
+        options,
+        enableNamespaceDeclarations = false,
+        appendableRowBuffer = buffer.asJava
       ))
-      val encoded = Quads1.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
-      assertEncoded(encoded, Quads1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
+
+      Quads1.mrl.foreach(quad => encoder.addQuadStatement(quad))
+      assertEncoded(buffer.toSeq, Quads1.encoded(options))
     }
 
     "encode quad statements with an external buffer" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS),
-        false, Some(buffer)
-      ))
-      for quad <- Quads1.mrl do
-        val result = encoder.addQuadStatement(quad)
-        // external buffer – nothing should be returned directly
-        result.size should be (0)
+      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
+        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
+        .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
+        .build()
 
-      assertEncoded(buffer.toSeq, Quads1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
+      val encoder = MockConverterFactory.encoder(Pep(
+        options,
+        enableNamespaceDeclarations = false,
+        appendableRowBuffer = buffer.asJava
+      ))
+
+      for quad <- Quads1.mrl do
+        encoder.addQuadStatement(quad)
+
+      assertEncoded(buffer.toSeq, Quads1.encoded(options))
     }
 
     "encode quad statements (repeated default graph)" in {
-      val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
-      ))
-      val encoded = Quads2RepeatDefault.mrl.flatMap(quad => encoder.addQuadStatement(quad).toSeq)
-      assertEncoded(encoded, Quads2RepeatDefault.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
-    }
+      val buffer = ListBuffer[RdfStreamRow]()
+      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
+        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
+        .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
+        .build()
 
-    "encode graphs" in {
       val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS)
+        options,
+        enableNamespaceDeclarations = false,
+        appendableRowBuffer = buffer.asJava
       ))
-      val encoded = Graphs1.mrl.flatMap((graphName, triples) => Seq(
-        encoder.startGraph(graphName).toSeq,
-        triples.flatMap(triple => encoder.addTripleStatement(triple).toSeq),
-        encoder.endGraph().toSeq
-      ).flatten)
-      assertEncoded(encoded, Graphs1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
+
+      Quads2RepeatDefault.mrl.foreach(quad => encoder.addQuadStatement(quad))
+      assertEncoded(buffer.toSeq, Quads2RepeatDefault.encoded(options))
     }
 
     "encode graphs with an external buffer" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS),
-        false, Some(buffer)
-      ))
-      for (graphName, triples) <- Graphs1.mrl do
-        val start = encoder.startGraph(graphName)
-        start.size should be (0)
-        for triple <- triples do
-          val result = encoder.addTripleStatement(triple)
-          result.size should be (0)
-        val end = encoder.endGraph()
-        end.size should be (0)
+      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
+        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS)
+        .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
+        .build()
 
-      assertEncoded(buffer.toSeq, Graphs1.encoded(encoder.options.withVersion(Constants.protoVersion_1_0_x)))
+      val encoder = MockConverterFactory.encoder(Pep(
+        options,
+        enableNamespaceDeclarations = false,
+        appendableRowBuffer = buffer.asJava
+      ))
+
+      for (graphName, triples) <- Graphs1.mrl do
+        encoder.startGraph(graphName)
+        for triple <- triples do
+          encoder.addTripleStatement(triple)
+        encoder.endGraph()
+
+      assertEncoded(buffer.toSeq, Graphs1.encoded(options))
     }
 
     "not allow to end a graph before starting one" in {
+      val buffer = ListBuffer[RdfStreamRow]()
+      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
+        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
+        .build()
+
       val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.QUADS)
+        options,
+        enableNamespaceDeclarations = false,
+        appendableRowBuffer = buffer.asJava
       ))
+
       val error = intercept[RdfProtoSerializationError] {
         encoder.endGraph()
       }
+
       error.getMessage should include ("Cannot end a delimited graph before starting one")
     }
 
     "not allow to use quoted triples as the graph name" in {
+      val buffer = ListBuffer[RdfStreamRow]()
+      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
+        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS)
+        .build()
+
       val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.GRAPHS)
+        options,
+        enableNamespaceDeclarations = false,
+        appendableRowBuffer = buffer.asJava
       ))
+
       val error = intercept[RdfProtoSerializationError] {
-        encoder.startGraph(TripleNode(
-          Triple(BlankNode("S"), BlankNode("P"), BlankNode("O"))
-        ))
+        encoder.startGraph(Triple(BlankNode("S"), BlankNode("P"), BlankNode("O")))
       }
+
       error.getMessage should include ("Cannot encode graph node")
     }
 
     "not allow to use namespace declarations if they are not enabled" in {
+      val buffer = ListBuffer[RdfStreamRow]()
+      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
+        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
+        .build()
+
       val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES),
+        options,
         enableNamespaceDeclarations = false,
+        appendableRowBuffer = buffer.asJava
       ))
+
       val error = intercept[RdfProtoSerializationError] {
         encoder.declareNamespace("test", "https://test.org/test/")
       }
-      error.getMessage should include ("Namespace declarations are not enabled in this stream")
-    }
 
-    "return options with the correct version" in {
-      val encoder = MockConverterFactory.encoder(Pep(
-        JellyOptions.smallGeneralized.withPhysicalType(PhysicalStreamType.TRIPLES)
-      ))
-      encoder.options.version should be (Constants.protoVersion_1_0_x)
+      error.getMessage should include ("Namespace declarations are not enabled in this stream")
     }
   }

@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core.internal
 
-import eu.ostrzyciel.jelly.core.JellyException.RdfProtoDeserializationError
+import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError
 import eu.ostrzyciel.jelly.core.proto.v1.*
 import eu.ostrzyciel.jelly.core.RdfTerm
 import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.*

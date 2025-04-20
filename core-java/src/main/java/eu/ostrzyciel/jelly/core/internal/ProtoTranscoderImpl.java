@@ -42,14 +42,13 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
     }
 
     @Override
-    public Iterable<RdfStreamFrame> ingestFrame(RdfStreamFrame frame) {
+    public RdfStreamFrame ingestFrame(RdfStreamFrame frame) {
         rowBuffer.clear();
-        for (RdfStreamRow row : frame.getRowsList()) {
+        for (final var row : frame.getRowsList()) {
             processRow(row);
         }
-        final var newFrame = RdfStreamFrame.newBuilder().addAllRows(rowBuffer).putAllMetadata(frame.getMetadataMap()).build();
-        rowBuffer.clear();
-        return List.of(newFrame);
+
+        return RdfStreamFrame.newBuilder().addAllRows(rowBuffer).putAllMetadata(frame.getMetadataMap()).build();
     }
 
     private void processRow(RdfStreamRow row) {
@@ -265,9 +264,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
         if (inputUsesPrefixes) {
             prefixLookup.newInputStream(options.getMaxPrefixTableSize());
         } else if (outputOptions.getMaxPrefixTableSize() > 0) {
-            throw new RdfProtoTranscodingError(
-                "Output stream uses prefixes, but the input stream does not."
-            );
+            throw new RdfProtoTranscodingError("Output stream uses prefixes, but the input stream does not.");
         }
 
         nameLookup.newInputStream(options.getMaxNameTableSize());

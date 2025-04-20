@@ -7,8 +7,12 @@ import eu.ostrzyciel.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import scala.language.postfixOps
+
 class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
-  private val validStreamTypes = LogicalStreamType.values.filter(_.getNumber > 0)
+  private val validStreamTypes = LogicalStreamType.values
+    .filter(_ != LogicalStreamType.UNRECOGNIZED)
+    .filter(_.getNumber > 0)
 
   given MockConverterFactory.type = MockConverterFactory
 
@@ -52,13 +56,13 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
     for streamType <- validStreamTypes do
       s"return RDF STaX type for $streamType" in {
         val t = LogicalStreamTypeUtils.getRdfStaxType(streamType)
-        t.isPresent should be (true)
-        t.get should startWith ("https://w3id.org/stax/ontology#")
+        t should not be None
+        t should startWith ("https://w3id.org/stax/ontology#")
       }
 
       s"return a type that can be parsed by LogicalStreamTypeFactory for $streamType" in {
         val t = LogicalStreamTypeUtils.getRdfStaxType(streamType)
-        val newType = LogicalStreamTypeUtils.fromOntologyIri(t.get)
+        val newType = LogicalStreamTypeUtils.fromOntologyIri(t)
         newType should be (Some(streamType))
       }
 
@@ -82,9 +86,15 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
         val decoder = MockConverterFactory.decoderConverter
         val a = LogicalStreamTypeUtils.getRdfStaxAnnotation(decoder, streamType, subjectNode)
         a.size should be (3)
-        a.get(0).s should be (subjectNode)
-        a.get(0).p should be (Iri("https://w3id.org/stax/ontology#hasStreamTypeUsage"))
-        a.get(2).o should be (Iri(LogicalStreamTypeUtils.getRdfStaxType(streamType).get))
+
+        val a0Triple = a.get(0).asInstanceOf[Triple]
+
+        a0Triple.s should be (subjectNode)
+        a0Triple.p should be (Iri("https://w3id.org/stax/ontology#hasStreamTypeUsage"))
+
+        val a2Triple = a.get(2).asInstanceOf[Triple]
+
+        a2Triple.o should be (Iri(LogicalStreamTypeUtils.getRdfStaxType(streamType)))
       }
 
     for subjectNode <- subjectNodes do

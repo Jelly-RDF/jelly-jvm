@@ -1,7 +1,6 @@
 package eu.ostrzyciel.jelly.core.internal
 
-import eu.ostrzyciel.jelly.core.JellyException.RdfProtoSerializationError
-import eu.ostrzyciel.jelly.core.JellyOptions
+import eu.ostrzyciel.jelly.core.{JellyOptions, RdfProtoSerializationError, RowBufferAppender}
 import eu.ostrzyciel.jelly.core.helpers.Mrl
 import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.*
 import eu.ostrzyciel.jelly.core.proto.v1.*

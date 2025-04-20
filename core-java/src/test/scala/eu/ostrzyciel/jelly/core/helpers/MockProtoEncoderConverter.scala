@@ -9,28 +9,29 @@ import scala.collection.mutable
 /**
  * Mock implementation of ProtoEncoderConverter
  */
-class MockProtoEncoderConverter extends ProtoEncoderConverter[Node, Triple, Quad]:
+class MockProtoEncoderConverter extends ProtoEncoderConverter[Node]:
 
-  override def getTstS(triple: Triple) = triple.s
-  override def getTstP(triple: Triple) = triple.p
-  override def getTstO(triple: Triple) = triple.o
+  override def getTstS(triple: Node) = triple.asInstanceOf[Triple].s
+  override def getTstP(triple: Node) = triple.asInstanceOf[Triple].p
+  override def getTstO(triple: Node) = triple.asInstanceOf[Triple].o
 
-  override def getQstS(quad: Quad) = quad.s
-  override def getQstP(quad: Quad) = quad.p
-  override def getQstO(quad: Quad) = quad.o
-  override def getQstG(quad: Quad) = quad.g
+  override def getQstS(quad: Node) = quad.asInstanceOf[Quad].s
+  override def getQstP(quad: Node) = quad.asInstanceOf[Quad].p
+  override def getQstO(quad: Node) = quad.asInstanceOf[Quad].o
+  override def getQstG(quad: Node) = quad.asInstanceOf[Quad].g
 
   override def nodeToProto(encoder: NodeEncoder[Node], node: Node): RdfTerm.SpoTerm = node match
     case Iri(iri) => encoder.makeIri(iri)
     case SimpleLiteral(lex) => encoder.makeSimpleLiteral(lex)
     case LangLiteral(lex, lang) => encoder.makeLangLiteral(node, lex, lang)
     case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt)
-    case TripleNode(t) => encoder.makeQuotedTriple(
-      nodeToProto(encoder, t.s),
-      nodeToProto(encoder, t.p),
-      nodeToProto(encoder, t.o),
-    )
     case BlankNode(label) => encoder.makeBlankNode(label)
+    case Triple(s, p, o) => encoder.makeQuotedTriple(
+      nodeToProto(encoder, s),
+      nodeToProto(encoder, p),
+      nodeToProto(encoder, o),
+    )
+    case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")
 
   override def graphNodeToProto(encoder: NodeEncoder[Node], node: Node): RdfTerm.GraphTerm = node match
     case Iri(iri) => encoder.makeIri(iri)
@@ -39,4 +40,4 @@ class MockProtoEncoderConverter extends ProtoEncoderConverter[Node, Triple, Quad
     case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt)
     case BlankNode(label) => encoder.makeBlankNode(label)
     case null => NodeEncoder.makeDefaultGraph
-    case _ => throw JellyException.RdfProtoSerializationError(s"Cannot encode graph node: $node")
+    case _ => throw RdfProtoSerializationError(s"Cannot encode graph node: $node")

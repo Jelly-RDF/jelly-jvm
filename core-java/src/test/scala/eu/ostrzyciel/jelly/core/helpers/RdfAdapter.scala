@@ -71,6 +71,7 @@ object RdfAdapter:
       | RdfNameEntry
       | RdfPrefixEntry
       | RdfDatatypeEntry
+      | Null
 
   def rdfStreamRowFromValue(value: RdfStreamRowValue): RdfStreamRow =
     value match {
@@ -130,6 +131,10 @@ object RdfAdapter:
       .setDatatype(row)
       .build()
 
+  def rdfStreamRow(): RdfStreamRow =
+    RdfStreamRow.newBuilder()
+      .build()
+
   def rdfStreamOptions(
     streamName: String = "",
     maxNameTableSize: Int = 1,
@@ -152,6 +157,7 @@ object RdfAdapter:
     | String
     | RdfDefaultGraph
     | RdfLiteral
+    | Null
 
   def rdfGraphStart(graph: RdfGraphValue): RdfGraphStart = {
     val builder = RdfGraphStart.newBuilder()
@@ -165,6 +171,10 @@ object RdfAdapter:
     builder.build()
   }
 
+  def rdfGraphStart(): RdfGraphStart =
+    RdfGraphStart.newBuilder()
+      .build()
+
   def rdfGraphEnd(): RdfGraphEnd =
     RdfGraphEnd.newBuilder()
       .build()
@@ -172,29 +182,33 @@ object RdfAdapter:
   def rdfQuad(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue, graph: RdfGraphValue): RdfQuad = {
     var builder = RdfQuad.newBuilder()
 
-    subject match
-      case s: RdfIri => builder = builder.setSIri(s)
-      case s: String => builder = builder.setSBnode(s)
-      case s: RdfLiteral => builder = builder.setSLiteral(s)
-      case s: RdfTriple => builder = builder.setSTripleTerm(s)
+    if subject != null then
+      subject match
+        case s: RdfIri => builder = builder.setSIri(s)
+        case s: String => builder = builder.setSBnode(s)
+        case s: RdfLiteral => builder = builder.setSLiteral(s)
+        case s: RdfTriple => builder = builder.setSTripleTerm(s)
 
-    predicate match
-      case p: RdfIri => builder = builder.setPIri(p)
-      case p: String => builder = builder.setPBnode(p)
-      case p: RdfLiteral => builder = builder.setPLiteral(p)
-      case p: RdfTriple => builder = builder.setPTripleTerm(p)
+    if predicate != null then
+      predicate match
+        case p: RdfIri => builder = builder.setPIri(p)
+        case p: String => builder = builder.setPBnode(p)
+        case p: RdfLiteral => builder = builder.setPLiteral(p)
+        case p: RdfTriple => builder = builder.setPTripleTerm(p)
 
-    `object` match
-      case o: RdfIri => builder = builder.setOIri(o)
-      case o: String => builder = builder.setOBnode(o)
-      case o: RdfLiteral => builder = builder.setOLiteral(o)
-      case o: RdfTriple => builder = builder.setOTripleTerm(o)
+    if `object` != null then
+      `object` match
+        case o: RdfIri => builder = builder.setOIri(o)
+        case o: String => builder = builder.setOBnode(o)
+        case o: RdfLiteral => builder = builder.setOLiteral(o)
+        case o: RdfTriple => builder = builder.setOTripleTerm(o)
 
-    graph match
-      case g: RdfIri => builder = builder.setGIri(g)
-      case g: String => builder = builder.setGBnode(g)
-      case g: RdfDefaultGraph => builder = builder.setGDefaultGraph(g)
-      case g: RdfLiteral => builder = builder.setGLiteral(g)
+    if graph != null then
+      graph match
+        case g: RdfIri => builder = builder.setGIri(g)
+        case g: String => builder = builder.setGBnode(g)
+        case g: RdfDefaultGraph => builder = builder.setGDefaultGraph(g)
+        case g: RdfLiteral => builder = builder.setGLiteral(g)
 
     builder.build()
   }
@@ -204,32 +218,36 @@ object RdfAdapter:
     | String
     | RdfLiteral
     | RdfTriple
+    | Null
 
   def rdfTriple(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue): RdfTriple = {
     var builder = RdfTriple.newBuilder()
 
-    subject match
-      case s: RdfIri => builder = builder.setSIri(s)
-      case s: String => builder = builder.setSBnode(s)
-      case s: RdfLiteral => builder = builder.setSLiteral(s)
-      case s: RdfTriple => builder = builder.setSTripleTerm(s)
+    if subject != null then
+      subject match
+        case s: RdfIri => builder = builder.setSIri(s)
+        case s: String => builder = builder.setSBnode(s)
+        case s: RdfLiteral => builder = builder.setSLiteral(s)
+        case s: RdfTriple => builder = builder.setSTripleTerm(s)
 
-    predicate match
-      case p: RdfIri => builder = builder.setPIri(p)
-      case p: String => builder = builder.setPBnode(p)
-      case p: RdfLiteral => builder = builder.setPLiteral(p)
-      case p: RdfTriple => builder = builder.setPTripleTerm(p)
+    if predicate != null then
+      predicate match
+        case p: RdfIri => builder = builder.setPIri(p)
+        case p: String => builder = builder.setPBnode(p)
+        case p: RdfLiteral => builder = builder.setPLiteral(p)
+        case p: RdfTriple => builder = builder.setPTripleTerm(p)
 
-    `object` match
-      case o: RdfIri => builder = builder.setOIri(o)
-      case o: String => builder = builder.setOBnode(o)
-      case o: RdfLiteral => builder = builder.setOLiteral(o)
-      case o: RdfTriple => builder = builder.setOTripleTerm(o)
+    if `object` != null then
+      `object` match
+        case o: RdfIri => builder = builder.setOIri(o)
+        case o: String => builder = builder.setOBnode(o)
+        case o: RdfLiteral => builder = builder.setOLiteral(o)
+        case o: RdfTriple => builder = builder.setOTripleTerm(o)
 
     builder.build()
   }
 
-  def extractRdfStreamRow(row: RdfStreamRow): RdfStreamRowValue | Null =
+  def extractRdfStreamRow(row: RdfStreamRow): RdfStreamRowValue =
     if row.hasOptions then
       row.getOptions
     else if row.hasName then

@@ -1,4 +1,4 @@
-package eu.ostrzyciel.jelly.core.internal;
+package eu.ostrzyciel.jelly.core;
 
 import eu.ostrzyciel.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry;

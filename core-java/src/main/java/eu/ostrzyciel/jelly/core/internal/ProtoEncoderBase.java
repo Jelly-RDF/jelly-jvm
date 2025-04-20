@@ -3,9 +3,12 @@ package eu.ostrzyciel.jelly.core.internal;
 import eu.ostrzyciel.jelly.core.NodeEncoder;
 import eu.ostrzyciel.jelly.core.ProtoEncoderConverter;
 import eu.ostrzyciel.jelly.core.RdfTerm;
+import eu.ostrzyciel.jelly.core.RowBufferAppender;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 
-public abstract class ProtoEncoderBase<TNode> {
+public abstract class ProtoEncoderBase<TNode> implements RowBufferAppender {
 
+    protected final RdfStreamOptions options;
     protected final NodeEncoder<TNode> nodeEncoder;
     protected final ProtoEncoderConverter<TNode> converter;
 
@@ -13,9 +16,11 @@ public abstract class ProtoEncoderBase<TNode> {
     protected final LastNodeHolder<TNode> lastPredicate = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
     protected TNode lastGraph = null;
+    
 
-    protected ProtoEncoderBase(NodeEncoder<TNode> nodeEncoder, ProtoEncoderConverter<TNode> converter) {
-        this.nodeEncoder = nodeEncoder;
+    protected ProtoEncoderBase(RdfStreamOptions options, ProtoEncoderConverter<TNode> converter) {
+        this.options = options;
+        this.nodeEncoder = NodeEncoderImpl.create(options, this);
         this.converter = converter;
     }
 

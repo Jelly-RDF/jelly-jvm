@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core.internal;
 
+import eu.ostrzyciel.jelly.core.NameDecoder;
 import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;

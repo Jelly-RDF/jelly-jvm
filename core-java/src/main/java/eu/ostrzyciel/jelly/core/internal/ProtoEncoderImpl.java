@@ -13,12 +13,8 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     private boolean hasEmittedOptions = false;
     private final Collection<RdfStreamRow> rowBuffer;
 
-    protected ProtoEncoderImpl(
-        NodeEncoder<TNode> nodeEncoder,
-        ProtoEncoderConverter<TNode> converter,
-        ProtoEncoder.Params params
-    ) {
-        super(nodeEncoder, converter, params);
+    public ProtoEncoderImpl(ProtoEncoderConverter<TNode> converter, ProtoEncoder.Params params) {
+        super(converter, params);
         this.rowBuffer = appendableRowBuffer;
     }
 

@@ -1,5 +1,6 @@
 package eu.ostrzyciel.jelly.core.internal;
 
+import eu.ostrzyciel.jelly.core.NameDecoder;
 import eu.ostrzyciel.jelly.core.ProtoDecoderConverter;
 import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError;
 import eu.ostrzyciel.jelly.core.RdfTerm;
@@ -15,9 +16,9 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
     protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastGraph = new LastNodeHolder<>();
 
-    protected ProtoDecoderBase(ProtoDecoderConverter<TNode, TDatatype> converter, NameDecoder<TNode> nameDecoder) {
+    protected ProtoDecoderBase(ProtoDecoderConverter<TNode, TDatatype> converter) {
         this.converter = converter;
-        this.nameDecoder = nameDecoder;
+        this.nameDecoder = new NameDecoderImpl<>(getPrefixTableSize(), getNameTableSize(), converter::makeIriNode);
         this.datatypeLookup = new DecoderLookup<>(getDatatypeTableSize());
     }
 
@@ -84,13 +85,17 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
     }
 
     protected final TNode convertGraphTermWrapped(RdfTerm.GraphTerm graph) {
-        if (graph == null) {
-            return lastGraph.node == null ? null : lastGraph.node;
-        } else {
-            final var node = convertGraphTerm(graph);
-            lastGraph.node = node;
-            return node;
+        if (graph == null && lastGraph.node == null) {
+            throw new RdfProtoDeserializationError("Empty term without previous graph term.");
         }
+
+        if (graph == null) {
+            return lastGraph.node;
+        }
+
+        final var node = convertGraphTerm(graph);
+        lastGraph.node = node;
+        return node;
     }
 
     protected final TNode convertTriple(RdfTerm.Triple triple) {
@@ -111,12 +116,16 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
     }
 
     private TNode convertSpoTermWrapped(RdfTerm.SpoTerm term, LastNodeHolder<TNode> lastNodeHolder) {
-        if (term == null) {
-            return lastNodeHolder.node == null ? null : lastNodeHolder.node;
-        } else {
-            final var node = convertTerm(term);
-            lastNodeHolder.node = node;
-            return node;
+        if (term == null && lastNodeHolder.node == null) {
+            throw new RdfProtoDeserializationError("Empty term without previous term.");
         }
+
+        if (term == null) {
+            return lastNodeHolder.node;
+        }
+
+        final var node = convertTerm(term);
+        lastNodeHolder.node = node;
+        return node;
     }
 }

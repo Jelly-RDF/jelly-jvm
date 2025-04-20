@@ -3,9 +3,11 @@ package eu.ostrzyciel.jelly.core.internal;
 import eu.ostrzyciel.jelly.core.NodeEncoder;
 import eu.ostrzyciel.jelly.core.RdfProtoSerializationError;
 import eu.ostrzyciel.jelly.core.RdfTerm;
+import eu.ostrzyciel.jelly.core.RowBufferAppender;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfNameEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
+import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
@@ -111,6 +113,18 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         nameLookup = new EncoderLookup(nameTableSize, maxPrefixTableSize > 0);
         nodeCache = new NodeCache<>(nodeCacheSize);
         this.bufferAppender = bufferAppender;
+    }
+
+    public static <TNode> NodeEncoder<TNode> create(RdfStreamOptions options, RowBufferAppender bufferAppender) {
+        return new NodeEncoderImpl<>(
+            options.getMaxPrefixTableSize(),
+            options.getMaxNameTableSize(),
+            options.getMaxDatatypeTableSize(),
+            Math.max(Math.min(options.getMaxNameTableSize(), 1024), 256),
+            options.getMaxNameTableSize(),
+            Math.max(Math.min(options.getMaxNameTableSize(), 1024), 256),
+            bufferAppender
+        );
     }
 
     /**

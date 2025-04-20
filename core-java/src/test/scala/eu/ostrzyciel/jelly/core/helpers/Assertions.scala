@@ -1,6 +1,6 @@
 package eu.ostrzyciel.jelly.core.helpers
 
-import eu.ostrzyciel.jelly.core.helpers.Mrl.Statement
+import eu.ostrzyciel.jelly.core.helpers.Mrl.Node
 import eu.ostrzyciel.jelly.core.helpers.RdfAdapter.extractRdfStreamRow
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -16,7 +16,7 @@ object Assertions extends AnyWordSpec, Matchers:
       }
     observed.size should be(expected.size)
 
-  def assertDecoded(observed: Seq[Statement], expected: Seq[Statement]): Unit =
+  def assertDecoded(observed: Seq[Node], expected: Seq[Node]): Unit =
     for ix <- 0 until observed.size.min(expected.size) do
       withClue(s"Row $ix:") {
         val obsRow = observed.applyOrElse(ix, null)

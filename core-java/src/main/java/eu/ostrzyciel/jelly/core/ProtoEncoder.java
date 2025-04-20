@@ -1,7 +1,6 @@
 package eu.ostrzyciel.jelly.core;
 
 import eu.ostrzyciel.jelly.core.internal.ProtoEncoderBase;
-import eu.ostrzyciel.jelly.core.internal.RowBufferAppender;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 import java.util.Collection;
@@ -14,13 +13,11 @@ public abstract class ProtoEncoder<TNode> extends ProtoEncoderBase<TNode> implem
         Collection<RdfStreamRow> appendableRowBuffer
     ) {}
 
-    protected final RdfStreamOptions options;
     protected final boolean enableNamespaceDeclarations;
     protected final Collection<RdfStreamRow> appendableRowBuffer;
 
-    protected ProtoEncoder(NodeEncoder<TNode> nodeEncoder, ProtoEncoderConverter<TNode> converter, Params params) {
-        super(nodeEncoder, converter);
-        this.options = params.options;
+    protected ProtoEncoder(ProtoEncoderConverter<TNode> converter, Params params) {
+        super(params.options, converter);
         this.enableNamespaceDeclarations = params.enableNamespaceDeclarations;
         this.appendableRowBuffer = params.appendableRowBuffer;
     }
