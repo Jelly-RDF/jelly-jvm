@@ -48,7 +48,7 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
                 throw new RdfProtoDeserializationError("Unknown graph term type.");
             }
         } catch (Exception e) {
-            throw new RdfProtoDeserializationError("Error while decoding term %s".formatted(e), e);
+            throw new RdfProtoDeserializationError("Error while decoding graph term %s".formatted(e), e);
         }
     }
 

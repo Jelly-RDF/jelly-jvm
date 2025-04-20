@@ -273,7 +273,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
 
         // Set the input options
         inputOptions = options;
-        
+
         // Update the input options
         if (hasEmittedOptions) {
             return;

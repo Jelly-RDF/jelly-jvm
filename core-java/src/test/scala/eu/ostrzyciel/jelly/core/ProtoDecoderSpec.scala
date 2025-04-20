@@ -159,7 +159,6 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           JellyOptions.SMALL_GENERALIZED
             .toBuilder
             .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-            .setLogicalType(LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES)
             .build()
         )
         .foreach(row => decoder.ingestRow(row))
@@ -705,7 +704,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       decoder.ingestRow(data(1))
       decoder.ingestRow(data(2))
 
-      collector.statements(1) should be (a[Triple])
+      collector.statements.head should be (a[Triple])
     }
   }
 

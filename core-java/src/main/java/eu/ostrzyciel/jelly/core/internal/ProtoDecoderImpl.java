@@ -103,10 +103,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
     protected void handleNamespace(RdfNamespaceDeclaration namespace) {
         final var iri = namespace.getValue();
-        protoHandler.handleNamespace(
-            namespace.getName(),
-            nameDecoder.decode(iri.getPrefixId(), iri.getNameId())
-        );
+        protoHandler.handleNamespace(namespace.getName(), nameDecoder.decode(iri.getPrefixId(), iri.getNameId()));
     }
 
     protected void handleTriple(RdfTriple triple) {
@@ -118,11 +115,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
     }
 
     protected void handleGraphStart(RdfGraphStart graphStart) {
-        throw new RdfProtoDeserializationError("Unexpected graph start row in stream.");
+        throw new RdfProtoDeserializationError("Unexpected start of graph in stream.");
     }
 
     protected void handleGraphEnd() {
-        throw new RdfProtoDeserializationError("Unexpected graph end row in stream.");
+        throw new RdfProtoDeserializationError("Unexpected end of graph in stream.");
     }
 
     public static final class TriplesDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
@@ -279,10 +276,6 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         protected void handleTriple(RdfTriple triple) {
-            if (currentGraph == null) {
-                throw new RdfProtoDeserializationError("Triple in stream without preceding graph start.");
-            }
-
             buffer.add(convertTriple(RdfTerm.from(triple)));
         }
 

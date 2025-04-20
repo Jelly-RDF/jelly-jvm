@@ -54,6 +54,10 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     @Override
     public void endGraph() {
+        if (!hasEmittedOptions) {
+            throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one");
+        }
+
         final var graphEnd = new RdfTerm.GraphEnd();
         final var graphRow = RdfStreamRow.newBuilder().setGraphEnd(graphEnd.toProto()).build();
         rowBuffer.add(graphRow);

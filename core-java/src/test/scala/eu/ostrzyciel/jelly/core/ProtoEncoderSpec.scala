@@ -36,6 +36,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       val buffer = ListBuffer[RdfStreamRow]()
       val options = JellyOptions.SMALL_GENERALIZED.toBuilder
         .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
+        .setVersion(JellyConstants.PROTO_VERSION)
         .build()
 
       val encoder = MockConverterFactory.encoder(Pep(

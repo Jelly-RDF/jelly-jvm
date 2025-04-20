@@ -17,7 +17,10 @@ public class LogicalStreamTypeUtils {
     }
 
     public static boolean isEqualOrSubtypeOf(LogicalStreamType logicalType, LogicalStreamType other) {
-        return logicalType.equals(other) || logicalType.getNumber() % 10 == other.getNumber();
+        return (
+            logicalType.equals(other) ||
+            String.valueOf(logicalType.getNumber()).endsWith(String.valueOf(other.getNumber()))
+        );
     }
 
     public static String getRdfStaxType(LogicalStreamType logicalType) {
