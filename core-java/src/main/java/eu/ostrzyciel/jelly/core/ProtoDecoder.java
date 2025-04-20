@@ -4,12 +4,9 @@ import eu.ostrzyciel.jelly.core.internal.ProtoDecoderBase;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 
-public abstract class ProtoDecoder<TNode, TDatatype>
-    extends ProtoDecoderBase<TNode, TDatatype> {
+public abstract class ProtoDecoder<TNode, TDatatype> extends ProtoDecoderBase<TNode, TDatatype> {
 
-    protected ProtoDecoder(
-        ProtoDecoderConverter<TNode, TDatatype> converter
-    ) {
+    protected ProtoDecoder(ProtoDecoderConverter<TNode, TDatatype> converter) {
         super(converter);
     }
 

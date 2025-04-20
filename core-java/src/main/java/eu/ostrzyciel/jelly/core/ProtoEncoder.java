@@ -5,7 +5,9 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 import java.util.Collection;
 
-public abstract class ProtoEncoder<TNode> extends ProtoEncoderBase<TNode> implements RowBufferAppender, ProtoHandler.AnyProtoHandler<TNode> {
+public abstract class ProtoEncoder<TNode>
+    extends ProtoEncoderBase<TNode>
+    implements RowBufferAppender, ProtoHandler.AnyProtoHandler<TNode> {
 
     public record Params(
         RdfStreamOptions options,

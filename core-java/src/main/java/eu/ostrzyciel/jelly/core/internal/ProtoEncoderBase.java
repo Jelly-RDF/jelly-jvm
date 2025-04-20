@@ -16,7 +16,6 @@ public abstract class ProtoEncoderBase<TNode> implements RowBufferAppender {
     protected final LastNodeHolder<TNode> lastPredicate = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
     protected TNode lastGraph = null;
-    
 
     protected ProtoEncoderBase(RdfStreamOptions options, ProtoEncoderConverter<TNode> converter) {
         this.options = options;
