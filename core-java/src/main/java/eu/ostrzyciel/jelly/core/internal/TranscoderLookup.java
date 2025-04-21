@@ -36,7 +36,7 @@ final class TranscoderLookup {
 
     /**
      * Remap a lookup entry from the input stream to the output stream.
-     *
+     * <p>
      * This may result in us actually adding a new entry to the output lookup, or not, if it's already there.
      *
      * @param originalId The ID of the entry in the input stream.
@@ -64,7 +64,7 @@ final class TranscoderLookup {
 
     /**
      * Remap a reference to a lookup entry from the input stream ID space to the output stream ID space.
-     *
+     * <p>
      * This automatically handles 0-compression.
      *
      * @param id The ID to remap (input stream).

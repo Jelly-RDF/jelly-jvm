@@ -27,26 +27,11 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
   )
   val testCases = testCasesRaw
     .map((name, tc, metadata) => (
-    name,
-    tc.encodedFull(opt, 1000, metadata).head
-  ))
+      name,
+      tc.encodedFull(opt, 1000, metadata).head
+    ))
 
   "RdfStreamFrame" should {
-//    "serialize to string with toProtoString" when {
-//      for ((name, tc) <- testCases) do s"test case $name" in {
-//        val str = tc.toProtoString
-//        str should not be empty
-//      }
-//    }
-
-//    "deserialize from string with fromAscii" when {
-//      for ((name, tc) <- testCases) do s"test case $name" in {
-//        val str = tc.toProtoString
-//        val frame = RdfStreamFrame.fromAscii(str)
-//        frame should be (tc)
-//      }
-//    }
-
     // This case is mostly here to test metadata serialization/deserialization
     // in a round-trip setting.
     "deserialize from bytes" when {

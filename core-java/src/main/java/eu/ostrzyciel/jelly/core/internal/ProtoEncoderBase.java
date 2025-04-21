@@ -6,8 +6,15 @@ import eu.ostrzyciel.jelly.core.RdfTerm;
 import eu.ostrzyciel.jelly.core.RowBufferAppender;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamOptions;
 
+/**
+ * Base interface for Jelly proto encoders. Only for internal use.
+ * @param <TNode> type of RDF nodes in the library
+ */
 public abstract class ProtoEncoderBase<TNode> implements RowBufferAppender {
 
+    /**
+     * RdfStreamOptions for this encoder.
+     */
     protected final RdfStreamOptions options;
     protected final NodeEncoder<TNode> nodeEncoder;
     protected final ProtoEncoderConverter<TNode> converter;
@@ -40,6 +47,11 @@ public abstract class ProtoEncoderBase<TNode> implements RowBufferAppender {
         );
     }
 
+    /**
+     * Converts a triple to an RdfQuad object with a null graph.
+     * <p>
+     * Used in RDF-Patch for triple add/delete operations.
+     */
     protected final RdfTerm.Quad tripleInQuadToProto(TNode subject, TNode predicate, TNode object) {
         return new RdfTerm.Quad(
             nodeToProtoWrapped(subject, lastSubject),

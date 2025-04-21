@@ -11,6 +11,12 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fast implementation of the ProtoTranscoder interface.
+ * <p>
+ * It does not in perfect compression (like you would get with full decoding and re-encoding), but it should be
+ * good enough for the vast majority of cases.
+ */
 public class ProtoTranscoderImpl implements ProtoTranscoder {
 
     private final RdfStreamOptions supportedInputOptions;
@@ -27,6 +33,12 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
     private boolean hasChangedTerms = false;
     private boolean hasEmittedOptions = false;
 
+    /**
+     * Constructor for the ProtoTranscoderImpl class.
+     *
+     * @param supportedInputOptions maximum allowable options for the input streams (optional)
+     * @param outputOptions options for the output stream. This MUST have the physical stream type set.
+     */
     public ProtoTranscoderImpl(RdfStreamOptions supportedInputOptions, RdfStreamOptions outputOptions) {
         this.supportedInputOptions = supportedInputOptions;
         this.outputOptions = outputOptions;

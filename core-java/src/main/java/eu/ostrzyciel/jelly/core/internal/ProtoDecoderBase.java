@@ -5,6 +5,11 @@ import eu.ostrzyciel.jelly.core.ProtoDecoderConverter;
 import eu.ostrzyciel.jelly.core.RdfProtoDeserializationError;
 import eu.ostrzyciel.jelly.core.RdfTerm;
 
+/**
+ * Base trait for Jelly proto decoders. Only for internal use.
+ * @param <TNode> type of RDF nodes in the library
+ * @param <TDatatype> type of the datatype in the library
+ */
 public abstract class ProtoDecoderBase<TNode, TDatatype> {
 
     protected final ProtoDecoderConverter<TNode, TDatatype> converter;
@@ -28,6 +33,12 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
 
     protected abstract int getDatatypeTableSize();
 
+    /**
+     * Convert a GraphTerm message to a node.
+     * @param graph graph term to convert
+     * @return converted node
+     * @throws RdfProtoDeserializationError if the graph term can't be decoded
+     */
     protected final TNode convertGraphTerm(RdfTerm.GraphTerm graph) {
         try {
             if (graph == null) {
@@ -52,6 +63,11 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
         }
     }
 
+    /**
+     * Convert a SpoTerm message to a node.
+     * @param term term to convert
+     * @throws RdfProtoDeserializationError if the term can't be decoded
+     */
     protected final TNode convertTerm(RdfTerm.SpoTerm term) {
         try {
             if (term == null) {
@@ -80,18 +96,38 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
         }
     }
 
+    /**
+     * Convert a subject SpoTerm message to a node, while respecting repeated terms.
+     * @param subject term to convert
+     * @return converted node
+     */
     protected final TNode convertSubjectTermWrapped(RdfTerm.SpoTerm subject) {
         return convertSpoTermWrapped(subject, lastSubject);
     }
 
+    /**
+     * Convert a predicate SpoTerm message to a node, while respecting repeated terms.
+     * @param predicate term to convert
+     * @return converted node
+     */
     protected final TNode convertPredicateTermWrapped(RdfTerm.SpoTerm predicate) {
         return convertSpoTermWrapped(predicate, lastPredicate);
     }
 
+    /**
+     * Convert an object SpoTerm message to a node, while respecting repeated terms.
+     * @param object term to convert
+     * @return converted node
+     */
     protected final TNode convertObjectTermWrapped(RdfTerm.SpoTerm object) {
         return convertSpoTermWrapped(object, lastObject);
     }
 
+    /**
+     * Convert a GraphTerm message to a node, while respecting repeated terms.
+     * @param graph graph term to convert
+     * @return converted node
+     */
     protected final TNode convertGraphTermWrapped(RdfTerm.GraphTerm graph) {
         if (graph == null && lastGraph.node == null) {
             throw new RdfProtoDeserializationError("Empty term without previous graph term.");
@@ -106,6 +142,11 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
         return node;
     }
 
+    /**
+     * Convert an RdfTriple message, while respecting repeated terms.
+     * @param triple triple to convert
+     * @return converted triple
+     */
     protected final TNode convertTriple(RdfTerm.Triple triple) {
         return converter.makeTriple(
             convertSpoTermWrapped(triple.subject(), lastSubject),
@@ -114,6 +155,11 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
         );
     }
 
+    /**
+     * Convert an RdfQuad message, while respecting repeated terms.
+     * @param quad quad to convert
+     * @return converted quad
+     */
     protected final TNode convertQuad(RdfTerm.Quad quad) {
         return converter.makeQuad(
             convertSpoTermWrapped(quad.subject(), lastSubject),

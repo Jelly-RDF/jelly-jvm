@@ -2,7 +2,6 @@ package eu.ostrzyciel.jelly.core.utils;
 
 import eu.ostrzyciel.jelly.core.ProtoDecoderConverter;
 import eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType;
-import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,10 +11,26 @@ public class LogicalStreamTypeUtils {
 
     private LogicalStreamTypeUtils() {}
 
+    /**
+     * Converts the logical stream type to its base concrete stream type in RDF-STaX.
+     * For example, LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS will be converted to LogicalStreamType.DATASETS.
+     * UNSPECIFIED values will be left as-is.
+     *
+     * @param logicalType logical stream type
+     * @return base stream type
+     */
     public static LogicalStreamType toBaseType(LogicalStreamType logicalType) {
         return LogicalStreamType.forNumber(logicalType.getNumber() % 10);
     }
 
+    /**
+     * Checks if the logical stream type is equal to or a subtype of the other logical stream type.
+     * For example, LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS is a subtype of LogicalStreamType.DATASETS.
+     *
+     * @param logicalType the logical stream type to check
+     * @param other the other logical stream type
+     * @return true if the logical stream type is equal to or a subtype of the other logical stream type
+     */
     public static boolean isEqualOrSubtypeOf(LogicalStreamType logicalType, LogicalStreamType other) {
         return (
             logicalType.equals(other) ||
@@ -23,6 +38,13 @@ public class LogicalStreamTypeUtils {
         );
     }
 
+    /**
+     * Returns the IRI of the RDF-STaX stream type individual for the logical stream type.
+     * If the logical stream type is not supported or is not specified, None is returned.
+     *
+     * @param logicalType the logical stream type
+     * @return the IRI of the RDF-STaX stream type individual
+     */
     public static String getRdfStaxType(LogicalStreamType logicalType) {
         return switch (logicalType) {
             case LOGICAL_STREAM_TYPE_FLAT_TRIPLES -> STAX_PREFIX + "flatTripleStream";
@@ -36,6 +58,12 @@ public class LogicalStreamTypeUtils {
         };
     }
 
+    /**
+     * Creates a logical stream type from an RDF-STaX stream type individual IRI.
+     *
+     * @param iri the IRI of the RDF-STaX stream type individual
+     * @return the logical stream type, or None if the IRI is not a valid RDF-STaX stream type individual
+     */
     public static LogicalStreamType fromOntologyIri(String iri) {
         if (!iri.startsWith(STAX_PREFIX)) {
             return null;
@@ -54,6 +82,24 @@ public class LogicalStreamTypeUtils {
         };
     }
 
+    /**
+     * Returns an RDF-STaX annotation for the logical stream type, in RDF. The annotation simply states that
+     * <subjectNode> has a stream type usage, and that stream type usage has this stream type.
+     * <p>
+     * Example in Turtle for a flat triple stream:
+     * <subjectNode> stax:hasStreamTypeUsage [
+     *     a stax:RdfStreamTypeUsage ;
+     *     stax:hasStreamType stax:flatTripleStream
+     * ] .
+     *
+     * @param logicalType the logical stream type
+     * @param subjectNode the subject node to annotate
+     * @param converter the converter to use for creating RDF nodes and triples
+     * @param <TNode> the type of RDF nodes
+     * @param <TDatatype> the type of RDF triples
+     * @throws IllegalArgumentException if the logical stream type is not supported
+     * @return the RDF-STaX annotation
+     */
     public static <TNode, TDatatype> List<TNode> getRdfStaxAnnotation(
         ProtoDecoderConverter<TNode, TDatatype> converter,
         LogicalStreamType logicalType,

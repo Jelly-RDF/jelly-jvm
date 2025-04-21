@@ -15,6 +15,15 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfTriple;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Base class for stateful decoders of protobuf RDF streams.
+ *
+ * @see ProtoDecoder the base (extendable) interface.
+ * @see ProtoDecoderBase for common methods shared by all decoders.
+ *
+ * @param <TNode> the type of the node
+ * @param <TDatatype> the type of the datatype
+ */
 public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNode, TDatatype> {
 
     protected final ProtoHandler<TNode> protoHandler;
@@ -32,6 +41,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         this.supportedOptions = supportedOptions;
     }
 
+    /**
+     * Returns the size of the name table.
+     * @return the size of the name table if options are set, otherwise the default size
+     */
     @Override
     protected int getNameTableSize() {
         if (currentOptions == null) {
@@ -41,6 +54,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         return currentOptions.getMaxNameTableSize();
     }
 
+    /**
+     * Returns the size of the prefix table.
+     * @return the size of the prefix table if options are set, otherwise the default size
+     */
     @Override
     protected int getPrefixTableSize() {
         if (currentOptions == null) {
@@ -50,6 +67,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         return currentOptions.getMaxPrefixTableSize();
     }
 
+    /**
+     * Returns the size of the datatype table.
+     * @return the size of the datatype table if options are set, otherwise the default size
+     */
     @Override
     protected int getDatatypeTableSize() {
         if (currentOptions == null) {
@@ -59,6 +80,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         return currentOptions.getMaxDatatypeTableSize();
     }
 
+    /**
+     * Returns the received stream options from the producer.
+     * @return the stream options if set, otherwise null
+     */
     @Override
     public RdfStreamOptions getStreamOptions() {
         return currentOptions;
@@ -122,6 +147,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         throw new RdfProtoDeserializationError("Unexpected end of graph in stream.");
     }
 
+    /**
+     * A decoder that reads TRIPLES streams and outputs a sequence of triples.
+     * <p>
+     * Do not instantiate this class directly. Instead use factory methods in
+     * ConverterFactory implementations.
+     */
     public static final class TriplesDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
         private final ProtoHandler.TripleProtoHandler<TNode> protoHandler;
@@ -154,6 +185,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         }
     }
 
+    /**
+     * A decoder that reads QUADS streams and outputs a sequence of quads.
+     * <p>
+     * Do not instantiate this class directly. Instead use factory methods in
+     * ConverterFactory implementations.
+     */
     public static final class QuadsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
         private final ProtoHandler.QuadProtoHandler<TNode> protoHandler;
@@ -187,6 +224,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         }
     }
 
+    /**
+     * A decoder that reads GRAPHS streams and outputs a flat sequence of quads.
+     * <p>
+     * Do not instantiate this class directly. Instead use factory methods in
+     * ConverterFactory implementations.
+     */
     public static final class GraphsAsQuadsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
         private final ProtoHandler.QuadProtoHandler<TNode> protoHandler;
@@ -236,6 +279,13 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         }
     }
 
+    /**
+     * A decoder that reads GRAPHS streams and outputs a sequence of graphs.
+     * Each graph is emitted as soon as the producer signals that it's complete.
+     * <p>
+     * Do not instantiate this class directly. Instead use factory methods in
+     * ConverterFactory implementations.
+     */
     public static final class GraphsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
         private final ProtoHandler.GraphProtoHandler<TNode> protoHandler;
@@ -292,6 +342,16 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         }
     }
 
+    /**
+     * A decoder that reads streams of any type and outputs a sequence of triples or quads.
+     * <p>
+     * The type of the stream is detected automatically based on the options row,
+     * which must be at the start of the stream. If the options row is not present or the stream changes its type
+     * in the middle, an error is thrown.
+     * <p>
+     * Do not instantiate this class directly. Instead use factory methods in
+     * ConverterFactory implementations.
+     */
     public static final class AnyDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
         private final ProtoHandler.AnyProtoHandler<TNode> protoHandler;

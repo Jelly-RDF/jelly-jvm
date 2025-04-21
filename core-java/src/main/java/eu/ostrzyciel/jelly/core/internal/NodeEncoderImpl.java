@@ -115,6 +115,11 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         this.bufferAppender = bufferAppender;
     }
 
+    /**
+     * Create a new NodeEncoder using the default cache size heuristics from the options.
+     * @param options The options to use
+     * @param bufferAppender The buffer appender to use
+     */
     public static <TNode> NodeEncoder<TNode> create(RdfStreamOptions options, RowBufferAppender bufferAppender) {
         return new NodeEncoderImpl<>(
             options.getMaxPrefixTableSize(),

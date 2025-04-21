@@ -8,11 +8,24 @@ import eu.ostrzyciel.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow;
 import java.util.Collection;
 
+/**
+ * Stateful encoder of a protobuf RDF stream.
+ * <p>
+ * This class supports all stream types and options, but usually does not check if the user is conforming to them.
+ * It will, for example, allow the user to send generalized triples in a stream that should not have them.
+ * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
+ */
 public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;
     private final Collection<RdfStreamRow> rowBuffer;
 
+    /**
+     * Constructor for the ProtoEncoderImpl class.
+     * <p>
+     * @param converter converter for the encoder
+     * @param params parameters object for the encoder
+     */
     public ProtoEncoderImpl(ProtoEncoderConverter<TNode> converter, ProtoEncoder.Params params) {
         super(converter, params);
         this.rowBuffer = appendableRowBuffer;
