@@ -175,7 +175,7 @@ lazy val coreJava = (project in file("core-java"))
         outputFile
       }
 
-    }.dependsOn(rdfProtosJava / Compile / PB.generate),
+    }.dependsOn(rdfProtosJava / Compile / compile),
     Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
   )
