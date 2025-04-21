@@ -91,6 +91,7 @@ lazy val rdfProtosJava = (project in file("rdf-protos-java"))
   .enablePlugins(ProtobufPlugin)
   .settings(
     name := "jelly-protos-java",
+    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufV,
     ),
@@ -117,10 +118,9 @@ lazy val rdfProtosJava = (project in file("rdf-protos-java"))
           val content = IO.read(file)
           val newContent = content +
             """
-              |
               |option java_multiple_files = true;
+              |option java_package = "eu.neverblink.jelly.core.proto.v1";
               |option optimize_for = SPEED;
-              |
               |""".stripMargin
           IO.write(file, newContent)
           file
@@ -183,6 +183,7 @@ lazy val coreJava = (project in file("core-java"))
 lazy val corePatch = (project in file("core-patch"))
   .settings(
     name := "jelly-core-patch",
+    organization := "eu.neverblink.jelly",
     description := "Core code for the RDF Patch Jelly extension.",
     // Add the generated proto classes after transforming them with Scalameta
     Compile / sourceGenerators += Def.task {
