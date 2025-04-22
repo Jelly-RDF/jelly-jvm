@@ -71,6 +71,12 @@ public interface RdfHandler<TNode> {
     }
 
     /**
+     * Extension of the ProtoHandler interface to handle Triples and Quads.
+     * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
+     */
+    interface TripleOrQuadStatementHandler<TNode> extends TripleStatementHandler<TNode>, QuadStatementHandler<TNode> {}
+
+    /**
      * Extension of the ProtoHandler interface to handle any RDF data structure.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */

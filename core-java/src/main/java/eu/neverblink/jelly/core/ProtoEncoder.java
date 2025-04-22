@@ -17,7 +17,6 @@ public abstract class ProtoEncoder<TNode>
      * Parameters passed to the Jelly encoder.
      * <p>
      * New fields may be added in the future, but always with a default value and in a sequential order.
-     * However, it is still recommended to use named arguments when creating this object.
      *
      * @param options options for this stream (required)
      * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
