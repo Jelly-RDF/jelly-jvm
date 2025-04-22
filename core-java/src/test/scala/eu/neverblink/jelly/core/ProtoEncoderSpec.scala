@@ -29,7 +29,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         enableNamespaceDeclarations = false,
         appendableRowBuffer = buffer.asJava
       ))
-      Triples1.mrl.foreach(triple => encoder.addTripleStatement(triple.s, triple.p, triple.o))
+      Triples1.mrl.foreach(triple => encoder.handleTriple(triple.s, triple.p, triple.o))
       assertEncoded(buffer.toSeq, Triples1.encoded(options))
     }
 
@@ -48,8 +48,8 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
       for triple <- Triples2NsDecl.mrl do
         triple match
-          case t: Triple => encoder.addTripleStatement(t.s, t.p, t.o)
-          case ns: NamespaceDeclaration => encoder.declareNamespace(ns.prefix, ns.iri)
+          case t: Triple => encoder.handleTriple(t.s, t.p, t.o)
+          case ns: NamespaceDeclaration => encoder.handleNamespace(ns.prefix, ns.iri)
 
       assertEncoded(buffer.toSeq, Triples2NsDecl.encoded(options))
     }
@@ -67,7 +67,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         appendableRowBuffer = buffer.asJava
       ))
 
-      Quads1.mrl.foreach(quad => encoder.addQuadStatement(quad.s, quad.p, quad.o, quad.g))
+      Quads1.mrl.foreach(quad => encoder.handleQuad(quad.s, quad.p, quad.o, quad.g))
       assertEncoded(buffer.toSeq, Quads1.encoded(options))
     }
 
@@ -85,7 +85,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       for quad <- Quads1.mrl do
-        encoder.addQuadStatement(quad.s, quad.p, quad.o, quad.g)
+        encoder.handleQuad(quad.s, quad.p, quad.o, quad.g)
 
       assertEncoded(buffer.toSeq, Quads1.encoded(options))
     }
@@ -103,7 +103,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         appendableRowBuffer = buffer.asJava
       ))
 
-      Quads2RepeatDefault.mrl.foreach(quad => encoder.addQuadStatement(quad.s, quad.p, quad.o, quad.g))
+      Quads2RepeatDefault.mrl.foreach(quad => encoder.handleQuad(quad.s, quad.p, quad.o, quad.g))
       assertEncoded(buffer.toSeq, Quads2RepeatDefault.encoded(options))
     }
 
@@ -121,10 +121,10 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       for (graphName, triples) <- Graphs1.mrl do
-        encoder.startGraph(graphName)
+        encoder.handleGraphStart(graphName)
         for triple <- triples do
-          encoder.addTripleStatement(triple.s, triple.p, triple.o)
-        encoder.endGraph()
+          encoder.handleTriple(triple.s, triple.p, triple.o)
+        encoder.handleGraphEnd()
 
       assertEncoded(buffer.toSeq, Graphs1.encoded(options))
     }
@@ -142,7 +142,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       val error = intercept[RdfProtoSerializationError] {
-        encoder.endGraph()
+        encoder.handleGraphEnd()
       }
 
       error.getMessage should include ("Cannot end a delimited graph before starting one")
@@ -161,7 +161,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       val error = intercept[RdfProtoSerializationError] {
-        encoder.startGraph(TripleNode(BlankNode("S"), BlankNode("P"), BlankNode("O")))
+        encoder.handleGraphStart(TripleNode(BlankNode("S"), BlankNode("P"), BlankNode("O")))
       }
 
       error.getMessage should include ("Cannot encode graph node")
@@ -180,7 +180,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       val error = intercept[RdfProtoSerializationError] {
-        encoder.declareNamespace("test", "https://test.org/test/")
+        encoder.handleNamespace("test", "https://test.org/test/")
       }
 
       error.getMessage should include ("Namespace declarations are not enabled in this stream")

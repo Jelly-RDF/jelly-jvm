@@ -48,56 +48,5 @@ public abstract class ProtoEncoder<TNode>
         this.appendableRowBuffer = params.appendableRowBuffer;
     }
 
-    /**
-     * Add an RDF triple statement to the stream.
-     * @param subject subject
-     * @param predicate predicate
-     * @param object object
-     * @throws RdfProtoSerializationError if a serialization error occurs
-     */
-    public abstract void addTripleStatement(TNode subject, TNode predicate, TNode object);
-
-    /**
-     * Add an RDF quad statement to the stream.
-     *
-     * @param subject subject
-     * @param predicate predicate
-     * @param object object
-     * @param graph graph
-     * @throws RdfProtoSerializationError if a serialization error occurs
-     */
-    public abstract void addQuadStatement(TNode subject, TNode predicate, TNode object, TNode graph);
-
-    /**
-     * Signal the start of a new (named) delimited graph in a GRAPHS stream.
-     * Null value is interpreted as the default graph.
-     *
-     * @param graph graph node
-     * @throws RdfProtoSerializationError if a serialization error occurs
-     */
-    public abstract void startGraph(TNode graph);
-
-    /**
-     * Signal the start of the default delimited graph in a GRAPHS stream.
-     *
-     * @throws RdfProtoSerializationError if a serialization error occurs
-     */
-    public abstract void startDefaultGraph();
-
-    /**
-     * Signal the end of a delimited graph in a GRAPHS stream.
-     *
-     * @throws RdfProtoSerializationError if a serialization error occurs
-     */
-    public abstract void endGraph();
-
-    /**
-     * Declare a namespace in the stream.
-     * This is equivalent to the PREFIX directive in Turtle.
-     *
-     * @param name     short name of the namespace (without the colon)
-     * @param iriValue IRI of the namespace
-     * @throws RdfProtoSerializationError if a serialization error occurs
-     */
-    public abstract void declareNamespace(String name, String iriValue);
+    public abstract void handleNamespace(String prefix, String namespace);
 }

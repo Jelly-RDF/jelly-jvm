@@ -26,8 +26,9 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     /**
      * Constructor for the ProtoEncoderImpl class.
      * <p>
+     *
      * @param converter converter for the encoder
-     * @param params parameters object for the encoder
+     * @param params    parameters object for the encoder
      */
     public ProtoEncoderImpl(ProtoEncoderConverter<TNode> converter, ProtoEncoder.Params params) {
         super(converter, params);
@@ -35,7 +36,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     }
 
     @Override
-    public void addTripleStatement(TNode subject, TNode predicate, TNode object) {
+    public void handleTriple(TNode subject, TNode predicate, TNode object) {
         emitOptions();
         final var triple = tripleToProto(subject, predicate, object);
         final var mainRow = RdfStreamRow.newBuilder().setTriple(triple.toProto()).build();
@@ -43,7 +44,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     }
 
     @Override
-    public void addQuadStatement(TNode subject, TNode predicate, TNode object, TNode graph) {
+    public void handleQuad(TNode subject, TNode predicate, TNode object, TNode graph) {
         emitOptions();
         final var quad = quadToProto(subject, predicate, object, graph);
         final var mainRow = RdfStreamRow.newBuilder().setQuad(quad.toProto()).build();
@@ -51,7 +52,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     }
 
     @Override
-    public void startGraph(TNode graph) {
+    public void handleGraphStart(TNode graph) {
         emitOptions();
         final var graphNode = converter.graphNodeToProto(nodeEncoder, graph);
         final var graphStart = new RdfTerm.GraphStart(graphNode);
@@ -60,16 +61,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     }
 
     @Override
-    public void startDefaultGraph() {
-        emitOptions();
-        final var defaultGraph = new RdfTerm.DefaultGraph();
-        final var graphStart = new RdfTerm.GraphStart(defaultGraph);
-        final var graphRow = RdfStreamRow.newBuilder().setGraphStart(graphStart.toProto()).build();
-        rowBuffer.add(graphRow);
-    }
-
-    @Override
-    public void endGraph() {
+    public void handleGraphEnd() {
         if (!hasEmittedOptions) {
             throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one");
         }
@@ -80,15 +72,36 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     }
 
     @Override
-    public void declareNamespace(String name, String iriValue) {
+    public void handleNamespace(String prefix, TNode namespace) {
         if (!enableNamespaceDeclarations) {
             throw new RdfProtoSerializationError("Namespace declarations are not enabled in this stream");
         }
 
         emitOptions();
-        final var iri = nodeEncoder.makeIri(iriValue);
+
+        final var namespaceTerm = converter.nodeToProto(nodeEncoder, namespace);
+        if (!(namespaceTerm instanceof RdfTerm.Iri iriTerm)) {
+            throw new RdfProtoSerializationError("Namespace must be an IRI");
+        }
+
         final var mainRow = RdfStreamRow.newBuilder()
-            .setNamespace(RdfNamespaceDeclaration.newBuilder().setName(name).setValue(iri.toProto()).build())
+            .setNamespace(RdfNamespaceDeclaration.newBuilder().setName(prefix).setValue(iriTerm.toProto()).build())
+            .build();
+
+        rowBuffer.add(mainRow);
+    }
+
+    @Override
+    public void handleNamespace(String prefix, String namespace) {
+        if (!enableNamespaceDeclarations) {
+            throw new RdfProtoSerializationError("Namespace declarations are not enabled in this stream");
+        }
+
+        emitOptions();
+
+        final var iriTerm = nodeEncoder.makeIri(namespace);
+        final var mainRow = RdfStreamRow.newBuilder()
+            .setNamespace(RdfNamespaceDeclaration.newBuilder().setName(prefix).setValue(iriTerm.toProto()).build())
             .build();
 
         rowBuffer.add(mainRow);
@@ -107,26 +120,6 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
         rowBuffer.add(RdfStreamRow.newBuilder().setDatatype(datatypeEntry).build());
-    }
-
-    @Override
-    public void handleQuad(TNode subject, TNode predicate, TNode object, TNode graph) {
-        addQuadStatement(subject, predicate, object, graph);
-    }
-
-    @Override
-    public void handleGraphStart(TNode graph) {
-        startGraph(graph);
-    }
-
-    @Override
-    public void handleTriple(TNode subject, TNode predicate, TNode object) {
-        addTripleStatement(subject, predicate, object);
-    }
-
-    @Override
-    public void handleGraphEnd() {
-        endGraph();
     }
 
     private void emitOptions() {
