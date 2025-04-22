@@ -107,35 +107,35 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
 
       "not accept a new prefix ID larger than table size" in {
         val dec = makeDecoder(smallOptions)
-        intercept[ArrayIndexOutOfBoundsException] {
+        intercept[RdfProtoDeserializationError] {
           dec.updatePrefixes(rdfPrefixEntry(9, "https://test.org/"))
         }
       }
 
       "not accept a new prefix ID lower than 0 (-1)" in {
         val dec = makeDecoder(smallOptions)
-        intercept[NullPointerException] {
+        intercept[RdfProtoDeserializationError] {
           dec.updatePrefixes(rdfPrefixEntry(-1, "https://test.org/"))
         }
       }
 
       "not accept a new prefix ID lower than 0 (-2)" in {
         val dec = makeDecoder(smallOptions)
-        intercept[ArrayIndexOutOfBoundsException] {
+        intercept[RdfProtoDeserializationError] {
           dec.updatePrefixes(rdfPrefixEntry(-2, "https://test.org/"))
         }
       }
 
       "not retrieve a prefix ID larger than table size" in {
         val dec = makeDecoder(smallOptions)
-        intercept[ArrayIndexOutOfBoundsException] {
+        intercept[RdfProtoDeserializationError] {
           dec.decode(9, 0)
         }
       }
 
       "not accept a new name ID larger than table size" in {
         val dec = makeDecoder(smallOptions)
-        intercept[ArrayIndexOutOfBoundsException] {
+        intercept[RdfProtoDeserializationError] {
           dec.updateNames(rdfNameEntry(17, "Cake"))
         }
       }
@@ -143,28 +143,28 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
       "not accept a default ID going beyond the table size" in {
         val dec = makeDecoder(smallOptions)
         dec.updateNames(rdfNameEntry(16, "Cake"))
-        intercept[ArrayIndexOutOfBoundsException] {
+        intercept[RdfProtoDeserializationError] {
           dec.updateNames(rdfNameEntry(0, "Cake 2"))
         }
       }
 
       "not accept a new name ID lower than 0 (-1)" in {
         val dec = makeDecoder(smallOptions)
-        intercept[NullPointerException] {
+        intercept[RdfProtoDeserializationError] {
           dec.updateNames(rdfNameEntry(-1, "Cake"))
         }
       }
 
       "not accept a new name ID lower than 0 (-2)" in {
         val dec = makeDecoder(smallOptions)
-        intercept[ArrayIndexOutOfBoundsException] {
+        intercept[RdfProtoDeserializationError] {
           dec.updateNames(rdfNameEntry(-2, "Cake"))
         }
       }
 
       "not retrieve a name ID larger than table size" in {
         val dec = makeDecoder(smallOptions)
-        intercept[ArrayIndexOutOfBoundsException] {
+        intercept[RdfProtoDeserializationError] {
           dec.decode(0, 17)
         }
       }

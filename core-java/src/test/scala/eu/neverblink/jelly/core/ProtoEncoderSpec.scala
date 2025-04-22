@@ -49,7 +49,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       for triple <- Triples2NsDecl.mrl do
         triple match
           case t: Triple => encoder.handleTriple(t.s, t.p, t.o)
-          case ns: NamespaceDeclaration => encoder.handleNamespace(ns.prefix, ns.iri)
+          case ns: NamespaceDeclaration => encoder.handleNamespace(ns.prefix, Iri(ns.iri))
 
       assertEncoded(buffer.toSeq, Triples2NsDecl.encoded(options))
     }
@@ -180,7 +180,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       val error = intercept[RdfProtoSerializationError] {
-        encoder.handleNamespace("test", "https://test.org/test/")
+        encoder.handleNamespace("test", Iri("http://example.org/test"))
       }
 
       error.getMessage should include ("Namespace declarations are not enabled in this stream")

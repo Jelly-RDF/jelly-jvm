@@ -11,7 +11,7 @@ import java.util.Collection;
  */
 public abstract class ProtoEncoder<TNode>
     extends ProtoEncoderBase<TNode>
-    implements RowBufferAppender, RdfHandler.AnyStatementHandler<TNode> {
+    implements RowBufferAppender, RdfHandler.AnyRdfHandler<TNode> {
 
     /**
      * Parameters passed to the Jelly encoder.
@@ -46,6 +46,4 @@ public abstract class ProtoEncoder<TNode>
         this.enableNamespaceDeclarations = params.enableNamespaceDeclarations;
         this.appendableRowBuffer = params.appendableRowBuffer;
     }
-
-    public abstract void handleNamespace(String prefix, String namespace);
 }

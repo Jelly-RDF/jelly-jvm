@@ -19,7 +19,7 @@ public interface RdfHandler<TNode> {
      * Extension of the ProtoHandler interface to handle triples.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface TripleStatementHandler<TNode> extends RdfHandler<TNode> {
+    interface TripleHandler<TNode> extends RdfHandler<TNode> {
         /**
          * Handle a triple.
          * @param subject The subject of the triple, as represented by node in the RDF data structure.
@@ -33,7 +33,7 @@ public interface RdfHandler<TNode> {
      * Extension of the ProtoHandler interface to handle quads.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface QuadStatementHandler<TNode> extends RdfHandler<TNode> {
+    interface QuadHandler<TNode> extends RdfHandler<TNode> {
         /**
          * Handle a quad.
          * @param subject The subject of the quad, as represented by node in the RDF data structure.
@@ -48,7 +48,7 @@ public interface RdfHandler<TNode> {
      * Extension of the ProtoHandler interface to handle graphs.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface GraphStatementHandler<TNode> extends RdfHandler<TNode> {
+    interface GraphHandler<TNode> extends RdfHandler<TNode> {
         /**
          * Handle a graph start.
          * @param graph The graph node, as represented by node in the RDF data structure.
@@ -74,12 +74,11 @@ public interface RdfHandler<TNode> {
      * Extension of the ProtoHandler interface to handle Triples and Quads.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface TripleOrQuadStatementHandler<TNode> extends TripleStatementHandler<TNode>, QuadStatementHandler<TNode> {}
+    interface AnyStatementHandler<TNode> extends TripleHandler<TNode>, QuadHandler<TNode> {}
 
     /**
      * Extension of the ProtoHandler interface to handle any RDF data structure.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface AnyStatementHandler<TNode>
-        extends TripleStatementHandler<TNode>, QuadStatementHandler<TNode>, GraphStatementHandler<TNode> {}
+    interface AnyRdfHandler<TNode> extends TripleHandler<TNode>, QuadHandler<TNode>, GraphHandler<TNode> {}
 }

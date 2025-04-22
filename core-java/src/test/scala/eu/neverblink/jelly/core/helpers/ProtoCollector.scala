@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.helpers
 
-import eu.neverblink.jelly.core.RdfHandler.AnyStatementHandler
+import eu.neverblink.jelly.core.RdfHandler.AnyRdfHandler
 import eu.neverblink.jelly.core.helpers.Mrl.*
 
 import java.util
@@ -8,7 +8,7 @@ import scala.collection.mutable
 import scala.jdk.javaapi.CollectionConverters
 import scala.jdk.javaapi.CollectionConverters.asScala
 
-final class ProtoCollector extends AnyStatementHandler[Node]:
+final class ProtoCollector extends AnyRdfHandler[Node]:
   val namespaces: mutable.ListBuffer[(String, Node)] = mutable.ListBuffer.empty
   val statements: mutable.ListBuffer[Statement] = mutable.ListBuffer.empty
 

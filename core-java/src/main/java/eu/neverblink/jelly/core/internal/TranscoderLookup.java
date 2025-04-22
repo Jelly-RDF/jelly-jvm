@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.internal;
 
+import eu.neverblink.jelly.core.RdfProtoTranscodingError;
 import java.util.Arrays;
 
 /**
@@ -101,7 +102,7 @@ final class TranscoderLookup {
      */
     void newInputStream(int size) {
         if (size > outputSize) {
-            throw new IllegalArgumentException("Input lookup size cannot be greater than the output lookup size");
+            throw new RdfProtoTranscodingError("Input lookup size cannot be greater than the output lookup size");
         }
         if (table != null) {
             // Only set this for streams 2 and above (counting from 1)

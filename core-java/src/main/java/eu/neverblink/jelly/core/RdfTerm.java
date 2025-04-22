@@ -8,7 +8,16 @@ import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 
+/**
+ * Represents RDF terms in a type-safe manner with conversion capabilities to and from Protocol Buffer messages.
+ * This interface defines the hierarchy of RDF terms and provides factory methods for creating terms from proto messages.
+ */
 public sealed interface RdfTerm {
+    /**
+     * Creates an IRI term from a Protocol Buffer RDF IRI message.
+     * @param iri The Protocol Buffer RDF IRI message
+     * @return An Iri instance, or null if the input is null
+     */
     static Iri from(RdfIri iri) {
         if (iri == null) {
             return null;
@@ -17,6 +26,11 @@ public sealed interface RdfTerm {
         return new Iri(iri.getPrefixId(), iri.getNameId());
     }
 
+    /**
+     * Creates a blank node term from a string identifier.
+     * @param bNode The blank node identifier
+     * @return A BNode instance, or null if the input is null
+     */
     static BNode from(String bNode) {
         if (bNode == null) {
             return null;
@@ -25,6 +39,11 @@ public sealed interface RdfTerm {
         return new BNode(bNode);
     }
 
+    /**
+     * Creates a literal term from a Protocol Buffer RDF literal message.
+     * @param literal The Protocol Buffer RDF literal message
+     * @return A LiteralTerm instance (SimpleLiteral, LanguageLiteral, or DtLiteral), or null if the input is null
+     */
     static LiteralTerm from(RdfLiteral literal) {
         if (literal == null) {
             return null;
@@ -39,6 +58,11 @@ public sealed interface RdfTerm {
         }
     }
 
+    /**
+     * Creates a triple term from a Protocol Buffer RDF triple message.
+     * @param triple The Protocol Buffer RDF triple message
+     * @return A Triple instance, or null if the input is null
+     */
     static Triple from(RdfTriple triple) {
         if (triple == null) {
             return null;
@@ -74,6 +98,11 @@ public sealed interface RdfTerm {
         return new Triple(subject, predicate, object);
     }
 
+    /**
+     * Creates a graph start marker from a Protocol Buffer RDF graph start message.
+     * @param graphStart The Protocol Buffer RDF graph start message
+     * @return A GraphStart instance, or null if the input is null
+     */
     static GraphStart from(RdfGraphStart graphStart) {
         if (graphStart == null) {
             return null;
@@ -91,14 +120,29 @@ public sealed interface RdfTerm {
         return new GraphStart(graph);
     }
 
+    /**
+     * Creates a graph end marker from a Protocol Buffer RDF graph end message.
+     * @param ignoredGraphEnd The Protocol Buffer RDF graph end message (ignored)
+     * @return A new GraphEnd instance
+     */
     static GraphEnd from(RdfGraphEnd ignoredGraphEnd) {
         return new GraphEnd();
     }
 
+    /**
+     * Creates a default graph marker from a Protocol Buffer RDF default graph message.
+     * @param ignoredDefaultGraph The Protocol Buffer RDF default graph message (ignored)
+     * @return A new DefaultGraph instance
+     */
     static DefaultGraph from(RdfDefaultGraph ignoredDefaultGraph) {
         return new DefaultGraph();
     }
 
+    /**
+     * Creates a quad term from a Protocol Buffer RDF quad message.
+     * @param quad The Protocol Buffer RDF quad message
+     * @return A Quad instance, or null if the input is null
+     */
     static Quad from(RdfQuad quad) {
         if (quad == null) {
             return null;
@@ -143,36 +187,84 @@ public sealed interface RdfTerm {
         return new Quad(subject, predicate, object, graph);
     }
 
+    /**
+     * Represents terms that can appear in subject, predicate, or object positions of a triple.
+     */
     sealed interface SpoTerm extends RdfTerm {
+        /**
+         * Converts the term to a Protocol Buffer RDF triple subject term.
+         */
         void writeSubject(RdfTriple.Builder builder);
 
+        /**
+         * Converts the term to a Protocol Buffer RDF quad subject term.
+         */
         void writeSubject(RdfQuad.Builder builder);
 
+        /**
+         * Converts the term to a Protocol Buffer RDF triple predicate term.
+         */
         void writePredicate(RdfTriple.Builder builder);
 
+        /**
+         * Converts the term to a Protocol Buffer RDF quad predicate term.
+         */
         void writePredicate(RdfQuad.Builder builder);
 
+        /**
+         * Converts the term to a Protocol Buffer RDF triple object term.
+         */
         void writeObject(RdfTriple.Builder builder);
 
+        /**
+         * Converts the term to a Protocol Buffer RDF quad object term.
+         */
         void writeObject(RdfQuad.Builder builder);
     }
 
+    /**
+     * Represents terms that mark graph boundaries in the RDF dataset.
+     */
     sealed interface GraphMarkerTerm extends RdfTerm {}
 
+    /**
+     * Represents terms that can appear as graph labels.
+     */
     sealed interface GraphTerm extends RdfTerm {
+        /**
+         * Converts the term to a Protocol Buffer RDF graph start message.
+         */
         void writeGraph(RdfGraphStart.Builder builder);
 
+        /**
+         * Converts the term to a Protocol Buffer RDF quad graph message.
+         */
         void writeGraph(RdfQuad.Builder builder);
     }
 
+    /**
+     * Represents terms that can appear in SPO positions and as graph labels.
+     */
     sealed interface SpoOrGraphTerm extends SpoTerm, GraphTerm {}
 
+    /**
+     * Represents literal terms with lexical values.
+     */
     sealed interface LiteralTerm extends SpoOrGraphTerm {
         String lex();
     }
 
+    /**
+     * Represents terms that can be either graph markers or graph labels.
+     */
     sealed interface GraphMarkerOrGraphTerm extends GraphMarkerTerm, GraphTerm {}
 
+    /**
+     * Represents IRI terms with prefix and name identifiers.
+     *
+     * @param prefixId The prefix identifier
+     * @param nameId The name identifier
+     */
     record Iri(int prefixId, int nameId) implements SpoOrGraphTerm {
         public RdfIri toProto() {
             return RdfIri.newBuilder().setPrefixId(prefixId).setNameId(nameId).build();
@@ -219,6 +311,11 @@ public sealed interface RdfTerm {
         }
     }
 
+    /**
+     * Represents blank node terms with a string identifier.
+     *
+     * @param bNode The blank node identifier
+     */
     record BNode(String bNode) implements SpoOrGraphTerm {
         public String toProto() {
             return bNode;
@@ -265,6 +362,12 @@ public sealed interface RdfTerm {
         }
     }
 
+    /**
+     * Represents literal terms with lexical values and language tags.
+     *
+     * @param lex The lexical value
+     * @param langtag The language tag
+     */
     record LanguageLiteral(String lex, String langtag) implements LiteralTerm {
         public RdfLiteral toProto() {
             return RdfLiteral.newBuilder().setLex(lex).setLangtag(langtag).build();
@@ -311,6 +414,12 @@ public sealed interface RdfTerm {
         }
     }
 
+    /**
+     * Represents literal terms with lexical values and datatype identifiers.
+     *
+     * @param lex The lexical value
+     * @param datatype The datatype identifier
+     */
     record DtLiteral(String lex, int datatype) implements LiteralTerm {
         public RdfLiteral toProto() {
             return RdfLiteral.newBuilder().setLex(lex).setDatatype(datatype).build();
@@ -357,6 +466,11 @@ public sealed interface RdfTerm {
         }
     }
 
+    /**
+     * Represents simple literal terms with lexical values.
+     *
+     * @param lex The lexical value
+     */
     record SimpleLiteral(String lex) implements LiteralTerm {
         public RdfLiteral toProto() {
             return RdfLiteral.newBuilder().setLex(lex).build();
@@ -403,6 +517,13 @@ public sealed interface RdfTerm {
         }
     }
 
+    /**
+     * Represents RDF triples with subject, predicate, and object terms.
+     *
+     * @param subject The subject term
+     * @param predicate The predicate term
+     * @param object The object term
+     */
     record Triple(SpoTerm subject, SpoTerm predicate, SpoTerm object) implements SpoTerm {
         public RdfTriple toProto() {
             final var tripleBuilder = RdfTriple.newBuilder();
@@ -453,6 +574,11 @@ public sealed interface RdfTerm {
         }
     }
 
+    /**
+     * Represents graph start markers with optional graph labels.
+     *
+     * @param graph The graph label term
+     */
     record GraphStart(GraphTerm graph) implements GraphMarkerTerm {
         public RdfGraphStart toProto() {
             final var graphBuilder = RdfGraphStart.newBuilder();
@@ -465,12 +591,18 @@ public sealed interface RdfTerm {
         }
     }
 
+    /**
+     * Represents graph end markers.
+     */
     record GraphEnd() implements GraphMarkerTerm {
         public RdfGraphEnd toProto() {
             return RdfGraphEnd.getDefaultInstance();
         }
     }
 
+    /**
+     * Represents default graph markers.
+     */
     record DefaultGraph() implements GraphMarkerOrGraphTerm {
         public static final DefaultGraph INSTANCE = new DefaultGraph();
 
@@ -489,6 +621,14 @@ public sealed interface RdfTerm {
         }
     }
 
+    /**
+     * Represents RDF quads with subject, predicate, object, and graph terms.
+     *
+     * @param subject The subject term
+     * @param predicate The predicate term
+     * @param object The object term
+     * @param graph The graph term
+     */
     record Quad(SpoTerm subject, SpoTerm predicate, SpoTerm object, GraphTerm graph) implements RdfTerm {
         public RdfQuad toProto() {
             final var quadBuilder = RdfQuad.newBuilder();

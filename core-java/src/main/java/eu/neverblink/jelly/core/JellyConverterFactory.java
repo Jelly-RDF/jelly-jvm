@@ -52,7 +52,7 @@ public abstract class JellyConverterFactory<
      * @return decoder
      */
     public final ProtoDecoder<TNode, TDatatype> triplesDecoder(
-        RdfHandler.TripleStatementHandler<TNode> tripleProtoHandler,
+        RdfHandler.TripleHandler<TNode> tripleProtoHandler,
         RdfStreamOptions supportedOptions
     ) {
         return new ProtoDecoderImpl.TriplesDecoder<>(decoderConverter(), tripleProtoHandler, supportedOptions);
@@ -67,7 +67,7 @@ public abstract class JellyConverterFactory<
      * @return decoder
      */
     public final ProtoDecoder<TNode, TDatatype> quadsDecoder(
-        RdfHandler.QuadStatementHandler<TNode> quadProtoHandler,
+        RdfHandler.QuadHandler<TNode> quadProtoHandler,
         RdfStreamOptions supportedOptions
     ) {
         return new ProtoDecoderImpl.QuadsDecoder<>(decoderConverter(), quadProtoHandler, supportedOptions);
@@ -82,7 +82,7 @@ public abstract class JellyConverterFactory<
      * @return decoder
      */
     public final ProtoDecoder<TNode, TDatatype> graphsAsQuadsDecoder(
-        RdfHandler.QuadStatementHandler<TNode> graphProtoHandler,
+        RdfHandler.QuadHandler<TNode> graphProtoHandler,
         RdfStreamOptions supportedOptions
     ) {
         return new ProtoDecoderImpl.GraphsAsQuadsDecoder<>(decoderConverter(), graphProtoHandler, supportedOptions);
@@ -97,7 +97,7 @@ public abstract class JellyConverterFactory<
      * @return decoder
      */
     public final ProtoDecoder<TNode, TDatatype> graphsDecoder(
-        RdfHandler.GraphStatementHandler<TNode> graphProtoHandler,
+        RdfHandler.GraphHandler<TNode> graphProtoHandler,
         RdfStreamOptions supportedOptions
     ) {
         return new ProtoDecoderImpl.GraphsDecoder<>(decoderConverter(), graphProtoHandler, supportedOptions);
@@ -112,7 +112,7 @@ public abstract class JellyConverterFactory<
      * @return decoder
      */
     public final ProtoDecoder<TNode, TDatatype> anyDecoder(
-        RdfHandler.AnyStatementHandler<TNode> anyProtoHandler,
+        RdfHandler.AnyRdfHandler<TNode> anyProtoHandler,
         RdfStreamOptions supportedOptions
     ) {
         return new ProtoDecoderImpl.AnyStatementDecoder<>(decoderConverter(), anyProtoHandler, supportedOptions);

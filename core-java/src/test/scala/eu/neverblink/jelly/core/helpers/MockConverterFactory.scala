@@ -21,26 +21,26 @@ trait MockConverterFactory:
     new ProtoEncoderImpl[Node](encoderConverter, params)
 
   final def triplesDecoder(
-                            handler: TripleStatementHandler[Node],
+                            handler: TripleHandler[Node],
                             options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): TriplesDecoder[Node, Datatype] = TriplesDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def quadsDecoder(
-                          handler: QuadStatementHandler[Node],
+                          handler: QuadHandler[Node],
                           options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): QuadsDecoder[Node, Datatype] = QuadsDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def graphsDecoder(
-                           handler: GraphStatementHandler[Node],
+                           handler: GraphHandler[Node],
                            options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): GraphsDecoder[Node, Datatype] = GraphsDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def graphsAsQuadsDecoder(
-                                  handler: QuadStatementHandler[Node],
+                                  handler: QuadHandler[Node],
                                   options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): GraphsAsQuadsDecoder[Node, Datatype] = GraphsAsQuadsDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def anyDecoder(
-                        handler: AnyStatementHandler[Node],
+                        handler: AnyRdfHandler[Node],
                         options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): AnyStatementDecoder[Node, Datatype] = AnyStatementDecoder[Node, Datatype](decoderConverter, handler, options)

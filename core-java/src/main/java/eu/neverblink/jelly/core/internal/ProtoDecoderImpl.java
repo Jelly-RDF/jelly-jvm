@@ -156,11 +156,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class TriplesDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final RdfHandler.TripleStatementHandler<TNode> protoHandler;
+        private final RdfHandler.TripleHandler<TNode> protoHandler;
 
         public TriplesDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            RdfHandler.TripleStatementHandler<TNode> protoHandler,
+            RdfHandler.TripleHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);
@@ -194,11 +194,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class QuadsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final RdfHandler.QuadStatementHandler<TNode> protoHandler;
+        private final RdfHandler.QuadHandler<TNode> protoHandler;
 
         public QuadsDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            RdfHandler.QuadStatementHandler<TNode> protoHandler,
+            RdfHandler.QuadHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);
@@ -233,12 +233,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class GraphsAsQuadsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final RdfHandler.QuadStatementHandler<TNode> protoHandler;
+        private final RdfHandler.QuadHandler<TNode> protoHandler;
         private TNode currentGraph = null;
 
         public GraphsAsQuadsDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            RdfHandler.QuadStatementHandler<TNode> protoHandler,
+            RdfHandler.QuadHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);
@@ -289,12 +289,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class GraphsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final RdfHandler.GraphStatementHandler<TNode> protoHandler;
+        private final RdfHandler.GraphHandler<TNode> protoHandler;
         private TNode currentGraph = null;
 
         public GraphsDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            RdfHandler.GraphStatementHandler<TNode> protoHandler,
+            RdfHandler.GraphHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);
@@ -348,12 +348,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class AnyStatementDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final RdfHandler.AnyStatementHandler<TNode> protoHandler;
+        private final RdfHandler.AnyRdfHandler<TNode> protoHandler;
         private ProtoDecoderImpl<TNode, TDatatype> delegateDecoder = null;
 
         public AnyStatementDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            RdfHandler.AnyStatementHandler<TNode> protoHandler,
+            RdfHandler.AnyRdfHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);

@@ -92,22 +92,6 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     }
 
     @Override
-    public void handleNamespace(String prefix, String namespace) {
-        if (!enableNamespaceDeclarations) {
-            throw new RdfProtoSerializationError("Namespace declarations are not enabled in this stream");
-        }
-
-        emitOptions();
-
-        final var iriTerm = nodeEncoder.makeIri(namespace);
-        final var mainRow = RdfStreamRow.newBuilder()
-            .setNamespace(RdfNamespaceDeclaration.newBuilder().setName(prefix).setValue(iriTerm.toProto()).build())
-            .build();
-
-        rowBuffer.add(mainRow);
-    }
-
-    @Override
     public void appendNameEntry(RdfNameEntry nameEntry) {
         rowBuffer.add(RdfStreamRow.newBuilder().setName(nameEntry).build());
     }
