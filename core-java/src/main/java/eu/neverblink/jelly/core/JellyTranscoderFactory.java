@@ -6,7 +6,10 @@ import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 /**
  * Factory for creating ProtoTranscoder instances.
  */
-public interface JellyTranscoderFactory {
+public final class JellyTranscoderFactory {
+
+    private JellyTranscoderFactory() {}
+
     /**
      * Fast transcoder suitable for merging multiple input streams into one.
      * This variant DOES NOT check the input options of the consumed streams. This should be therefore only used
@@ -15,7 +18,7 @@ public interface JellyTranscoderFactory {
      * @param outputOptions options for the output stream. This MUST have the physical stream type set.
      * @return ProtoTranscoder
      */
-    default ProtoTranscoder fastMergingTranscoderUnsafe(RdfStreamOptions outputOptions) {
+    public static ProtoTranscoder fastMergingTranscoderUnsafe(RdfStreamOptions outputOptions) {
         return new ProtoTranscoderImpl(null, outputOptions);
     }
 
@@ -27,7 +30,7 @@ public interface JellyTranscoderFactory {
      * @param outputOptions options for the output stream. This MUST have the physical stream type set.
      * @return ProtoTranscoder
      */
-    default ProtoTranscoder fastMergingTranscoder(
+    public static ProtoTranscoder fastMergingTranscoder(
         RdfStreamOptions supportedInputOptions,
         RdfStreamOptions outputOptions
     ) {
