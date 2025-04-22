@@ -110,22 +110,23 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     }
 
     @Override
-    public void handleGraph(TNode graph, Collection<TNode> triples) {
-        startGraph(graph);
-        for (TNode triple : triples) {
-            addTripleStatement(triple);
-        }
-        endGraph();
-    }
-
-    @Override
     public void handleQuad(TNode subject, TNode predicate, TNode object, TNode graph) {
         addQuadStatement(subject, predicate, object, graph);
     }
 
     @Override
+    public void handleGraphStart(TNode graph) {
+        startGraph(graph);
+    }
+
+    @Override
     public void handleTriple(TNode subject, TNode predicate, TNode object) {
         addTripleStatement(subject, predicate, object);
+    }
+
+    @Override
+    public void handleGraphEnd() {
+        endGraph();
     }
 
     private void emitOptions() {

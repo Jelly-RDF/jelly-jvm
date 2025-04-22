@@ -1,13 +1,11 @@
 package eu.neverblink.jelly.core;
 
-import java.util.Collection;
-
 /**
  * Interface for handling different types of RDF data structures that flow from the decoder.
  *
  * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
  */
-public interface ProtoHandler<TNode> {
+public interface RdfHandler<TNode> {
     /**
      * Handle namespace definition.
      * @param prefix The prefix of the namespace.
@@ -21,7 +19,7 @@ public interface ProtoHandler<TNode> {
      * Extension of the ProtoHandler interface to handle triples.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface TripleProtoHandler<TNode> extends ProtoHandler<TNode> {
+    interface TripleStatementHandler<TNode> extends RdfHandler<TNode> {
         /**
          * Handle a triple.
          * @param subject The subject of the triple, as represented by node in the RDF data structure.
@@ -35,7 +33,7 @@ public interface ProtoHandler<TNode> {
      * Extension of the ProtoHandler interface to handle quads.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface QuadProtoHandler<TNode> extends ProtoHandler<TNode> {
+    interface QuadStatementHandler<TNode> extends RdfHandler<TNode> {
         /**
          * Handle a quad.
          * @param subject The subject of the quad, as represented by node in the RDF data structure.
@@ -50,19 +48,32 @@ public interface ProtoHandler<TNode> {
      * Extension of the ProtoHandler interface to handle graphs.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface GraphProtoHandler<TNode> extends ProtoHandler<TNode> {
+    interface GraphStatementHandler<TNode> extends RdfHandler<TNode> {
         /**
-         * Handle a graph.
+         * Handle a graph start.
          * @param graph The graph node, as represented by node in the RDF data structure.
-         * @param triples A collection of triples that belong to the graph.
          */
-        void handleGraph(TNode graph, Collection<TNode> triples);
+        void handleGraphStart(TNode graph);
+
+        /**
+         * Handle a graph-related triple.
+         *
+         * @param subject A subject of triple that belong to the graph.
+         * @param predicate A predicate of triple that belong to the graph.
+         * @param object An object of triple that belong to the graph.
+         */
+        void handleTriple(TNode subject, TNode predicate, TNode object);
+
+        /**
+         * Handle a graph end.
+         */
+        void handleGraphEnd();
     }
 
     /**
      * Extension of the ProtoHandler interface to handle any RDF data structure.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface AnyProtoHandler<TNode>
-        extends TripleProtoHandler<TNode>, QuadProtoHandler<TNode>, GraphProtoHandler<TNode> {}
+    interface AnyStatementHandler<TNode>
+        extends TripleStatementHandler<TNode>, QuadStatementHandler<TNode>, GraphStatementHandler<TNode> {}
 }

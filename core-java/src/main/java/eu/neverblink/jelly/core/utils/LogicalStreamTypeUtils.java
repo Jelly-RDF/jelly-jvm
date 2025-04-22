@@ -97,11 +97,13 @@ public class LogicalStreamTypeUtils {
      * @param converter the converter to use for creating RDF nodes and triples
      * @param <TNode> the type of RDF nodes
      * @param <TDatatype> the type of RDF triples
+     * @param <TTriple> the type of RDF triples
      * @throws IllegalArgumentException if the logical stream type is not supported
      * @return the RDF-STaX annotation
      */
-    public static <TNode, TDatatype> List<TNode> getRdfStaxAnnotation(
+    public static <TNode, TDatatype, TTriple> List<TTriple> getRdfStaxAnnotation(
         ProtoDecoderConverter<TNode, TDatatype> converter,
+        TripleEncoder<TNode, TTriple> tripleEncoder,
         LogicalStreamType logicalType,
         TNode subjectNode
     ) {
@@ -112,13 +114,13 @@ public class LogicalStreamTypeUtils {
 
         TNode bNode = converter.makeBlankNode(UUID.randomUUID().toString());
         return List.of(
-            converter.makeTriple(subjectNode, converter.makeIriNode(STAX_PREFIX + "hasStreamTypeUsage"), bNode),
-            converter.makeTriple(
+            tripleEncoder.encode(subjectNode, converter.makeIriNode(STAX_PREFIX + "hasStreamTypeUsage"), bNode),
+            tripleEncoder.encode(
                 bNode,
                 converter.makeIriNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 converter.makeIriNode(STAX_PREFIX + "RdfStreamTypeUsage")
             ),
-            converter.makeTriple(
+            tripleEncoder.encode(
                 bNode,
                 converter.makeIriNode(STAX_PREFIX + "hasStreamType"),
                 converter.makeIriNode(typeIri)

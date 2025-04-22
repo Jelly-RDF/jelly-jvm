@@ -46,12 +46,12 @@ object ProtoTestCases:
       Triple(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
-        Triple(Iri("https://test.org/test/subject"), Iri("b"), Iri("c")),
+        TripleNode(Iri("https://test.org/test/subject"), Iri("b"), Iri("c")),
       ),
       Triple(
         Iri("https://test.org/test/predicate"),
         Iri("https://test.org/test/subject"),
-        Triple(Iri("https://test.org/test/subject"), Iri("b"), Iri("c")),
+        TripleNode(Iri("https://test.org/test/subject"), Iri("b"), Iri("c")),
       ),
     )
 

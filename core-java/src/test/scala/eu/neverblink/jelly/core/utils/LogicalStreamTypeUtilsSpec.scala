@@ -93,15 +93,20 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
     do
       s"return RDF STaX annotation for $streamType and $subjectNode" in {
         val decoder = MockConverterFactory.decoderConverter
-        val a = LogicalStreamTypeUtils.getRdfStaxAnnotation(decoder, streamType, subjectNode)
+        val a = LogicalStreamTypeUtils.getRdfStaxAnnotation(
+          decoder,
+          { (s, p, o) => Triple(s, p, o) },
+          streamType,
+          subjectNode
+        )
         a.size should be (3)
 
-        val a0Triple = a.get(0).asInstanceOf[Triple]
+        val a0Triple = a.get(0)
 
         a0Triple.s should be (subjectNode)
         a0Triple.p should be (Iri("https://w3id.org/stax/ontology#hasStreamTypeUsage"))
 
-        val a2Triple = a.get(2).asInstanceOf[Triple]
+        val a2Triple = a.get(2)
 
         a2Triple.o should be (Iri(LogicalStreamTypeUtils.getRdfStaxType(streamType)))
       }
@@ -110,7 +115,12 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
       s"throw exception for RDF STaX annotation for UNSPECIFIED and $subjectNode" in {
         val error = intercept[IllegalArgumentException] {
           val decoder = MockConverterFactory.decoderConverter
-          LogicalStreamTypeUtils.getRdfStaxAnnotation(decoder, LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED, subjectNode)
+          LogicalStreamTypeUtils.getRdfStaxAnnotation(
+            decoder,
+            { (s, p, o) => Triple(s, p, o) },
+            LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED,
+            subjectNode
+          )
         }
         error.getMessage should include ("Unsupported logical stream type")
         error.getMessage should include ("UNSPECIFIED")

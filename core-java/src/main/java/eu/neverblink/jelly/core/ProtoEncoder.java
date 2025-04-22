@@ -11,7 +11,7 @@ import java.util.Collection;
  */
 public abstract class ProtoEncoder<TNode>
     extends ProtoEncoderBase<TNode>
-    implements RowBufferAppender, ProtoHandler.AnyProtoHandler<TNode> {
+    implements RowBufferAppender, RdfHandler.AnyStatementHandler<TNode> {
 
     /**
      * Parameters passed to the Jelly encoder.
@@ -50,43 +50,12 @@ public abstract class ProtoEncoder<TNode>
 
     /**
      * Add an RDF triple statement to the stream.
-     * <p>
-     * If your library does not support quad objects, use `addTripleStatement(s, p, o)` instead.
-     *
-     * @param triple triple to add
-     * @throws RdfProtoSerializationError if the library does not support triple objects or
-     *                                    if a serialization error occurs.
-     */
-    public final void addTripleStatement(TNode triple) {
-        addTripleStatement(converter.getTstS(triple), converter.getTstP(triple), converter.getTstO(triple));
-    }
-
-    /**
-     * Add an RDF triple statement to the stream.
      * @param subject subject
      * @param predicate predicate
      * @param object object
      * @throws RdfProtoSerializationError if a serialization error occurs
      */
     public abstract void addTripleStatement(TNode subject, TNode predicate, TNode object);
-
-    /**
-     * Add an RDF quad statement to the stream.
-     * <p>
-     * If your library does not support quad objects, use `addQuadStatement(s, p, o, g)` instead.
-     *
-     * @param quad quad to add
-     * @throws RdfProtoSerializationError if the library does not support quad objects or
-     *                                    if a serialization error occurs.
-     */
-    public final void addQuadStatement(TNode quad) {
-        addQuadStatement(
-            converter.getQstS(quad),
-            converter.getQstP(quad),
-            converter.getQstO(quad),
-            converter.getQstG(quad)
-        );
-    }
 
     /**
      * Add an RDF quad statement to the stream.

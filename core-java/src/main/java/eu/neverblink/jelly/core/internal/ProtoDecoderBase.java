@@ -142,33 +142,6 @@ public abstract class ProtoDecoderBase<TNode, TDatatype> {
         return node;
     }
 
-    /**
-     * Convert an RdfTriple message, while respecting repeated terms.
-     * @param triple triple to convert
-     * @return converted triple
-     */
-    protected final TNode convertTriple(RdfTerm.Triple triple) {
-        return converter.makeTriple(
-            convertSpoTermWrapped(triple.subject(), lastSubject),
-            convertSpoTermWrapped(triple.predicate(), lastPredicate),
-            convertSpoTermWrapped(triple.object(), lastObject)
-        );
-    }
-
-    /**
-     * Convert an RdfQuad message, while respecting repeated terms.
-     * @param quad quad to convert
-     * @return converted quad
-     */
-    protected final TNode convertQuad(RdfTerm.Quad quad) {
-        return converter.makeQuad(
-            convertSpoTermWrapped(quad.subject(), lastSubject),
-            convertSpoTermWrapped(quad.predicate(), lastPredicate),
-            convertSpoTermWrapped(quad.object(), lastObject),
-            convertGraphTermWrapped(quad.graph())
-        );
-    }
-
     private TNode convertSpoTermWrapped(RdfTerm.SpoTerm term, LastNodeHolder<TNode> lastNodeHolder) {
         if (term == null && lastNodeHolder.node == null) {
             throw new RdfProtoDeserializationError("Empty term without previous term.");

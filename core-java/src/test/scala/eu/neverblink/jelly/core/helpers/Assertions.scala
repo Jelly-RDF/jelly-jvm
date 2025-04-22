@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.helpers
 
-import eu.neverblink.jelly.core.helpers.Mrl.Node
+import eu.neverblink.jelly.core.helpers.Mrl.{Statement}
 import eu.neverblink.jelly.core.helpers.RdfAdapter.extractRdfStreamRow
 import eu.neverblink.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
@@ -16,7 +16,7 @@ object Assertions extends AnyWordSpec, Matchers:
       }
     observed.size should be(expected.size)
 
-  def assertDecoded(observed: Seq[Node], expected: Seq[Node]): Unit =
+  def assertDecoded(observed: Seq[Statement], expected: Seq[Statement]): Unit =
     for ix <- 0 until observed.size.min(expected.size) do
       withClue(s"Row $ix:") {
         val obsRow = observed.applyOrElse(ix, null)

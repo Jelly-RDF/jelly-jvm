@@ -12,28 +12,25 @@ import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Base class for stateful decoders of protobuf RDF streams.
  *
+ * @param <TNode>     the type of the node
+ * @param <TDatatype> the type of the datatype
  * @see ProtoDecoder the base (extendable) interface.
  * @see ProtoDecoderBase for common methods shared by all decoders.
- *
- * @param <TNode> the type of the node
- * @param <TDatatype> the type of the datatype
  */
 public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNode, TDatatype> {
 
-    protected final ProtoHandler<TNode> protoHandler;
+    protected final RdfHandler<TNode> protoHandler;
     protected final RdfStreamOptions supportedOptions;
 
     private RdfStreamOptions currentOptions = null;
 
     public ProtoDecoderImpl(
         ProtoDecoderConverter<TNode, TDatatype> converter,
-        ProtoHandler<TNode> protoHandler,
+        RdfHandler<TNode> protoHandler,
         RdfStreamOptions supportedOptions
     ) {
         super(converter);
@@ -43,6 +40,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
     /**
      * Returns the size of the name table.
+     *
      * @return the size of the name table if options are set, otherwise the default size
      */
     @Override
@@ -56,6 +54,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
     /**
      * Returns the size of the prefix table.
+     *
      * @return the size of the prefix table if options are set, otherwise the default size
      */
     @Override
@@ -69,6 +68,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
     /**
      * Returns the size of the datatype table.
+     *
      * @return the size of the datatype table if options are set, otherwise the default size
      */
     @Override
@@ -82,6 +82,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
     /**
      * Returns the received stream options from the producer.
+     *
      * @return the stream options if set, otherwise null
      */
     @Override
@@ -155,11 +156,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class TriplesDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final ProtoHandler.TripleProtoHandler<TNode> protoHandler;
+        private final RdfHandler.TripleStatementHandler<TNode> protoHandler;
 
         public TriplesDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            ProtoHandler.TripleProtoHandler<TNode> protoHandler,
+            RdfHandler.TripleStatementHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);
@@ -193,11 +194,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class QuadsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final ProtoHandler.QuadProtoHandler<TNode> protoHandler;
+        private final RdfHandler.QuadStatementHandler<TNode> protoHandler;
 
         public QuadsDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            ProtoHandler.QuadProtoHandler<TNode> protoHandler,
+            RdfHandler.QuadStatementHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);
@@ -232,12 +233,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class GraphsAsQuadsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final ProtoHandler.QuadProtoHandler<TNode> protoHandler;
+        private final RdfHandler.QuadStatementHandler<TNode> protoHandler;
         private TNode currentGraph = null;
 
         public GraphsAsQuadsDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            ProtoHandler.QuadProtoHandler<TNode> protoHandler,
+            RdfHandler.QuadStatementHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);
@@ -288,13 +289,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class GraphsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final ProtoHandler.GraphProtoHandler<TNode> protoHandler;
+        private final RdfHandler.GraphStatementHandler<TNode> protoHandler;
         private TNode currentGraph = null;
-        private final List<TNode> buffer = new ArrayList<>();
 
         public GraphsDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            ProtoHandler.GraphProtoHandler<TNode> protoHandler,
+            RdfHandler.GraphStatementHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);
@@ -311,34 +311,28 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         protected void handleGraphStart(RdfGraphStart graphStart) {
-            emitBuffer();
-            buffer.clear();
             final var graphStartTerm = RdfTerm.from(graphStart);
             currentGraph = convertGraphTerm(graphStartTerm.graph());
+            protoHandler.handleGraphStart(currentGraph);
         }
 
         @Override
         protected void handleGraphEnd() {
-            emitBuffer();
-            buffer.clear();
-            currentGraph = null;
-        }
-
-        @Override
-        protected void handleTriple(RdfTriple triple) {
-            buffer.add(convertTriple(RdfTerm.from(triple)));
-        }
-
-        private void emitBuffer() {
-            if (buffer.isEmpty()) {
-                return;
-            }
-
             if (currentGraph == null) {
                 throw new RdfProtoDeserializationError("End of graph encountered before a start.");
             }
 
-            protoHandler.handleGraph(currentGraph, buffer);
+            currentGraph = null;
+            protoHandler.handleGraphEnd();
+        }
+
+        @Override
+        protected void handleTriple(RdfTriple triple) {
+            var tripleTerm = RdfTerm.from(triple);
+            var subject = convertSubjectTermWrapped(tripleTerm.subject());
+            var predicate = convertPredicateTermWrapped(tripleTerm.predicate());
+            var object = convertObjectTermWrapped(tripleTerm.object());
+            protoHandler.handleTriple(subject, predicate, object);
         }
     }
 
@@ -352,14 +346,14 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      * Do not instantiate this class directly. Instead use factory methods in
      * ConverterFactory implementations.
      */
-    public static final class AnyDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
+    public static final class AnyStatementDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final ProtoHandler.AnyProtoHandler<TNode> protoHandler;
+        private final RdfHandler.AnyStatementHandler<TNode> protoHandler;
         private ProtoDecoderImpl<TNode, TDatatype> delegateDecoder = null;
 
-        public AnyDecoder(
+        public AnyStatementDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            ProtoHandler.AnyProtoHandler<TNode> protoHandler,
+            RdfHandler.AnyStatementHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);

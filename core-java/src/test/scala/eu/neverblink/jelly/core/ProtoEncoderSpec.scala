@@ -29,7 +29,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         enableNamespaceDeclarations = false,
         appendableRowBuffer = buffer.asJava
       ))
-      Triples1.mrl.foreach(triple => encoder.addTripleStatement(triple))
+      Triples1.mrl.foreach(triple => encoder.addTripleStatement(triple.s, triple.p, triple.o))
       assertEncoded(buffer.toSeq, Triples1.encoded(options))
     }
 
@@ -48,7 +48,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
       for triple <- Triples2NsDecl.mrl do
         triple match
-          case t: Triple => encoder.addTripleStatement(t)
+          case t: Triple => encoder.addTripleStatement(t.s, t.p, t.o)
           case ns: NamespaceDeclaration => encoder.declareNamespace(ns.prefix, ns.iri)
 
       assertEncoded(buffer.toSeq, Triples2NsDecl.encoded(options))
@@ -67,7 +67,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         appendableRowBuffer = buffer.asJava
       ))
 
-      Quads1.mrl.foreach(quad => encoder.addQuadStatement(quad))
+      Quads1.mrl.foreach(quad => encoder.addQuadStatement(quad.s, quad.p, quad.o, quad.g))
       assertEncoded(buffer.toSeq, Quads1.encoded(options))
     }
 
@@ -85,7 +85,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       for quad <- Quads1.mrl do
-        encoder.addQuadStatement(quad)
+        encoder.addQuadStatement(quad.s, quad.p, quad.o, quad.g)
 
       assertEncoded(buffer.toSeq, Quads1.encoded(options))
     }
@@ -103,7 +103,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         appendableRowBuffer = buffer.asJava
       ))
 
-      Quads2RepeatDefault.mrl.foreach(quad => encoder.addQuadStatement(quad))
+      Quads2RepeatDefault.mrl.foreach(quad => encoder.addQuadStatement(quad.s, quad.p, quad.o, quad.g))
       assertEncoded(buffer.toSeq, Quads2RepeatDefault.encoded(options))
     }
 
@@ -123,7 +123,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       for (graphName, triples) <- Graphs1.mrl do
         encoder.startGraph(graphName)
         for triple <- triples do
-          encoder.addTripleStatement(triple)
+          encoder.addTripleStatement(triple.s, triple.p, triple.o)
         encoder.endGraph()
 
       assertEncoded(buffer.toSeq, Graphs1.encoded(options))
@@ -161,7 +161,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       val error = intercept[RdfProtoSerializationError] {
-        encoder.startGraph(Triple(BlankNode("S"), BlankNode("P"), BlankNode("O")))
+        encoder.startGraph(TripleNode(BlankNode("S"), BlankNode("P"), BlankNode("O")))
       }
 
       error.getMessage should include ("Cannot encode graph node")

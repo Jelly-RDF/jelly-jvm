@@ -58,7 +58,8 @@ lazy val commonSettings = Seq(
   ),
   javacOptions ++= Seq(
     "-source", "17",
-//    "-Werror",
+    // Currently, impossible to enable this without breaking the build due to warnings in protobuf generated code.
+    // "-Werror",
     // TODO: enable more warnings
     "-Xlint:unchecked",
   ),
