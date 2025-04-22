@@ -24,7 +24,6 @@ public interface JellyConverterFactory<
 > {
     /**
      * To be implemented by subclasses. Returns an instance of ProtoEncoderConverter for the RDF library.
-     * @since 2.7.0
      */
     TEncoderConverter encoderConverter();
 
@@ -34,10 +33,9 @@ public interface JellyConverterFactory<
     TDecoderConverter decoderConverter();
 
     /**
-     * Create a new [[ProtoEncoder]].
+     * Create a new ProtoEncoder.
      * @param params Parameters for the encoder.
      * @return encoder
-     * @since 2.6.0
      */
     default ProtoEncoder<TNode> encoder(ProtoEncoder.Params params) {
         return new ProtoEncoderImpl<>(encoderConverter(), params);

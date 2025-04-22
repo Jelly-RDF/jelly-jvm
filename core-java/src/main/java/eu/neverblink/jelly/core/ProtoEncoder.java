@@ -66,7 +66,6 @@ public abstract class ProtoEncoder<TNode>
      * @param subject subject
      * @param predicate predicate
      * @param object object
-     * @since 2.9.0
      * @throws RdfProtoSerializationError if a serialization error occurs
      */
     public abstract void addTripleStatement(TNode subject, TNode predicate, TNode object);
@@ -96,7 +95,6 @@ public abstract class ProtoEncoder<TNode>
      * @param predicate predicate
      * @param object object
      * @param graph graph
-     * @since 2.9.0
      * @throws RdfProtoSerializationError if a serialization error occurs
      */
     public abstract void addQuadStatement(TNode subject, TNode predicate, TNode object, TNode graph);
