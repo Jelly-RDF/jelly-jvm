@@ -61,7 +61,6 @@ lazy val commonSettings = Seq(
     // Currently, impossible to enable this without breaking the build due to warnings in protobuf generated code.
     // "-Werror",
     // TODO: enable more warnings
-    "-Xlint:unchecked",
   ),
   assemblyJarName := s"${name.value}.jar",
   assemblyMergeStrategy := {
