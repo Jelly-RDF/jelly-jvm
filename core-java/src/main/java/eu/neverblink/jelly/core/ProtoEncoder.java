@@ -17,6 +17,7 @@ public abstract class ProtoEncoder<TNode>
      * Parameters passed to the Jelly encoder.
      * <p>
      * New fields may be added in the future, but always with a default value and in a sequential order.
+     * WARNING: PLEASE USE .of TO CREATE NEW INSTANCES, otherwise your code will break when new fields are added.
      *
      * @param options options for this stream (required)
      * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
@@ -29,7 +30,22 @@ public abstract class ProtoEncoder<TNode>
         RdfStreamOptions options,
         boolean enableNamespaceDeclarations,
         Collection<RdfStreamRow> appendableRowBuffer
-    ) {}
+    ) {
+        /**
+         * Creates a new instance of Params.
+         * @param options options for this stream (required)
+         * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
+         * @param appendableRowBuffer buffer for storing stream rows that should go into a stream frame.
+         * @return a new instance of Params
+         */
+        public static Params of(
+            RdfStreamOptions options,
+            boolean enableNamespaceDeclarations,
+            Collection<RdfStreamRow> appendableRowBuffer
+        ) {
+            return new Params(options, enableNamespaceDeclarations, appendableRowBuffer);
+        }
+    }
 
     /**
      * Whether namespace declarations are enabled for this encoder.
