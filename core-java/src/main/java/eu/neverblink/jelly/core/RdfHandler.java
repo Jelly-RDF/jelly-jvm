@@ -80,5 +80,5 @@ public interface RdfHandler<TNode> {
      * Extension of the ProtoHandler interface to handle any RDF data structure.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */
-    interface AnyRdfHandler<TNode> extends TripleHandler<TNode>, QuadHandler<TNode>, GraphHandler<TNode> {}
+    interface AnyRdfHandler<TNode> extends AnyStatementHandler<TNode>, GraphHandler<TNode> {}
 }

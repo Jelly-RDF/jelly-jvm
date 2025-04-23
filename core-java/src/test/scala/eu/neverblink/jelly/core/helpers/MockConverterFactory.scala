@@ -21,26 +21,26 @@ trait MockConverterFactory:
     new ProtoEncoderImpl[Node](encoderConverter, params)
 
   final def triplesDecoder(
-                            handler: TripleHandler[Node],
-                            options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+    handler: TripleHandler[Node],
+    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): TriplesDecoder[Node, Datatype] = TriplesDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def quadsDecoder(
-                          handler: QuadHandler[Node],
-                          options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+    handler: QuadHandler[Node],
+    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): QuadsDecoder[Node, Datatype] = QuadsDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def graphsDecoder(
-                           handler: GraphHandler[Node],
-                           options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+   handler: GraphHandler[Node],
+   options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): GraphsDecoder[Node, Datatype] = GraphsDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def graphsAsQuadsDecoder(
-                                  handler: QuadHandler[Node],
-                                  options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+    handler: QuadHandler[Node],
+    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): GraphsAsQuadsDecoder[Node, Datatype] = GraphsAsQuadsDecoder[Node, Datatype](decoderConverter, handler, options)
 
   final def anyDecoder(
-                        handler: AnyRdfHandler[Node],
-                        options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+    handler: AnyStatementHandler[Node],
+    options: RdfStreamOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
   ): AnyStatementDecoder[Node, Datatype] = AnyStatementDecoder[Node, Datatype](decoderConverter, handler, options)

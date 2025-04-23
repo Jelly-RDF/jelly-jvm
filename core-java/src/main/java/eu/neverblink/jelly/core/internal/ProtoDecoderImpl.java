@@ -348,12 +348,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
      */
     public static final class AnyStatementDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
-        private final RdfHandler.AnyRdfHandler<TNode> protoHandler;
+        private final RdfHandler.AnyStatementHandler<TNode> protoHandler;
         private ProtoDecoderImpl<TNode, TDatatype> delegateDecoder = null;
 
         public AnyStatementDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
-            RdfHandler.AnyRdfHandler<TNode> protoHandler,
+            RdfHandler.AnyStatementHandler<TNode> protoHandler,
             RdfStreamOptions supportedOptions
         ) {
             super(converter, protoHandler, supportedOptions);
@@ -424,16 +424,6 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         @Override
         protected void handleQuad(RdfQuad quad) {
             delegateDecoder.handleQuad(quad);
-        }
-
-        @Override
-        protected void handleGraphStart(RdfGraphStart graphStart) {
-            delegateDecoder.handleGraphStart(graphStart);
-        }
-
-        @Override
-        protected void handleGraphEnd() {
-            delegateDecoder.handleGraphEnd();
         }
     }
 }

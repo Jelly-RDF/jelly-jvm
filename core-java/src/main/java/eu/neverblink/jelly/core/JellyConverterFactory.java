@@ -48,73 +48,73 @@ public abstract class JellyConverterFactory<
      *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
      *                         type), you should always use this.defaultSupportedOptions.withXxx.
      *                         namespace prefix (without a colon), the second is the IRI node.
-     * @param tripleProtoHandler the handler to use for decoding triples
+     * @param tripleHandler the handler to use for decoding triples
      * @return decoder
      */
     public final ProtoDecoder<TNode, TDatatype> triplesDecoder(
-        RdfHandler.TripleHandler<TNode> tripleProtoHandler,
+        RdfHandler.TripleHandler<TNode> tripleHandler,
         RdfStreamOptions supportedOptions
     ) {
-        return new ProtoDecoderImpl.TriplesDecoder<>(decoderConverter(), tripleProtoHandler, supportedOptions);
+        return new ProtoDecoderImpl.TriplesDecoder<>(decoderConverter(), tripleHandler, supportedOptions);
     }
 
     /**
      * Create a new QuadsDecoder.
      * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
      *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
-     *                         type), you should always use this.defaultSupportedOptions.withXxx.
-     * @param quadProtoHandler the handler to use for decoding quads
+     *                         type), you should always use this.defaultSupportedOptions.toBuilder().setXxx.build();.
+     * @param quadHandler the handler to use for decoding quads
      * @return decoder
      */
     public final ProtoDecoder<TNode, TDatatype> quadsDecoder(
-        RdfHandler.QuadHandler<TNode> quadProtoHandler,
+        RdfHandler.QuadHandler<TNode> quadHandler,
         RdfStreamOptions supportedOptions
     ) {
-        return new ProtoDecoderImpl.QuadsDecoder<>(decoderConverter(), quadProtoHandler, supportedOptions);
+        return new ProtoDecoderImpl.QuadsDecoder<>(decoderConverter(), quadHandler, supportedOptions);
     }
 
     /**
      * Create a new GraphsAsQuadsDecoder.
      * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
      *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
-     *                         type), you should always use this.defaultSupportedOptions.withXxx.
-     * @param graphProtoHandler the handler to use for decoding graphs
+     *                         type), you should always use this.defaultSupportedOptions.toBuilder().setXxx.build();.
+     * @param graphHandler the handler to use for decoding graphs
      * @return decoder
      */
     public final ProtoDecoder<TNode, TDatatype> graphsAsQuadsDecoder(
-        RdfHandler.QuadHandler<TNode> graphProtoHandler,
+        RdfHandler.QuadHandler<TNode> graphHandler,
         RdfStreamOptions supportedOptions
     ) {
-        return new ProtoDecoderImpl.GraphsAsQuadsDecoder<>(decoderConverter(), graphProtoHandler, supportedOptions);
+        return new ProtoDecoderImpl.GraphsAsQuadsDecoder<>(decoderConverter(), graphHandler, supportedOptions);
     }
 
     /**
      * Create a new GraphsDecoder.
      * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
      *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
-     *                         type), you should always use this.defaultSupportedOptions.withXxx.
-     * @param graphProtoHandler the handler to use for decoding graphs
+     *                         type), you should always use this.defaultSupportedOptions.toBuilder().setXxx.build();.
+     * @param graphHandler the handler to use for decoding graphs
      * @return decoder
      */
     public final ProtoDecoder<TNode, TDatatype> graphsDecoder(
-        RdfHandler.GraphHandler<TNode> graphProtoHandler,
+        RdfHandler.GraphHandler<TNode> graphHandler,
         RdfStreamOptions supportedOptions
     ) {
-        return new ProtoDecoderImpl.GraphsDecoder<>(decoderConverter(), graphProtoHandler, supportedOptions);
+        return new ProtoDecoderImpl.GraphsDecoder<>(decoderConverter(), graphHandler, supportedOptions);
     }
 
     /**
      * Create a new AnyStatementDecoder.
      * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
      *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
-     *                         type), you should always use this.defaultSupportedOptions.withXxx.
-     * @param anyProtoHandler the handler to use for decoding any statements
+     *                         type), you should always use this.defaultSupportedOptions.toBuilder().setXxx.build();.
+     * @param anyStatementHandler the handler to use for decoding any statements
      * @return decoder
      */
-    public final ProtoDecoder<TNode, TDatatype> anyDecoder(
-        RdfHandler.AnyRdfHandler<TNode> anyProtoHandler,
+    public final ProtoDecoder<TNode, TDatatype> anyStatementDecoder(
+        RdfHandler.AnyStatementHandler<TNode> anyStatementHandler,
         RdfStreamOptions supportedOptions
     ) {
-        return new ProtoDecoderImpl.AnyStatementDecoder<>(decoderConverter(), anyProtoHandler, supportedOptions);
+        return new ProtoDecoderImpl.AnyStatementDecoder<>(decoderConverter(), anyStatementHandler, supportedOptions);
     }
 }
