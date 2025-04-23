@@ -16,6 +16,7 @@ public class IoUtils {
      * These bytes are then put back into the stream, and the stream is returned, so the parser won't notice the peeking.
      * @param inputStream the input stream
      * @return (isDelimited, newInputStream) where isDelimited is true if the stream is a delimited Jelly file
+     * @throws IOException if an I/O error occurs
      */
     public static AutodetectDelimitingResponse autodetectDelimiting(InputStream inputStream) throws IOException {
         final var scout = inputStream.readNBytes(3);
@@ -48,6 +49,7 @@ public class IoUtils {
      *
      * @param nonDelimitedFrame EXACTLY one non-delimited Jelly frame
      * @param output the output stream to write the frame to
+     * @throws IOException if an I/O error occurs
      */
     public static void writeFrameAsDelimited(byte[] nonDelimitedFrame, OutputStream output) throws IOException {
         // Don't worry, the buffer won't really have 0-size. It will be of minimal size able to fit the varint.

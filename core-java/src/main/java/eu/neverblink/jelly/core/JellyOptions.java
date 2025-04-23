@@ -147,12 +147,12 @@ public class JellyOptions {
      *   requesting stream options that the server can support.
      * <p>
      * We check:
-     * - version (must be <= Constants.protoVersion and <= supportedOptions.version)
-     * - generalized statements (must be <= supportedOptions.generalizedStatements)
-     * - RDF star (must be <= supportedOptions.rdfStar)
-     * - max name table size (must be <= supportedOptions.maxNameTableSize and >= 16).
-     * - max prefix table size (must be <= supportedOptions.maxPrefixTableSize)
-     * - max datatype table size (must be <= supportedOptions.maxDatatypeTableSize and >= 8)
+     * - version (must be &lt;= Constants.protoVersion and &lt;= supportedOptions.version)
+     * - generalized statements (must be &lt;= supportedOptions.generalizedStatements)
+     * - RDF star (must be &lt;= supportedOptions.rdfStar)
+     * - max name table size (must be &lt;= supportedOptions.maxNameTableSize and &gt;= 16).
+     * - max prefix table size (must be &lt;= supportedOptions.maxPrefixTableSize)
+     * - max datatype table size (must be &lt;= supportedOptions.maxDatatypeTableSize and &gt;= 8)
      * - logical stream type (must be compatible with physical stream type and compatible with expected log. stream type)
      * <p>
      * We don't check:

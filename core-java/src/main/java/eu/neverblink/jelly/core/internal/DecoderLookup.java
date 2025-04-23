@@ -21,7 +21,7 @@ public class DecoderLookup<T> {
     /**
      * @param id 1-based. 0 signifies an id that is larger by 1 than the last set id.
      * @param v value
-     * @throws ArrayIndexOutOfBoundsException if id < 0 or id > maxEntries
+     * @throws ArrayIndexOutOfBoundsException if id &lt; 0 or id &gt; maxEntries
      */
     public void update(int id, T v) {
         if (id == 0) {
@@ -36,7 +36,7 @@ public class DecoderLookup<T> {
     /**
      * @param id 1-based
      * @return value
-     * @throws ArrayIndexOutOfBoundsException if id < 1 or id > maxEntries
+     * @throws ArrayIndexOutOfBoundsException if id &lt; 1 or id &gt; maxEntries
      */
     public T get(int id) {
         return lookup[id - 1];

@@ -84,20 +84,21 @@ public class LogicalStreamTypeUtils {
 
     /**
      * Returns an RDF-STaX annotation for the logical stream type, in RDF. The annotation simply states that
-     * <subjectNode> has a stream type usage, and that stream type usage has this stream type.
+     * &lt;subjectNode&gt; has a stream type usage, and that stream type usage has this stream type.
      * <p>
      * Example in Turtle for a flat triple stream:
-     * <subjectNode> stax:hasStreamTypeUsage [
+     * &lt;subjectNode&gt; stax:hasStreamTypeUsage [
      *     a stax:RdfStreamTypeUsage ;
      *     stax:hasStreamType stax:flatTripleStream
      * ] .
-     *
-     * @param logicalType the logical stream type
-     * @param subjectNode the subject node to annotate
-     * @param converter the converter to use for creating RDF nodes and triples
+     * 
      * @param <TNode> the type of RDF nodes
      * @param <TDatatype> the type of RDF triples
      * @param <TTriple> the type of RDF triples
+     * @param converter the converter to use for creating RDF nodes
+     * @param tripleEncoder the encoder to use for creating RDF triples
+     * @param logicalType the logical stream type
+     * @param subjectNode the subject node to annotate
      * @throws IllegalArgumentException if the logical stream type is not supported
      * @return the RDF-STaX annotation
      */
