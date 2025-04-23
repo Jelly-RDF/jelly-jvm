@@ -42,6 +42,28 @@ jobs:
     - name: Build and test
       shell: bash
       run: sbt -v +test
+
+  # Test publishing to a local repository
+  test-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
+
+    - name: Test publishing to a local repository
+      run: sbt -v +publishLocal
   
   # Test building assemblies
   test-assembly:
