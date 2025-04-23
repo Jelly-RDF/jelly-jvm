@@ -91,7 +91,7 @@ public class LogicalStreamTypeUtils {
      *     a stax:RdfStreamTypeUsage ;
      *     stax:hasStreamType stax:flatTripleStream
      * ] .
-     * 
+     *
      * @param <TNode> the type of RDF nodes
      * @param <TDatatype> the type of RDF triples
      * @param <TTriple> the type of RDF triples
