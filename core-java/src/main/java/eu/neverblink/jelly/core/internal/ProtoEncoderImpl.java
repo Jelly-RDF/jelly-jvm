@@ -54,7 +54,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     @Override
     public void handleGraphStart(TNode graph) {
         emitOptions();
-        final var graphNode = converter.graphNodeToProto(nodeEncoder, graph);
+        final var graphNode = converter.graphNodeToProto(nodeEncoder.provide(), graph);
         final var graphStart = new RdfTerm.GraphStart(graphNode);
         final var graphRow = RdfStreamRow.newBuilder().setGraphStart(graphStart.toProto()).build();
         rowBuffer.add(graphRow);
@@ -79,7 +79,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
         emitOptions();
 
-        final var namespaceTerm = converter.nodeToProto(nodeEncoder, namespace);
+        final var namespaceTerm = converter.nodeToProto(nodeEncoder.provide(), namespace);
         if (!(namespaceTerm instanceof RdfTerm.Iri iriTerm)) {
             throw new RdfProtoSerializationError("Namespace must be an IRI");
         }

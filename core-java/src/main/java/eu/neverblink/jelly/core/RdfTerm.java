@@ -252,6 +252,8 @@ public sealed interface RdfTerm {
      */
     sealed interface LiteralTerm extends SpoOrGraphTerm {
         String lex();
+
+        RdfLiteral toProto();
     }
 
     /**

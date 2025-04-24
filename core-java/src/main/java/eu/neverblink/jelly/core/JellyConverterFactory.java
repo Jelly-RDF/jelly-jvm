@@ -26,12 +26,12 @@ public abstract class JellyConverterFactory<
     /**
      * To be implemented by subclasses. Returns an instance of ProtoEncoderConverter for the RDF library.
      */
-    protected abstract TEncoderConverter encoderConverter();
+    public abstract TEncoderConverter encoderConverter();
 
     /**
      * To be implemented by subclasses. Returns an instance of ProtoDecoderConverter for the RDF library.
      */
-    protected abstract TDecoderConverter decoderConverter();
+    public abstract TDecoderConverter decoderConverter();
 
     /**
      * Create a new ProtoEncoder.

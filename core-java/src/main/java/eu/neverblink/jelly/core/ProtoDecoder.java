@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core;
 
-import eu.neverblink.jelly.core.internal.ProtoDecoderBase;
+import eu.neverblink.jelly.core.internal.DecoderBase;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 
@@ -12,7 +12,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
  * @param <TNode> The type of the node.
  * @param <TDatatype> The type of the datatype.
  */
-public abstract class ProtoDecoder<TNode, TDatatype> extends ProtoDecoderBase<TNode, TDatatype> {
+public abstract class ProtoDecoder<TNode, TDatatype> extends DecoderBase<TNode, TDatatype> {
 
     /**
      * Constructor.

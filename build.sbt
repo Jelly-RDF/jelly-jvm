@@ -186,17 +186,22 @@ lazy val corePatch = (project in file("core-patch"))
     description := "Core code for the RDF Patch Jelly extension.",
     // Add the generated proto classes after transforming them with Scalameta
     Compile / sourceGenerators += Def.task {
-      Generator.gen(
-        inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main",
-        outputDir = sourceManaged.value / "main" / "scalapb",
-        module = "core-patch",
-      )
-    }.dependsOn(rdfProtos / Compile / PB.generate),
+      // Copy from the managed source directory to the output directory
+      val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main"
+      val outputDir = sourceManaged.value / "main" / "protobuf"
+      val javaFiles = (inputDir ** "*.java").get
+      javaFiles.map { file =>
+        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+        IO.copyFile(file, outputFile)
+        outputFile
+      }
+
+    }.dependsOn(rdfProtosJava / Compile / compile),
     Compile / sourceManaged := sourceManaged.value / "main",
     publishArtifact := false, // TODO: remove this when ready
     commonSettings,
   )
-  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(coreJava % "compile->compile;test->test")
 
 lazy val jena = (project in file("jena"))
   .settings(
