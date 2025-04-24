@@ -237,7 +237,7 @@ public class JellyOptions {
      *
      * @throws RdfProtoDeserializationError if the table size is not within the supported range.
      */
-    private static void checkTableSize(String name, int size, int supportedSize, int minSize) {
+    public static void checkTableSize(String name, int size, int supportedSize, int minSize) {
         if (size > supportedSize) {
             throw new RdfProtoDeserializationError(
                 "The stream uses a %s table size of %s, which is larger than the maximum supported size of %s.".formatted(
@@ -258,7 +258,7 @@ public class JellyOptions {
         }
     }
 
-    private static void checkTableSize(String name, int size, int supportedSize) {
+    public static void checkTableSize(String name, int size, int supportedSize) {
         checkTableSize(name, size, supportedSize, 0);
     }
 

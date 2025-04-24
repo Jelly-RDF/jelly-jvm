@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core;
 
-import eu.neverblink.jelly.core.internal.ProtoEncoderBase;
+import eu.neverblink.jelly.core.internal.EncoderBase;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 import java.util.Collection;
@@ -10,7 +10,7 @@ import java.util.Collection;
  * @param <TNode> type of RDF nodes in the library
  */
 public abstract class ProtoEncoder<TNode>
-    extends ProtoEncoderBase<TNode>
+    extends EncoderBase<TNode>
     implements RowBufferAppender, RdfHandler.AnyRdfHandler<TNode> {
 
     /**
@@ -48,6 +48,11 @@ public abstract class ProtoEncoder<TNode>
     }
 
     /**
+     * RdfStreamOptions for this encoder.
+     */
+    protected final RdfStreamOptions options;
+
+    /**
      * Whether namespace declarations are enabled for this encoder.
      */
     protected final boolean enableNamespaceDeclarations;
@@ -58,8 +63,24 @@ public abstract class ProtoEncoder<TNode>
     protected final Collection<RdfStreamRow> appendableRowBuffer;
 
     protected ProtoEncoder(ProtoEncoderConverter<TNode> converter, Params params) {
-        super(params.options, converter);
+        super(converter);
+        this.options = params.options;
         this.enableNamespaceDeclarations = params.enableNamespaceDeclarations;
         this.appendableRowBuffer = params.appendableRowBuffer;
+    }
+
+    @Override
+    protected int getNameTableSize() {
+        return options.getMaxNameTableSize();
+    }
+
+    @Override
+    protected int getPrefixTableSize() {
+        return options.getMaxPrefixTableSize();
+    }
+
+    @Override
+    protected int getDatatypeTableSize() {
+        return options.getMaxDatatypeTableSize();
     }
 }

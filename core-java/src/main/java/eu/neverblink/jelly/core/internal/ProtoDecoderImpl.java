@@ -19,7 +19,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfTriple;
  * @param <TNode>     the type of the node
  * @param <TDatatype> the type of the datatype
  * @see ProtoDecoder the base (extendable) interface.
- * @see ProtoDecoderBase for common methods shared by all decoders.
+ * @see DecoderBase for common methods shared by all decoders.
  */
 public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNode, TDatatype> {
 
@@ -106,8 +106,8 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         switch (row.getRowCase()) {
             case OPTIONS -> handleOptions(row.getOptions());
-            case NAME -> nameDecoder.updateNames(row.getName());
-            case PREFIX -> nameDecoder.updatePrefixes(row.getPrefix());
+            case NAME -> nameDecoder.provide().updateNames(row.getName());
+            case PREFIX -> nameDecoder.provide().updatePrefixes(row.getPrefix());
             case DATATYPE -> handleDatatype(row.getDatatype());
             case NAMESPACE -> handleNamespace(row.getNamespace());
             case TRIPLE -> handleTriple(row.getTriple());
@@ -124,12 +124,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
     }
 
     protected void handleDatatype(RdfDatatypeEntry datatype) {
-        datatypeLookup.update(datatype.getId(), converter.makeDatatype(datatype.getValue()));
+        datatypeLookup.provide().update(datatype.getId(), converter.makeDatatype(datatype.getValue()));
     }
 
     protected void handleNamespace(RdfNamespaceDeclaration namespace) {
         final var iri = namespace.getValue();
-        protoHandler.handleNamespace(namespace.getName(), nameDecoder.decode(iri.getPrefixId(), iri.getNameId()));
+        protoHandler.handleNamespace(namespace.getName(), nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId()));
     }
 
     protected void handleTriple(RdfTriple triple) {
