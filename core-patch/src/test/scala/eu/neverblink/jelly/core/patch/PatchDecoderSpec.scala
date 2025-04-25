@@ -1,12 +1,11 @@
 package eu.neverblink.jelly.core.patch
 
-import eu.neverblink.jelly.core.patch.PatchDecoder
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
-import eu.neverblink.jelly.core.patch.helpers.PatchAdapter.*
 import eu.neverblink.jelly.core.patch.PatchHandler.*
 import eu.neverblink.jelly.core.patch.helpers.*
+import eu.neverblink.jelly.core.patch.helpers.PatchAdapter.*
 import eu.neverblink.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
