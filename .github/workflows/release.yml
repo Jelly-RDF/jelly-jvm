@@ -23,10 +23,11 @@ jobs:
 
       # Publish eu.ostrzyciel and eu.neverblink namespaces separately, otherwise Maven rejects
       # the release because of the different groupId.
+      # TODO: remove this in 3.0.0
       - run: |
-          sbt -v +core/ci-release +jena/ci-release +rdf4j/ci-release +titaniumRdfApi/ci-release \ 
-            +stream/ci-release +grpc/ci-release
-          sbt -v +coreJava/ci-release +corePatch/ci-release
+          sbt -v +core/publishSigned +jena/publishSigned +rdf4j/publishSigned +titaniumRdfApi/publishSigned \ 
+            +stream/publishSigned +grpc/publishSigned
+          sbt -v +coreJava/publishSigned +corePatch/publishSigned
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
