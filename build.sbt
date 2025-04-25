@@ -175,6 +175,7 @@ lazy val coreJava = (project in file("core-java"))
 
     }.dependsOn(rdfProtosJava / Compile / compile),
     Compile / sourceManaged := sourceManaged.value / "main",
+    publishArtifact := false, // TODO: remove this when ready
     commonSettings,
   )
 
@@ -192,6 +193,7 @@ lazy val corePatch = (project in file("core-patch"))
       )
     }.dependsOn(rdfProtos / Compile / PB.generate),
     Compile / sourceManaged := sourceManaged.value / "main",
+    publishArtifact := false, // TODO: remove this when ready
     commonSettings,
   )
   .dependsOn(core % "compile->compile;test->test")
