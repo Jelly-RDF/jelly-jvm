@@ -1,9 +1,9 @@
 package eu.neverblink.jelly.core.internal
 
-import eu.neverblink.jelly.core.{JellyOptions, RdfProtoSerializationError, RowBufferAppender}
 import eu.neverblink.jelly.core.helpers.Mrl
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.{RdfProtoSerializationError, RowBufferAppender}
 import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -13,7 +13,7 @@ import scala.util.Random
 
 class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
   def smallOptions(prefixTableSize: Int): RdfStreamOptions = rdfStreamOptions(
-    maxNameTableSize = 4,
+    maxNameTableSize = 8,
     maxPrefixTableSize = prefixTableSize,
     maxDatatypeTableSize = 8,
   )
@@ -26,7 +26,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit = buffer += rdfStreamRow(entry)
     }
     (NodeEncoderImpl[Mrl.Node](
-      prefixTableSize, 4, 8,
+      prefixTableSize, 8, 8,
       16, 16, 16, 
       appender
     ), buffer)
@@ -314,10 +314,14 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           ("https://test.org/other/Cake2", 0, 0),
           ("https://test.org/other/Cake3", 0, 0),
           ("https://test.org/other/Cake4", 0, 0),
-          ("https://test.org/other/Cake5", 0, 1),
-          ("https://test.org/other/Cake5", 0, 1),
+          ("https://test.org/other/Cake5", 0, 0),
+          ("https://test.org/other/Cake6", 0, 0),
+          ("https://test.org/other/Cake7", 0, 0),
+          ("https://test.org/other/Cake8", 0, 0),
+          ("https://test.org/other/Cake9", 0, 1),
+          ("https://test.org/other/Cake9", 0, 1),
           ("https://test.org#Cake2", 2, 0),
-          ("https://test.org#Cake5", 0, 1),
+          ("https://test.org#Cake9", 0, 1),
           // prefix "" evicts the previous number #1
           ("Cake2", 1, 0),
         )
@@ -337,7 +341,11 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           (true, 3, "https://test.org/other/"),
           (false, 0, "Cake3"),
           (false, 0, "Cake4"),
-          (false, 1, "Cake5"),
+          (false, 0, "Cake5"),
+          (false, 0, "Cake6"),
+          (false, 0, "Cake7"),
+          (false, 0, "Cake8"),
+          (false, 1, "Cake9"),
           (true, 1, ""),
         )
 
@@ -430,6 +438,10 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           ("https://test.org#Cake1", 0),
           ("https://test.org/test/Cake1", 0),
           ("https://test.org/Cake2", 0),
+          ("https://test.org/Cake3", 0),
+          ("https://test.org/Cake4", 0),
+          ("https://test.org/Cake5", 0),
+          ("https://test.org/Cake6", 0),
           ("https://test.org#Cake2", 1),
           ("https://test.org/other/Cake1", 0),
           ("https://test.org/other/Cake2", 0),
@@ -437,6 +449,10 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           ("https://test.org/other/Cake1", 2),
           ("https://test.org/other/Cake2", 0),
           ("https://test.org/other/Cake3", 0),
+          ("https://test.org/other/Cake3_1", 0),
+          ("https://test.org/other/Cake3_2", 0),
+          ("https://test.org/other/Cake3_3", 0),
+          ("https://test.org/other/Cake3_4", 0),
           ("https://test.org/other/Cake4", 1),
           ("https://test.org/other/Cake5", 0),
           ("https://test.org/other/Cake5", 2),
@@ -447,6 +463,15 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           val iri = encoder.makeIri(sIri)
           iri.prefixId should be(0)
           iri.nameId should be(eName)
+      }
+
+      "throw exception if name table size = 1" in {
+        val e = intercept[RdfProtoSerializationError] {
+          NodeEncoderImpl[Mrl.Node](
+            16, 1, 16, 16, 16, 16, null
+          )
+        }
+        e.getMessage should include("Requested name table size of 1 is too small. The minimum is 8.")
       }
     }
   }

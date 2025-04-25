@@ -1,6 +1,7 @@
 package eu.ostrzyciel.jelly.core.proto.v1
 
 import eu.ostrzyciel.jelly.core.JellyExceptions.RdfProtoDeserializationError
+import eu.ostrzyciel.jelly.core.JellyOptions
 
 /**
  * Base options shared by Jelly-RDF, Jelly-Patch and possible future extensions.
@@ -56,7 +57,12 @@ private[core] object BaseJellyOptions:
         )
 
     // The minimum size of the name lookup is hard-coded in the spec.
-    checkTableSize("Name", requestedOptions.maxNameTableSize, supportedOptions.maxNameTableSize, 8)
+    checkTableSize(
+      "Name",
+      requestedOptions.maxNameTableSize,
+      supportedOptions.maxNameTableSize,
+      JellyOptions.minNameTableSize
+    )
     checkTableSize("Prefix", requestedOptions.maxPrefixTableSize, supportedOptions.maxPrefixTableSize)
     // The datatype lookup can be empty if the stream does not use datatype literals.
     checkTableSize("Datatype", requestedOptions.maxDatatypeTableSize, supportedOptions.maxDatatypeTableSize)

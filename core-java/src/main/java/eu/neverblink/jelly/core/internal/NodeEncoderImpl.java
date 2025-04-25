@@ -1,9 +1,6 @@
 package eu.neverblink.jelly.core.internal;
 
-import eu.neverblink.jelly.core.NodeEncoder;
-import eu.neverblink.jelly.core.RdfProtoSerializationError;
-import eu.neverblink.jelly.core.RdfTerm;
-import eu.neverblink.jelly.core.RowBufferAppender;
+import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
@@ -104,6 +101,12 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         } else {
             prefixLookup = null;
             iriNodeCache = null;
+        }
+        if (nameTableSize < JellyOptions.MIN_NAME_TABLE_SIZE) {
+            throw new RdfProtoSerializationError(
+                "Requested name table size of %d is too small. The minimum is %d."
+                    .formatted(nameTableSize, JellyOptions.MIN_NAME_TABLE_SIZE)
+            );
         }
         nameOnlyIris = new RdfTerm.Iri[nameTableSize + 1];
         for (int i = 0; i < nameOnlyIris.length; i++) {

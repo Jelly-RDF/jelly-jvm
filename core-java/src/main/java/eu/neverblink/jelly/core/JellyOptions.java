@@ -21,6 +21,11 @@ public class JellyOptions {
     public static final int SMALL_DT_TABLE_SIZE = 16;
 
     /**
+     * Minimum size of the name table, according to the spec.
+     */
+    public static final int MIN_NAME_TABLE_SIZE = 8;
+
+    /**
      * "Big" preset suitable for high-volume streams and larger machines.
      * Does not allow generalized RDF statements.
      */
@@ -208,7 +213,12 @@ public class JellyOptions {
             );
         }
 
-        checkTableSize("Name", requestedOptions.getMaxNameTableSize(), supportedOptions.getMaxNameTableSize(), 8);
+        checkTableSize(
+            "Name",
+            requestedOptions.getMaxNameTableSize(),
+            supportedOptions.getMaxNameTableSize(),
+            MIN_NAME_TABLE_SIZE
+        );
         checkTableSize("Prefix", requestedOptions.getMaxPrefixTableSize(), supportedOptions.getMaxPrefixTableSize());
         checkTableSize(
             "Datatype",

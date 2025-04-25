@@ -99,6 +99,11 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             prefixLookup = null;
             iriNodeCache = null;
         }
+        if (nameTableSize < 8) {
+            throw JellyExceptions.rdfProtoSerializationError(
+                "Requested name table size of %d is too small. The minimum is 8.".formatted(nameTableSize)
+            );
+        }
         nameOnlyIris = new RdfIri[nameTableSize + 1];
         for (int i = 0; i < nameOnlyIris.length; i++) {
             nameOnlyIris[i] = new RdfIri(0, i);
