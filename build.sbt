@@ -16,7 +16,16 @@ ThisBuild / developers := List(
     url("https://github.com/Ostrzyciel"),
   ),
 )
-ThisBuild / sonatypeCredentialHost := xerial.sbt.Sonatype.sonatypeCentralHost
+// Hacks to make the Sonatype plugin work with the new central repo
+// TODO: remove this when the plugin is updated
+//   https://github.com/xerial/sbt-sonatype/pull/583
+//   https://github.com/sbt/sbt-ci-release/issues/344
+ThisBuild / sonatypeCredentialHost := "central.sonatype.com." // xerial.sbt.Sonatype.sonatypeCentralHost
+ThisBuild / sonatypePublishTo := Some(sonatypeDefaultResolver.value)
+ThisBuild / sonatypePublishToBundle := Some(
+  Resolver.file("sonatype-local-bundle", sonatypeBundleDirectory.value)
+)
+ThisBuild / sonatypeDefaultResolver := Resolver.url(s"https://${sonatypeCredentialHost.value}")
 
 lazy val pekkoV = "1.1.3"
 lazy val pekkoGrpcV = "1.1.1"
