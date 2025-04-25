@@ -12,14 +12,11 @@ ThisBuild / developers := List(
   Developer(
     "Ostrzyciel",
     "Piotr Sowiński",
-    "psowinski17@gmail.com",
+    "piotr@neverblink.eu",
     url("https://github.com/Ostrzyciel"),
   ),
 )
-ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
-
-sonatypeProfileName := "eu.ostrzyciel"
-sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+ThisBuild / sonatypeCredentialHost := xerial.sbt.Sonatype.sonatypeCentralHost
 
 lazy val pekkoV = "1.1.3"
 lazy val pekkoGrpcV = "1.1.1"
@@ -160,6 +157,7 @@ lazy val core = (project in file("core"))
 lazy val coreJava = (project in file("core-java"))
   .settings(
     name := "jelly-core-java",
+    organization := "eu.neverblink.jelly",
     description := "Core code for serializing and deserializing RDF data in the Jelly format. Java edition.",
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufV,
