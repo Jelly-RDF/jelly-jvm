@@ -17,6 +17,7 @@ ThisBuild / developers := List(
   ),
 )
 ThisBuild / sonatypeCredentialHost := xerial.sbt.Sonatype.sonatypeCentralHost
+ThisBuild / sonatypeRepository := "https://central.sonatype.com/repository/maven-snapshots/"
 
 lazy val pekkoV = "1.1.3"
 lazy val pekkoGrpcV = "1.1.1"
