@@ -26,7 +26,9 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     ) {
         super(converter);
         this.patchHandler = patchHandler;
-        this.supportedOptions = supportedOptions;
+        this.supportedOptions = supportedOptions != null
+            ? supportedOptions
+            : JellyPatchOptions.DEFAULT_SUPPORTED_OPTIONS;
     }
 
     @Override
@@ -94,21 +96,18 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
         }
     }
 
-    protected void handleOptions(RdfPatchOptions opt) {
-        if (supportedOptions != null) {
-            JellyPatchOptions.checkCompatibility(opt, supportedOptions);
-        }
-
-        setPatchOptions(opt);
-    }
-
     protected abstract void handleStatementAdd(RdfQuad statement);
 
     protected abstract void handleStatementDelete(RdfQuad statement);
 
+    protected void handleOptions(RdfPatchOptions opt) {
+        JellyPatchOptions.checkCompatibility(opt, supportedOptions);
+        setPatchOptions(opt);
+    }
+
     private void handleNamespaceAdd(RdfPatchNamespace nsRow) {
         var valueIri = RdfTerm.from(nsRow.getValue());
-        var graphIri = RdfTerm.from(nsRow.getGraph());
+        var graphIri = RdfTerm.from(nsRow.hasGraph() ? nsRow.getGraph() : null);
         patchHandler.addNamespace(
             nsRow.getName(),
             nameDecoder.provide().decode(valueIri.prefixId(), valueIri.nameId()),
@@ -117,8 +116,8 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     }
 
     private void handleNamespaceDelete(RdfPatchNamespace nsRow) {
-        var valueIri = RdfTerm.from(nsRow.getValue());
-        var graphIri = RdfTerm.from(nsRow.getGraph());
+        var valueIri = RdfTerm.from(nsRow.hasValue() ? nsRow.getValue() : null);
+        var graphIri = RdfTerm.from(nsRow.hasGraph() ? nsRow.getGraph() : null);
         patchHandler.deleteNamespace(nsRow.getName(), decodeNsIri(valueIri), decodeNsIri(graphIri));
     }
 

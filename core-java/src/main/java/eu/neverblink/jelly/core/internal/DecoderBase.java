@@ -5,7 +5,6 @@ import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.RdfTerm;
 import eu.neverblink.jelly.core.utils.LazyProperty;
-import java.util.function.Supplier;
 
 /**
  * Base trait for Jelly proto decoders. Only for internal use.
@@ -13,12 +12,6 @@ import java.util.function.Supplier;
  * @param <TDatatype> type of the datatype in the library
  */
 public abstract class DecoderBase<TNode, TDatatype> {
-
-    protected record NameDecoderOptions(
-        Supplier<Integer> prefixTableSize,
-        Supplier<Integer> nameTableSize,
-        Supplier<Integer> datatypeTableSize
-    ) {}
 
     protected final ProtoDecoderConverter<TNode, TDatatype> converter;
     protected final LazyProperty<NameDecoder<TNode>> nameDecoder;
@@ -93,6 +86,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
             } else if (term instanceof RdfTerm.SimpleLiteral simpleLiteral) {
                 return converter.makeSimpleLiteral(simpleLiteral.lex());
             } else if (term instanceof RdfTerm.Triple triple) {
+                // ! No support for repeated terms in quoted triples
                 return converter.makeTripleNode(
                     convertTerm(triple.subject()),
                     convertTerm(triple.predicate()),
