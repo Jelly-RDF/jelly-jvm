@@ -27,7 +27,10 @@ libraryDependencies ++= Seq(
   "com.thesamet.scalapb" %% "compilerplugin" % scalapbV,
   // org.xerial.sbt.sbt-sonatype
   // TODO: remove when this is merged: https://github.com/xerial/sbt-sonatype/pull/583
+  "org.sonatype.spice.zapper" % "spice-zapper" % "1.3",
   "org.wvlet.airframe" %% "airframe-http" % "24.12.2",
   "com.lumidion" %% "sonatype-central-client-sttp-core" % "0.3.0",
   "com.lumidion" %% "sonatype-central-client-upickle" % "0.3.0",
+  "com.softwaremill.sttp.client4" %% "slf4j-backend" % "4.0.0-M16",
+  "com.softwaremill.sttp.client4" %% "upickle" % "4.0.0-M16",
 )
