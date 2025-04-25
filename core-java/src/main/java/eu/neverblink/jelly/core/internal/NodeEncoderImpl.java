@@ -104,8 +104,10 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
         if (nameTableSize < JellyOptions.MIN_NAME_TABLE_SIZE) {
             throw new RdfProtoSerializationError(
-                "Requested name table size of %d is too small. The minimum is %d."
-                    .formatted(nameTableSize, JellyOptions.MIN_NAME_TABLE_SIZE)
+                "Requested name table size of %d is too small. The minimum is %d.".formatted(
+                        nameTableSize,
+                        JellyOptions.MIN_NAME_TABLE_SIZE
+                    )
             );
         }
         nameOnlyIris = new RdfTerm.Iri[nameTableSize + 1];
