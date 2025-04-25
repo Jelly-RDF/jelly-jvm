@@ -21,7 +21,12 @@ jobs:
       - name: Setup SBT
         uses: sbt/setup-sbt@v1
 
-      - run: sbt ci-release
+      # Publish eu.ostrzyciel and eu.neverblink namespaces separately, otherwise Maven rejects
+      # the release because of the different groupId.
+      - run: |
+          sbt -v +core/ci-release +jena/ci-release +rdf4j/ci-release +titaniumRdfApi/ci-release \ 
+            +stream/ci-release +grpc/ci-release
+          sbt -v +coreJava/ci-release +corePatch/ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
