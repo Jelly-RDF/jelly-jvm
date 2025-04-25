@@ -16,6 +16,11 @@ object JellyOptions:
   private[core] inline val smallDtTableSize = 16
 
   /**
+   * Minimum size of the name table, according to the spec.
+   */
+  private[core] inline val minNameTableSize = 8
+
+  /**
    * "Big" preset suitable for high-volume streams and larger machines.
    * Does not allow generalized RDF statements.
    * @return
