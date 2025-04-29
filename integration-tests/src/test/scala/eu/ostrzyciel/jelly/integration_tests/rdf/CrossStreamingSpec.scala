@@ -118,7 +118,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
                 .toGraph
 
               sourceGraph.size() should be (resultGraph.size())
-              if caseName == "rdf-star-blanks.nt" then
+              if caseName == "rdf-star-blanks.ttl" then
                 // For blank nodes in quoted triples, we need to use a slower isomorphism algorithm
                 IsoMatcher.isomorphic(sourceGraph, resultGraph) should be (true)
               else
