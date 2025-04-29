@@ -5,6 +5,8 @@ import org.apache.jena.datatypes.RDFDatatype
 import org.apache.jena.graph.*
 import org.apache.jena.sparql.core.Quad
 
+import scala.annotation.nowarn
+
 final class JenaDecoderConverter extends ProtoDecoderConverter[Node, RDFDatatype, Triple, Quad]:
   override inline def makeSimpleLiteral(lex: String): Node = NodeFactory.createLiteralString(lex)
 
@@ -18,6 +20,9 @@ final class JenaDecoderConverter extends ProtoDecoderConverter[Node, RDFDatatype
 
   override inline def makeIriNode(iri: String): Node = NodeFactory.createURI(iri)
 
+  // TODO: change to .createTripleTerm in Jena 6. For Jena 5, we must keep using createTripleNode
+  //   to maintain compatibility with 5.0.x–5.3.x.
+  @nowarn("msg=deprecated")
   override inline def makeTripleNode(s: Node, p: Node, o: Node): Node = NodeFactory.createTripleNode(s, p, o)
 
   // See: https://github.com/apache/jena/issues/2578#issuecomment-2231749564
