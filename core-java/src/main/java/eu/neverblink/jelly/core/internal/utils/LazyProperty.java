@@ -1,4 +1,4 @@
-package eu.neverblink.jelly.core.utils;
+package eu.neverblink.jelly.core.internal.utils;
 
 /**
  * Not thread-safe lazy property holder.

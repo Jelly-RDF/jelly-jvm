@@ -4,7 +4,7 @@ import eu.neverblink.jelly.core.NameDecoder;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.RdfTerm;
-import eu.neverblink.jelly.core.utils.LazyProperty;
+import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 
 /**
  * Base trait for Jelly proto decoders. Only for internal use.
@@ -133,30 +133,31 @@ public abstract class DecoderBase<TNode, TDatatype> {
      * @return converted node
      */
     protected final TNode convertGraphTermWrapped(RdfTerm.GraphTerm graph) {
-        if (graph == null && lastGraph.node == null) {
-            throw new RdfProtoDeserializationError("Empty term without previous graph term.");
+        if (graph == null && lastGraph.hasNoValue()) {
+            // Special case: Jena and RDF4J allow null graph terms in the input, so we do not treat them as errors.
+            return null;
         }
 
         if (graph == null) {
-            return lastGraph.node;
+            return lastGraph.get();
         }
 
         final var node = convertGraphTerm(graph);
-        lastGraph.node = node;
+        lastGraph.set(node);
         return node;
     }
 
     private TNode convertSpoTermWrapped(RdfTerm.SpoTerm term, LastNodeHolder<TNode> lastNodeHolder) {
-        if (term == null && lastNodeHolder.node == null) {
+        if (term == null && lastNodeHolder.hasNoValue()) {
             throw new RdfProtoDeserializationError("Empty term without previous term.");
         }
 
         if (term == null) {
-            return lastNodeHolder.node;
+            return lastNodeHolder.get();
         }
 
         final var node = convertTerm(term);
-        lastNodeHolder.node = node;
+        lastNodeHolder.set(node);
         return node;
     }
 }

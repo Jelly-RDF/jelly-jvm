@@ -106,8 +106,8 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     }
 
     private void handleNamespaceAdd(RdfPatchNamespace nsRow) {
-        var valueIri = RdfTerm.from(nsRow.getValue());
-        var graphIri = RdfTerm.from(nsRow.hasGraph() ? nsRow.getGraph() : null);
+        final var valueIri = RdfTerm.from(nsRow.getValue());
+        final var graphIri = RdfTerm.from(nsRow.hasGraph() ? nsRow.getGraph() : null);
         patchHandler.addNamespace(
             nsRow.getName(),
             nameDecoder.provide().decode(valueIri.prefixId(), valueIri.nameId()),
@@ -116,8 +116,8 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     }
 
     private void handleNamespaceDelete(RdfPatchNamespace nsRow) {
-        var valueIri = RdfTerm.from(nsRow.hasValue() ? nsRow.getValue() : null);
-        var graphIri = RdfTerm.from(nsRow.hasGraph() ? nsRow.getGraph() : null);
+        final var valueIri = RdfTerm.from(nsRow.hasValue() ? nsRow.getValue() : null);
+        final var graphIri = RdfTerm.from(nsRow.hasGraph() ? nsRow.getGraph() : null);
         patchHandler.deleteNamespace(nsRow.getName(), decodeNsIri(valueIri), decodeNsIri(graphIri));
     }
 
@@ -147,7 +147,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
     private void handleHeader(RdfPatchHeader hRow) {
         // No support for repeated terms in the header
-        var term =
+        final var term =
             switch (hRow.getValueCase()) {
                 case H_IRI -> RdfTerm.from(hRow.getHIri());
                 case H_BNODE -> RdfTerm.from(hRow.getHBnode());
@@ -212,7 +212,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementAdd(RdfQuad statement) {
-            var term = RdfTerm.from(statement);
+            final var term = RdfTerm.from(statement);
             patchHandler.addTriple(
                 convertSubjectTermWrapped(term.subject()),
                 convertPredicateTermWrapped(term.predicate()),
@@ -222,7 +222,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementDelete(RdfQuad statement) {
-            var term = RdfTerm.from(statement);
+            final var term = RdfTerm.from(statement);
             patchHandler.deleteTriple(
                 convertSubjectTermWrapped(term.subject()),
                 convertPredicateTermWrapped(term.predicate()),
@@ -258,7 +258,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementAdd(RdfQuad statement) {
-            var term = RdfTerm.from(statement);
+            final var term = RdfTerm.from(statement);
             patchHandler.addQuad(
                 convertSubjectTermWrapped(term.subject()),
                 convertPredicateTermWrapped(term.predicate()),
@@ -269,7 +269,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementDelete(RdfQuad statement) {
-            var term = RdfTerm.from(statement);
+            final var term = RdfTerm.from(statement);
             patchHandler.deleteQuad(
                 convertSubjectTermWrapped(term.subject()),
                 convertPredicateTermWrapped(term.predicate()),
@@ -312,10 +312,10 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementAdd(RdfQuad statement) {
-            var term = RdfTerm.from(statement);
-            var s = convertSubjectTermWrapped(term.subject());
-            var p = convertPredicateTermWrapped(term.predicate());
-            var o = convertObjectTermWrapped(term.object());
+            final var term = RdfTerm.from(statement);
+            final var s = convertSubjectTermWrapped(term.subject());
+            final var p = convertPredicateTermWrapped(term.predicate());
+            final var o = convertObjectTermWrapped(term.object());
 
             if (statementType == null) {
                 throw new RdfProtoDeserializationError(
@@ -325,7 +325,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
             switch (statementType) {
                 case PATCH_STATEMENT_TYPE_TRIPLES -> patchHandler.addTriple(s, p, o);
                 case PATCH_STATEMENT_TYPE_QUADS -> {
-                    var g = convertGraphTermWrapped(term.graph());
+                    final var g = convertGraphTermWrapped(term.graph());
                     patchHandler.addQuad(s, p, o, g);
                 }
             }
@@ -333,10 +333,10 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementDelete(RdfQuad statement) {
-            var term = RdfTerm.from(statement);
-            var s = convertSubjectTermWrapped(term.subject());
-            var p = convertPredicateTermWrapped(term.predicate());
-            var o = convertObjectTermWrapped(term.object());
+            final var term = RdfTerm.from(statement);
+            final var s = convertSubjectTermWrapped(term.subject());
+            final var p = convertPredicateTermWrapped(term.predicate());
+            final var o = convertObjectTermWrapped(term.object());
 
             if (statementType == null) {
                 throw new RdfProtoDeserializationError(
@@ -346,7 +346,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
             switch (statementType) {
                 case PATCH_STATEMENT_TYPE_TRIPLES -> patchHandler.deleteTriple(s, p, o);
                 case PATCH_STATEMENT_TYPE_QUADS -> {
-                    var g = convertGraphTermWrapped(term.graph());
+                    final var g = convertGraphTermWrapped(term.graph());
                     patchHandler.deleteQuad(s, p, o, g);
                 }
             }

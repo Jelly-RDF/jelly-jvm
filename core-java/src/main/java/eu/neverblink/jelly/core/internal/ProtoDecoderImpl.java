@@ -389,6 +389,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         protected void handleOptions(RdfStreamOptions options) {
+            // Reset the logical type to UNSPECIFIED to ignore checking if it's supported by the inner decoder
             final var newSupportedOptions = supportedOptions
                 .toBuilder()
                 .setLogicalType(LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED)
