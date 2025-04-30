@@ -205,7 +205,21 @@ lazy val corePatch = (project in file("core-patch"))
 
 lazy val jena = (project in file("jena"))
   .settings(
-    name := "jelly-jena",
+    name := "jelly",
+    description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
+    libraryDependencies ++= Seq(
+      "org.apache.jena" % "jena-core" % jenaV,
+      "org.apache.jena" % "jena-arq" % jenaV,
+      // Integration with Fuseki is optional, so include this dep as "provided"
+      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
+    ),
+    commonSettings,
+  )
+  .dependsOn(core)
+
+lazy val jenaJava = (project in file("jena-java"))
+  .settings(
+    name := "jelly-jena-java",
     organization := "eu.neverblink.jelly",
     description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
     libraryDependencies ++= Seq(
@@ -228,7 +242,7 @@ lazy val jenaPatch = (project in file("jena-patch"))
     ),
     commonSettings,
   )
-  .dependsOn(corePatch, jena)
+  .dependsOn(corePatch, jenaJava)
 
 // jena-plugin is a dummy directory that contains only a symlink (src) to the source code
 // in the jena directory. This way sbt won't shout at us for having two projects in the
@@ -237,7 +251,6 @@ lazy val jenaPatch = (project in file("jena-patch"))
 lazy val jenaPlugin = (project in file("jena-plugin"))
   .settings(
     name := "jelly-jena-plugin",
-    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       // Use the "provided" scope to not include the Jena dependencies in the plugin JAR
       "org.apache.jena" % "jena-core" % jenaV % "provided,test",
@@ -248,11 +261,23 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
     publishArtifact := false,
     commonSettings,
   )
-  .dependsOn(coreJava)
+  .dependsOn(core)
 
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
+    description := "Jelly parsers, serializers, and other utilities for RDF4J.",
+    libraryDependencies ++= Seq(
+      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
+    ),
+    commonSettings,
+  )
+  .dependsOn(core)
+
+lazy val rdf4jJava = (project in file("rdf4j-java"))
+  .settings(
+    name := "jelly-rdf4j-java",
     organization := "eu.neverblink.jelly",
     description := "Jelly parsers, serializers, and other utilities for RDF4J.",
     libraryDependencies ++= Seq(
@@ -270,12 +295,11 @@ lazy val rdf4jPatch = (project in file("rdf4j-patch"))
     description := "Jelly-Patch integration for RDF4J.",
     commonSettings,
   )
-  .dependsOn(corePatch, rdf4j)
+  .dependsOn(corePatch, rdf4jJava)
 
 lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
   .settings(
     name := "jelly-rdf4j-plugin",
-    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       // Use the "provided" scope to not include the RDF4J dependencies in the plugin JAR
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV % "provided,test",
@@ -285,7 +309,7 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
     publishArtifact := false,
     commonSettings,
   )
-  .dependsOn(coreJava)
+  .dependsOn(core)
 
 lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   .settings(
