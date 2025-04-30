@@ -1,16 +1,28 @@
 package eu.neverblink.jelly.core.patch.internal;
 
+import com.google.protobuf.ExperimentalApi;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.RdfTerm;
 import eu.neverblink.jelly.core.patch.PatchEncoder;
-import eu.neverblink.jelly.core.proto.v1.*;
+import eu.neverblink.jelly.core.proto.v1.PatchStreamType;
+import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
+import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchHeader;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchNamespace;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchPunctuation;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchRow;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchTransactionAbort;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchTransactionCommit;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchTransactionStart;
+import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 
 /**
  * Implementation of PatchEncoder.
  *
  * @param <TNode> the type of RDF nodes in the library
  */
+@ExperimentalApi
 public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;

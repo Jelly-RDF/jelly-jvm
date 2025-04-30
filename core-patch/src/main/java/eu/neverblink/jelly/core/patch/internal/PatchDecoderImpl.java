@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.patch.internal;
 
+import com.google.protobuf.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
@@ -8,8 +9,19 @@ import eu.neverblink.jelly.core.internal.DecoderBase;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
 import eu.neverblink.jelly.core.patch.PatchDecoder;
 import eu.neverblink.jelly.core.patch.PatchHandler;
-import eu.neverblink.jelly.core.proto.v1.*;
+import eu.neverblink.jelly.core.proto.v1.PatchStatementType;
+import eu.neverblink.jelly.core.proto.v1.PatchStreamType;
+import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
+import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchFrame;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchHeader;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchNamespace;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
+import eu.neverblink.jelly.core.proto.v1.RdfPatchRow;
+import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
+import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 
+@ExperimentalApi
 public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode, TDatatype> implements PatchDecoder {
 
     protected final PatchHandler<TNode> patchHandler;
@@ -185,6 +197,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
         return nameDecoder.provide().decode(iri.prefixId(), iri.nameId());
     }
 
+    @ExperimentalApi
     public static class TriplesDecoder<TNode, TDatatype> extends PatchDecoderImpl<TNode, TDatatype> {
 
         private final PatchHandler.TriplePatchHandler<TNode> patchHandler;
@@ -231,6 +244,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
         }
     }
 
+    @ExperimentalApi
     public static class QuadsDecoder<TNode, TDatatype> extends PatchDecoderImpl<TNode, TDatatype> {
 
         private final PatchHandler.QuadPatchHandler<TNode> patchHandler;
@@ -279,6 +293,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
         }
     }
 
+    @ExperimentalApi
     public static class AnyStatementDecoder<TNode, TDatatype> extends PatchDecoderImpl<TNode, TDatatype> {
 
         private final PatchHandler.AnyPatchHandler<TNode> patchHandler;

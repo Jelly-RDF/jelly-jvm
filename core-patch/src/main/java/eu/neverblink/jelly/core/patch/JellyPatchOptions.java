@@ -2,6 +2,7 @@ package eu.neverblink.jelly.core.patch;
 
 import static eu.neverblink.jelly.core.JellyOptions.checkTableSize;
 
+import com.google.protobuf.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.PatchStatementType;
@@ -13,6 +14,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 /**
  * Utilities for working with RdfPatchOptions.
  */
+@ExperimentalApi
 public class JellyPatchOptions {
 
     private JellyPatchOptions() {}

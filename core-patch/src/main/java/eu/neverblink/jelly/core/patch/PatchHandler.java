@@ -1,9 +1,12 @@
 package eu.neverblink.jelly.core.patch;
 
+import com.google.protobuf.ExperimentalApi;
+
 /**
  * Interface for handling different types of RDF data structures that flow from the patch decoder.
  * @param <TNode> type of RDF nodes in the library
  */
+@ExperimentalApi
 public interface PatchHandler<TNode> {
     /**
      * Start a new transaction. (TX)
@@ -61,6 +64,7 @@ public interface PatchHandler<TNode> {
      *
      * @param <TNode> type of RDF nodes in the library
      */
+    @ExperimentalApi
     interface TriplePatchHandler<TNode> extends PatchHandler<TNode> {
         /**
          * Add a triple to the patch stream. (A Triple)
@@ -86,6 +90,7 @@ public interface PatchHandler<TNode> {
      *
      * @param <TNode> type of RDF nodes in the library
      */
+    @ExperimentalApi
     interface QuadPatchHandler<TNode> extends PatchHandler<TNode> {
         /**
          * Add a quad to the patch stream. (A Quad)
@@ -113,5 +118,6 @@ public interface PatchHandler<TNode> {
      *
      * @param <TNode> type of RDF nodes in the library
      */
+    @ExperimentalApi
     interface AnyPatchHandler<TNode> extends TriplePatchHandler<TNode>, QuadPatchHandler<TNode> {}
 }

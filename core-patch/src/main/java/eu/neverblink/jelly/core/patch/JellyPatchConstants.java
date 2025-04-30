@@ -1,5 +1,8 @@
 package eu.neverblink.jelly.core.patch;
 
+import com.google.protobuf.ExperimentalApi;
+
+@ExperimentalApi
 public class JellyPatchConstants {
 
     private JellyPatchConstants() {}
