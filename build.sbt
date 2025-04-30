@@ -206,6 +206,7 @@ lazy val corePatch = (project in file("core-patch"))
 lazy val jena = (project in file("jena"))
   .settings(
     name := "jelly-jena",
+    organization := "eu.neverblink.jelly",
     description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-core" % jenaV,
@@ -215,11 +216,12 @@ lazy val jena = (project in file("jena"))
     ),
     commonSettings,
   )
-  .dependsOn(core)
+  .dependsOn(coreJava)
 
 lazy val jenaPatch = (project in file("jena-patch"))
   .settings(
     name := "jelly-jena-patch",
+    organization := "eu.neverblink.jelly",
     description := "Jelly-Patch integration for Apache Jena.",
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-rdfpatch" % jenaV,
@@ -235,6 +237,7 @@ lazy val jenaPatch = (project in file("jena-patch"))
 lazy val jenaPlugin = (project in file("jena-plugin"))
   .settings(
     name := "jelly-jena-plugin",
+    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       // Use the "provided" scope to not include the Jena dependencies in the plugin JAR
       "org.apache.jena" % "jena-core" % jenaV % "provided,test",
@@ -245,7 +248,7 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
     publishArtifact := false,
     commonSettings,
   )
-  .dependsOn(core)
+  .dependsOn(coreJava)
 
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
