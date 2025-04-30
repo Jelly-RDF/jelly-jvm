@@ -4,7 +4,7 @@ import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfTerm;
 import eu.neverblink.jelly.core.RowBufferAppender;
-import eu.neverblink.jelly.core.utils.LazyProperty;
+import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 
 /**
  * Base interface for Jelly proto encoders. Only for internal use.
@@ -65,10 +65,10 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender {
     }
 
     private RdfTerm.SpoTerm nodeToProtoWrapped(TNode node, LastNodeHolder<TNode> lastNodeHolder) {
-        if (node.equals(lastNodeHolder.node)) {
+        if (node.equals(lastNodeHolder.get())) {
             return null;
         } else {
-            lastNodeHolder.node = node;
+            lastNodeHolder.set(node);
             return converter.nodeToProto(nodeEncoder.provide(), node);
         }
     }

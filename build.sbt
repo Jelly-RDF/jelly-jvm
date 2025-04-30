@@ -250,6 +250,7 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
+    organization := "eu.neverblink.jelly",
     description := "Jelly parsers, serializers, and other utilities for RDF4J.",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
@@ -257,11 +258,12 @@ lazy val rdf4j = (project in file("rdf4j"))
     ),
     commonSettings,
   )
-  .dependsOn(core)
+  .dependsOn(coreJava)
 
 lazy val rdf4jPatch = (project in file("rdf4j-patch"))
   .settings(
     name := "jelly-rdf4j-patch",
+    organization := "eu.neverblink.jelly",
     description := "Jelly-Patch integration for RDF4J.",
     commonSettings,
   )
@@ -270,6 +272,7 @@ lazy val rdf4jPatch = (project in file("rdf4j-patch"))
 lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
   .settings(
     name := "jelly-rdf4j-plugin",
+    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       // Use the "provided" scope to not include the RDF4J dependencies in the plugin JAR
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV % "provided,test",
@@ -279,7 +282,7 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
     publishArtifact := false,
     commonSettings,
   )
-  .dependsOn(core)
+  .dependsOn(coreJava)
 
 lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   .settings(

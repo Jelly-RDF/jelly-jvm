@@ -1,13 +1,7 @@
 package eu.neverblink.jelly.core.helpers
 
-import eu.neverblink.jelly.core.RdfHandler.*
-import eu.neverblink.jelly.core.internal.ProtoDecoderImpl.*
-import eu.neverblink.jelly.core.internal.ProtoEncoderImpl
-import eu.neverblink.jelly.core.{JellyConverterFactory, JellyOptions, ProtoDecoderConverter, ProtoEncoder, ProtoEncoderConverter}
+import eu.neverblink.jelly.core.JellyConverterFactory
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.*
-
-import scala.jdk.FunctionConverters.*
 
 object MockConverterFactory extends MockConverterFactory
 
