@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.convert.rdf4j.rio;
 
 import static eu.neverblink.jelly.convert.rdf4j.rio.JellyConstants.JELLY_RDF_FORMAT;
+import static eu.neverblink.jelly.core.utils.IoUtils.readDelimitedStream;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.core.RdfHandler;
@@ -92,19 +93,9 @@ public final class JellyParser extends AbstractRDFParser {
             if (delimitingDetectionResponse.isDelimited()) {
                 // Delimited Jelly file
                 // In this case, we can read multiple frames
-                while (true) {
-                    try {
-                        final var frame = RdfStreamFrame.parseDelimitedFrom(delimitingDetectionResponse.newInput());
-                        if (frame == null) {
-                            break;
-                        }
-
-                        frame.getRowsList().forEach(decoder::ingestRow);
-                    } catch (IOException e) {
-                        // Handle the end of the stream
-                        break;
-                    }
-                }
+                readDelimitedStream(in, RdfStreamFrame::parseDelimitedFrom, frame ->
+                    frame.getRowsList().forEach(decoder::ingestRow)
+                );
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame

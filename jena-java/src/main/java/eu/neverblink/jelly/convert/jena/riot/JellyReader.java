@@ -1,5 +1,7 @@
 package eu.neverblink.jelly.convert.jena.riot;
 
+import static eu.neverblink.jelly.core.utils.IoUtils.readDelimitedStream;
+
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.RdfHandler;
@@ -32,14 +34,6 @@ public final class JellyReader implements ReaderRIOT {
      */
     @Override
     public void read(InputStream in, String baseURI, ContentType ct, StreamRDF output, Context context) {
-        //val supportedOptions = context.get[RdfStreamOptions](
-        //      JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, JellyOptions.DEFAULT_SUPPORTED_OPTIONS
-        //    )
-        //    val decoder = JenaConverterFactory.anyStatementDecoder(
-        //      supportedOptions
-        //      namespaceHandler = (name, iri) => output.prefix(name, iri.getURI)
-        //    )
-        //
         final RdfStreamOptions supportedOptions = context.get(
             JellyLanguage.SYMBOL_SUPPORTED_OPTIONS,
             JellyOptions.DEFAULT_SUPPORTED_OPTIONS
@@ -70,19 +64,9 @@ public final class JellyReader implements ReaderRIOT {
             if (delimitingResponse.isDelimited()) {
                 // Delimited Jelly file
                 // In this case, we can read multiple frames
-                while (true) {
-                    try {
-                        final var frame = RdfStreamFrame.parseDelimitedFrom(delimitingResponse.newInput());
-                        if (frame == null) {
-                            break;
-                        }
-
-                        frame.getRowsList().forEach(decoder::ingestRow);
-                    } catch (IOException e) {
-                        // Handle the end of the stream
-                        break;
-                    }
-                }
+                readDelimitedStream(in, RdfStreamFrame::parseDelimitedFrom, frame ->
+                    frame.getRowsList().forEach(decoder::ingestRow)
+                );
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame
