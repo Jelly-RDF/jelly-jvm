@@ -2,7 +2,6 @@ package eu.neverblink.jelly.convert.jena.riot;
 
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-import java.util.Objects;
 import org.apache.jena.riot.RDFFormatVariant;
 
 /**
@@ -75,7 +74,7 @@ public class JellyFormatVariant extends RDFFormatVariant {
         return frameSize;
     }
 
-    public JellyFormatVariant copy(RdfStreamOptions options) {
+    public JellyFormatVariant updateOptions(RdfStreamOptions options) {
         return new JellyFormatVariant(options, enableNamespaceDeclarations, isDelimited, frameSize);
     }
 }

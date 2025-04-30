@@ -46,7 +46,7 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
     @Override
     public void triple(Triple triple) {
         if (delegatedWriter == null) {
-            var triplesFormatVariant = formatVariant.copy(
+            var triplesFormatVariant = formatVariant.updateOptions(
                 formatVariant
                     .getOptions()
                     .toBuilder()
@@ -65,7 +65,7 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
     @Override
     public void quad(Quad quad) {
         if (delegatedWriter == null) {
-            var quadsFormatVariant = formatVariant.copy(
+            var quadsFormatVariant = formatVariant.updateOptions(
                 formatVariant
                     .getOptions()
                     .toBuilder()
@@ -77,6 +77,8 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
             delegatedWriter.start();
             clearPrefixBacklog();
         }
+
+        delegatedWriter.quad(quad);
     }
 
     @Override
