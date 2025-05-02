@@ -4,6 +4,7 @@ package eu.neverblink.jelly.core.proto.v1;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 
@@ -229,8 +230,9 @@ public final class RdfLiteral extends ProtoMessage<RdfLiteral> implements Clonea
 
   @Override
   @SuppressWarnings("fallthrough")
-  public RdfLiteral mergeFrom(final CodedInputStream input) throws IOException {
+  public RdfLiteral mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
     // Enabled Fall-Through Optimization (Quickbuf)
+    final CodedInputStream input = inputLimited.in();
     int tag = input.readTag();
     while (true) {
       switch (tag) {
@@ -281,7 +283,7 @@ public final class RdfLiteral extends ProtoMessage<RdfLiteral> implements Clonea
     return ProtoMessage.mergeFrom(new RdfLiteral(), data).checkInitialized();
   }
 
-  public static RdfLiteral parseFrom(final CodedInputStream input) throws IOException {
+  public static RdfLiteral parseFrom(final LimitedCodedInputStream input) throws IOException {
     return ProtoMessage.mergeFrom(new RdfLiteral(), input).checkInitialized();
   }
 

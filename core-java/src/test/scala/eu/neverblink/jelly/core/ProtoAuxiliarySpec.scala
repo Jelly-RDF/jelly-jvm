@@ -84,4 +84,32 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
         frame should be (tc)
       }
     }
+
+    val deeplyNestedFrame = {
+      var triple = RdfTriple.newInstance()
+      for (i <- 1 to 100) {
+        triple = RdfTriple.newInstance()
+          .setSTripleTerm(triple)
+      }
+      RdfStreamFrame.newInstance()
+        .addRows(RdfStreamRow.newInstance().setTriple(triple))
+    }
+
+    "[SECURITY] reject parsing too deeply nested messages (non-delimited)" in {
+      val bytes = deeplyNestedFrame.toByteArray
+      val exception = intercept[RuntimeException] {
+        RdfStreamFrame.parseFrom(bytes)
+      }
+      exception.getMessage should include("depth exceeded: 65")
+    }
+
+    "[SECURITY] reject parsing too deeply nested messages (delimited)" in {
+      val os = new ByteArrayOutputStream()
+      deeplyNestedFrame.writeDelimitedTo(os)
+      val bytes = os.toByteArray
+      val exception = intercept[RuntimeException] {
+        RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
+      }
+      exception.getMessage should include("depth exceeded: 65")
+    }
   }

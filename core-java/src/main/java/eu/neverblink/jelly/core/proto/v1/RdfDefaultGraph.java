@@ -4,6 +4,7 @@ package eu.neverblink.jelly.core.proto.v1;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 
@@ -67,8 +68,9 @@ public final class RdfDefaultGraph extends ProtoMessage<RdfDefaultGraph> impleme
 
   @Override
   @SuppressWarnings("fallthrough")
-  public RdfDefaultGraph mergeFrom(final CodedInputStream input) throws IOException {
+  public RdfDefaultGraph mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
     // Enabled Fall-Through Optimization (Quickbuf)
+    final CodedInputStream input = inputLimited.in();
     int tag = input.readTag();
     while (true) {
       switch (tag) {
@@ -95,7 +97,7 @@ public final class RdfDefaultGraph extends ProtoMessage<RdfDefaultGraph> impleme
     return ProtoMessage.mergeFrom(new RdfDefaultGraph(), data).checkInitialized();
   }
 
-  public static RdfDefaultGraph parseFrom(final CodedInputStream input) throws IOException {
+  public static RdfDefaultGraph parseFrom(final LimitedCodedInputStream input) throws IOException {
     return ProtoMessage.mergeFrom(new RdfDefaultGraph(), input).checkInitialized();
   }
 

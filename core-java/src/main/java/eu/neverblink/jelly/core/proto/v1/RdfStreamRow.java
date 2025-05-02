@@ -4,6 +4,7 @@ package eu.neverblink.jelly.core.proto.v1;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 
@@ -463,8 +464,9 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
 
   @Override
   @SuppressWarnings("fallthrough")
-  public RdfStreamRow mergeFrom(final CodedInputStream input) throws IOException {
+  public RdfStreamRow mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
     // Enabled Fall-Through Optimization (Quickbuf)
+    final CodedInputStream input = inputLimited.in();
     int tag = input.readTag();
     while (true) {
       switch (tag) {
@@ -478,7 +480,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
             options = RdfStreamOptions.newInstance();
             setOptions(options);
           }
-          ProtoMessage.mergeDelimitedFrom(options, input);
+          ProtoMessage.mergeDelimitedFrom(options, inputLimited);
           tag = input.readTag();
           if (tag != 18) {
             break;
@@ -494,7 +496,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
             triple = RdfTriple.newInstance();
             setTriple(triple);
           }
-          ProtoMessage.mergeDelimitedFrom(triple, input);
+          ProtoMessage.mergeDelimitedFrom(triple, inputLimited);
           tag = input.readTag();
           if (tag != 26) {
             break;
@@ -510,7 +512,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
             quad = RdfQuad.newInstance();
             setQuad(quad);
           }
-          ProtoMessage.mergeDelimitedFrom(quad, input);
+          ProtoMessage.mergeDelimitedFrom(quad, inputLimited);
           tag = input.readTag();
           if (tag != 34) {
             break;
@@ -526,7 +528,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
             graphStart = RdfGraphStart.newInstance();
             setGraphStart(graphStart);
           }
-          ProtoMessage.mergeDelimitedFrom(graphStart, input);
+          ProtoMessage.mergeDelimitedFrom(graphStart, inputLimited);
           tag = input.readTag();
           if (tag != 42) {
             break;
@@ -542,7 +544,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
             graphEnd = RdfGraphEnd.newInstance();
             setGraphEnd(graphEnd);
           }
-          ProtoMessage.mergeDelimitedFrom(graphEnd, input);
+          ProtoMessage.mergeDelimitedFrom(graphEnd, inputLimited);
           tag = input.readTag();
           if (tag != 50) {
             break;
@@ -558,7 +560,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
             namespace = RdfNamespaceDeclaration.newInstance();
             setNamespace(namespace);
           }
-          ProtoMessage.mergeDelimitedFrom(namespace, input);
+          ProtoMessage.mergeDelimitedFrom(namespace, inputLimited);
           tag = input.readTag();
           if (tag != 74) {
             break;
@@ -574,7 +576,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
             name = RdfNameEntry.newInstance();
             setName(name);
           }
-          ProtoMessage.mergeDelimitedFrom(name, input);
+          ProtoMessage.mergeDelimitedFrom(name, inputLimited);
           tag = input.readTag();
           if (tag != 82) {
             break;
@@ -590,7 +592,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
             prefix = RdfPrefixEntry.newInstance();
             setPrefix(prefix);
           }
-          ProtoMessage.mergeDelimitedFrom(prefix, input);
+          ProtoMessage.mergeDelimitedFrom(prefix, inputLimited);
           tag = input.readTag();
           if (tag != 90) {
             break;
@@ -606,7 +608,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
             datatype = RdfDatatypeEntry.newInstance();
             setDatatype(datatype);
           }
-          ProtoMessage.mergeDelimitedFrom(datatype, input);
+          ProtoMessage.mergeDelimitedFrom(datatype, inputLimited);
           tag = input.readTag();
           if (tag != 0) {
             break;
@@ -635,7 +637,7 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
     return ProtoMessage.mergeFrom(new RdfStreamRow(), data).checkInitialized();
   }
 
-  public static RdfStreamRow parseFrom(final CodedInputStream input) throws IOException {
+  public static RdfStreamRow parseFrom(final LimitedCodedInputStream input) throws IOException {
     return ProtoMessage.mergeFrom(new RdfStreamRow(), input).checkInitialized();
   }
 

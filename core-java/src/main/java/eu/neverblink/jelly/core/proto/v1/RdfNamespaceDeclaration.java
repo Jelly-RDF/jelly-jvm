@@ -6,6 +6,7 @@ import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.jelly.core.internal.proto.NsBase;
 import eu.neverblink.jelly.core.proto.v1.RdfIri;
+import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 import java.io.IOException;
@@ -163,8 +164,9 @@ public final class RdfNamespaceDeclaration extends ProtoMessage<RdfNamespaceDecl
 
     @Override
     @SuppressWarnings("fallthrough")
-    public RdfNamespaceDeclaration mergeFrom(final CodedInputStream input) throws IOException {
+    public RdfNamespaceDeclaration mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
         // Enabled Fall-Through Optimization (Quickbuf)
+        final CodedInputStream input = inputLimited.in();
         int tag = input.readTag();
         while (true) {
             switch (tag) {
@@ -179,7 +181,7 @@ public final class RdfNamespaceDeclaration extends ProtoMessage<RdfNamespaceDecl
                 case 18: {
                     // value_
                     initValue();
-                    ProtoMessage.mergeDelimitedFrom(value_, input);
+                    ProtoMessage.mergeDelimitedFrom(value_, inputLimited);
                     tag = input.readTag();
                     if (tag != 0) {
                         break;
@@ -208,7 +210,7 @@ public final class RdfNamespaceDeclaration extends ProtoMessage<RdfNamespaceDecl
         return ProtoMessage.mergeFrom(new RdfNamespaceDeclaration(), data).checkInitialized();
     }
 
-    public static RdfNamespaceDeclaration parseFrom(final CodedInputStream input) throws IOException {
+    public static RdfNamespaceDeclaration parseFrom(final LimitedCodedInputStream input) throws IOException {
         return ProtoMessage.mergeFrom(new RdfNamespaceDeclaration(), input).checkInitialized();
     }
 

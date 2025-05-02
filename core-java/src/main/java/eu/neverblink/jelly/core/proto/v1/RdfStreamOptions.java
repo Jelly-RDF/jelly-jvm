@@ -4,8 +4,7 @@ package eu.neverblink.jelly.core.proto.v1;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
-import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
-import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
+import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 import java.io.IOException;
@@ -504,8 +503,9 @@ public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> imple
 
     @Override
     @SuppressWarnings("fallthrough")
-    public RdfStreamOptions mergeFrom(final CodedInputStream input) throws IOException {
+    public RdfStreamOptions mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
         // Enabled Fall-Through Optimization (Quickbuf)
+        final CodedInputStream input = inputLimited.in();
         int tag = input.readTag();
         while (true) {
             switch (tag) {
@@ -610,7 +610,7 @@ public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> imple
         return ProtoMessage.mergeFrom(new RdfStreamOptions(), data).checkInitialized();
     }
 
-    public static RdfStreamOptions parseFrom(final CodedInputStream input) throws IOException {
+    public static RdfStreamOptions parseFrom(final LimitedCodedInputStream input) throws IOException {
         return ProtoMessage.mergeFrom(new RdfStreamOptions(), input).checkInitialized();
     }
 

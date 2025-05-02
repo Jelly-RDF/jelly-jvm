@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 import java.io.IOException;
@@ -17,18 +18,18 @@ import java.util.List;
  */
 @SuppressWarnings("hiding")
 public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implements Cloneable {
+
     /**
-     * <code>repeated .eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow rows = 1;</code>
+     * <code>repeated .eu.neverblink.jelly.core.proto.v1.RdfStreamRow rows = 1;</code>
      */
     private final List<RdfStreamRow> rows = new ArrayList<>();
 
     /**
-     * <code>repeated .eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame.MetadataEntry metadata = 15;</code>
+     * <code>repeated .eu.neverblink.jelly.core.proto.v1.RdfStreamFrame.MetadataEntry metadata = 15;</code>
      */
     private final List<MetadataEntry> metadata = new ArrayList<>();
 
-    private RdfStreamFrame() {
-    }
+    private RdfStreamFrame() {}
 
     /**
      * @return a new empty instance of {@code RdfStreamFrame}
@@ -38,7 +39,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
     }
 
     /**
-     * <code>repeated .eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow rows = 1;</code>
+     * <code>repeated .eu.neverblink.jelly.core.proto.v1.RdfStreamRow rows = 1;</code>
      * @return this
      */
     public RdfStreamFrame clearRows() {
@@ -47,7 +48,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
     }
 
     /**
-     * <code>repeated .eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow rows = 1;</code>
+     * <code>repeated .eu.neverblink.jelly.core.proto.v1.RdfStreamRow rows = 1;</code>
      *
      * @return value for this field
      */
@@ -56,7 +57,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
     }
 
     /**
-     * <code>repeated .eu.ostrzyciel.jelly.core.proto.v1.RdfStreamRow rows = 1;</code>
+     * <code>repeated .eu.neverblink.jelly.core.proto.v1.RdfStreamRow rows = 1;</code>
      * @param value the rows to add
      * @return this
      */
@@ -66,7 +67,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
     }
 
     /**
-     * <code>repeated .eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame.MetadataEntry metadata = 15;</code>
+     * <code>repeated .eu.neverblink.jelly.core.proto.v1.RdfStreamFrame.MetadataEntry metadata = 15;</code>
      * @return this
      */
     public RdfStreamFrame clearMetadata() {
@@ -75,7 +76,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
     }
 
     /**
-     * <code>repeated .eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame.MetadataEntry metadata = 15;</code>
+     * <code>repeated .eu.neverblink.jelly.core.proto.v1.RdfStreamFrame.MetadataEntry metadata = 15;</code>
      *
      * @return value for this field
      */
@@ -84,7 +85,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
     }
 
     /**
-     * <code>repeated .eu.ostrzyciel.jelly.core.proto.v1.RdfStreamFrame.MetadataEntry metadata = 15;</code>
+     * <code>repeated .eu.neverblink.jelly.core.proto.v1.RdfStreamFrame.MetadataEntry metadata = 15;</code>
      * @param value the metadata to add
      * @return this
      */
@@ -128,8 +129,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
             return false;
         }
         RdfStreamFrame other = (RdfStreamFrame) o;
-        return rows.equals(other.rows)
-                && metadata.equals(other.metadata);
+        return rows.equals(other.rows) && metadata.equals(other.metadata);
     }
 
     @Override
@@ -164,21 +164,22 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
 
     @Override
     @SuppressWarnings("fallthrough")
-    public RdfStreamFrame mergeFrom(final CodedInputStream input) throws IOException {
+    public RdfStreamFrame mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
         // Enabled Fall-Through Optimization (Quickbuf)
+        final CodedInputStream input = inputLimited.in();
         int tag = input.readTag();
         while (true) {
             switch (tag) {
                 case 10: {
                     // rows
-                    tag = ProtoMessage.readRepeatedMessage(rows, RdfStreamRow.getFactory(), input, tag);
+                    tag = ProtoMessage.readRepeatedMessage(rows, RdfStreamRow.getFactory(), inputLimited, tag);
                     if (tag != 122) {
                         break;
                     }
                 }
                 case 122: {
                     // metadata
-                    tag = ProtoMessage.readRepeatedMessage(metadata, MetadataEntry.getFactory(), input, tag);
+                    tag = ProtoMessage.readRepeatedMessage(metadata, MetadataEntry.getFactory(), inputLimited, tag);
                     if (tag != 0) {
                         break;
                     }
@@ -206,7 +207,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
         return ProtoMessage.mergeFrom(new RdfStreamFrame(), data).checkInitialized();
     }
 
-    public static RdfStreamFrame parseFrom(final CodedInputStream input) throws IOException {
+    public static RdfStreamFrame parseFrom(final LimitedCodedInputStream input) throws IOException {
         return ProtoMessage.mergeFrom(new RdfStreamFrame(), input).checkInitialized();
     }
 
@@ -225,6 +226,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
      * Protobuf type {@code MetadataEntry}
      */
     public static final class MetadataEntry extends ProtoMessage<MetadataEntry> implements Cloneable {
+
         /**
          * <code>optional string key = 1;</code>
          */
@@ -235,8 +237,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
          */
         private ByteString value_ = ByteString.EMPTY;
 
-        private MetadataEntry() {
-        }
+        private MetadataEntry() {}
 
         /**
          * @return a new empty instance of {@code MetadataEntry}
@@ -333,8 +334,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
                 return false;
             }
             MetadataEntry other = (MetadataEntry) o;
-            return key.equals(other.key)
-                    && value_.equals(other.value_);
+            return key.equals(other.key) && value_.equals(other.value_);
         }
 
         @Override
@@ -363,8 +363,9 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
 
         @Override
         @SuppressWarnings("fallthrough")
-        public MetadataEntry mergeFrom(final CodedInputStream input) throws IOException {
+        public MetadataEntry mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
             // Enabled Fall-Through Optimization (Quickbuf)
+            final CodedInputStream input = inputLimited.in();
             int tag = input.readTag();
             while (true) {
                 switch (tag) {
@@ -407,7 +408,7 @@ public final class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implement
             return ProtoMessage.mergeFrom(new MetadataEntry(), data).checkInitialized();
         }
 
-        public static MetadataEntry parseFrom(final CodedInputStream input) throws IOException {
+        public static MetadataEntry parseFrom(final LimitedCodedInputStream input) throws IOException {
             return ProtoMessage.mergeFrom(new MetadataEntry(), input).checkInitialized();
         }
 

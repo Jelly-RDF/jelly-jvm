@@ -6,6 +6,7 @@ import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.jelly.core.internal.proto.GraphBase;
 import eu.neverblink.jelly.core.internal.proto.SpoBase;
+import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 
@@ -869,8 +870,9 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
 
   @Override
   @SuppressWarnings("fallthrough")
-  public RdfQuad mergeFrom(final CodedInputStream input) throws IOException {
+  public RdfQuad mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
     // Enabled Fall-Through Optimization (Quickbuf)
+    final CodedInputStream input = inputLimited.in();
     int tag = input.readTag();
     while (true) {
       switch (tag) {
@@ -884,7 +886,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             sIri = RdfIri.newInstance();
             setSIri(sIri);
           }
-          ProtoMessage.mergeDelimitedFrom(sIri, input);
+          ProtoMessage.mergeDelimitedFrom(sIri, inputLimited);
           tag = input.readTag();
           if (tag != 42) {
             break;
@@ -900,7 +902,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             pIri = RdfIri.newInstance();
             setPIri(pIri);
           }
-          ProtoMessage.mergeDelimitedFrom(pIri, input);
+          ProtoMessage.mergeDelimitedFrom(pIri, inputLimited);
           tag = input.readTag();
           if (tag != 74) {
             break;
@@ -916,7 +918,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             oIri = RdfIri.newInstance();
             setOIri(oIri);
           }
-          ProtoMessage.mergeDelimitedFrom(oIri, input);
+          ProtoMessage.mergeDelimitedFrom(oIri, inputLimited);
           tag = input.readTag();
           if (tag != 106) {
             break;
@@ -932,7 +934,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             gIri = RdfIri.newInstance();
             setGIri(gIri);
           }
-          ProtoMessage.mergeDelimitedFrom(gIri, input);
+          ProtoMessage.mergeDelimitedFrom(gIri, inputLimited);
           tag = input.readTag();
           if (tag != 18) {
             break;
@@ -980,7 +982,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             sLiteral = RdfLiteral.newInstance();
             setSLiteral(sLiteral);
           }
-          ProtoMessage.mergeDelimitedFrom(sLiteral, input);
+          ProtoMessage.mergeDelimitedFrom(sLiteral, inputLimited);
           tag = input.readTag();
           if (tag != 58) {
             break;
@@ -996,7 +998,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             pLiteral = RdfLiteral.newInstance();
             setPLiteral(pLiteral);
           }
-          ProtoMessage.mergeDelimitedFrom(pLiteral, input);
+          ProtoMessage.mergeDelimitedFrom(pLiteral, inputLimited);
           tag = input.readTag();
           if (tag != 90) {
             break;
@@ -1012,7 +1014,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             oLiteral = RdfLiteral.newInstance();
             setOLiteral(oLiteral);
           }
-          ProtoMessage.mergeDelimitedFrom(oLiteral, input);
+          ProtoMessage.mergeDelimitedFrom(oLiteral, inputLimited);
           tag = input.readTag();
           if (tag != 122) {
             break;
@@ -1028,7 +1030,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             gDefaultGraph = RdfDefaultGraph.newInstance();
             setGDefaultGraph(gDefaultGraph);
           }
-          ProtoMessage.mergeDelimitedFrom(gDefaultGraph, input);
+          ProtoMessage.mergeDelimitedFrom(gDefaultGraph, inputLimited);
           tag = input.readTag();
           if (tag != 34) {
             break;
@@ -1044,7 +1046,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             sTripleTerm = RdfTriple.newInstance();
             setSTripleTerm(sTripleTerm);
           }
-          ProtoMessage.mergeDelimitedFrom(sTripleTerm, input);
+          ProtoMessage.mergeDelimitedFrom(sTripleTerm, inputLimited);
           tag = input.readTag();
           if (tag != 66) {
             break;
@@ -1060,7 +1062,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             pTripleTerm = RdfTriple.newInstance();
             setPTripleTerm(pTripleTerm);
           }
-          ProtoMessage.mergeDelimitedFrom(pTripleTerm, input);
+          ProtoMessage.mergeDelimitedFrom(pTripleTerm, inputLimited);
           tag = input.readTag();
           if (tag != 98) {
             break;
@@ -1076,7 +1078,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             oTripleTerm = RdfTriple.newInstance();
             setOTripleTerm(oTripleTerm);
           }
-          ProtoMessage.mergeDelimitedFrom(oTripleTerm, input);
+          ProtoMessage.mergeDelimitedFrom(oTripleTerm, inputLimited);
           tag = input.readTag();
           if (tag != 130) {
             break;
@@ -1092,7 +1094,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
             gLiteral = RdfLiteral.newInstance();
             setGLiteral(gLiteral);
           }
-          ProtoMessage.mergeDelimitedFrom(gLiteral, input);
+          ProtoMessage.mergeDelimitedFrom(gLiteral, inputLimited);
           tag = input.readTag();
           if (tag != 0) {
             break;
@@ -1121,7 +1123,7 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements Cloneable, S
     return ProtoMessage.mergeFrom(new RdfQuad(), data).checkInitialized();
   }
 
-  public static RdfQuad parseFrom(final CodedInputStream input) throws IOException {
+  public static RdfQuad parseFrom(final LimitedCodedInputStream input) throws IOException {
     return ProtoMessage.mergeFrom(new RdfQuad(), input).checkInitialized();
   }
 
