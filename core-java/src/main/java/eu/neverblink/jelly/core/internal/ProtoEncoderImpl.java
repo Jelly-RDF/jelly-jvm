@@ -78,6 +78,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
         final var ns = RdfNamespaceDeclaration.newInstance().setName(prefix);
         this.currentNsBase = ns;
+        this.currentTerm = SpoTerm.NAMESPACE;
         converter.nodeToProto(nodeEncoder.provide(), namespace);
         final var mainRow = RdfStreamRow.newInstance().setNamespace(ns);
         rowBuffer.add(mainRow);

@@ -12,7 +12,7 @@ import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 @InternalApi
 public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
 
-    private enum SpoTerm {
+    protected enum SpoTerm {
         SUBJECT,
         PREDICATE,
         OBJECT,
@@ -28,7 +28,7 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
     protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
     protected TNode lastGraph = null;
 
-    private SpoTerm currentTerm = SpoTerm.SUBJECT;
+    protected SpoTerm currentTerm = SpoTerm.SUBJECT;
     private SpoBase currentSpoBase = null;
     private GraphBase currentGraphBase = null;
     protected NsBase currentNsBase = null;

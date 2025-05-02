@@ -181,8 +181,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
             return;
         }
 
-        final var newGraphStart = RdfGraphStart.newInstance()
-            .setGraph(g1, graphStart.getGraphFieldNumber());
+        final var newGraphStart = RdfGraphStart.newInstance().setGraph(g1, graphStart.getGraphFieldNumber());
         rowBuffer.add(RdfStreamRow.newInstance().setGraphStart(newGraphStart));
     }
 
@@ -202,10 +201,10 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
     }
 
     private Object handleSpoTerm(int kind, Object term) {
+        if (kind < 0) {
+            return null;
+        }
         switch (kind) {
-            case -1 -> {
-                return null;
-            }
             case 0 -> {
                 return handleIri((RdfIri) term);
             }
@@ -225,10 +224,10 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
     }
 
     private Object handleGraphTerm(int kind, Object graph) {
+        if (kind < 0) {
+            return null;
+        }
         switch (kind) {
-            case -1 -> {
-                return null;
-            }
             case 0 -> {
                 return handleIri((RdfIri) graph);
             }
@@ -236,10 +235,10 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
                 return graph; // blank node
             }
             case 2 -> {
-                return handleLiteral((RdfLiteral) graph);
+                return graph; // default graph
             }
             case 3 -> {
-                return graph; // default graph
+                return handleLiteral((RdfLiteral) graph);
             }
             default -> {
                 throw new RdfProtoTranscodingError("Unknown graph term type");

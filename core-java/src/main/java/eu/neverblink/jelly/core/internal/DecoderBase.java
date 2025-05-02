@@ -61,10 +61,10 @@ public abstract class DecoderBase<TNode, TDatatype> {
                     return converter.makeBlankNode(bnode);
                 }
                 case 2 -> {
-                    return convertLiteral((RdfLiteral) graph);
+                    return converter.makeDefaultGraphNode();
                 }
                 case 3 -> {
-                    return converter.makeDefaultGraphNode();
+                    return convertLiteral((RdfLiteral) graph);
                 }
                 default -> throw new RdfProtoDeserializationError("Unknown graph term type");
             }
@@ -99,9 +99,9 @@ public abstract class DecoderBase<TNode, TDatatype> {
                 case 3 -> {
                     final var triple = (RdfTriple) term;
                     return converter.makeTripleNode(
-                        convertTerm(triple.getSubjectFieldNumber(), triple.getSubject()),
-                        convertTerm(triple.getPredicateFieldNumber(), triple.getPredicate()),
-                        convertTerm(triple.getObjectFieldNumber(), triple.getObject())
+                        convertTerm(triple.getSubjectFieldNumber() - RdfTriple.S_IRI, triple.getSubject()),
+                        convertTerm(triple.getPredicateFieldNumber() - RdfTriple.P_IRI, triple.getPredicate()),
+                        convertTerm(triple.getObjectFieldNumber() - RdfTriple.O_IRI, triple.getObject())
                     );
                 }
                 default -> throw new RdfProtoDeserializationError("Unknown term type");

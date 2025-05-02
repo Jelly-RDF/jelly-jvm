@@ -163,10 +163,11 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 lastIriNameId = nameId;
                 bufferAppender.appendIri(nameOnlyIris[nameId]);
             }
+            return;
         }
 
         // Slow path, with splitting out the prefix
-        final var cachedNode = Objects.requireNonNull(iriNodeCache).computeIfAbsent(iri, k -> new DependentNode());
+        final var cachedNode = Objects.requireNonNull(iriNodeCache).computeIfAbsent(iri, k -> new DependentNode<>());
         // Check if the value is still valid
         if (
             cachedNode.encoded != null &&
@@ -177,6 +178,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             nameLookup.onAccess(cachedNode.lookupPointer1);
             prefixLookup.onAccess(cachedNode.lookupPointer2);
             outputIri(cachedNode);
+            return;
         }
 
         int i = iri.indexOf('#', 8);
