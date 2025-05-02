@@ -3,11 +3,10 @@ package eu.neverblink.protoc.java.runtime;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.UninitializedMessageException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,14 +18,11 @@ import java.util.List;
  * @author Piotr Sowiński
  */
 public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
-
+    
     protected int cachedSize = -1;
 
-    // Keep the first bitfield in the parent class so that it
-    // is likely in the same cache line as the object header
-    // protected int bitField0_;
-
-    protected ProtoMessage() {}
+    protected ProtoMessage() {
+    }
 
     /**
      * Copies all fields and data from another message of the same
@@ -36,44 +32,6 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * @return this
      */
     public abstract MessageType copyFrom(MessageType other);
-
-    /**
-     * Sets all fields and data to their default values.
-     *
-     * @return this
-     */
-    public abstract MessageType clear();
-
-    /**
-     * @return true if none of the fields in this message are set
-     */
-    public boolean isEmpty() {
-        throw new RuntimeException("Generated message does not implement isEmpty");
-    }
-
-    /**
-     * @return true if all required fields in this message and in nested messages are set
-     */
-    public boolean isInitialized() {
-        return true;
-    }
-
-    /**
-     * Helper method to check if this message is initialized, i.e.,
-     * if all required fields are set.
-     * <p>
-     * Message content is not automatically checked after merging
-     * new data. This method should be called manually as needed.
-     *
-     * @return this
-     * @throws InvalidProtocolBufferException if it is not initialized.
-     */
-    public final MessageType checkInitialized() throws InvalidProtocolBufferException {
-        if (!isInitialized()) {
-            throw new UninitializedMessageException(new ArrayList<>()).asInvalidProtocolBufferException();
-        }
-        return getThis();
-    }
 
     /**
      * Get the number of bytes required to encode this message.
@@ -112,14 +70,6 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * @return the size of the serialized proto form
      */
     protected abstract int computeSerializedSize();
-
-    /**
-     * Resets the cached size. This must be called when a field is modified after being already
-     * serialized.
-     */
-    public void resetCachedSize() {
-        cachedSize = -1;
-    }
 
     /**
      * Serializes the message and writes it to {@code output}.
@@ -166,8 +116,10 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      *
      * @return a new message parsed from the input stream or null if there is no message to parse.
      */
-    protected static <T extends ProtoMessage<T>> T parseDelimitedFrom(InputStream input, MessageFactory<T> factory)
-        throws IOException {
+    protected static <T extends ProtoMessage<T>> T parseDelimitedFrom(
+        InputStream input,
+        MessageFactory<T> factory
+    ) throws IOException {
         int size;
         try {
             int firstByte = input.read();
@@ -249,18 +201,15 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
             msg.writeTo(output);
             output.checkNoSpaceLeft();
         } catch (IOException e) {
-            throw new RuntimeException(
-                "Serializing to a byte array threw an IOException " + "(should never happen).",
-                e
-            );
+            throw new RuntimeException("Serializing to a byte array threw an IOException "
+                    + "(should never happen).", e);
         }
     }
 
     /**
      * Parse {@code data} as a message of this type and merge it with the message being built.
      */
-    public static <T extends ProtoMessage<T>> T mergeFrom(T msg, final byte[] data)
-        throws InvalidProtocolBufferException {
+    public static <T extends ProtoMessage<T>> T mergeFrom(T msg, final byte[] data) throws InvalidProtocolBufferException {
         return mergeFrom(msg, data, 0, data.length);
     }
 
@@ -268,7 +217,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * Parse {@code data} as a message of this type and merge it with the message being built.
      */
     public static <T extends ProtoMessage<T>> T mergeFrom(T msg, final byte[] data, final int off, final int len)
-        throws InvalidProtocolBufferException {
+            throws InvalidProtocolBufferException {
         try {
             final var input = CodedInputStream.newInstance(data, off, len);
             return mergeFrom(msg, new LimitedCodedInputStream(input));
@@ -288,9 +237,9 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         return msg;
     }
 
-    // TODO: recursion limits???
-    protected static <T extends ProtoMessage<T>> void mergeDelimitedFrom(T msg, LimitedCodedInputStream inputLimited)
-        throws IOException {
+    protected static <T extends ProtoMessage<T>> void mergeDelimitedFrom(
+        T msg, LimitedCodedInputStream inputLimited
+    ) throws IOException {
         inputLimited.checkRecursionDepth();
         inputLimited.incrementRecursionDepth();
         final CodedInputStream input = inputLimited.in();
@@ -322,7 +271,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
             final var msg = factory.create();
             mergeDelimitedFrom(msg, input);
             store.add(msg);
-        } while ((nextTag = input.in().readTag()) == tag);
+        } while((nextTag = input.in().readTag()) == tag);
         return nextTag;
     }
 
@@ -342,18 +291,6 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      */
     @Override
     public abstract boolean equals(Object obj);
-
-    /**
-     * Messages have no immutable state and should not
-     * be used in hashing structures. This implementation
-     * returns a constant value in order to satisfy the
-     * contract.
-     * TODO: oh really?
-     */
-    @Override
-    public final int hashCode() {
-        return 0;
-    }
 
     /**
      * Creates a new instance of this message with the same content

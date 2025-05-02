@@ -1,13 +1,13 @@
 package eu.neverblink.protoc.java.runtime;
 
 import com.google.protobuf.CodedInputStream;
+
 import java.io.InputStream;
 
 /**
  * Wrapper for {@link CodedInputStream} which limits the recursion depth.
  */
 public final class LimitedCodedInputStream {
-
     private final CodedInputStream in;
     private int recursionDepth;
     private final int maxRecursionDepth;
@@ -33,7 +33,7 @@ public final class LimitedCodedInputStream {
 
     public void checkRecursionDepth() {
         if (recursionDepth > maxRecursionDepth) {
-            throw new RuntimeException("Recursion depth exceeded: " + recursionDepth);
+            throw new RuntimeException("Maximum recursion depth exceeded: " + recursionDepth);
         }
     }
 
