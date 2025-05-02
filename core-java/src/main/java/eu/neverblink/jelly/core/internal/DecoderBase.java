@@ -2,6 +2,11 @@ package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.utils.LazyProperty;
+import eu.neverblink.jelly.core.NameDecoder;
+import eu.neverblink.jelly.core.ProtoDecoderConverter;
+import eu.neverblink.jelly.core.RdfProtoDeserializationError;
+import eu.neverblink.jelly.core.internal.proto.SpoBase;
+import eu.neverblink.jelly.core.proto.v1.*;
 
 /**
  * Base trait for Jelly proto decoders. Only for internal use.
@@ -36,28 +41,32 @@ public abstract class DecoderBase<TNode, TDatatype> {
 
     /**
      * Convert a GraphTerm message to a node.
+     * @param kind field number of the term, normalized to 0, 1, 2, 3
      * @param graph graph term to convert
      * @return converted node
      * @throws RdfProtoDeserializationError if the graph term can't be decoded
      */
-    protected final TNode convertGraphTerm(RdfTerm.GraphTerm graph) {
+    protected final TNode convertGraphTerm(int kind, Object graph) {
+        if (graph == null) {
+            throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.");
+        }
         try {
-            if (graph == null) {
-                throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.");
-            } else if (graph instanceof RdfTerm.Iri iri) {
-                return nameDecoder.provide().decode(iri.prefixId(), iri.nameId());
-            } else if (graph instanceof RdfTerm.DefaultGraph) {
-                return converter.makeDefaultGraphNode();
-            } else if (graph instanceof RdfTerm.BNode bnode) {
-                return converter.makeBlankNode(bnode.bNode());
-            } else if (graph instanceof RdfTerm.LanguageLiteral languageLiteral) {
-                return converter.makeLangLiteral(languageLiteral.lex(), languageLiteral.langtag());
-            } else if (graph instanceof RdfTerm.DtLiteral dtLiteral) {
-                return converter.makeDtLiteral(dtLiteral.lex(), datatypeLookup.provide().get(dtLiteral.datatype()));
-            } else if (graph instanceof RdfTerm.SimpleLiteral simpleLiteral) {
-                return converter.makeSimpleLiteral(simpleLiteral.lex());
-            } else {
-                throw new RdfProtoDeserializationError("Unknown graph term type.");
+            switch (kind) {
+                case 0 -> {
+                    final var iri = (RdfIri) graph;
+                    return nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId());
+                }
+                case 1 -> {
+                    final var bnode = (String) graph;
+                    return converter.makeBlankNode(bnode);
+                }
+                case 2 -> {
+                    return convertLiteral((RdfLiteral) graph);
+                }
+                case 3 -> {
+                    return converter.makeDefaultGraphNode();
+                }
+                default -> throw new RdfProtoDeserializationError("Unknown graph term type");
             }
         } catch (Exception e) {
             throw new RdfProtoDeserializationError("Error while decoding graph term %s".formatted(e), e);
@@ -66,63 +75,85 @@ public abstract class DecoderBase<TNode, TDatatype> {
 
     /**
      * Convert a SpoTerm message to a node.
+     * @param kind field number of the term, normalized to 0, 1, 2, 3
      * @param term term to convert
      * @throws RdfProtoDeserializationError if the term can't be decoded
      */
-    protected final TNode convertTerm(RdfTerm.SpoTerm term) {
+    protected final TNode convertTerm(int kind, Object term) {
+        if (term == null) {
+            throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
+        }
         try {
-            if (term == null) {
-                throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
-            } else if (term instanceof RdfTerm.Iri iri) {
-                return nameDecoder.provide().decode(iri.prefixId(), iri.nameId());
-            } else if (term instanceof RdfTerm.BNode bnode) {
-                return converter.makeBlankNode(bnode.bNode());
-            } else if (term instanceof RdfTerm.LanguageLiteral languageLiteral) {
-                return converter.makeLangLiteral(languageLiteral.lex(), languageLiteral.langtag());
-            } else if (term instanceof RdfTerm.DtLiteral dtLiteral) {
-                return converter.makeDtLiteral(dtLiteral.lex(), datatypeLookup.provide().get(dtLiteral.datatype()));
-            } else if (term instanceof RdfTerm.SimpleLiteral simpleLiteral) {
-                return converter.makeSimpleLiteral(simpleLiteral.lex());
-            } else if (term instanceof RdfTerm.Triple triple) {
-                // ! No support for repeated terms in quoted triples
-                return converter.makeTripleNode(
-                    convertTerm(triple.subject()),
-                    convertTerm(triple.predicate()),
-                    convertTerm(triple.object())
-                );
-            } else {
-                throw new RdfProtoDeserializationError("Unknown term type.");
+            switch (kind) {
+                case 0 -> {
+                    final var iri = (RdfIri) term;
+                    return nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId());
+                }
+                case 1 -> {
+                    final var bnode = (String) term;
+                    return converter.makeBlankNode(bnode);
+                }
+                case 2 -> {
+                    return convertLiteral((RdfLiteral) term);
+                }
+                case 3 -> {
+                    final var triple = (RdfTriple) term;
+                    return converter.makeTripleNode(
+                        convertTerm(triple.getSubjectFieldNumber(), triple.getSubject()),
+                        convertTerm(triple.getPredicateFieldNumber(), triple.getPredicate()),
+                        convertTerm(triple.getObjectFieldNumber(), triple.getObject())
+                    );
+                }
+                default -> throw new RdfProtoDeserializationError("Unknown term type");
             }
         } catch (Exception e) {
             throw new RdfProtoDeserializationError("Error while decoding term %s".formatted(e), e);
         }
     }
 
-    /**
-     * Convert a subject SpoTerm message to a node, while respecting repeated terms.
-     * @param subject term to convert
-     * @return converted node
-     */
-    protected final TNode convertSubjectTermWrapped(RdfTerm.SpoTerm subject) {
-        return convertSpoTermWrapped(subject, lastSubject);
+    private TNode convertLiteral(RdfLiteral literal) {
+        switch (literal.getLiteralKindFieldNumber()) {
+            case RdfLiteral.LANGTAG -> {
+                return converter.makeLangLiteral(literal.getLex(), literal.getLangtag());
+            }
+            case RdfLiteral.DATATYPE -> {
+                return converter.makeDtLiteral(literal.getLex(), datatypeLookup.provide().get(literal.getDatatype()));
+            }
+            default -> {
+                return converter.makeSimpleLiteral(literal.getLex());
+            }
+        }
     }
 
     /**
-     * Convert a predicate SpoTerm message to a node, while respecting repeated terms.
-     * @param predicate term to convert
+     * Convert the subject from an SPO-like message to a node, while respecting repeated terms.
+     * @param spo SPO-like message to extract the subject from
      * @return converted node
      */
-    protected final TNode convertPredicateTermWrapped(RdfTerm.SpoTerm predicate) {
-        return convertSpoTermWrapped(predicate, lastPredicate);
+    protected final TNode convertSubjectTermWrapped(SpoBase spo) {
+        return convertSpoTermWrapped(spo.getSubjectFieldNumber() - RdfTriple.S_IRI, spo.getSubject(), lastSubject);
     }
 
     /**
-     * Convert an object SpoTerm message to a node, while respecting repeated terms.
-     * @param object term to convert
+     * Convert the predicate from an SPO-like message to a node, while respecting repeated terms.
+     * @param spo SPO-like message to extract the predicate from
      * @return converted node
      */
-    protected final TNode convertObjectTermWrapped(RdfTerm.SpoTerm object) {
-        return convertSpoTermWrapped(object, lastObject);
+    protected final TNode convertPredicateTermWrapped(SpoBase spo) {
+        return convertSpoTermWrapped(
+            spo.getPredicateFieldNumber() - RdfTriple.P_IRI,
+            spo.getPredicate(),
+            lastPredicate
+        );
+    }
+
+    /**
+     * Convert the object from an SPO-like message to a node, while respecting repeated terms.
+     * @param spo SPO-like message to extract the object from
+     * @return converted node
+     */
+    protected final TNode convertObjectTermWrapped(SpoBase spo) {
+        return convertSpoTermWrapped(spo.getObjectFieldNumber() - RdfTriple.O_IRI, spo.getObject(), lastObject);
     }
 
     /**
@@ -140,12 +171,12 @@ public abstract class DecoderBase<TNode, TDatatype> {
             return lastGraph.get();
         }
 
-        final var node = convertGraphTerm(graph);
+        final var node = convertGraphTerm(kind, graph);
         lastGraph.set(node);
         return node;
     }
 
-    private TNode convertSpoTermWrapped(RdfTerm.SpoTerm term, LastNodeHolder<TNode> lastNodeHolder) {
+    private TNode convertSpoTermWrapped(int kind, Object term, LastNodeHolder<TNode> lastNodeHolder) {
         if (term == null && lastNodeHolder.hasNoValue()) {
             throw new RdfProtoDeserializationError("Empty term without previous term.");
         }
@@ -154,7 +185,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
             return lastNodeHolder.get();
         }
 
-        final var node = convertTerm(term);
+        final var node = convertTerm(kind, term);
         lastNodeHolder.set(node);
         return node;
     }

@@ -11,9 +11,8 @@ object ProtoTestCases:
     .map {
       case v: RdfStreamOptions => v.getVersion match
         // If the version is not set, set it to the current version
-        case 0 => v.toBuilder
+        case 0 => v.clone
           .setVersion(JellyConstants.PROTO_VERSION)
-          .build()
         // Otherwise assume we are checking version compatibility
         case _ => v
       case v => v

@@ -11,7 +11,7 @@ import java.util.Collection;
  */
 public abstract class ProtoEncoder<TNode>
     extends EncoderBase<TNode>
-    implements RowBufferAppender, RdfHandler.AnyRdfHandler<TNode> {
+    implements RdfBufferAppender<TNode>, RdfHandler.AnyRdfHandler<TNode> {
 
     /**
      * Parameters passed to the Jelly encoder.

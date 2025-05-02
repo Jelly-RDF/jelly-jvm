@@ -174,18 +174,18 @@ lazy val coreJava = (project in file("core-java"))
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufV,
     ),
-    Compile / sourceGenerators += Def.task {
-      // Copy from the managed source directory to the output directory
-      val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main"
-      val outputDir = sourceManaged.value / "main" / "protobuf"
-      val javaFiles = (inputDir ** "*.java").get
-      javaFiles.map { file =>
-        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
-        IO.copyFile(file, outputFile)
-        outputFile
-      }
-
-    }.dependsOn(rdfProtosJava / Compile / compile),
+//    Compile / sourceGenerators += Def.task {
+//      // Copy from the managed source directory to the output directory
+//      val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main"
+//      val outputDir = sourceManaged.value / "main" / "protobuf"
+//      val javaFiles = (inputDir ** "*.java").get
+//      javaFiles.map { file =>
+//        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+//        IO.copyFile(file, outputFile)
+//        outputFile
+//      }
+//
+//    }.dependsOn(rdfProtosJava / Compile / compile),
     Compile / sourceManaged := sourceManaged.value / "main",
     publishArtifact := false, // TODO: remove this when ready
     commonSettings,

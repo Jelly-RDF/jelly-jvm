@@ -1,6 +1,8 @@
 package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.*;
+import eu.neverblink.jelly.core.internal.proto.*;
+import eu.neverblink.jelly.core.proto.v1.*;
 import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 
 /**
@@ -8,7 +10,15 @@ import eu.neverblink.jelly.core.internal.utils.LazyProperty;
  * @param <TNode> type of RDF nodes in the library
  */
 @InternalApi
-public abstract class EncoderBase<TNode> implements RowBufferAppender {
+public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
+
+    private enum SpoTerm {
+        SUBJECT,
+        PREDICATE,
+        OBJECT,
+        GRAPH,
+        NAMESPACE,
+    }
 
     protected final ProtoEncoderConverter<TNode> converter;
     protected final LazyProperty<NodeEncoder<TNode>> nodeEncoder;
@@ -17,6 +27,11 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender {
     protected final LastNodeHolder<TNode> lastPredicate = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
     protected TNode lastGraph = null;
+
+    private SpoTerm currentTerm = SpoTerm.SUBJECT;
+    private SpoBase currentSpoBase = null;
+    private GraphBase currentGraphBase = null;
+    protected NsBase currentNsBase = null;
 
     protected EncoderBase(ProtoEncoderConverter<TNode> converter) {
         this.converter = converter;
@@ -31,21 +46,24 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender {
 
     protected abstract int getDatatypeTableSize();
 
-    protected final RdfTerm.Triple tripleToProto(TNode subject, TNode predicate, TNode object) {
-        return new RdfTerm.Triple(
-            nodeToProtoWrapped(subject, lastSubject),
-            nodeToProtoWrapped(predicate, lastPredicate),
-            nodeToProtoWrapped(object, lastObject)
-        );
+    protected final RdfTriple tripleToProto(TNode subject, TNode predicate, TNode object) {
+        final RdfTriple triple = RdfTriple.newInstance();
+        this.currentSpoBase = triple;
+        nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
+        nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);
+        nodeToProtoWrapped(object, lastObject, SpoTerm.OBJECT);
+        return triple;
     }
 
-    protected final RdfTerm.Quad quadToProto(TNode subject, TNode predicate, TNode object, TNode graph) {
-        return new RdfTerm.Quad(
-            nodeToProtoWrapped(subject, lastSubject),
-            nodeToProtoWrapped(predicate, lastPredicate),
-            nodeToProtoWrapped(object, lastObject),
-            graphNodeToProtoWrapped(graph)
-        );
+    protected final RdfQuad quadToProto(TNode subject, TNode predicate, TNode object, TNode graph) {
+        final RdfQuad quad = RdfQuad.newInstance();
+        this.currentSpoBase = quad;
+        this.currentGraphBase = quad;
+        nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
+        nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);
+        nodeToProtoWrapped(object, lastObject, SpoTerm.OBJECT);
+        graphNodeToProtoWrapped(graph);
+        return quad;
     }
 
     /**
@@ -53,31 +71,101 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender {
      * <p>
      * Used in RDF-Patch for triple add/delete operations.
      */
-    protected final RdfTerm.Quad tripleInQuadToProto(TNode subject, TNode predicate, TNode object) {
-        return new RdfTerm.Quad(
-            nodeToProtoWrapped(subject, lastSubject),
-            nodeToProtoWrapped(predicate, lastPredicate),
-            nodeToProtoWrapped(object, lastObject),
-            null
-        );
+    protected final RdfQuad tripleInQuadToProto(TNode subject, TNode predicate, TNode object) {
+        final RdfQuad quad = RdfQuad.newInstance();
+        this.currentSpoBase = quad;
+        nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
+        nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);
+        nodeToProtoWrapped(object, lastObject, SpoTerm.OBJECT);
+        return quad;
     }
 
-    private RdfTerm.SpoTerm nodeToProtoWrapped(TNode node, LastNodeHolder<TNode> lastNodeHolder) {
-        if (node.equals(lastNodeHolder.get())) {
-            return null;
-        } else {
+    /**
+     * Converts a graph term to an RdfGraphStart object.
+     */
+    protected final RdfGraphStart graphStartToProto(TNode graph) {
+        final RdfGraphStart graphStart = RdfGraphStart.newInstance();
+        this.currentGraphBase = graphStart;
+        graphNodeToProtoWrapped(graph);
+        return graphStart;
+    }
+
+    private void nodeToProtoWrapped(TNode node, LastNodeHolder<TNode> lastNodeHolder, SpoTerm term) {
+        if (!node.equals(lastNodeHolder.get())) {
             lastNodeHolder.set(node);
-            return converter.nodeToProto(nodeEncoder.provide(), node);
+            currentTerm = term;
+            converter.nodeToProto(nodeEncoder.provide(), node);
         }
     }
 
-    private RdfTerm.GraphTerm graphNodeToProtoWrapped(TNode node) {
+    private void graphNodeToProtoWrapped(TNode node) {
         // Graph nodes may be null in Jena for example... so we need to handle that.
-        if ((node == null && lastGraph == null) || (node != null && node.equals(lastGraph))) {
-            return null;
-        } else {
+        if ((node != null || lastGraph != null) && (node == null || !node.equals(lastGraph))) {
             lastGraph = node;
-            return converter.graphNodeToProto(nodeEncoder.provide(), node);
+            currentTerm = SpoTerm.GRAPH;
+            converter.graphNodeToProto(nodeEncoder.provide(), node);
         }
+    }
+
+    @Override
+    public void appendIri(RdfIri iri) {
+        switch (currentTerm) {
+            case SUBJECT -> currentSpoBase.setSIri(iri);
+            case PREDICATE -> currentSpoBase.setPIri(iri);
+            case OBJECT -> currentSpoBase.setOIri(iri);
+            case GRAPH -> currentGraphBase.setGIri(iri);
+            case NAMESPACE -> currentNsBase.setValue(iri);
+        }
+    }
+
+    @Override
+    public void appendBlankNode(String label) {
+        switch (currentTerm) {
+            case SUBJECT -> currentSpoBase.setSBnode(label);
+            case PREDICATE -> currentSpoBase.setPBnode(label);
+            case OBJECT -> currentSpoBase.setOBnode(label);
+            case GRAPH -> currentGraphBase.setGBnode(label);
+        }
+    }
+
+    @Override
+    public void appendLiteral(RdfLiteral literal) {
+        switch (currentTerm) {
+            case SUBJECT -> currentSpoBase.setSLiteral(literal);
+            case PREDICATE -> currentSpoBase.setPLiteral(literal);
+            case OBJECT -> currentSpoBase.setOLiteral(literal);
+            case GRAPH -> currentGraphBase.setGLiteral(literal);
+        }
+    }
+
+    @Override
+    public void appendQuotedTriple(TNode subject, TNode predicate, TNode object) {
+        // Store the current state of the SpoBase and SpoTerm
+        final SpoBase parent = currentSpoBase;
+        final SpoTerm parentTerm = currentTerm;
+        // Encode the quoted triple
+        final RdfTriple quotedTriple = RdfTriple.newInstance();
+        currentSpoBase = quotedTriple;
+        currentTerm = SpoTerm.SUBJECT;
+        converter.nodeToProto(nodeEncoder, subject);
+        currentTerm = SpoTerm.PREDICATE;
+        converter.nodeToProto(nodeEncoder, predicate);
+        currentTerm = SpoTerm.OBJECT;
+        converter.nodeToProto(nodeEncoder, object);
+        // Restore the previous state and set the quoted triple
+        currentSpoBase = parent;
+        currentTerm = parentTerm;
+        switch (currentTerm) {
+            case SUBJECT -> currentSpoBase.setSTripleTerm(quotedTriple);
+            case PREDICATE -> currentSpoBase.setPTripleTerm(quotedTriple);
+            case OBJECT -> currentSpoBase.setOTripleTerm(quotedTriple);
+            case GRAPH -> throw new RdfProtoSerializationError("Cannot set a graph node to be a quoted triple.");
+        }
+    }
+
+    @Override
+    public void appendDefaultGraph() {
+        // TODO: use a shared instance here
+        currentGraphBase.setGDefaultGraph(RdfDefaultGraph.newInstance());
     }
 }
