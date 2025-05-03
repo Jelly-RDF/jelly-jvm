@@ -8,7 +8,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -19,125 +18,127 @@ import java.io.InputStream;
  */
 @SuppressWarnings("hiding")
 public abstract class RdfGraphEnd extends ProtoMessage<RdfGraphEnd> implements Cloneable {
-  /**
-   * @return a new empty instance of {@code Mutable}
-   */
-  public static Mutable newInstance() {
-    return new Mutable();
-  }
 
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof RdfGraphEnd)) {
-      return false;
-    }
-    RdfGraphEnd other = (RdfGraphEnd) o;
-    return true;
-  }
+    private RdfGraphEnd() {}
 
-  @Override
-  public void writeTo(final CodedOutputStream output) throws IOException {
-  }
-
-  @Override
-  protected int computeSerializedSize() {
-    int size = 0;
-    return size;
-  }
-
-  @Override
-  public Mutable clone() {
-    return newInstance().copyFrom(this);
-  }
-
-  public static RdfGraphEnd parseFrom(final byte[] data) throws InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(newInstance(), data);
-  }
-
-  public static RdfGraphEnd parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(newInstance(), input);
-  }
-
-  public static RdfGraphEnd parseDelimitedFrom(final InputStream input) throws IOException {
-    return ProtoMessage.parseDelimitedFrom(input, RdfGraphEnd.getFactory());
-  }
-
-  /**
-   * @return factory for creating RdfGraphEnd messages
-   */
-  public static MessageFactory<RdfGraphEnd> getFactory() {
-    return RdfGraphEndFactory.INSTANCE;
-  }
-
-  /**
-   * @return this type's descriptor.
-   */
-  public static Descriptors.Descriptor getDescriptor() {
-    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfGraphEnd_descriptor;
-  }
-
-  private enum RdfGraphEndFactory implements MessageFactory<RdfGraphEnd> {
-    INSTANCE;
-
-    @Override
-    public RdfGraphEnd create() {
-      return RdfGraphEnd.newInstance();
-    }
-  }
-
-  /**
-   * Mutable subclass of the parent class.
-   * You can call setters on this class to set the values.
-   * When passing the constructed message to the serializer,
-   * you should use the parent class (using .asImmutable()) to
-   * ensure the message won't be modified by accident.
-   */
-  public static final class Mutable extends RdfGraphEnd {
-    private Mutable() {
+    /**
+     * @return a new empty instance of {@code Mutable}
+     */
+    public static Mutable newInstance() {
+        return new Mutable();
     }
 
     @Override
-    public Mutable copyFrom(final RdfGraphEnd other) {
-      cachedSize = other.cachedSize;
-      return this;
-    }
-
-    @Override
-    public Mutable mergeFrom(final RdfGraphEnd other) {
-      cachedSize = -1;
-      return this;
-    }
-
-    @Override
-    @SuppressWarnings("fallthrough")
-    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-      // Enabled Fall-Through Optimization
-      final CodedInputStream input = inputLimited.in();
-      int tag = input.readTag();
-      while (true) {
-        switch (tag) {
-          case 0: {
-            return this;
-          }
-          default: {
-            if (!input.skipField(tag)) {
-              return this;
-            }
-            tag = input.readTag();
-            break;
-          }
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
         }
-      }
+        if (!(o instanceof RdfGraphEnd)) {
+            return false;
+        }
+        RdfGraphEnd other = (RdfGraphEnd) o;
+        return true;
+    }
+
+    @Override
+    public void writeTo(final CodedOutputStream output) throws IOException {}
+
+    @Override
+    protected int computeSerializedSize() {
+        int size = 0;
+        return size;
+    }
+
+    @Override
+    public Mutable clone() {
+        return newInstance().copyFrom(this);
+    }
+
+    public static RdfGraphEnd parseFrom(final byte[] data) throws InvalidProtocolBufferException {
+        return ProtoMessage.mergeFrom(newInstance(), data);
+    }
+
+    public static RdfGraphEnd parseFrom(final LimitedCodedInputStream input) throws IOException {
+        return ProtoMessage.mergeFrom(newInstance(), input);
+    }
+
+    public static RdfGraphEnd parseDelimitedFrom(final InputStream input) throws IOException {
+        return ProtoMessage.parseDelimitedFrom(input, RdfGraphEnd.getFactory());
     }
 
     /**
-     * Returns this message as an immutable message, without any copies.
+     * @return factory for creating RdfGraphEnd messages
      */
-    public RdfGraphEnd asImmutable() {
-      return this;
+    public static MessageFactory<RdfGraphEnd> getFactory() {
+        return RdfGraphEndFactory.INSTANCE;
     }
-  }
+
+    /**
+     * @return this type's descriptor.
+     */
+    public static Descriptors.Descriptor getDescriptor() {
+        return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfGraphEnd_descriptor;
+    }
+
+    private enum RdfGraphEndFactory implements MessageFactory<RdfGraphEnd> {
+        INSTANCE;
+
+        @Override
+        public RdfGraphEnd create() {
+            return RdfGraphEnd.newInstance();
+        }
+    }
+
+    /**
+     * Mutable subclass of the parent class.
+     * You can call setters on this class to set the values.
+     * When passing the constructed message to the serializer,
+     * you should use the parent class (using .asImmutable()) to
+     * ensure the message won't be modified by accident.
+     */
+    public static final class Mutable extends RdfGraphEnd {
+
+        private Mutable() {}
+
+        @Override
+        public Mutable copyFrom(final RdfGraphEnd other) {
+            cachedSize = other.cachedSize;
+            return this;
+        }
+
+        @Override
+        public Mutable mergeFrom(final RdfGraphEnd other) {
+            cachedSize = -1;
+            return this;
+        }
+
+        @Override
+        @SuppressWarnings("fallthrough")
+        public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+            // Enabled Fall-Through Optimization
+            final CodedInputStream input = inputLimited.in();
+            int tag = input.readTag();
+            while (true) {
+                switch (tag) {
+                    case 0: {
+                        return this;
+                    }
+                    default: {
+                        if (!input.skipField(tag)) {
+                            return this;
+                        }
+                        tag = input.readTag();
+                        break;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Returns this message as an immutable message, without any copies.
+         */
+        public RdfGraphEnd asImmutable() {
+            return this;
+        }
+    }
 }

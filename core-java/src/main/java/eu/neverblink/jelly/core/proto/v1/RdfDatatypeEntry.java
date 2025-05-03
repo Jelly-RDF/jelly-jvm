@@ -8,7 +8,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -19,207 +18,208 @@ import java.io.InputStream;
  */
 @SuppressWarnings("hiding")
 public abstract class RdfDatatypeEntry extends ProtoMessage<RdfDatatypeEntry> implements Cloneable {
-  /**
-   * <code>optional uint32 id = 1;</code>
-   */
-  protected int id;
 
-  /**
-   * <code>optional string value = 2;</code>
-   */
-  protected String value_ = "";
+    /**
+     * <code>optional uint32 id = 1;</code>
+     */
+    protected int id;
 
-  /**
-   * @return a new empty instance of {@code Mutable}
-   */
-  public static Mutable newInstance() {
-    return new Mutable();
-  }
+    /**
+     * <code>optional string value = 2;</code>
+     */
+    protected String value_ = "";
 
-  /**
-   * <code>optional uint32 id = 1;</code>
-   * @return the id
-   */
-  public int getId() {
-    return id;
-  }
+    private RdfDatatypeEntry() {}
 
-  /**
-   * <code>optional string value = 2;</code>
-   * @return the value_
-   */
-  public String getValue() {
-    return value_;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof RdfDatatypeEntry)) {
-      return false;
-    }
-    RdfDatatypeEntry other = (RdfDatatypeEntry) o;
-    return id == other.id
-      && value_.equals(other.value_);
-  }
-
-  @Override
-  public void writeTo(final CodedOutputStream output) throws IOException {
-    if (id != 0) {
-      output.writeRawByte((byte) 8);
-      output.writeUInt32NoTag(id);
-    }
-    if (!value_.isEmpty()) {
-      output.writeRawByte((byte) 18);
-      output.writeStringNoTag(value_);
-    }
-  }
-
-  @Override
-  protected int computeSerializedSize() {
-    int size = 0;
-    if (id != 0) {
-      size += 1 + CodedOutputStream.computeUInt32SizeNoTag(id);
-    }
-    if (!value_.isEmpty()) {
-      size += 1 + CodedOutputStream.computeStringSizeNoTag(value_);
-    }
-    return size;
-  }
-
-  @Override
-  public Mutable clone() {
-    return newInstance().copyFrom(this);
-  }
-
-  public static RdfDatatypeEntry parseFrom(final byte[] data) throws
-      InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(newInstance(), data);
-  }
-
-  public static RdfDatatypeEntry parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(newInstance(), input);
-  }
-
-  public static RdfDatatypeEntry parseDelimitedFrom(final InputStream input) throws IOException {
-    return ProtoMessage.parseDelimitedFrom(input, RdfDatatypeEntry.getFactory());
-  }
-
-  /**
-   * @return factory for creating RdfDatatypeEntry messages
-   */
-  public static MessageFactory<RdfDatatypeEntry> getFactory() {
-    return RdfDatatypeEntryFactory.INSTANCE;
-  }
-
-  /**
-   * @return this type's descriptor.
-   */
-  public static Descriptors.Descriptor getDescriptor() {
-    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfDatatypeEntry_descriptor;
-  }
-
-  private enum RdfDatatypeEntryFactory implements MessageFactory<RdfDatatypeEntry> {
-    INSTANCE;
-
-    @Override
-    public RdfDatatypeEntry create() {
-      return RdfDatatypeEntry.newInstance();
-    }
-  }
-
-  /**
-   * Mutable subclass of the parent class.
-   * You can call setters on this class to set the values.
-   * When passing the constructed message to the serializer,
-   * you should use the parent class (using .asImmutable()) to
-   * ensure the message won't be modified by accident.
-   */
-  public static final class Mutable extends RdfDatatypeEntry {
-    private Mutable() {
+    /**
+     * @return a new empty instance of {@code Mutable}
+     */
+    public static Mutable newInstance() {
+        return new Mutable();
     }
 
     /**
      * <code>optional uint32 id = 1;</code>
-     * @param value the id to set
-     * @return this
+     * @return the id
      */
-    public Mutable setId(final int value) {
-      id = value;
-      return this;
+    public int getId() {
+        return id;
     }
 
     /**
      * <code>optional string value = 2;</code>
-     * @param value the value_ to set
-     * @return this
+     * @return the value_
      */
-    public Mutable setValue(final String value) {
-      value_ = value;
-      return this;
+    public String getValue() {
+        return value_;
     }
 
     @Override
-    public Mutable copyFrom(final RdfDatatypeEntry other) {
-      cachedSize = other.cachedSize;
-      id = other.id;
-      value_ = other.value_;
-      return this;
-    }
-
-    @Override
-    public Mutable mergeFrom(final RdfDatatypeEntry other) {
-      cachedSize = -1;
-      setId(other.id);
-      value_ = other.value_;
-      return this;
-    }
-
-    @Override
-    @SuppressWarnings("fallthrough")
-    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-      // Enabled Fall-Through Optimization
-      final CodedInputStream input = inputLimited.in();
-      int tag = input.readTag();
-      while (true) {
-        switch (tag) {
-          case 8: {
-            // id
-            id = input.readUInt32();
-            tag = input.readTag();
-            if (tag != 18) {
-              break;
-            }
-          }
-          case 18: {
-            // value_
-            value_ = input.readStringRequireUtf8();
-            tag = input.readTag();
-            if (tag != 0) {
-              break;
-            }
-          }
-          case 0: {
-            return this;
-          }
-          default: {
-            if (!input.skipField(tag)) {
-              return this;
-            }
-            tag = input.readTag();
-            break;
-          }
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
         }
-      }
+        if (!(o instanceof RdfDatatypeEntry)) {
+            return false;
+        }
+        RdfDatatypeEntry other = (RdfDatatypeEntry) o;
+        return id == other.id && value_.equals(other.value_);
+    }
+
+    @Override
+    public void writeTo(final CodedOutputStream output) throws IOException {
+        if (id != 0) {
+            output.writeRawByte((byte) 8);
+            output.writeUInt32NoTag(id);
+        }
+        if (!value_.isEmpty()) {
+            output.writeRawByte((byte) 18);
+            output.writeStringNoTag(value_);
+        }
+    }
+
+    @Override
+    protected int computeSerializedSize() {
+        int size = 0;
+        if (id != 0) {
+            size += 1 + CodedOutputStream.computeUInt32SizeNoTag(id);
+        }
+        if (!value_.isEmpty()) {
+            size += 1 + CodedOutputStream.computeStringSizeNoTag(value_);
+        }
+        return size;
+    }
+
+    @Override
+    public Mutable clone() {
+        return newInstance().copyFrom(this);
+    }
+
+    public static RdfDatatypeEntry parseFrom(final byte[] data) throws InvalidProtocolBufferException {
+        return ProtoMessage.mergeFrom(newInstance(), data);
+    }
+
+    public static RdfDatatypeEntry parseFrom(final LimitedCodedInputStream input) throws IOException {
+        return ProtoMessage.mergeFrom(newInstance(), input);
+    }
+
+    public static RdfDatatypeEntry parseDelimitedFrom(final InputStream input) throws IOException {
+        return ProtoMessage.parseDelimitedFrom(input, RdfDatatypeEntry.getFactory());
     }
 
     /**
-     * Returns this message as an immutable message, without any copies.
+     * @return factory for creating RdfDatatypeEntry messages
      */
-    public RdfDatatypeEntry asImmutable() {
-      return this;
+    public static MessageFactory<RdfDatatypeEntry> getFactory() {
+        return RdfDatatypeEntryFactory.INSTANCE;
     }
-  }
+
+    /**
+     * @return this type's descriptor.
+     */
+    public static Descriptors.Descriptor getDescriptor() {
+        return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfDatatypeEntry_descriptor;
+    }
+
+    private enum RdfDatatypeEntryFactory implements MessageFactory<RdfDatatypeEntry> {
+        INSTANCE;
+
+        @Override
+        public RdfDatatypeEntry create() {
+            return RdfDatatypeEntry.newInstance();
+        }
+    }
+
+    /**
+     * Mutable subclass of the parent class.
+     * You can call setters on this class to set the values.
+     * When passing the constructed message to the serializer,
+     * you should use the parent class (using .asImmutable()) to
+     * ensure the message won't be modified by accident.
+     */
+    public static final class Mutable extends RdfDatatypeEntry {
+
+        private Mutable() {}
+
+        /**
+         * <code>optional uint32 id = 1;</code>
+         * @param value the id to set
+         * @return this
+         */
+        public Mutable setId(final int value) {
+            id = value;
+            return this;
+        }
+
+        /**
+         * <code>optional string value = 2;</code>
+         * @param value the value_ to set
+         * @return this
+         */
+        public Mutable setValue(final String value) {
+            value_ = value;
+            return this;
+        }
+
+        @Override
+        public Mutable copyFrom(final RdfDatatypeEntry other) {
+            cachedSize = other.cachedSize;
+            id = other.id;
+            value_ = other.value_;
+            return this;
+        }
+
+        @Override
+        public Mutable mergeFrom(final RdfDatatypeEntry other) {
+            cachedSize = -1;
+            setId(other.id);
+            value_ = other.value_;
+            return this;
+        }
+
+        @Override
+        @SuppressWarnings("fallthrough")
+        public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+            // Enabled Fall-Through Optimization
+            final CodedInputStream input = inputLimited.in();
+            int tag = input.readTag();
+            while (true) {
+                switch (tag) {
+                    case 8: {
+                        // id
+                        id = input.readUInt32();
+                        tag = input.readTag();
+                        if (tag != 18) {
+                            break;
+                        }
+                    }
+                    case 18: {
+                        // value_
+                        value_ = input.readStringRequireUtf8();
+                        tag = input.readTag();
+                        if (tag != 0) {
+                            break;
+                        }
+                    }
+                    case 0: {
+                        return this;
+                    }
+                    default: {
+                        if (!input.skipField(tag)) {
+                            return this;
+                        }
+                        tag = input.readTag();
+                        break;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Returns this message as an immutable message, without any copies.
+         */
+        public RdfDatatypeEntry asImmutable() {
+            return this;
+        }
+    }
 }
