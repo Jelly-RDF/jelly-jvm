@@ -186,17 +186,22 @@ lazy val corePatch = (project in file("core-patch"))
     description := "Core code for the RDF Patch Jelly extension.",
     // Add the generated proto classes after transforming them with Scalameta
     Compile / sourceGenerators += Def.task {
-      Generator.gen(
-        inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main",
-        outputDir = sourceManaged.value / "main" / "scalapb",
-        module = "core-patch",
-      )
-    }.dependsOn(rdfProtos / Compile / PB.generate),
+      // Copy from the managed source directory to the output directory
+      val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main"
+      val outputDir = sourceManaged.value / "main" / "protobuf"
+      val javaFiles = (inputDir ** "*.java").get
+      javaFiles.map { file =>
+        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+        IO.copyFile(file, outputFile)
+        outputFile
+      }
+
+    }.dependsOn(rdfProtosJava / Compile / compile),
     Compile / sourceManaged := sourceManaged.value / "main",
     publishArtifact := false, // TODO: remove this when ready
     commonSettings,
   )
-  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(coreJava % "compile->compile;test->test")
 
 lazy val jena = (project in file("jena"))
   .settings(
@@ -212,16 +217,32 @@ lazy val jena = (project in file("jena"))
   )
   .dependsOn(core)
 
+lazy val jenaJava = (project in file("jena-java"))
+  .settings(
+    name := "jelly-jena-java",
+    organization := "eu.neverblink.jelly",
+    description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
+    libraryDependencies ++= Seq(
+      "org.apache.jena" % "jena-core" % jenaV,
+      "org.apache.jena" % "jena-arq" % jenaV,
+      // Integration with Fuseki is optional, so include this dep as "provided"
+      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
+    ),
+    commonSettings,
+  )
+  .dependsOn(coreJava)
+
 lazy val jenaPatch = (project in file("jena-patch"))
   .settings(
     name := "jelly-jena-patch",
+    organization := "eu.neverblink.jelly",
     description := "Jelly-Patch integration for Apache Jena.",
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-rdfpatch" % jenaV,
     ),
     commonSettings,
   )
-  .dependsOn(corePatch, jena)
+  .dependsOn(corePatch, jenaJava)
 
 // jena-plugin is a dummy directory that contains only a symlink (src) to the source code
 // in the jena directory. This way sbt won't shout at us for having two projects in the
@@ -254,13 +275,27 @@ lazy val rdf4j = (project in file("rdf4j"))
   )
   .dependsOn(core)
 
+lazy val rdf4jJava = (project in file("rdf4j-java"))
+  .settings(
+    name := "jelly-rdf4j-java",
+    organization := "eu.neverblink.jelly",
+    description := "Jelly parsers, serializers, and other utilities for RDF4J.",
+    libraryDependencies ++= Seq(
+      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
+    ),
+    commonSettings,
+  )
+  .dependsOn(coreJava)
+
 lazy val rdf4jPatch = (project in file("rdf4j-patch"))
   .settings(
     name := "jelly-rdf4j-patch",
+    organization := "eu.neverblink.jelly",
     description := "Jelly-Patch integration for RDF4J.",
     commonSettings,
   )
-  .dependsOn(corePatch, rdf4j)
+  .dependsOn(corePatch, rdf4jJava)
 
 lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
   .settings(
@@ -347,9 +382,9 @@ lazy val integrationTests = (project in file("integration-tests"))
   .dependsOn(
     stream,
     jena % "compile->compile;test->test",
-    jenaPatch % "compile->compile;test->test",
+//    jenaPatch % "compile->compile;test->test",
     rdf4j,
-    rdf4jPatch,
+//    rdf4jPatch,
     titaniumRdfApi,
   )
 

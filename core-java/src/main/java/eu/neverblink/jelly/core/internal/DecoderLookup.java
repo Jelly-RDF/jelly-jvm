@@ -1,9 +1,12 @@
 package eu.neverblink.jelly.core.internal;
 
+import eu.neverblink.jelly.core.InternalApi;
+
 /**
  * Simple, array-based lookup for the protobuf decoder.
  * @param <T> type of the value
  */
+@InternalApi
 public class DecoderLookup<T> {
 
     private int lastSetId = -1;

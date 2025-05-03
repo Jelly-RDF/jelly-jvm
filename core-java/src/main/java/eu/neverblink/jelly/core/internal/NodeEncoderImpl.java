@@ -15,6 +15,7 @@ import java.util.Objects;
  *
  * @param <TNode> The type of RDF nodes used by the RDF library.
  */
+@InternalApi
 final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     /**
@@ -122,17 +123,25 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     /**
      * Create a new NodeEncoder using the default cache size heuristics from the options.
-     * @param options The options to use
      * @param bufferAppender The buffer appender to use
+     * @param maxPrefixTableSize The maximum size of the prefix table
+     * @param maxNameTableSize The maximum size of the name table
+     * @param maxDatatypeTableSize The maximum size of the datatype table
+     * @return A new NodeEncoder
      */
-    public static <TNode> NodeEncoder<TNode> create(RdfStreamOptions options, RowBufferAppender bufferAppender) {
+    public static <TNode> NodeEncoder<TNode> create(
+        RowBufferAppender bufferAppender,
+        int maxPrefixTableSize,
+        int maxNameTableSize,
+        int maxDatatypeTableSize
+    ) {
         return new NodeEncoderImpl<>(
-            options.getMaxPrefixTableSize(),
-            options.getMaxNameTableSize(),
-            options.getMaxDatatypeTableSize(),
-            Math.max(Math.min(options.getMaxNameTableSize(), 1024), 256),
-            options.getMaxNameTableSize(),
-            Math.max(Math.min(options.getMaxNameTableSize(), 1024), 256),
+            maxPrefixTableSize,
+            maxNameTableSize,
+            maxDatatypeTableSize,
+            Math.max(Math.min(maxNameTableSize, 1024), 256),
+            maxNameTableSize,
+            Math.max(Math.min(maxNameTableSize, 1024), 256),
             bufferAppender
         );
     }

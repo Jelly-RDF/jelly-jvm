@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.internal;
 
+import eu.neverblink.jelly.core.InternalApi;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -8,6 +9,7 @@ import java.util.Objects;
  * This is a very efficient implementation of an LRU cache that uses as few allocations as possible.
  * The table is implemented as a doubly linked list in an array.
  */
+@InternalApi
 final class EncoderLookup {
 
     /**

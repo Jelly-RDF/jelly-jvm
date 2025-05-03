@@ -2,6 +2,7 @@ package eu.neverblink.jelly.core.utils;
 
 import com.google.protobuf.CodedOutputStream;
 import java.io.*;
+import java.util.function.Consumer;
 
 public class IoUtils {
 
@@ -57,5 +58,42 @@ public class IoUtils {
         codedOutput.writeUInt32NoTag(nonDelimitedFrame.length);
         codedOutput.flush();
         output.write(nonDelimitedFrame);
+    }
+
+    /**
+     * Functional interface for processing frames from an input stream.
+     * @param <TFrame> the type of the frame
+     */
+    @FunctionalInterface
+    public interface FrameProcessor<TFrame> {
+        TFrame apply(InputStream inputStream) throws IOException;
+    }
+
+    /**
+     * Reads a stream of frames from an input stream and processes each frame using the provided frame processor.
+     * @param inputStream the input stream to read from
+     * @param frameProcessor the function to process each frame
+     * @param frameConsumer the consumer to handle each processed frame
+     * @param <TFrame> the type of the frame
+     */
+    public static <TFrame> void readStream(
+        InputStream inputStream,
+        FrameProcessor<TFrame> frameProcessor,
+        Consumer<TFrame> frameConsumer
+    ) throws IOException {
+        while (true) {
+            if (inputStream.available() == 0) {
+                // No more data available, break the loop
+                break;
+            }
+
+            final var maybeFrame = frameProcessor.apply(inputStream);
+            if (maybeFrame == null) {
+                // No more frames available, break the loop
+                break;
+            }
+
+            frameConsumer.accept(maybeFrame);
+        }
     }
 }

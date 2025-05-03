@@ -1,0 +1,114 @@
+package eu.neverblink.jelly.convert.rdf4j.rio;
+
+import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
+import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
+
+import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
+import eu.neverblink.jelly.core.RdfHandler;
+import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
+import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
+import eu.neverblink.jelly.core.utils.IoUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.Collection;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.RioSetting;
+import org.eclipse.rdf4j.rio.helpers.AbstractRDFParser;
+
+public final class JellyParser extends AbstractRDFParser {
+
+    private final Rdf4jConverterFactory converterFactory;
+
+    public JellyParser(Rdf4jConverterFactory converterFactory) {
+        this.converterFactory = converterFactory;
+    }
+
+    @Override
+    public RDFFormat getRDFFormat() {
+        return JELLY;
+    }
+
+    @Override
+    public Collection<RioSetting<?>> getSupportedSettings() {
+        final Collection<RioSetting<?>> settings = super.getSupportedSettings();
+        settings.add(JellyParserSettings.PROTO_VERSION);
+        settings.add(JellyParserSettings.ALLOW_GENERALIZED_STATEMENTS);
+        settings.add(JellyParserSettings.ALLOW_RDF_STAR);
+        settings.add(JellyParserSettings.MAX_NAME_TABLE_SIZE);
+        settings.add(JellyParserSettings.MAX_PREFIX_TABLE_SIZE);
+        settings.add(JellyParserSettings.MAX_DATATYPE_TABLE_SIZE);
+        return settings;
+    }
+
+    /**
+     * Read Jelly RDF data from an InputStream.
+     * Automatically detects whether the input is a single frame (non-delimited) or a stream of frames (delimited).
+     */
+    @Override
+    public void parse(InputStream in, String baseURI) throws IOException, RDFParseException, RDFHandlerException {
+        if (in == null) {
+            throw new IllegalArgumentException("Input stream must not be null");
+        }
+
+        final var config = getParserConfig();
+        final var options = RdfStreamOptions.newBuilder()
+            .setGeneralizedStatements(config.get(JellyParserSettings.ALLOW_GENERALIZED_STATEMENTS))
+            .setRdfStar(config.get(JellyParserSettings.ALLOW_RDF_STAR))
+            .setMaxNameTableSize(config.get(JellyParserSettings.MAX_NAME_TABLE_SIZE))
+            .setMaxPrefixTableSize(config.get(JellyParserSettings.MAX_PREFIX_TABLE_SIZE))
+            .setMaxDatatypeTableSize(config.get(JellyParserSettings.MAX_DATATYPE_TABLE_SIZE))
+            .setVersion(config.get(JellyParserSettings.PROTO_VERSION))
+            .build();
+
+        final var handler = new RdfHandler.AnyStatementHandler<Value>() {
+            @Override
+            public void handleNamespace(String prefix, Value namespace) {
+                rdfHandler.handleNamespace(prefix, namespace.stringValue());
+            }
+
+            @Override
+            public void handleQuad(Value subject, Value predicate, Value object, Value graph) {
+                rdfHandler.handleStatement(
+                    valueFactory.createStatement((Resource) subject, (IRI) predicate, object, (Resource) graph)
+                );
+            }
+
+            @Override
+            public void handleTriple(Value subject, Value predicate, Value object) {
+                rdfHandler.handleStatement(valueFactory.createStatement((Resource) subject, (IRI) predicate, object));
+            }
+        };
+
+        final var decoder = converterFactory.anyStatementDecoder(handler, options);
+
+        rdfHandler.startRDF();
+        try {
+            final var delimitingResponse = IoUtils.autodetectDelimiting(in);
+            if (delimitingResponse.isDelimited()) {
+                // Delimited Jelly file
+                // In this case, we can read multiple frames
+                readStream(delimitingResponse.newInput(), RdfStreamFrame::parseDelimitedFrom, frame ->
+                    frame.getRowsList().forEach(decoder::ingestRow)
+                );
+            } else {
+                // Non-delimited Jelly file
+                // In this case, we can only read one frame
+                final var frame = RdfStreamFrame.parseFrom(delimitingResponse.newInput());
+                frame.getRowsList().forEach(decoder::ingestRow);
+            }
+        } finally {
+            rdfHandler.endRDF();
+        }
+    }
+
+    @Override
+    public void parse(Reader reader, String baseURI) throws IOException, RDFParseException, RDFHandlerException {
+        throw new UnsupportedOperationException("Parsing from Reader is not supported.");
+    }
+}

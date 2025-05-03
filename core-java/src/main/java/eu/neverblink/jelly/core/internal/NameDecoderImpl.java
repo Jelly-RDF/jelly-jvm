@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.internal;
 
+import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.NameDecoder;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
@@ -8,9 +9,9 @@ import java.util.function.Function;
 
 /**
  * Class for decoding RDF IRIs from their Jelly representation.
- *
  * @param <TIri> The type of the IRI in the target RDF library.
  */
+@InternalApi
 final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     private static final class NameLookupEntry {
@@ -47,8 +48,8 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      * Creates a new NameDecoder.
      *
      * @param prefixTableSize The size of the prefix lookup table.
-     * @param nameTableSize   The size of the name lookup table.
-     * @param iriFactory      A function that creates an IRI from a string.
+     * @param nameTableSize The size of the name lookup table.
+     * @param iriFactory A function that creates an IRI from a string.
      */
     public NameDecoderImpl(int prefixTableSize, int nameTableSize, Function<String, TIri> iriFactory) {
         this.iriFactory = iriFactory;
@@ -116,10 +117,10 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      * Reconstruct an IRI from its prefix and name ids.
      *
      * @param prefixId prefix ID
-     * @param nameId   name ID
+     * @param nameId name ID
      * @return full IRI combining the prefix and the name
      * @throws RdfProtoDeserializationError if the IRI reference is invalid
-     * @throws NullPointerException         if the IRI reference is invalid
+     * @throws NullPointerException if the IRI reference is invalid
      */
     @SuppressWarnings("unchecked")
     @Override

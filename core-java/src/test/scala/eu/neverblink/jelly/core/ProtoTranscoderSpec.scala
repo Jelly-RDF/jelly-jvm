@@ -78,7 +78,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
           // Decode the output
           val collector = ProtoCollector()
-          val decoder = MockConverterFactory.anyDecoder(collector)
+          val decoder = MockConverterFactory.anyStatementDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
           asScala(out1.getRowsList).foreach(decoder.ingestRow)
           asScala(out2.getRowsList).foreach(decoder.ingestRow)
 
@@ -119,7 +119,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
       for seed <- 1 to 20 do
         f"random seed is $seed" in {
           val collector = ProtoCollector()
-          val decoder = MockConverterFactory.quadsDecoder(collector)
+          val decoder = MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
           val options = JellyOptions.SMALL_ALL_FEATURES.toBuilder
             .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
             .build()

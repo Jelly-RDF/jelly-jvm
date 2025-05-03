@@ -237,7 +237,8 @@ public class JellyOptions {
      *
      * @throws RdfProtoDeserializationError if the table size is not within the supported range.
      */
-    private static void checkTableSize(String name, int size, int supportedSize, int minSize) {
+    @InternalApi
+    public static void checkTableSize(String name, int size, int supportedSize, int minSize) {
         if (size > supportedSize) {
             throw new RdfProtoDeserializationError(
                 "The stream uses a %s table size of %s, which is larger than the maximum supported size of %s.".formatted(
@@ -258,7 +259,7 @@ public class JellyOptions {
         }
     }
 
-    private static void checkTableSize(String name, int size, int supportedSize) {
+    public static void checkTableSize(String name, int size, int supportedSize) {
         checkTableSize(name, size, supportedSize, 0);
     }
 
@@ -272,17 +273,18 @@ public class JellyOptions {
      * @throws RdfProtoDeserializationError if the requested options are not supported.
      */
     private static void checkLogicalStreamType(RdfStreamOptions options, LogicalStreamType expectedLogicalType) {
-        final var logicalType = options.getLogicalType();
-        final var baseLogicalType = LogicalStreamTypeUtils.toBaseType(logicalType);
-        final var physicalType = options.getPhysicalType();
+        final var requestedLogicalType = options.getLogicalType();
+        final var requestedPhysicalType = options.getPhysicalType();
+
+        final var baseLogicalType = LogicalStreamTypeUtils.toBaseType(requestedLogicalType);
 
         final var conflict =
             switch (baseLogicalType) {
-                case LOGICAL_STREAM_TYPE_FLAT_TRIPLES, LOGICAL_STREAM_TYPE_GRAPHS -> switch (physicalType) {
+                case LOGICAL_STREAM_TYPE_FLAT_TRIPLES, LOGICAL_STREAM_TYPE_GRAPHS -> switch (requestedPhysicalType) {
                     case PHYSICAL_STREAM_TYPE_QUADS, PHYSICAL_STREAM_TYPE_GRAPHS -> true;
                     default -> false;
                 };
-                case LOGICAL_STREAM_TYPE_FLAT_QUADS, LOGICAL_STREAM_TYPE_DATASETS -> switch (physicalType) {
+                case LOGICAL_STREAM_TYPE_FLAT_QUADS, LOGICAL_STREAM_TYPE_DATASETS -> switch (requestedPhysicalType) {
                     case PHYSICAL_STREAM_TYPE_TRIPLES -> true;
                     default -> false;
                 };
@@ -292,18 +294,22 @@ public class JellyOptions {
         if (conflict) {
             throw new RdfProtoDeserializationError(
                 "Logical stream type %s is incompatible with physical stream type %s.".formatted(
-                        logicalType,
-                        physicalType
+                        requestedLogicalType,
+                        requestedPhysicalType
                     )
             );
         }
 
-        if (!LogicalStreamTypeUtils.isEqualOrSubtypeOf(logicalType, expectedLogicalType)) {
+        if (expectedLogicalType == LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED) {
+            return;
+        }
+
+        if (!LogicalStreamTypeUtils.isEqualOrSubtypeOf(requestedLogicalType, expectedLogicalType)) {
             throw new RdfProtoDeserializationError(
                 "Expected logical stream type %s, got %s. %s is not a subtype of %s.".formatted(
                         expectedLogicalType,
-                        logicalType,
-                        logicalType,
+                        requestedLogicalType,
+                        requestedLogicalType,
                         expectedLogicalType
                     )
             );

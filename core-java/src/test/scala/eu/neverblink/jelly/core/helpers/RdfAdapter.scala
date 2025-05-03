@@ -179,7 +179,7 @@ object RdfAdapter:
     RdfGraphEnd.newBuilder()
       .build()
 
-  def rdfQuad(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue, graph: RdfGraphValue): RdfQuad = {
+  def rdfQuad(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue, graph: RdfGraphValue = null): RdfQuad = {
     var builder = RdfQuad.newBuilder()
 
     if subject != null then
