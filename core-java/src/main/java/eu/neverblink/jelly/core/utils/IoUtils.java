@@ -83,14 +83,20 @@ public class IoUtils {
     ) {
         while (true) {
             try {
-                final var maybeFrame = frameProcessor.apply(inputStream);
-                if (maybeFrame == null) {
+                if (inputStream.available() == 0) {
+                    // No more data available, break the loop
                     break;
                 }
+
+                final var maybeFrame = frameProcessor.apply(inputStream);
+                if (maybeFrame == null) {
+                    // No more frames available, break the loop
+                    break;
+                }
+                
                 frameConsumer.accept(maybeFrame);
             } catch (IOException e) {
-                // Handle the case where the stream ends unexpectedly
-                break;
+                throw new IllegalStateException("Error reading stream", e);
             }
         }
     }

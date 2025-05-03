@@ -74,4 +74,12 @@ class PatchProtoSpec extends AnyWordSpec, Matchers:
         assertEncodedFrame(decoded, frame)
       }
     }
+
+//    "round-trip in text format" when {
+//      for (desc, frame) <- testCases2 do s"encoding $desc" in {
+//        val str = frame.toProtoString
+//        val decoded = RdfPatchFrame.fromAscii(str)
+//        assertEncodedFrame(decoded, frame)
+//      }
+//    }
   }

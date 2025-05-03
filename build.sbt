@@ -205,7 +205,7 @@ lazy val corePatch = (project in file("core-patch"))
 
 lazy val jena = (project in file("jena"))
   .settings(
-    name := "jelly",
+    name := "jelly-jena",
     description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-core" % jenaV,

@@ -15,11 +15,6 @@ public class LastNodeHolder<TNode> {
     private TNode node = null;
 
     /**
-     * Indicates whether the last node held a value or not.
-     */
-    private boolean hasValue = false;
-
-    /**
      * Get the last node.
      * @return the last node
      */
@@ -33,7 +28,6 @@ public class LastNodeHolder<TNode> {
      */
     public void set(TNode node) {
         this.node = node;
-        this.hasValue = true;
     }
 
     /**
@@ -41,7 +35,7 @@ public class LastNodeHolder<TNode> {
      * @return true if the last node has a value, false otherwise
      */
     public boolean hasValue() {
-        return hasValue;
+        return node != null;
     }
 
     /**
@@ -49,7 +43,7 @@ public class LastNodeHolder<TNode> {
      * @return true if the last node has no value, false otherwise
      */
     public boolean hasNoValue() {
-        return !hasValue;
+        return node == null;
     }
 
     /**
@@ -57,6 +51,5 @@ public class LastNodeHolder<TNode> {
      */
     public void clear() {
         this.node = null;
-        this.hasValue = false;
     }
 }

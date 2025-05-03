@@ -18,6 +18,17 @@ public final class JellyLanguage {
 
     private JellyLanguage() {}
 
+    static {
+        // Force initialize the language before registering it
+        JELLY_LANGUAGE = LangBuilder.create(JELLY_NAME, JELLY_CONTENT_TYPE)
+            .addAltNames("JELLY")
+            .addFileExtensions(JELLY_FILE_EXTENSION)
+            .build();
+
+        // Register the language and formats on static initialization
+        register();
+    }
+
     /**
      * The Jelly language constant for use in Apache Jena RIOT.
      * <p>
@@ -27,10 +38,7 @@ public final class JellyLanguage {
      * If you are not intending to use generalized RDF or RDF-star, you may want to use
      * JellyFormat.JELLY_SMALL_STRICT.
      */
-    public static final Lang JELLY_LANGUAGE = LangBuilder.create(JELLY_NAME, JELLY_CONTENT_TYPE)
-        .addAltNames("JELLY")
-        .addFileExtensions(JELLY_FILE_EXTENSION)
-        .build();
+    public static final Lang JELLY_LANGUAGE;
 
     private static final String SYMBOL_NS = "https://neverblink.eu/jelly/riot/symbols#";
 
