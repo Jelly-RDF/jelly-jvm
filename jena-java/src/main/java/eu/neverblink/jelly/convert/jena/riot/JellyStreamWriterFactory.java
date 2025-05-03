@@ -15,7 +15,7 @@ public final class JellyStreamWriterFactory implements StreamRDFWriterFactory {
     @Override
     public StreamRDF create(OutputStream output, RDFFormat format, Context context) {
         final var converterFactory = new JenaConverterFactory();
-        final var variant = JellyUtils.applyContext(JellyUtils.getVariant(format), context);
+        final var variant = JellyFormatVariant.applyContext(JellyFormatVariant.getVariant(format), context);
         return new JellyStreamWriterAutodetectType(converterFactory, variant, output);
     }
 }

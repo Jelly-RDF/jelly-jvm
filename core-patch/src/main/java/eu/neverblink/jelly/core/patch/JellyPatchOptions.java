@@ -107,6 +107,8 @@ public class JellyPatchOptions {
      * @throws RdfProtoDeserializationError on validation error
      */
     private static void checkBaseCompatibility(RdfPatchOptions requestedOptions, RdfPatchOptions supportedOptions) {
+        // TODO: This method copies logic of JellyOptions. Both options (RdfStreamOptions and RdfPatchOptions) should be
+        //  merged under a common interface.
         if (
             requestedOptions.getVersion() > supportedOptions.getVersion() ||
             requestedOptions.getVersion() > JellyPatchConstants.PROTO_VERSION

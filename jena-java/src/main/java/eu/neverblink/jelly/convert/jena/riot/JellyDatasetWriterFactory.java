@@ -13,6 +13,6 @@ public final class JellyDatasetWriterFactory implements WriterDatasetRIOTFactory
     @Override
     public WriterDatasetRIOT create(RDFFormat syntaxForm) {
         final var converterFactory = new JenaConverterFactory();
-        return new JellyDatasetWriter(converterFactory, JellyUtils.getVariant(syntaxForm));
+        return new JellyDatasetWriter(converterFactory, JellyFormatVariant.getVariant(syntaxForm));
     }
 }

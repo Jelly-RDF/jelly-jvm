@@ -39,7 +39,7 @@ public final class JellyGraphWriter extends WriterGraphRIOTBase {
 
     @Override
     public void write(OutputStream out, Graph graph, PrefixMap prefixMap, String baseURI, Context context) {
-        var variant = JellyUtils.applyContext(formatVariant, context);
+        var variant = JellyFormatVariant.applyContext(formatVariant, context);
         variant = variant.updateOptions(
             variant
                 .getOptions()

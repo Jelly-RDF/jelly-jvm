@@ -10,6 +10,14 @@ import org.apache.jena.fuseki.DEF;
 import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.sys.JenaSubsystemLifecycle;
 
+/**
+ * A Jena module that adds Jelly content type to the list of accepted content types in Fuseki.
+ * This isn't a Fuseki module, because Fuseki modules are not supported in all distributions of Fuseki, see:
+ * <a href="https://github.com/apache/jena/issues/2774">Issue 2774</a>
+ * <p>
+ * This allows users to use the Accept header set to application/x-jelly-rdf to request Jelly RDF responses.
+ * It works for SPARQL CONSTRUCT queries and for the Graph Store Protocol.
+ */
 public final class JellyFusekiLifecycle implements JenaSubsystemLifecycle {
 
     public static final MediaRange JELLY_MEDIA_RANGE = new MediaRange(JELLY_CONTENT_TYPE);

@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.convert.jena.riot;
 
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
+import eu.neverblink.jelly.core.NamespaceDeclaration;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import java.io.OutputStream;
@@ -22,9 +23,8 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
     private final JellyFormatVariant formatVariant;
     private final OutputStream outputStream;
 
-    private record PrefixBacklog(String prefix, String iri) {}
-
-    private final Collection<PrefixBacklog> prefixBacklog = new ArrayList<>();
+    // If we start receiving prefix() calls before the first triple/quad, we need to store them
+    private final Collection<NamespaceDeclaration> prefixBacklog = new ArrayList<>();
 
     private JellyStreamWriter delegatedWriter;
 
@@ -91,7 +91,7 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
         if (delegatedWriter != null) {
             delegatedWriter.prefix(prefix, iri);
         } else {
-            prefixBacklog.add(new PrefixBacklog(prefix, iri));
+            prefixBacklog.add(new NamespaceDeclaration(prefix, iri));
         }
     }
 
@@ -104,7 +104,7 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
 
     private void clearPrefixBacklog() {
         for (final var backlog : prefixBacklog) {
-            delegatedWriter.prefix(backlog.prefix, backlog.iri);
+            delegatedWriter.prefix(backlog.prefix(), backlog.iri());
         }
         prefixBacklog.clear();
     }

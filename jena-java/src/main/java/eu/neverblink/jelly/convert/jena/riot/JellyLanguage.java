@@ -120,6 +120,13 @@ public final class JellyLanguage {
 
     private static volatile boolean isRegistered = false;
 
+    /**
+     * Register the Jelly language and formats in Jena.
+     * <p>
+     * This method is idempotent and should be called automatically when Jena is initialized.
+     * See: <a href="https://jena.apache.org/documentation/notes/system-initialization.html">Jena Documentation</a>
+     * However, you may also want to call this manually if Jena doesn't load the language automatically.
+     */
     public static synchronized void register() {
         if (isRegistered) {
             return;

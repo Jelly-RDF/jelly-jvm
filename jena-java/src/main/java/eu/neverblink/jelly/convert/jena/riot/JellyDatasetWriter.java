@@ -39,7 +39,7 @@ public final class JellyDatasetWriter extends WriterDatasetRIOTBase {
 
     @Override
     public void write(OutputStream out, DatasetGraph dataset, PrefixMap prefixMap, String baseURI, Context context) {
-        var variant = JellyUtils.applyContext(formatVariant, context);
+        var variant = JellyFormatVariant.applyContext(formatVariant, context);
         variant = variant.updateOptions(
             variant
                 .getOptions()

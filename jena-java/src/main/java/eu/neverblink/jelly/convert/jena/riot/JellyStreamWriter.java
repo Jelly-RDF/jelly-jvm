@@ -83,6 +83,7 @@ public final class JellyStreamWriter implements StreamRDF {
 
     @Override
     public void finish() {
+        // Flush the buffer and finish the stream
         if (!formatVariant.isDelimited()) {
             // Non-delimited variant – whole stream in one frame
             final var frame = RdfStreamFrame.newBuilder().addAllRows(buffer).build();
