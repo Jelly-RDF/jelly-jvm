@@ -65,3 +65,7 @@ You can also join the **[Jelly Discord chat](https://discord.gg/A8sN5XwVa5)** to
 The Jelly-JVM libraries are licensed under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0).
 
 Jelly-JVM was written by [Piotr Sowiński](https://ostrzyciel.eu) ([Ostrzyciel](https://github.com/Ostrzyciel)).
+
+----
+
+The development of the Jelly protocol, its implementations, and supporting tooling was co-funded by the European Union. **[More details](https://w3id.org/jelly/dev/licensing/projects)**.

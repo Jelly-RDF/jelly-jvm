@@ -85,5 +85,10 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
 
 Community support is available on the **[Jelly Discord chat](https://discord.gg/A8sN5XwVa5)**.
 
+----
+
+The development of the Jelly protocol, its implementations, and supporting tooling was co-funded by the European Union. **[More details]({{ proto_link( 'licensing/projects' ) }})**.
+
+![European Funds for Smart Economy, Republic of Poland, Co-funded by the European Union](assets/featured/feng_rp_eu.png)
 
 [^1]: Scala 2.13-compatible builds of Jelly-JVM are available for Jelly-JVM 1.0.x. Scala 2 support was removed in subsequent versions. [See more details](https://w3id.org/jelly/jelly-jvm/1.0.x/user/scala2).
