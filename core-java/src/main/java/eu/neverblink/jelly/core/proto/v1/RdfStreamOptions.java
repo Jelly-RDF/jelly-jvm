@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.proto.v1;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
@@ -13,62 +14,61 @@ import java.io.InputStream;
 
 /**
  * Protobuf type {@code RdfStreamOptions}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 @SuppressWarnings("hiding")
-public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> implements Cloneable {
+public abstract class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> implements Cloneable {
   /**
    * <code>optional string stream_name = 1;</code>
    */
-  private String streamName = "";
+  protected String streamName = "";
 
   /**
    * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.PhysicalStreamType physical_type = 2;</code>
    */
-  private int physicalType;
+  protected int physicalType;
 
   /**
    * <code>optional bool generalized_statements = 3;</code>
    */
-  private boolean generalizedStatements;
+  protected boolean generalizedStatements;
 
   /**
    * <code>optional bool rdf_star = 4;</code>
    */
-  private boolean rdfStar;
+  protected boolean rdfStar;
 
   /**
    * <code>optional uint32 max_name_table_size = 9;</code>
    */
-  private int maxNameTableSize;
+  protected int maxNameTableSize;
 
   /**
    * <code>optional uint32 max_prefix_table_size = 10;</code>
    */
-  private int maxPrefixTableSize;
+  protected int maxPrefixTableSize;
 
   /**
    * <code>optional uint32 max_datatype_table_size = 11;</code>
    */
-  private int maxDatatypeTableSize;
+  protected int maxDatatypeTableSize;
 
   /**
    * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType logical_type = 14;</code>
    */
-  private int logicalType;
+  protected int logicalType;
 
   /**
    * <code>optional uint32 version = 15;</code>
    */
-  private int version;
-
-  private RdfStreamOptions() {
-  }
+  protected int version;
 
   /**
-   * @return a new empty instance of {@code RdfStreamOptions}
+   * @return a new empty instance of {@code Mutable}
    */
-  public static RdfStreamOptions newInstance() {
-    return new RdfStreamOptions();
+  public static Mutable newInstance() {
+    return new Mutable();
   }
 
   /**
@@ -77,16 +77,6 @@ public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> imple
    */
   public String getStreamName() {
     return streamName;
-  }
-
-  /**
-   * <code>optional string stream_name = 1;</code>
-   * @param value the streamName to set
-   * @return this
-   */
-  public RdfStreamOptions setStreamName(final String value) {
-    streamName = value;
-    return this;
   }
 
   /**
@@ -122,31 +112,11 @@ public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> imple
   }
 
   /**
-   * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.PhysicalStreamType physical_type = 2;</code>
-   * @param value the physicalType to set
-   * @return this
-   */
-  public RdfStreamOptions setPhysicalType(final PhysicalStreamType value) {
-    physicalType = value.getNumber();
-    return this;
-  }
-
-  /**
    * <code>optional bool generalized_statements = 3;</code>
    * @return the generalizedStatements
    */
   public boolean getGeneralizedStatements() {
     return generalizedStatements;
-  }
-
-  /**
-   * <code>optional bool generalized_statements = 3;</code>
-   * @param value the generalizedStatements to set
-   * @return this
-   */
-  public RdfStreamOptions setGeneralizedStatements(final boolean value) {
-    generalizedStatements = value;
-    return this;
   }
 
   /**
@@ -158,31 +128,11 @@ public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> imple
   }
 
   /**
-   * <code>optional bool rdf_star = 4;</code>
-   * @param value the rdfStar to set
-   * @return this
-   */
-  public RdfStreamOptions setRdfStar(final boolean value) {
-    rdfStar = value;
-    return this;
-  }
-
-  /**
    * <code>optional uint32 max_name_table_size = 9;</code>
    * @return the maxNameTableSize
    */
   public int getMaxNameTableSize() {
     return maxNameTableSize;
-  }
-
-  /**
-   * <code>optional uint32 max_name_table_size = 9;</code>
-   * @param value the maxNameTableSize to set
-   * @return this
-   */
-  public RdfStreamOptions setMaxNameTableSize(final int value) {
-    maxNameTableSize = value;
-    return this;
   }
 
   /**
@@ -194,31 +144,11 @@ public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> imple
   }
 
   /**
-   * <code>optional uint32 max_prefix_table_size = 10;</code>
-   * @param value the maxPrefixTableSize to set
-   * @return this
-   */
-  public RdfStreamOptions setMaxPrefixTableSize(final int value) {
-    maxPrefixTableSize = value;
-    return this;
-  }
-
-  /**
    * <code>optional uint32 max_datatype_table_size = 11;</code>
    * @return the maxDatatypeTableSize
    */
   public int getMaxDatatypeTableSize() {
     return maxDatatypeTableSize;
-  }
-
-  /**
-   * <code>optional uint32 max_datatype_table_size = 11;</code>
-   * @param value the maxDatatypeTableSize to set
-   * @return this
-   */
-  public RdfStreamOptions setMaxDatatypeTableSize(final int value) {
-    maxDatatypeTableSize = value;
-    return this;
   }
 
   /**
@@ -254,61 +184,11 @@ public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> imple
   }
 
   /**
-   * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType logical_type = 14;</code>
-   * @param value the logicalType to set
-   * @return this
-   */
-  public RdfStreamOptions setLogicalType(final LogicalStreamType value) {
-    logicalType = value.getNumber();
-    return this;
-  }
-
-  /**
    * <code>optional uint32 version = 15;</code>
    * @return the version
    */
   public int getVersion() {
     return version;
-  }
-
-  /**
-   * <code>optional uint32 version = 15;</code>
-   * @param value the version to set
-   * @return this
-   */
-  public RdfStreamOptions setVersion(final int value) {
-    version = value;
-    return this;
-  }
-
-  @Override
-  public RdfStreamOptions copyFrom(final RdfStreamOptions other) {
-    cachedSize = other.cachedSize;
-    streamName = other.streamName;
-    physicalType = other.physicalType;
-    generalizedStatements = other.generalizedStatements;
-    rdfStar = other.rdfStar;
-    maxNameTableSize = other.maxNameTableSize;
-    maxPrefixTableSize = other.maxPrefixTableSize;
-    maxDatatypeTableSize = other.maxDatatypeTableSize;
-    logicalType = other.logicalType;
-    version = other.version;
-    return this;
-  }
-
-  @Override
-  public RdfStreamOptions mergeFrom(final RdfStreamOptions other) {
-    cachedSize = -1;
-    streamName = other.streamName;
-    setPhysicalTypeValue(other.physicalType);
-    setGeneralizedStatements(other.generalizedStatements);
-    setRdfStar(other.rdfStar);
-    setMaxNameTableSize(other.maxNameTableSize);
-    setMaxPrefixTableSize(other.maxPrefixTableSize);
-    setMaxDatatypeTableSize(other.maxDatatypeTableSize);
-    setLogicalTypeValue(other.logicalType);
-    setVersion(other.version);
-    return this;
   }
 
   @Override
@@ -405,117 +285,17 @@ public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> imple
   }
 
   @Override
-  @SuppressWarnings("fallthrough")
-  public RdfStreamOptions mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-    // Enabled Fall-Through Optimization
-    final CodedInputStream input = inputLimited.in();
-    int tag = input.readTag();
-    while (true) {
-      switch (tag) {
-        case 10: {
-          // streamName
-          streamName = input.readStringRequireUtf8();
-          tag = input.readTag();
-          if (tag != 16) {
-            break;
-          }
-        }
-        case 16: {
-          // physicalType
-          final int value = input.readInt32();
-          if (PhysicalStreamType.forNumber(value) != null) {
-            physicalType = value;
-          }
-          tag = input.readTag();
-          if (tag != 24) {
-            break;
-          }
-        }
-        case 24: {
-          // generalizedStatements
-          generalizedStatements = input.readBool();
-          tag = input.readTag();
-          if (tag != 32) {
-            break;
-          }
-        }
-        case 32: {
-          // rdfStar
-          rdfStar = input.readBool();
-          tag = input.readTag();
-          if (tag != 72) {
-            break;
-          }
-        }
-        case 72: {
-          // maxNameTableSize
-          maxNameTableSize = input.readUInt32();
-          tag = input.readTag();
-          if (tag != 80) {
-            break;
-          }
-        }
-        case 80: {
-          // maxPrefixTableSize
-          maxPrefixTableSize = input.readUInt32();
-          tag = input.readTag();
-          if (tag != 88) {
-            break;
-          }
-        }
-        case 88: {
-          // maxDatatypeTableSize
-          maxDatatypeTableSize = input.readUInt32();
-          tag = input.readTag();
-          if (tag != 112) {
-            break;
-          }
-        }
-        case 112: {
-          // logicalType
-          final int value = input.readInt32();
-          if (LogicalStreamType.forNumber(value) != null) {
-            logicalType = value;
-          }
-          tag = input.readTag();
-          if (tag != 120) {
-            break;
-          }
-        }
-        case 120: {
-          // version
-          version = input.readUInt32();
-          tag = input.readTag();
-          if (tag != 0) {
-            break;
-          }
-        }
-        case 0: {
-          return this;
-        }
-        default: {
-          if (!input.skipField(tag)) {
-            return this;
-          }
-          tag = input.readTag();
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
-  public RdfStreamOptions clone() {
-    return new RdfStreamOptions().copyFrom(this);
+  public Mutable clone() {
+    return newInstance().copyFrom(this);
   }
 
   public static RdfStreamOptions parseFrom(final byte[] data) throws
       InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(new RdfStreamOptions(), data);
+    return ProtoMessage.mergeFrom(newInstance(), data);
   }
 
   public static RdfStreamOptions parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(new RdfStreamOptions(), input);
+    return ProtoMessage.mergeFrom(newInstance(), input);
   }
 
   public static RdfStreamOptions parseDelimitedFrom(final InputStream input) throws IOException {
@@ -529,12 +309,258 @@ public final class RdfStreamOptions extends ProtoMessage<RdfStreamOptions> imple
     return RdfStreamOptionsFactory.INSTANCE;
   }
 
+  /**
+   * @return this type's descriptor.
+   */
+  public static Descriptors.Descriptor getDescriptor() {
+    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfStreamOptions_descriptor;
+  }
+
   private enum RdfStreamOptionsFactory implements MessageFactory<RdfStreamOptions> {
     INSTANCE;
 
     @Override
     public RdfStreamOptions create() {
       return RdfStreamOptions.newInstance();
+    }
+  }
+
+  /**
+   * Mutable subclass of the parent class.
+   * You can call setters on this class to set the values.
+   * When passing the constructed message to the serializer,
+   * you should use the parent class (using .asImmutable()) to
+   * ensure the message won't be modified by accident.
+   */
+  public static final class Mutable extends RdfStreamOptions {
+    private Mutable() {
+    }
+
+    /**
+     * <code>optional string stream_name = 1;</code>
+     * @param value the streamName to set
+     * @return this
+     */
+    public Mutable setStreamName(final String value) {
+      streamName = value;
+      return this;
+    }
+
+    /**
+     * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.PhysicalStreamType physical_type = 2;</code>
+     * @param value the physicalType to set
+     * @return this
+     */
+    public Mutable setPhysicalType(final PhysicalStreamType value) {
+      physicalType = value.getNumber();
+      return this;
+    }
+
+    /**
+     * <code>optional bool generalized_statements = 3;</code>
+     * @param value the generalizedStatements to set
+     * @return this
+     */
+    public Mutable setGeneralizedStatements(final boolean value) {
+      generalizedStatements = value;
+      return this;
+    }
+
+    /**
+     * <code>optional bool rdf_star = 4;</code>
+     * @param value the rdfStar to set
+     * @return this
+     */
+    public Mutable setRdfStar(final boolean value) {
+      rdfStar = value;
+      return this;
+    }
+
+    /**
+     * <code>optional uint32 max_name_table_size = 9;</code>
+     * @param value the maxNameTableSize to set
+     * @return this
+     */
+    public Mutable setMaxNameTableSize(final int value) {
+      maxNameTableSize = value;
+      return this;
+    }
+
+    /**
+     * <code>optional uint32 max_prefix_table_size = 10;</code>
+     * @param value the maxPrefixTableSize to set
+     * @return this
+     */
+    public Mutable setMaxPrefixTableSize(final int value) {
+      maxPrefixTableSize = value;
+      return this;
+    }
+
+    /**
+     * <code>optional uint32 max_datatype_table_size = 11;</code>
+     * @param value the maxDatatypeTableSize to set
+     * @return this
+     */
+    public Mutable setMaxDatatypeTableSize(final int value) {
+      maxDatatypeTableSize = value;
+      return this;
+    }
+
+    /**
+     * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.LogicalStreamType logical_type = 14;</code>
+     * @param value the logicalType to set
+     * @return this
+     */
+    public Mutable setLogicalType(final LogicalStreamType value) {
+      logicalType = value.getNumber();
+      return this;
+    }
+
+    /**
+     * <code>optional uint32 version = 15;</code>
+     * @param value the version to set
+     * @return this
+     */
+    public Mutable setVersion(final int value) {
+      version = value;
+      return this;
+    }
+
+    @Override
+    public Mutable copyFrom(final RdfStreamOptions other) {
+      cachedSize = other.cachedSize;
+      streamName = other.streamName;
+      physicalType = other.physicalType;
+      generalizedStatements = other.generalizedStatements;
+      rdfStar = other.rdfStar;
+      maxNameTableSize = other.maxNameTableSize;
+      maxPrefixTableSize = other.maxPrefixTableSize;
+      maxDatatypeTableSize = other.maxDatatypeTableSize;
+      logicalType = other.logicalType;
+      version = other.version;
+      return this;
+    }
+
+    @Override
+    public Mutable mergeFrom(final RdfStreamOptions other) {
+      cachedSize = -1;
+      streamName = other.streamName;
+      setPhysicalTypeValue(other.physicalType);
+      setGeneralizedStatements(other.generalizedStatements);
+      setRdfStar(other.rdfStar);
+      setMaxNameTableSize(other.maxNameTableSize);
+      setMaxPrefixTableSize(other.maxPrefixTableSize);
+      setMaxDatatypeTableSize(other.maxDatatypeTableSize);
+      setLogicalTypeValue(other.logicalType);
+      setVersion(other.version);
+      return this;
+    }
+
+    @Override
+    @SuppressWarnings("fallthrough")
+    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+      // Enabled Fall-Through Optimization
+      final CodedInputStream input = inputLimited.in();
+      int tag = input.readTag();
+      while (true) {
+        switch (tag) {
+          case 10: {
+            // streamName
+            streamName = input.readStringRequireUtf8();
+            tag = input.readTag();
+            if (tag != 16) {
+              break;
+            }
+          }
+          case 16: {
+            // physicalType
+            final int value = input.readInt32();
+            if (PhysicalStreamType.forNumber(value) != null) {
+              physicalType = value;
+            }
+            tag = input.readTag();
+            if (tag != 24) {
+              break;
+            }
+          }
+          case 24: {
+            // generalizedStatements
+            generalizedStatements = input.readBool();
+            tag = input.readTag();
+            if (tag != 32) {
+              break;
+            }
+          }
+          case 32: {
+            // rdfStar
+            rdfStar = input.readBool();
+            tag = input.readTag();
+            if (tag != 72) {
+              break;
+            }
+          }
+          case 72: {
+            // maxNameTableSize
+            maxNameTableSize = input.readUInt32();
+            tag = input.readTag();
+            if (tag != 80) {
+              break;
+            }
+          }
+          case 80: {
+            // maxPrefixTableSize
+            maxPrefixTableSize = input.readUInt32();
+            tag = input.readTag();
+            if (tag != 88) {
+              break;
+            }
+          }
+          case 88: {
+            // maxDatatypeTableSize
+            maxDatatypeTableSize = input.readUInt32();
+            tag = input.readTag();
+            if (tag != 112) {
+              break;
+            }
+          }
+          case 112: {
+            // logicalType
+            final int value = input.readInt32();
+            if (LogicalStreamType.forNumber(value) != null) {
+              logicalType = value;
+            }
+            tag = input.readTag();
+            if (tag != 120) {
+              break;
+            }
+          }
+          case 120: {
+            // version
+            version = input.readUInt32();
+            tag = input.readTag();
+            if (tag != 0) {
+              break;
+            }
+          }
+          case 0: {
+            return this;
+          }
+          default: {
+            if (!input.skipField(tag)) {
+              return this;
+            }
+            tag = input.readTag();
+            break;
+          }
+        }
+      }
+    }
+
+    /**
+     * Returns this message as an immutable message, without any copies.
+     */
+    public RdfStreamOptions asImmutable() {
+      return this;
     }
   }
 }

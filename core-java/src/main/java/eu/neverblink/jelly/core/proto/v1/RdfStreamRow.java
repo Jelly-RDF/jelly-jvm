@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.proto.v1;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
@@ -13,9 +14,11 @@ import java.io.InputStream;
 
 /**
  * Protobuf type {@code RdfStreamRow}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 @SuppressWarnings("hiding")
-public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cloneable {
+public abstract class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cloneable {
   public static final byte OPTIONS = 1;
 
   public static final byte TRIPLE = 2;
@@ -37,32 +40,19 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
   /**
    * <code>oneof row { ... }</code>
    */
-  private Object row = null;
+  protected Object row = null;
 
-  private byte rowNumber = 0;
-
-  private RdfStreamRow() {
-  }
+  protected byte rowNumber = 0;
 
   /**
-   * @return a new empty instance of {@code RdfStreamRow}
+   * @return a new empty instance of {@code Mutable}
    */
-  public static RdfStreamRow newInstance() {
-    return new RdfStreamRow();
+  public static Mutable newInstance() {
+    return new Mutable();
   }
 
   public boolean hasRow() {
     return rowNumber != 0;
-  }
-
-  /**
-   * Low-level setter for the <code>row</code> oneof field.
-   * Use with care, as it will not check the type of the value.
-   */
-  public RdfStreamRow setRow(Object row, byte number) {
-    this.row = row;
-    this.rowNumber = number;
-    return this;
   }
 
   /**
@@ -77,15 +67,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
    */
   public byte getRowFieldNumber() {
     return rowNumber;
-  }
-
-  /**
-   * Sets the <code>row</code> oneof field to options.
-   */
-  public RdfStreamRow setOptions(RdfStreamOptions options) {
-    this.row = options;
-    this.rowNumber = 1;
-    return this;
   }
 
   /**
@@ -104,15 +85,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
   }
 
   /**
-   * Sets the <code>row</code> oneof field to triple.
-   */
-  public RdfStreamRow setTriple(RdfTriple triple) {
-    this.row = triple;
-    this.rowNumber = 2;
-    return this;
-  }
-
-  /**
    * Returns the <code>row</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -125,15 +97,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
    */
   public boolean hasTriple() {
     return rowNumber == 2;
-  }
-
-  /**
-   * Sets the <code>row</code> oneof field to quad.
-   */
-  public RdfStreamRow setQuad(RdfQuad quad) {
-    this.row = quad;
-    this.rowNumber = 3;
-    return this;
   }
 
   /**
@@ -152,15 +115,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
   }
 
   /**
-   * Sets the <code>row</code> oneof field to graphStart.
-   */
-  public RdfStreamRow setGraphStart(RdfGraphStart graphStart) {
-    this.row = graphStart;
-    this.rowNumber = 4;
-    return this;
-  }
-
-  /**
    * Returns the <code>row</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -173,15 +127,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
    */
   public boolean hasGraphStart() {
     return rowNumber == 4;
-  }
-
-  /**
-   * Sets the <code>row</code> oneof field to graphEnd.
-   */
-  public RdfStreamRow setGraphEnd(RdfGraphEnd graphEnd) {
-    this.row = graphEnd;
-    this.rowNumber = 5;
-    return this;
   }
 
   /**
@@ -200,15 +145,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
   }
 
   /**
-   * Sets the <code>row</code> oneof field to namespace.
-   */
-  public RdfStreamRow setNamespace(RdfNamespaceDeclaration namespace) {
-    this.row = namespace;
-    this.rowNumber = 6;
-    return this;
-  }
-
-  /**
    * Returns the <code>row</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -221,15 +157,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
    */
   public boolean hasNamespace() {
     return rowNumber == 6;
-  }
-
-  /**
-   * Sets the <code>row</code> oneof field to name.
-   */
-  public RdfStreamRow setName(RdfNameEntry name) {
-    this.row = name;
-    this.rowNumber = 9;
-    return this;
   }
 
   /**
@@ -248,15 +175,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
   }
 
   /**
-   * Sets the <code>row</code> oneof field to prefix.
-   */
-  public RdfStreamRow setPrefix(RdfPrefixEntry prefix) {
-    this.row = prefix;
-    this.rowNumber = 10;
-    return this;
-  }
-
-  /**
    * Returns the <code>row</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -272,15 +190,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
   }
 
   /**
-   * Sets the <code>row</code> oneof field to datatype.
-   */
-  public RdfStreamRow setDatatype(RdfDatatypeEntry datatype) {
-    this.row = datatype;
-    this.rowNumber = 11;
-    return this;
-  }
-
-  /**
    * Returns the <code>row</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -293,22 +202,6 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
    */
   public boolean hasDatatype() {
     return rowNumber == 11;
-  }
-
-  @Override
-  public RdfStreamRow copyFrom(final RdfStreamRow other) {
-    cachedSize = other.cachedSize;
-    this.row = other.row;
-    this.rowNumber = other.rowNumber;
-    return this;
-  }
-
-  @Override
-  public RdfStreamRow mergeFrom(final RdfStreamRow other) {
-    cachedSize = -1;
-    this.row = other.row;
-    this.rowNumber = other.rowNumber;
-    return this;
   }
 
   @Override
@@ -455,182 +348,16 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
   }
 
   @Override
-  @SuppressWarnings("fallthrough")
-  public RdfStreamRow mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-    // Enabled Fall-Through Optimization
-    final CodedInputStream input = inputLimited.in();
-    int tag = input.readTag();
-    while (true) {
-      switch (tag) {
-        case 10: {
-          // options
-          final RdfStreamOptions options;
-          if (rowNumber == 1) {
-            options = getOptions();
-          }
-          else {
-            options = RdfStreamOptions.newInstance();
-            setOptions(options);
-          }
-          ProtoMessage.mergeDelimitedFrom(options, inputLimited);
-          tag = input.readTag();
-          if (tag != 18) {
-            break;
-          }
-        }
-        case 18: {
-          // triple
-          final RdfTriple triple;
-          if (rowNumber == 2) {
-            triple = getTriple();
-          }
-          else {
-            triple = RdfTriple.newInstance();
-            setTriple(triple);
-          }
-          ProtoMessage.mergeDelimitedFrom(triple, inputLimited);
-          tag = input.readTag();
-          if (tag != 26) {
-            break;
-          }
-        }
-        case 26: {
-          // quad
-          final RdfQuad quad;
-          if (rowNumber == 3) {
-            quad = getQuad();
-          }
-          else {
-            quad = RdfQuad.newInstance();
-            setQuad(quad);
-          }
-          ProtoMessage.mergeDelimitedFrom(quad, inputLimited);
-          tag = input.readTag();
-          if (tag != 34) {
-            break;
-          }
-        }
-        case 34: {
-          // graphStart
-          final RdfGraphStart graphStart;
-          if (rowNumber == 4) {
-            graphStart = getGraphStart();
-          }
-          else {
-            graphStart = RdfGraphStart.newInstance();
-            setGraphStart(graphStart);
-          }
-          ProtoMessage.mergeDelimitedFrom(graphStart, inputLimited);
-          tag = input.readTag();
-          if (tag != 42) {
-            break;
-          }
-        }
-        case 42: {
-          // graphEnd
-          final RdfGraphEnd graphEnd;
-          if (rowNumber == 5) {
-            graphEnd = getGraphEnd();
-          }
-          else {
-            graphEnd = RdfGraphEnd.newInstance();
-            setGraphEnd(graphEnd);
-          }
-          ProtoMessage.mergeDelimitedFrom(graphEnd, inputLimited);
-          tag = input.readTag();
-          if (tag != 50) {
-            break;
-          }
-        }
-        case 50: {
-          // namespace
-          final RdfNamespaceDeclaration namespace;
-          if (rowNumber == 6) {
-            namespace = getNamespace();
-          }
-          else {
-            namespace = RdfNamespaceDeclaration.newInstance();
-            setNamespace(namespace);
-          }
-          ProtoMessage.mergeDelimitedFrom(namespace, inputLimited);
-          tag = input.readTag();
-          if (tag != 74) {
-            break;
-          }
-        }
-        case 74: {
-          // name
-          final RdfNameEntry name;
-          if (rowNumber == 9) {
-            name = getName();
-          }
-          else {
-            name = RdfNameEntry.newInstance();
-            setName(name);
-          }
-          ProtoMessage.mergeDelimitedFrom(name, inputLimited);
-          tag = input.readTag();
-          if (tag != 82) {
-            break;
-          }
-        }
-        case 82: {
-          // prefix
-          final RdfPrefixEntry prefix;
-          if (rowNumber == 10) {
-            prefix = getPrefix();
-          }
-          else {
-            prefix = RdfPrefixEntry.newInstance();
-            setPrefix(prefix);
-          }
-          ProtoMessage.mergeDelimitedFrom(prefix, inputLimited);
-          tag = input.readTag();
-          if (tag != 90) {
-            break;
-          }
-        }
-        case 90: {
-          // datatype
-          final RdfDatatypeEntry datatype;
-          if (rowNumber == 11) {
-            datatype = getDatatype();
-          }
-          else {
-            datatype = RdfDatatypeEntry.newInstance();
-            setDatatype(datatype);
-          }
-          ProtoMessage.mergeDelimitedFrom(datatype, inputLimited);
-          tag = input.readTag();
-          if (tag != 0) {
-            break;
-          }
-        }
-        case 0: {
-          return this;
-        }
-        default: {
-          if (!input.skipField(tag)) {
-            return this;
-          }
-          tag = input.readTag();
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
-  public RdfStreamRow clone() {
-    return new RdfStreamRow().copyFrom(this);
+  public Mutable clone() {
+    return newInstance().copyFrom(this);
   }
 
   public static RdfStreamRow parseFrom(final byte[] data) throws InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(new RdfStreamRow(), data);
+    return ProtoMessage.mergeFrom(newInstance(), data);
   }
 
   public static RdfStreamRow parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(new RdfStreamRow(), input);
+    return ProtoMessage.mergeFrom(newInstance(), input);
   }
 
   public static RdfStreamRow parseDelimitedFrom(final InputStream input) throws IOException {
@@ -644,12 +371,311 @@ public final class RdfStreamRow extends ProtoMessage<RdfStreamRow> implements Cl
     return RdfStreamRowFactory.INSTANCE;
   }
 
+  /**
+   * @return this type's descriptor.
+   */
+  public static Descriptors.Descriptor getDescriptor() {
+    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfStreamRow_descriptor;
+  }
+
   private enum RdfStreamRowFactory implements MessageFactory<RdfStreamRow> {
     INSTANCE;
 
     @Override
     public RdfStreamRow create() {
       return RdfStreamRow.newInstance();
+    }
+  }
+
+  /**
+   * Mutable subclass of the parent class.
+   * You can call setters on this class to set the values.
+   * When passing the constructed message to the serializer,
+   * you should use the parent class (using .asImmutable()) to
+   * ensure the message won't be modified by accident.
+   */
+  public static final class Mutable extends RdfStreamRow {
+    private Mutable() {
+    }
+
+    /**
+     * Low-level setter for the <code>row</code> oneof field.
+     * Use with care, as it will not check the type of the value.
+     */
+    public Mutable setRow(Object row, byte number) {
+      this.row = row;
+      this.rowNumber = number;
+      return this;
+    }
+
+    /**
+     * Sets the <code>row</code> oneof field to options.
+     */
+    public Mutable setOptions(RdfStreamOptions options) {
+      this.row = options;
+      this.rowNumber = 1;
+      return this;
+    }
+
+    /**
+     * Sets the <code>row</code> oneof field to triple.
+     */
+    public Mutable setTriple(RdfTriple triple) {
+      this.row = triple;
+      this.rowNumber = 2;
+      return this;
+    }
+
+    /**
+     * Sets the <code>row</code> oneof field to quad.
+     */
+    public Mutable setQuad(RdfQuad quad) {
+      this.row = quad;
+      this.rowNumber = 3;
+      return this;
+    }
+
+    /**
+     * Sets the <code>row</code> oneof field to graphStart.
+     */
+    public Mutable setGraphStart(RdfGraphStart graphStart) {
+      this.row = graphStart;
+      this.rowNumber = 4;
+      return this;
+    }
+
+    /**
+     * Sets the <code>row</code> oneof field to graphEnd.
+     */
+    public Mutable setGraphEnd(RdfGraphEnd graphEnd) {
+      this.row = graphEnd;
+      this.rowNumber = 5;
+      return this;
+    }
+
+    /**
+     * Sets the <code>row</code> oneof field to namespace.
+     */
+    public Mutable setNamespace(RdfNamespaceDeclaration namespace) {
+      this.row = namespace;
+      this.rowNumber = 6;
+      return this;
+    }
+
+    /**
+     * Sets the <code>row</code> oneof field to name.
+     */
+    public Mutable setName(RdfNameEntry name) {
+      this.row = name;
+      this.rowNumber = 9;
+      return this;
+    }
+
+    /**
+     * Sets the <code>row</code> oneof field to prefix.
+     */
+    public Mutable setPrefix(RdfPrefixEntry prefix) {
+      this.row = prefix;
+      this.rowNumber = 10;
+      return this;
+    }
+
+    /**
+     * Sets the <code>row</code> oneof field to datatype.
+     */
+    public Mutable setDatatype(RdfDatatypeEntry datatype) {
+      this.row = datatype;
+      this.rowNumber = 11;
+      return this;
+    }
+
+    @Override
+    public Mutable copyFrom(final RdfStreamRow other) {
+      cachedSize = other.cachedSize;
+      this.row = other.row;
+      this.rowNumber = other.rowNumber;
+      return this;
+    }
+
+    @Override
+    public Mutable mergeFrom(final RdfStreamRow other) {
+      cachedSize = -1;
+      this.row = other.row;
+      this.rowNumber = other.rowNumber;
+      return this;
+    }
+
+    @Override
+    @SuppressWarnings("fallthrough")
+    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+      // Enabled Fall-Through Optimization
+      final CodedInputStream input = inputLimited.in();
+      int tag = input.readTag();
+      while (true) {
+        switch (tag) {
+          case 10: {
+            // options
+            final RdfStreamOptions options;
+            if (rowNumber == 1) {
+              options = getOptions();
+            }
+            else {
+              options = RdfStreamOptions.newInstance();
+              setOptions(options);
+            }
+            ProtoMessage.mergeDelimitedFrom(options, inputLimited);
+            tag = input.readTag();
+            if (tag != 18) {
+              break;
+            }
+          }
+          case 18: {
+            // triple
+            final RdfTriple triple;
+            if (rowNumber == 2) {
+              triple = getTriple();
+            }
+            else {
+              triple = RdfTriple.newInstance();
+              setTriple(triple);
+            }
+            ProtoMessage.mergeDelimitedFrom(triple, inputLimited);
+            tag = input.readTag();
+            if (tag != 26) {
+              break;
+            }
+          }
+          case 26: {
+            // quad
+            final RdfQuad quad;
+            if (rowNumber == 3) {
+              quad = getQuad();
+            }
+            else {
+              quad = RdfQuad.newInstance();
+              setQuad(quad);
+            }
+            ProtoMessage.mergeDelimitedFrom(quad, inputLimited);
+            tag = input.readTag();
+            if (tag != 34) {
+              break;
+            }
+          }
+          case 34: {
+            // graphStart
+            final RdfGraphStart graphStart;
+            if (rowNumber == 4) {
+              graphStart = getGraphStart();
+            }
+            else {
+              graphStart = RdfGraphStart.newInstance();
+              setGraphStart(graphStart);
+            }
+            ProtoMessage.mergeDelimitedFrom(graphStart, inputLimited);
+            tag = input.readTag();
+            if (tag != 42) {
+              break;
+            }
+          }
+          case 42: {
+            // graphEnd
+            final RdfGraphEnd graphEnd;
+            if (rowNumber == 5) {
+              graphEnd = getGraphEnd();
+            }
+            else {
+              graphEnd = RdfGraphEnd.newInstance();
+              setGraphEnd(graphEnd);
+            }
+            ProtoMessage.mergeDelimitedFrom(graphEnd, inputLimited);
+            tag = input.readTag();
+            if (tag != 50) {
+              break;
+            }
+          }
+          case 50: {
+            // namespace
+            final RdfNamespaceDeclaration namespace;
+            if (rowNumber == 6) {
+              namespace = getNamespace();
+            }
+            else {
+              namespace = RdfNamespaceDeclaration.newInstance();
+              setNamespace(namespace);
+            }
+            ProtoMessage.mergeDelimitedFrom(namespace, inputLimited);
+            tag = input.readTag();
+            if (tag != 74) {
+              break;
+            }
+          }
+          case 74: {
+            // name
+            final RdfNameEntry name;
+            if (rowNumber == 9) {
+              name = getName();
+            }
+            else {
+              name = RdfNameEntry.newInstance();
+              setName(name);
+            }
+            ProtoMessage.mergeDelimitedFrom(name, inputLimited);
+            tag = input.readTag();
+            if (tag != 82) {
+              break;
+            }
+          }
+          case 82: {
+            // prefix
+            final RdfPrefixEntry prefix;
+            if (rowNumber == 10) {
+              prefix = getPrefix();
+            }
+            else {
+              prefix = RdfPrefixEntry.newInstance();
+              setPrefix(prefix);
+            }
+            ProtoMessage.mergeDelimitedFrom(prefix, inputLimited);
+            tag = input.readTag();
+            if (tag != 90) {
+              break;
+            }
+          }
+          case 90: {
+            // datatype
+            final RdfDatatypeEntry datatype;
+            if (rowNumber == 11) {
+              datatype = getDatatype();
+            }
+            else {
+              datatype = RdfDatatypeEntry.newInstance();
+              setDatatype(datatype);
+            }
+            ProtoMessage.mergeDelimitedFrom(datatype, inputLimited);
+            tag = input.readTag();
+            if (tag != 0) {
+              break;
+            }
+          }
+          case 0: {
+            return this;
+          }
+          default: {
+            if (!input.skipField(tag)) {
+              return this;
+            }
+            tag = input.readTag();
+            break;
+          }
+        }
+      }
+    }
+
+    /**
+     * Returns this message as an immutable message, without any copies.
+     */
+    public RdfStreamRow asImmutable() {
+      return this;
     }
   }
 }

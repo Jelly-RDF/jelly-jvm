@@ -29,9 +29,9 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
     protected TNode lastGraph = null;
 
     protected SpoTerm currentTerm = SpoTerm.SUBJECT;
-    private SpoBase currentSpoBase = null;
-    private GraphBase currentGraphBase = null;
-    protected NsBase currentNsBase = null;
+    private SpoBase.Setters currentSpoBase = null;
+    private GraphBase.Setters currentGraphBase = null;
+    protected NsBase.Setters currentNsBase = null;
 
     protected EncoderBase(ProtoEncoderConverter<TNode> converter) {
         this.converter = converter;
@@ -47,7 +47,7 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
     protected abstract int getDatatypeTableSize();
 
     protected final RdfTriple tripleToProto(TNode subject, TNode predicate, TNode object) {
-        final RdfTriple triple = RdfTriple.newInstance();
+        final RdfTriple.Mutable triple = RdfTriple.newInstance();
         this.currentSpoBase = triple;
         nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
         nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);
@@ -56,7 +56,7 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
     }
 
     protected final RdfQuad quadToProto(TNode subject, TNode predicate, TNode object, TNode graph) {
-        final RdfQuad quad = RdfQuad.newInstance();
+        final RdfQuad.Mutable quad = RdfQuad.newInstance();
         this.currentSpoBase = quad;
         this.currentGraphBase = quad;
         nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
@@ -72,7 +72,7 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
      * Used in RDF-Patch for triple add/delete operations.
      */
     protected final RdfQuad tripleInQuadToProto(TNode subject, TNode predicate, TNode object) {
-        final RdfQuad quad = RdfQuad.newInstance();
+        final RdfQuad.Mutable quad = RdfQuad.newInstance();
         this.currentSpoBase = quad;
         nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
         nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);
@@ -84,7 +84,7 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
      * Converts a graph term to an RdfGraphStart object.
      */
     protected final RdfGraphStart graphStartToProto(TNode graph) {
-        final RdfGraphStart graphStart = RdfGraphStart.newInstance();
+        final RdfGraphStart.Mutable graphStart = RdfGraphStart.newInstance();
         this.currentGraphBase = graphStart;
         graphNodeToProtoWrapped(graph);
         return graphStart;
@@ -141,10 +141,10 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
     @Override
     public void appendQuotedTriple(TNode subject, TNode predicate, TNode object) {
         // Store the current state of the SpoBase and SpoTerm
-        final SpoBase parent = currentSpoBase;
+        final SpoBase.Setters parent = currentSpoBase;
         final SpoTerm parentTerm = currentTerm;
         // Encode the quoted triple
-        final RdfTriple quotedTriple = RdfTriple.newInstance();
+        final RdfTriple.Mutable quotedTriple = RdfTriple.newInstance();
         currentSpoBase = quotedTriple;
         currentTerm = SpoTerm.SUBJECT;
         converter.nodeToProto(nodeEncoder, subject);

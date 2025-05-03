@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.proto.v1;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.jelly.core.internal.proto.GraphBase;
 import eu.neverblink.jelly.core.internal.proto.SpoBase;
@@ -15,9 +16,11 @@ import java.io.InputStream;
 
 /**
  * Protobuf type {@code RdfQuad}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 @SuppressWarnings("hiding")
-public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, GraphBase, Cloneable {
+public abstract class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, GraphBase, Cloneable {
   public static final byte S_IRI = 1;
 
   public static final byte S_BNODE = 2;
@@ -53,53 +56,40 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   /**
    * <code>oneof subject { ... }</code>
    */
-  private Object subject = null;
+  protected Object subject = null;
 
-  private byte subjectNumber = 0;
+  protected byte subjectNumber = 0;
 
   /**
    * <code>oneof predicate { ... }</code>
    */
-  private Object predicate = null;
+  protected Object predicate = null;
 
-  private byte predicateNumber = 0;
+  protected byte predicateNumber = 0;
 
   /**
    * <code>oneof object { ... }</code>
    */
-  private Object object = null;
+  protected Object object = null;
 
-  private byte objectNumber = 0;
+  protected byte objectNumber = 0;
 
   /**
    * <code>oneof graph { ... }</code>
    */
-  private Object graph = null;
+  protected Object graph = null;
 
-  private byte graphNumber = 0;
-
-  private RdfQuad() {
-  }
+  protected byte graphNumber = 0;
 
   /**
-   * @return a new empty instance of {@code RdfQuad}
+   * @return a new empty instance of {@code Mutable}
    */
-  public static RdfQuad newInstance() {
-    return new RdfQuad();
+  public static Mutable newInstance() {
+    return new Mutable();
   }
 
   public boolean hasSubject() {
     return subjectNumber != 0;
-  }
-
-  /**
-   * Low-level setter for the <code>subject</code> oneof field.
-   * Use with care, as it will not check the type of the value.
-   */
-  public RdfQuad setSubject(Object subject, byte number) {
-    this.subject = subject;
-    this.subjectNumber = number;
-    return this;
   }
 
   /**
@@ -114,15 +104,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
    */
   public byte getSubjectFieldNumber() {
     return subjectNumber;
-  }
-
-  /**
-   * Sets the <code>subject</code> oneof field to sIri.
-   */
-  public RdfQuad setSIri(RdfIri sIri) {
-    this.subject = sIri;
-    this.subjectNumber = 1;
-    return this;
   }
 
   /**
@@ -141,15 +122,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Sets the <code>subject</code> oneof field to sBnode.
-   */
-  public RdfQuad setSBnode(String sBnode) {
-    this.subject = sBnode;
-    this.subjectNumber = 2;
-    return this;
-  }
-
-  /**
    * Returns the <code>subject</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -165,15 +137,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Sets the <code>subject</code> oneof field to sLiteral.
-   */
-  public RdfQuad setSLiteral(RdfLiteral sLiteral) {
-    this.subject = sLiteral;
-    this.subjectNumber = 3;
-    return this;
-  }
-
-  /**
    * Returns the <code>subject</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -186,15 +149,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
    */
   public boolean hasSLiteral() {
     return subjectNumber == 3;
-  }
-
-  /**
-   * Sets the <code>subject</code> oneof field to sTripleTerm.
-   */
-  public RdfQuad setSTripleTerm(RdfTriple sTripleTerm) {
-    this.subject = sTripleTerm;
-    this.subjectNumber = 4;
-    return this;
   }
 
   /**
@@ -217,16 +171,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Low-level setter for the <code>predicate</code> oneof field.
-   * Use with care, as it will not check the type of the value.
-   */
-  public RdfQuad setPredicate(Object predicate, byte number) {
-    this.predicate = predicate;
-    this.predicateNumber = number;
-    return this;
-  }
-
-  /**
    * Returns the <code>predicate</code> oneof field.
    */
   public Object getPredicate() {
@@ -238,15 +182,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
    */
   public byte getPredicateFieldNumber() {
     return predicateNumber;
-  }
-
-  /**
-   * Sets the <code>predicate</code> oneof field to pIri.
-   */
-  public RdfQuad setPIri(RdfIri pIri) {
-    this.predicate = pIri;
-    this.predicateNumber = 5;
-    return this;
   }
 
   /**
@@ -265,15 +200,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Sets the <code>predicate</code> oneof field to pBnode.
-   */
-  public RdfQuad setPBnode(String pBnode) {
-    this.predicate = pBnode;
-    this.predicateNumber = 6;
-    return this;
-  }
-
-  /**
    * Returns the <code>predicate</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -289,15 +215,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Sets the <code>predicate</code> oneof field to pLiteral.
-   */
-  public RdfQuad setPLiteral(RdfLiteral pLiteral) {
-    this.predicate = pLiteral;
-    this.predicateNumber = 7;
-    return this;
-  }
-
-  /**
    * Returns the <code>predicate</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -310,15 +227,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
    */
   public boolean hasPLiteral() {
     return predicateNumber == 7;
-  }
-
-  /**
-   * Sets the <code>predicate</code> oneof field to pTripleTerm.
-   */
-  public RdfQuad setPTripleTerm(RdfTriple pTripleTerm) {
-    this.predicate = pTripleTerm;
-    this.predicateNumber = 8;
-    return this;
   }
 
   /**
@@ -341,16 +249,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Low-level setter for the <code>object</code> oneof field.
-   * Use with care, as it will not check the type of the value.
-   */
-  public RdfQuad setObject(Object object, byte number) {
-    this.object = object;
-    this.objectNumber = number;
-    return this;
-  }
-
-  /**
    * Returns the <code>object</code> oneof field.
    */
   public Object getObject() {
@@ -362,15 +260,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
    */
   public byte getObjectFieldNumber() {
     return objectNumber;
-  }
-
-  /**
-   * Sets the <code>object</code> oneof field to oIri.
-   */
-  public RdfQuad setOIri(RdfIri oIri) {
-    this.object = oIri;
-    this.objectNumber = 9;
-    return this;
   }
 
   /**
@@ -389,15 +278,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Sets the <code>object</code> oneof field to oBnode.
-   */
-  public RdfQuad setOBnode(String oBnode) {
-    this.object = oBnode;
-    this.objectNumber = 10;
-    return this;
-  }
-
-  /**
    * Returns the <code>object</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -413,15 +293,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Sets the <code>object</code> oneof field to oLiteral.
-   */
-  public RdfQuad setOLiteral(RdfLiteral oLiteral) {
-    this.object = oLiteral;
-    this.objectNumber = 11;
-    return this;
-  }
-
-  /**
    * Returns the <code>object</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -434,15 +305,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
    */
   public boolean hasOLiteral() {
     return objectNumber == 11;
-  }
-
-  /**
-   * Sets the <code>object</code> oneof field to oTripleTerm.
-   */
-  public RdfQuad setOTripleTerm(RdfTriple oTripleTerm) {
-    this.object = oTripleTerm;
-    this.objectNumber = 12;
-    return this;
   }
 
   /**
@@ -465,16 +327,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Low-level setter for the <code>graph</code> oneof field.
-   * Use with care, as it will not check the type of the value.
-   */
-  public RdfQuad setGraph(Object graph, byte number) {
-    this.graph = graph;
-    this.graphNumber = number;
-    return this;
-  }
-
-  /**
    * Returns the <code>graph</code> oneof field.
    */
   public Object getGraph() {
@@ -486,15 +338,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
    */
   public byte getGraphFieldNumber() {
     return graphNumber;
-  }
-
-  /**
-   * Sets the <code>graph</code> oneof field to gIri.
-   */
-  public RdfQuad setGIri(RdfIri gIri) {
-    this.graph = gIri;
-    this.graphNumber = 13;
-    return this;
   }
 
   /**
@@ -513,15 +356,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Sets the <code>graph</code> oneof field to gBnode.
-   */
-  public RdfQuad setGBnode(String gBnode) {
-    this.graph = gBnode;
-    this.graphNumber = 14;
-    return this;
-  }
-
-  /**
    * Returns the <code>graph</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -534,15 +368,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
    */
   public boolean hasGBnode() {
     return graphNumber == 14;
-  }
-
-  /**
-   * Sets the <code>graph</code> oneof field to gDefaultGraph.
-   */
-  public RdfQuad setGDefaultGraph(RdfDefaultGraph gDefaultGraph) {
-    this.graph = gDefaultGraph;
-    this.graphNumber = 15;
-    return this;
   }
 
   /**
@@ -561,15 +386,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   /**
-   * Sets the <code>graph</code> oneof field to gLiteral.
-   */
-  public RdfQuad setGLiteral(RdfLiteral gLiteral) {
-    this.graph = gLiteral;
-    this.graphNumber = 16;
-    return this;
-  }
-
-  /**
    * Returns the <code>graph</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -582,34 +398,6 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
    */
   public boolean hasGLiteral() {
     return graphNumber == 16;
-  }
-
-  @Override
-  public RdfQuad copyFrom(final RdfQuad other) {
-    cachedSize = other.cachedSize;
-    this.subject = other.subject;
-    this.subjectNumber = other.subjectNumber;
-    this.predicate = other.predicate;
-    this.predicateNumber = other.predicateNumber;
-    this.object = other.object;
-    this.objectNumber = other.objectNumber;
-    this.graph = other.graph;
-    this.graphNumber = other.graphNumber;
-    return this;
-  }
-
-  @Override
-  public RdfQuad mergeFrom(final RdfQuad other) {
-    cachedSize = -1;
-    this.subject = other.subject;
-    this.subjectNumber = other.subjectNumber;
-    this.predicate = other.predicate;
-    this.predicateNumber = other.predicateNumber;
-    this.object = other.object;
-    this.objectNumber = other.objectNumber;
-    this.graph = other.graph;
-    this.graphNumber = other.graphNumber;
-    return this;
   }
 
   @Override
@@ -855,262 +643,16 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
   }
 
   @Override
-  @SuppressWarnings("fallthrough")
-  public RdfQuad mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-    // Enabled Fall-Through Optimization
-    final CodedInputStream input = inputLimited.in();
-    int tag = input.readTag();
-    while (true) {
-      switch (tag) {
-        case 10: {
-          // sIri
-          final RdfIri sIri;
-          if (subjectNumber == 1) {
-            sIri = getSIri();
-          }
-          else {
-            sIri = RdfIri.newInstance();
-            setSIri(sIri);
-          }
-          ProtoMessage.mergeDelimitedFrom(sIri, inputLimited);
-          tag = input.readTag();
-          if (tag != 42) {
-            break;
-          }
-        }
-        case 42: {
-          // pIri
-          final RdfIri pIri;
-          if (predicateNumber == 5) {
-            pIri = getPIri();
-          }
-          else {
-            pIri = RdfIri.newInstance();
-            setPIri(pIri);
-          }
-          ProtoMessage.mergeDelimitedFrom(pIri, inputLimited);
-          tag = input.readTag();
-          if (tag != 74) {
-            break;
-          }
-        }
-        case 74: {
-          // oIri
-          final RdfIri oIri;
-          if (objectNumber == 9) {
-            oIri = getOIri();
-          }
-          else {
-            oIri = RdfIri.newInstance();
-            setOIri(oIri);
-          }
-          ProtoMessage.mergeDelimitedFrom(oIri, inputLimited);
-          tag = input.readTag();
-          if (tag != 106) {
-            break;
-          }
-        }
-        case 106: {
-          // gIri
-          final RdfIri gIri;
-          if (graphNumber == 13) {
-            gIri = getGIri();
-          }
-          else {
-            gIri = RdfIri.newInstance();
-            setGIri(gIri);
-          }
-          ProtoMessage.mergeDelimitedFrom(gIri, inputLimited);
-          tag = input.readTag();
-          if (tag != 18) {
-            break;
-          }
-        }
-        case 18: {
-          // sBnode
-          setSBnode(input.readStringRequireUtf8());
-          tag = input.readTag();
-          if (tag != 50) {
-            break;
-          }
-        }
-        case 50: {
-          // pBnode
-          setPBnode(input.readStringRequireUtf8());
-          tag = input.readTag();
-          if (tag != 82) {
-            break;
-          }
-        }
-        case 82: {
-          // oBnode
-          setOBnode(input.readStringRequireUtf8());
-          tag = input.readTag();
-          if (tag != 114) {
-            break;
-          }
-        }
-        case 114: {
-          // gBnode
-          setGBnode(input.readStringRequireUtf8());
-          tag = input.readTag();
-          if (tag != 26) {
-            break;
-          }
-        }
-        case 26: {
-          // sLiteral
-          final RdfLiteral sLiteral;
-          if (subjectNumber == 3) {
-            sLiteral = getSLiteral();
-          }
-          else {
-            sLiteral = RdfLiteral.newInstance();
-            setSLiteral(sLiteral);
-          }
-          ProtoMessage.mergeDelimitedFrom(sLiteral, inputLimited);
-          tag = input.readTag();
-          if (tag != 58) {
-            break;
-          }
-        }
-        case 58: {
-          // pLiteral
-          final RdfLiteral pLiteral;
-          if (predicateNumber == 7) {
-            pLiteral = getPLiteral();
-          }
-          else {
-            pLiteral = RdfLiteral.newInstance();
-            setPLiteral(pLiteral);
-          }
-          ProtoMessage.mergeDelimitedFrom(pLiteral, inputLimited);
-          tag = input.readTag();
-          if (tag != 90) {
-            break;
-          }
-        }
-        case 90: {
-          // oLiteral
-          final RdfLiteral oLiteral;
-          if (objectNumber == 11) {
-            oLiteral = getOLiteral();
-          }
-          else {
-            oLiteral = RdfLiteral.newInstance();
-            setOLiteral(oLiteral);
-          }
-          ProtoMessage.mergeDelimitedFrom(oLiteral, inputLimited);
-          tag = input.readTag();
-          if (tag != 122) {
-            break;
-          }
-        }
-        case 122: {
-          // gDefaultGraph
-          final RdfDefaultGraph gDefaultGraph;
-          if (graphNumber == 15) {
-            gDefaultGraph = getGDefaultGraph();
-          }
-          else {
-            gDefaultGraph = RdfDefaultGraph.newInstance();
-            setGDefaultGraph(gDefaultGraph);
-          }
-          ProtoMessage.mergeDelimitedFrom(gDefaultGraph, inputLimited);
-          tag = input.readTag();
-          if (tag != 34) {
-            break;
-          }
-        }
-        case 34: {
-          // sTripleTerm
-          final RdfTriple sTripleTerm;
-          if (subjectNumber == 4) {
-            sTripleTerm = getSTripleTerm();
-          }
-          else {
-            sTripleTerm = RdfTriple.newInstance();
-            setSTripleTerm(sTripleTerm);
-          }
-          ProtoMessage.mergeDelimitedFrom(sTripleTerm, inputLimited);
-          tag = input.readTag();
-          if (tag != 66) {
-            break;
-          }
-        }
-        case 66: {
-          // pTripleTerm
-          final RdfTriple pTripleTerm;
-          if (predicateNumber == 8) {
-            pTripleTerm = getPTripleTerm();
-          }
-          else {
-            pTripleTerm = RdfTriple.newInstance();
-            setPTripleTerm(pTripleTerm);
-          }
-          ProtoMessage.mergeDelimitedFrom(pTripleTerm, inputLimited);
-          tag = input.readTag();
-          if (tag != 98) {
-            break;
-          }
-        }
-        case 98: {
-          // oTripleTerm
-          final RdfTriple oTripleTerm;
-          if (objectNumber == 12) {
-            oTripleTerm = getOTripleTerm();
-          }
-          else {
-            oTripleTerm = RdfTriple.newInstance();
-            setOTripleTerm(oTripleTerm);
-          }
-          ProtoMessage.mergeDelimitedFrom(oTripleTerm, inputLimited);
-          tag = input.readTag();
-          if (tag != 130) {
-            break;
-          }
-        }
-        case 130: {
-          // gLiteral
-          final RdfLiteral gLiteral;
-          if (graphNumber == 16) {
-            gLiteral = getGLiteral();
-          }
-          else {
-            gLiteral = RdfLiteral.newInstance();
-            setGLiteral(gLiteral);
-          }
-          ProtoMessage.mergeDelimitedFrom(gLiteral, inputLimited);
-          tag = input.readTag();
-          if (tag != 0) {
-            break;
-          }
-        }
-        case 0: {
-          return this;
-        }
-        default: {
-          if (!input.skipField(tag)) {
-            return this;
-          }
-          tag = input.readTag();
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
-  public RdfQuad clone() {
-    return new RdfQuad().copyFrom(this);
+  public Mutable clone() {
+    return newInstance().copyFrom(this);
   }
 
   public static RdfQuad parseFrom(final byte[] data) throws InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(new RdfQuad(), data);
+    return ProtoMessage.mergeFrom(newInstance(), data);
   }
 
   public static RdfQuad parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(new RdfQuad(), input);
+    return ProtoMessage.mergeFrom(newInstance(), input);
   }
 
   public static RdfQuad parseDelimitedFrom(final InputStream input) throws IOException {
@@ -1124,12 +666,496 @@ public final class RdfQuad extends ProtoMessage<RdfQuad> implements SpoBase, Gra
     return RdfQuadFactory.INSTANCE;
   }
 
+  /**
+   * @return this type's descriptor.
+   */
+  public static Descriptors.Descriptor getDescriptor() {
+    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfQuad_descriptor;
+  }
+
   private enum RdfQuadFactory implements MessageFactory<RdfQuad> {
     INSTANCE;
 
     @Override
     public RdfQuad create() {
       return RdfQuad.newInstance();
+    }
+  }
+
+  /**
+   * Mutable subclass of the parent class.
+   * You can call setters on this class to set the values.
+   * When passing the constructed message to the serializer,
+   * you should use the parent class (using .asImmutable()) to
+   * ensure the message won't be modified by accident.
+   */
+  public static final class Mutable extends RdfQuad implements SpoBase.Setters, GraphBase.Setters {
+    private Mutable() {
+    }
+
+    /**
+     * Low-level setter for the <code>subject</code> oneof field.
+     * Use with care, as it will not check the type of the value.
+     */
+    public Mutable setSubject(Object subject, byte number) {
+      this.subject = subject;
+      this.subjectNumber = number;
+      return this;
+    }
+
+    /**
+     * Sets the <code>subject</code> oneof field to sIri.
+     */
+    public Mutable setSIri(RdfIri sIri) {
+      this.subject = sIri;
+      this.subjectNumber = 1;
+      return this;
+    }
+
+    /**
+     * Sets the <code>subject</code> oneof field to sBnode.
+     */
+    public Mutable setSBnode(String sBnode) {
+      this.subject = sBnode;
+      this.subjectNumber = 2;
+      return this;
+    }
+
+    /**
+     * Sets the <code>subject</code> oneof field to sLiteral.
+     */
+    public Mutable setSLiteral(RdfLiteral sLiteral) {
+      this.subject = sLiteral;
+      this.subjectNumber = 3;
+      return this;
+    }
+
+    /**
+     * Sets the <code>subject</code> oneof field to sTripleTerm.
+     */
+    public Mutable setSTripleTerm(RdfTriple sTripleTerm) {
+      this.subject = sTripleTerm;
+      this.subjectNumber = 4;
+      return this;
+    }
+
+    /**
+     * Low-level setter for the <code>predicate</code> oneof field.
+     * Use with care, as it will not check the type of the value.
+     */
+    public Mutable setPredicate(Object predicate, byte number) {
+      this.predicate = predicate;
+      this.predicateNumber = number;
+      return this;
+    }
+
+    /**
+     * Sets the <code>predicate</code> oneof field to pIri.
+     */
+    public Mutable setPIri(RdfIri pIri) {
+      this.predicate = pIri;
+      this.predicateNumber = 5;
+      return this;
+    }
+
+    /**
+     * Sets the <code>predicate</code> oneof field to pBnode.
+     */
+    public Mutable setPBnode(String pBnode) {
+      this.predicate = pBnode;
+      this.predicateNumber = 6;
+      return this;
+    }
+
+    /**
+     * Sets the <code>predicate</code> oneof field to pLiteral.
+     */
+    public Mutable setPLiteral(RdfLiteral pLiteral) {
+      this.predicate = pLiteral;
+      this.predicateNumber = 7;
+      return this;
+    }
+
+    /**
+     * Sets the <code>predicate</code> oneof field to pTripleTerm.
+     */
+    public Mutable setPTripleTerm(RdfTriple pTripleTerm) {
+      this.predicate = pTripleTerm;
+      this.predicateNumber = 8;
+      return this;
+    }
+
+    /**
+     * Low-level setter for the <code>object</code> oneof field.
+     * Use with care, as it will not check the type of the value.
+     */
+    public Mutable setObject(Object object, byte number) {
+      this.object = object;
+      this.objectNumber = number;
+      return this;
+    }
+
+    /**
+     * Sets the <code>object</code> oneof field to oIri.
+     */
+    public Mutable setOIri(RdfIri oIri) {
+      this.object = oIri;
+      this.objectNumber = 9;
+      return this;
+    }
+
+    /**
+     * Sets the <code>object</code> oneof field to oBnode.
+     */
+    public Mutable setOBnode(String oBnode) {
+      this.object = oBnode;
+      this.objectNumber = 10;
+      return this;
+    }
+
+    /**
+     * Sets the <code>object</code> oneof field to oLiteral.
+     */
+    public Mutable setOLiteral(RdfLiteral oLiteral) {
+      this.object = oLiteral;
+      this.objectNumber = 11;
+      return this;
+    }
+
+    /**
+     * Sets the <code>object</code> oneof field to oTripleTerm.
+     */
+    public Mutable setOTripleTerm(RdfTriple oTripleTerm) {
+      this.object = oTripleTerm;
+      this.objectNumber = 12;
+      return this;
+    }
+
+    /**
+     * Low-level setter for the <code>graph</code> oneof field.
+     * Use with care, as it will not check the type of the value.
+     */
+    public Mutable setGraph(Object graph, byte number) {
+      this.graph = graph;
+      this.graphNumber = number;
+      return this;
+    }
+
+    /**
+     * Sets the <code>graph</code> oneof field to gIri.
+     */
+    public Mutable setGIri(RdfIri gIri) {
+      this.graph = gIri;
+      this.graphNumber = 13;
+      return this;
+    }
+
+    /**
+     * Sets the <code>graph</code> oneof field to gBnode.
+     */
+    public Mutable setGBnode(String gBnode) {
+      this.graph = gBnode;
+      this.graphNumber = 14;
+      return this;
+    }
+
+    /**
+     * Sets the <code>graph</code> oneof field to gDefaultGraph.
+     */
+    public Mutable setGDefaultGraph(RdfDefaultGraph gDefaultGraph) {
+      this.graph = gDefaultGraph;
+      this.graphNumber = 15;
+      return this;
+    }
+
+    /**
+     * Sets the <code>graph</code> oneof field to gLiteral.
+     */
+    public Mutable setGLiteral(RdfLiteral gLiteral) {
+      this.graph = gLiteral;
+      this.graphNumber = 16;
+      return this;
+    }
+
+    @Override
+    public Mutable copyFrom(final RdfQuad other) {
+      cachedSize = other.cachedSize;
+      this.subject = other.subject;
+      this.subjectNumber = other.subjectNumber;
+      this.predicate = other.predicate;
+      this.predicateNumber = other.predicateNumber;
+      this.object = other.object;
+      this.objectNumber = other.objectNumber;
+      this.graph = other.graph;
+      this.graphNumber = other.graphNumber;
+      return this;
+    }
+
+    @Override
+    public Mutable mergeFrom(final RdfQuad other) {
+      cachedSize = -1;
+      this.subject = other.subject;
+      this.subjectNumber = other.subjectNumber;
+      this.predicate = other.predicate;
+      this.predicateNumber = other.predicateNumber;
+      this.object = other.object;
+      this.objectNumber = other.objectNumber;
+      this.graph = other.graph;
+      this.graphNumber = other.graphNumber;
+      return this;
+    }
+
+    @Override
+    @SuppressWarnings("fallthrough")
+    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+      // Enabled Fall-Through Optimization
+      final CodedInputStream input = inputLimited.in();
+      int tag = input.readTag();
+      while (true) {
+        switch (tag) {
+          case 10: {
+            // sIri
+            final RdfIri sIri;
+            if (subjectNumber == 1) {
+              sIri = getSIri();
+            }
+            else {
+              sIri = RdfIri.newInstance();
+              setSIri(sIri);
+            }
+            ProtoMessage.mergeDelimitedFrom(sIri, inputLimited);
+            tag = input.readTag();
+            if (tag != 42) {
+              break;
+            }
+          }
+          case 42: {
+            // pIri
+            final RdfIri pIri;
+            if (predicateNumber == 5) {
+              pIri = getPIri();
+            }
+            else {
+              pIri = RdfIri.newInstance();
+              setPIri(pIri);
+            }
+            ProtoMessage.mergeDelimitedFrom(pIri, inputLimited);
+            tag = input.readTag();
+            if (tag != 74) {
+              break;
+            }
+          }
+          case 74: {
+            // oIri
+            final RdfIri oIri;
+            if (objectNumber == 9) {
+              oIri = getOIri();
+            }
+            else {
+              oIri = RdfIri.newInstance();
+              setOIri(oIri);
+            }
+            ProtoMessage.mergeDelimitedFrom(oIri, inputLimited);
+            tag = input.readTag();
+            if (tag != 106) {
+              break;
+            }
+          }
+          case 106: {
+            // gIri
+            final RdfIri gIri;
+            if (graphNumber == 13) {
+              gIri = getGIri();
+            }
+            else {
+              gIri = RdfIri.newInstance();
+              setGIri(gIri);
+            }
+            ProtoMessage.mergeDelimitedFrom(gIri, inputLimited);
+            tag = input.readTag();
+            if (tag != 18) {
+              break;
+            }
+          }
+          case 18: {
+            // sBnode
+            setSBnode(input.readStringRequireUtf8());
+            tag = input.readTag();
+            if (tag != 50) {
+              break;
+            }
+          }
+          case 50: {
+            // pBnode
+            setPBnode(input.readStringRequireUtf8());
+            tag = input.readTag();
+            if (tag != 82) {
+              break;
+            }
+          }
+          case 82: {
+            // oBnode
+            setOBnode(input.readStringRequireUtf8());
+            tag = input.readTag();
+            if (tag != 114) {
+              break;
+            }
+          }
+          case 114: {
+            // gBnode
+            setGBnode(input.readStringRequireUtf8());
+            tag = input.readTag();
+            if (tag != 26) {
+              break;
+            }
+          }
+          case 26: {
+            // sLiteral
+            final RdfLiteral sLiteral;
+            if (subjectNumber == 3) {
+              sLiteral = getSLiteral();
+            }
+            else {
+              sLiteral = RdfLiteral.newInstance();
+              setSLiteral(sLiteral);
+            }
+            ProtoMessage.mergeDelimitedFrom(sLiteral, inputLimited);
+            tag = input.readTag();
+            if (tag != 58) {
+              break;
+            }
+          }
+          case 58: {
+            // pLiteral
+            final RdfLiteral pLiteral;
+            if (predicateNumber == 7) {
+              pLiteral = getPLiteral();
+            }
+            else {
+              pLiteral = RdfLiteral.newInstance();
+              setPLiteral(pLiteral);
+            }
+            ProtoMessage.mergeDelimitedFrom(pLiteral, inputLimited);
+            tag = input.readTag();
+            if (tag != 90) {
+              break;
+            }
+          }
+          case 90: {
+            // oLiteral
+            final RdfLiteral oLiteral;
+            if (objectNumber == 11) {
+              oLiteral = getOLiteral();
+            }
+            else {
+              oLiteral = RdfLiteral.newInstance();
+              setOLiteral(oLiteral);
+            }
+            ProtoMessage.mergeDelimitedFrom(oLiteral, inputLimited);
+            tag = input.readTag();
+            if (tag != 122) {
+              break;
+            }
+          }
+          case 122: {
+            // gDefaultGraph
+            final RdfDefaultGraph gDefaultGraph;
+            if (graphNumber == 15) {
+              gDefaultGraph = getGDefaultGraph();
+            }
+            else {
+              gDefaultGraph = RdfDefaultGraph.newInstance();
+              setGDefaultGraph(gDefaultGraph);
+            }
+            ProtoMessage.mergeDelimitedFrom(gDefaultGraph, inputLimited);
+            tag = input.readTag();
+            if (tag != 34) {
+              break;
+            }
+          }
+          case 34: {
+            // sTripleTerm
+            final RdfTriple sTripleTerm;
+            if (subjectNumber == 4) {
+              sTripleTerm = getSTripleTerm();
+            }
+            else {
+              sTripleTerm = RdfTriple.newInstance();
+              setSTripleTerm(sTripleTerm);
+            }
+            ProtoMessage.mergeDelimitedFrom(sTripleTerm, inputLimited);
+            tag = input.readTag();
+            if (tag != 66) {
+              break;
+            }
+          }
+          case 66: {
+            // pTripleTerm
+            final RdfTriple pTripleTerm;
+            if (predicateNumber == 8) {
+              pTripleTerm = getPTripleTerm();
+            }
+            else {
+              pTripleTerm = RdfTriple.newInstance();
+              setPTripleTerm(pTripleTerm);
+            }
+            ProtoMessage.mergeDelimitedFrom(pTripleTerm, inputLimited);
+            tag = input.readTag();
+            if (tag != 98) {
+              break;
+            }
+          }
+          case 98: {
+            // oTripleTerm
+            final RdfTriple oTripleTerm;
+            if (objectNumber == 12) {
+              oTripleTerm = getOTripleTerm();
+            }
+            else {
+              oTripleTerm = RdfTriple.newInstance();
+              setOTripleTerm(oTripleTerm);
+            }
+            ProtoMessage.mergeDelimitedFrom(oTripleTerm, inputLimited);
+            tag = input.readTag();
+            if (tag != 130) {
+              break;
+            }
+          }
+          case 130: {
+            // gLiteral
+            final RdfLiteral gLiteral;
+            if (graphNumber == 16) {
+              gLiteral = getGLiteral();
+            }
+            else {
+              gLiteral = RdfLiteral.newInstance();
+              setGLiteral(gLiteral);
+            }
+            ProtoMessage.mergeDelimitedFrom(gLiteral, inputLimited);
+            tag = input.readTag();
+            if (tag != 0) {
+              break;
+            }
+          }
+          case 0: {
+            return this;
+          }
+          default: {
+            if (!input.skipField(tag)) {
+              return this;
+            }
+            tag = input.readTag();
+            break;
+          }
+        }
+      }
+    }
+
+    /**
+     * Returns this message as an immutable message, without any copies.
+     */
+    public RdfQuad asImmutable() {
+      return this;
     }
   }
 }

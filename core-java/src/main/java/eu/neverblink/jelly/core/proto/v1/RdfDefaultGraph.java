@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.proto.v1;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
@@ -13,29 +14,16 @@ import java.io.InputStream;
 
 /**
  * Protobuf type {@code RdfDefaultGraph}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 @SuppressWarnings("hiding")
-public final class RdfDefaultGraph extends ProtoMessage<RdfDefaultGraph> implements Cloneable {
-  private RdfDefaultGraph() {
-  }
-
+public abstract class RdfDefaultGraph extends ProtoMessage<RdfDefaultGraph> implements Cloneable {
   /**
-   * @return a new empty instance of {@code RdfDefaultGraph}
+   * @return a new empty instance of {@code Mutable}
    */
-  public static RdfDefaultGraph newInstance() {
-    return new RdfDefaultGraph();
-  }
-
-  @Override
-  public RdfDefaultGraph copyFrom(final RdfDefaultGraph other) {
-    cachedSize = other.cachedSize;
-    return this;
-  }
-
-  @Override
-  public RdfDefaultGraph mergeFrom(final RdfDefaultGraph other) {
-    cachedSize = -1;
-    return this;
+  public static Mutable newInstance() {
+    return new Mutable();
   }
 
   @Override
@@ -61,38 +49,16 @@ public final class RdfDefaultGraph extends ProtoMessage<RdfDefaultGraph> impleme
   }
 
   @Override
-  @SuppressWarnings("fallthrough")
-  public RdfDefaultGraph mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-    // Enabled Fall-Through Optimization
-    final CodedInputStream input = inputLimited.in();
-    int tag = input.readTag();
-    while (true) {
-      switch (tag) {
-        case 0: {
-          return this;
-        }
-        default: {
-          if (!input.skipField(tag)) {
-            return this;
-          }
-          tag = input.readTag();
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
-  public RdfDefaultGraph clone() {
-    return new RdfDefaultGraph().copyFrom(this);
+  public Mutable clone() {
+    return newInstance().copyFrom(this);
   }
 
   public static RdfDefaultGraph parseFrom(final byte[] data) throws InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(new RdfDefaultGraph(), data);
+    return ProtoMessage.mergeFrom(newInstance(), data);
   }
 
   public static RdfDefaultGraph parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(new RdfDefaultGraph(), input);
+    return ProtoMessage.mergeFrom(newInstance(), input);
   }
 
   public static RdfDefaultGraph parseDelimitedFrom(final InputStream input) throws IOException {
@@ -106,12 +72,72 @@ public final class RdfDefaultGraph extends ProtoMessage<RdfDefaultGraph> impleme
     return RdfDefaultGraphFactory.INSTANCE;
   }
 
+  /**
+   * @return this type's descriptor.
+   */
+  public static Descriptors.Descriptor getDescriptor() {
+    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfDefaultGraph_descriptor;
+  }
+
   private enum RdfDefaultGraphFactory implements MessageFactory<RdfDefaultGraph> {
     INSTANCE;
 
     @Override
     public RdfDefaultGraph create() {
       return RdfDefaultGraph.newInstance();
+    }
+  }
+
+  /**
+   * Mutable subclass of the parent class.
+   * You can call setters on this class to set the values.
+   * When passing the constructed message to the serializer,
+   * you should use the parent class (using .asImmutable()) to
+   * ensure the message won't be modified by accident.
+   */
+  public static final class Mutable extends RdfDefaultGraph {
+    private Mutable() {
+    }
+
+    @Override
+    public Mutable copyFrom(final RdfDefaultGraph other) {
+      cachedSize = other.cachedSize;
+      return this;
+    }
+
+    @Override
+    public Mutable mergeFrom(final RdfDefaultGraph other) {
+      cachedSize = -1;
+      return this;
+    }
+
+    @Override
+    @SuppressWarnings("fallthrough")
+    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+      // Enabled Fall-Through Optimization
+      final CodedInputStream input = inputLimited.in();
+      int tag = input.readTag();
+      while (true) {
+        switch (tag) {
+          case 0: {
+            return this;
+          }
+          default: {
+            if (!input.skipField(tag)) {
+              return this;
+            }
+            tag = input.readTag();
+            break;
+          }
+        }
+      }
+    }
+
+    /**
+     * Returns this message as an immutable message, without any copies.
+     */
+    public RdfDefaultGraph asImmutable() {
+      return this;
     }
   }
 }

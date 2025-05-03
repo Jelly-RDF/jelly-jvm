@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.proto.v1;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
@@ -13,27 +14,26 @@ import java.io.InputStream;
 
 /**
  * Protobuf type {@code RdfPrefixEntry}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 @SuppressWarnings("hiding")
-public final class RdfPrefixEntry extends ProtoMessage<RdfPrefixEntry> implements Cloneable {
+public abstract class RdfPrefixEntry extends ProtoMessage<RdfPrefixEntry> implements Cloneable {
   /**
    * <code>optional uint32 id = 1;</code>
    */
-  private int id;
+  protected int id;
 
   /**
    * <code>optional string value = 2;</code>
    */
-  private String value_ = "";
-
-  private RdfPrefixEntry() {
-  }
+  protected String value_ = "";
 
   /**
-   * @return a new empty instance of {@code RdfPrefixEntry}
+   * @return a new empty instance of {@code Mutable}
    */
-  public static RdfPrefixEntry newInstance() {
-    return new RdfPrefixEntry();
+  public static Mutable newInstance() {
+    return new Mutable();
   }
 
   /**
@@ -45,47 +45,11 @@ public final class RdfPrefixEntry extends ProtoMessage<RdfPrefixEntry> implement
   }
 
   /**
-   * <code>optional uint32 id = 1;</code>
-   * @param value the id to set
-   * @return this
-   */
-  public RdfPrefixEntry setId(final int value) {
-    id = value;
-    return this;
-  }
-
-  /**
    * <code>optional string value = 2;</code>
    * @return the value_
    */
   public String getValue() {
     return value_;
-  }
-
-  /**
-   * <code>optional string value = 2;</code>
-   * @param value the value_ to set
-   * @return this
-   */
-  public RdfPrefixEntry setValue(final String value) {
-    value_ = value;
-    return this;
-  }
-
-  @Override
-  public RdfPrefixEntry copyFrom(final RdfPrefixEntry other) {
-    cachedSize = other.cachedSize;
-    id = other.id;
-    value_ = other.value_;
-    return this;
-  }
-
-  @Override
-  public RdfPrefixEntry mergeFrom(final RdfPrefixEntry other) {
-    cachedSize = -1;
-    setId(other.id);
-    value_ = other.value_;
-    return this;
   }
 
   @Override
@@ -126,54 +90,16 @@ public final class RdfPrefixEntry extends ProtoMessage<RdfPrefixEntry> implement
   }
 
   @Override
-  @SuppressWarnings("fallthrough")
-  public RdfPrefixEntry mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-    // Enabled Fall-Through Optimization
-    final CodedInputStream input = inputLimited.in();
-    int tag = input.readTag();
-    while (true) {
-      switch (tag) {
-        case 8: {
-          // id
-          id = input.readUInt32();
-          tag = input.readTag();
-          if (tag != 18) {
-            break;
-          }
-        }
-        case 18: {
-          // value_
-          value_ = input.readStringRequireUtf8();
-          tag = input.readTag();
-          if (tag != 0) {
-            break;
-          }
-        }
-        case 0: {
-          return this;
-        }
-        default: {
-          if (!input.skipField(tag)) {
-            return this;
-          }
-          tag = input.readTag();
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
-  public RdfPrefixEntry clone() {
-    return new RdfPrefixEntry().copyFrom(this);
+  public Mutable clone() {
+    return newInstance().copyFrom(this);
   }
 
   public static RdfPrefixEntry parseFrom(final byte[] data) throws InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(new RdfPrefixEntry(), data);
+    return ProtoMessage.mergeFrom(newInstance(), data);
   }
 
   public static RdfPrefixEntry parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(new RdfPrefixEntry(), input);
+    return ProtoMessage.mergeFrom(newInstance(), input);
   }
 
   public static RdfPrefixEntry parseDelimitedFrom(final InputStream input) throws IOException {
@@ -187,12 +113,112 @@ public final class RdfPrefixEntry extends ProtoMessage<RdfPrefixEntry> implement
     return RdfPrefixEntryFactory.INSTANCE;
   }
 
+  /**
+   * @return this type's descriptor.
+   */
+  public static Descriptors.Descriptor getDescriptor() {
+    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfPrefixEntry_descriptor;
+  }
+
   private enum RdfPrefixEntryFactory implements MessageFactory<RdfPrefixEntry> {
     INSTANCE;
 
     @Override
     public RdfPrefixEntry create() {
       return RdfPrefixEntry.newInstance();
+    }
+  }
+
+  /**
+   * Mutable subclass of the parent class.
+   * You can call setters on this class to set the values.
+   * When passing the constructed message to the serializer,
+   * you should use the parent class (using .asImmutable()) to
+   * ensure the message won't be modified by accident.
+   */
+  public static final class Mutable extends RdfPrefixEntry {
+    private Mutable() {
+    }
+
+    /**
+     * <code>optional uint32 id = 1;</code>
+     * @param value the id to set
+     * @return this
+     */
+    public Mutable setId(final int value) {
+      id = value;
+      return this;
+    }
+
+    /**
+     * <code>optional string value = 2;</code>
+     * @param value the value_ to set
+     * @return this
+     */
+    public Mutable setValue(final String value) {
+      value_ = value;
+      return this;
+    }
+
+    @Override
+    public Mutable copyFrom(final RdfPrefixEntry other) {
+      cachedSize = other.cachedSize;
+      id = other.id;
+      value_ = other.value_;
+      return this;
+    }
+
+    @Override
+    public Mutable mergeFrom(final RdfPrefixEntry other) {
+      cachedSize = -1;
+      setId(other.id);
+      value_ = other.value_;
+      return this;
+    }
+
+    @Override
+    @SuppressWarnings("fallthrough")
+    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+      // Enabled Fall-Through Optimization
+      final CodedInputStream input = inputLimited.in();
+      int tag = input.readTag();
+      while (true) {
+        switch (tag) {
+          case 8: {
+            // id
+            id = input.readUInt32();
+            tag = input.readTag();
+            if (tag != 18) {
+              break;
+            }
+          }
+          case 18: {
+            // value_
+            value_ = input.readStringRequireUtf8();
+            tag = input.readTag();
+            if (tag != 0) {
+              break;
+            }
+          }
+          case 0: {
+            return this;
+          }
+          default: {
+            if (!input.skipField(tag)) {
+              return this;
+            }
+            tag = input.readTag();
+            break;
+          }
+        }
+      }
+    }
+
+    /**
+     * Returns this message as an immutable message, without any copies.
+     */
+    public RdfPrefixEntry asImmutable() {
+      return this;
     }
   }
 }

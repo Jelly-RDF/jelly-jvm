@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.proto.v1;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
@@ -13,9 +14,11 @@ import java.io.InputStream;
 
 /**
  * Protobuf type {@code RdfLiteral}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 @SuppressWarnings("hiding")
-public final class RdfLiteral extends ProtoMessage<RdfLiteral> implements Cloneable {
+public abstract class RdfLiteral extends ProtoMessage<RdfLiteral> implements Cloneable {
   public static final byte LANGTAG = 2;
 
   public static final byte DATATYPE = 3;
@@ -23,37 +26,24 @@ public final class RdfLiteral extends ProtoMessage<RdfLiteral> implements Clonea
   /**
    * <code>optional string lex = 1;</code>
    */
-  private String lex = "";
+  protected String lex = "";
 
   /**
    * <code>oneof literalKind { ... }</code>
    */
-  private Object literalKind = null;
+  protected Object literalKind = null;
 
-  private byte literalKindNumber = 0;
-
-  private RdfLiteral() {
-  }
+  protected byte literalKindNumber = 0;
 
   /**
-   * @return a new empty instance of {@code RdfLiteral}
+   * @return a new empty instance of {@code Mutable}
    */
-  public static RdfLiteral newInstance() {
-    return new RdfLiteral();
+  public static Mutable newInstance() {
+    return new Mutable();
   }
 
   public boolean hasLiteralKind() {
     return literalKindNumber != 0;
-  }
-
-  /**
-   * Low-level setter for the <code>literalKind</code> oneof field.
-   * Use with care, as it will not check the type of the value.
-   */
-  public RdfLiteral setLiteralKind(Object literalKind, byte number) {
-    this.literalKind = literalKind;
-    this.literalKindNumber = number;
-    return this;
   }
 
   /**
@@ -71,15 +61,6 @@ public final class RdfLiteral extends ProtoMessage<RdfLiteral> implements Clonea
   }
 
   /**
-   * Sets the <code>literalKind</code> oneof field to langtag.
-   */
-  public RdfLiteral setLangtag(String langtag) {
-    this.literalKind = langtag;
-    this.literalKindNumber = 2;
-    return this;
-  }
-
-  /**
    * Returns the <code>literalKind</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -92,15 +73,6 @@ public final class RdfLiteral extends ProtoMessage<RdfLiteral> implements Clonea
    */
   public boolean hasLangtag() {
     return literalKindNumber == 2;
-  }
-
-  /**
-   * Sets the <code>literalKind</code> oneof field to datatype.
-   */
-  public RdfLiteral setDatatype(int datatype) {
-    this.literalKind = datatype;
-    this.literalKindNumber = 3;
-    return this;
   }
 
   /**
@@ -124,34 +96,6 @@ public final class RdfLiteral extends ProtoMessage<RdfLiteral> implements Clonea
    */
   public String getLex() {
     return lex;
-  }
-
-  /**
-   * <code>optional string lex = 1;</code>
-   * @param value the lex to set
-   * @return this
-   */
-  public RdfLiteral setLex(final String value) {
-    lex = value;
-    return this;
-  }
-
-  @Override
-  public RdfLiteral copyFrom(final RdfLiteral other) {
-    cachedSize = other.cachedSize;
-    lex = other.lex;
-    this.literalKind = other.literalKind;
-    this.literalKindNumber = other.literalKindNumber;
-    return this;
-  }
-
-  @Override
-  public RdfLiteral mergeFrom(final RdfLiteral other) {
-    cachedSize = -1;
-    lex = other.lex;
-    this.literalKind = other.literalKind;
-    this.literalKindNumber = other.literalKindNumber;
-    return this;
   }
 
   @Override
@@ -211,62 +155,16 @@ public final class RdfLiteral extends ProtoMessage<RdfLiteral> implements Clonea
   }
 
   @Override
-  @SuppressWarnings("fallthrough")
-  public RdfLiteral mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-    // Enabled Fall-Through Optimization
-    final CodedInputStream input = inputLimited.in();
-    int tag = input.readTag();
-    while (true) {
-      switch (tag) {
-        case 10: {
-          // lex
-          lex = input.readStringRequireUtf8();
-          tag = input.readTag();
-          if (tag != 18) {
-            break;
-          }
-        }
-        case 18: {
-          // langtag
-          setLangtag(input.readStringRequireUtf8());
-          tag = input.readTag();
-          if (tag != 24) {
-            break;
-          }
-        }
-        case 24: {
-          // datatype
-          setDatatype(input.readUInt32());
-          tag = input.readTag();
-          if (tag != 0) {
-            break;
-          }
-        }
-        case 0: {
-          return this;
-        }
-        default: {
-          if (!input.skipField(tag)) {
-            return this;
-          }
-          tag = input.readTag();
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
-  public RdfLiteral clone() {
-    return new RdfLiteral().copyFrom(this);
+  public Mutable clone() {
+    return newInstance().copyFrom(this);
   }
 
   public static RdfLiteral parseFrom(final byte[] data) throws InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(new RdfLiteral(), data);
+    return ProtoMessage.mergeFrom(newInstance(), data);
   }
 
   public static RdfLiteral parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(new RdfLiteral(), input);
+    return ProtoMessage.mergeFrom(newInstance(), input);
   }
 
   public static RdfLiteral parseDelimitedFrom(final InputStream input) throws IOException {
@@ -280,12 +178,140 @@ public final class RdfLiteral extends ProtoMessage<RdfLiteral> implements Clonea
     return RdfLiteralFactory.INSTANCE;
   }
 
+  /**
+   * @return this type's descriptor.
+   */
+  public static Descriptors.Descriptor getDescriptor() {
+    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfLiteral_descriptor;
+  }
+
   private enum RdfLiteralFactory implements MessageFactory<RdfLiteral> {
     INSTANCE;
 
     @Override
     public RdfLiteral create() {
       return RdfLiteral.newInstance();
+    }
+  }
+
+  /**
+   * Mutable subclass of the parent class.
+   * You can call setters on this class to set the values.
+   * When passing the constructed message to the serializer,
+   * you should use the parent class (using .asImmutable()) to
+   * ensure the message won't be modified by accident.
+   */
+  public static final class Mutable extends RdfLiteral {
+    private Mutable() {
+    }
+
+    /**
+     * Low-level setter for the <code>literalKind</code> oneof field.
+     * Use with care, as it will not check the type of the value.
+     */
+    public Mutable setLiteralKind(Object literalKind, byte number) {
+      this.literalKind = literalKind;
+      this.literalKindNumber = number;
+      return this;
+    }
+
+    /**
+     * Sets the <code>literalKind</code> oneof field to langtag.
+     */
+    public Mutable setLangtag(String langtag) {
+      this.literalKind = langtag;
+      this.literalKindNumber = 2;
+      return this;
+    }
+
+    /**
+     * Sets the <code>literalKind</code> oneof field to datatype.
+     */
+    public Mutable setDatatype(int datatype) {
+      this.literalKind = datatype;
+      this.literalKindNumber = 3;
+      return this;
+    }
+
+    /**
+     * <code>optional string lex = 1;</code>
+     * @param value the lex to set
+     * @return this
+     */
+    public Mutable setLex(final String value) {
+      lex = value;
+      return this;
+    }
+
+    @Override
+    public Mutable copyFrom(final RdfLiteral other) {
+      cachedSize = other.cachedSize;
+      lex = other.lex;
+      this.literalKind = other.literalKind;
+      this.literalKindNumber = other.literalKindNumber;
+      return this;
+    }
+
+    @Override
+    public Mutable mergeFrom(final RdfLiteral other) {
+      cachedSize = -1;
+      lex = other.lex;
+      this.literalKind = other.literalKind;
+      this.literalKindNumber = other.literalKindNumber;
+      return this;
+    }
+
+    @Override
+    @SuppressWarnings("fallthrough")
+    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+      // Enabled Fall-Through Optimization
+      final CodedInputStream input = inputLimited.in();
+      int tag = input.readTag();
+      while (true) {
+        switch (tag) {
+          case 10: {
+            // lex
+            lex = input.readStringRequireUtf8();
+            tag = input.readTag();
+            if (tag != 18) {
+              break;
+            }
+          }
+          case 18: {
+            // langtag
+            setLangtag(input.readStringRequireUtf8());
+            tag = input.readTag();
+            if (tag != 24) {
+              break;
+            }
+          }
+          case 24: {
+            // datatype
+            setDatatype(input.readUInt32());
+            tag = input.readTag();
+            if (tag != 0) {
+              break;
+            }
+          }
+          case 0: {
+            return this;
+          }
+          default: {
+            if (!input.skipField(tag)) {
+              return this;
+            }
+            tag = input.readTag();
+            break;
+          }
+        }
+      }
+    }
+
+    /**
+     * Returns this message as an immutable message, without any copies.
+     */
+    public RdfLiteral asImmutable() {
+      return this;
     }
   }
 }

@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.proto.v1;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.jelly.core.internal.proto.NsBase;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
@@ -14,27 +15,26 @@ import java.io.InputStream;
 
 /**
  * Protobuf type {@code RdfNamespaceDeclaration}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 @SuppressWarnings("hiding")
-public final class RdfNamespaceDeclaration extends ProtoMessage<RdfNamespaceDeclaration> implements NsBase, Cloneable {
+public abstract class RdfNamespaceDeclaration extends ProtoMessage<RdfNamespaceDeclaration> implements NsBase, Cloneable {
   /**
    * <code>optional string name = 1;</code>
    */
-  private String name = "";
+  protected String name = "";
 
   /**
    * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.RdfIri value = 2;</code>
    */
-  private RdfIri value_ = null;
-
-  private RdfNamespaceDeclaration() {
-  }
+  protected RdfIri value_ = null;
 
   /**
-   * @return a new empty instance of {@code RdfNamespaceDeclaration}
+   * @return a new empty instance of {@code Mutable}
    */
-  public static RdfNamespaceDeclaration newInstance() {
-    return new RdfNamespaceDeclaration();
+  public static Mutable newInstance() {
+    return new Mutable();
   }
 
   /**
@@ -46,56 +46,12 @@ public final class RdfNamespaceDeclaration extends ProtoMessage<RdfNamespaceDecl
   }
 
   /**
-   * <code>optional string name = 1;</code>
-   * @param value the name to set
-   * @return this
-   */
-  public RdfNamespaceDeclaration setName(final String value) {
-    name = value;
-    return this;
-  }
-
-  private void initValue() {
-    if (value_ == null) {
-      value_ = RdfIri.newInstance();
-    }
-  }
-
-  /**
    * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.RdfIri value = 2;</code>
    *
    * @return value for this field
    */
   public RdfIri getValue() {
     return value_;
-  }
-
-  /**
-   * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.RdfIri value = 2;</code>
-   * @param value the value_ to set
-   * @return this
-   */
-  public RdfNamespaceDeclaration setValue(final RdfIri value) {
-    initValue();
-    value_.copyFrom(value);
-    return this;
-  }
-
-  @Override
-  public RdfNamespaceDeclaration copyFrom(final RdfNamespaceDeclaration other) {
-    cachedSize = other.cachedSize;
-    name = other.name;
-    initValue();
-    value_.copyFrom(other.value_);
-    return this;
-  }
-
-  @Override
-  public RdfNamespaceDeclaration mergeFrom(final RdfNamespaceDeclaration other) {
-    cachedSize = -1;
-    name = other.name;
-    getValue().mergeFrom(other.value_);
-    return this;
   }
 
   @Override
@@ -138,58 +94,18 @@ public final class RdfNamespaceDeclaration extends ProtoMessage<RdfNamespaceDecl
   }
 
   @Override
-  @SuppressWarnings("fallthrough")
-  public RdfNamespaceDeclaration mergeFrom(final LimitedCodedInputStream inputLimited) throws
-      IOException {
-    // Enabled Fall-Through Optimization
-    final CodedInputStream input = inputLimited.in();
-    int tag = input.readTag();
-    while (true) {
-      switch (tag) {
-        case 10: {
-          // name
-          name = input.readStringRequireUtf8();
-          tag = input.readTag();
-          if (tag != 18) {
-            break;
-          }
-        }
-        case 18: {
-          // value_
-          initValue();
-          ProtoMessage.mergeDelimitedFrom(value_, inputLimited);
-          tag = input.readTag();
-          if (tag != 0) {
-            break;
-          }
-        }
-        case 0: {
-          return this;
-        }
-        default: {
-          if (!input.skipField(tag)) {
-            return this;
-          }
-          tag = input.readTag();
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
-  public RdfNamespaceDeclaration clone() {
-    return new RdfNamespaceDeclaration().copyFrom(this);
+  public Mutable clone() {
+    return newInstance().copyFrom(this);
   }
 
   public static RdfNamespaceDeclaration parseFrom(final byte[] data) throws
       InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(new RdfNamespaceDeclaration(), data);
+    return ProtoMessage.mergeFrom(newInstance(), data);
   }
 
   public static RdfNamespaceDeclaration parseFrom(final LimitedCodedInputStream input) throws
       IOException {
-    return ProtoMessage.mergeFrom(new RdfNamespaceDeclaration(), input);
+    return ProtoMessage.mergeFrom(newInstance(), input);
   }
 
   public static RdfNamespaceDeclaration parseDelimitedFrom(final InputStream input) throws
@@ -204,12 +120,121 @@ public final class RdfNamespaceDeclaration extends ProtoMessage<RdfNamespaceDecl
     return RdfNamespaceDeclarationFactory.INSTANCE;
   }
 
+  /**
+   * @return this type's descriptor.
+   */
+  public static Descriptors.Descriptor getDescriptor() {
+    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfNamespaceDeclaration_descriptor;
+  }
+
   private enum RdfNamespaceDeclarationFactory implements MessageFactory<RdfNamespaceDeclaration> {
     INSTANCE;
 
     @Override
     public RdfNamespaceDeclaration create() {
       return RdfNamespaceDeclaration.newInstance();
+    }
+  }
+
+  /**
+   * Mutable subclass of the parent class.
+   * You can call setters on this class to set the values.
+   * When passing the constructed message to the serializer,
+   * you should use the parent class (using .asImmutable()) to
+   * ensure the message won't be modified by accident.
+   */
+  public static final class Mutable extends RdfNamespaceDeclaration implements Setters {
+    private Mutable() {
+    }
+
+    /**
+     * <code>optional string name = 1;</code>
+     * @param value the name to set
+     * @return this
+     */
+    public Mutable setName(final String value) {
+      name = value;
+      return this;
+    }
+
+    private void initValue() {
+      if (value_ == null) {
+        value_ = RdfIri.newInstance();
+      }
+    }
+
+    /**
+     * <code>optional .eu.ostrzyciel.jelly.core.proto.v1.RdfIri value = 2;</code>
+     * @param value the value_ to set
+     * @return this
+     */
+    public Mutable setValue(final RdfIri value) {
+      initValue();
+      value_.copyFrom(value);
+      return this;
+    }
+
+    @Override
+    public Mutable copyFrom(final RdfNamespaceDeclaration other) {
+      cachedSize = other.cachedSize;
+      name = other.name;
+      initValue();
+      value_.copyFrom(other.value_);
+      return this;
+    }
+
+    @Override
+    public Mutable mergeFrom(final RdfNamespaceDeclaration other) {
+      cachedSize = -1;
+      name = other.name;
+      getValue().mergeFrom(other.value_);
+      return this;
+    }
+
+    @Override
+    @SuppressWarnings("fallthrough")
+    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+      // Enabled Fall-Through Optimization
+      final CodedInputStream input = inputLimited.in();
+      int tag = input.readTag();
+      while (true) {
+        switch (tag) {
+          case 10: {
+            // name
+            name = input.readStringRequireUtf8();
+            tag = input.readTag();
+            if (tag != 18) {
+              break;
+            }
+          }
+          case 18: {
+            // value_
+            initValue();
+            ProtoMessage.mergeDelimitedFrom(value_, inputLimited);
+            tag = input.readTag();
+            if (tag != 0) {
+              break;
+            }
+          }
+          case 0: {
+            return this;
+          }
+          default: {
+            if (!input.skipField(tag)) {
+              return this;
+            }
+            tag = input.readTag();
+            break;
+          }
+        }
+      }
+    }
+
+    /**
+     * Returns this message as an immutable message, without any copies.
+     */
+    public RdfNamespaceDeclaration asImmutable() {
+      return this;
     }
   }
 }

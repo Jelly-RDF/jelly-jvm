@@ -5,6 +5,8 @@ import eu.neverblink.protoc.java.runtime.ProtoEnum;
 
 /**
  * Protobuf enum {@code LogicalStreamType}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 public enum LogicalStreamType implements ProtoEnum<LogicalStreamType> {
   /**

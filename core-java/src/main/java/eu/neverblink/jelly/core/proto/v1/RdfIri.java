@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.proto.v1;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
@@ -13,27 +14,26 @@ import java.io.InputStream;
 
 /**
  * Protobuf type {@code RdfIri}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 @SuppressWarnings("hiding")
-public final class RdfIri extends ProtoMessage<RdfIri> implements Cloneable {
+public abstract class RdfIri extends ProtoMessage<RdfIri> implements Cloneable {
   /**
    * <code>optional uint32 prefix_id = 1;</code>
    */
-  private int prefixId;
+  protected int prefixId;
 
   /**
    * <code>optional uint32 name_id = 2;</code>
    */
-  private int nameId;
-
-  private RdfIri() {
-  }
+  protected int nameId;
 
   /**
-   * @return a new empty instance of {@code RdfIri}
+   * @return a new empty instance of {@code Mutable}
    */
-  public static RdfIri newInstance() {
-    return new RdfIri();
+  public static Mutable newInstance() {
+    return new Mutable();
   }
 
   /**
@@ -45,47 +45,11 @@ public final class RdfIri extends ProtoMessage<RdfIri> implements Cloneable {
   }
 
   /**
-   * <code>optional uint32 prefix_id = 1;</code>
-   * @param value the prefixId to set
-   * @return this
-   */
-  public RdfIri setPrefixId(final int value) {
-    prefixId = value;
-    return this;
-  }
-
-  /**
    * <code>optional uint32 name_id = 2;</code>
    * @return the nameId
    */
   public int getNameId() {
     return nameId;
-  }
-
-  /**
-   * <code>optional uint32 name_id = 2;</code>
-   * @param value the nameId to set
-   * @return this
-   */
-  public RdfIri setNameId(final int value) {
-    nameId = value;
-    return this;
-  }
-
-  @Override
-  public RdfIri copyFrom(final RdfIri other) {
-    cachedSize = other.cachedSize;
-    prefixId = other.prefixId;
-    nameId = other.nameId;
-    return this;
-  }
-
-  @Override
-  public RdfIri mergeFrom(final RdfIri other) {
-    cachedSize = -1;
-    setPrefixId(other.prefixId);
-    setNameId(other.nameId);
-    return this;
   }
 
   @Override
@@ -126,54 +90,16 @@ public final class RdfIri extends ProtoMessage<RdfIri> implements Cloneable {
   }
 
   @Override
-  @SuppressWarnings("fallthrough")
-  public RdfIri mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-    // Enabled Fall-Through Optimization
-    final CodedInputStream input = inputLimited.in();
-    int tag = input.readTag();
-    while (true) {
-      switch (tag) {
-        case 8: {
-          // prefixId
-          prefixId = input.readUInt32();
-          tag = input.readTag();
-          if (tag != 16) {
-            break;
-          }
-        }
-        case 16: {
-          // nameId
-          nameId = input.readUInt32();
-          tag = input.readTag();
-          if (tag != 0) {
-            break;
-          }
-        }
-        case 0: {
-          return this;
-        }
-        default: {
-          if (!input.skipField(tag)) {
-            return this;
-          }
-          tag = input.readTag();
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
-  public RdfIri clone() {
-    return new RdfIri().copyFrom(this);
+  public Mutable clone() {
+    return newInstance().copyFrom(this);
   }
 
   public static RdfIri parseFrom(final byte[] data) throws InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(new RdfIri(), data);
+    return ProtoMessage.mergeFrom(newInstance(), data);
   }
 
   public static RdfIri parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(new RdfIri(), input);
+    return ProtoMessage.mergeFrom(newInstance(), input);
   }
 
   public static RdfIri parseDelimitedFrom(final InputStream input) throws IOException {
@@ -187,12 +113,112 @@ public final class RdfIri extends ProtoMessage<RdfIri> implements Cloneable {
     return RdfIriFactory.INSTANCE;
   }
 
+  /**
+   * @return this type's descriptor.
+   */
+  public static Descriptors.Descriptor getDescriptor() {
+    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfIri_descriptor;
+  }
+
   private enum RdfIriFactory implements MessageFactory<RdfIri> {
     INSTANCE;
 
     @Override
     public RdfIri create() {
       return RdfIri.newInstance();
+    }
+  }
+
+  /**
+   * Mutable subclass of the parent class.
+   * You can call setters on this class to set the values.
+   * When passing the constructed message to the serializer,
+   * you should use the parent class (using .asImmutable()) to
+   * ensure the message won't be modified by accident.
+   */
+  public static final class Mutable extends RdfIri {
+    private Mutable() {
+    }
+
+    /**
+     * <code>optional uint32 prefix_id = 1;</code>
+     * @param value the prefixId to set
+     * @return this
+     */
+    public Mutable setPrefixId(final int value) {
+      prefixId = value;
+      return this;
+    }
+
+    /**
+     * <code>optional uint32 name_id = 2;</code>
+     * @param value the nameId to set
+     * @return this
+     */
+    public Mutable setNameId(final int value) {
+      nameId = value;
+      return this;
+    }
+
+    @Override
+    public Mutable copyFrom(final RdfIri other) {
+      cachedSize = other.cachedSize;
+      prefixId = other.prefixId;
+      nameId = other.nameId;
+      return this;
+    }
+
+    @Override
+    public Mutable mergeFrom(final RdfIri other) {
+      cachedSize = -1;
+      setPrefixId(other.prefixId);
+      setNameId(other.nameId);
+      return this;
+    }
+
+    @Override
+    @SuppressWarnings("fallthrough")
+    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+      // Enabled Fall-Through Optimization
+      final CodedInputStream input = inputLimited.in();
+      int tag = input.readTag();
+      while (true) {
+        switch (tag) {
+          case 8: {
+            // prefixId
+            prefixId = input.readUInt32();
+            tag = input.readTag();
+            if (tag != 16) {
+              break;
+            }
+          }
+          case 16: {
+            // nameId
+            nameId = input.readUInt32();
+            tag = input.readTag();
+            if (tag != 0) {
+              break;
+            }
+          }
+          case 0: {
+            return this;
+          }
+          default: {
+            if (!input.skipField(tag)) {
+              return this;
+            }
+            tag = input.readTag();
+            break;
+          }
+        }
+      }
+    }
+
+    /**
+     * Returns this message as an immutable message, without any copies.
+     */
+    public RdfIri asImmutable() {
+      return this;
     }
   }
 }

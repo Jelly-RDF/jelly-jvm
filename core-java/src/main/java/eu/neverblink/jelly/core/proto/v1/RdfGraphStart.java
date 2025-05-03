@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.proto.v1;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.jelly.core.internal.proto.GraphBase;
 import eu.neverblink.protoc.java.runtime.LimitedCodedInputStream;
@@ -14,9 +15,11 @@ import java.io.InputStream;
 
 /**
  * Protobuf type {@code RdfGraphStart}
+ * DO NOT INHERIT FROM THIS CLASS!
+ * It's not <code>final</code> only to facilitate the Mutable nested subclass.
  */
 @SuppressWarnings("hiding")
-public final class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements GraphBase, Cloneable {
+public abstract class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements GraphBase, Cloneable {
   public static final byte G_IRI = 1;
 
   public static final byte G_BNODE = 2;
@@ -28,32 +31,19 @@ public final class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements 
   /**
    * <code>oneof graph { ... }</code>
    */
-  private Object graph = null;
+  protected Object graph = null;
 
-  private byte graphNumber = 0;
-
-  private RdfGraphStart() {
-  }
+  protected byte graphNumber = 0;
 
   /**
-   * @return a new empty instance of {@code RdfGraphStart}
+   * @return a new empty instance of {@code Mutable}
    */
-  public static RdfGraphStart newInstance() {
-    return new RdfGraphStart();
+  public static Mutable newInstance() {
+    return new Mutable();
   }
 
   public boolean hasGraph() {
     return graphNumber != 0;
-  }
-
-  /**
-   * Low-level setter for the <code>graph</code> oneof field.
-   * Use with care, as it will not check the type of the value.
-   */
-  public RdfGraphStart setGraph(Object graph, byte number) {
-    this.graph = graph;
-    this.graphNumber = number;
-    return this;
   }
 
   /**
@@ -68,15 +58,6 @@ public final class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements 
    */
   public byte getGraphFieldNumber() {
     return graphNumber;
-  }
-
-  /**
-   * Sets the <code>graph</code> oneof field to gIri.
-   */
-  public RdfGraphStart setGIri(RdfIri gIri) {
-    this.graph = gIri;
-    this.graphNumber = 1;
-    return this;
   }
 
   /**
@@ -95,15 +76,6 @@ public final class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements 
   }
 
   /**
-   * Sets the <code>graph</code> oneof field to gBnode.
-   */
-  public RdfGraphStart setGBnode(String gBnode) {
-    this.graph = gBnode;
-    this.graphNumber = 2;
-    return this;
-  }
-
-  /**
    * Returns the <code>graph</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -116,15 +88,6 @@ public final class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements 
    */
   public boolean hasGBnode() {
     return graphNumber == 2;
-  }
-
-  /**
-   * Sets the <code>graph</code> oneof field to gDefaultGraph.
-   */
-  public RdfGraphStart setGDefaultGraph(RdfDefaultGraph gDefaultGraph) {
-    this.graph = gDefaultGraph;
-    this.graphNumber = 3;
-    return this;
   }
 
   /**
@@ -143,15 +106,6 @@ public final class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements 
   }
 
   /**
-   * Sets the <code>graph</code> oneof field to gLiteral.
-   */
-  public RdfGraphStart setGLiteral(RdfLiteral gLiteral) {
-    this.graph = gLiteral;
-    this.graphNumber = 4;
-    return this;
-  }
-
-  /**
    * Returns the <code>graph</code> oneof field.
    * Use with care, as it will not check if the correct field number is actually set.
    */
@@ -164,22 +118,6 @@ public final class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements 
    */
   public boolean hasGLiteral() {
     return graphNumber == 4;
-  }
-
-  @Override
-  public RdfGraphStart copyFrom(final RdfGraphStart other) {
-    cachedSize = other.cachedSize;
-    this.graph = other.graph;
-    this.graphNumber = other.graphNumber;
-    return this;
-  }
-
-  @Override
-  public RdfGraphStart mergeFrom(final RdfGraphStart other) {
-    cachedSize = -1;
-    this.graph = other.graph;
-    this.graphNumber = other.graphNumber;
-    return this;
   }
 
   @Override
@@ -259,94 +197,16 @@ public final class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements 
   }
 
   @Override
-  @SuppressWarnings("fallthrough")
-  public RdfGraphStart mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
-    // Enabled Fall-Through Optimization
-    final CodedInputStream input = inputLimited.in();
-    int tag = input.readTag();
-    while (true) {
-      switch (tag) {
-        case 10: {
-          // gIri
-          final RdfIri gIri;
-          if (graphNumber == 1) {
-            gIri = getGIri();
-          }
-          else {
-            gIri = RdfIri.newInstance();
-            setGIri(gIri);
-          }
-          ProtoMessage.mergeDelimitedFrom(gIri, inputLimited);
-          tag = input.readTag();
-          if (tag != 18) {
-            break;
-          }
-        }
-        case 18: {
-          // gBnode
-          setGBnode(input.readStringRequireUtf8());
-          tag = input.readTag();
-          if (tag != 26) {
-            break;
-          }
-        }
-        case 26: {
-          // gDefaultGraph
-          final RdfDefaultGraph gDefaultGraph;
-          if (graphNumber == 3) {
-            gDefaultGraph = getGDefaultGraph();
-          }
-          else {
-            gDefaultGraph = RdfDefaultGraph.newInstance();
-            setGDefaultGraph(gDefaultGraph);
-          }
-          ProtoMessage.mergeDelimitedFrom(gDefaultGraph, inputLimited);
-          tag = input.readTag();
-          if (tag != 34) {
-            break;
-          }
-        }
-        case 34: {
-          // gLiteral
-          final RdfLiteral gLiteral;
-          if (graphNumber == 4) {
-            gLiteral = getGLiteral();
-          }
-          else {
-            gLiteral = RdfLiteral.newInstance();
-            setGLiteral(gLiteral);
-          }
-          ProtoMessage.mergeDelimitedFrom(gLiteral, inputLimited);
-          tag = input.readTag();
-          if (tag != 0) {
-            break;
-          }
-        }
-        case 0: {
-          return this;
-        }
-        default: {
-          if (!input.skipField(tag)) {
-            return this;
-          }
-          tag = input.readTag();
-          break;
-        }
-      }
-    }
-  }
-
-  @Override
-  public RdfGraphStart clone() {
-    return new RdfGraphStart().copyFrom(this);
+  public Mutable clone() {
+    return newInstance().copyFrom(this);
   }
 
   public static RdfGraphStart parseFrom(final byte[] data) throws InvalidProtocolBufferException {
-    return ProtoMessage.mergeFrom(new RdfGraphStart(), data);
+    return ProtoMessage.mergeFrom(newInstance(), data);
   }
 
   public static RdfGraphStart parseFrom(final LimitedCodedInputStream input) throws IOException {
-    return ProtoMessage.mergeFrom(new RdfGraphStart(), input);
+    return ProtoMessage.mergeFrom(newInstance(), input);
   }
 
   public static RdfGraphStart parseDelimitedFrom(final InputStream input) throws IOException {
@@ -360,12 +220,178 @@ public final class RdfGraphStart extends ProtoMessage<RdfGraphStart> implements 
     return RdfGraphStartFactory.INSTANCE;
   }
 
+  /**
+   * @return this type's descriptor.
+   */
+  public static Descriptors.Descriptor getDescriptor() {
+    return Rdf.eu_ostrzyciel_jelly_core_proto_v1_RdfGraphStart_descriptor;
+  }
+
   private enum RdfGraphStartFactory implements MessageFactory<RdfGraphStart> {
     INSTANCE;
 
     @Override
     public RdfGraphStart create() {
       return RdfGraphStart.newInstance();
+    }
+  }
+
+  /**
+   * Mutable subclass of the parent class.
+   * You can call setters on this class to set the values.
+   * When passing the constructed message to the serializer,
+   * you should use the parent class (using .asImmutable()) to
+   * ensure the message won't be modified by accident.
+   */
+  public static final class Mutable extends RdfGraphStart implements Setters {
+    private Mutable() {
+    }
+
+    /**
+     * Low-level setter for the <code>graph</code> oneof field.
+     * Use with care, as it will not check the type of the value.
+     */
+    public Mutable setGraph(Object graph, byte number) {
+      this.graph = graph;
+      this.graphNumber = number;
+      return this;
+    }
+
+    /**
+     * Sets the <code>graph</code> oneof field to gIri.
+     */
+    public Mutable setGIri(RdfIri gIri) {
+      this.graph = gIri;
+      this.graphNumber = 1;
+      return this;
+    }
+
+    /**
+     * Sets the <code>graph</code> oneof field to gBnode.
+     */
+    public Mutable setGBnode(String gBnode) {
+      this.graph = gBnode;
+      this.graphNumber = 2;
+      return this;
+    }
+
+    /**
+     * Sets the <code>graph</code> oneof field to gDefaultGraph.
+     */
+    public Mutable setGDefaultGraph(RdfDefaultGraph gDefaultGraph) {
+      this.graph = gDefaultGraph;
+      this.graphNumber = 3;
+      return this;
+    }
+
+    /**
+     * Sets the <code>graph</code> oneof field to gLiteral.
+     */
+    public Mutable setGLiteral(RdfLiteral gLiteral) {
+      this.graph = gLiteral;
+      this.graphNumber = 4;
+      return this;
+    }
+
+    @Override
+    public Mutable copyFrom(final RdfGraphStart other) {
+      cachedSize = other.cachedSize;
+      this.graph = other.graph;
+      this.graphNumber = other.graphNumber;
+      return this;
+    }
+
+    @Override
+    public Mutable mergeFrom(final RdfGraphStart other) {
+      cachedSize = -1;
+      this.graph = other.graph;
+      this.graphNumber = other.graphNumber;
+      return this;
+    }
+
+    @Override
+    @SuppressWarnings("fallthrough")
+    public Mutable mergeFrom(final LimitedCodedInputStream inputLimited) throws IOException {
+      // Enabled Fall-Through Optimization
+      final CodedInputStream input = inputLimited.in();
+      int tag = input.readTag();
+      while (true) {
+        switch (tag) {
+          case 10: {
+            // gIri
+            final RdfIri gIri;
+            if (graphNumber == 1) {
+              gIri = getGIri();
+            }
+            else {
+              gIri = RdfIri.newInstance();
+              setGIri(gIri);
+            }
+            ProtoMessage.mergeDelimitedFrom(gIri, inputLimited);
+            tag = input.readTag();
+            if (tag != 18) {
+              break;
+            }
+          }
+          case 18: {
+            // gBnode
+            setGBnode(input.readStringRequireUtf8());
+            tag = input.readTag();
+            if (tag != 26) {
+              break;
+            }
+          }
+          case 26: {
+            // gDefaultGraph
+            final RdfDefaultGraph gDefaultGraph;
+            if (graphNumber == 3) {
+              gDefaultGraph = getGDefaultGraph();
+            }
+            else {
+              gDefaultGraph = RdfDefaultGraph.newInstance();
+              setGDefaultGraph(gDefaultGraph);
+            }
+            ProtoMessage.mergeDelimitedFrom(gDefaultGraph, inputLimited);
+            tag = input.readTag();
+            if (tag != 34) {
+              break;
+            }
+          }
+          case 34: {
+            // gLiteral
+            final RdfLiteral gLiteral;
+            if (graphNumber == 4) {
+              gLiteral = getGLiteral();
+            }
+            else {
+              gLiteral = RdfLiteral.newInstance();
+              setGLiteral(gLiteral);
+            }
+            ProtoMessage.mergeDelimitedFrom(gLiteral, inputLimited);
+            tag = input.readTag();
+            if (tag != 0) {
+              break;
+            }
+          }
+          case 0: {
+            return this;
+          }
+          default: {
+            if (!input.skipField(tag)) {
+              return this;
+            }
+            tag = input.readTag();
+            break;
+          }
+        }
+      }
+    }
+
+    /**
+     * Returns this message as an immutable message, without any copies.
+     */
+    public RdfGraphStart asImmutable() {
+      return this;
     }
   }
 }
