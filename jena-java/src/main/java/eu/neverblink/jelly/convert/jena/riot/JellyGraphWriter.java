@@ -51,7 +51,7 @@ public final class JellyGraphWriter extends WriterGraphRIOTBase {
 
         var inner = new JellyStreamWriter(converterFactory, variant, out);
 
-        if (formatVariant.isEnableNamespaceDeclarations() && prefixMap != null) {
+        if (variant.isEnableNamespaceDeclarations() && prefixMap != null) {
             for (var entry : prefixMap.getMapping().entrySet()) {
                 inner.prefix(entry.getKey(), entry.getValue());
             }
