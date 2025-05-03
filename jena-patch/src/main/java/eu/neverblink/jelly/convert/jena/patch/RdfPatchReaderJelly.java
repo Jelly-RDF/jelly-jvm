@@ -43,7 +43,7 @@ public final class RdfPatchReaderJelly implements PatchProcessor {
 
     @Override
     public void apply(RDFChanges destination) {
-        final var handler = JellyPatchOperations.fromJellyToJena(destination);
+        final var handler = JellyPatchOps.fromJellyToJena(destination);
         final var decoder = converterFactory.anyStatementDecoder(handler, options.supportedOptions());
         destination.start();
         try {

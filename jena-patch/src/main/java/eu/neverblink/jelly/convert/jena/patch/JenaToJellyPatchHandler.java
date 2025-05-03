@@ -7,6 +7,11 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdfpatch.RDFChanges;
 
+/**
+ * Patch handler to convert Jena RDFChanges operations to Jelly-Patch operations.
+ * <p>
+ * This class provides a handler in Jena terms that relays all operations to a Jelly-Patch stream.
+ */
 @ExperimentalApi
 final class JenaToJellyPatchHandler implements RDFChanges {
 

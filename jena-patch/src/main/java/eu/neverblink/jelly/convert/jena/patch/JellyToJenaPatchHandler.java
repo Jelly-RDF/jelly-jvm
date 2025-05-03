@@ -5,6 +5,11 @@ import eu.neverblink.jelly.core.patch.PatchHandler;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfpatch.RDFChanges;
 
+/**
+ * Patch handler to convert Jelly-Patch operations to Jena RDFChanges operations.
+ * <p>
+ * This class provides a handler in Jelly terms that relays all operations to a Jena RDFChanges
+ */
 @ExperimentalApi
 final class JellyToJenaPatchHandler implements PatchHandler.AnyPatchHandler<Node> {
 

@@ -10,9 +10,9 @@ import org.apache.jena.rdfpatch.RDFChanges;
  * Jelly-based operations on RDFChanges streams and RDFPatch objects from Jena.
  */
 @ExperimentalApi
-public class JellyPatchOperations {
+public class JellyPatchOps {
 
-    private JellyPatchOperations() {}
+    private JellyPatchOps() {}
 
     /**
      * Convert a Jelly-Patch stream to a Jena RDFChanges stream.
