@@ -21,6 +21,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfTriple;
  * @see ProtoDecoder the base (extendable) interface.
  * @see DecoderBase for common methods shared by all decoders.
  */
+@InternalApi
 public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNode, TDatatype> {
 
     protected final RdfHandler<TNode> protoHandler;

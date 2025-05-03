@@ -1,10 +1,6 @@
 package eu.neverblink.jelly.core.patch.internal;
 
-import com.google.protobuf.ExperimentalApi;
-import eu.neverblink.jelly.core.JellyOptions;
-import eu.neverblink.jelly.core.ProtoDecoderConverter;
-import eu.neverblink.jelly.core.RdfProtoDeserializationError;
-import eu.neverblink.jelly.core.RdfTerm;
+import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.DecoderBase;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
 import eu.neverblink.jelly.core.patch.PatchDecoder;
@@ -22,6 +18,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 
 @ExperimentalApi
+@InternalApi
 public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode, TDatatype> implements PatchDecoder {
 
     protected final PatchHandler<TNode> patchHandler;

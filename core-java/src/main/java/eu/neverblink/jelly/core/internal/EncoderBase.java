@@ -1,15 +1,13 @@
 package eu.neverblink.jelly.core.internal;
 
-import eu.neverblink.jelly.core.NodeEncoder;
-import eu.neverblink.jelly.core.ProtoEncoderConverter;
-import eu.neverblink.jelly.core.RdfTerm;
-import eu.neverblink.jelly.core.RowBufferAppender;
+import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 
 /**
  * Base interface for Jelly proto encoders. Only for internal use.
  * @param <TNode> type of RDF nodes in the library
  */
+@InternalApi
 public abstract class EncoderBase<TNode> implements RowBufferAppender {
 
     protected final ProtoEncoderConverter<TNode> converter;

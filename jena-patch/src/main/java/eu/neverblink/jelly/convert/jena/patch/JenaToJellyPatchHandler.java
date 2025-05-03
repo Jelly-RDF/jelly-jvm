@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.convert.jena.patch;
 
-import com.google.protobuf.ExperimentalApi;
+import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.PatchHandler;
 import eu.neverblink.jelly.core.proto.v1.PatchStatementType;
 import org.apache.jena.graph.Node;

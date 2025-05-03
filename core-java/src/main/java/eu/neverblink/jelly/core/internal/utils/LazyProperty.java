@@ -1,9 +1,12 @@
 package eu.neverblink.jelly.core.internal.utils;
 
+import eu.neverblink.jelly.core.InternalApi;
+
 /**
  * Not thread-safe lazy property holder.
  * @param <T> type of the property
  */
+@InternalApi
 public class LazyProperty<T> {
 
     private T value;

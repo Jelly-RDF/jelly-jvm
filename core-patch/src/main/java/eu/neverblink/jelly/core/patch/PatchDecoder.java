@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.patch;
 
-import com.google.protobuf.ExperimentalApi;
+import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.RdfPatchFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfPatchRow;

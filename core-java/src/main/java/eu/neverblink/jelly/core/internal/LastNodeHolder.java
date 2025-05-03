@@ -1,9 +1,12 @@
 package eu.neverblink.jelly.core.internal;
 
+import eu.neverblink.jelly.core.InternalApi;
+
 /**
  * Tiny mutable holder for the last node that occurred as S, P, O, or G.
  * @param <TNode> the type of the node
  */
+@InternalApi
 public class LastNodeHolder<TNode> {
 
     /**

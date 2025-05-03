@@ -17,6 +17,7 @@ import java.util.List;
  * It does not in perfect compression (like you would get with full decoding and re-encoding), but it should be
  * good enough for the vast majority of cases.
  */
+@InternalApi
 public class ProtoTranscoderImpl implements ProtoTranscoder {
 
     private final RdfStreamOptions supportedInputOptions;

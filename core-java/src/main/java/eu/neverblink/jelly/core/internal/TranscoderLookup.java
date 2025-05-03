@@ -1,11 +1,13 @@
 package eu.neverblink.jelly.core.internal;
 
+import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.RdfProtoTranscodingError;
 import java.util.Arrays;
 
 /**
  * A wrapper around EncoderLookup that is used in proto transcoders to remap input stream IDs to output stream IDs.
  */
+@InternalApi
 final class TranscoderLookup {
 
     // The size of the output lookup table

@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.internal;
 
+import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.NameDecoder;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
@@ -10,6 +11,7 @@ import java.util.function.Function;
  * Class for decoding RDF IRIs from their Jelly representation.
  * @param <TIri> The type of the IRI in the target RDF library.
  */
+@InternalApi
 final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     private static final class NameLookupEntry {

@@ -1,9 +1,6 @@
 package eu.neverblink.jelly.core.internal;
 
-import eu.neverblink.jelly.core.NameDecoder;
-import eu.neverblink.jelly.core.ProtoDecoderConverter;
-import eu.neverblink.jelly.core.RdfProtoDeserializationError;
-import eu.neverblink.jelly.core.RdfTerm;
+import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 
 /**
@@ -11,6 +8,7 @@ import eu.neverblink.jelly.core.internal.utils.LazyProperty;
  * @param <TNode> type of RDF nodes in the library
  * @param <TDatatype> type of the datatype in the library
  */
+@InternalApi
 public abstract class DecoderBase<TNode, TDatatype> {
 
     protected final ProtoDecoderConverter<TNode, TDatatype> converter;

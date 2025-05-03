@@ -1,9 +1,6 @@
 package eu.neverblink.jelly.core.internal;
 
-import eu.neverblink.jelly.core.ProtoEncoder;
-import eu.neverblink.jelly.core.ProtoEncoderConverter;
-import eu.neverblink.jelly.core.RdfProtoSerializationError;
-import eu.neverblink.jelly.core.RdfTerm;
+import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfNamespaceDeclaration;
@@ -18,6 +15,7 @@ import java.util.Collection;
  * It will, for example, allow the user to send generalized triples in a stream that should not have them.
  * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
  */
+@InternalApi
 public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;

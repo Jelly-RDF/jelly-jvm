@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.patch;
 
-import com.google.protobuf.ExperimentalApi;
+import eu.neverblink.jelly.core.ExperimentalApi;
 
 /**
  * Interface for handling different types of RDF data structures that flow from the patch decoder.

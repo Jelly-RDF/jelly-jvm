@@ -1,8 +1,8 @@
 package eu.neverblink.jelly.convert.jena.patch;
 
-import com.google.protobuf.ExperimentalApi;
 import eu.neverblink.jelly.convert.jena.JenaDecoderConverter;
 import eu.neverblink.jelly.convert.jena.JenaEncoderConverter;
+import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyConverterFactory;
 import eu.neverblink.jelly.core.patch.JellyPatchConverterFactory;
 import org.apache.jena.datatypes.RDFDatatype;

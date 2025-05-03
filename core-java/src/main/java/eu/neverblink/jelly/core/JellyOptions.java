@@ -237,6 +237,7 @@ public class JellyOptions {
      *
      * @throws RdfProtoDeserializationError if the table size is not within the supported range.
      */
+    @InternalApi
     public static void checkTableSize(String name, int size, int supportedSize, int minSize) {
         if (size > supportedSize) {
             throw new RdfProtoDeserializationError(
