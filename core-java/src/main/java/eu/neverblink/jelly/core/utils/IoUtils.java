@@ -93,7 +93,7 @@ public class IoUtils {
                     // No more frames available, break the loop
                     break;
                 }
-                
+
                 frameConsumer.accept(maybeFrame);
             } catch (IOException e) {
                 throw new IllegalStateException("Error reading stream", e);
