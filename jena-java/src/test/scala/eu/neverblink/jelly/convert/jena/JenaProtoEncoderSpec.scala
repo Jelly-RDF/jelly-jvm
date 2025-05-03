@@ -27,7 +27,7 @@ class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
   "JenaProtoEncoder" should {
     "encode a null graph node as default graph" in {
       val buffer = new mutable.ArrayBuffer[RdfStreamRow]()
-      val encoder = JenaConverterFactory().encoder(Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava))
+      val encoder = JenaConverterFactory.getInstance().encoder(Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava))
       encoder.handleGraphStart(null)
       buffer.size should be (2)
       buffer(1) should be (encodedDefaultGraph)
@@ -35,7 +35,7 @@ class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
     
     "encode an explicitly named default graph as default graph" in {
       val buffer = new mutable.ArrayBuffer[RdfStreamRow]()
-      val encoder = JenaConverterFactory().encoder(Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava))
+      val encoder = JenaConverterFactory.getInstance().encoder(Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava))
       encoder.handleGraphStart(Quad.defaultGraphIRI)
       buffer.size should be (2)
       buffer(1) should be (encodedDefaultGraph)
@@ -43,7 +43,7 @@ class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
     
     "encode a generated default graph as default graph" in {
       val buffer = new mutable.ArrayBuffer[RdfStreamRow]()
-      val encoder = JenaConverterFactory().encoder(Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava))
+      val encoder = JenaConverterFactory.getInstance().encoder(Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava))
       encoder.handleGraphStart(Quad.defaultGraphNodeGenerated)
       buffer.size should be (2)
       buffer(1) should be (encodedDefaultGraph)

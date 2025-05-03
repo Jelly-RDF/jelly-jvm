@@ -3,7 +3,6 @@ package eu.neverblink.jelly.core.utils;
 import com.google.protobuf.CodedOutputStream;
 import java.io.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class IoUtils {
 
@@ -71,13 +70,13 @@ public class IoUtils {
     }
 
     /**
-     * Reads a delimited stream of frames from an input stream and processes each frame using the provided frame processor.
+     * Reads a stream of frames from an input stream and processes each frame using the provided frame processor.
      * @param inputStream the input stream to read from
      * @param frameProcessor the function to process each frame
      * @param frameConsumer the consumer to handle each processed frame
      * @param <TFrame> the type of the frame
      */
-    public static <TFrame> void readDelimitedStream(
+    public static <TFrame> void readStream(
         InputStream inputStream,
         FrameProcessor<TFrame> frameProcessor,
         Consumer<TFrame> frameConsumer

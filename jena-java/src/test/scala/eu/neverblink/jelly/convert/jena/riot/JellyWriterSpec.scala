@@ -17,7 +17,7 @@ import java.io.{ByteArrayInputStream, OutputStream}
  * The main tests are done in the integration-tests module.
  */
 class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
-  val converterFactory = JenaConverterFactory()
+  val converterFactory = JenaConverterFactory.getInstance()
 
   val streamWriters = Seq(
     ("JellyStreamWriter", (opt, out) => JellyStreamWriter(converterFactory, opt, out)),

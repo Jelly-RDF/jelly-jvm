@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.convert.jena.riot;
 
-import static eu.neverblink.jelly.core.utils.IoUtils.readDelimitedStream;
+import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
 import eu.neverblink.jelly.core.JellyOptions;
@@ -64,7 +64,7 @@ public final class JellyReader implements ReaderRIOT {
             if (delimitingResponse.isDelimited()) {
                 // Delimited Jelly file
                 // In this case, we can read multiple frames
-                readDelimitedStream(in, RdfStreamFrame::parseDelimitedFrom, frame ->
+                readStream(delimitingResponse.newInput(), RdfStreamFrame::parseDelimitedFrom, frame ->
                     frame.getRowsList().forEach(decoder::ingestRow)
                 );
             } else {

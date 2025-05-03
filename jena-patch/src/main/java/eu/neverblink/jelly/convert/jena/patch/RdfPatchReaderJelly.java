@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.convert.jena.patch;
 
-import static eu.neverblink.jelly.core.utils.IoUtils.readDelimitedStream;
+import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
@@ -53,7 +53,7 @@ public final class RdfPatchReaderJelly implements PatchProcessor {
                 decoder.ingestFrame(RdfPatchFrame.parseFrom(delimitingResponse.newInput()));
             } else {
                 // Delimited Jelly-Patch file, we can read multiple frames
-                readDelimitedStream(delimitingResponse.newInput(), RdfPatchFrame::parseFrom, decoder::ingestFrame);
+                readStream(delimitingResponse.newInput(), RdfPatchFrame::parseFrom, decoder::ingestFrame);
             }
         } catch (IOException e) {
             throw new IllegalStateException(e);
