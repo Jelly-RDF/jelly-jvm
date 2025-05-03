@@ -10,7 +10,7 @@ public final class JellyReaderFactory implements ReaderRIOTFactory {
 
     @Override
     public ReaderRIOT create(Lang language, ParserProfile profile) {
-        final var converterFactory = new JenaConverterFactory();
+        final var converterFactory = JenaConverterFactory.getInstance();
         return new JellyReader(converterFactory);
     }
 }

@@ -12,18 +12,18 @@ public final class JellyWriterSettings {
 
     private JellyWriterSettings() {}
 
-    public static WriterConfig fromJelly(int frameSize) {
-        return fromJelly(frameSize, false);
+    public static WriterConfig from(int frameSize) {
+        return from(frameSize, false);
     }
 
-    public static WriterConfig fromJelly(int frameSize, boolean enableNamespaceDeclarations) {
+    public static WriterConfig from(int frameSize, boolean enableNamespaceDeclarations) {
         WriterConfig config = new WriterConfig();
         config.set(FRAME_SIZE, frameSize);
         config.set(ENABLE_NAMESPACE_DECLARATIONS, enableNamespaceDeclarations);
         return config;
     }
 
-    public static WriterConfig fromJelly(
+    public static WriterConfig from(
         RdfStreamOptions options,
         int frameSize,
         boolean enableNamespaceDeclarations,

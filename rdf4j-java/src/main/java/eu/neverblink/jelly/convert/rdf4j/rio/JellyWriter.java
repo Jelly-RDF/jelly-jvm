@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.convert.rdf4j.rio;
 
-import static eu.neverblink.jelly.convert.rdf4j.rio.JellyConstants.JELLY_RDF_FORMAT;
+import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.core.ProtoEncoder;
@@ -71,7 +71,7 @@ public final class JellyWriter extends AbstractRDFWriter {
 
     @Override
     public RDFFormat getRDFFormat() {
-        return JELLY_RDF_FORMAT;
+        return JELLY;
     }
 
     @Override

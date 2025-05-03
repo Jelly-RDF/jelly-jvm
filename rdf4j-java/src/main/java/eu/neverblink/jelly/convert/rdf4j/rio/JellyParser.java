@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.convert.rdf4j.rio;
 
-import static eu.neverblink.jelly.convert.rdf4j.rio.JellyConstants.JELLY_RDF_FORMAT;
+import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 import static eu.neverblink.jelly.core.utils.IoUtils.readDelimitedStream;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
@@ -31,7 +31,7 @@ public final class JellyParser extends AbstractRDFParser {
 
     @Override
     public RDFFormat getRDFFormat() {
-        return JELLY_RDF_FORMAT;
+        return JELLY;
     }
 
     @Override

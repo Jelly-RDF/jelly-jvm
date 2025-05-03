@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.convert.rdf4j.rio;
 
-import static eu.neverblink.jelly.convert.rdf4j.rio.JellyConstants.JELLY_RDF_FORMAT;
+import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import java.io.OutputStream;
@@ -14,12 +14,12 @@ public final class JellyWriterFactory implements RDFWriterFactory {
 
     @Override
     public RDFFormat getRDFFormat() {
-        return JELLY_RDF_FORMAT;
+        return JELLY;
     }
 
     @Override
     public RDFWriter getWriter(OutputStream out) {
-        final var converterFactory = new Rdf4jConverterFactory();
+        final var converterFactory = Rdf4jConverterFactory.getInstance();
         final var valueFactory = SimpleValueFactory.getInstance();
         return new JellyWriter(converterFactory, valueFactory, out);
     }

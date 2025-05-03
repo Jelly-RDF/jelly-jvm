@@ -4,11 +4,11 @@ import static eu.neverblink.jelly.core.JellyConstants.*;
 
 import org.eclipse.rdf4j.rio.RDFFormat;
 
-public final class JellyConstants {
+public final class JellyFormat {
 
-    private JellyConstants() {}
+    private JellyFormat() {}
 
-    public static RDFFormat JELLY_RDF_FORMAT = new RDFFormat(
+    public static final RDFFormat JELLY = new RDFFormat(
         JELLY_NAME,
         JELLY_CONTENT_TYPE,
         null,

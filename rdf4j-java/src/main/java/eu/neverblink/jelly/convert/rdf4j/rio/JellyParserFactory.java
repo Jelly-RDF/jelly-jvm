@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.convert.rdf4j.rio;
 
-import static eu.neverblink.jelly.convert.rdf4j.rio.JellyConstants.JELLY_RDF_FORMAT;
+import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -11,12 +11,12 @@ public final class JellyParserFactory implements RDFParserFactory {
 
     @Override
     public RDFFormat getRDFFormat() {
-        return JELLY_RDF_FORMAT;
+        return JELLY;
     }
 
     @Override
     public RDFParser getParser() {
-        final var converterFactory = new Rdf4jConverterFactory();
+        final var converterFactory = Rdf4jConverterFactory.getInstance();
         return new JellyParser(converterFactory);
     }
 }

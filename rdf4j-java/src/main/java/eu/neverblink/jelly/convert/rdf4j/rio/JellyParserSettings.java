@@ -10,7 +10,7 @@ public final class JellyParserSettings {
 
     private JellyParserSettings() {}
 
-    public static ParserConfig fromJelly(RdfStreamOptions options) {
+    public static ParserConfig from(RdfStreamOptions options) {
         ParserConfig config = new ParserConfig();
         config.set(PROTO_VERSION, options.getVersion());
         config.set(ALLOW_GENERALIZED_STATEMENTS, options.getGeneralizedStatements());
