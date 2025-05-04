@@ -10,7 +10,7 @@ import eu.neverblink.jelly.core.internal.utils.LazyProperty;
  * @param <TNode> type of RDF nodes in the library
  */
 @InternalApi
-public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
+public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected enum SpoTerm {
         SUBJECT,
@@ -147,11 +147,11 @@ public abstract class EncoderBase<TNode> implements RowBufferAppender<TNode> {
         final RdfTriple.Mutable quotedTriple = RdfTriple.newInstance();
         currentSpoBase = quotedTriple;
         currentTerm = SpoTerm.SUBJECT;
-        converter.nodeToProto(nodeEncoder, subject);
+        converter.nodeToProto(nodeEncoder.provide(), subject);
         currentTerm = SpoTerm.PREDICATE;
-        converter.nodeToProto(nodeEncoder, predicate);
+        converter.nodeToProto(nodeEncoder.provide(), predicate);
         currentTerm = SpoTerm.OBJECT;
-        converter.nodeToProto(nodeEncoder, object);
+        converter.nodeToProto(nodeEncoder.provide(), object);
         // Restore the previous state and set the quoted triple
         currentSpoBase = parent;
         currentTerm = parentTerm;

@@ -96,55 +96,55 @@ lazy val crunchyProtocPlugin = (project in file("crunchy-protoc-plugin"))
   )
 
 // Intermediate project that generates the Scala code from the protobuf files
-lazy val rdfProtosJava = (project in file("rdf-protos-java"))
-  .enablePlugins(ProtobufPlugin)
-  .settings(
-    name := "jelly-protos-java",
-    organization := "eu.neverblink.jelly",
-    libraryDependencies ++= Seq(
-      "com.google.protobuf" % "protobuf-java" % protobufV,
-    ),
-    generateProtos := {
-      val inputDir = (baseDirectory.value / ".." / "submodules" / "protobuf" / "proto").getAbsoluteFile
-      val outputDir = (baseDirectory.value / "src" / "main" / "protobuf").getAbsoluteFile
-
-      // Make output dir if not exists
-      IO.createDirectory(outputDir)
-
-      // Clean the output directory
-      IO.delete(IO.listFiles(outputDir))
-
-      val protoFiles = (inputDir ** "*.proto").get
-      protoFiles
-        .map { file =>
-          // Copy the file to the output directory
-          val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
-          IO.copyFile(file, outputFile)
-          outputFile
-        }
-        .map { file =>
-          // Append java options to the file
-          val content = IO.read(file)
-          val newContent = content +
-            """
-              |option java_multiple_files = true;
-              |option java_package = "eu.neverblink.jelly.core.proto.v1";
-              |option optimize_for = SPEED;
-              |""".stripMargin
-          IO.write(file, newContent)
-          file
-        }
-
-      // Return the list of generated files
-      protoFiles.map { file =>
-        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
-        outputFile
-      }
-    },
-    Compile / compile := (Compile / compile).dependsOn(generateProtos).value,
-    ProtobufConfig / protobufExcludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "grpc.proto"),
-    publishArtifact := false,
-  )
+//lazy val rdfProtosJava = (project in file("rdf-protos-java"))
+//  .enablePlugins(ProtobufPlugin)
+//  .settings(
+//    name := "jelly-protos-java",
+//    organization := "eu.neverblink.jelly",
+//    libraryDependencies ++= Seq(
+//      "com.google.protobuf" % "protobuf-java" % protobufV,
+//    ),
+//    generateProtos := {
+//      val inputDir = (baseDirectory.value / ".." / "submodules" / "protobuf" / "proto").getAbsoluteFile
+//      val outputDir = (baseDirectory.value / "src" / "main" / "protobuf").getAbsoluteFile
+//
+//      // Make output dir if not exists
+//      IO.createDirectory(outputDir)
+//
+//      // Clean the output directory
+//      IO.delete(IO.listFiles(outputDir))
+//
+//      val protoFiles = (inputDir ** "*.proto").get
+//      protoFiles
+//        .map { file =>
+//          // Copy the file to the output directory
+//          val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+//          IO.copyFile(file, outputFile)
+//          outputFile
+//        }
+//        .map { file =>
+//          // Append java options to the file
+//          val content = IO.read(file)
+//          val newContent = content +
+//            """
+//              |option java_multiple_files = true;
+//              |option java_package = "eu.neverblink.jelly.core.proto.v1";
+//              |option optimize_for = SPEED;
+//              |""".stripMargin
+//          IO.write(file, newContent)
+//          file
+//        }
+//
+//      // Return the list of generated files
+//      protoFiles.map { file =>
+//        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+//        outputFile
+//      }
+//    },
+//    Compile / compile := (Compile / compile).dependsOn(generateProtos).value,
+//    ProtobufConfig / protobufExcludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "grpc.proto"),
+//    publishArtifact := false,
+//  )
 
 lazy val core = (project in file("core"))
   .settings(
@@ -197,18 +197,18 @@ lazy val corePatch = (project in file("core-patch"))
     organization := "eu.neverblink.jelly",
     description := "Core code for the RDF Patch Jelly extension.",
     // Add the generated proto classes after transforming them with Scalameta
-    Compile / sourceGenerators += Def.task {
-      // Copy from the managed source directory to the output directory
-      val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main"
-      val outputDir = sourceManaged.value / "main" / "protobuf"
-      val javaFiles = (inputDir ** "*.java").get
-      javaFiles.map { file =>
-        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
-        IO.copyFile(file, outputFile)
-        outputFile
-      }
-
-    }.dependsOn(rdfProtosJava / Compile / compile),
+//    Compile / sourceGenerators += Def.task {
+//      // Copy from the managed source directory to the output directory
+//      val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) / "src_managed" / "main"
+//      val outputDir = sourceManaged.value / "main" / "protobuf"
+//      val javaFiles = (inputDir ** "*.java").get
+//      javaFiles.map { file =>
+//        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+//        IO.copyFile(file, outputFile)
+//        outputFile
+//      }
+//
+//    }.dependsOn(rdfProtosJava / Compile / compile),
     Compile / sourceManaged := sourceManaged.value / "main",
     publishArtifact := false, // TODO: remove this when ready
     commonSettings,

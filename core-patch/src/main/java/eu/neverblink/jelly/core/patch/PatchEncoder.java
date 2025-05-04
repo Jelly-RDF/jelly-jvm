@@ -2,7 +2,7 @@ package eu.neverblink.jelly.core.patch;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
-import eu.neverblink.jelly.core.RowBufferAppender;
+import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.internal.EncoderBase;
 import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfPatchRow;
@@ -19,7 +19,7 @@ import java.util.Collection;
 @ExperimentalApi
 public abstract class PatchEncoder<TNode>
     extends EncoderBase<TNode>
-    implements PatchHandler.AnyPatchHandler<TNode>, RowBufferAppender {
+    implements PatchHandler.AnyPatchHandler<TNode>, RdfBufferAppender<TNode> {
 
     /**
      * Parameters passed to the Jelly-Patch encoder.

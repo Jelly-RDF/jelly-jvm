@@ -50,7 +50,7 @@ class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
       val out = new ByteArrayOutputStream()
       val writer = JellyWriterFactory().getWriter(out)
       writer.set(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS, true)
-//      writer.set(JellyWriterSettings.PHYSICAL_TYPE, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
+//      writer.set(JellyWriterSettings.PHYSICAL_TYPE, PhysicalStreamType.TRIPLES)
 
       writer.startRDF()
       writer.handleNamespace("ex", "http://example.com/")

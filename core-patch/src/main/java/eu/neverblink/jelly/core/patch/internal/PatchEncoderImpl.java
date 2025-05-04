@@ -37,24 +37,24 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
 
     @Override
     public void appendNameEntry(RdfNameEntry nameEntry) {
-        rowBuffer.add(RdfPatchRow.newBuilder().setName(nameEntry).build());
+        rowBuffer.add(RdfPatchRow.newInstance().setName(nameEntry).build());
     }
 
     @Override
     public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
-        rowBuffer.add(RdfPatchRow.newBuilder().setPrefix(prefixEntry).build());
+        rowBuffer.add(RdfPatchRow.newInstance().setPrefix(prefixEntry).build());
     }
 
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
-        rowBuffer.add(RdfPatchRow.newBuilder().setDatatype(datatypeEntry).build());
+        rowBuffer.add(RdfPatchRow.newInstance().setDatatype(datatypeEntry).build());
     }
 
     @Override
     public void addQuad(TNode subject, TNode predicate, TNode object, TNode graph) {
         emitOptions();
         final var quad = quadToProto(subject, predicate, object, graph);
-        final var mainRow = RdfPatchRow.newBuilder().setStatementAdd(quad.toProto()).build();
+        final var mainRow = RdfPatchRow.newInstance().setStatementAdd(quad.toProto()).build();
         rowBuffer.add(mainRow);
     }
 
@@ -62,7 +62,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void deleteQuad(TNode subject, TNode predicate, TNode object, TNode graph) {
         emitOptions();
         final var quad = quadToProto(subject, predicate, object, graph);
-        final var mainRow = RdfPatchRow.newBuilder().setStatementDelete(quad.toProto()).build();
+        final var mainRow = RdfPatchRow.newInstance().setStatementDelete(quad.toProto()).build();
         rowBuffer.add(mainRow);
     }
 
@@ -70,7 +70,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void addTriple(TNode subject, TNode predicate, TNode object) {
         emitOptions();
         final var triple = tripleInQuadToProto(subject, predicate, object);
-        final var mainRow = RdfPatchRow.newBuilder().setStatementAdd(triple.toProto()).build();
+        final var mainRow = RdfPatchRow.newInstance().setStatementAdd(triple.toProto()).build();
         rowBuffer.add(mainRow);
     }
 
@@ -78,7 +78,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void deleteTriple(TNode subject, TNode predicate, TNode object) {
         emitOptions();
         final var triple = tripleInQuadToProto(subject, predicate, object);
-        final var mainRow = RdfPatchRow.newBuilder().setStatementDelete(triple.toProto()).build();
+        final var mainRow = RdfPatchRow.newInstance().setStatementDelete(triple.toProto()).build();
         rowBuffer.add(mainRow);
     }
 
@@ -86,7 +86,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void transactionStart() {
         emitOptions();
         final var transactionStart = RdfPatchTransactionStart.getDefaultInstance();
-        final var mainRow = RdfPatchRow.newBuilder().setTransactionStart(transactionStart).build();
+        final var mainRow = RdfPatchRow.newInstance().setTransactionStart(transactionStart).build();
         rowBuffer.add(mainRow);
     }
 
@@ -94,7 +94,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void transactionCommit() {
         emitOptions();
         final var transactionCommit = RdfPatchTransactionCommit.getDefaultInstance();
-        final var mainRow = RdfPatchRow.newBuilder().setTransactionCommit(transactionCommit).build();
+        final var mainRow = RdfPatchRow.newInstance().setTransactionCommit(transactionCommit).build();
         rowBuffer.add(mainRow);
     }
 
@@ -102,7 +102,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void transactionAbort() {
         emitOptions();
         final var transactionAbort = RdfPatchTransactionAbort.getDefaultInstance();
-        final var mainRow = RdfPatchRow.newBuilder().setTransactionAbort(transactionAbort).build();
+        final var mainRow = RdfPatchRow.newInstance().setTransactionAbort(transactionAbort).build();
         rowBuffer.add(mainRow);
     }
 
@@ -116,14 +116,14 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
 
         final var graphIri = encodeNsIri(graph);
 
-        final var namespaceEntryBuilder = RdfPatchNamespace.newBuilder().setName(name).setValue(valueIri.toProto());
+        final var namespaceEntryBuilder = RdfPatchNamespace.newInstance().setName(name).setValue(valueIri.toProto());
 
         if (graphIri != null) {
             namespaceEntryBuilder.setGraph(graphIri.toProto());
         }
 
         final var namespaceEntry = namespaceEntryBuilder.build();
-        final var mainRow = RdfPatchRow.newBuilder().setNamespaceAdd(namespaceEntry).build();
+        final var mainRow = RdfPatchRow.newInstance().setNamespaceAdd(namespaceEntry).build();
         rowBuffer.add(mainRow);
     }
 
@@ -134,7 +134,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         final var valueIri = encodeNsIri(iriValue);
         final var graphIri = encodeNsIri(graph);
 
-        final var namespaceEntryBuilder = RdfPatchNamespace.newBuilder().setName(name);
+        final var namespaceEntryBuilder = RdfPatchNamespace.newInstance().setName(name);
 
         if (valueIri != null) {
             namespaceEntryBuilder.setValue(valueIri.toProto());
@@ -145,7 +145,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         }
 
         final var namespaceEntry = namespaceEntryBuilder.build();
-        final var mainRow = RdfPatchRow.newBuilder().setNamespaceDelete(namespaceEntry).build();
+        final var mainRow = RdfPatchRow.newInstance().setNamespaceDelete(namespaceEntry).build();
         rowBuffer.add(mainRow);
     }
 
@@ -153,7 +153,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void header(String key, TNode value) {
         emitOptions();
         var valueTerm = converter.nodeToProto(nodeEncoder.provide(), value);
-        var headerBuilder = RdfPatchHeader.newBuilder().setKey(key);
+        var headerBuilder = RdfPatchHeader.newInstance().setKey(key);
 
         if (valueTerm instanceof RdfTerm.Iri valueIri) {
             headerBuilder.setHIri(valueIri.toProto());
@@ -168,7 +168,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         }
 
         var headerEntry = headerBuilder.build();
-        var mainRow = RdfPatchRow.newBuilder().setHeader(headerEntry).build();
+        var mainRow = RdfPatchRow.newInstance().setHeader(headerEntry).build();
         rowBuffer.add(mainRow);
     }
 
@@ -180,7 +180,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         }
 
         var punctuation = RdfPatchPunctuation.getDefaultInstance();
-        var mainRow = RdfPatchRow.newBuilder().setPunctuation(punctuation).build();
+        var mainRow = RdfPatchRow.newInstance().setPunctuation(punctuation).build();
         rowBuffer.add(mainRow);
     }
 
@@ -202,6 +202,6 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         }
 
         hasEmittedOptions = true;
-        rowBuffer.add(RdfPatchRow.newBuilder().setOptions(options).build());
+        rowBuffer.add(RdfPatchRow.newInstance().setOptions(options).build());
     }
 }

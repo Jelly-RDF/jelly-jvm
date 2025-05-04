@@ -6,7 +6,7 @@ import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils;
 
 /**
  * A collection of convenient streaming option presets.
- * None of the presets specifies the stream type – do that with the .toBuilder().setPhysicalType().build() method.
+ * None of the presets specifies the stream type – do that with the .clone().setPhysicalType().build() method.
  */
 public class JellyOptions {
 
@@ -115,7 +115,7 @@ public class JellyOptions {
      * For example, to disable RDF-star support, you can do this:
      * <code>
      * final var myOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
-     *      .toBuilder()
+     *      .clone()
      *      .setRdfStar(false)
      *      .build();
      * </code>

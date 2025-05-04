@@ -87,11 +87,11 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
           val options = frame.getRowsList.get(0).getOptions
           val expOpt = JellyLanguage.PRESETS.get(presetName)
           if streamType == "triples" then
-            options.getPhysicalType should be(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-            options.getLogicalType should be(LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES)
+            options.getPhysicalType should be(PhysicalStreamType.TRIPLES)
+            options.getLogicalType should be(LogicalStreamType.FLAT_TRIPLES)
           else if streamType == "quads" then
-            options.getPhysicalType should be(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
-            options.getLogicalType should be(LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS)
+            options.getPhysicalType should be(PhysicalStreamType.QUADS)
+            options.getLogicalType should be(LogicalStreamType.FLAT_QUADS)
           options.getGeneralizedStatements should be(expOpt.getGeneralizedStatements)
           options.getRdfStar should be(expOpt.getRdfStar)
           options.getMaxNameTableSize should be(expOpt.getMaxNameTableSize)

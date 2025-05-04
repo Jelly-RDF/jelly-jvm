@@ -112,6 +112,24 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     }
 
     /**
+     * Parses the contents of {@code input} as a message of this type, in NON-DELIMITED form.
+     * @param input the input stream to read the message from
+     * @param factory the factory to create the message
+     * @return a new message parsed from the input stream
+     * @param <T> the type of the message
+     * @throws IOException if an error occurred reading from {@code input}
+     */
+    protected static <T extends ProtoMessage<T>> T parseFrom(
+        InputStream input,
+        MessageFactory<T> factory
+    ) throws IOException {
+        final var msg = factory.create();
+        final var cin = CodedInputStream.newInstance(input);
+        msg.mergeFrom(new LimitedCodedInputStream(cin));
+        return msg;
+    }
+
+    /**
      * Parses the contents for one message written in length delimited form.
      *
      * @return a new message parsed from the input stream or null if there is no message to parse.

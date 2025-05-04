@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.*;
+import eu.neverblink.jelly.core.internal.proto.GraphBase;
 import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 import eu.neverblink.jelly.core.NameDecoder;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
@@ -158,10 +159,11 @@ public abstract class DecoderBase<TNode, TDatatype> {
 
     /**
      * Convert a GraphTerm message to a node, while respecting repeated terms.
+     * @param kind field number of the term, normalized to 0, 1, 2, 3
      * @param graph graph term to convert
      * @return converted node
      */
-    protected final TNode convertGraphTermWrapped(RdfTerm.GraphTerm graph) {
+    protected final TNode convertGraphTermWrapped(int kind, GraphBase graph) {
         if (graph == null && lastGraph.hasNoValue()) {
             // Special case: Jena and RDF4J allow null graph terms in the input, so we do not treat them as errors.
             return null;

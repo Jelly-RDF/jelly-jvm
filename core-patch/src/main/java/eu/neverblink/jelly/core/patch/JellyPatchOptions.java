@@ -49,7 +49,7 @@ public class JellyPatchOptions {
      * @return RdfPatchOptions
      */
     public static RdfPatchOptions fromJellyOptions(RdfStreamOptions opt) {
-        return fromBaseOptions(opt).toBuilder().setStatementType(fromJellyPhysicalType(opt.getPhysicalType())).build();
+        return fromBaseOptions(opt).clone().setStatementType(fromJellyPhysicalType(opt.getPhysicalType())).build();
     }
 
     /**
@@ -58,7 +58,7 @@ public class JellyPatchOptions {
      * @return RdfPatchOptions
      */
     public static RdfPatchOptions fromBaseOptions(RdfStreamOptions opt) {
-        return RdfPatchOptions.newBuilder()
+        return RdfPatchOptions.newInstance()
             .setGeneralizedStatements(opt.getGeneralizedStatements())
             .setRdfStar(opt.getRdfStar())
             .setMaxNameTableSize(opt.getMaxNameTableSize())

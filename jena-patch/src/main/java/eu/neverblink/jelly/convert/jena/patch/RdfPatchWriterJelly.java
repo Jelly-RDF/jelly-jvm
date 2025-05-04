@@ -67,7 +67,7 @@ public final class RdfPatchWriterJelly implements RDFChanges {
 
         this.patchOptions = options
             .patchOptions()
-            .toBuilder()
+            .clone()
             // If no stream type is set, we default to PUNCTUATED, as it's the safest option.
             // It can handle patches of any size and preserves the segmentation marks.
             .setStreamType(
@@ -159,7 +159,7 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     public void finish() {
         if (!options.delimited) {
             // Non-delimited variant, whole stream in one frame
-            final var frame = RdfPatchFrame.newBuilder().addAllRows(buffer).build();
+            final var frame = RdfPatchFrame.newInstance().addAllRows(buffer).build();
             try {
                 frame.writeTo(outputStream);
             } catch (IOException e) {
@@ -183,7 +183,7 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     }
 
     private void flushBuffer() {
-        final var frame = RdfPatchFrame.newBuilder().addAllRows(buffer).build();
+        final var frame = RdfPatchFrame.newInstance().addAllRows(buffer).build();
         try {
             frame.writeDelimitedTo(outputStream);
         } catch (IOException e) {

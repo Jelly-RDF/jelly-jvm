@@ -96,7 +96,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
     @Override
     public void ingestFrame(RdfPatchFrame frame) {
-        for (final var row : frame.getRowsList()) {
+        for (final var row : frame.getRows()) {
             ingestRow(row);
         }
 

@@ -224,7 +224,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
                 convertObjectTermWrapped(quad),
                 convertGraphTermWrapped(
                     quad.getGraphFieldNumber() - RdfQuad.G_IRI,
-                    quad.getGraph()
+                    quad
                 )
             );
         }

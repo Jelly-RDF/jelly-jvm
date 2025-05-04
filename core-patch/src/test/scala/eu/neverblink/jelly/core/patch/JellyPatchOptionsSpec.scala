@@ -34,10 +34,10 @@ class JellyPatchOptionsSpec extends AnyWordSpec, Matchers:
       }
 
     val physicalTypeCases = Seq(
-      (PatchStatementType.PATCH_STATEMENT_TYPE_UNSPECIFIED, PhysicalStreamType.PHYSICAL_STREAM_TYPE_UNSPECIFIED),
-      (PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-      (PatchStatementType.PATCH_STATEMENT_TYPE_QUADS, PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS),
-      (PatchStatementType.PATCH_STATEMENT_TYPE_QUADS, PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS),
+      (PatchStatementType.PATCH_STATEMENT_TYPE_UNSPECIFIED, PhysicalStreamType.UNSPECIFIED),
+      (PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES, PhysicalStreamType.TRIPLES),
+      (PatchStatementType.PATCH_STATEMENT_TYPE_QUADS, PhysicalStreamType.GRAPHS),
+      (PatchStatementType.PATCH_STATEMENT_TYPE_QUADS, PhysicalStreamType.QUADS),
     )
 
     for (patchType, jellyType) <- physicalTypeCases do

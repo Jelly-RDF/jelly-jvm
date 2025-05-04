@@ -65,15 +65,14 @@ public abstract class ProtoEncoder<TNode>
     protected ProtoEncoder(ProtoEncoderConverter<TNode> converter, Params params) {
         super(converter);
         this.options = params.options
-            .toBuilder()
+            .clone()
             // Override whatever the user set in the options.
             // If namespace declarations are enabled, we need to use Jelly 1.1.x.
             .setVersion(
                 params.enableNamespaceDeclarations
                     ? JellyConstants.PROTO_VERSION_1_1_X
                     : JellyConstants.PROTO_VERSION_1_0_X
-            )
-            .build();
+            );
         this.enableNamespaceDeclarations = params.enableNamespaceDeclarations;
         this.appendableRowBuffer = params.appendableRowBuffer;
     }

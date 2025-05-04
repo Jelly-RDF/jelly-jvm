@@ -110,6 +110,11 @@ public abstract class RdfStreamFrame extends ProtoMessage<RdfStreamFrame> implem
         return ProtoMessage.mergeFrom(newInstance(), input);
     }
 
+    // TODO: add to codegen
+    public static RdfStreamFrame parseFrom(final InputStream input) throws IOException {
+        return ProtoMessage.parseFrom(input, RdfStreamFrame.getFactory());
+    }
+
     public static RdfStreamFrame parseDelimitedFrom(final InputStream input) throws IOException {
         return ProtoMessage.parseDelimitedFrom(input, RdfStreamFrame.getFactory());
     }
