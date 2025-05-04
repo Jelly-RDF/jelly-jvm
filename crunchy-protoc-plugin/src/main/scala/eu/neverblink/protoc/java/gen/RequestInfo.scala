@@ -77,7 +77,7 @@ object RequestInfo:
     val outerClassName: ClassName = ClassName.get(javaPackage, NamingUtil.getJavaOuterClassname(descriptor))
     val outputDirectory: String = if (javaPackage.isEmpty) "" else javaPackage.replaceAll("\\.", "/") + "/"
     val options: DescriptorProtos.FileOptions = descriptor.getOptions
-    val generateMultipleFiles: Boolean = options.hasJavaMultipleFiles && options.getJavaMultipleFiles
+    val generateMultipleFiles: Boolean = !options.hasJavaMultipleFiles || options.getJavaMultipleFiles
     val generateDescriptors: Boolean = parentRequest.pluginOptions.generateDescriptors
     val deprecated: Boolean = options.hasDeprecated && options.getDeprecated
     // The first message appends a '.', so we omit it to not have two '.' in the default package
