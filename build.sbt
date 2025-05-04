@@ -144,19 +144,17 @@ lazy val rdfProtosJava = (project in file("rdf-protos-java"))
     generateProtos := Def.task {
       val inputDir = (baseDirectory.value / ".." / "submodules" / "protobuf" / "proto").getAbsoluteFile
       val outputDir = (baseDirectory.value / "src" / "main" / "protobuf").getAbsoluteFile
-
       // Make output dir if not exists
       IO.createDirectory(outputDir)
-
       // Clean the output directory
       IO.delete(IO.listFiles(outputDir))
-
       val protoFiles = (inputDir ** "*.proto").get
       protoFiles
         .map { file =>
           // Copy the file to the output directory
           val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
           IO.copyFile(file, outputFile)
+          println(s"Copying proto file from $file to $outputFile")
           outputFile
         }
         .map { file =>
@@ -169,7 +167,6 @@ lazy val rdfProtosJava = (project in file("rdf-protos-java"))
           IO.write(file, newContent)
           file
         }
-
       // Return the list of generated files
       protoFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
@@ -228,6 +225,7 @@ lazy val coreJava = (project in file("core-java"))
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+      println(s"[core] Copying proto files from $inputDir to $outputDir")
       val javaFiles = (inputDir * "*.java").get
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
@@ -252,6 +250,7 @@ lazy val corePatch = (project in file("core-patch"))
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
+      println(s"[core-patch] Copying proto files from $inputDir to $outputDir")
       val javaFiles = (inputDir * "*.java").get
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
