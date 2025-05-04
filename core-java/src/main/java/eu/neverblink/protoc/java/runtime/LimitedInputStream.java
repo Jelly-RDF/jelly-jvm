@@ -12,6 +12,7 @@ import java.io.InputStream;
  * @author kenton@google.com Kenton Varda
  */
 final class LimitedInputStream extends FilterInputStream {
+
     private int limit;
 
     LimitedInputStream(InputStream in, int limit) {

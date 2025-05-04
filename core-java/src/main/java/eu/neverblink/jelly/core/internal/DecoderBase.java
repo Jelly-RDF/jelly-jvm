@@ -1,12 +1,12 @@
 package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.*;
-import eu.neverblink.jelly.core.internal.proto.GraphBase;
-import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 import eu.neverblink.jelly.core.NameDecoder;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
+import eu.neverblink.jelly.core.internal.proto.GraphBase;
 import eu.neverblink.jelly.core.internal.proto.SpoBase;
+import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 import eu.neverblink.jelly.core.proto.v1.*;
 
 /**

@@ -3,7 +3,6 @@ package eu.neverblink.protoc.java.runtime;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,11 +17,10 @@ import java.util.List;
  * @author Piotr Sowiński
  */
 public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
-    
+
     protected int cachedSize = -1;
 
-    protected ProtoMessage() {
-    }
+    protected ProtoMessage() {}
 
     /**
      * Copies all fields and data from another message of the same
@@ -35,32 +33,19 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
 
     /**
      * Get the number of bytes required to encode this message.
-     * Returns the cached size or calls getSerializedSize which
-     * sets the cached size. This is used internally when serializing
-     * so the size is only computed once. If a member is modified
-     * then this could be stale call getSerializedSize if in doubt.
-     *
-     * @return the cached size of the serialized proto form
-     */
-    public int getCachedSize() {
-        if (cachedSize < 0) {
-            // getSerializedSize sets cachedSize
-            getSerializedSize();
-        }
-        return cachedSize;
-    }
-
-    /**
-     * Computes the number of bytes required to encode this message.
-     * The size is cached and the cached result can be retrieved
-     * using getCachedSize().
+     * Returns the cached size or calls computeSerializedSize which
+     * sets the cached size.
+     * WARNING: once you call this method, the cached size is set and will be persisted unless
+     * the message is modified with mergeFrom or copyFrom. If you modify the message with setters,
+     * the cached size may be stale. Instead, you should call .clone() and work on a new instance.
      *
      * @return the size of the serialized proto form
      */
     public int getSerializedSize() {
-        int size = computeSerializedSize();
-        cachedSize = size;
-        return size;
+        if (cachedSize < 0) {
+            cachedSize = computeSerializedSize();
+        }
+        return cachedSize;
     }
 
     /**
@@ -86,8 +71,6 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * @return this
      */
     public final MessageType writeDelimitedTo(CodedOutputStream output) throws IOException {
-        // Force cached size to be recomputed
-        // TODO: is this needed?
         output.writeUInt32NoTag(getSerializedSize());
         this.writeTo(output);
         return getThis();
@@ -121,10 +104,8 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * @param <T> the type of the message
      * @throws IOException if an error occurred reading from {@code input}
      */
-    protected static <T extends ProtoMessage<T>> T parseFrom(
-        InputStream input,
-        MessageFactory<T> factory
-    ) throws IOException {
+    protected static <T extends ProtoMessage<T>> T parseFrom(InputStream input, MessageFactory<T> factory)
+        throws IOException {
         final var msg = factory.create();
         final var cin = CodedInputStream.newInstance(input);
         msg.mergeFrom(new LimitedCodedInputStream(cin));
@@ -136,10 +117,8 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      *
      * @return a new message parsed from the input stream or null if there is no message to parse.
      */
-    protected static <T extends ProtoMessage<T>> T parseDelimitedFrom(
-        InputStream input,
-        MessageFactory<T> factory
-    ) throws IOException {
+    protected static <T extends ProtoMessage<T>> T parseDelimitedFrom(InputStream input, MessageFactory<T> factory)
+        throws IOException {
         int size;
         try {
             int firstByte = input.read();
@@ -221,15 +200,18 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
             msg.writeTo(output);
             output.checkNoSpaceLeft();
         } catch (IOException e) {
-            throw new RuntimeException("Serializing to a byte array threw an IOException "
-                    + "(should never happen).", e);
+            throw new RuntimeException(
+                "Serializing to a byte array threw an IOException " + "(should never happen).",
+                e
+            );
         }
     }
 
     /**
      * Parse {@code data} as a message of this type and merge it with the message being built.
      */
-    public static <T extends ProtoMessage<T>> T mergeFrom(T msg, final byte[] data) throws InvalidProtocolBufferException {
+    public static <T extends ProtoMessage<T>> T mergeFrom(T msg, final byte[] data)
+        throws InvalidProtocolBufferException {
         return mergeFrom(msg, data, 0, data.length);
     }
 
@@ -237,7 +219,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * Parse {@code data} as a message of this type and merge it with the message being built.
      */
     public static <T extends ProtoMessage<T>> T mergeFrom(T msg, final byte[] data, final int off, final int len)
-            throws InvalidProtocolBufferException {
+        throws InvalidProtocolBufferException {
         try {
             final var input = CodedInputStream.newInstance(data, off, len);
             return mergeFrom(msg, new LimitedCodedInputStream(input));
@@ -257,9 +239,8 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         return msg;
     }
 
-    protected static <T extends ProtoMessage<T>> void mergeDelimitedFrom(
-        T msg, LimitedCodedInputStream inputLimited
-    ) throws IOException {
+    protected static <T extends ProtoMessage<T>> void mergeDelimitedFrom(T msg, LimitedCodedInputStream inputLimited)
+        throws IOException {
         inputLimited.checkRecursionDepth();
         inputLimited.incrementRecursionDepth();
         final CodedInputStream input = inputLimited.in();
@@ -291,7 +272,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
             final var msg = factory.create();
             mergeDelimitedFrom(msg, input);
             store.add(msg);
-        } while((nextTag = input.in().readTag()) == tag);
+        } while ((nextTag = input.in().readTag()) == tag);
         return nextTag;
     }
 

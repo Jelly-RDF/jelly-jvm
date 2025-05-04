@@ -222,10 +222,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
                 convertSubjectTermWrapped(quad),
                 convertPredicateTermWrapped(quad),
                 convertObjectTermWrapped(quad),
-                convertGraphTermWrapped(
-                    quad.getGraphFieldNumber() - RdfQuad.G_IRI,
-                    quad
-                )
+                convertGraphTermWrapped(quad.getGraphFieldNumber() - RdfQuad.G_IRI, quad)
             );
         }
     }
@@ -394,9 +391,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         @Override
         protected void handleOptions(RdfStreamOptions options) {
             // Reset the logical type to UNSPECIFIED to ignore checking if it's supported by the inner decoder
-            final var newSupportedOptions = supportedOptions
-                .clone()
-                .setLogicalType(LogicalStreamType.UNSPECIFIED);
+            final var newSupportedOptions = supportedOptions.clone().setLogicalType(LogicalStreamType.UNSPECIFIED);
 
             checkCompatibility(options, newSupportedOptions);
             if (delegateDecoder != null) {
@@ -404,17 +399,9 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
             }
 
             switch (options.getPhysicalType()) {
-                case TRIPLES -> delegateDecoder = new TriplesDecoder<>(
-                    converter,
-                    protoHandler,
-                    options
-                );
+                case TRIPLES -> delegateDecoder = new TriplesDecoder<>(converter, protoHandler, options);
                 case QUADS -> delegateDecoder = new QuadsDecoder<>(converter, protoHandler, options);
-                case GRAPHS -> delegateDecoder = new GraphsAsQuadsDecoder<>(
-                    converter,
-                    protoHandler,
-                    options
-                );
+                case GRAPHS -> delegateDecoder = new GraphsAsQuadsDecoder<>(converter, protoHandler, options);
                 default -> throw new RdfProtoDeserializationError("Incoming physical stream type is not recognized.");
             }
         }

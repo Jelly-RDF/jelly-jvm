@@ -1,13 +1,13 @@
 package eu.neverblink.jelly.convert.jena.patch;
 
+import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.*;
+
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.PatchHandler;
 import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdfpatch.RDFChanges;
-
-import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.*;
 
 /**
  * Patch handler to convert Jena RDFChanges operations to Jelly-Patch operations.

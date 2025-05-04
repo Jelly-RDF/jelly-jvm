@@ -2,11 +2,11 @@ package eu.neverblink.jelly.core.patch.internal;
 
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.patch.PatchEncoder;
-import eu.neverblink.jelly.core.proto.v1.patch.*;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
+import eu.neverblink.jelly.core.proto.v1.patch.*;
 
 /**
  * Implementation of PatchEncoder.
@@ -116,7 +116,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         final var mainRow = RdfPatchRow.newInstance().setNamespaceDelete(namespace);
         rowBuffer.add(mainRow);
     }
-    
+
     private RdfPatchNamespace encodeNamespace(String name, TNode iriValue, TNode graph) {
         emitOptions();
         final var namespace = RdfPatchNamespace.newInstance().setName(name);

@@ -28,11 +28,7 @@ public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value> {
 
             encoder.makeSimpleLiteral(lex);
         } else if (value instanceof Triple triple) {
-            encoder.makeQuotedTriple(
-                triple.getSubject(),
-                triple.getPredicate(),
-                triple.getObject()
-            );
+            encoder.makeQuotedTriple(triple.getSubject(), triple.getPredicate(), triple.getObject());
         } else {
             throw new RdfProtoSerializationError("Cannot encode node: %s".formatted(value));
         }

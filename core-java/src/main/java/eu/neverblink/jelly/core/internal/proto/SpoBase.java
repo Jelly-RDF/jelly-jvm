@@ -21,7 +21,7 @@ public interface SpoBase {
         SpoBase setOLiteral(RdfLiteral oLiteral);
         SpoBase setOTripleTerm(RdfTriple oTripleTerm);
     }
-    
+
     Object getSubject();
     Object getPredicate();
     Object getObject();

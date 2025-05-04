@@ -1,11 +1,10 @@
 package eu.neverblink.jelly.core.internal;
 
+import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.*;
-import eu.neverblink.jelly.core.*;
-
 import java.util.Collection;
 
 /**
