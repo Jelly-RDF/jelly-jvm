@@ -160,20 +160,20 @@ public abstract class DecoderBase<TNode, TDatatype> {
     /**
      * Convert a GraphTerm message to a node, while respecting repeated terms.
      * @param kind field number of the term, normalized to 0, 1, 2, 3
-     * @param graph graph term to convert
+     * @param graph GraphBase message to convert
      * @return converted node
      */
     protected final TNode convertGraphTermWrapped(int kind, GraphBase graph) {
-        if (graph == null && lastGraph.hasNoValue()) {
+        if (graph.getGraph() == null && lastGraph.hasNoValue()) {
             // Special case: Jena and RDF4J allow null graph terms in the input, so we do not treat them as errors.
             return null;
         }
 
-        if (graph == null) {
+        if (graph.getGraph() == null) {
             return lastGraph.get();
         }
 
-        final var node = convertGraphTerm(kind, graph);
+        final var node = convertGraphTerm(kind, graph.getGraph());
         lastGraph.set(node);
         return node;
     }

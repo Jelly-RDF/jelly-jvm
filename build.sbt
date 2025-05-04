@@ -226,7 +226,9 @@ lazy val coreJava = (project in file("core-java"))
       val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) /
         "src_managed" / "main" / "compiled_protobuf" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
-      val outputDir = sourceManaged.value / "main" / "protobuf"
+      val outputDir = sourceManaged.value / "main" /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+      // / "protobuf"
       val javaFiles = (inputDir * "*.java").get
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
@@ -250,7 +252,9 @@ lazy val corePatch = (project in file("core-patch"))
       val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) /
         "src_managed" / "main" / "compiled_protobuf" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
-      val outputDir = sourceManaged.value / "main" / "protobuf"
+      val outputDir = sourceManaged.value / "main" /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
+        // / "protobuf"
       val javaFiles = (inputDir * "*.java").get
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
