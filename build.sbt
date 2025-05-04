@@ -27,7 +27,6 @@ lazy val titaniumNqV = "1.0.2"
 // !! When updating ScalaPB also change the version of the plugin in plugins.sbt
 lazy val scalapbV = "0.11.17"
 lazy val protobufV = "4.30.2"
-lazy val javapoetV = "0.7.0"
 
 // List of exclusions for the grpc module and its dependencies
 lazy val grpcExclusions = Seq(
@@ -83,17 +82,6 @@ lazy val rdfProtos = (project in file("rdf-protos"))
   )
 
 lazy val generateProtos = taskKey[Seq[File]]("Copies and modifies proto files before compilation")
-
-// .proto -> .java protoc compiler plugin
-lazy val crunchyProtocPlugin = (project in file("crunchy-protoc-plugin"))
-  .settings(
-    name := "crunchy-protoc-plugin",
-    libraryDependencies ++= Seq(
-      "com.google.protobuf" % "protobuf-java" % protobufV,
-      "com.palantir.javapoet" % "javapoet" % javapoetV,
-    ),
-    publishArtifact := false,
-  )
 
 // Intermediate project that generates the Scala code from the protobuf files
 lazy val rdfProtosJava = (project in file("rdf-protos-java"))
