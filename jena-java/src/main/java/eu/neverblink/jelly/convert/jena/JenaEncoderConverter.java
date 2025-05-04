@@ -12,14 +12,10 @@ public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
         // URI/IRI
         if (node.isURI()) {
             encoder.makeIri(node.getURI());
-        }
-
-        if (node.isBlank()) {
+        } else if (node.isBlank()) {
             // Blank node
             encoder.makeBlankNode(node.getBlankNodeLabel());
-        }
-
-        if (node.isLiteral()) {
+        } else if (node.isLiteral()) {
             // Literal
             final var lang = node.getLiteralLanguage();
             if (lang.isEmpty()) {
@@ -32,15 +28,11 @@ public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
             } else {
                 encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
             }
-        }
-
-        if (node.isNodeTriple()) {
+        } else if (node.isNodeTriple()) {
             // RDF-star node
             final var t = node.getTriple();
             encoder.makeQuotedTriple(t.getSubject(), t.getPredicate(), t.getObject());
-        }
-
-        throw new IllegalArgumentException("Cannot encode node: " + node);
+        } else throw new IllegalArgumentException("Cannot encode node: " + node);
     }
 
     @Override
@@ -48,24 +40,19 @@ public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
         // Default graph
         if (node == null) {
             encoder.makeDefaultGraph();
-        }
-
-        // URI/IRI
-        if (node.isURI()) {
+            return;
+        } else if (node.isURI()) {
+            // URI/IRI
             if (Quad.isDefaultGraph(node)) {
                 encoder.makeDefaultGraph();
             } else {
                 encoder.makeIri(node.getURI());
             }
-        }
-
-        // Blank node
-        if (node.isBlank()) {
+        } else if (node.isBlank()) {
+            // Blank node
             encoder.makeBlankNode(node.getBlankNodeLabel());
-        }
-
-        // Literal
-        if (node.isLiteral()) {
+        } else if (node.isLiteral()) {
+            // Literal
             final var lang = node.getLiteralLanguage();
             if (lang.isEmpty()) {
                 // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
@@ -77,8 +64,6 @@ public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
             } else {
                 encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
             }
-        }
-
-        throw new IllegalArgumentException("Cannot encode graph node: " + node);
+        } else throw new IllegalArgumentException("Cannot encode graph node: " + node);
     }
 }

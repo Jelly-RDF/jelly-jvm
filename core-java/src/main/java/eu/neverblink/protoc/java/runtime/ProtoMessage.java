@@ -107,7 +107,9 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     }
 
     public final MessageType writeTo(OutputStream output) throws IOException {
-        writeTo(CodedOutputStream.newInstance(output));
+        final var codedOutput = CodedOutputStream.newInstance(output);
+        writeTo(codedOutput);
+        codedOutput.flush();
         return getThis();
     }
 

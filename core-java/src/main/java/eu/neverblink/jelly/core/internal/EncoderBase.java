@@ -86,7 +86,8 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     protected final RdfGraphStart graphStartToProto(TNode graph) {
         final RdfGraphStart.Mutable graphStart = RdfGraphStart.newInstance();
         this.currentGraphBase = graphStart;
-        graphNodeToProtoWrapped(graph);
+        currentTerm = SpoTerm.GRAPH;
+        converter.graphNodeToProto(nodeEncoder.provide(), graph);
         return graphStart;
     }
 
