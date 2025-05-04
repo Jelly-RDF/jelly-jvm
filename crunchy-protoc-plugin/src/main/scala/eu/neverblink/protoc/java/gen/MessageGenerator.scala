@@ -348,6 +348,18 @@ class MessageGenerator(val info: MessageInfo):
       .addStatement("return $T.mergeFrom(newInstance(), input)", RuntimeClasses.AbstractMessage)
       .build
     )
+    t.addMethod(MethodSpec.methodBuilder("parseFrom")
+      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+      .addException(classOf[IOException])
+      .addParameter(classOf[java.io.InputStream], "input", Modifier.FINAL)
+      .returns(info.typeName)
+      .addStatement(
+        "return $T.parseFrom(input, $T.getFactory())",
+        RuntimeClasses.AbstractMessage,
+        info.typeName
+      )
+      .build
+    )
     t.addMethod(MethodSpec.methodBuilder("parseDelimitedFrom")
       .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
       .addException(classOf[IOException])
