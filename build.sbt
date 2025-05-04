@@ -154,7 +154,6 @@ lazy val rdfProtosJava = (project in file("rdf-protos-java"))
           // Copy the file to the output directory
           val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
           IO.copyFile(file, outputFile)
-          println(s"Copying proto file from $file to $outputFile")
           outputFile
         }
         .map { file =>
@@ -186,6 +185,10 @@ lazy val rdfProtosJava = (project in file("rdf-protos-java"))
         (ProtobufConfig / protobufRunProtoc).value,
       )
     }.dependsOn(generateProtos).value,
+    ProtobufConfig / protobufGenerate := Def.task {
+      println(f"protobufSources: ${(ProtobufConfig / protobufSources).value.mkString(",")}")
+      (ProtobufConfig / protobufGenerate).value
+    }.value,
     ProtobufConfig / protobufExcludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "grpc.proto"),
     publishArtifact := false,
   )
