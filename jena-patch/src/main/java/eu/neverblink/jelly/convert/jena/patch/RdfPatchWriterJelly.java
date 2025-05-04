@@ -3,11 +3,11 @@ package eu.neverblink.jelly.convert.jena.patch;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
 import eu.neverblink.jelly.core.patch.PatchEncoder;
-import eu.neverblink.jelly.core.proto.v1.PatchStatementType;
-import eu.neverblink.jelly.core.proto.v1.PatchStreamType;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchFrame;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchRow;
+import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
+import eu.neverblink.jelly.core.proto.v1.patch.PatchStreamType;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchFrame;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchRow;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -71,23 +71,21 @@ public final class RdfPatchWriterJelly implements RDFChanges {
             // If no stream type is set, we default to PUNCTUATED, as it's the safest option.
             // It can handle patches of any size and preserves the segmentation marks.
             .setStreamType(
-                options.patchOptions().getStreamType() == PatchStreamType.PATCH_STREAM_TYPE_UNSPECIFIED
-                    ? PatchStreamType.PATCH_STREAM_TYPE_PUNCTUATED
+                options.patchOptions().getStreamType() == PatchStreamType.UNSPECIFIED
+                    ? PatchStreamType.PUNCTUATED
                     : options.patchOptions().getStreamType()
             )
             // Statement type: go for QUADS if unknown. Otherwise, if we encounter a quad later, we will
             // have to throw an error.
             .setStatementType(
-                options.patchOptions().getStatementType() == PatchStatementType.PATCH_STATEMENT_TYPE_UNSPECIFIED
-                    ? PatchStatementType.PATCH_STATEMENT_TYPE_QUADS
+                options.patchOptions().getStatementType() == PatchStatementType.UNSPECIFIED
+                    ? PatchStatementType.QUADS
                     : options.patchOptions().getStatementType()
-            )
-            .build();
+            );
 
         this.encoder = converterFactory.encoder(PatchEncoder.Params.of(this.patchOptions, this.buffer));
         this.delegate = new JenaToJellyPatchHandler(this.encoder, this.patchOptions.getStatementType());
-        this.shouldSplitByCount =
-            this.patchOptions.getStreamType() != PatchStreamType.PATCH_STREAM_TYPE_FRAME && options.delimited;
+        this.shouldSplitByCount = this.patchOptions.getStreamType() != PatchStreamType.FRAME && options.delimited;
     }
 
     @Override
@@ -140,7 +138,7 @@ public final class RdfPatchWriterJelly implements RDFChanges {
 
     @Override
     public void segment() {
-        if (patchOptions.getStreamType() == PatchStreamType.PATCH_STREAM_TYPE_PUNCTUATED) {
+        if (patchOptions.getStreamType() == PatchStreamType.PUNCTUATED) {
             delegate.segment();
             afterWrite();
         } else if (options.delimited) {
@@ -159,7 +157,8 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     public void finish() {
         if (!options.delimited) {
             // Non-delimited variant, whole stream in one frame
-            final var frame = RdfPatchFrame.newInstance().addAllRows(buffer).build();
+            final var frame = RdfPatchFrame.newInstance();
+            frame.getRows().addAll(buffer);
             try {
                 frame.writeTo(outputStream);
             } catch (IOException e) {
@@ -183,7 +182,8 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     }
 
     private void flushBuffer() {
-        final var frame = RdfPatchFrame.newInstance().addAllRows(buffer).build();
+        final var frame = RdfPatchFrame.newInstance();
+        frame.getRows().addAll(buffer);
         try {
             frame.writeDelimitedTo(outputStream);
         } catch (IOException e) {

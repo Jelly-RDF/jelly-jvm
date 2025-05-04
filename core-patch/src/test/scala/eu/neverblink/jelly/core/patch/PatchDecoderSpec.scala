@@ -7,6 +7,7 @@ import eu.neverblink.jelly.core.patch.PatchHandler.*
 import eu.neverblink.jelly.core.patch.helpers.*
 import eu.neverblink.jelly.core.patch.helpers.PatchAdapter.*
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -19,25 +20,24 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
     (AnyPatchHandler[Mrl.Node], RdfPatchOptions) => PatchDecoder,
     PatchStatementType
   )] = Seq(
-    ("TriplesDecoder", MockPatchConverterFactory.triplesDecoder, PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES),
-    ("QuadsDecoder", MockPatchConverterFactory.quadsDecoder, PatchStatementType.PATCH_STATEMENT_TYPE_QUADS),
-    ("AnyDecoder", MockPatchConverterFactory.anyStatementDecoder, PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES),
+    ("TriplesDecoder", MockPatchConverterFactory.triplesDecoder, PatchStatementType.TRIPLES),
+    ("QuadsDecoder", MockPatchConverterFactory.quadsDecoder, PatchStatementType.QUADS),
+    ("AnyDecoder", MockPatchConverterFactory.anyStatementDecoder, PatchStatementType.TRIPLES),
   )
 
   val streamTypes: Seq[(PatchStreamType, Int)] = Seq(
-    PatchStreamType.PATCH_STREAM_TYPE_FLAT,
-    PatchStreamType.PATCH_STREAM_TYPE_FRAME,
-    PatchStreamType.PATCH_STREAM_TYPE_PUNCTUATED
+    PatchStreamType.FLAT,
+    PatchStreamType.FRAME,
+    PatchStreamType.PUNCTUATED
   ).zipWithIndex
 
   for (decName, decFactory, stType) <- decoders do decName should {
     "throw exception on overly large name lookup table" in {
       val input = rdfPatchFrame(Seq(
         rdfPatchRow(
-          JellyPatchOptions.SMALL_STRICT.toBuilder
+          JellyPatchOptions.SMALL_STRICT.clone
             .setMaxNameTableSize(100_000)
             .setStatementType(stType)
-            .build()
         )
       ))
       val decoder = decFactory(null, null)
@@ -50,9 +50,8 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on missing patch stream type" in {
       val input = rdfPatchFrame(Seq(
         rdfPatchRow(
-          JellyPatchOptions.SMALL_STRICT.toBuilder
+          JellyPatchOptions.SMALL_STRICT.clone
             .setStatementType(stType)
-            .build()
         )
       ))
       val decoder = decFactory(null, null)
@@ -63,10 +62,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
     }
 
     for (st, i) <- streamTypes do f"accept stream with type $st" in {
-      val opt = JellyPatchOptions.SMALL_STRICT.toBuilder
+      val opt = JellyPatchOptions.SMALL_STRICT.clone
         .setStatementType(stType)
         .setStreamType(st)
-        .build()
 
       val input = rdfPatchFrame(Seq(rdfPatchRow(opt)))
       val decoder = decFactory(PatchCollector(), null)
@@ -75,14 +73,12 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
     }
 
     for (st, i) <- streamTypes do f"reject stream with type $st if a different stream type is expected" in {
-      val opt = JellyPatchOptions.SMALL_STRICT.toBuilder
+      val opt = JellyPatchOptions.SMALL_STRICT.clone
         .setStatementType(stType)
         .setStreamType(st)
-        .build()
 
-      val supportedOpt = opt.toBuilder
+      val supportedOpt = opt.clone
         .setStreamType(streamTypes((i + 1) % streamTypes.size)._1)
-        .build()
 
       val input = rdfPatchFrame(Seq(rdfPatchRow(opt)))
       val decoder = decFactory(PatchCollector(), supportedOpt)
@@ -94,10 +90,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
     }
 
     "handle multiple options rows" in {
-      val opt = JellyPatchOptions.SMALL_STRICT.toBuilder
+      val opt = JellyPatchOptions.SMALL_STRICT.clone
         .setStatementType(stType)
-        .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-        .build()
+        .setStreamType(PatchStreamType.FLAT)
       val input = rdfPatchFrame(Seq(
         rdfPatchRow(opt),
         rdfPatchRow(opt),
@@ -110,10 +105,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "decode transactions, punctuations and options" in {
       val inputRows = PatchTestCases.MalformedTransactions.encoded(
-        JellyPatchOptions.SMALL_STRICT.toBuilder
+        JellyPatchOptions.SMALL_STRICT.clone
           .setStatementType(stType)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_PUNCTUATED)
-          .build()
+          .setStreamType(PatchStreamType.PUNCTUATED)
 
       ) :++ Seq(rdfPatchRow(rdfPatchPunctuation()), rdfPatchRow(rdfPatchPunctuation()))
       val input = rdfPatchFrame(inputRows)
@@ -129,10 +123,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     for (st, _) <- streamTypes.take(2) do f"throw exception on punctuations in stream type $st" in {
       val input = rdfPatchFrame(Seq(
-        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.toBuilder
+        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.clone
           .setStatementType(stType)
           .setStreamType(st)
-          .build()
         ),
         rdfPatchRow(rdfPatchPunctuation()),
       ))
@@ -145,10 +138,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "emit punctuation on frame boundaries in stream type FRAME" in {
       val input1 = rdfPatchFrame(Seq(
-        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.toBuilder
+        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.clone
           .setStatementType(stType)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FRAME)
-          .build()
+          .setStreamType(PatchStreamType.FRAME)
         ),
       ))
       val input2 = rdfPatchFrame(Seq())
@@ -160,13 +152,12 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
       out.statements.result() shouldBe Seq(Mpl.Punctuation, Mpl.Punctuation, Mpl.Punctuation)
     }
 
-    for (st, _) <- streamTypes.filterNot(_._1 == PatchStreamType.PATCH_STREAM_TYPE_FRAME) do
+    for (st, _) <- streamTypes.filterNot(_._1 == PatchStreamType.FRAME) do
       f"not emit punctuation on frame boundaries in stream type $st" in {
         val input1 = rdfPatchFrame(Seq(
-          rdfPatchRow(JellyPatchOptions.SMALL_STRICT.toBuilder
+          rdfPatchRow(JellyPatchOptions.SMALL_STRICT.clone
             .setStatementType(stType)
             .setStreamType(st)
-            .build()
           ),
         ))
         val input2 = rdfPatchFrame(Seq())
@@ -180,10 +171,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "throw exception on unknown row type" in {
       val input = rdfPatchFrame(Seq(
-        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.toBuilder
+        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.clone
           .setStatementType(stType)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build()
+          .setStreamType(PatchStreamType.FLAT)
         ),
         rdfPatchRow(),
       ))
@@ -198,10 +188,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
   "TriplesDecoder" should {
     "decode triples (1)" in {
       val input = PatchTestCases.Triples1.encodedFull(
-        JellyPatchOptions.SMALL_STRICT.toBuilder
-          .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build(),
+        JellyPatchOptions.SMALL_STRICT.clone
+          .setStatementType(PatchStatementType.TRIPLES)
+          .setStreamType(PatchStreamType.FLAT),
         10_000
       ).head
       val out = PatchCollector()
@@ -212,10 +201,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "decode triples (2) with namespace declarations" in {
       val input = PatchTestCases.Triples2NsDecl.encodedFull(
-        JellyPatchOptions.SMALL_STRICT.toBuilder
-          .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build(),
+        JellyPatchOptions.SMALL_STRICT.clone
+          .setStatementType(PatchStatementType.TRIPLES)
+          .setStreamType(PatchStreamType.FLAT),
         10_000
       ).head
       val out = PatchCollector()
@@ -226,10 +214,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "ignore graph names in quads" in {
       val input = rdfPatchFrame(Seq(
-        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.toBuilder
-          .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build()
+        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.clone
+          .setStatementType(PatchStatementType.TRIPLES)
+          .setStreamType(PatchStreamType.FLAT)
         ),
         rdfPatchRowAdd(rdfQuad("b1", "b1", "b1", "b1")),
         rdfPatchRowDelete(rdfQuad("b1", "b1", "b1", "b1")),
@@ -250,10 +237,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "not accept a stream with statement type QUADS" in {
       val input = rdfPatchFrame(Seq(
-        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.toBuilder
-          .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_QUADS)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build()
+        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.clone
+          .setStatementType(PatchStatementType.QUADS)
+          .setStreamType(PatchStreamType.FLAT)
         ),
       ))
       val decoder = MockPatchConverterFactory.triplesDecoder(null, null)
@@ -268,10 +254,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
   "QuadsDecoder" should {
     "decode quads (1)" in {
       val input = PatchTestCases.Quads1.encodedFull(
-        JellyPatchOptions.SMALL_STRICT.toBuilder
-          .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_QUADS)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build(),
+        JellyPatchOptions.SMALL_STRICT.clone
+          .setStatementType(PatchStatementType.QUADS)
+          .setStreamType(PatchStreamType.FLAT),
         10_000
       ).head
       val out = PatchCollector()
@@ -282,10 +267,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "not accept a stream with statement type TRIPLES" in {
       val input = rdfPatchFrame(Seq(
-        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.toBuilder
-          .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build()
+        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.clone
+          .setStatementType(PatchStatementType.TRIPLES)
+          .setStreamType(PatchStreamType.FLAT)
         ),
       ))
       val decoder = MockPatchConverterFactory.quadsDecoder(null, null)
@@ -329,10 +313,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
     }
 
     "ignore multiple options rows" in {
-      val opt = JellyPatchOptions.SMALL_STRICT.toBuilder
-        .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES)
-        .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-        .build()
+      val opt = JellyPatchOptions.SMALL_STRICT.clone
+        .setStatementType(PatchStatementType.TRIPLES)
+        .setStreamType(PatchStreamType.FLAT)
       val input = rdfPatchFrame(Seq(
         rdfPatchRow(opt),
         rdfPatchRow(opt),
@@ -346,10 +329,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "decode quads" in {
       val input = PatchTestCases.Quads1.encodedFull(
-        JellyPatchOptions.SMALL_STRICT.toBuilder
-          .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_QUADS)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build(),
+        JellyPatchOptions.SMALL_STRICT.clone
+          .setStatementType(PatchStatementType.QUADS)
+          .setStreamType(PatchStreamType.FLAT),
         10_000
       ).head
       val out = PatchCollector()
@@ -360,10 +342,9 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "decode triples" in {
       val input = PatchTestCases.Triples1.encodedFull(
-        JellyPatchOptions.SMALL_STRICT.toBuilder
-          .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build(),
+        JellyPatchOptions.SMALL_STRICT.clone
+          .setStatementType(PatchStatementType.TRIPLES)
+          .setStreamType(PatchStreamType.FLAT),
         10_000
       ).head
       val out = PatchCollector()
@@ -374,9 +355,8 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
 
     "throw exception if the statement type is not set" in {
       val input = rdfPatchFrame(Seq(
-        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.toBuilder
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build()
+        rdfPatchRow(JellyPatchOptions.SMALL_STRICT.clone
+          .setStreamType(PatchStreamType.FLAT)
         ),
       ))
       val out = PatchCollector()

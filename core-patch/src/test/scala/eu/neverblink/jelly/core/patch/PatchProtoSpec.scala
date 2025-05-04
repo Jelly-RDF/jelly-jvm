@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.patch
 
-import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
@@ -19,10 +19,9 @@ class PatchProtoSpec extends AnyWordSpec, Matchers:
     val tcs = testCases.map(tc => (
       tc._1,
       tc._2.encodedFull(
-        JellyPatchOptions.SMALL_GENERALIZED.toBuilder
+        JellyPatchOptions.SMALL_GENERALIZED.clone
           .setStatementType(tc._3)
-          .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_FLAT)
-          .build(),
+          .setStreamType(PatchStreamType.FLAT),
         10_000
       ).head
     )) ++ Seq(
@@ -53,7 +52,7 @@ class PatchProtoSpec extends AnyWordSpec, Matchers:
     )
     tcs :+ (
       "all test cases in one frame",
-      rdfPatchFrame(tcs.flatMap(_._2.getRowsList.asScala))
+      rdfPatchFrame(tcs.flatMap(_._2.getRows.asScala))
     )
   }
 

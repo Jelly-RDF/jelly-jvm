@@ -15,7 +15,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
   private def checkDeclarations(out: ByteArrayOutputStream, shouldBeThere: Boolean) =
     val rows: Seq[RdfStreamRow] = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray))
-      .getRowsList
+      .getRows
       .asScala
       .toSeq
 

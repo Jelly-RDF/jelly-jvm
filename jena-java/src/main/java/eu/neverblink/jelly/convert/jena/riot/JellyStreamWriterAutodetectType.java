@@ -52,7 +52,6 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
                     .clone()
                     .setPhysicalType(PhysicalStreamType.TRIPLES)
                     .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
-                    .build()
             );
             delegatedWriter = new JellyStreamWriter(converterFactory, triplesFormatVariant, outputStream);
             delegatedWriter.start();
@@ -71,7 +70,6 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
                     .clone()
                     .setPhysicalType(PhysicalStreamType.QUADS)
                     .setLogicalType(LogicalStreamType.FLAT_QUADS)
-                    .build()
             );
             delegatedWriter = new JellyStreamWriter(converterFactory, quadsFormatVariant, outputStream);
             delegatedWriter.start();

@@ -1,9 +1,9 @@
 package eu.neverblink.jelly.core.patch;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchFrame;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchRow;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchFrame;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchRow;
 
 /**
  * Decoder for RDF-Patch streams.

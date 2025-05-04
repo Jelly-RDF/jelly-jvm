@@ -16,13 +16,11 @@ import scala.jdk.CollectionConverters.*
  */
 class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
 
-  private val encodedDefaultGraph = RdfStreamRow.newBuilder
+  private val encodedDefaultGraph = RdfStreamRow.newInstance
     .setGraphStart(
-      RdfGraphStart.newBuilder
-        .setGDefaultGraph(RdfDefaultGraph.newBuilder.build())
-        .build()
+      RdfGraphStart.newInstance
+        .setGDefaultGraph(RdfDefaultGraph.newInstance)
     )
-    .build()
   
   "JenaProtoEncoder" should {
     "encode a null graph node as default graph" in {

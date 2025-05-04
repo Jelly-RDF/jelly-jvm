@@ -6,7 +6,7 @@ import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.patch.internal.PatchDecoderImpl;
 import eu.neverblink.jelly.core.patch.internal.PatchEncoderImpl;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
 
 /**
  * Factory for creating RDF-Patch encoders and decoders.

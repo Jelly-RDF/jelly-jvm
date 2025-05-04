@@ -2,7 +2,7 @@ package eu.neverblink.jelly.convert.jena.patch;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.PatchHandler;
-import eu.neverblink.jelly.core.proto.v1.PatchStatementType;
+import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfpatch.RDFChanges;
 
@@ -37,7 +37,7 @@ public class JellyPatchOps {
      * @return A Jena RDFChanges instance that relays all operations to the Jelly-Patch stream.
      */
     public static RDFChanges fromJenaToJelly(PatchHandler.AnyPatchHandler<Node> destination) {
-        return new JenaToJellyPatchHandler(destination, PatchStatementType.PATCH_STATEMENT_TYPE_UNSPECIFIED);
+        return new JenaToJellyPatchHandler(destination, PatchStatementType.UNSPECIFIED);
     }
 
     /**
@@ -50,7 +50,7 @@ public class JellyPatchOps {
      * @return A Jena RDFChanges instance that relays all operations to the Jelly-Patch stream.
      */
     public static RDFChanges fromJenaToJellyTriples(PatchHandler.AnyPatchHandler<Node> jellyStream) {
-        return new JenaToJellyPatchHandler(jellyStream, PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES);
+        return new JenaToJellyPatchHandler(jellyStream, PatchStatementType.TRIPLES);
     }
 
     /**
@@ -63,6 +63,6 @@ public class JellyPatchOps {
      * @return A Jena RDFChanges instance that relays all operations to the Jelly-Patch stream.
      */
     public static RDFChanges fromJenaToJellyQuads(PatchHandler.AnyPatchHandler<Node> jellyStream) {
-        return new JenaToJellyPatchHandler(jellyStream, PatchStatementType.PATCH_STATEMENT_TYPE_QUADS);
+        return new JenaToJellyPatchHandler(jellyStream, PatchStatementType.QUADS);
     }
 }

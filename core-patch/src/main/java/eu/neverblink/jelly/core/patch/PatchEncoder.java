@@ -4,8 +4,8 @@ import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.internal.EncoderBase;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchRow;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchRow;
 import java.util.Collection;
 
 /**

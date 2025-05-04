@@ -2,10 +2,12 @@ package eu.neverblink.jelly.convert.jena.patch;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.PatchHandler;
-import eu.neverblink.jelly.core.proto.v1.PatchStatementType;
+import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdfpatch.RDFChanges;
+
+import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.*;
 
 /**
  * Patch handler to convert Jena RDFChanges operations to Jelly-Patch operations.
@@ -31,14 +33,17 @@ final class JenaToJellyPatchHandler implements RDFChanges {
     @Override
     public void add(Node g, Node s, Node p, Node o) {
         switch (statementType) {
-            case PATCH_STATEMENT_TYPE_TRIPLES -> jellyStream.addTriple(s, p, o);
-            case PATCH_STATEMENT_TYPE_QUADS -> jellyStream.addQuad(s, p, o, g);
-            case PATCH_STATEMENT_TYPE_UNSPECIFIED, UNRECOGNIZED -> {
+            case TRIPLES -> jellyStream.addTriple(s, p, o);
+            case QUADS -> jellyStream.addQuad(s, p, o, g);
+            case UNSPECIFIED -> {
                 if (g == null) {
                     jellyStream.addTriple(s, p, o);
                 } else {
                     jellyStream.addQuad(s, p, o, g);
                 }
+            }
+            default -> {
+                throw new IllegalArgumentException("Unsupported statement type: " + statementType);
             }
         }
     }
@@ -46,14 +51,17 @@ final class JenaToJellyPatchHandler implements RDFChanges {
     @Override
     public void delete(Node g, Node s, Node p, Node o) {
         switch (statementType) {
-            case PATCH_STATEMENT_TYPE_TRIPLES -> jellyStream.deleteTriple(s, p, o);
-            case PATCH_STATEMENT_TYPE_QUADS -> jellyStream.deleteQuad(s, p, o, g);
-            case PATCH_STATEMENT_TYPE_UNSPECIFIED, UNRECOGNIZED -> {
+            case TRIPLES -> jellyStream.deleteTriple(s, p, o);
+            case QUADS -> jellyStream.deleteQuad(s, p, o, g);
+            case UNSPECIFIED -> {
                 if (g == null) {
                     jellyStream.deleteTriple(s, p, o);
                 } else {
                     jellyStream.deleteQuad(s, p, o, g);
                 }
+            }
+            default -> {
+                throw new IllegalArgumentException("Unsupported statement type: " + statementType);
             }
         }
     }

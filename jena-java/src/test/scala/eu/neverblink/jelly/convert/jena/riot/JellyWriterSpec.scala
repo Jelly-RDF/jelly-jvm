@@ -86,7 +86,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
         for i <- 0 until 100 do
           val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
           f should not be null
-          f.getRowsList.size should be > 0
+          f.getRows.size should be > 0
       }
 
       "not split stream into multiple frames if it's non-delimited" in {
@@ -100,7 +100,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
         val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
         response.isDelimited should be (false)
         val f = RdfStreamFrame.parseFrom(response.newInput())
-        f.getRowsList.size should be > 10_000
+        f.getRows.size should be > 10_000
       }
     }
 

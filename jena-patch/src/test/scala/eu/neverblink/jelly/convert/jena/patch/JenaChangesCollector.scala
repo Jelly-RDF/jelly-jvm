@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.convert.jena.patch
 
-import eu.neverblink.jelly.core.proto.v1.PatchStatementType
+import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType
 import org.apache.jena.graph.Node
 import org.apache.jena.rdfpatch.RDFChanges
 import org.apache.jena.sparql.core.Quad
@@ -59,8 +59,8 @@ final class JenaChangesCollector(stType: PatchStatementType) extends RDFChanges:
     changes += Delete(coerceGraph(g), s, p, o)
 
   private def coerceGraph(g: Node): Node =
-    if g == null && stType == PatchStatementType.PATCH_STATEMENT_TYPE_QUADS then Quad.defaultGraphNodeGenerated
-    else if stType == PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES then null
+    if g == null && stType == PatchStatementType.QUADS then Quad.defaultGraphNodeGenerated
+    else if stType == PatchStatementType.TRIPLES then null
     else g
 
   def addPrefix(gn: Node, prefix: String, uriStr: String): Unit =

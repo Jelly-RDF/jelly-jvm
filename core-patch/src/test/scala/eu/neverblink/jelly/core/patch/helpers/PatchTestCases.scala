@@ -5,6 +5,7 @@ import eu.neverblink.jelly.core.patch.helpers.PatchAdapter.*
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.patch.helpers.Mpl.*
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.proto.v1.patch.*
 
 import scala.annotation.experimental
 
@@ -12,10 +13,10 @@ import scala.annotation.experimental
 object PatchTestCases:
 
   val testCases: Seq[(String, PatchTestCase, PatchStatementType)] = Seq(
-    ("a triple patch", Triples1, PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES),
-    ("a triple patch with namespace declarations", Triples2NsDecl, PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES),
-    ("a quad patch", Quads1, PatchStatementType.PATCH_STATEMENT_TYPE_QUADS),
-    ("nonsensical transaction commands", MalformedTransactions, PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES),
+    ("a triple patch", Triples1, PatchStatementType.TRIPLES),
+    ("a triple patch with namespace declarations", Triples2NsDecl, PatchStatementType.TRIPLES),
+    ("a quad patch", Quads1, PatchStatementType.QUADS),
+    ("nonsensical transaction commands", MalformedTransactions, PatchStatementType.TRIPLES),
   )
 
   trait PatchTestCase:
