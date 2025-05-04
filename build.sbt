@@ -221,7 +221,6 @@ lazy val coreJava = (project in file("core-java"))
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufV,
     ),
-    Compile / compile := (Compile / compile).dependsOn(rdfProtosJava / Compile / compile).value,
     Compile / sourceGenerators += Def.task {
       // Copy from the managed source directory to the output directory
       val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) /
@@ -235,7 +234,7 @@ lazy val coreJava = (project in file("core-java"))
         IO.copyFile(file, outputFile)
         outputFile
       }
-    }.dependsOn(rdfProtosJava / Compile / compile),
+    }.dependsOn(rdfProtosJava / ProtobufConfig / protobufGenerate),
     Compile / sourceManaged := sourceManaged.value / "main",
     publishArtifact := false, // TODO: remove this when ready
     commonSettings,
@@ -246,7 +245,6 @@ lazy val corePatch = (project in file("core-patch"))
     name := "jelly-core-patch",
     organization := "eu.neverblink.jelly",
     description := "Core code for the RDF Patch Jelly extension.",
-    Compile / compile := (Compile / compile).dependsOn(rdfProtosJava / Compile / compile).value,
     Compile / sourceGenerators += Def.task {
       // Copy from the managed source directory to the output directory
       val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) /
@@ -260,7 +258,7 @@ lazy val corePatch = (project in file("core-patch"))
         IO.copyFile(file, outputFile)
         outputFile
       }
-    }.dependsOn(rdfProtosJava / Compile / compile),
+    }.dependsOn(rdfProtosJava / ProtobufConfig / protobufGenerate),
     Compile / sourceManaged := sourceManaged.value / "main",
     publishArtifact := false, // TODO: remove this when ready
     commonSettings,
