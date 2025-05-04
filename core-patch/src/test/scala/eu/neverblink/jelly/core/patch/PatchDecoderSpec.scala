@@ -181,7 +181,7 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
       val e = intercept[RdfProtoDeserializationError] {
         decoder.ingestFrame(input)
       }
-      e.getMessage should include("Row kind is not set or unknown: ROW_NOT_SET")
+      e.getMessage should include("Row kind is not set or unknown: 0")
     }
   }
 

@@ -2,8 +2,8 @@ package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.proto.*;
-import eu.neverblink.jelly.core.proto.v1.*;
 import eu.neverblink.jelly.core.internal.utils.LazyProperty;
+import eu.neverblink.jelly.core.proto.v1.*;
 
 /**
  * Base interface for Jelly proto encoders. Only for internal use.
@@ -18,6 +18,9 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         OBJECT,
         GRAPH,
         NAMESPACE,
+        // Temporary. TODO: remove
+        NAMESPACE_GRAPH,
+        HEADER,
     }
 
     protected final ProtoEncoderConverter<TNode> converter;
@@ -32,6 +35,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     private SpoBase.Setters currentSpoBase = null;
     private GraphBase.Setters currentGraphBase = null;
     protected NsBase.Setters currentNsBase = null;
+    protected HeaderBase.Setters currentHeaderBase = null;
 
     protected EncoderBase(ProtoEncoderConverter<TNode> converter) {
         this.converter = converter;
@@ -116,6 +120,8 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
             case OBJECT -> currentSpoBase.setOIri(iri);
             case GRAPH -> currentGraphBase.setGIri(iri);
             case NAMESPACE -> currentNsBase.setValue(iri);
+            case NAMESPACE_GRAPH -> currentNsBase.setGraph(iri);
+            case HEADER -> currentHeaderBase.setHIri(iri);
         }
     }
 
@@ -126,6 +132,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
             case PREDICATE -> currentSpoBase.setPBnode(label);
             case OBJECT -> currentSpoBase.setOBnode(label);
             case GRAPH -> currentGraphBase.setGBnode(label);
+            case HEADER -> currentHeaderBase.setHBnode(label);
         }
     }
 
@@ -136,6 +143,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
             case PREDICATE -> currentSpoBase.setPLiteral(literal);
             case OBJECT -> currentSpoBase.setOLiteral(literal);
             case GRAPH -> currentGraphBase.setGLiteral(literal);
+            case HEADER -> currentHeaderBase.setHLiteral(literal);
         }
     }
 
@@ -161,6 +169,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
             case PREDICATE -> currentSpoBase.setPTripleTerm(quotedTriple);
             case OBJECT -> currentSpoBase.setOTripleTerm(quotedTriple);
             case GRAPH -> throw new RdfProtoSerializationError("Cannot set a graph node to be a quoted triple.");
+            case HEADER -> currentHeaderBase.setHTripleTerm(quotedTriple);
         }
     }
 

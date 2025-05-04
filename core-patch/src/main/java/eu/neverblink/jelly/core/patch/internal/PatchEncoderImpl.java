@@ -105,70 +105,42 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
 
     @Override
     public void addNamespace(String name, TNode iriValue, TNode graph) {
-        emitOptions();
-        // TODO: fix
-//        final var namespace = converter.nodeToProto(nodeEncoder.provide(), iriValue);
-//        if (!(namespace instanceof RdfTerm.Iri valueIri)) {
-//            throw new RdfProtoSerializationError("Namespace must be an IRI");
-//        }
-//
-//        final var graphIri = encodeNsIri(graph);
-//
-//        final var namespaceEntryBuilder = RdfPatchNamespace.newInstance().setName(name).setValue(valueIri);
-//
-//        if (graphIri != null) {
-//            namespaceEntryBuilder.setGraph(graphIri);
-//        }
-//
-//        final var namespaceEntry = namespaceEntryBuilder;
-//        final var mainRow = RdfPatchRow.newInstance().setNamespaceAdd(namespaceEntry);
-//        rowBuffer.add(mainRow);
+        final var namespace = encodeNamespace(name, iriValue, graph);
+        final var mainRow = RdfPatchRow.newInstance().setNamespaceAdd(namespace);
+        rowBuffer.add(mainRow);
     }
 
     @Override
     public void deleteNamespace(String name, TNode iriValue, TNode graph) {
-        emitOptions();
-
-        final var valueIri = encodeNsIri(iriValue);
-        final var graphIri = encodeNsIri(graph);
-
-        final var namespaceEntryBuilder = RdfPatchNamespace.newInstance().setName(name);
-
-        if (valueIri != null) {
-            namespaceEntryBuilder.setValue(valueIri);
-        }
-
-        if (graphIri != null) {
-            namespaceEntryBuilder.setGraph(graphIri);
-        }
-
-        final var namespaceEntry = namespaceEntryBuilder;
-        final var mainRow = RdfPatchRow.newInstance().setNamespaceDelete(namespaceEntry);
+        final var namespace = encodeNamespace(name, iriValue, graph);
+        final var mainRow = RdfPatchRow.newInstance().setNamespaceDelete(namespace);
         rowBuffer.add(mainRow);
+    }
+    
+    private RdfPatchNamespace encodeNamespace(String name, TNode iriValue, TNode graph) {
+        emitOptions();
+        final var namespace = RdfPatchNamespace.newInstance().setName(name);
+        this.currentNsBase = namespace;
+        if (iriValue != null) {
+            this.currentTerm = SpoTerm.NAMESPACE;
+            converter.nodeToProto(nodeEncoder.provide(), iriValue);
+        }
+        if (graph != null) {
+            this.currentTerm = SpoTerm.NAMESPACE_GRAPH;
+            converter.nodeToProto(nodeEncoder.provide(), graph);
+        }
+        return namespace;
     }
 
     @Override
     public void header(String key, TNode value) {
         emitOptions();
-        // TODO: fix
-//        var valueTerm = converter.nodeToProto(nodeEncoder.provide(), value);
-//        var headerBuilder = RdfPatchHeader.newInstance().setKey(key);
-//
-//        if (valueTerm instanceof RdfTerm.Iri valueIri) {
-//            headerBuilder.setHIri(valueIri);
-//        } else if (valueTerm instanceof RdfTerm.BNode valueBlankNode) {
-//            headerBuilder.setHBnode(valueBlankNode);
-//        } else if (valueTerm instanceof RdfTerm.LiteralTerm valueLiteral) {
-//            headerBuilder.setHLiteral(valueLiteral);
-//        } else if (valueTerm instanceof RdfTerm.Triple valueTriple) {
-//            headerBuilder.setHTripleTerm(valueTriple);
-//        } else {
-//            throw new RdfProtoSerializationError("Header value must be an IRI, literal, or blank node");
-//        }
-//
-//        var headerEntry = headerBuilder;
-//        var mainRow = RdfPatchRow.newInstance().setHeader(headerEntry);
-//        rowBuffer.add(mainRow);
+        final var header = RdfPatchHeader.newInstance().setKey(key);
+        this.currentHeaderBase = header;
+        this.currentTerm = SpoTerm.HEADER;
+        converter.nodeToProto(nodeEncoder.provide(), value);
+        var mainRow = RdfPatchRow.newInstance().setHeader(header);
+        rowBuffer.add(mainRow);
     }
 
     @Override
@@ -182,20 +154,6 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         var punctuation = RdfPatchPunctuation.newInstance();
         var mainRow = RdfPatchRow.newInstance().setPunctuation(punctuation);
         rowBuffer.add(mainRow);
-    }
-
-    private RdfIri encodeNsIri(TNode iri) {
-        // TODO: fix
-        return null;
-//        if (iri == null) {
-//            return null;
-//        }
-//
-//        final var term = converter.nodeToProto(nodeEncoder.provide(), iri);
-//        if (!(term instanceof RdfTerm.Iri iriTerm)) {
-//            throw new RdfProtoSerializationError("Namespace must be an IRI");
-//        }
-//        return iriTerm;
     }
 
     private void emitOptions() {
