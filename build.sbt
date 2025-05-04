@@ -221,6 +221,7 @@ lazy val coreJava = (project in file("core-java"))
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufV,
     ),
+    Compile / compile := (Compile / compile).dependsOn(rdfProtosJava / Compile / compile).value,
     Compile / sourceGenerators += Def.task {
       // Copy from the managed source directory to the output directory
       val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) /
@@ -228,7 +229,6 @@ lazy val coreJava = (project in file("core-java"))
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
-      // / "protobuf"
       val javaFiles = (inputDir * "*.java").get
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
@@ -246,7 +246,7 @@ lazy val corePatch = (project in file("core-patch"))
     name := "jelly-core-patch",
     organization := "eu.neverblink.jelly",
     description := "Core code for the RDF Patch Jelly extension.",
-    // Add the generated proto classes after transforming them with Scalameta
+    Compile / compile := (Compile / compile).dependsOn(rdfProtosJava / Compile / compile).value,
     Compile / sourceGenerators += Def.task {
       // Copy from the managed source directory to the output directory
       val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) /
@@ -254,7 +254,6 @@ lazy val corePatch = (project in file("core-patch"))
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
-        // / "protobuf"
       val javaFiles = (inputDir * "*.java").get
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
