@@ -153,10 +153,6 @@ lazy val rdfProtosJava = (project in file("rdf-protos-java"))
         (ProtobufConfig / protobufRunProtoc).value,
       )
     }.dependsOn(crunchyProtocPlugin / generatePluginRunScript).value,
-    ProtobufConfig / protobufGenerate := Def.task {
-      println(f"protobufSources: ${(ProtobufConfig / protobufSources).value.mkString(",")}")
-      (ProtobufConfig / protobufGenerate).value
-    }.value,
     ProtobufConfig / protobufExcludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "grpc.proto"),
     publishArtifact := false,
   )
@@ -196,7 +192,6 @@ lazy val coreJava = (project in file("core-java"))
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
-      println(s"[core] Copying proto files from $inputDir to $outputDir")
       val javaFiles = (inputDir * "*.java").get
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
@@ -221,7 +216,6 @@ lazy val corePatch = (project in file("core-patch"))
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
-      println(s"[core-patch] Copying proto files from $inputDir to $outputDir")
       val javaFiles = (inputDir * "*.java").get
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
