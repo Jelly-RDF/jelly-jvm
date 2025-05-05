@@ -43,10 +43,9 @@ public final class JellyDatasetWriter extends WriterDatasetRIOTBase {
         variant = variant.updateOptions(
             variant
                 .getOptions()
-                .toBuilder()
-                .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
-                .setLogicalType(LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS)
-                .build()
+                .clone()
+                .setPhysicalType(PhysicalStreamType.QUADS)
+                .setLogicalType(LogicalStreamType.FLAT_QUADS)
         );
 
         var inner = new JellyStreamWriter(converterFactory, variant, out);

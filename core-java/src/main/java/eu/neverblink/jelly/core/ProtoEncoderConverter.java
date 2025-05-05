@@ -8,6 +8,6 @@ package eu.neverblink.jelly.core;
  * @param <TNode> type of RDF nodes in the library
  */
 public interface ProtoEncoderConverter<TNode> {
-    RdfTerm.SpoTerm nodeToProto(NodeEncoder<TNode> encoder, TNode node);
-    RdfTerm.GraphTerm graphNodeToProto(NodeEncoder<TNode> encoder, TNode node);
+    void nodeToProto(NodeEncoder<TNode> encoder, TNode node);
+    void graphNodeToProto(NodeEncoder<TNode> encoder, TNode node);
 }

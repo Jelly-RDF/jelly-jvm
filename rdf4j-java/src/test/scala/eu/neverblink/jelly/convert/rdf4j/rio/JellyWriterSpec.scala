@@ -61,7 +61,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers:
       for i <- 0 until 100 do
         val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
         f should not be null
-        f.getRowsList.size should be > 0
+        f.getRows.size should be > 0
       response.newInput().available() should be(0)
     }
 
@@ -79,7 +79,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers:
       val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
       response.isDelimited should be(false)
       val f = RdfStreamFrame.parseFrom(response.newInput())
-      f.getRowsList.size should be > 10_000
+      f.getRows.size should be > 10_000
       response.newInput().available() should be(0)
     }
   }

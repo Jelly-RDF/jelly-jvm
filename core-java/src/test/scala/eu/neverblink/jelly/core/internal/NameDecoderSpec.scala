@@ -7,10 +7,9 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class NameDecoderSpec extends AnyWordSpec, Matchers:
-  var smallOptions: RdfStreamOptions = RdfStreamOptions.newBuilder()
+  var smallOptions: RdfStreamOptions = RdfStreamOptions.newInstance()
     .setMaxNameTableSize(16)
     .setMaxPrefixTableSize(8)
-    .build()
   
   def makeDecoder(opt: RdfStreamOptions) =
     NameDecoderImpl(opt.getMaxPrefixTableSize(), opt.getMaxNameTableSize(), identity)

@@ -1,21 +1,16 @@
 package eu.neverblink.jelly.core.patch.internal;
 
+import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.QUADS;
+import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.TRIPLES;
+
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.DecoderBase;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
 import eu.neverblink.jelly.core.patch.PatchDecoder;
 import eu.neverblink.jelly.core.patch.PatchHandler;
-import eu.neverblink.jelly.core.proto.v1.PatchStatementType;
-import eu.neverblink.jelly.core.proto.v1.PatchStreamType;
-import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchFrame;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchHeader;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchNamespace;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchRow;
-import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
+import eu.neverblink.jelly.core.proto.v1.*;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
+import eu.neverblink.jelly.core.proto.v1.patch.*;
 
 @ExperimentalApi
 @InternalApi
@@ -74,29 +69,29 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
     @Override
     public void ingestRow(RdfPatchRow row) {
-        switch (row.getRowCase()) {
-            case OPTIONS -> handleOptions(row.getOptions());
-            case STATEMENT_ADD -> handleStatementAdd(row.getStatementAdd());
-            case STATEMENT_DELETE -> handleStatementDelete(row.getStatementDelete());
-            case NAMESPACE_ADD -> handleNamespaceAdd(row.getNamespaceAdd());
-            case NAMESPACE_DELETE -> handleNamespaceDelete(row.getNamespaceDelete());
-            case TRANSACTION_START -> handleTransactionStart();
-            case TRANSACTION_COMMIT -> handleTransactionCommit();
-            case TRANSACTION_ABORT -> handleTransactionAbort();
-            case NAME -> handleName(row.getName());
-            case PREFIX -> handlePrefix(row.getPrefix());
-            case DATATYPE -> handleDatatype(row.getDatatype());
-            case HEADER -> handleHeader(row.getHeader());
-            case PUNCTUATION -> handlePunctuation();
-            case ROW_NOT_SET -> throw new RdfProtoDeserializationError(
-                "Row kind is not set or unknown: " + row.getRowCase()
+        switch (row.getRowFieldNumber()) {
+            case RdfPatchRow.OPTIONS -> handleOptions(row.getOptions());
+            case RdfPatchRow.STATEMENT_ADD -> handleStatementAdd(row.getStatementAdd());
+            case RdfPatchRow.STATEMENT_DELETE -> handleStatementDelete(row.getStatementDelete());
+            case RdfPatchRow.NAMESPACE_ADD -> handleNamespaceAdd(row.getNamespaceAdd());
+            case RdfPatchRow.NAMESPACE_DELETE -> handleNamespaceDelete(row.getNamespaceDelete());
+            case RdfPatchRow.TRANSACTION_START -> handleTransactionStart();
+            case RdfPatchRow.TRANSACTION_COMMIT -> handleTransactionCommit();
+            case RdfPatchRow.TRANSACTION_ABORT -> handleTransactionAbort();
+            case RdfPatchRow.NAME -> handleName(row.getName());
+            case RdfPatchRow.PREFIX -> handlePrefix(row.getPrefix());
+            case RdfPatchRow.DATATYPE -> handleDatatype(row.getDatatype());
+            case RdfPatchRow.HEADER -> handleHeader(row.getHeader());
+            case RdfPatchRow.PUNCTUATION -> handlePunctuation();
+            default -> throw new RdfProtoDeserializationError(
+                "Row kind is not set or unknown: " + row.getRowFieldNumber()
             );
         }
     }
 
     @Override
     public void ingestFrame(RdfPatchFrame frame) {
-        for (final var row : frame.getRowsList()) {
+        for (final var row : frame.getRows()) {
             ingestRow(row);
         }
 
@@ -115,18 +110,18 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     }
 
     private void handleNamespaceAdd(RdfPatchNamespace nsRow) {
-        final var valueIri = RdfTerm.from(nsRow.getValue());
-        final var graphIri = RdfTerm.from(nsRow.hasGraph() ? nsRow.getGraph() : null);
+        final var valueIri = nsRow.getValue();
+        final var graphIri = nsRow.getGraph();
         patchHandler.addNamespace(
             nsRow.getName(),
-            nameDecoder.provide().decode(valueIri.prefixId(), valueIri.nameId()),
+            nameDecoder.provide().decode(valueIri.getPrefixId(), valueIri.getNameId()),
             decodeNsIri(graphIri)
         );
     }
 
     private void handleNamespaceDelete(RdfPatchNamespace nsRow) {
-        final var valueIri = RdfTerm.from(nsRow.hasValue() ? nsRow.getValue() : null);
-        final var graphIri = RdfTerm.from(nsRow.hasGraph() ? nsRow.getGraph() : null);
+        final var valueIri = nsRow.getValue();
+        final var graphIri = nsRow.getGraph();
         patchHandler.deleteNamespace(nsRow.getName(), decodeNsIri(valueIri), decodeNsIri(graphIri));
     }
 
@@ -156,16 +151,10 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
     private void handleHeader(RdfPatchHeader hRow) {
         // No support for repeated terms in the header
-        final var term =
-            switch (hRow.getValueCase()) {
-                case H_IRI -> RdfTerm.from(hRow.getHIri());
-                case H_BNODE -> RdfTerm.from(hRow.getHBnode());
-                case H_LITERAL -> RdfTerm.from(hRow.getHLiteral());
-                case H_TRIPLE_TERM -> RdfTerm.from(hRow.getHTripleTerm());
-                case VALUE_NOT_SET -> null;
-            };
-
-        patchHandler.header(hRow.getKey(), convertTerm(term));
+        patchHandler.header(
+            hRow.getKey(),
+            convertTerm(hRow.getValueFieldNumber() - RdfPatchHeader.H_IRI, hRow.getValue())
+        );
     }
 
     private void handlePunctuation() {
@@ -182,16 +171,16 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
         }
 
         this.currentOptions = options;
-        this.isFrameStreamType = options.getStreamType() == PatchStreamType.PATCH_STREAM_TYPE_FRAME;
-        this.isPunctuatedStreamType = options.getStreamType() == PatchStreamType.PATCH_STREAM_TYPE_PUNCTUATED;
+        this.isFrameStreamType = options.getStreamType() == PatchStreamType.FRAME;
+        this.isPunctuatedStreamType = options.getStreamType() == PatchStreamType.PUNCTUATED;
     }
 
-    private TNode decodeNsIri(RdfTerm.Iri iri) {
+    private TNode decodeNsIri(RdfIri iri) {
         if (iri == null) {
             return null;
         }
 
-        return nameDecoder.provide().decode(iri.prefixId(), iri.nameId());
+        return nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId());
     }
 
     @ExperimentalApi
@@ -210,7 +199,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleOptions(RdfPatchOptions opt) {
-            if (opt.getStatementType() != PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES) {
+            if (opt.getStatementType() != PatchStatementType.TRIPLES) {
                 throw new RdfProtoDeserializationError(
                     "Incoming stream with statement type %s cannot be decoded by this decoder. Only TRIPLES streams are accepted.".formatted(
                             opt.getStatementType()
@@ -222,21 +211,19 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementAdd(RdfQuad statement) {
-            final var term = RdfTerm.from(statement);
             patchHandler.addTriple(
-                convertSubjectTermWrapped(term.subject()),
-                convertPredicateTermWrapped(term.predicate()),
-                convertObjectTermWrapped(term.object())
+                convertSubjectTermWrapped(statement),
+                convertPredicateTermWrapped(statement),
+                convertObjectTermWrapped(statement)
             );
         }
 
         @Override
         protected void handleStatementDelete(RdfQuad statement) {
-            final var term = RdfTerm.from(statement);
             patchHandler.deleteTriple(
-                convertSubjectTermWrapped(term.subject()),
-                convertPredicateTermWrapped(term.predicate()),
-                convertObjectTermWrapped(term.object())
+                convertSubjectTermWrapped(statement),
+                convertPredicateTermWrapped(statement),
+                convertObjectTermWrapped(statement)
             );
         }
     }
@@ -257,7 +244,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleOptions(RdfPatchOptions opt) {
-            if (opt.getStatementType() != PatchStatementType.PATCH_STATEMENT_TYPE_QUADS) {
+            if (opt.getStatementType() != PatchStatementType.QUADS) {
                 throw new RdfProtoDeserializationError(
                     "Incoming stream with statement type %s cannot be decoded by this decoder. Only QUADS streams are accepted.".formatted(
                             opt.getStatementType()
@@ -269,23 +256,21 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementAdd(RdfQuad statement) {
-            final var term = RdfTerm.from(statement);
             patchHandler.addQuad(
-                convertSubjectTermWrapped(term.subject()),
-                convertPredicateTermWrapped(term.predicate()),
-                convertObjectTermWrapped(term.object()),
-                convertGraphTermWrapped(term.graph())
+                convertSubjectTermWrapped(statement),
+                convertPredicateTermWrapped(statement),
+                convertObjectTermWrapped(statement),
+                convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement)
             );
         }
 
         @Override
         protected void handleStatementDelete(RdfQuad statement) {
-            final var term = RdfTerm.from(statement);
             patchHandler.deleteQuad(
-                convertSubjectTermWrapped(term.subject()),
-                convertPredicateTermWrapped(term.predicate()),
-                convertObjectTermWrapped(term.object()),
-                convertGraphTermWrapped(term.graph())
+                convertSubjectTermWrapped(statement),
+                convertPredicateTermWrapped(statement),
+                convertObjectTermWrapped(statement),
+                convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement)
             );
         }
     }
@@ -307,14 +292,13 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleOptions(RdfPatchOptions opt) {
-            if (opt.getStatementType() == PatchStatementType.PATCH_STATEMENT_TYPE_UNSPECIFIED) {
+            if (opt.getStatementType() == PatchStatementType.UNSPECIFIED) {
                 throw new RdfProtoDeserializationError("Incoming stream has no statement type set. Cannot decode.");
             }
-            if (opt.getStatementType() == PatchStatementType.UNRECOGNIZED) {
+            if (opt.getStatementType() == null) {
                 throw new RdfProtoDeserializationError(
-                    "Incoming stream with statement type %s cannot be decoded by this decoder. Only TRIPLES and QUADS streams are accepted.".formatted(
-                            opt.getStatementType()
-                        )
+                    "Incoming stream has an unrecognized statement type cannot be decoded by this decoder. " +
+                    "Only TRIPLES and QUADS streams are accepted."
                 );
             }
 
@@ -324,10 +308,9 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementAdd(RdfQuad statement) {
-            final var term = RdfTerm.from(statement);
-            final var s = convertSubjectTermWrapped(term.subject());
-            final var p = convertPredicateTermWrapped(term.predicate());
-            final var o = convertObjectTermWrapped(term.object());
+            final var s = convertSubjectTermWrapped(statement);
+            final var p = convertPredicateTermWrapped(statement);
+            final var o = convertObjectTermWrapped(statement);
 
             if (statementType == null) {
                 throw new RdfProtoDeserializationError(
@@ -335,9 +318,9 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
                 );
             }
             switch (statementType) {
-                case PATCH_STATEMENT_TYPE_TRIPLES -> patchHandler.addTriple(s, p, o);
-                case PATCH_STATEMENT_TYPE_QUADS -> {
-                    final var g = convertGraphTermWrapped(term.graph());
+                case TRIPLES -> patchHandler.addTriple(s, p, o);
+                case QUADS -> {
+                    final var g = convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement);
                     patchHandler.addQuad(s, p, o, g);
                 }
             }
@@ -345,10 +328,9 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementDelete(RdfQuad statement) {
-            final var term = RdfTerm.from(statement);
-            final var s = convertSubjectTermWrapped(term.subject());
-            final var p = convertPredicateTermWrapped(term.predicate());
-            final var o = convertObjectTermWrapped(term.object());
+            final var s = convertSubjectTermWrapped(statement);
+            final var p = convertPredicateTermWrapped(statement);
+            final var o = convertObjectTermWrapped(statement);
 
             if (statementType == null) {
                 throw new RdfProtoDeserializationError(
@@ -356,9 +338,9 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
                 );
             }
             switch (statementType) {
-                case PATCH_STATEMENT_TYPE_TRIPLES -> patchHandler.deleteTriple(s, p, o);
-                case PATCH_STATEMENT_TYPE_QUADS -> {
-                    final var g = convertGraphTermWrapped(term.graph());
+                case TRIPLES -> patchHandler.deleteTriple(s, p, o);
+                case QUADS -> {
+                    final var g = convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement);
                     patchHandler.deleteQuad(s, p, o, g);
                 }
             }

@@ -47,13 +47,13 @@ public class LogicalStreamTypeUtils {
      */
     public static String getRdfStaxType(LogicalStreamType logicalType) {
         return switch (logicalType) {
-            case LOGICAL_STREAM_TYPE_FLAT_TRIPLES -> STAX_PREFIX + "flatTripleStream";
-            case LOGICAL_STREAM_TYPE_FLAT_QUADS -> STAX_PREFIX + "flatQuadStream";
-            case LOGICAL_STREAM_TYPE_GRAPHS -> STAX_PREFIX + "graphStream";
-            case LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS -> STAX_PREFIX + "subjectGraphStream";
-            case LOGICAL_STREAM_TYPE_DATASETS -> STAX_PREFIX + "datasetStream";
-            case LOGICAL_STREAM_TYPE_NAMED_GRAPHS -> STAX_PREFIX + "namedGraphStream";
-            case LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS -> STAX_PREFIX + "timestampedNamedGraphStream";
+            case FLAT_TRIPLES -> STAX_PREFIX + "flatTripleStream";
+            case FLAT_QUADS -> STAX_PREFIX + "flatQuadStream";
+            case GRAPHS -> STAX_PREFIX + "graphStream";
+            case SUBJECT_GRAPHS -> STAX_PREFIX + "subjectGraphStream";
+            case DATASETS -> STAX_PREFIX + "datasetStream";
+            case NAMED_GRAPHS -> STAX_PREFIX + "namedGraphStream";
+            case TIMESTAMPED_NAMED_GRAPHS -> STAX_PREFIX + "timestampedNamedGraphStream";
             default -> null;
         };
     }
@@ -71,13 +71,13 @@ public class LogicalStreamTypeUtils {
 
         String typeName = iri.substring(STAX_PREFIX.length());
         return switch (typeName) {
-            case "flatTripleStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES;
-            case "flatQuadStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS;
-            case "graphStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS;
-            case "subjectGraphStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS;
-            case "datasetStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS;
-            case "namedGraphStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_NAMED_GRAPHS;
-            case "timestampedNamedGraphStream" -> LogicalStreamType.LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS;
+            case "flatTripleStream" -> LogicalStreamType.FLAT_TRIPLES;
+            case "flatQuadStream" -> LogicalStreamType.FLAT_QUADS;
+            case "graphStream" -> LogicalStreamType.GRAPHS;
+            case "subjectGraphStream" -> LogicalStreamType.SUBJECT_GRAPHS;
+            case "datasetStream" -> LogicalStreamType.DATASETS;
+            case "namedGraphStream" -> LogicalStreamType.NAMED_GRAPHS;
+            case "timestampedNamedGraphStream" -> LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS;
             default -> null;
         };
     }

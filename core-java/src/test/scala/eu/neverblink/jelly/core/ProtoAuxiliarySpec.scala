@@ -5,6 +5,8 @@ import eu.neverblink.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+
 /**
  * Tests for some auxiliary methods (e.g., Text Format serialization) of the generated Protobuf messages.
  */
@@ -31,21 +33,23 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
     tc.encodedFull(opt, 1000, metadata).head
   ))
 
+  // TODO: restore functionality
 //  val companions: Seq[scalapb.GeneratedMessageCompanion[? <: scalapb.GeneratedMessage]] = RdfProto.messagesCompanions
 //
 //  for (companion <- companions) do
 //    val name = companion.getClass.getName.split('.').last.replace("$", "")
 //    s"message companion $name" should {
 //      "return the correct Java descriptor" in {
-//        companion.javaDescriptor.getName should be (name)
+//        companion.javaDescriptor.getName should be(name)
 //      }
 //
 //      "return the correct Scala descriptor" in {
-//        companion.scalaDescriptor.name should be (name)
+//        companion.scalaDescriptor.name should be(name)
 //      }
-//  }
+//    }
 
   "RdfStreamFrame" should {
+    // TODO: restore functionality
 //    "serialize to string with toProtoString" when {
 //      for ((name, tc) <- testCases) do s"test case $name" in {
 //        val str = tc.toProtoString
@@ -57,17 +61,55 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
 //      for ((name, tc) <- testCases) do s"test case $name" in {
 //        val str = tc.toProtoString
 //        val frame = RdfStreamFrame.fromAscii(str)
-//        frame should be (tc)
+//        frame should be(tc)
 //      }
 //    }
 
     // This case is mostly here to test metadata serialization/deserialization
     // in a round-trip setting.
-    "deserialize from bytes" when {
+    "round-trip with non-delimited bytes" when {
       for ((name, tc) <- testCases) do s"test case $name" in {
         val bytes = tc.toByteArray
         val frame = RdfStreamFrame.parseFrom(bytes)
         frame should be (tc)
       }
+    }
+
+    "round-trip with delimited bytes" when {
+      for ((name, tc) <- testCases) do s"test case $name" in {
+        val os = new ByteArrayOutputStream()
+        tc.writeDelimitedTo(os)
+        val bytes = os.toByteArray
+        val frame = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
+        frame should be (tc)
+      }
+    }
+
+    val deeplyNestedFrame = {
+      var triple = RdfTriple.newInstance()
+      for (i <- 1 to 100) {
+        triple = RdfTriple.newInstance()
+          .setSTripleTerm(triple)
+      }
+      RdfStreamFrame.newInstance()
+        .addRows(RdfStreamRow.newInstance().setTriple(triple))
+    }
+
+    "[SECURITY] reject parsing too deeply nested messages (non-delimited)" in {
+      val bytes = deeplyNestedFrame.toByteArray
+      val exception = intercept[RuntimeException] {
+        RdfStreamFrame.parseFrom(bytes)
+      }
+      exception.getMessage should include("depth exceeded: 65")
+    }
+
+    "[SECURITY] reject parsing too deeply nested messages (delimited)" in {
+      val os = new ByteArrayOutputStream()
+      deeplyNestedFrame.writeDelimitedTo(os)
+      val bytes = os.toByteArray
+      val exception = intercept[RuntimeException] {
+        RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
+      }
+      exception.getMessage should include("depth exceeded: 65")
     }
   }

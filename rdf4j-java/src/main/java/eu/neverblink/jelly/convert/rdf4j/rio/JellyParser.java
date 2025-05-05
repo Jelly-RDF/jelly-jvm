@@ -57,14 +57,13 @@ public final class JellyParser extends AbstractRDFParser {
         }
 
         final var config = getParserConfig();
-        final var options = RdfStreamOptions.newBuilder()
+        final var options = RdfStreamOptions.newInstance()
             .setGeneralizedStatements(config.get(JellyParserSettings.ALLOW_GENERALIZED_STATEMENTS))
             .setRdfStar(config.get(JellyParserSettings.ALLOW_RDF_STAR))
             .setMaxNameTableSize(config.get(JellyParserSettings.MAX_NAME_TABLE_SIZE))
             .setMaxPrefixTableSize(config.get(JellyParserSettings.MAX_PREFIX_TABLE_SIZE))
             .setMaxDatatypeTableSize(config.get(JellyParserSettings.MAX_DATATYPE_TABLE_SIZE))
-            .setVersion(config.get(JellyParserSettings.PROTO_VERSION))
-            .build();
+            .setVersion(config.get(JellyParserSettings.PROTO_VERSION));
 
         final var handler = new RdfHandler.AnyStatementHandler<Value>() {
             @Override
@@ -94,13 +93,13 @@ public final class JellyParser extends AbstractRDFParser {
                 // Delimited Jelly file
                 // In this case, we can read multiple frames
                 readStream(delimitingResponse.newInput(), RdfStreamFrame::parseDelimitedFrom, frame ->
-                    frame.getRowsList().forEach(decoder::ingestRow)
+                    frame.getRows().forEach(decoder::ingestRow)
                 );
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame
                 final var frame = RdfStreamFrame.parseFrom(delimitingResponse.newInput());
-                frame.getRowsList().forEach(decoder::ingestRow);
+                frame.getRows().forEach(decoder::ingestRow);
             }
         } finally {
             rdfHandler.endRDF();

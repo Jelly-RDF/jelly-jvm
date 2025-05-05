@@ -1,11 +1,10 @@
 package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.*;
-import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfNamespaceDeclaration;
-import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
+import eu.neverblink.jelly.core.ProtoEncoder;
+import eu.neverblink.jelly.core.ProtoEncoderConverter;
+import eu.neverblink.jelly.core.RdfProtoSerializationError;
+import eu.neverblink.jelly.core.proto.v1.*;
 import java.util.Collection;
 
 /**
@@ -37,7 +36,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     public void handleTriple(TNode subject, TNode predicate, TNode object) {
         emitOptions();
         final var triple = tripleToProto(subject, predicate, object);
-        final var mainRow = RdfStreamRow.newBuilder().setTriple(triple.toProto()).build();
+        final var mainRow = RdfStreamRow.newInstance().setTriple(triple);
         rowBuffer.add(mainRow);
     }
 
@@ -45,16 +44,15 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     public void handleQuad(TNode subject, TNode predicate, TNode object, TNode graph) {
         emitOptions();
         final var quad = quadToProto(subject, predicate, object, graph);
-        final var mainRow = RdfStreamRow.newBuilder().setQuad(quad.toProto()).build();
+        final var mainRow = RdfStreamRow.newInstance().setQuad(quad);
         rowBuffer.add(mainRow);
     }
 
     @Override
     public void handleGraphStart(TNode graph) {
         emitOptions();
-        final var graphNode = converter.graphNodeToProto(nodeEncoder.provide(), graph);
-        final var graphStart = new RdfTerm.GraphStart(graphNode);
-        final var graphRow = RdfStreamRow.newBuilder().setGraphStart(graphStart.toProto()).build();
+        final var graphStart = graphStartToProto(graph);
+        final var graphRow = RdfStreamRow.newInstance().setGraphStart(graphStart);
         rowBuffer.add(graphRow);
     }
 
@@ -63,9 +61,9 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         if (!hasEmittedOptions) {
             throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one");
         }
-
-        final var graphEnd = new RdfTerm.GraphEnd();
-        final var graphRow = RdfStreamRow.newBuilder().setGraphEnd(graphEnd.toProto()).build();
+        // TODO: use a singleton here
+        final var graphEnd = RdfGraphEnd.newInstance();
+        final var graphRow = RdfStreamRow.newInstance().setGraphEnd(graphEnd);
         rowBuffer.add(graphRow);
     }
 
@@ -77,31 +75,27 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
         emitOptions();
 
-        final var namespaceTerm = converter.nodeToProto(nodeEncoder.provide(), namespace);
-        if (!(namespaceTerm instanceof RdfTerm.Iri iriTerm)) {
-            throw new RdfProtoSerializationError("Namespace must be an IRI");
-        }
-
-        final var mainRow = RdfStreamRow.newBuilder()
-            .setNamespace(RdfNamespaceDeclaration.newBuilder().setName(prefix).setValue(iriTerm.toProto()).build())
-            .build();
-
+        final var ns = RdfNamespaceDeclaration.newInstance().setName(prefix);
+        this.currentNsBase = ns;
+        this.currentTerm = SpoTerm.NAMESPACE;
+        converter.nodeToProto(nodeEncoder.provide(), namespace);
+        final var mainRow = RdfStreamRow.newInstance().setNamespace(ns);
         rowBuffer.add(mainRow);
     }
 
     @Override
     public void appendNameEntry(RdfNameEntry nameEntry) {
-        rowBuffer.add(RdfStreamRow.newBuilder().setName(nameEntry).build());
+        rowBuffer.add(RdfStreamRow.newInstance().setName(nameEntry));
     }
 
     @Override
     public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
-        rowBuffer.add(RdfStreamRow.newBuilder().setPrefix(prefixEntry).build());
+        rowBuffer.add(RdfStreamRow.newInstance().setPrefix(prefixEntry));
     }
 
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
-        rowBuffer.add(RdfStreamRow.newBuilder().setDatatype(datatypeEntry).build());
+        rowBuffer.add(RdfStreamRow.newInstance().setDatatype(datatypeEntry));
     }
 
     private void emitOptions() {
@@ -110,6 +104,6 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         }
 
         hasEmittedOptions = true;
-        rowBuffer.add(RdfStreamRow.newBuilder().setOptions(options).build());
+        rowBuffer.add(RdfStreamRow.newInstance().setOptions(options));
     }
 }

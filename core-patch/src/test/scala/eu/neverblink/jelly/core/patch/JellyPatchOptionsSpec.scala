@@ -1,8 +1,8 @@
 package eu.neverblink.jelly.core.patch
 
 import eu.neverblink.jelly.core.JellyOptions
-import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -34,17 +34,16 @@ class JellyPatchOptionsSpec extends AnyWordSpec, Matchers:
       }
 
     val physicalTypeCases = Seq(
-      (PatchStatementType.PATCH_STATEMENT_TYPE_UNSPECIFIED, PhysicalStreamType.PHYSICAL_STREAM_TYPE_UNSPECIFIED),
-      (PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES, PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES),
-      (PatchStatementType.PATCH_STATEMENT_TYPE_QUADS, PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS),
-      (PatchStatementType.PATCH_STATEMENT_TYPE_QUADS, PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS),
+      (PatchStatementType.UNSPECIFIED, PhysicalStreamType.UNSPECIFIED),
+      (PatchStatementType.TRIPLES, PhysicalStreamType.TRIPLES),
+      (PatchStatementType.QUADS, PhysicalStreamType.GRAPHS),
+      (PatchStatementType.QUADS, PhysicalStreamType.QUADS),
     )
 
     for (patchType, jellyType) <- physicalTypeCases do
       f"convert PhysicalStreamType to StatementType, case $jellyType" in {
-        val opt = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.toBuilder
+        val opt = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone()
           .setPhysicalType(jellyType)
-          .build()
         
         val patchOpt = JellyPatchOptions.fromJellyOptions(opt)
         patchOpt.getStatementType should be (patchType)

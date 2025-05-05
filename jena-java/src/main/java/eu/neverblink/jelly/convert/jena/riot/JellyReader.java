@@ -65,13 +65,13 @@ public final class JellyReader implements ReaderRIOT {
                 // Delimited Jelly file
                 // In this case, we can read multiple frames
                 readStream(delimitingResponse.newInput(), RdfStreamFrame::parseDelimitedFrom, frame ->
-                    frame.getRowsList().forEach(decoder::ingestRow)
+                    frame.getRows().forEach(decoder::ingestRow)
                 );
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame
                 final var frame = RdfStreamFrame.parseFrom(delimitingResponse.newInput());
-                frame.getRowsList().forEach(decoder::ingestRow);
+                frame.getRows().forEach(decoder::ingestRow);
             }
         } catch (IOException e) {
             throw new RiotException(e);

@@ -4,8 +4,8 @@ import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchFrame;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchFrame;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
 import eu.neverblink.jelly.core.utils.IoUtils;
 import java.io.IOException;
 import java.io.InputStream;

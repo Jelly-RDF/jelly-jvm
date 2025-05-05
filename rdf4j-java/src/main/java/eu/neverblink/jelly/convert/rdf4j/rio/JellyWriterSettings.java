@@ -76,7 +76,7 @@ public final class JellyWriterSettings {
     public static final ClassRioSetting<PhysicalStreamType> PHYSICAL_TYPE = new ClassRioSetting<>(
         "eu.neverblink.jelly.convert.rdf4j.rio.physicalType",
         "Physical stream type",
-        PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS
+        PhysicalStreamType.QUADS
     );
 
     public static final BooleanRioSetting ALLOW_RDF_STAR = new BooleanRioSetting(

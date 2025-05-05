@@ -43,10 +43,9 @@ public final class JellyGraphWriter extends WriterGraphRIOTBase {
         variant = variant.updateOptions(
             variant
                 .getOptions()
-                .toBuilder()
-                .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-                .setLogicalType(LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES)
-                .build()
+                .clone()
+                .setPhysicalType(PhysicalStreamType.TRIPLES)
+                .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
         );
 
         var inner = new JellyStreamWriter(converterFactory, variant, out);

@@ -29,34 +29,33 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
   val testCases: Seq[(String, PhysicalStreamType,
     TestCase[Mrl.Triple | Mrl.Quad | (Mrl.Node, Iterable[Mrl.Triple]) | NamespaceDeclaration]
   )] = Seq(
-    ("Triples1", PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES, Triples1),
-    ("Triples2NsDecl", PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES, Triples2NsDecl),
-    ("Quads1", PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS, Quads1),
-    ("Quads2RepeatDefault", PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS, Quads2RepeatDefault),
-    ("Graphs1", PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS, Graphs1),
+    ("Triples1", PhysicalStreamType.TRIPLES, Triples1),
+    ("Triples2NsDecl", PhysicalStreamType.TRIPLES, Triples2NsDecl),
+    ("Quads1", PhysicalStreamType.QUADS, Quads1),
+    ("Quads2RepeatDefault", PhysicalStreamType.QUADS, Quads2RepeatDefault),
+    ("Graphs1", PhysicalStreamType.GRAPHS, Graphs1),
   )
 
   "ProtoTranscoder" should {
     "splice two identical streams" when {
       for (caseName, streamType, testCase) <- testCases do
         s"input is $caseName" in {
-          val options: RdfStreamOptions = JellyOptions.SMALL_ALL_FEATURES.toBuilder
+          val options: RdfStreamOptions = JellyOptions.SMALL_ALL_FEATURES.clone
             .setPhysicalType(streamType)
-            .build()
           val input: RdfStreamFrame = testCase.encodedFull(options, 100).head
           val transcoder = new ProtoTranscoderImpl(null, options)
           // First frame should be returned as is
           val out1 = transcoder.ingestFrame(input)
           out1 shouldEqual input
           // What's more, the rows should be the exact same objects (except the options)
-          forAll(asScala(input.getRowsList).zip(asScala(out1.getRowsList)).drop(1)) { case (in, out) =>
+          forAll(asScala(input.getRows).zip(asScala(out1.getRows)).drop(1)) { case (in, out) =>
             in eq out shouldBe true // reference equality
           }
 
           val out2 = transcoder.ingestFrame(input)
-          out2.getRowsList.size shouldBe < (input.getRowsList.size)
+          out2.getRows.size shouldBe < (input.getRows.size)
           // No row in out2 should be an options row or a lookup entry row
-          forAll(asScala(out2.getRowsList)) { (row: RdfStreamRow) =>
+          forAll(asScala(out2.getRows)) { (row: RdfStreamRow) =>
             row.hasOptions shouldBe false
             row.hasPrefix shouldBe false
             row.hasName shouldBe false
@@ -65,8 +64,8 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
           // If there is a row in out2 with same content as in input, it should be the same object
           var identicalRows = 0
-          forAll(asScala(input.getRowsList)) { (row: RdfStreamRow) =>
-            val sameRows = asScala(out2.getRowsList).filter(_ == row)
+          forAll(asScala(input.getRows)) { (row: RdfStreamRow) =>
+            val sameRows = asScala(out2.getRows).filter(_ == row)
             if sameRows.nonEmpty then
               forAtLeast(1, sameRows) { (sameRow: RdfStreamRow) =>
                 sameRow eq row shouldBe true
@@ -79,8 +78,8 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
           // Decode the output
           val collector = ProtoCollector()
           val decoder = MockConverterFactory.anyStatementDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
-          asScala(out1.getRowsList).foreach(decoder.ingestRow)
-          asScala(out2.getRowsList).foreach(decoder.ingestRow)
+          asScala(out1.getRows).foreach(decoder.ingestRow)
+          asScala(out2.getRows).foreach(decoder.ingestRow)
 
           val statements1 = collector.statements.slice(0, collector.statements.size / 2)
           val statements2 = collector.statements.slice(collector.statements.size / 2, collector.statements.size)
@@ -91,9 +90,8 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "splice multiple identical streams" when {
       for (caseName, streamType, testCase) <- testCases do
         s"input is $caseName" in {
-          val options: RdfStreamOptions = JellyOptions.SMALL_ALL_FEATURES.toBuilder
+          val options: RdfStreamOptions = JellyOptions.SMALL_ALL_FEATURES.clone
             .setPhysicalType(streamType)
-            .build()
           
           val input: RdfStreamFrame = testCase.encodedFull(options, 100).head
           val transcoder = new ProtoTranscoderImpl(null, options)
@@ -101,9 +99,9 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
           var lastOut = out1
           for i <- 1 to 100 do
             val outN = transcoder.ingestFrame(input)
-            outN.getRowsList.size shouldBe < (input.getRowsList.size)
+            outN.getRows.size shouldBe < (input.getRows.size)
             // No row in out should be an options row or a lookup entry row
-            forAll(asScala(outN.getRowsList)) { (row: RdfStreamRow) =>
+            forAll(asScala(outN.getRows)) { (row: RdfStreamRow) =>
               row.hasOptions shouldBe false
               row.hasPrefix shouldBe false
               row.hasName shouldBe false
@@ -120,9 +118,8 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
         f"random seed is $seed" in {
           val collector = ProtoCollector()
           val decoder = MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
-          val options = JellyOptions.SMALL_ALL_FEATURES.toBuilder
-            .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
-            .build()
+          val options = JellyOptions.SMALL_ALL_FEATURES.clone
+            .setPhysicalType(PhysicalStreamType.QUADS)
 
           val transcoder = new ProtoTranscoderImpl(null, options)
           val possibleCases = Seq(Quads1, Quads2RepeatDefault)
@@ -137,25 +134,24 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
             if usedIndices(index) > 1 then
               // No row in out should be an options row or a lookup entry row
-              forAll(asScala(out.getRowsList)) { (row: RdfStreamRow) =>
+              forAll(asScala(out.getRows)) { (row: RdfStreamRow) =>
                 row.hasOptions shouldBe false
                 row.hasPrefix shouldBe false
                 row.hasName shouldBe false
                 row.hasDatatype shouldBe false
               }
 
-            asScala(out.getRowsList).foreach(decoder.ingestRow)
+            asScala(out.getRows).foreach(decoder.ingestRow)
             collector.statements shouldBe testCase.mrl
             collector.clear()
         }
     }
 
     "handle named graphs" in {
-      val options = JellyOptions.SMALL_STRICT.toBuilder
+      val options = JellyOptions.SMALL_STRICT.clone
         .setMaxPrefixTableSize(0)
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS)
+        .setPhysicalType(PhysicalStreamType.GRAPHS)
         .setVersion(JellyConstants.PROTO_VERSION)
-        .build()
 
       val input: Seq[RdfStreamRow] = Seq[RdfStreamRow](
         rdfStreamRow(options),
@@ -180,9 +176,8 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     }
 
     "remap prefix, name, and datatype IDs" in {
-      val options = JellyOptions.SMALL_STRICT.toBuilder
+      val options = JellyOptions.SMALL_STRICT.clone
         .setVersion(JellyConstants.PROTO_VERSION)
-        .build()
 
       val input: Seq[RdfStreamRow] = Seq(
         rdfStreamRow(options),
@@ -236,16 +231,14 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     }
 
     "maintain protocol version 1 if input uses it" in {
-      val options = JellyOptions.SMALL_STRICT.toBuilder
+      val options = JellyOptions.SMALL_STRICT.clone
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
-        .build()
 
       val input = rdfStreamRow(options)
       val transcoder = new ProtoTranscoderImpl(
         null,
-        options.toBuilder
+        options.clone
           .setVersion(JellyConstants.PROTO_VERSION)
-          .build()
       )
 
       val output = transcoder.ingestRow(input).asScala
@@ -263,56 +256,49 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "throw an exception on mismatched physical types if checking is enabled" in {
       val transcoder = new ProtoTranscoderImpl(
         JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
-        JellyOptions.SMALL_STRICT.toBuilder
-          .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-          .build()
+        JellyOptions.SMALL_STRICT.clone
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
       )
 
       val ex = intercept[RdfProtoTranscodingError] {
         transcoder.ingestRow(rdfStreamRow(
           JellyOptions.SMALL_STRICT
-            .toBuilder
-            .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
-            .build()
+            .clone
+            .setPhysicalType(PhysicalStreamType.QUADS)
         ))
       }
 
       ex.getMessage should include ("Input stream has a different physical type than the output")
-      ex.getMessage should include ("PHYSICAL_STREAM_TYPE_QUADS")
-      ex.getMessage should include ("PHYSICAL_STREAM_TYPE_TRIPLES")
+      ex.getMessage should include ("QUADS")
+      ex.getMessage should include ("TRIPLES")
     }
 
     "not throw an exception on mismatched physical types if checking is disabled" in {
       val transcoder = new ProtoTranscoderImpl(
         null,
-        JellyOptions.SMALL_STRICT.toBuilder
-          .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-          .build()
+        JellyOptions.SMALL_STRICT.clone
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
       )
 
       transcoder.ingestRow(rdfStreamRow(
-        JellyOptions.SMALL_STRICT.toBuilder
-          .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
-          .build()
+        JellyOptions.SMALL_STRICT.clone
+          .setPhysicalType(PhysicalStreamType.QUADS)
       ))
     }
 
     "throw an exception on unsupported options if checking is enabled" in {
       val transcoder = new ProtoTranscoderImpl(
         // Mark the prefix table as disabled
-        JellyOptions.DEFAULT_SUPPORTED_OPTIONS.toBuilder
-          .setMaxPrefixTableSize(0)
-          .build(),
-        JellyOptions.SMALL_STRICT.toBuilder
-          .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-          .build()
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone
+          .setMaxPrefixTableSize(0),
+        JellyOptions.SMALL_STRICT.clone
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
       )
 
       val ex = intercept[RdfProtoDeserializationError] {
         transcoder.ingestRow(rdfStreamRow(
-          JellyOptions.SMALL_STRICT.toBuilder
-            .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-            .build()
+          JellyOptions.SMALL_STRICT.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES)
         ))
       }
 
@@ -322,17 +308,15 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "throw an exception if the input does not use prefixes but the output does" in {
       val transcoder = new ProtoTranscoderImpl(
         null,
-        JellyOptions.SMALL_STRICT.toBuilder
-          .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-          .build()
+        JellyOptions.SMALL_STRICT.clone
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
       )
 
       val ex = intercept[RdfProtoTranscodingError] {
         transcoder.ingestRow(rdfStreamRow(
-          JellyOptions.SMALL_STRICT.toBuilder
-            .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
+          JellyOptions.SMALL_STRICT.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES)
             .setMaxPrefixTableSize(0)
-            .build()
         ))
       }
 
@@ -342,19 +326,16 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
     "accept an input stream with valid options if checking is enabled" in {
       val transcoder = new ProtoTranscoderImpl(
         // Mark the prefix table as disabled
-        JellyOptions.DEFAULT_SUPPORTED_OPTIONS.toBuilder
-          .setMaxPrefixTableSize(0)
-          .build(),
-        JellyOptions.SMALL_STRICT.toBuilder
-          .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-          .setMaxPrefixTableSize(0)
-          .build(),
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone
+          .setMaxPrefixTableSize(0),
+        JellyOptions.SMALL_STRICT.clone
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
+          .setMaxPrefixTableSize(0),
       )
 
-      val inputOptions = JellyOptions.SMALL_STRICT.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
+      val inputOptions = JellyOptions.SMALL_STRICT.clone
+        .setPhysicalType(PhysicalStreamType.TRIPLES)
         .setMaxPrefixTableSize(0)
-        .build()
 
       transcoder.ingestRow(rdfStreamRow(inputOptions))
     }
@@ -363,22 +344,20 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
       val transcoder = new ProtoTranscoderImpl(null, JellyOptions.SMALL_STRICT)
       val input = rdfStreamFrame(
         rows = Seq(rdfStreamRow(
-          JellyOptions.SMALL_STRICT.toBuilder
+          JellyOptions.SMALL_STRICT.clone
             .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
-            .build()
         )),
       )
       val output = transcoder.ingestFrame(input)
-      output.getMetadataMap.size should be (0)
+      output.getMetadata.size should be (0)
     }
 
     "preserve metadata in a frame (1.1.1)" in {
       val transcoder = new ProtoTranscoderImpl(null, JellyOptions.SMALL_STRICT)
       val input = rdfStreamFrame(
         rows = Seq(rdfStreamRow(
-          JellyOptions.SMALL_STRICT.toBuilder
+          JellyOptions.SMALL_STRICT.clone
             .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
-            .build()
         )),
         metadata = Map(
           "key1" -> ByteString.copyFromUtf8("value"),
@@ -386,8 +365,9 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
         ),
       )
       val output = transcoder.ingestFrame(input)
-      output.getMetadataMap.size should be (2)
-      output.getMetadataMap.asScala("key1").toStringUtf8 should be ("value")
-      output.getMetadataMap.asScala("key2").toStringUtf8 should be ("value2")
+      output.getMetadata.size should be (2)
+      val map = output.getMetadata.asScala.map(x => (x.getKey, x.getValue)).toMap
+      map("key1").toStringUtf8 should be ("value")
+      map("key2").toStringUtf8 should be ("value2")
     }
   }

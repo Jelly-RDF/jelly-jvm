@@ -1,129 +1,108 @@
 package eu.neverblink.jelly.core.patch.helpers
 
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.proto.v1.patch.*
 
 import scala.jdk.CollectionConverters.*
 
 object PatchAdapter:
 
   def rdfPatchRow(options: RdfPatchOptions): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setOptions(options)
-      .build()
 
   def rdfPatchRowAdd(statement: RdfQuad): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setStatementAdd(statement)
-      .build()
 
   def rdfPatchRowDelete(statement: RdfQuad): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setStatementDelete(statement)
-      .build()
 
   def rdfPatchRowAdd(statement: RdfPatchNamespace): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setNamespaceAdd(statement)
-      .build()
 
   def rdfPatchRowDelete(statement: RdfPatchNamespace): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setNamespaceDelete(statement)
-      .build()
 
   def rdfPatchRow(statement: RdfPatchTransactionStart): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setTransactionStart(statement)
-      .build()
 
   def rdfPatchRow(statement: RdfPatchTransactionCommit): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setTransactionCommit(statement)
-      .build()
 
   def rdfPatchRow(statement: RdfPatchTransactionAbort): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setTransactionAbort(statement)
-      .build()
 
   def rdfPatchRow(statement: RdfPatchHeader): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setHeader(statement)
-      .build()
 
   def rdfPatchRow(statement: RdfPatchPunctuation): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setPunctuation(statement)
-      .build()
 
   def rdfPatchRow(statement: RdfNameEntry): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setName(statement)
-      .build()
 
   def rdfPatchRow(statement: RdfPrefixEntry): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setPrefix(statement)
-      .build()
 
   def rdfPatchRow(statement: RdfDatatypeEntry): RdfPatchRow =
-    RdfPatchRow.newBuilder()
+    RdfPatchRow.newInstance()
       .setDatatype(statement)
-      .build()
 
   def rdfPatchRow(): RdfPatchRow =
-    RdfPatchRow.newBuilder()
-      .build()
+    RdfPatchRow.newInstance()
 
   def rdfPatchFrame(rows: Seq[RdfPatchRow] = Seq.empty): RdfPatchFrame =
-    RdfPatchFrame.newBuilder()
-      .addAllRows(rows.asJava)
-      .build()
+    val frame = RdfPatchFrame.newInstance()
+    frame.getRows.addAll(rows.asJava)
+    frame
 
   def rdfPatchHeader(key: String, value: RdfIri): RdfPatchHeader =
-    RdfPatchHeader.newBuilder()
+    RdfPatchHeader.newInstance()
       .setKey(key)
       .setHIri(value)
-      .build()
 
   def rdfPatchHeader(key: String, value: String): RdfPatchHeader =
-    RdfPatchHeader.newBuilder()
+    RdfPatchHeader.newInstance()
       .setKey(key)
       .setHBnode(value)
-      .build()
 
   def rdfPatchHeader(key: String, value: RdfLiteral): RdfPatchHeader =
-    RdfPatchHeader.newBuilder()
+    RdfPatchHeader.newInstance()
       .setKey(key)
       .setHLiteral(value)
-      .build()
 
   def rdfPatchHeader(key: String, value: RdfTriple): RdfPatchHeader =
-    RdfPatchHeader.newBuilder()
+    RdfPatchHeader.newInstance()
       .setKey(key)
       .setHTripleTerm(value)
-      .build()
 
   def rdfPatchNamespace(name: String, value: RdfIri = null, graph: RdfIri = null): RdfPatchNamespace = {
-    val builder = RdfPatchNamespace.newBuilder()
-    if (name != null) builder.setName(name)
-    if (value != null) builder.setValue(value)
-    if (graph != null) builder.setGraph(graph)
-    builder.build()
+    val ns = RdfPatchNamespace.newInstance()
+    if (name != null) ns.setName(name)
+    if (value != null) ns.setValue(value)
+    if (graph != null) ns.setGraph(graph)
+    ns
   }
 
   def rdfPatchPunctuation(): RdfPatchPunctuation =
-    RdfPatchPunctuation.newBuilder()
-      .build()
+    RdfPatchPunctuation.newInstance()
 
   def rdfPatchTransactionStart(): RdfPatchTransactionStart =
-    RdfPatchTransactionStart.newBuilder()
-      .build()
+    RdfPatchTransactionStart.newInstance()
 
   def rdfPatchTransactionCommit(): RdfPatchTransactionCommit =
-    RdfPatchTransactionCommit.newBuilder()
-      .build()
+    RdfPatchTransactionCommit.newInstance()
 
   def rdfPatchTransactionAbort(): RdfPatchTransactionAbort =
-    RdfPatchTransactionAbort.newBuilder()
-      .build()
+    RdfPatchTransactionAbort.newInstance()

@@ -80,20 +80,20 @@ public final class JellyWriter extends AbstractRDFWriter {
         final var config = getWriterConfig();
         var physicalType = config.get(JellyWriterSettings.PHYSICAL_TYPE);
 
-        if (physicalType == null || physicalType == PhysicalStreamType.PHYSICAL_STREAM_TYPE_UNSPECIFIED) {
-            physicalType = PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS;
+        if (physicalType == null || physicalType == PhysicalStreamType.UNSPECIFIED) {
+            physicalType = PhysicalStreamType.QUADS;
         }
 
         LogicalStreamType logicalType;
-        if (physicalType == PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES) {
-            logicalType = LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES;
-        } else if (physicalType == PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS) {
-            logicalType = LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS;
+        if (physicalType == PhysicalStreamType.TRIPLES) {
+            logicalType = LogicalStreamType.FLAT_TRIPLES;
+        } else if (physicalType == PhysicalStreamType.QUADS) {
+            logicalType = LogicalStreamType.FLAT_QUADS;
         } else {
             throw new IllegalStateException("Unsupported stream type: " + physicalType);
         }
 
-        options = RdfStreamOptions.newBuilder()
+        options = RdfStreamOptions.newInstance()
             .setStreamName(config.get(JellyWriterSettings.STREAM_NAME))
             .setPhysicalType(physicalType)
             .setLogicalType(logicalType)
@@ -101,8 +101,7 @@ public final class JellyWriter extends AbstractRDFWriter {
             .setRdfStar(config.get(JellyWriterSettings.ALLOW_RDF_STAR))
             .setMaxNameTableSize(config.get(JellyWriterSettings.MAX_NAME_TABLE_SIZE))
             .setMaxPrefixTableSize(config.get(JellyWriterSettings.MAX_PREFIX_TABLE_SIZE))
-            .setMaxDatatypeTableSize(config.get(JellyWriterSettings.MAX_DATATYPE_TABLE_SIZE))
-            .build();
+            .setMaxDatatypeTableSize(config.get(JellyWriterSettings.MAX_DATATYPE_TABLE_SIZE));
 
         frameSize = config.get(JellyWriterSettings.FRAME_SIZE);
         enableNamespaceDeclarations = config.get(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS);
@@ -113,7 +112,7 @@ public final class JellyWriter extends AbstractRDFWriter {
     @Override
     protected void consumeStatement(Statement st) {
         checkWritingStarted();
-        if (options.getPhysicalType() == PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES) {
+        if (options.getPhysicalType() == PhysicalStreamType.TRIPLES) {
             encoder.handleTriple(st.getSubject(), st.getPredicate(), st.getObject());
         } else {
             encoder.handleQuad(st.getSubject(), st.getPredicate(), st.getObject(), st.getContext());
@@ -129,7 +128,8 @@ public final class JellyWriter extends AbstractRDFWriter {
         checkWritingStarted();
         if (!isDelimited) {
             // Non-delimited variant – whole stream in one frame
-            final var frame = RdfStreamFrame.newBuilder().addAllRows(buffer).build();
+            final var frame = RdfStreamFrame.newInstance();
+            frame.getRows().addAll(buffer);
             try {
                 frame.writeTo(outputStream);
             } catch (Exception e) {
@@ -158,7 +158,8 @@ public final class JellyWriter extends AbstractRDFWriter {
     }
 
     private void flushBuffer() {
-        final var frame = RdfStreamFrame.newBuilder().addAllRows(buffer).build();
+        final var frame = RdfStreamFrame.newInstance();
+        frame.getRows().addAll(buffer);
         try {
             frame.writeDelimitedTo(outputStream);
         } catch (Exception e) {

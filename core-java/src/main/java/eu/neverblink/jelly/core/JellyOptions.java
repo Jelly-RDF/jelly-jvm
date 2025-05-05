@@ -6,7 +6,7 @@ import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils;
 
 /**
  * A collection of convenient streaming option presets.
- * None of the presets specifies the stream type – do that with the .toBuilder().setPhysicalType().build() method.
+ * None of the presets specifies the stream type – do that with the .clone().setPhysicalType() method.
  */
 public class JellyOptions {
 
@@ -29,88 +29,80 @@ public class JellyOptions {
      * "Big" preset suitable for high-volume streams and larger machines.
      * Does not allow generalized RDF statements.
      */
-    public static final RdfStreamOptions BIG_STRICT = RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions BIG_STRICT = RdfStreamOptions.newInstance()
         .setMaxNameTableSize(BIG_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(BIG_PREFIX_TABLE_SIZE)
-        .setMaxDatatypeTableSize(BIG_DT_TABLE_SIZE)
-        .build();
+        .setMaxDatatypeTableSize(BIG_DT_TABLE_SIZE);
 
     /**
      * "Big" preset suitable for high-volume streams and larger machines.
      * Allows generalized RDF statements.
      */
-    public static final RdfStreamOptions BIG_GENERALIZED = RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions BIG_GENERALIZED = RdfStreamOptions.newInstance()
         .setMaxNameTableSize(BIG_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(BIG_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(BIG_DT_TABLE_SIZE)
-        .setGeneralizedStatements(true)
-        .build();
+        .setGeneralizedStatements(true);
 
     /**
      * "Big" preset suitable for high-volume streams and larger machines.
      * Allows RDF-star statements.
      */
-    public static final RdfStreamOptions BIG_RDF_STAR = RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions BIG_RDF_STAR = RdfStreamOptions.newInstance()
         .setMaxNameTableSize(BIG_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(BIG_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(BIG_DT_TABLE_SIZE)
-        .setRdfStar(true)
-        .build();
+        .setRdfStar(true);
 
     /**
      * "Big" preset suitable for high-volume streams and larger machines.
      * Allows all protocol features (including generalized RDF statements and RDF-star statements).
      */
-    public static final RdfStreamOptions BIG_ALL_FEATURES = RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions BIG_ALL_FEATURES = RdfStreamOptions.newInstance()
         .setMaxNameTableSize(BIG_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(BIG_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(BIG_DT_TABLE_SIZE)
         .setGeneralizedStatements(true)
-        .setRdfStar(true)
-        .build();
+        .setRdfStar(true);
 
     /**
      * "Small" preset suitable for low-volume streams and smaller machines.
      * Does not allow generalized RDF statements.
      */
-    public static final RdfStreamOptions SMALL_STRICT = RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions SMALL_STRICT = RdfStreamOptions.newInstance()
         .setMaxNameTableSize(SMALL_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(SMALL_PREFIX_TABLE_SIZE)
-        .setMaxDatatypeTableSize(SMALL_DT_TABLE_SIZE)
-        .build();
+        .setMaxDatatypeTableSize(SMALL_DT_TABLE_SIZE);
 
     /**
      * "Small" preset suitable for low-volume streams and smaller machines.
      * Allows generalized RDF statements.
      */
-    public static final RdfStreamOptions SMALL_GENERALIZED = RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions SMALL_GENERALIZED = RdfStreamOptions.newInstance()
         .setMaxNameTableSize(SMALL_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(SMALL_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(SMALL_DT_TABLE_SIZE)
-        .setGeneralizedStatements(true)
-        .build();
+        .setGeneralizedStatements(true);
     /**
      * "Small" preset suitable for low-volume streams and smaller machines.
      * Allows RDF-star statements.
      */
-    public static final RdfStreamOptions SMALL_RDF_STAR = RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions SMALL_RDF_STAR = RdfStreamOptions.newInstance()
         .setMaxNameTableSize(SMALL_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(SMALL_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(SMALL_DT_TABLE_SIZE)
-        .setRdfStar(true)
-        .build();
+        .setRdfStar(true);
 
     /**
      * "Small" preset suitable for low-volume streams and smaller machines.
      * Allows all protocol features (including generalized RDF statements and RDF-star statements).
      */
-    public static final RdfStreamOptions SMALL_ALL_FEATURES = RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions SMALL_ALL_FEATURES = RdfStreamOptions.newInstance()
         .setMaxNameTableSize(SMALL_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(SMALL_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(SMALL_DT_TABLE_SIZE)
         .setGeneralizedStatements(true)
-        .setRdfStar(true)
-        .build();
+        .setRdfStar(true);
 
     /**
      * Default maximum supported options for Jelly decoders.
@@ -123,22 +115,20 @@ public class JellyOptions {
      * For example, to disable RDF-star support, you can do this:
      * <code>
      * final var myOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
-     *      .toBuilder()
-     *      .setRdfStar(false)
-     *      .build();
+     *      .clone()
+     *      .setRdfStar(false);
      * </code>
      * <p>
      * If you were to pass a default RdfStreamOptions object to the decoder, it would simply refuse to read any stream
      * as (by default) it will have all max table sizes set to 0. So, you should always use this method as the base.
      */
-    public static final RdfStreamOptions DEFAULT_SUPPORTED_OPTIONS = RdfStreamOptions.newBuilder()
+    public static final RdfStreamOptions DEFAULT_SUPPORTED_OPTIONS = RdfStreamOptions.newInstance()
         .setVersion(JellyConstants.PROTO_VERSION)
         .setGeneralizedStatements(true)
         .setRdfStar(true)
         .setMaxNameTableSize(4096)
         .setMaxPrefixTableSize(1024)
-        .setMaxDatatypeTableSize(256)
-        .build();
+        .setMaxDatatypeTableSize(256);
 
     /**
      * Checks if the requested stream options are supported. Throws an exception if not.
@@ -280,12 +270,12 @@ public class JellyOptions {
 
         final var conflict =
             switch (baseLogicalType) {
-                case LOGICAL_STREAM_TYPE_FLAT_TRIPLES, LOGICAL_STREAM_TYPE_GRAPHS -> switch (requestedPhysicalType) {
-                    case PHYSICAL_STREAM_TYPE_QUADS, PHYSICAL_STREAM_TYPE_GRAPHS -> true;
+                case FLAT_TRIPLES, GRAPHS -> switch (requestedPhysicalType) {
+                    case QUADS, GRAPHS -> true;
                     default -> false;
                 };
-                case LOGICAL_STREAM_TYPE_FLAT_QUADS, LOGICAL_STREAM_TYPE_DATASETS -> switch (requestedPhysicalType) {
-                    case PHYSICAL_STREAM_TYPE_TRIPLES -> true;
+                case FLAT_QUADS, DATASETS -> switch (requestedPhysicalType) {
+                    case TRIPLES -> true;
                     default -> false;
                 };
                 default -> false;
@@ -300,7 +290,7 @@ public class JellyOptions {
             );
         }
 
-        if (expectedLogicalType == LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED) {
+        if (expectedLogicalType == LogicalStreamType.UNSPECIFIED) {
             return;
         }
 

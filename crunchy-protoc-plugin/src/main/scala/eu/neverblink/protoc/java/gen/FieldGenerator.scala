@@ -172,9 +172,17 @@ class FieldGenerator(val info: FieldInfo):
     else throw new IllegalStateException("unhandled field: " + info.descriptor)
 
   def generateEqualsStatement(method: MethodSpec.Builder): Unit =
-    if (info.isRepeated || info.isBytes || info.isMessageOrGroup || info.isString) method.addNamedCode("$field:N.equals(other.$field:N)", m)
-    else if ((typeName eq TypeName.DOUBLE) || (typeName eq TypeName.FLOAT)) method.addNamedCode("$protoUtil:T.isEqual($field:N, other.$field:N)", m)
-    else if (info.isPrimitive || info.isEnum) method.addNamedCode("$field:N == other.$field:N", m)
+    if (info.isMessageOrGroup)
+      method.addNamedCode(
+        "($field:N == null && other.$field:N == null || $field:N != null && $field:N.equals(other.$field:N))",
+        m
+      )
+    else if (info.isRepeated || info.isBytes || info.isString)
+      method.addNamedCode("$field:N.equals(other.$field:N)", m)
+    else if ((typeName eq TypeName.DOUBLE) || (typeName eq TypeName.FLOAT))
+      method.addNamedCode("$protoUtil:T.isEqual($field:N, other.$field:N)", m)
+    else if (info.isPrimitive || info.isEnum)
+      method.addNamedCode("$field:N == other.$field:N", m)
     else throw new IllegalStateException("unhandled field: " + info.descriptor)
 
   /**
@@ -245,7 +253,7 @@ class FieldGenerator(val info: FieldInfo):
     else if (info.isRepeated) method.addNamedCode("" + 
       "for (final var _field : $field:N) {$>\n" +
       "$writeTagToOutput:L" +
-      "output.writeUInt32NoTag(_field.getCachedSize());\n" +
+      "output.writeUInt32NoTag(_field.getSerializedSize());\n" +
       "_field.writeTo(output);\n" +
       "$writeEndGroupTagToOutput:L" + 
       "$<}\n", 
@@ -253,7 +261,7 @@ class FieldGenerator(val info: FieldInfo):
     )
     else if (info.isMessageOrGroup) method.addNamedCode("" + // non-repeated
       "$writeTagToOutput:L" +
-      "output.writeUInt32NoTag($field:N.getCachedSize());\n" +
+      "output.writeUInt32NoTag($field:N.getSerializedSize());\n" +
       "$field:N.writeTo(output);\n" +
       "$writeEndGroupTagToOutput:L",
       m
@@ -370,8 +378,7 @@ class FieldGenerator(val info: FieldInfo):
         .addModifiers(Modifier.PUBLIC)
         .returns(info.parentTypeInfo.mutableTypeName)
         .addParameter(info.getInputParameterType, "value", Modifier.FINAL)
-        .addCode(ensureFieldNotNull)
-        .addStatement(named("$field:N.copyFrom(value)"))
+        .addStatement(named("$field:N = value"))
         .addStatement(named("return this"))
         .build
       t.addMethod(setter)

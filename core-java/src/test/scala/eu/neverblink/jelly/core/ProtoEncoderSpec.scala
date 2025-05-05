@@ -19,10 +19,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
   "a ProtoEncoder" should {
     "encode triple statements" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
+      val options = JellyOptions.SMALL_GENERALIZED.clone
+        .setPhysicalType(PhysicalStreamType.TRIPLES)
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
-        .build()
 
       val encoder = MockConverterFactory.encoder(Pep(
         options,
@@ -35,10 +34,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode triple statements with ns decls and an external buffer" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
+      val options = JellyOptions.SMALL_GENERALIZED.clone
+        .setPhysicalType(PhysicalStreamType.TRIPLES)
         .setVersion(JellyConstants.PROTO_VERSION)
-        .build()
 
       val encoder = MockConverterFactory.encoder(Pep(
         options,
@@ -56,10 +54,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode quad statements" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
+      val options = JellyOptions.SMALL_GENERALIZED.clone
+        .setPhysicalType(PhysicalStreamType.QUADS)
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
-        .build()
 
       val encoder = MockConverterFactory.encoder(Pep(
         options,
@@ -73,10 +70,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode quad statements with an external buffer" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
+      val options = JellyOptions.SMALL_GENERALIZED.clone
+        .setPhysicalType(PhysicalStreamType.QUADS)
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
-        .build()
 
       val encoder = MockConverterFactory.encoder(Pep(
         options,
@@ -92,10 +88,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode quad statements (repeated default graph)" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
+      val options = JellyOptions.SMALL_GENERALIZED.clone
+        .setPhysicalType(PhysicalStreamType.QUADS)
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
-        .build()
 
       val encoder = MockConverterFactory.encoder(Pep(
         options,
@@ -109,10 +104,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "encode graphs with an external buffer" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS)
+      val options = JellyOptions.SMALL_GENERALIZED.clone
+        .setPhysicalType(PhysicalStreamType.GRAPHS)
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
-        .build()
 
       val encoder = MockConverterFactory.encoder(Pep(
         options,
@@ -131,9 +125,8 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "not allow to end a graph before starting one" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_QUADS)
-        .build()
+      val options = JellyOptions.SMALL_GENERALIZED.clone
+        .setPhysicalType(PhysicalStreamType.QUADS)
 
       val encoder = MockConverterFactory.encoder(Pep(
         options,
@@ -150,9 +143,8 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "not allow to use quoted triples as the graph name" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_GRAPHS)
-        .build()
+      val options = JellyOptions.SMALL_GENERALIZED.clone
+        .setPhysicalType(PhysicalStreamType.GRAPHS)
 
       val encoder = MockConverterFactory.encoder(Pep(
         options,
@@ -169,9 +161,8 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
     "not allow to use namespace declarations if they are not enabled" in {
       val buffer = ListBuffer[RdfStreamRow]()
-      val options = JellyOptions.SMALL_GENERALIZED.toBuilder
-        .setPhysicalType(PhysicalStreamType.PHYSICAL_STREAM_TYPE_TRIPLES)
-        .build()
+      val options = JellyOptions.SMALL_GENERALIZED.clone
+        .setPhysicalType(PhysicalStreamType.TRIPLES)
 
       val encoder = MockConverterFactory.encoder(Pep(
         options,

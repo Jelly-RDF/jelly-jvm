@@ -5,11 +5,11 @@ import static eu.neverblink.jelly.core.JellyOptions.checkTableSize;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
-import eu.neverblink.jelly.core.proto.v1.PatchStatementType;
-import eu.neverblink.jelly.core.proto.v1.PatchStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
-import eu.neverblink.jelly.core.proto.v1.RdfPatchOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
+import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
+import eu.neverblink.jelly.core.proto.v1.patch.PatchStreamType;
+import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
 
 /**
  * Utilities for working with RdfPatchOptions.
@@ -49,7 +49,7 @@ public class JellyPatchOptions {
      * @return RdfPatchOptions
      */
     public static RdfPatchOptions fromJellyOptions(RdfStreamOptions opt) {
-        return fromBaseOptions(opt).toBuilder().setStatementType(fromJellyPhysicalType(opt.getPhysicalType())).build();
+        return fromBaseOptions(opt).clone().setStatementType(fromJellyPhysicalType(opt.getPhysicalType()));
     }
 
     /**
@@ -58,14 +58,13 @@ public class JellyPatchOptions {
      * @return RdfPatchOptions
      */
     public static RdfPatchOptions fromBaseOptions(RdfStreamOptions opt) {
-        return RdfPatchOptions.newBuilder()
+        return RdfPatchOptions.newInstance()
             .setGeneralizedStatements(opt.getGeneralizedStatements())
             .setRdfStar(opt.getRdfStar())
             .setMaxNameTableSize(opt.getMaxNameTableSize())
             .setMaxPrefixTableSize(opt.getMaxPrefixTableSize())
             .setMaxDatatypeTableSize(opt.getMaxDatatypeTableSize())
-            .setVersion(JellyPatchConstants.PROTO_VERSION)
-            .build();
+            .setVersion(JellyPatchConstants.PROTO_VERSION);
     }
 
     /**
@@ -78,14 +77,14 @@ public class JellyPatchOptions {
     public static void checkCompatibility(RdfPatchOptions requestedOptions, RdfPatchOptions supportedOptions) {
         checkBaseCompatibility(requestedOptions, supportedOptions);
 
-        if (requestedOptions.getStreamType() == PatchStreamType.PATCH_STREAM_TYPE_UNSPECIFIED) {
+        if (requestedOptions.getStreamType() == PatchStreamType.UNSPECIFIED) {
             throw new RdfProtoDeserializationError(
                 "The patch stream type is unspecified. " +
                 "The stream_type field is required and must be set to a valid value."
             );
         }
         if (
-            !supportedOptions.getStreamType().equals(PatchStreamType.PATCH_STREAM_TYPE_UNSPECIFIED) &&
+            !supportedOptions.getStreamType().equals(PatchStreamType.UNSPECIFIED) &&
             !supportedOptions.getStreamType().equals(requestedOptions.getStreamType())
         ) {
             throw new RdfProtoDeserializationError(
@@ -153,10 +152,9 @@ public class JellyPatchOptions {
      */
     public static PatchStatementType fromJellyPhysicalType(PhysicalStreamType type) {
         return switch (type) {
-            case PHYSICAL_STREAM_TYPE_TRIPLES -> PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES;
-            case PHYSICAL_STREAM_TYPE_QUADS,
-                PHYSICAL_STREAM_TYPE_GRAPHS -> PatchStatementType.PATCH_STATEMENT_TYPE_QUADS;
-            default -> PatchStatementType.PATCH_STATEMENT_TYPE_UNSPECIFIED;
+            case TRIPLES -> PatchStatementType.TRIPLES;
+            case QUADS, GRAPHS -> PatchStatementType.QUADS;
+            default -> PatchStatementType.UNSPECIFIED;
         };
     }
 }

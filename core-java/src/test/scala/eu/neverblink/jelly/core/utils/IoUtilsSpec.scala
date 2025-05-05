@@ -79,7 +79,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
 
       "input stream is a non-delimited Jelly message (options size =10)" in {
         val os = ByteArrayOutputStream()
-        frameOptionsSize10.getRows(0).writeTo(os)
+        frameOptionsSize10.getRows.get(0).writeTo(os)
         val bytes = os.toByteArray
 
         val in = new ByteArrayInputStream(bytes)
@@ -123,6 +123,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
       val in = new ByteArrayInputStream(bytes)
       val response = IoUtils.autodetectDelimiting(in)
       response.isDelimited shouldBe true
+      RdfStreamFrame.newInstance()
       RdfStreamFrame.parseDelimitedFrom(response.newInput) shouldBe frameLarge
     }
   }

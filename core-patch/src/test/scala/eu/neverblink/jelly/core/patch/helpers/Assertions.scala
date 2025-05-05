@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.patch.helpers
 
-import eu.neverblink.jelly.core.proto.v1.{RdfPatchFrame, RdfPatchRow}
+import eu.neverblink.jelly.core.proto.v1.patch.{RdfPatchFrame, RdfPatchRow}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -18,8 +18,8 @@ object Assertions extends AnyWordSpec, Matchers:
     observed.size should be (expected.size)
 
   def assertEncodedFrame(observed: RdfPatchFrame, expected: RdfPatchFrame): Unit = assertEncoded(
-    observed.getRowsList.asScala.toSeq,
-    expected.getRowsList.asScala.toSeq
+    observed.getRows.asScala.toSeq,
+    expected.getRows.asScala.toSeq
   )
 
   def assertEncodedFrame(observed: Seq[RdfPatchFrame], expected: Seq[RdfPatchFrame]): Unit =

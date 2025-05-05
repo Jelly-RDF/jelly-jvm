@@ -36,7 +36,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private def checkDeclarations(out: ByteArrayOutputStream, shouldBeThere: Boolean) =
     val rows: Seq[RdfStreamRow] = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray))
-      .getRowsList
+      .getRows
       .asScala
       .toSeq
     

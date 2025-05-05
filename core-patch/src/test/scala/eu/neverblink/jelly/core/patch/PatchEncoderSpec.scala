@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.patch
 import eu.neverblink.jelly.core.patch.helpers.MockPatchConverterFactory
 import eu.neverblink.jelly.core.RdfProtoSerializationError
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
@@ -18,7 +19,7 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
   import eu.neverblink.jelly.core.patch.helpers.PatchTestCases.*
   import PatchEncoder.Params as Pep
 
-  val streamTypes = Seq(PatchStreamType.PATCH_STREAM_TYPE_FLAT, PatchStreamType.PATCH_STREAM_TYPE_FRAME, PatchStreamType.PATCH_STREAM_TYPE_PUNCTUATED)
+  val streamTypes = Seq(PatchStreamType.FLAT, PatchStreamType.FRAME, PatchStreamType.PUNCTUATED)
   
   "PatchEncoder" should {
     for streamType <- streamTypes do f"with stream type $streamType" when {
@@ -26,10 +27,9 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
         s"encode $desc" in {
           val buffer = ListBuffer[RdfPatchRow]()
           val encoder = MockPatchConverterFactory.encoder(Pep(
-            JellyPatchOptions.SMALL_GENERALIZED.toBuilder
+            JellyPatchOptions.SMALL_GENERALIZED.clone
               .setStatementType(statementType)
-              .setStreamType(streamType)
-              .build(),
+              .setStreamType(streamType),
             buffer.asJava
           ))
           testCase.mrl.foreach(_.apply(encoder))
@@ -39,14 +39,13 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
     }
 
     "disallow punctuation" when {
-      for st <- Seq(PatchStreamType.PATCH_STREAM_TYPE_FLAT, PatchStreamType.PATCH_STREAM_TYPE_FRAME) do
+      for st <- Seq(PatchStreamType.FLAT, PatchStreamType.FRAME) do
         s"stream type $st" in {
           val buffer = ListBuffer[RdfPatchRow]()
           val encoder = MockPatchConverterFactory.encoder(Pep(
-            JellyPatchOptions.SMALL_GENERALIZED.toBuilder
-              .setStatementType(PatchStatementType.PATCH_STATEMENT_TYPE_TRIPLES)
-              .setStreamType(st)
-              .build(),
+            JellyPatchOptions.SMALL_GENERALIZED.clone
+              .setStatementType(PatchStatementType.TRIPLES)
+              .setStreamType(st),
             buffer.asJava
           ))
           val e = intercept[RdfProtoSerializationError] {
@@ -61,10 +60,9 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
         s"encoding $desc" in {
           val buffer = ListBuffer[RdfPatchRow]()
           val encoder = MockPatchConverterFactory.encoder(Pep(
-            JellyPatchOptions.SMALL_STRICT.toBuilder
+            JellyPatchOptions.SMALL_STRICT.clone
               .setStatementType(statementType)
-              .setStreamType(PatchStreamType.PATCH_STREAM_TYPE_PUNCTUATED)
-              .build(),
+              .setStreamType(PatchStreamType.PUNCTUATED),
             buffer.asJava
           ))
           testCase.mrl.foreach(_.apply(encoder))

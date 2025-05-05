@@ -11,7 +11,6 @@ import scala.language.postfixOps
 
 class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
   private val validStreamTypes = LogicalStreamType.values
-    .filter(_ != LogicalStreamType.UNRECOGNIZED)
     .filter(_.getNumber > 0)
 
   given MockConverterFactory.type = MockConverterFactory
@@ -24,13 +23,13 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
         baseValue.getNumber should be < 10
 
         streamType match
-          case LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES => LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_TRIPLES
-          case LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS => LogicalStreamType.LOGICAL_STREAM_TYPE_FLAT_QUADS
-          case LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS => LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS
-          case LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS => LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS
-          case LogicalStreamType.LOGICAL_STREAM_TYPE_SUBJECT_GRAPHS => LogicalStreamType.LOGICAL_STREAM_TYPE_GRAPHS
-          case LogicalStreamType.LOGICAL_STREAM_TYPE_NAMED_GRAPHS => LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS
-          case LogicalStreamType.LOGICAL_STREAM_TYPE_TIMESTAMPED_NAMED_GRAPHS => LogicalStreamType.LOGICAL_STREAM_TYPE_DATASETS
+          case LogicalStreamType.FLAT_TRIPLES => LogicalStreamType.FLAT_TRIPLES
+          case LogicalStreamType.FLAT_QUADS => LogicalStreamType.FLAT_QUADS
+          case LogicalStreamType.GRAPHS => LogicalStreamType.GRAPHS
+          case LogicalStreamType.DATASETS => LogicalStreamType.DATASETS
+          case LogicalStreamType.SUBJECT_GRAPHS => LogicalStreamType.GRAPHS
+          case LogicalStreamType.NAMED_GRAPHS => LogicalStreamType.DATASETS
+          case LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS => LogicalStreamType.DATASETS
           case _ => fail(s"Unrecognized stream type: $streamType")
       }
   }
@@ -53,11 +52,11 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
         }
 
       s"return false for $streamType and an undefined type" in {
-        LogicalStreamTypeUtils.isEqualOrSubtypeOf(streamType, LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED) shouldBe false
+        LogicalStreamTypeUtils.isEqualOrSubtypeOf(streamType, LogicalStreamType.UNSPECIFIED) shouldBe false
       }
 
       s"return false for an undefined type and $streamType" in {
-        LogicalStreamTypeUtils.isEqualOrSubtypeOf(LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED, streamType) shouldBe false
+        LogicalStreamTypeUtils.isEqualOrSubtypeOf(LogicalStreamType.UNSPECIFIED, streamType) shouldBe false
       }
   }
 
@@ -76,7 +75,7 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
       }
 
     "not return RDF STaX type for UNSPECIFIED" in {
-      LogicalStreamTypeUtils.getRdfStaxType(LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED) should be (null)
+      LogicalStreamTypeUtils.getRdfStaxType(LogicalStreamType.UNSPECIFIED) should be (null)
     }
   }
 
@@ -118,7 +117,7 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
           LogicalStreamTypeUtils.getRdfStaxAnnotation(
             decoder,
             { (s, p, o) => Triple(s, p, o) },
-            LogicalStreamType.LOGICAL_STREAM_TYPE_UNSPECIFIED,
+            LogicalStreamType.UNSPECIFIED,
             subjectNode
           )
         }
