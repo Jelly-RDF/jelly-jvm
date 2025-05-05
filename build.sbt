@@ -190,9 +190,12 @@ lazy val coreJava = (project in file("core-java"))
       val inputDir = (rdfProtosJava / target).value / ("scala-" + scalaVersion.value) /
         "src_managed" / "main" / "compiled_protobuf" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
-      val javaFiles = (inputDir * "*.java").get
+
+      val javaFiles = (inputDir * "*.java").get ++ (inputDir * "**" * "*.java").get
+
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
         IO.copyFile(file, outputFile)

@@ -1,8 +1,5 @@
 package eu.neverblink.jelly.core.patch.internal;
 
-import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.QUADS;
-import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.TRIPLES;
-
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.DecoderBase;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
@@ -212,18 +209,18 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
         @Override
         protected void handleStatementAdd(RdfQuad statement) {
             patchHandler.addTriple(
-                convertSubjectTermWrapped(statement),
-                convertPredicateTermWrapped(statement),
-                convertObjectTermWrapped(statement)
+                convertSubjectTermWrapped(statement.getQuadSubjectFieldKind(), statement),
+                convertPredicateTermWrapped(statement.getQuadPredicateFieldKind(), statement),
+                convertObjectTermWrapped(statement.getQuadObjectFieldKind(), statement)
             );
         }
 
         @Override
         protected void handleStatementDelete(RdfQuad statement) {
             patchHandler.deleteTriple(
-                convertSubjectTermWrapped(statement),
-                convertPredicateTermWrapped(statement),
-                convertObjectTermWrapped(statement)
+                convertSubjectTermWrapped(statement.getTripleSubjectFieldKind(), statement),
+                convertPredicateTermWrapped(statement.getTriplePredicateFieldKind(), statement),
+                convertObjectTermWrapped(statement.getTripleObjectFieldKind(), statement)
             );
         }
     }
@@ -257,20 +254,20 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
         @Override
         protected void handleStatementAdd(RdfQuad statement) {
             patchHandler.addQuad(
-                convertSubjectTermWrapped(statement),
-                convertPredicateTermWrapped(statement),
-                convertObjectTermWrapped(statement),
-                convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement)
+                convertSubjectTermWrapped(statement.getQuadSubjectFieldKind(), statement),
+                convertPredicateTermWrapped(statement.getQuadPredicateFieldKind(), statement),
+                convertObjectTermWrapped(statement.getQuadObjectFieldKind(), statement),
+                convertGraphTermWrapped(statement.getQuadGraphFieldKind(), statement)
             );
         }
 
         @Override
         protected void handleStatementDelete(RdfQuad statement) {
             patchHandler.deleteQuad(
-                convertSubjectTermWrapped(statement),
-                convertPredicateTermWrapped(statement),
-                convertObjectTermWrapped(statement),
-                convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement)
+                convertSubjectTermWrapped(statement.getQuadSubjectFieldKind(), statement),
+                convertPredicateTermWrapped(statement.getQuadPredicateFieldKind(), statement),
+                convertObjectTermWrapped(statement.getQuadObjectFieldKind(), statement),
+                convertGraphTermWrapped(statement.getQuadGraphFieldKind(), statement)
             );
         }
     }
@@ -308,19 +305,20 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementAdd(RdfQuad statement) {
-            final var s = convertSubjectTermWrapped(statement);
-            final var p = convertPredicateTermWrapped(statement);
-            final var o = convertObjectTermWrapped(statement);
+            final var s = convertSubjectTermWrapped(statement.getQuadSubjectFieldKind(), statement);
+            final var p = convertPredicateTermWrapped(statement.getQuadPredicateFieldKind(), statement);
+            final var o = convertObjectTermWrapped(statement.getQuadObjectFieldKind(), statement);
 
             if (statementType == null) {
                 throw new RdfProtoDeserializationError(
                     "Statement type is not set, statement add command cannot be decoded."
                 );
             }
+
             switch (statementType) {
                 case TRIPLES -> patchHandler.addTriple(s, p, o);
                 case QUADS -> {
-                    final var g = convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement);
+                    final var g = convertGraphTermWrapped(statement.getQuadGraphFieldKind(), statement);
                     patchHandler.addQuad(s, p, o, g);
                 }
             }
@@ -328,19 +326,20 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
         @Override
         protected void handleStatementDelete(RdfQuad statement) {
-            final var s = convertSubjectTermWrapped(statement);
-            final var p = convertPredicateTermWrapped(statement);
-            final var o = convertObjectTermWrapped(statement);
+            final var s = convertSubjectTermWrapped(statement.getQuadSubjectFieldKind(), statement);
+            final var p = convertPredicateTermWrapped(statement.getQuadPredicateFieldKind(), statement);
+            final var o = convertObjectTermWrapped(statement.getQuadObjectFieldKind(), statement);
 
             if (statementType == null) {
                 throw new RdfProtoDeserializationError(
                     "Statement type is not set, statement delete command cannot be decoded."
                 );
             }
+
             switch (statementType) {
                 case TRIPLES -> patchHandler.deleteTriple(s, p, o);
                 case QUADS -> {
-                    final var g = convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement);
+                    final var g = convertGraphTermWrapped(statement.getQuadGraphFieldKind(), statement);
                     patchHandler.deleteQuad(s, p, o, g);
                 }
             }

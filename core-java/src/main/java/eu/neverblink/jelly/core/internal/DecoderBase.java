@@ -53,19 +53,20 @@ public abstract class DecoderBase<TNode, TDatatype> {
         }
         try {
             switch (kind) {
-                case 0 -> {
+                case GraphBase.IRI_FIELD_KIND -> {
                     final var iri = (RdfIri) graph;
                     return nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId());
                 }
-                case 1 -> {
+                case GraphBase.BNODE_FIELD_KIND -> {
                     final var bnode = (String) graph;
                     return converter.makeBlankNode(bnode);
                 }
-                case 2 -> {
+                case GraphBase.DEFAULT_GRAPH_FIELD_KIND -> {
                     return converter.makeDefaultGraphNode();
                 }
-                case 3 -> {
-                    return convertLiteral((RdfLiteral) graph);
+                case GraphBase.LITERAL_FIELD_KIND -> {
+                    final var literal = (RdfLiteral) graph;
+                    return convertLiteral(literal);
                 }
                 default -> throw new RdfProtoDeserializationError("Unknown graph term type");
             }
@@ -86,23 +87,24 @@ public abstract class DecoderBase<TNode, TDatatype> {
         }
         try {
             switch (kind) {
-                case 0 -> {
+                case SpoBase.IRI_FIELD_KIND -> {
                     final var iri = (RdfIri) term;
                     return nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId());
                 }
-                case 1 -> {
+                case SpoBase.BNODE_FIELD_KIND -> {
                     final var bnode = (String) term;
                     return converter.makeBlankNode(bnode);
                 }
-                case 2 -> {
-                    return convertLiteral((RdfLiteral) term);
+                case SpoBase.LITERAL_FIELD_KIND -> {
+                    final var literal = (RdfLiteral) term;
+                    return convertLiteral(literal);
                 }
-                case 3 -> {
+                case SpoBase.TRIPLE_TERM_FIELD_KIND -> {
                     final var triple = (RdfTriple) term;
                     return converter.makeTripleNode(
-                        convertTerm(triple.getSubjectFieldNumber() - RdfTriple.S_IRI, triple.getSubject()),
-                        convertTerm(triple.getPredicateFieldNumber() - RdfTriple.P_IRI, triple.getPredicate()),
-                        convertTerm(triple.getObjectFieldNumber() - RdfTriple.O_IRI, triple.getObject())
+                        convertTerm(triple.getTripleSubjectFieldKind(), triple.getSubject()),
+                        convertTerm(triple.getTriplePredicateFieldKind(), triple.getPredicate()),
+                        convertTerm(triple.getTripleObjectFieldKind(), triple.getObject())
                     );
                 }
                 default -> throw new RdfProtoDeserializationError("Unknown term type");
@@ -128,33 +130,32 @@ public abstract class DecoderBase<TNode, TDatatype> {
 
     /**
      * Convert the subject from an SPO-like message to a node, while respecting repeated terms.
+     * @param kind field number of the term, normalized to 0, 1, 2, 3
      * @param spo SPO-like message to extract the subject from
      * @return converted node
      */
-    protected final TNode convertSubjectTermWrapped(SpoBase spo) {
-        return convertSpoTermWrapped(spo.getSubjectFieldNumber() - RdfTriple.S_IRI, spo.getSubject(), lastSubject);
+    protected final TNode convertSubjectTermWrapped(int kind, SpoBase spo) {
+        return convertSpoTermWrapped(kind, spo.getSubject(), lastSubject);
     }
 
     /**
      * Convert the predicate from an SPO-like message to a node, while respecting repeated terms.
+     * @param kind field number of the term, normalized to 0, 1, 2, 3
      * @param spo SPO-like message to extract the predicate from
      * @return converted node
      */
-    protected final TNode convertPredicateTermWrapped(SpoBase spo) {
-        return convertSpoTermWrapped(
-            spo.getPredicateFieldNumber() - RdfTriple.P_IRI,
-            spo.getPredicate(),
-            lastPredicate
-        );
+    protected final TNode convertPredicateTermWrapped(int kind, SpoBase spo) {
+        return convertSpoTermWrapped(kind, spo.getPredicate(), lastPredicate);
     }
 
     /**
      * Convert the object from an SPO-like message to a node, while respecting repeated terms.
+     * @param kind field number of the term, normalized to 0, 1, 2, 3
      * @param spo SPO-like message to extract the object from
      * @return converted node
      */
-    protected final TNode convertObjectTermWrapped(SpoBase spo) {
-        return convertSpoTermWrapped(spo.getObjectFieldNumber() - RdfTriple.O_IRI, spo.getObject(), lastObject);
+    protected final TNode convertObjectTermWrapped(int kind, SpoBase spo) {
+        return convertSpoTermWrapped(kind, spo.getObject(), lastObject);
     }
 
     /**

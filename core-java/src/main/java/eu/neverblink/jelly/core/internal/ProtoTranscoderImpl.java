@@ -1,6 +1,8 @@
 package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.*;
+import eu.neverblink.jelly.core.internal.proto.GraphBase;
+import eu.neverblink.jelly.core.internal.proto.SpoBase;
 import eu.neverblink.jelly.core.proto.v1.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,9 +135,9 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
         this.hasChangedTerms = false;
         final var triple = row.getTriple();
 
-        final var s1 = handleSpoTerm(triple.getSubjectFieldNumber() - RdfTriple.S_IRI, triple.getSubject());
-        final var p1 = handleSpoTerm(triple.getPredicateFieldNumber() - RdfTriple.P_IRI, triple.getPredicate());
-        final var o1 = handleSpoTerm(triple.getObjectFieldNumber() - RdfTriple.O_IRI, triple.getObject());
+        final var s1 = handleSpoTerm(triple.getTripleSubjectFieldKind(), triple.getSubject());
+        final var p1 = handleSpoTerm(triple.getTriplePredicateFieldKind(), triple.getPredicate());
+        final var o1 = handleSpoTerm(triple.getTripleObjectFieldKind(), triple.getObject());
 
         if (!hasChangedTerms) {
             rowBuffer.add(row);
@@ -146,6 +148,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
             .setSubject(s1, triple.getSubjectFieldNumber())
             .setPredicate(p1, triple.getPredicateFieldNumber())
             .setObject(o1, triple.getObjectFieldNumber());
+
         rowBuffer.add(RdfStreamRow.newInstance().setTriple(newTriple));
     }
 
@@ -153,10 +156,10 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
         this.hasChangedTerms = false;
         final var quad = row.getQuad();
 
-        final var s1 = handleSpoTerm(quad.getSubjectFieldNumber() - RdfQuad.S_IRI, quad.getSubject());
-        final var p1 = handleSpoTerm(quad.getPredicateFieldNumber() - RdfQuad.P_IRI, quad.getPredicate());
-        final var o1 = handleSpoTerm(quad.getObjectFieldNumber() - RdfQuad.O_IRI, quad.getObject());
-        final var g1 = handleGraphTerm(quad.getGraphFieldNumber() - RdfQuad.G_IRI, quad.getGraph());
+        final var s1 = handleSpoTerm(quad.getQuadSubjectFieldKind(), quad.getSubject());
+        final var p1 = handleSpoTerm(quad.getQuadPredicateFieldKind(), quad.getPredicate());
+        final var o1 = handleSpoTerm(quad.getQuadObjectFieldKind(), quad.getObject());
+        final var g1 = handleGraphTerm(quad.getQuadGraphFieldKind(), quad.getGraph());
 
         if (!hasChangedTerms) {
             rowBuffer.add(row);
@@ -168,6 +171,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
             .setPredicate(p1, quad.getPredicateFieldNumber())
             .setObject(o1, quad.getObjectFieldNumber())
             .setGraph(g1, quad.getGraphFieldNumber());
+
         rowBuffer.add(RdfStreamRow.newInstance().setQuad(newQuad));
     }
 
@@ -175,7 +179,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
         this.hasChangedTerms = false;
         final var graphStart = row.getGraphStart();
 
-        final var g1 = handleGraphTerm(graphStart.getGraphFieldNumber() - RdfGraphStart.G_IRI, graphStart.getGraph());
+        final var g1 = handleGraphTerm(graphStart.getGraphStartGraphFieldKind(), graphStart.getGraph());
         if (!hasChangedTerms) {
             rowBuffer.add(row);
             return;
@@ -204,46 +208,28 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
         if (kind < 0) {
             return null;
         }
-        switch (kind) {
-            case 0 -> {
-                return handleIri((RdfIri) term);
-            }
-            case 1 -> {
-                return term; // blank node
-            }
-            case 2 -> {
-                return handleLiteral((RdfLiteral) term);
-            }
-            case 3 -> {
-                return handleTripleTerm((RdfTriple) term);
-            }
-            default -> {
-                throw new RdfProtoTranscodingError("Unknown term type");
-            }
-        }
+
+        return switch (kind) {
+            case SpoBase.IRI_FIELD_KIND -> handleIri((RdfIri) term);
+            case SpoBase.BNODE_FIELD_KIND -> term; // blank node
+            case SpoBase.LITERAL_FIELD_KIND -> handleLiteral((RdfLiteral) term);
+            case SpoBase.TRIPLE_TERM_FIELD_KIND -> handleTripleTerm((RdfTriple) term);
+            default -> throw new RdfProtoTranscodingError("Unknown term type");
+        };
     }
 
     private Object handleGraphTerm(int kind, Object graph) {
         if (kind < 0) {
             return null;
         }
-        switch (kind) {
-            case 0 -> {
-                return handleIri((RdfIri) graph);
-            }
-            case 1 -> {
-                return graph; // blank node
-            }
-            case 2 -> {
-                return graph; // default graph
-            }
-            case 3 -> {
-                return handleLiteral((RdfLiteral) graph);
-            }
-            default -> {
-                throw new RdfProtoTranscodingError("Unknown graph term type");
-            }
-        }
+
+        return switch (kind) {
+            case GraphBase.IRI_FIELD_KIND -> handleIri((RdfIri) graph);
+            case GraphBase.BNODE_FIELD_KIND -> graph; // blank node
+            case GraphBase.DEFAULT_GRAPH_FIELD_KIND -> graph; // default graph
+            case GraphBase.LITERAL_FIELD_KIND -> handleLiteral((RdfLiteral) graph);
+            default -> throw new RdfProtoTranscodingError("Unknown graph term type");
+        };
     }
 
     private RdfIri handleIri(RdfIri iri) {
@@ -274,9 +260,10 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
     }
 
     private RdfTriple handleTripleTerm(RdfTriple triple) {
-        var s1 = handleSpoTerm(triple.getSubjectFieldNumber() - RdfTriple.S_IRI, triple.getSubject());
-        var p1 = handleSpoTerm(triple.getPredicateFieldNumber() - RdfTriple.P_IRI, triple.getPredicate());
-        var o1 = handleSpoTerm(triple.getObjectFieldNumber() - RdfTriple.O_IRI, triple.getObject());
+        var s1 = handleSpoTerm(triple.getTripleSubjectFieldKind(), triple.getSubject());
+        var p1 = handleSpoTerm(triple.getTriplePredicateFieldKind(), triple.getPredicate());
+        var o1 = handleSpoTerm(triple.getTripleObjectFieldKind(), triple.getObject());
+
         // Reference comparison is fine here, as the term objects should be reused directly if possible.
         if (s1 != triple.getSubject() || p1 != triple.getPredicate() || o1 != triple.getObject()) {
             hasChangedTerms = true;
@@ -285,6 +272,7 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
                 .setPredicate(p1, triple.getPredicateFieldNumber())
                 .setObject(o1, triple.getObjectFieldNumber());
         }
+
         return triple;
     }
 

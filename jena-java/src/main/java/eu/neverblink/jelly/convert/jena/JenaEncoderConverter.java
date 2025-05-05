@@ -32,7 +32,9 @@ public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
             // RDF-star node
             final var t = node.getTriple();
             encoder.makeQuotedTriple(t.getSubject(), t.getPredicate(), t.getObject());
-        } else throw new IllegalArgumentException("Cannot encode node: " + node);
+        } else {
+            throw new IllegalArgumentException("Cannot encode node: " + node);
+        }
     }
 
     @Override
@@ -40,7 +42,6 @@ public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
         // Default graph
         if (node == null) {
             encoder.makeDefaultGraph();
-            return;
         } else if (node.isURI()) {
             // URI/IRI
             if (Quad.isDefaultGraph(node)) {
@@ -64,6 +65,8 @@ public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
             } else {
                 encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
             }
-        } else throw new IllegalArgumentException("Cannot encode graph node: " + node);
+        } else {
+            throw new IllegalArgumentException("Cannot encode graph node: " + node);
+        }
     }
 }

@@ -182,9 +182,9 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         @Override
         protected void handleTriple(RdfTriple triple) {
             protoHandler.handleTriple(
-                convertSubjectTermWrapped(triple),
-                convertPredicateTermWrapped(triple),
-                convertObjectTermWrapped(triple)
+                convertSubjectTermWrapped(triple.getTripleSubjectFieldKind(), triple),
+                convertPredicateTermWrapped(triple.getTriplePredicateFieldKind(), triple),
+                convertObjectTermWrapped(triple.getTripleObjectFieldKind(), triple)
             );
         }
     }
@@ -219,10 +219,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         @Override
         protected void handleQuad(RdfQuad quad) {
             protoHandler.handleQuad(
-                convertSubjectTermWrapped(quad),
-                convertPredicateTermWrapped(quad),
-                convertObjectTermWrapped(quad),
-                convertGraphTermWrapped(quad.getGraphFieldNumber() - RdfQuad.G_IRI, quad)
+                convertSubjectTermWrapped(quad.getQuadSubjectFieldKind(), quad),
+                convertPredicateTermWrapped(quad.getQuadPredicateFieldKind(), quad),
+                convertObjectTermWrapped(quad.getQuadObjectFieldKind(), quad),
+                convertGraphTermWrapped(quad.getQuadGraphFieldKind(), quad)
             );
         }
     }
@@ -257,10 +257,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         protected void handleGraphStart(RdfGraphStart graphStart) {
-            currentGraph = convertGraphTerm(
-                graphStart.getGraphFieldNumber() - RdfGraphStart.G_IRI,
-                graphStart.getGraph()
-            );
+            currentGraph = convertGraphTerm(graphStart.getGraphStartGraphFieldKind(), graphStart.getGraph());
         }
 
         @Override
@@ -275,9 +272,9 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
             }
 
             protoHandler.handleQuad(
-                convertSubjectTermWrapped(triple),
-                convertPredicateTermWrapped(triple),
-                convertObjectTermWrapped(triple),
+                convertSubjectTermWrapped(triple.getTripleSubjectFieldKind(), triple),
+                convertPredicateTermWrapped(triple.getTriplePredicateFieldKind(), triple),
+                convertObjectTermWrapped(triple.getTripleObjectFieldKind(), triple),
                 currentGraph
             );
         }
@@ -314,10 +311,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         protected void handleGraphStart(RdfGraphStart graphStart) {
-            currentGraph = convertGraphTerm(
-                graphStart.getGraphFieldNumber() - RdfGraphStart.G_IRI,
-                graphStart.getGraph()
-            );
+            currentGraph = convertGraphTerm(graphStart.getGraphStartGraphFieldKind(), graphStart.getGraph());
             protoHandler.handleGraphStart(currentGraph);
         }
 
@@ -333,9 +327,9 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         protected void handleTriple(RdfTriple triple) {
-            var subject = convertSubjectTermWrapped(triple);
-            var predicate = convertPredicateTermWrapped(triple);
-            var object = convertObjectTermWrapped(triple);
+            var subject = convertSubjectTermWrapped(triple.getTripleSubjectFieldKind(), triple);
+            var predicate = convertPredicateTermWrapped(triple.getTriplePredicateFieldKind(), triple);
+            var object = convertObjectTermWrapped(triple.getTripleObjectFieldKind(), triple);
             protoHandler.handleTriple(subject, predicate, object);
         }
     }
