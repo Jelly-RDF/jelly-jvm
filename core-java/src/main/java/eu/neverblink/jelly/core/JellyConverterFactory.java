@@ -62,7 +62,7 @@ public abstract class JellyConverterFactory<
      * Create a new QuadsDecoder.
      * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
      *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
-     *                         type), you should always use this.defaultSupportedOptions.clone().setXxx.build();.
+     *                         type), you should always use this.defaultSupportedOptions.clone().setXxx(...);
      * @param quadHandler the handler to use for decoding quads
      * @return decoder
      */
@@ -77,7 +77,7 @@ public abstract class JellyConverterFactory<
      * Create a new GraphsAsQuadsDecoder.
      * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
      *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
-     *                         type), you should always use this.defaultSupportedOptions.clone().setXxx.build();.
+     *                         type), you should always use this.defaultSupportedOptions.clone().setXxx(...);
      * @param graphHandler the handler to use for decoding graphs
      * @return decoder
      */
@@ -92,7 +92,7 @@ public abstract class JellyConverterFactory<
      * Create a new GraphsDecoder.
      * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
      *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
-     *                         type), you should always use this.defaultSupportedOptions.clone().setXxx.build();.
+     *                         type), you should always use this.defaultSupportedOptions.clone().setXxx(...);
      * @param graphHandler the handler to use for decoding graphs
      * @return decoder
      */
@@ -107,7 +107,7 @@ public abstract class JellyConverterFactory<
      * Create a new AnyStatementDecoder.
      * @param supportedOptions maximum supported options for the decoder. If not provided, this.defaultSupportedOptions
      *                         will be used. If you want to modify this (e.g., to specify an expected logical stream
-     *                         type), you should always use this.defaultSupportedOptions.clone().setXxx.build();.
+     *                         type), you should always use this.defaultSupportedOptions.clone().setXxx(...);
      * @param anyStatementHandler the handler to use for decoding any statements
      * @return decoder
      */

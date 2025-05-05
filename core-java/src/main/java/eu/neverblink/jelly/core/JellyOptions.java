@@ -6,7 +6,7 @@ import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils;
 
 /**
  * A collection of convenient streaming option presets.
- * None of the presets specifies the stream type – do that with the .clone().setPhysicalType().build() method.
+ * None of the presets specifies the stream type – do that with the .clone().setPhysicalType() method.
  */
 public class JellyOptions {
 
@@ -116,8 +116,7 @@ public class JellyOptions {
      * <code>
      * final var myOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
      *      .clone()
-     *      .setRdfStar(false)
-     *      .build();
+     *      .setRdfStar(false);
      * </code>
      * <p>
      * If you were to pass a default RdfStreamOptions object to the decoder, it would simply refuse to read any stream
