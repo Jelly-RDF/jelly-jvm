@@ -265,6 +265,19 @@ class PatchDecoderSpec extends AnyWordSpec, Matchers:
       out.statements.result() shouldBe PatchTestCases.Quads1.mrl
     }
 
+    "decode quads with generalized namespace declarations" in {
+      val input = PatchTestCases.Quads2NsDeclOnly.encodedFull(
+        JellyPatchOptions.SMALL_STRICT.clone
+          .setStatementType(PatchStatementType.QUADS)
+          .setStreamType(PatchStreamType.FLAT),
+        10_000
+      ).head
+      val out = PatchCollector()
+      val decoder = MockPatchConverterFactory.quadsDecoder(out, null)
+      decoder.ingestFrame(input)
+      out.statements.result() shouldBe PatchTestCases.Quads2NsDeclOnly.mrl
+    }
+
     "not accept a stream with statement type TRIPLES" in {
       val input = rdfPatchFrame(Seq(
         rdfPatchRow(JellyPatchOptions.SMALL_STRICT.clone

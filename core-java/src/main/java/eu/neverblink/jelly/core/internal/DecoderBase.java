@@ -165,7 +165,8 @@ public abstract class DecoderBase<TNode, TDatatype> {
      */
     protected final TNode convertGraphTermWrapped(int kind, GraphBase graph) {
         if (graph.getGraph() == null && lastGraph.hasNoValue()) {
-            // Special case: Jena and RDF4J allow null graph terms in the input, so we do not treat them as errors.
+            // Special case: Jena and RDF4J allow null graph terms in the input, 
+            // so we do not treat them as errors.
             return null;
         }
 

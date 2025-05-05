@@ -1,10 +1,8 @@
 package eu.neverblink.jelly.core.patch.internal;
 
-import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.QUADS;
-import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.TRIPLES;
-
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.DecoderBase;
+import eu.neverblink.jelly.core.internal.LastNodeHolder;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
 import eu.neverblink.jelly.core.patch.PatchDecoder;
 import eu.neverblink.jelly.core.patch.PatchHandler;
@@ -22,6 +20,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     private RdfPatchOptions currentOptions;
     private boolean isFrameStreamType = false;
     private boolean isPunctuatedStreamType = false;
+    private final LastNodeHolder<TNode> lastNsGraph = new LastNodeHolder<>();
 
     protected PatchDecoderImpl(
         ProtoDecoderConverter<TNode, TDatatype> converter,
@@ -111,18 +110,22 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
     private void handleNamespaceAdd(RdfPatchNamespace nsRow) {
         final var valueIri = nsRow.getValue();
-        final var graphIri = nsRow.getGraph();
         patchHandler.addNamespace(
             nsRow.getName(),
+            // The value is required for the namespace add operation
             nameDecoder.provide().decode(valueIri.getPrefixId(), valueIri.getNameId()),
-            decodeNsIri(graphIri)
+            convertGraphTermWrapped(nsRow.getGraphFieldNumber() - RdfPatchNamespace.G_IRI, nsRow)
         );
     }
 
     private void handleNamespaceDelete(RdfPatchNamespace nsRow) {
         final var valueIri = nsRow.getValue();
-        final var graphIri = nsRow.getGraph();
-        patchHandler.deleteNamespace(nsRow.getName(), decodeNsIri(valueIri), decodeNsIri(graphIri));
+        patchHandler.deleteNamespace(
+            nsRow.getName(),
+            // The value is not required for the namespace delete operation, null is fine
+            decodeNsIri(valueIri),
+            convertGraphTermWrapped(nsRow.getGraphFieldNumber() - RdfPatchNamespace.G_IRI, nsRow)
+        );
     }
 
     private void handleTransactionStart() {

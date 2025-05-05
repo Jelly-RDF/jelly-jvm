@@ -87,13 +87,12 @@ object PatchAdapter:
       .setKey(key)
       .setHTripleTerm(value)
 
-  def rdfPatchNamespace(name: String, value: RdfIri = null, graph: RdfIri = null): RdfPatchNamespace = {
+  // Set the graph yourself on the returned object
+  def rdfPatchNamespace(name: String, value: RdfIri = null): RdfPatchNamespace.Mutable =
     val ns = RdfPatchNamespace.newInstance()
     if (name != null) ns.setName(name)
     if (value != null) ns.setValue(value)
-    if (graph != null) ns.setGraph(graph)
     ns
-  }
 
   def rdfPatchPunctuation(): RdfPatchPunctuation =
     RdfPatchPunctuation.newInstance()

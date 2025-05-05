@@ -3,7 +3,6 @@ package eu.neverblink.jelly.core.patch.internal;
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.patch.PatchEncoder;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.neverblink.jelly.core.proto.v1.patch.*;
@@ -126,8 +125,9 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
             converter.nodeToProto(nodeEncoder.provide(), iriValue);
         }
         if (graph != null) {
-            this.currentTerm = SpoTerm.NAMESPACE_GRAPH;
-            converter.nodeToProto(nodeEncoder.provide(), graph);
+            this.currentGraphBase = namespace;
+            this.currentTerm = SpoTerm.GRAPH;
+            this.graphNodeToProtoWrapped(graph);
         }
         return namespace;
     }
