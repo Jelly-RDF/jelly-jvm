@@ -27,7 +27,7 @@ public final class JellyFormatVariant extends RDFFormatVariant {
     public static Builder builder() {
         return new Builder();
     }
-    
+
     public static JellyFormatVariant getDefault() {
         return builder().build();
     }
@@ -155,8 +155,7 @@ public final class JellyFormatVariant extends RDFFormatVariant {
 
         return new JellyFormatVariant(
             context.get(JellyLanguage.SYMBOL_STREAM_OPTIONS, preset),
-            context.isTrue(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS) ||
-            this.isEnableNamespaceDeclarations(),
+            context.isTrue(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS) || this.isEnableNamespaceDeclarations(),
             context.isTrueOrUndef(JellyLanguage.SYMBOL_DELIMITED_OUTPUT),
             context.getInt(JellyLanguage.SYMBOL_FRAME_SIZE, this.getFrameSize())
         );

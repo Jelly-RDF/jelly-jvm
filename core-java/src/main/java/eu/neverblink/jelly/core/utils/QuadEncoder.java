@@ -2,7 +2,7 @@ package eu.neverblink.jelly.core.utils;
 
 /**
  * QuadEncoder is a functional interface that encodes a quad into a representation bound to RDF libraries.
- * 
+ *
  * @param <TNode> the type of the nodes in the quad
  * @param <TQuad> the type of the encoded quad
  */
