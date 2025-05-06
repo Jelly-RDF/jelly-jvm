@@ -1,11 +1,16 @@
 package eu.neverblink.jelly.convert.rdf4j;
 
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
+import eu.neverblink.jelly.core.RdfProtoDeserializationError;
+import eu.neverblink.jelly.core.utils.QuadEncoder;
+import eu.neverblink.jelly.core.utils.TripleEncoder;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
-public final class Rdf4jDecoderConverter implements ProtoDecoderConverter<Value, Rdf4jDatatype> {
+public final class Rdf4jDecoderConverter
+    implements
+        ProtoDecoderConverter<Value, Rdf4jDatatype>, TripleEncoder<Value, Statement>, QuadEncoder<Value, Statement> {
 
     private static final ValueFactory VALUE_FACTORY = SimpleValueFactory.getInstance();
 
@@ -46,7 +51,7 @@ public final class Rdf4jDecoderConverter implements ProtoDecoderConverter<Value,
             // RDF4J doesn't accept generalized statements (unlike Jena) which is why we need to do a type cast here.
             return VALUE_FACTORY.createTriple((Resource) s, (IRI) p, o);
         } catch (ClassCastException e) {
-            throw new IllegalArgumentException(
+            throw new RdfProtoDeserializationError(
                 "Cannot create generalized triple node with %s, %s, %s".formatted(s, p, o),
                 e
             );
@@ -56,5 +61,29 @@ public final class Rdf4jDecoderConverter implements ProtoDecoderConverter<Value,
     @Override
     public Value makeDefaultGraphNode() {
         return null;
+    }
+
+    @Override
+    public Statement makeQuad(Value subject, Value predicate, Value object, Value graph) {
+        try {
+            return VALUE_FACTORY.createStatement((Resource) subject, (IRI) predicate, object, (Resource) graph);
+        } catch (ClassCastException e) {
+            throw new RdfProtoDeserializationError(
+                "Cannot create generalized quad with %s, %s, %s, %s".formatted(subject, predicate, object, graph),
+                e
+            );
+        }
+    }
+
+    @Override
+    public Statement makeTriple(Value subject, Value predicate, Value object) {
+        try {
+            return VALUE_FACTORY.createStatement((Resource) subject, (IRI) predicate, object);
+        } catch (ClassCastException e) {
+            throw new RdfProtoDeserializationError(
+                "Cannot create generalized triple with %s, %s, %s".formatted(subject, predicate, object),
+                e
+            );
+        }
     }
 }

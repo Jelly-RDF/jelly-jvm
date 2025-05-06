@@ -414,6 +414,32 @@ lazy val integrationTests = (project in file("integration-tests"))
     titaniumRdfApi,
   )
 
+lazy val integrationTestsJava = (project in file("integration-tests-java"))
+  .settings(
+    publishArtifact := false,
+    name := "jelly-integration-tests-java",
+    libraryDependencies ++= Seq(
+      "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
+      "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV % Test,
+      "com.apicatalog" % "titanium-json-ld" % "1.6.0" % Test,
+    ),
+    libraryDependencies ++= protobufCompilerDeps,
+//    Compile / PB.targets := Seq(
+//      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
+//    ),
+    commonSettings,
+  )
+  .dependsOn(
+    // stream,
+    coreJava % "compile->compile;test->test",
+    jenaJava % "compile->compile;test->test",
+    jenaPatch % "compile->compile;test->test",
+    rdf4jJava,
+    rdf4jPatch,
+    // titaniumRdfApi,
+  )
+
 lazy val examples = (project in file("examples"))
   .settings(
     publishArtifact := false,

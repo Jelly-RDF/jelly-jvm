@@ -1,12 +1,16 @@
 package eu.neverblink.jelly.convert.jena;
 
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
+import eu.neverblink.jelly.core.utils.QuadEncoder;
+import eu.neverblink.jelly.core.utils.TripleEncoder;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 
-public final class JenaDecoderConverter implements ProtoDecoderConverter<Node, RDFDatatype> {
+public final class JenaDecoderConverter
+    implements ProtoDecoderConverter<Node, RDFDatatype>, TripleEncoder<Node, Triple>, QuadEncoder<Node, Quad> {
 
     @Override
     public Node makeSimpleLiteral(String lex) {
@@ -46,5 +50,15 @@ public final class JenaDecoderConverter implements ProtoDecoderConverter<Node, R
     @Override
     public Node makeDefaultGraphNode() {
         return Quad.defaultGraphNodeGenerated;
+    }
+
+    @Override
+    public Quad makeQuad(Node subject, Node predicate, Node object, Node graph) {
+        return Quad.create(graph, subject, predicate, object);
+    }
+
+    @Override
+    public Triple makeTriple(Node subject, Node predicate, Node object) {
+        return Triple.create(subject, predicate, object);
     }
 }

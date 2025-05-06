@@ -27,7 +27,7 @@ public final class JellyGraphWriter extends WriterGraphRIOTBase {
 
     @Override
     public Lang getLang() {
-        return JellyLanguage.JELLY_LANGUAGE;
+        return JellyLanguage.JELLY;
     }
 
     @Override
@@ -39,8 +39,8 @@ public final class JellyGraphWriter extends WriterGraphRIOTBase {
 
     @Override
     public void write(OutputStream out, Graph graph, PrefixMap prefixMap, String baseURI, Context context) {
-        var variant = JellyFormatVariant.applyContext(formatVariant, context);
-        variant = variant.updateOptions(
+        var variant = formatVariant.withContext(context);
+        variant = variant.withOptions(
             variant
                 .getOptions()
                 .clone()

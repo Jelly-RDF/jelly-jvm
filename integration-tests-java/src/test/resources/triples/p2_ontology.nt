@@ -1,0 +1,100 @@
+<https://assist-iot.eu/ontologies/aiot_p2#> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Ontology> .
+<https://assist-iot.eu/ontologies/aiot_p2#> <http://www.w3.org/2002/07/owl#imports> <http://www.ontology-of-units-of-measure.org/resource/om-2> .
+<https://assist-iot.eu/ontologies/aiot_p2#> <http://www.w3.org/2002/07/owl#imports> <https://assist-iot.eu/ontologies/aiot#> .
+<https://assist-iot.eu/ontologies/aiot_p2#> <http://purl.org/vocab/vann/preferredNamespacePrefix> "aiot_p2"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#> <http://www.w3.org/2000/01/rdf-schema#label> "Extensions specific to ASSIST-IoT Pilot 2"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#hasBIMModel> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasBIMModel> <http://www.w3.org/2000/01/rdf-schema#range> <https://assist-iot.eu/ontologies/aiot_p2#BIMModel> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasBIMModel> <http://www.w3.org/2000/01/rdf-schema#comment> "Indicates the BIM model that is used as a reference"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#hasBIMModel> <http://www.w3.org/2000/01/rdf-schema#label> "Has BIM model"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#hasLocationMeasurementType> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasLocationMeasurementType> <http://www.w3.org/2000/01/rdf-schema#domain> <https://assist-iot.eu/ontologies/aiot_p2#BIMLocation> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasLocationMeasurementType> <http://www.w3.org/2000/01/rdf-schema#range> <https://assist-iot.eu/ontologies/aiot_p2#LocationMeasurementType> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasLocationMeasurementType> <http://www.w3.org/2000/01/rdf-schema#comment> "Indicates the method with which the location measurement was performed (2D or 3D)"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#hasLocationMeasurementType> <http://www.w3.org/2000/01/rdf-schema#label> "Has location measurement type"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#hasXValue> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasXValue> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasValue> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasXValue> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.ontology-of-units-of-measure.org/resource/om-2/Measure> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasXValue> <http://www.w3.org/2000/01/rdf-schema#label> "Has X value"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#hasYValue> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasYValue> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasValue> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasYValue> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.ontology-of-units-of-measure.org/resource/om-2/Measure> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasYValue> <http://www.w3.org/2000/01/rdf-schema#label> "Has Y value"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#hasZValue> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasZValue> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasValue> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasZValue> <http://www.w3.org/2000/01/rdf-schema#range> <http://www.ontology-of-units-of-measure.org/resource/om-2/Measure> .
+<https://assist-iot.eu/ontologies/aiot_p2#hasZValue> <http://www.w3.org/2000/01/rdf-schema#label> "Has Z value"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#AtmosphericPressure> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#AtmosphericPressure> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/Pressure> .
+<https://assist-iot.eu/ontologies/aiot_p2#AtmosphericPressure> <http://www.w3.org/2000/01/rdf-schema#label> "atmospheric pressure"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#AverageWindSpeed> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#AverageWindSpeed> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/AverageSpeed> .
+<https://assist-iot.eu/ontologies/aiot_p2#AverageWindSpeed> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <https://assist-iot.eu/ontologies/aiot_p2#WindSpeed> .
+<https://assist-iot.eu/ontologies/aiot_p2#AverageWindSpeed> <http://www.w3.org/2000/01/rdf-schema#comment> "Average wind speed over 10 minutes prior to time of measurement."@en .
+<https://assist-iot.eu/ontologies/aiot_p2#AverageWindSpeed> <http://www.w3.org/2000/01/rdf-schema#label> "average wind speed"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#BIMLocation> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#BIMLocation> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <https://assist-iot.eu/ontologies/aiot#Location> .
+<https://assist-iot.eu/ontologies/aiot_p2#BIMLocation> <http://www.w3.org/2000/01/rdf-schema#comment> "Location relative to the root of some BIM model."@en .
+<https://assist-iot.eu/ontologies/aiot_p2#BIMLocation> <http://www.w3.org/2000/01/rdf-schema#label> "Location within a BIM model"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#BIMModel> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#BIMModel> <http://www.w3.org/2000/01/rdf-schema#comment> "A BIM model used as a reference"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#BIMModel> <http://www.w3.org/2000/01/rdf-schema#label> "BIM model"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#LocationMeasurementType> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#LocationMeasurementType> <http://www.w3.org/2000/01/rdf-schema#comment> "Method that was used to perform the location measurement"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#LocationMeasurementType> <http://www.w3.org/2000/01/rdf-schema#label> "Location measurement type"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#RainRate> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#RainRate> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/Speed> .
+<https://assist-iot.eu/ontologies/aiot_p2#RainRate> <http://www.w3.org/2000/01/rdf-schema#label> "rain rate"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#SolarIrradiance> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#SolarIrradiance> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/Irradiance> .
+<https://assist-iot.eu/ontologies/aiot_p2#SolarIrradiance> <http://www.w3.org/2000/01/rdf-schema#label> "solar irradiance"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndex> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndex> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/Quantity> .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndex> <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:genid1 .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndex> <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:genid3 .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndex> <http://www.w3.org/2000/01/rdf-schema#comment> "international ultraviolet index"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndex> <http://www.w3.org/2000/01/rdf-schema#label> "UV index"@en .
+_:genid1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .
+_:genid1 <http://www.w3.org/2002/07/owl#onProperty> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasValue> .
+_:genid1 <http://www.w3.org/2002/07/owl#allValuesFrom> _:genid2 .
+_:genid2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .
+_:genid2 <http://www.w3.org/2002/07/owl#onProperty> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasUnit> .
+_:genid2 <http://www.w3.org/2002/07/owl#allValuesFrom> <https://assist-iot.eu/ontologies/aiot_p2#UvIndexUnit> .
+_:genid3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .
+_:genid3 <http://www.w3.org/2002/07/owl#onProperty> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasDimension> .
+_:genid3 <http://www.w3.org/2002/07/owl#hasValue> <http://www.ontology-of-units-of-measure.org/resource/om-2/dimensionOne> .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndexUnit> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndexUnit> <http://www.w3.org/2002/07/owl#equivalentClass> _:genid4 .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndexUnit> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/Unit> .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndexUnit> <http://www.w3.org/2000/01/rdf-schema#comment> "ultraviolet index in the international scale unit"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#UvIndexUnit> <http://www.w3.org/2000/01/rdf-schema#label> "UV index unit"@en .
+_:genid4 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+_:genid4 <http://www.w3.org/2002/07/owl#oneOf> _:genid5 .
+_:genid5 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://www.ontology-of-units-of-measure.org/resource/om-2/one> .
+_:genid5 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<https://assist-iot.eu/ontologies/aiot_p2#WindDirection> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#WindDirection> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/Azimuth> .
+<https://assist-iot.eu/ontologies/aiot_p2#WindDirection> <http://www.w3.org/2000/01/rdf-schema#label> "wind direction"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#WindSpeed> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<https://assist-iot.eu/ontologies/aiot_p2#WindSpeed> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.ontology-of-units-of-measure.org/resource/om-2/Speed> .
+<https://assist-iot.eu/ontologies/aiot_p2#WindSpeed> <http://www.w3.org/2000/01/rdf-schema#label> "wind speed"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#inchHg> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchHg> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.ontology-of-units-of-measure.org/resource/om-2/SingularUnit> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchHg> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.ontology-of-units-of-measure.org/resource/om-2/Unit> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchHg> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasDimension> <http://www.ontology-of-units-of-measure.org/resource/om-2/pressure-Dimension> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchHg> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasUnit> <http://www.ontology-of-units-of-measure.org/resource/om-2/pascal> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchHg> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasFactor> "3386.39"^^<http://www.w3.org/2001/XMLSchema#float> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchHg> <http://www.w3.org/2000/01/rdf-schema#comment> "An inch of mercury."@en .
+<https://assist-iot.eu/ontologies/aiot_p2#inchHg> <http://www.w3.org/2000/01/rdf-schema#label> "inch of mercury"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#inchPerHour> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchPerHour> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.ontology-of-units-of-measure.org/resource/om-2/UnitDivision> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchPerHour> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasDenominator> <http://www.ontology-of-units-of-measure.org/resource/om-2/hour> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchPerHour> <http://www.ontology-of-units-of-measure.org/resource/om-2/hasNumerator> <http://www.ontology-of-units-of-measure.org/resource/om-2/inch-International> .
+<https://assist-iot.eu/ontologies/aiot_p2#inchPerHour> <http://www.w3.org/2000/01/rdf-schema#comment> "Inch per hour is a unit of speed defined as inch divided by hour."@en .
+<https://assist-iot.eu/ontologies/aiot_p2#inchPerHour> <http://www.w3.org/2000/01/rdf-schema#label> "inch per hour"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#measurement2D> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://assist-iot.eu/ontologies/aiot_p2#measurement2D> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://assist-iot.eu/ontologies/aiot_p2#LocationMeasurementType> .
+<https://assist-iot.eu/ontologies/aiot_p2#measurement2D> <http://www.w3.org/2000/01/rdf-schema#label> "2D location measurement"@en .
+<https://assist-iot.eu/ontologies/aiot_p2#measurement3D> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#NamedIndividual> .
+<https://assist-iot.eu/ontologies/aiot_p2#measurement3D> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://assist-iot.eu/ontologies/aiot_p2#LocationMeasurementType> .
+<https://assist-iot.eu/ontologies/aiot_p2#measurement3D> <http://www.w3.org/2000/01/rdf-schema#label> "3D location measurement"@en .

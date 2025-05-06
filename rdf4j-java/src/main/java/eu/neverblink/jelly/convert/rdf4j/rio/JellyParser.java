@@ -74,13 +74,13 @@ public final class JellyParser extends AbstractRDFParser {
             @Override
             public void handleQuad(Value subject, Value predicate, Value object, Value graph) {
                 rdfHandler.handleStatement(
-                    valueFactory.createStatement((Resource) subject, (IRI) predicate, object, (Resource) graph)
+                    converterFactory.decoderConverter().makeQuad(subject, predicate, object, graph)
                 );
             }
 
             @Override
             public void handleTriple(Value subject, Value predicate, Value object) {
-                rdfHandler.handleStatement(valueFactory.createStatement((Resource) subject, (IRI) predicate, object));
+                rdfHandler.handleStatement(converterFactory.decoderConverter().makeTriple(subject, predicate, object));
             }
         };
 

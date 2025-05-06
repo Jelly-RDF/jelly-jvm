@@ -115,13 +115,13 @@ public class LogicalStreamTypeUtils {
 
         TNode bNode = converter.makeBlankNode(UUID.randomUUID().toString());
         return List.of(
-            tripleEncoder.encode(subjectNode, converter.makeIriNode(STAX_PREFIX + "hasStreamTypeUsage"), bNode),
-            tripleEncoder.encode(
+            tripleEncoder.makeTriple(subjectNode, converter.makeIriNode(STAX_PREFIX + "hasStreamTypeUsage"), bNode),
+            tripleEncoder.makeTriple(
                 bNode,
                 converter.makeIriNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
                 converter.makeIriNode(STAX_PREFIX + "RdfStreamTypeUsage")
             ),
-            tripleEncoder.encode(
+            tripleEncoder.makeTriple(
                 bNode,
                 converter.makeIriNode(STAX_PREFIX + "hasStreamType"),
                 converter.makeIriNode(typeIri)

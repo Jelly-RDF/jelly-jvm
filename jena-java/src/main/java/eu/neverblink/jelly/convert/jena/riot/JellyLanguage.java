@@ -20,7 +20,7 @@ public final class JellyLanguage {
 
     static {
         // Force initialize the language before registering it
-        JELLY_LANGUAGE = LangBuilder.create(JELLY_NAME, JELLY_CONTENT_TYPE)
+        JELLY = LangBuilder.create(JELLY_NAME, JELLY_CONTENT_TYPE)
             .addAltNames("JELLY")
             .addFileExtensions(JELLY_FILE_EXTENSION)
             .build();
@@ -38,7 +38,7 @@ public final class JellyLanguage {
      * If you are not intending to use generalized RDF or RDF-star, you may want to use
      * JellyFormat.JELLY_SMALL_STRICT.
      */
-    public static final Lang JELLY_LANGUAGE;
+    public static final Lang JELLY;
 
     private static final String SYMBOL_NS = "https://neverblink.eu/jelly/riot/symbols#";
 
@@ -143,13 +143,13 @@ public final class JellyLanguage {
         isRegistered = true;
 
         // Register the language
-        RDFLanguages.register(JELLY_LANGUAGE);
+        RDFLanguages.register(JELLY);
 
         // Default serialization format
-        RDFWriterRegistry.register(JELLY_LANGUAGE, JellyFormat.JELLY_SMALL_ALL_FEATURES);
+        RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_ALL_FEATURES);
 
         // Register also the streaming writer
-        StreamRDFWriter.register(JELLY_LANGUAGE, JellyFormat.JELLY_SMALL_ALL_FEATURES);
+        StreamRDFWriter.register(JELLY, JellyFormat.JELLY_SMALL_ALL_FEATURES);
 
         // Register the writers
         final var allFormats = List.of(
@@ -170,7 +170,7 @@ public final class JellyLanguage {
         }
 
         // Register the parser factory
-        RDFParserRegistry.registerLangTriples(JELLY_LANGUAGE, new JellyReaderFactory());
-        RDFParserRegistry.registerLangQuads(JELLY_LANGUAGE, new JellyReaderFactory());
+        RDFParserRegistry.registerLangTriples(JELLY, new JellyReaderFactory());
+        RDFParserRegistry.registerLangQuads(JELLY, new JellyReaderFactory());
     }
 }

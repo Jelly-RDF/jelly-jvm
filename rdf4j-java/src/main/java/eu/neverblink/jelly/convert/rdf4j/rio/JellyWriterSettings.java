@@ -8,38 +8,37 @@ import org.eclipse.rdf4j.rio.helpers.ClassRioSetting;
 import org.eclipse.rdf4j.rio.helpers.IntegerRioSetting;
 import org.eclipse.rdf4j.rio.helpers.StringRioSetting;
 
-public final class JellyWriterSettings {
+public final class JellyWriterSettings extends WriterConfig {
 
     private JellyWriterSettings() {}
 
-    public static WriterConfig from(int frameSize) {
-        return from(frameSize, false);
+    public static JellyWriterSettings empty() {
+        return new JellyWriterSettings();
     }
 
-    public static WriterConfig from(int frameSize, boolean enableNamespaceDeclarations) {
-        WriterConfig config = new WriterConfig();
-        config.set(FRAME_SIZE, frameSize);
-        config.set(ENABLE_NAMESPACE_DECLARATIONS, enableNamespaceDeclarations);
-        return config;
+    public JellyWriterSettings setFrameSize(int frameSize) {
+        this.set(FRAME_SIZE, frameSize);
+        return this;
     }
 
-    public static WriterConfig from(
-        RdfStreamOptions options,
-        int frameSize,
-        boolean enableNamespaceDeclarations,
-        boolean delimited
-    ) {
-        WriterConfig config = new WriterConfig();
-        config.set(FRAME_SIZE, frameSize);
-        config.set(ENABLE_NAMESPACE_DECLARATIONS, enableNamespaceDeclarations);
-        config.set(DELIMITED_OUTPUT, delimited);
-        config.set(STREAM_NAME, options.getStreamName());
-        config.set(PHYSICAL_TYPE, options.getPhysicalType());
-        config.set(ALLOW_RDF_STAR, options.getRdfStar());
-        config.set(MAX_NAME_TABLE_SIZE, options.getMaxNameTableSize());
-        config.set(MAX_PREFIX_TABLE_SIZE, options.getMaxPrefixTableSize());
-        config.set(MAX_DATATYPE_TABLE_SIZE, options.getMaxDatatypeTableSize());
-        return config;
+    public JellyWriterSettings setEnableNamespaceDeclarations(boolean enableNamespaceDeclarations) {
+        this.set(ENABLE_NAMESPACE_DECLARATIONS, enableNamespaceDeclarations);
+        return this;
+    }
+
+    public JellyWriterSettings setDelimitedOutput(boolean delimited) {
+        this.set(DELIMITED_OUTPUT, delimited);
+        return this;
+    }
+
+    public JellyWriterSettings setJellyOptions(RdfStreamOptions options) {
+        this.set(STREAM_NAME, options.getStreamName());
+        this.set(PHYSICAL_TYPE, options.getPhysicalType());
+        this.set(ALLOW_RDF_STAR, options.getRdfStar());
+        this.set(MAX_NAME_TABLE_SIZE, options.getMaxNameTableSize());
+        this.set(MAX_PREFIX_TABLE_SIZE, options.getMaxPrefixTableSize());
+        this.set(MAX_DATATYPE_TABLE_SIZE, options.getMaxDatatypeTableSize());
+        return this;
     }
 
     public static final IntegerRioSetting FRAME_SIZE = new IntegerRioSetting(
