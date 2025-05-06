@@ -16,6 +16,7 @@ object PatchTestCases:
     ("a triple patch", Triples1, PatchStatementType.TRIPLES),
     ("a triple patch with namespace declarations", Triples2NsDecl, PatchStatementType.TRIPLES),
     ("a quad patch", Quads1, PatchStatementType.QUADS),
+    ("a quad patch with generalized namespace declarations", Quads2NsDeclOnly, PatchStatementType.QUADS),
     ("nonsensical transaction commands", MalformedTransactions, PatchStatementType.TRIPLES),
   )
 
@@ -189,7 +190,8 @@ object PatchTestCases:
     val mrl = Seq(
       TxStart,
       Add(NsDecl("test", Iri("https://test.org/test/"), Iri("https://test.org/test/"))),
-      Add(NsDecl("test", Iri("https://test.org/test/"))),
+      Add(NsDecl("test", Iri("https://test.org/test/"), DefaultGraphNode())),
+      Add(NsDecl("test2", Iri("https://test.org/test/"), DefaultGraphNode())),
       Add(Quad(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -229,7 +231,8 @@ object PatchTestCases:
         SimpleLiteral("test"),
       )),
       Delete(NsDecl("test", null, Iri("https://test.org/test/"))),
-      Delete(NsDecl("test")),
+      Delete(NsDecl("test", null, DefaultGraphNode())),
+      Delete(NsDecl("test2", null, DefaultGraphNode())),
       TxAbort,
     )
 
@@ -238,8 +241,9 @@ object PatchTestCases:
       rdfPatchRow(rdfPatchTransactionStart()),
       rdfPatchRow(rdfPrefixEntry(0, "https://test.org/test/")),
       rdfPatchRow(rdfNameEntry(0, "")),
-      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(1, 0), rdfIri(0, 1))),
-      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(0, 1))),
+      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(1, 0)).setGIri(rdfIri(0, 1))),
+      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(0, 1)).setGDefaultGraph(rdfDefaultGraph())),
+      rdfPatchRowAdd(rdfPatchNamespace("test2", rdfIri(0, 1))),
       rdfPatchRow(rdfNameEntry(0, "subject")),
       rdfPatchRow(rdfNameEntry(0, "predicate")),
       rdfPatchRow(rdfPrefixEntry(0, "https://test.org/ns3/")),
@@ -282,9 +286,61 @@ object PatchTestCases:
         null,
         rdfLiteral("test"),
       )),
-      rdfPatchRowDelete(rdfPatchNamespace("test", null, rdfIri(1, 1))),
-      rdfPatchRowDelete(rdfPatchNamespace("test", null, null)),
+      rdfPatchRowDelete(rdfPatchNamespace("test", null).setGIri(rdfIri(1, 1))),
+      rdfPatchRowDelete(rdfPatchNamespace("test", null).setGDefaultGraph(rdfDefaultGraph())),
+      rdfPatchRowDelete(rdfPatchNamespace("test2", null)),
       rdfPatchRow(rdfPatchTransactionAbort()),
+    )
+
+  /**
+   * Tests for edge cases with namespace declarations in QUADS streams.
+   */
+  object Quads2NsDeclOnly extends PatchTestCase:
+    val mrl = Seq(
+      Add(NsDecl("test", Iri("https://test.org/test/"), DefaultGraphNode())),
+      Add(NsDecl("test", Iri("https://test.org/test/"), Iri("https://test.org/test/"))),
+      Add(NsDecl("test2", Iri("https://test.org/test/"), BlankNode("b1"))),
+      Add(Quad(
+        Iri("https://test.org/test/"),
+        Iri("https://test.org/test/"),
+        Iri("https://test.org/test/"),
+        BlankNode("b1"),
+      )),
+      Delete(NsDecl("test2", Iri("https://test.org/test/"), BlankNode("b1"))),
+      Add(NsDecl("test7", Iri("https://test.org/test7/"), LangLiteral("test", "en-gb"))),
+      Delete(NsDecl(
+        "test7",
+        Iri("https://test.org/test7/"),
+        DtLiteral("test", Datatype("https://test.org/test7/"))
+      )),
+      Delete(NsDecl(
+        "test7",
+        null,
+        DtLiteral("test", Datatype("https://test.org/test7/"))
+      )),
+    )
+
+    override def encoded(opt: RdfPatchOptions): Seq[RdfPatchRow] = Seq(
+      rdfPatchRow(opt),
+      rdfPatchRow(rdfPrefixEntry(0, "https://test.org/test/")),
+      rdfPatchRow(rdfNameEntry(0, "")),
+      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(1, 0)).setGDefaultGraph(rdfDefaultGraph())),
+      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(0, 1)).setGIri(rdfIri(0, 1))),
+      rdfPatchRowAdd(rdfPatchNamespace("test2", rdfIri(0, 1)).setGBnode("b1")),
+      rdfPatchRowAdd(rdfQuad(
+        rdfIri(0, 1),
+        rdfIri(0, 1),
+        rdfIri(0, 1),
+        null,
+      )),
+      rdfPatchRowDelete(rdfPatchNamespace("test2", rdfIri(0, 1))),
+      rdfPatchRow(rdfPrefixEntry(0, "https://test.org/test7/")),
+      rdfPatchRowAdd(rdfPatchNamespace("test7", rdfIri(2, 1)).setGLiteral(rdfLiteral("test", "en-gb"))),
+      rdfPatchRow(rdfDatatypeEntry(0, "https://test.org/test7/")),
+      rdfPatchRowDelete(rdfPatchNamespace(
+        "test7", rdfIri(0, 1)
+      ).setGLiteral(rdfLiteral("test", 1))),
+      rdfPatchRowDelete(rdfPatchNamespace("test7", null)),
     )
 
   /**

@@ -18,8 +18,6 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         OBJECT,
         GRAPH,
         NAMESPACE,
-        // Temporary. TODO: remove
-        NAMESPACE_GRAPH,
         HEADER,
     }
 
@@ -33,7 +31,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected SpoTerm currentTerm = SpoTerm.SUBJECT;
     private SpoBase.Setters currentSpoBase = null;
-    private GraphBase.Setters currentGraphBase = null;
+    protected GraphBase.Setters currentGraphBase = null;
     protected NsBase.Setters currentNsBase = null;
     protected HeaderBase.Setters currentHeaderBase = null;
 
@@ -103,7 +101,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         }
     }
 
-    private void graphNodeToProtoWrapped(TNode node) {
+    protected final void graphNodeToProtoWrapped(TNode node) {
         // Graph nodes may be null in Jena for example... so we need to handle that.
         if ((node != null || lastGraph != null) && (node == null || !node.equals(lastGraph))) {
             lastGraph = node;
@@ -120,7 +118,6 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
             case OBJECT -> currentSpoBase.setOIri(iri);
             case GRAPH -> currentGraphBase.setGIri(iri);
             case NAMESPACE -> currentNsBase.setValue(iri);
-            case NAMESPACE_GRAPH -> currentNsBase.setGraph(iri);
             case HEADER -> currentHeaderBase.setHIri(iri);
         }
     }

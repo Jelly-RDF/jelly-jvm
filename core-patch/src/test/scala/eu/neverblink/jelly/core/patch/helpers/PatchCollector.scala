@@ -35,10 +35,10 @@ final class PatchCollector extends AnyPatchHandler[Mrl.Node]:
     statements += Mpl.TxAbort
 
   def addNamespace(name: String, iriValue: Mrl.Node, graph: Mrl.Node): Unit =
-    statements += Mpl.Add(Mpl.NsDecl(name, iriValue.asInstanceOf[Mrl.Iri], graph.asInstanceOf[Mrl.Iri]))
+    statements += Mpl.Add(Mpl.NsDecl(name, iriValue.asInstanceOf[Mrl.Iri], graph))
 
   def deleteNamespace(name: String, iriValue: Mrl.Node, graph: Mrl.Node): Unit =
-    statements += Mpl.Delete(Mpl.NsDecl(name, iriValue.asInstanceOf[Mrl.Iri], graph.asInstanceOf[Mrl.Iri]))
+    statements += Mpl.Delete(Mpl.NsDecl(name, iriValue.asInstanceOf[Mrl.Iri], graph))
 
   def header(key: String, value: Mrl.Node): Unit =
     statements += Mpl.Header(key, value)

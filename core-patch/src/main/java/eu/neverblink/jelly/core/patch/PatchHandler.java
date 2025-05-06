@@ -29,7 +29,8 @@ public interface PatchHandler<TNode> {
      *
      * @param name     the name of the namespace (without the trailing colon, required)
      * @param iriValue the IRI value of the namespace (required)
-     * @param graph    the named graph to which the namespace belongs (optional)
+     * @param graph    the named graph to which the namespace belongs
+     *                 (required in QUADS streams, always null in TRIPLES streams)
      */
     void addNamespace(String name, TNode iriValue, TNode graph);
 
@@ -39,7 +40,8 @@ public interface PatchHandler<TNode> {
      *
      * @param name     the name of the namespace (without the trailing colon, required)
      * @param iriValue the IRI value of the namespace (optional)
-     * @param graph    the named graph to which the namespace belongs (optional)
+     * @param graph    the graph to which the namespace belongs
+     *                 (required in QUADS streams, always null in TRIPLES streams)
      */
     void deleteNamespace(String name, TNode iriValue, TNode graph);
 

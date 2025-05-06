@@ -7,7 +7,7 @@ import eu.neverblink.jelly.core.patch.PatchHandler.AnyPatchHandler
  * "Mpl" stands for "mock RDF patch library".
  */
 object Mpl:
-  final case class NsDecl(prefix: String, iri: Iri = null, graph: Iri = null)
+  final case class NsDecl(prefix: String, iri: Iri = null, graph: Node = null)
   
   sealed trait PatchStatement:
     /**

@@ -8,7 +8,7 @@ public class JellyPatchConstants {
     private JellyPatchConstants() {}
 
     public static final String JELLY_PATCH_NAME = "Jelly-Patch";
-    public static final String JELLY_PATCH_FILE_EXTENSION = "jelly-patch";
+    public static final String JELLY_PATCH_FILE_EXTENSION = "jellyp";
     public static final String JELLY_PATCH_CONTENT_TYPE = "application/x-jelly-rdf-patch";
 
     public static final int PROTO_VERSION_1_0_X = 1;
