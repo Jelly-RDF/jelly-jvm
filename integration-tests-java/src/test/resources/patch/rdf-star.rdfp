@@ -1,0 +1,26 @@
+# Devious test cases with RDF-star
+
+TX .
+A << <http://example/s> <http://example/p> <http://example/o> >> <http://example/q> <http://example/z> .
+A <http://example/x> <http://example/p> << <http://example/s> <http://example/p> <http://example/o> >> .
+TC .
+
+TX .
+D << <http://example/s1> <http://example/p1> <http://example/o1> >> <http://example/q> << <http://example/s2> <http://example/p2> <http://example/o2> >> .
+
+D <http://example/s> <http://example/p> <http://example/o> .
+A << <http://example/s> <http://example/p> <http://example/o> >> <http://example/r> <http://example/z> .
+D << << <http://example/s> <http://example/p> <http://example/o> >> <http://example/r> <http://example/z> >> <http://example/q> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+TA .
+
+TX .
+A <http://example/s> <http://example/p> <http://example/o> .
+A <http://example/a> <http://example/q> << <http://example/s> <http://example/p> <http://example/o> >> .
+A << <http://example/a> <http://example/q> << <http://example/s> <http://example/p> <http://example/o> >> >> <http://example/r> <http://example/z> .
+
+D _:b0 <http://example/p> <http://example/o> .
+D << _:b0 <http://example/p> <http://example/o> >> <http://example/q> "ABC" .
+
+D <http://example/s> <http://example/p> _:b1 .
+D << <http://example/s> <http://example/p> _:b1 >> <http://example/q> "456"^^<http://www.w3.org/2001/XMLSchema#integer> .
+TC .

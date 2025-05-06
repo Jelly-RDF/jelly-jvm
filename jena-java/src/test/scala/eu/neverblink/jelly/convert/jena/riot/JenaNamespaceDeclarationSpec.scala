@@ -52,13 +52,13 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       val out = new ByteArrayOutputStream()
       RDFWriter
         .source(m)
-        .lang(JellyLanguage.JELLY_LANGUAGE)
+        .lang(JellyLanguage.JELLY)
         .set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, true)
         .output(out)
 
       checkDeclarations(out, true)
       val m2 = ModelFactory.createDefaultModel()
-      RDFDataMgr.read(m2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY_LANGUAGE)
+      RDFDataMgr.read(m2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY)
       m2.getNsPrefixMap should be (m.getNsPrefixMap)
     }
 
@@ -66,14 +66,14 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       val out = new ByteArrayOutputStream()
       RDFWriter
         .source(m)
-        .lang(JellyLanguage.JELLY_LANGUAGE)
+        .lang(JellyLanguage.JELLY)
         // Default is false
         // .set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, false)
         .output(out)
 
       checkDeclarations(out, false)
       val m2 = ModelFactory.createDefaultModel()
-      RDFDataMgr.read(m2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY_LANGUAGE)
+      RDFDataMgr.read(m2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY)
       m2.getNsPrefixMap should be (java.util.Map.of())
     }
   }
@@ -83,13 +83,13 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       val out = new ByteArrayOutputStream()
       RDFWriter
         .source(ds)
-        .lang(JellyLanguage.JELLY_LANGUAGE)
+        .lang(JellyLanguage.JELLY)
         .set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, true)
         .output(out)
 
       checkDeclarations(out, true)
       val ds2 = DatasetGraphFactory.create()
-      RDFDataMgr.read(ds2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY_LANGUAGE)
+      RDFDataMgr.read(ds2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY)
       ds2.prefixes().getMapping should be (ds.prefixes().getMapping)
     }
 
@@ -97,14 +97,14 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       val out = new ByteArrayOutputStream()
       RDFWriter
         .source(ds)
-        .lang(JellyLanguage.JELLY_LANGUAGE)
+        .lang(JellyLanguage.JELLY)
         // Default is false
         // .set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, false)
         .output(out)
 
       checkDeclarations(out, false)
       val ds2 = DatasetGraphFactory.create()
-      RDFDataMgr.read(ds2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY_LANGUAGE)
+      RDFDataMgr.read(ds2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY)
       ds2.prefixes().getMapping should be (java.util.Map.of())
     }
   }
@@ -114,7 +114,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       val out = new ByteArrayOutputStream()
       val writer = StreamRDFWriter.getWriterStream(
         out,
-        JellyLanguage.JELLY_LANGUAGE,
+        JellyLanguage.JELLY,
         RIOT.getContext.copy().set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, true)
       )
       writer.start()
@@ -130,7 +130,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       val out = new ByteArrayOutputStream()
       val writer = StreamRDFWriter.getWriterStream(
         out,
-        JellyLanguage.JELLY_LANGUAGE,
+        JellyLanguage.JELLY,
         RIOT.getContext.copy().set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, true)
       )
       writer.start()
@@ -146,7 +146,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       val out = new ByteArrayOutputStream()
       val writer = StreamRDFWriter.getWriterStream(
         out,
-        JellyLanguage.JELLY_LANGUAGE,
+        JellyLanguage.JELLY,
         // default is false
         RIOT.getContext.copy() // .set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, false)
       )

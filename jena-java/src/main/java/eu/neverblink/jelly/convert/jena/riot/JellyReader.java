@@ -47,12 +47,12 @@ public final class JellyReader implements ReaderRIOT {
 
             @Override
             public void handleTriple(Node subject, Node predicate, Node object) {
-                output.triple(Triple.create(subject, predicate, object));
+                output.triple(converterFactory.decoderConverter().makeTriple(subject, predicate, object));
             }
 
             @Override
             public void handleQuad(Node subject, Node predicate, Node object, Node graph) {
-                output.quad(Quad.create(subject, predicate, object, graph));
+                output.quad(converterFactory.decoderConverter().makeQuad(subject, predicate, object, graph));
             }
         };
 

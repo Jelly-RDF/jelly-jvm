@@ -19,14 +19,14 @@ public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value> {
             final var lang = literal.getLanguage();
             if (lang.isPresent()) {
                 encoder.makeLangLiteral(literal, lex, lang.get());
+            } else {
+                final var dt = literal.getDatatype();
+                if (dt != XSD.STRING) {
+                    encoder.makeDtLiteral(literal, lex, dt.stringValue());
+                } else {
+                    encoder.makeSimpleLiteral(lex);
+                }
             }
-
-            final var dt = literal.getDatatype();
-            if (dt != XSD.STRING) {
-                encoder.makeDtLiteral(literal, lex, dt.stringValue());
-            }
-
-            encoder.makeSimpleLiteral(lex);
         } else if (value instanceof Triple triple) {
             encoder.makeQuotedTriple(triple.getSubject(), triple.getPredicate(), triple.getObject());
         } else {
@@ -45,14 +45,14 @@ public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value> {
             final var lang = literal.getLanguage();
             if (lang.isPresent()) {
                 encoder.makeLangLiteral(literal, lex, lang.get());
+            } else {
+                final var dt = literal.getDatatype();
+                if (dt != XSD.STRING) {
+                    encoder.makeDtLiteral(literal, lex, dt.stringValue());
+                } else {
+                    encoder.makeSimpleLiteral(lex);
+                }
             }
-
-            final var dt = literal.getDatatype();
-            if (dt != XSD.STRING) {
-                encoder.makeDtLiteral(literal, lex, dt.stringValue());
-            }
-
-            encoder.makeSimpleLiteral(lex);
         } else if (value == null) {
             encoder.makeDefaultGraph();
         } else {

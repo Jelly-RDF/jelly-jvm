@@ -38,7 +38,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
           val out = new OutputStream {
             override def write(b: Int): Unit = mutations += 1
           }
-          val writer = writerFactory(JellyFormatVariant(), out)
+          val writer = writerFactory(JellyFormatVariant.getDefault, out)
           op match
             case "start" => writer.start()
             case "base" => writer.base("http://example.com")
@@ -48,7 +48,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
 
       "write delimited frames by default" in {
         val out = new ByteArrayOutputStream()
-        val writer = writerFactory(JellyFormatVariant(), out)
+        val writer = writerFactory(JellyFormatVariant.getDefault, out)
         writer.start()
         writer.triple(testTriple)
         writer.finish()
@@ -61,7 +61,11 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
       "write non-delimited frames if requested" in {
         val out = new ByteArrayOutputStream()
         val writer = writerFactory(
-          JellyFormatVariant(false, false, 256),
+          JellyFormatVariant.builder
+            .isDelimited(false)
+            .enableNamespaceDeclarations(false)
+            .frameSize(256)
+            .build(),
           out
         )
         writer.start()
@@ -75,7 +79,14 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
 
       "split stream in multiple frames if it's delimited" in {
         val out = new ByteArrayOutputStream()
-        val writer = writerFactory(JellyFormatVariant(false, true, 1), out)
+        val writer = writerFactory(
+          JellyFormatVariant.builder
+            .isDelimited(true)
+            .enableNamespaceDeclarations(false)
+            .frameSize(1)
+            .build(),
+          out
+        )
         writer.start()
         for _ <- 1 to 100 do
           writer.triple(testTriple)
@@ -91,7 +102,14 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
 
       "not split stream into multiple frames if it's non-delimited" in {
         val out = new ByteArrayOutputStream()
-        val writer = writerFactory(JellyFormatVariant(false, false, 1), out)
+        val writer = writerFactory(
+          JellyFormatVariant.builder
+            .isDelimited(false)
+            .enableNamespaceDeclarations(false)
+            .frameSize(256)
+            .build(),
+          out
+        )
         writer.start()
         for _ <- 1 to 10_000 do
           writer.triple(testTriple)
@@ -109,7 +127,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
       val out = new OutputStream {
         override def write(b: Int): Unit = fail("Should not write anything")
       }
-      val writer = JellyStreamWriterAutodetectType(converterFactory, JellyFormatVariant(), out)
+      val writer = JellyStreamWriterAutodetectType(converterFactory, JellyFormatVariant.getDefault, out)
       writer.finish()
     }
   }
@@ -122,7 +140,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
   for (writerName, writerFactory) <- classicWriters do
     f"$writerName" should {
       "throw an exception when writing to a Java Writer" in {
-        val writer = writerFactory(JellyFormatVariant())
+        val writer = writerFactory(JellyFormatVariant.getDefault)
         val javaWriter = NullWriter.INSTANCE
         intercept[RiotException] {
           writer match
@@ -132,9 +150,9 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
       }
 
       ".getLang return JellyLanguage.JELLY" in {
-        val writer = writerFactory(JellyFormatVariant())
+        val writer = writerFactory(JellyFormatVariant.getDefault)
         writer match
-          case graphWriter: JellyGraphWriter => graphWriter.getLang should be (JellyLanguage.JELLY_LANGUAGE)
-          case datasetWriter: JellyDatasetWriter => datasetWriter.getLang should be (JellyLanguage.JELLY_LANGUAGE)
+          case graphWriter: JellyGraphWriter => graphWriter.getLang should be (JellyLanguage.JELLY)
+          case datasetWriter: JellyDatasetWriter => datasetWriter.getLang should be (JellyLanguage.JELLY)
       }
     }

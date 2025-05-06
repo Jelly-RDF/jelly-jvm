@@ -72,7 +72,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
       do
         f"write a header with the $presetName preset set in the context, NS declarations $enableNsDecls" in {
           val os = new ByteArrayOutputStream()
-          val format = RDFFormat(JellyLanguage.JELLY_LANGUAGE)
+          val format = RDFFormat(JellyLanguage.JELLY)
           val ctx = new Context()
           ctx.set(JellyLanguage.SYMBOL_PRESET, presetName)
           enableNsDecls.foreach(ctx.set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, _))
@@ -105,7 +105,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
 
       "apply the `delimited` parameter set to false" in {
         val os = new ByteArrayOutputStream()
-        val format = RDFFormat(JellyLanguage.JELLY_LANGUAGE)
+        val format = RDFFormat(JellyLanguage.JELLY)
         val ctx = new Context()
         ctx.set(JellyLanguage.SYMBOL_DELIMITED_OUTPUT, false)
         factory(format, ctx, os)

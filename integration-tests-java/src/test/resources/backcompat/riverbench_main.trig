@@ -1,0 +1,16 @@
+@prefix dcat:    <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix eurovoc: <http://eurovoc.europa.eu/> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix rb:      <https://w3id.org/riverbench/schema/metadata#> .
+
+<https://w3id.org/riverbench/>
+        a                    rb:RiverBench , dcat:Catalog;
+        dcterms:description  "RiverBench – open, community-driven RDF streaming benchmark suite."@en;
+        dcterms:rights       "The metadata, documentation, and ontologies of RiverBench are licensed under the [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/) license. The source code of RiverBench is licensed under the [Apache License, Version 2.0](https://spdx.org/licenses/Apache-2.0). The included datasets are licensed under their respective free licenses, listed in their documentation pages."@en;
+        dcterms:title        "RiverBench"@en;
+        dcat:dataset         <https://w3id.org/riverbench/datasets/linked-spending/dev> , <https://w3id.org/riverbench/datasets/openaire-lod/dev> , <https://w3id.org/riverbench/datasets/nanopubs/dev> , <https://w3id.org/riverbench/datasets/dbpedia-live/dev> , <https://w3id.org/riverbench/datasets/muziekweb/dev> , <https://w3id.org/riverbench/datasets/yago-annotated-facts/dev> , <https://w3id.org/riverbench/datasets/lod-katrina/dev> , <https://w3id.org/riverbench/datasets/digital-agenda-indicators/dev> , <https://w3id.org/riverbench/datasets/citypulse-traffic-graphs/dev> , <https://w3id.org/riverbench/datasets/assist-iot-weather-graphs/dev> , <https://w3id.org/riverbench/datasets/assist-iot-weather/dev> , <https://w3id.org/riverbench/datasets/politiquices/dev> , <https://w3id.org/riverbench/datasets/citypulse-traffic/dev>;
+        dcat:themeTaxonomy   eurovoc:100141;
+        foaf:homepage        <https://w3id.org/riverbench/>;
+        rb:hasCategory       <https://w3id.org/riverbench/v/dev/categories/stream> , <https://w3id.org/riverbench/v/dev/categories/flat>;
+        rb:hasVersion        "dev" .
