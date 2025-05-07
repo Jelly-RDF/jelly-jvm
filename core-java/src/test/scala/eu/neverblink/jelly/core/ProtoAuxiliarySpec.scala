@@ -1,11 +1,13 @@
 package eu.neverblink.jelly.core
 
-import com.google.protobuf.{ByteString, Descriptors}
+import com.google.protobuf.{ByteString, Descriptors, TextFormat}
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.proto.google.v1 as google
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import scala.jdk.CollectionConverters.*
 
 /**
  * Tests for some auxiliary methods (e.g., Text Format serialization) of the generated Protobuf messages.
@@ -52,22 +54,6 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
     }
 
   "RdfStreamFrame" should {
-    // TODO: restore functionality
-//    "serialize to string with toProtoString" when {
-//      for ((name, tc) <- testCases) do s"test case $name" in {
-//        val str = tc.toProtoString
-//        str should not be empty
-//      }
-//    }
-//
-//    "deserialize from string with fromAscii" when {
-//      for ((name, tc) <- testCases) do s"test case $name" in {
-//        val str = tc.toProtoString
-//        val frame = RdfStreamFrame.fromAscii(str)
-//        frame should be(tc)
-//      }
-//    }
-
     // This case is mostly here to test metadata serialization/deserialization
     // in a round-trip setting.
     "round-trip with non-delimited bytes" when {
@@ -114,5 +100,53 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
         RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
       }
       exception.getMessage should include("depth exceeded: 65")
+    }
+  }
+
+  // Tests for the core-protos-google module
+  "proto.google.v1.RdfStreamFrame" should {
+    "round-trip with non-delimited bytes" when {
+      for ((name, tc) <- testCases) do s"test case $name" in {
+        val bytes = tc.toByteArray
+        val gFrame = google.RdfStreamFrame.parseFrom(bytes)
+        val gBytes = gFrame.toByteArray
+        val frame = RdfStreamFrame.parseFrom(gBytes)
+        frame should be(tc)
+      }
+    }
+
+    "round-trip with delimited bytes" when {
+      for ((name, tc) <- testCases) do s"test case $name" in {
+        val os = new ByteArrayOutputStream()
+        tc.writeDelimitedTo(os)
+        val bytes = os.toByteArray
+        val gFrame = google.RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
+        val gOs = ByteArrayOutputStream()
+        gFrame.writeDelimitedTo(gOs)
+        val frame = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(gOs.toByteArray))
+        frame should be(tc)
+      }
+    }
+
+    "round-trip the message in Text Format" when {
+      for ((name, tc) <- testCases) do s"test case $name" in {
+        val bytes = tc.toByteArray
+        bytes should not be empty
+        val gFrame = google.RdfStreamFrame.parseFrom(bytes)
+        val text = gFrame.toString
+        text should not be empty
+        val gFrame2 = TextFormat.parse(text, classOf[google.RdfStreamFrame])
+        gFrame2 should be(gFrame)
+        val bytes2 = gFrame2.toByteArray
+        bytes2 should not be empty
+        val frame = RdfStreamFrame.parseFrom(bytes2)
+
+        // Compare rows directly -- they must be kept in order
+        frame.getRows should be(tc.getRows)
+        // However, maps are not guaranteed to be in order, so we first sort it
+        frame.getMetadata.asScala.sortBy(_.getKey) should be(
+          tc.getMetadata.asScala.sortBy(_.getKey)
+        )
+      }
     }
   }

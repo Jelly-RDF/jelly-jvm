@@ -248,7 +248,7 @@ lazy val coreJava = (project in file("core-java"))
   )
   .dependsOn(
     // Test-time dependency on Google protos for ProtoAuxiliarySpec
-    coreProtosGoogle % "compile->test"
+    coreProtosGoogle % "compile->test",
   )
 
 lazy val coreProtosGoogle = (project in file("core-protos-google"))
@@ -261,9 +261,8 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
       "that is only available with the more heavyweight, Google-style proto classes, like " +
       "support for the Protobuf Text Format.",
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
-    prepareGoogleProtos := {
-      doPrepareGoogleProtos(baseDirectory.value)
-    },
+    prepareGoogleProtos := { doPrepareGoogleProtos(baseDirectory.value) },
+    Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
     publishArtifact := false, // TODO: remove this when ready
@@ -292,7 +291,11 @@ lazy val corePatch = (project in file("core-patch"))
     publishArtifact := false, // TODO: remove this when ready
     commonSettings,
   )
-  .dependsOn(coreJava % "compile->compile;test->test")
+  .dependsOn(
+    coreJava % "compile->compile;test->test",
+    // Test-time dependency on Google protos for PatchProtoSpec
+    corePatchProtosGoogle % "compile->test",
+  )
 
 lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
   .enablePlugins(ProtobufPlugin)
@@ -304,9 +307,8 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
       "that is only available with the more heavyweight, Google-style proto classes, like " +
       "support for the Protobuf Text Format.",
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
-    prepareGoogleProtos := {
-      doPrepareGoogleProtos(baseDirectory.value)
-    },
+    prepareGoogleProtos := { doPrepareGoogleProtos(baseDirectory.value) },
+    Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "patch.proto"),
     publishArtifact := false, // TODO: remove this when ready
