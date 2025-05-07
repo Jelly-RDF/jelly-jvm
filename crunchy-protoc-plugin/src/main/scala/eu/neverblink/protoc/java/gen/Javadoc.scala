@@ -82,7 +82,7 @@ object Javadoc:
   private def forType(name: String, info: RequestInfo.TypeInfo) =
     withComments(info.sourceLocation)
       .add("Protobuf $L {@code $T}", name, info.typeName)
-      .add("\nDO NOT INHERIT FROM THIS CLASS!\n" +
+      .add("\nDo not inherit from this class!\n" +
         "It's not <code>final</code> only to facilitate the Mutable nested subclass."
       )
       .build
