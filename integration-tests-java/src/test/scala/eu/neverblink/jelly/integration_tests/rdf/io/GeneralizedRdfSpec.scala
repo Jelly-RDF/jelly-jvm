@@ -159,7 +159,6 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
 //    parsingFailureTests(Rdf4jReactiveSerDes(), boxed = true)
 //  }
 
-  // TODO: re-enable when the Titanium module is available
-//  "Titanium implementation" should {
-//    parsingFailureTests(TitaniumSerDes)
-//  }
+  "Titanium implementation" should {
+    parsingFailureTests(TitaniumSerDes)
+  }
