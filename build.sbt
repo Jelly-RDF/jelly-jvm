@@ -436,6 +436,23 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   )
   .dependsOn(core)
 
+lazy val titaniumRdfApiJava = (project in file("titanium-rdf-api-java"))
+  .settings(
+    name := "jelly-titanium-rdf-api-java",
+    organization := "eu.neverblink.jelly",
+    description := "Implementation of the Titanium RDF API for Jelly-JVM. " +
+      "See: https://github.com/filip26/titanium-rdf-api \n\n" +
+      "If you are already using RDF4J or Jena, it's recommended to use their dedicated " +
+      "integration modules instead of this one for better performance and more features." +
+      "\n\n This is the Java version of the Titanium RDF API adapter.",
+    libraryDependencies ++= Seq(
+      "com.apicatalog" % "titanium-rdf-api" % titaniumApiV,
+    ),
+    publishArtifact := false, // TODO: remove this when ready
+    commonSettings,
+  )
+  .dependsOn(coreJava)
+
 lazy val stream = (project in file("stream"))
   .settings(
     name := "jelly-stream",
