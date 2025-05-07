@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.patch
 
+import com.google.protobuf.Descriptors
 import eu.neverblink.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -55,6 +56,24 @@ class PatchProtoSpec extends AnyWordSpec, Matchers:
       rdfPatchFrame(tcs.flatMap(_._2.getRows.asScala))
     )
   }
+
+  val descriptors: Array[(String, Descriptors.Descriptor)] = classOf[Patch].getDeclaredFields
+    .filter(_.getType == classOf[com.google.protobuf.Descriptors.Descriptor])
+    .map(f => {
+      f.setAccessible(true); f
+    })
+    .map(f => (
+      f.getName,
+      f.get(null).asInstanceOf[com.google.protobuf.Descriptors.Descriptor]
+    ))
+
+  for ((name, descriptor) <- descriptors) do
+    s"message descriptor $name" should {
+      "have the correct name" in {
+        val expectedName = name.replace("_descriptor", "").split("_").last
+        descriptor.getName should be(expectedName)
+      }
+    }
 
   "RdfPatchFrame" should {
     "round-trip in non-delimited binary form" when {

@@ -151,7 +151,6 @@ lazy val crunchyProtocPlugin = (project in file("crunchy-protoc-plugin"))
       script.setExecutable(true)
       Seq(script)
     }.dependsOn(Compile / compile).value,
-    generatePluginRunScript := generatePluginRunScript.dependsOn(Compile / compile).value,
     publishArtifact := false,
   )
 
@@ -247,6 +246,10 @@ lazy val coreJava = (project in file("core-java"))
     publishArtifact := false, // TODO: remove this when ready
     commonSettings,
   )
+  .dependsOn(
+    // Test-time dependency on Google protos for ProtoAuxiliarySpec
+    coreProtosGoogle % "compile->test"
+  )
 
 lazy val coreProtosGoogle = (project in file("core-protos-google"))
   .enablePlugins(ProtobufPlugin)
@@ -261,7 +264,7 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
     prepareGoogleProtos := {
       doPrepareGoogleProtos(baseDirectory.value)
     },
-    Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
+    ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
     publishArtifact := false, // TODO: remove this when ready
   )
@@ -304,7 +307,7 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
     prepareGoogleProtos := {
       doPrepareGoogleProtos(baseDirectory.value)
     },
-    Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
+    ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "patch.proto"),
     publishArtifact := false, // TODO: remove this when ready
   ).dependsOn(coreProtosGoogle)
