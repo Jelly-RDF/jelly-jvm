@@ -333,6 +333,10 @@ class MessageGenerator(val info: MessageInfo):
 
   private def generateParseFrom(t: TypeSpec.Builder): Unit =
     t.addMethod(MethodSpec.methodBuilder("parseFrom")
+      .addJavadoc(
+        "Parse this message in NON-delimited form from a byte array.\n" +
+        "This assumes that the message spans the entire array."
+      )
       .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
       .addException(RuntimeClasses.InvalidProtocolBufferException)
       .addParameter(classOf[Array[Byte]], "data", Modifier.FINAL)
@@ -341,6 +345,11 @@ class MessageGenerator(val info: MessageInfo):
       .build
     )
     t.addMethod(MethodSpec.methodBuilder("parseFrom")
+      .addJavadoc(
+        "Parse this message in NON-delimited form from a {@link $T}.\n" +
+        "This assumes that the message spans the entire input stream.",
+        RuntimeClasses.LimitedCodedInputStream
+      )
       .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
       .addException(classOf[IOException])
       .addParameter(RuntimeClasses.LimitedCodedInputStream, "input", Modifier.FINAL)
@@ -349,6 +358,11 @@ class MessageGenerator(val info: MessageInfo):
       .build
     )
     t.addMethod(MethodSpec.methodBuilder("parseFrom")
+      .addJavadoc(
+        "Parse this message in NON-delimited form from a Java {@link $T}.\n" +
+        "This assumes that the message spans the entire input stream.",
+        classOf[java.io.InputStream]
+      )
       .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
       .addException(classOf[IOException])
       .addParameter(classOf[java.io.InputStream], "input", Modifier.FINAL)
@@ -361,6 +375,13 @@ class MessageGenerator(val info: MessageInfo):
       .build
     )
     t.addMethod(MethodSpec.methodBuilder("parseDelimitedFrom")
+      .addJavadoc(
+        "Parse this message in DELIMITED form from a Java {@link $T}.\n" +
+        "If there is no message to be read, null will be returned.\n" +
+        "To read all delimited messages in the stream, call this method\n" +
+        "repeatedly until null is returned.",
+        classOf[java.io.InputStream]
+      )
       .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
       .addException(classOf[IOException])
       .addParameter(classOf[java.io.InputStream], "input", Modifier.FINAL)
