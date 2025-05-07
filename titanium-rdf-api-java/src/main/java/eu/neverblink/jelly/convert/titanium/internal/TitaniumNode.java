@@ -16,7 +16,6 @@ public sealed interface TitaniumNode {
         SIMPLE_LITERAL,
         LANG_LITERAL,
         DT_LITERAL,
-        QUAD,
     }
 
     TitaniumNodeType type();
@@ -24,13 +23,9 @@ public sealed interface TitaniumNode {
     default StringNode asString() {
         return (StringNode) this;
     }
-    
+
     default String asStringValue() {
         return asString().value();
-    }
-
-    default Quad asQuad() {
-        return (Quad) this;
     }
 
     default SimpleLiteral asSimpleLiteral() {
@@ -52,13 +47,6 @@ public sealed interface TitaniumNode {
         @Override
         public TitaniumNodeType type() {
             return RdfQuadConsumer.isBlank(value) ? TitaniumNodeType.BLANK : TitaniumNodeType.IRI;
-        }
-    }
-
-    record Quad(String s, String p, TitaniumNode o, String g) implements TitaniumNode {
-        @Override
-        public TitaniumNodeType type() {
-            return TitaniumNodeType.QUAD;
         }
     }
 

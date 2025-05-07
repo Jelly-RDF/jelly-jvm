@@ -7,6 +7,7 @@ import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.convert.titanium.internal.TitaniumConverterFactory;
 import eu.neverblink.jelly.convert.titanium.internal.TitaniumNode;
 import eu.neverblink.jelly.core.ProtoEncoder;
+import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
@@ -42,6 +43,11 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
     @Override
     public Iterable<RdfStreamRow> getRows() {
         return buffer;
+    }
+
+    @Override
+    public void clearRows() {
+        buffer.clear();
     }
 
     @Override
@@ -86,7 +92,7 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
                     new TitaniumNode.StringNode(graph)
                 );
             }
-        } catch (final Exception e) {
+        } catch (RdfProtoSerializationError e) {
             throw new RdfConsumerException(e.getMessage(), e);
         }
 

@@ -539,7 +539,7 @@ lazy val integrationTestsJava = (project in file("integration-tests-java"))
     jenaPatch % "compile->compile;test->test",
     rdf4jJava,
     rdf4jPatch,
-    // titaniumRdfApi,
+    titaniumRdfApiJava,
   )
 
 lazy val examples = (project in file("examples"))

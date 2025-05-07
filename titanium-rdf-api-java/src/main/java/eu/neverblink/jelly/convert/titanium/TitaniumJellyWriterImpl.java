@@ -58,6 +58,8 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
             } catch (IOException e) {
                 throw new RdfConsumerException(e);
             }
+
+            encoder.clearRows();
         }
 
         return this;
@@ -71,6 +73,8 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
                 frame.addRows(row);
             }
             frame.writeDelimitedTo(outputStream);
+
+            encoder.clearRows();
         }
 
         if (outputStream != null) {

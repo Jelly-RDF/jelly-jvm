@@ -42,6 +42,12 @@ public interface TitaniumJellyEncoder extends RdfQuadConsumer {
     Iterable<RdfStreamRow> getRows();
 
     /**
+     * Clears the encoded row buffer.
+     * This method is called automatically when the buffer is flushed.
+     */
+    void clearRows();
+
+    /**
      * Returns the options that this encoder uses.
      * @return RdfStreamOptions
      */
