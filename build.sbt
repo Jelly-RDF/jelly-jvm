@@ -82,7 +82,51 @@ lazy val rdfProtos = (project in file("rdf-protos"))
     publishArtifact := false,
   )
 
+lazy val prepareGoogleProtos = taskKey[Seq[File]](
+  "Copies and modifies proto files before Google protoc-java compilation"
+)
 lazy val generatePluginRunScript = taskKey[Seq[File]]("Generate the run script for the protoc plugin")
+
+/**
+ * Used for core*ProtosGoogle modules.
+ * Copies the proto files from the protobuf submodule to the protoc input directory,
+ * while applying some options to the proto files.
+ */
+def doPrepareGoogleProtos(baseDir: File): Seq[File] = {
+  val inputDir = (baseDir / ".." / "submodules" / "protobuf" / "proto").getAbsoluteFile
+  val outputDir = (baseDir / "src" / "main" / "protobuf").getAbsoluteFile
+  // Make output dir if not exists
+  IO.createDirectory(outputDir)
+  // Clean the output directory
+  IO.delete(IO.listFiles(outputDir).filterNot(_.getName == ".gitkeep"))
+  val protoFiles = (inputDir ** "*.proto").get
+  protoFiles
+    .map { file =>
+      // Copy the file to the output directory
+      val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+      IO.copyFile(file, outputFile)
+      outputFile
+    }
+    .map { file =>
+      // Append java options to the file
+      val outPackage = "eu.neverblink.jelly.core.proto.google.v1" +
+        (if (file.getName == "patch.proto") ".patch" else "")
+      val content = IO.read(file)
+      val newContent = content +
+        f"""
+          |option java_multiple_files = true;
+          |option java_package = "$outPackage";
+          |option optimize_for = SPEED;
+          |""".stripMargin
+      IO.write(file, newContent)
+      file
+    }
+  // Return the list of generated files
+  protoFiles.map { file =>
+    val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+    outputFile
+  }
+}
 
 // .proto -> .java protoc compiler plugin
 lazy val crunchyProtocPlugin = (project in file("crunchy-protoc-plugin"))
@@ -204,6 +248,24 @@ lazy val coreJava = (project in file("core-java"))
     commonSettings,
   )
 
+lazy val coreProtosGoogle = (project in file("core-protos-google"))
+  .enablePlugins(ProtobufPlugin)
+  .settings(
+    name := "jelly-core-protos-google",
+    organization := "eu.neverblink.jelly",
+    description := "Optional proto classes for Jelly-RDF (rdf.proto) compiled with Google's " +
+      "official Java protoc plugin. This is not needed, unless you need some functionality " +
+      "that is only available with the more heavyweight, Google-style proto classes, like " +
+      "support for the Protobuf Text Format.",
+    libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
+    prepareGoogleProtos := {
+      doPrepareGoogleProtos(baseDirectory.value)
+    },
+    Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
+    ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
+    publishArtifact := false, // TODO: remove this when ready
+  )
+
 lazy val corePatch = (project in file("core-patch"))
   .settings(
     name := "jelly-core-patch",
@@ -228,6 +290,24 @@ lazy val corePatch = (project in file("core-patch"))
     commonSettings,
   )
   .dependsOn(coreJava % "compile->compile;test->test")
+
+lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
+  .enablePlugins(ProtobufPlugin)
+  .settings(
+    name := "jelly-core-patch-protos-google",
+    organization := "eu.neverblink.jelly",
+    description := "Optional proto classes for Jelly-Patch (patch.proto) compiled with Google's " +
+      "official Java protoc plugin. This is not needed, unless you need some functionality " +
+      "that is only available with the more heavyweight, Google-style proto classes, like " +
+      "support for the Protobuf Text Format.",
+    libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
+    prepareGoogleProtos := {
+      doPrepareGoogleProtos(baseDirectory.value)
+    },
+    Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
+    ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "patch.proto"),
+    publishArtifact := false, // TODO: remove this when ready
+  ).dependsOn(coreProtosGoogle)
 
 lazy val jena = (project in file("jena"))
   .settings(
