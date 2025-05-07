@@ -172,13 +172,13 @@ class FieldGenerator(val info: FieldInfo):
     else throw new IllegalStateException("unhandled field: " + info.descriptor)
 
   def generateEqualsStatement(method: MethodSpec.Builder): Unit =
-    if (info.isMessageOrGroup)
+    if (info.isRepeated || info.isBytes || info.isString)
+      method.addNamedCode("$field:N.equals(other.$field:N)", m)
+    else if (info.isMessageOrGroup)
       method.addNamedCode(
         "($field:N == null && other.$field:N == null || $field:N != null && $field:N.equals(other.$field:N))",
         m
       )
-    else if (info.isRepeated || info.isBytes || info.isString)
-      method.addNamedCode("$field:N.equals(other.$field:N)", m)
     else if ((typeName eq TypeName.DOUBLE) || (typeName eq TypeName.FLOAT))
       method.addNamedCode("$protoUtil:T.isEqual($field:N, other.$field:N)", m)
     else if (info.isPrimitive || info.isEnum)

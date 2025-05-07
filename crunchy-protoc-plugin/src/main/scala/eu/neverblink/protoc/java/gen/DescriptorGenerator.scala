@@ -71,19 +71,20 @@ class DescriptorGenerator(val info: RequestInfo.FileInfo):
     // field for the main file descriptor
     val initBlock = CodeBlock.builder
     initBlock.add(
-      "$T.buildFrom($T.parseFrom($N), new $T[] {})",
+      "$T.buildFrom($T.parseFrom($N), new $T[] { ",
       RuntimeClasses.FileDescriptor,
       RuntimeClasses.FileDescriptorProto,
       DescriptorGenerator.getDescriptorBytesFieldName,
       RuntimeClasses.FileDescriptor,
     )
     // any file dependencies
-//    if (info.descriptor.getDependencyCount > 0) {
-//      for (fileName <- info.descriptor.getDependencyList.asScala) {
-//        initBlock.add(", $T.getDescriptor()", info.parentRequest.getInfoForFile(fileName).outerClassName)
-//      }
-//    }
-//    initBlock.add(")")
+    if (info.descriptor.getDependencyCount > 0) {
+      for ((fileName, i) <- info.descriptor.getDependencyList.asScala.zipWithIndex) {
+        if i > 0 then initBlock.add(", ")
+        initBlock.add("$T.getDescriptor()", info.parentRequest.getInfoForFile(fileName).outerClassName)
+      }
+    }
+    initBlock.add(" })")
     val fileDescriptor = FieldSpec
       .builder(RuntimeClasses.FileDescriptor, DescriptorGenerator.getFileDescriptorFieldName)
       .addModifiers(Modifier.STATIC, Modifier.FINAL)
