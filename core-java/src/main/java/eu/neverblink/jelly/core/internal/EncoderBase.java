@@ -172,7 +172,6 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     @Override
     public void appendDefaultGraph() {
-        // TODO: use a shared instance here
-        currentGraphBase.setGDefaultGraph(RdfDefaultGraph.newInstance());
+        currentGraphBase.setGDefaultGraph(RdfDefaultGraph.EMPTY);
     }
 }

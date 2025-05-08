@@ -91,14 +91,28 @@ class MessageGenerator(val info: MessageInfo):
       .map(_.generate)
       .forEach(t.addType)
     // newInstance() method
+    val newInstanceJavadoc = Javadoc.withComments(info.sourceLocation)
+    if info.isEmptyMessage then
+      newInstanceJavadoc.add(
+        "This message is always empty, so there is no need to create a new instance.\n" +
+        "Use the static field {@code $T.EMPTY} instead.\n",
+        info.typeName
+      )
     t.addMethod(MethodSpec.methodBuilder("newInstance")
-      .addJavadoc(Javadoc.withComments(info.sourceLocation)
+      .addJavadoc(newInstanceJavadoc
         .add("@return a new empty instance of {@code $T}", info.mutableTypeName)
         .build
       )
       .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
       .returns(info.mutableTypeName)
       .addStatement("return new $T()", info.mutableTypeName)
+      .build
+    )
+    // EMPTY field
+    t.addField(FieldSpec.builder(info.typeName, "EMPTY")
+      .addJavadoc("An empty instance of this message type.")
+      .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+      .initializer("newInstance()")
       .build
     )
     // Constructors
@@ -202,6 +216,15 @@ class MessageGenerator(val info: MessageInfo):
     }
     mergeFrom.addStatement("final $T input = inputLimited.in()", RuntimeClasses.CodedInputStream)
       .addStatement(named("int tag = input.readTag()"))
+
+    // If this is an empty message, we can skip the whole switch statement
+    if info.isEmptyMessage then
+      mergeFrom
+        .addStatement("input.skipField(tag)")
+        .addStatement("return this")
+      t.addMethod(mergeFrom.build)
+      return
+    mergeFrom
       .beginControlFlow("while (true)")
       .beginControlFlow("switch (tag)")
     // Add fields by the expected order and type
@@ -282,17 +305,20 @@ class MessageGenerator(val info: MessageInfo):
       .addAnnotation(classOf[Override])
       .addModifiers(Modifier.PROTECTED)
       .returns(classOf[Int])
-    // Check all required fields at once
-    computeSerializedSize.addStatement("int size = 0")
-    fields.foreach(f => {
-      val checker = CodeBlock.builder().add("if (")
-      f.generateHasChecker(checker)
-      computeSerializedSize.beginControlFlow(checker.add(")").build())
-      f.generateComputeSerializedSizeCode(computeSerializedSize)
-      computeSerializedSize.endControlFlow
-    })
-    oneOfGenerators.foreach(_.generateComputeSerializedSizeCode(computeSerializedSize))
-    computeSerializedSize.addStatement("return size")
+    if info.isEmptyMessage then
+      computeSerializedSize.addStatement("return 0")
+    else
+      // Check all required fields at once
+      computeSerializedSize.addStatement("int size = 0")
+      fields.foreach(f => {
+        val checker = CodeBlock.builder().add("if (")
+        f.generateHasChecker(checker)
+        computeSerializedSize.beginControlFlow(checker.add(")").build())
+        f.generateComputeSerializedSizeCode(computeSerializedSize)
+        computeSerializedSize.endControlFlow
+      })
+      oneOfGenerators.foreach(_.generateComputeSerializedSizeCode(computeSerializedSize))
+      computeSerializedSize.addStatement("return size")
     t.addMethod(computeSerializedSize.build)
 
   private def generateCopyFrom(t: TypeSpec.Builder): Unit =

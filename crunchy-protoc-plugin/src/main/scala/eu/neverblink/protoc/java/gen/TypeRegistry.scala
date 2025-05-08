@@ -43,6 +43,13 @@ class TypeRegistry:
   private final val messageMap = new java.util.HashMap[TypeName, MessageInfo]
   private final val hasRequiredMap = new java.util.HashMap[TypeName, RequiredType]
   
+  def resolveMessageInfoFromProto(descriptor: FieldDescriptorProto): MessageInfo =
+    val typeId = descriptor.getTypeName
+    val typeName = checkNotNull(typeMap.get(typeId), "Unable to resolve type id: " + typeId)
+    val messageInfo = messageMap.get(typeName)
+    checkNotNull(messageInfo, "Unable to resolve message info for: " + typeName)
+    messageInfo
+  
   def resolveJavaTypeFromProto(descriptor: FieldDescriptorProto): TypeName =
     descriptor.getType match
       case TYPE_DOUBLE => TypeName.DOUBLE

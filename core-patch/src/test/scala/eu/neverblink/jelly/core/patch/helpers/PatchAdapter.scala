@@ -95,13 +95,13 @@ object PatchAdapter:
     ns
 
   def rdfPatchPunctuation(): RdfPatchPunctuation =
-    RdfPatchPunctuation.newInstance()
+    RdfPatchPunctuation.EMPTY
 
   def rdfPatchTransactionStart(): RdfPatchTransactionStart =
-    RdfPatchTransactionStart.newInstance()
+    RdfPatchTransactionStart.EMPTY
 
   def rdfPatchTransactionCommit(): RdfPatchTransactionCommit =
-    RdfPatchTransactionCommit.newInstance()
+    RdfPatchTransactionCommit.EMPTY
 
   def rdfPatchTransactionAbort(): RdfPatchTransactionAbort =
-    RdfPatchTransactionAbort.newInstance()
+    RdfPatchTransactionAbort.EMPTY

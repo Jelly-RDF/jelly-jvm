@@ -167,6 +167,8 @@ object RequestInfo:
       new RequestInfo.OneOfInfo(
         parentFile, this, typeName, descriptor.getOneofDecl(i), i
       )
+
+    val isEmptyMessage: Boolean = fieldCount == 0 && oneOfCount == 0
   }
 
   class FieldInfo(
@@ -318,6 +320,12 @@ object RequestInfo:
       t match
         case name: ParameterizedTypeName => name.rawType
         case _ => t
+
+    def isEmptyMessage: Boolean =
+      if isMessageOrGroup then
+        parentFile.parentRequest.typeRegistry
+          .resolveMessageInfoFromProto(descriptor).isEmptyMessage
+      else false
   }
 
   class EnumInfo(

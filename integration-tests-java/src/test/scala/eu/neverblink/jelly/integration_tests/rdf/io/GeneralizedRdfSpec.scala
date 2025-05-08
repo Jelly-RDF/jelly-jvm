@@ -67,7 +67,7 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
       rdfLiteral("p"),
       rdfLiteral("o"),
     )),
-    rdfStreamRow(RdfGraphEnd.newInstance()),
+    rdfStreamRow(RdfGraphEnd.EMPTY),
   ))
   private val bytesGraphs = frameAsDelimited(frameGraphs)
 
