@@ -91,4 +91,12 @@ public abstract class ProtoEncoder<TNode>
     protected int getDatatypeTableSize() {
         return options.getMaxDatatypeTableSize();
     }
+
+    /**
+     * Returns the options for this encoder.
+     * @return the options for this encoder
+     */
+    public RdfStreamOptions getOptions() {
+        return options;
+    }
 }

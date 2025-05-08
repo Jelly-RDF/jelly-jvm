@@ -128,17 +128,17 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
 //  runTest(JenaReactiveSerDes(), Rdf4jReactiveSerDes())
 
   // Titanium as serializer
-//  runTest(TitaniumSerDes, TitaniumSerDes)
-//  runTest(TitaniumSerDes, JenaSerDes)
-//  runTest(TitaniumSerDes, JenaStreamSerDes)
-//  runTest(TitaniumSerDes, Rdf4jSerDes)
+  runTest(TitaniumSerDes, TitaniumSerDes)
+  runTest(TitaniumSerDes, JenaSerDes)
+  runTest(TitaniumSerDes, JenaStreamSerDes)
+  runTest(TitaniumSerDes, Rdf4jSerDes)
 //  runTest(TitaniumSerDes, Rdf4jReactiveSerDes())
 //  runTest(TitaniumSerDes, JenaReactiveSerDes())
 
   // Titanium as deserializer
-//  runTest(JenaSerDes, TitaniumSerDes)
-//  runTest(JenaStreamSerDes, TitaniumSerDes)
-//  runTest(Rdf4jSerDes, TitaniumSerDes)
+  runTest(JenaSerDes, TitaniumSerDes)
+  runTest(JenaStreamSerDes, TitaniumSerDes)
+  runTest(Rdf4jSerDes, TitaniumSerDes)
 //  runTest(Rdf4jReactiveSerDes(), TitaniumSerDes)
 //  runTest(JenaReactiveSerDes(), TitaniumSerDes)
 
