@@ -142,7 +142,8 @@ class OneOfGenerator(val info: OneOfInfo):
     method.beginControlFlow("switch ($N)", info.numberFieldName)
     for f <- fieldGenerators do
       method.beginControlFlow("case $L:", f.info.descriptor.getNumber)
-      method.addStatement("final var $N = $N()", f.info.fieldName, f.info.getterName)
+      if !f.info.isEmptyMessage then
+        method.addStatement("final var $N = $N()", f.info.fieldName, f.info.getterName)
       f.generateSerializationCode(method)
       method.addStatement("break")
       method.endControlFlow
@@ -152,7 +153,8 @@ class OneOfGenerator(val info: OneOfInfo):
     method.beginControlFlow("switch ($N)", info.numberFieldName)
     for f <- fieldGenerators do
       method.beginControlFlow("case $L:", f.info.descriptor.getNumber)
-      method.addStatement("final var $N = $N()", f.info.fieldName, f.info.getterName)
+      if !f.info.isEmptyMessage then
+        method.addStatement("final var $N = $N()", f.info.fieldName, f.info.getterName)
       f.generateComputeSerializedSizeCode(method)
       method.addStatement("break")
       method.endControlFlow
@@ -162,7 +164,12 @@ class OneOfGenerator(val info: OneOfInfo):
    * @return true if the tag needs to be read
    */
   def generateMergingCode(method: MethodSpec.Builder, field: FieldGenerator): Boolean =
-    if field.info.isMessage then
+    if field.info.isEmptyMessage then
+      // We simply set the correct field number and the value to the singleton instance
+      method
+        .addStatement("$N($T.EMPTY)", field.info.setterName, field.info.getTypeName)
+        .addStatement("input.skipField(tag)")
+    else if field.info.isMessage then
       // If the field is already set to the same kind of message, we merge it.
       // Otherwise, we create a new instance of the message and merge it.
       method

@@ -137,7 +137,7 @@ object RdfAdapter:
       .setMaxDatatypeTableSize(maxDatatypeTableSize)
 
   def rdfDefaultGraph(): RdfDefaultGraph =
-    RdfDefaultGraph.newInstance()
+    RdfDefaultGraph.EMPTY
 
   type RdfGraphValue =
     RdfIri
@@ -162,7 +162,7 @@ object RdfAdapter:
     RdfGraphStart.newInstance()
 
   def rdfGraphEnd(): RdfGraphEnd =
-    RdfGraphEnd.newInstance()
+    RdfGraphEnd.EMPTY
 
   def rdfQuad(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue, graph: RdfGraphValue = null): RdfQuad = {
     var quad = RdfQuad.newInstance()

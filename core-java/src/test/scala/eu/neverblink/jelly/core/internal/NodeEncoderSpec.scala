@@ -34,8 +34,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       override def appendLiteral(literal: RdfLiteral): Unit = termBuffer += literal
       override def appendQuotedTriple(subject: Mrl.Node, predicate: Mrl.Node, `object`: Mrl.Node): Unit =
         termBuffer += ((subject, predicate, `object`))
-      // TODO: replace with singleton
-      override def appendDefaultGraph(): Unit = termBuffer += RdfDefaultGraph.newInstance()
+      override def appendDefaultGraph(): Unit = termBuffer += RdfDefaultGraph.EMPTY
     }
     (NodeEncoderImpl[Mrl.Node](
       prefixTableSize, 8, 8,

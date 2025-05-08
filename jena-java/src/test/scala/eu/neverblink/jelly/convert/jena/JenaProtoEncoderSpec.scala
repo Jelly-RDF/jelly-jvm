@@ -18,8 +18,7 @@ class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private val encodedDefaultGraph = RdfStreamRow.newInstance
     .setGraphStart(
-      RdfGraphStart.newInstance
-        .setGDefaultGraph(RdfDefaultGraph.newInstance)
+      RdfGraphStart.newInstance.setGDefaultGraph(RdfDefaultGraph.EMPTY)
     )
   
   "JenaProtoEncoder" should {

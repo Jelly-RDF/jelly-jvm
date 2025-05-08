@@ -19,6 +19,10 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;
     private final Collection<RdfStreamRow> rowBuffer;
+    
+    // Rows ending the graph are always identical
+    private static final RdfStreamRow ROW_GRAPH_END = 
+        RdfStreamRow.newInstance().setGraphEnd(RdfGraphEnd.EMPTY);
 
     /**
      * Constructor for the ProtoEncoderImpl class.
@@ -61,10 +65,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         if (!hasEmittedOptions) {
             throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one");
         }
-        // TODO: use a singleton here
-        final var graphEnd = RdfGraphEnd.newInstance();
-        final var graphRow = RdfStreamRow.newInstance().setGraphEnd(graphEnd);
-        rowBuffer.add(graphRow);
+        rowBuffer.add(ROW_GRAPH_END);
     }
 
     @Override

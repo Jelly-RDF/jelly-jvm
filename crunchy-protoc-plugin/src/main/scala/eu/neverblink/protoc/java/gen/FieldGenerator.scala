@@ -259,6 +259,12 @@ class FieldGenerator(val info: FieldInfo):
       "$<}\n", 
       m
     )
+    else if (info.isEmptyMessage) method.addNamedCode("" +
+      "$writeTagToOutput:L" +
+      "// Message is always empty: write length zero\n" +
+      "output.writeRawByte((byte) 0);\n",
+      m
+    )
     else if (info.isMessageOrGroup) method.addNamedCode("" + // non-repeated
       "$writeTagToOutput:L" +
       "output.writeUInt32NoTag($field:N.getSerializedSize());\n" +
@@ -291,7 +297,6 @@ class FieldGenerator(val info: FieldInfo):
       m
     )
     else if (info.isRepeated) { // non packed
-
       method.addNamedCode("" + 
         "size += " +
         // if 1 byte per tag, we can skip the multiplication
@@ -302,6 +307,8 @@ class FieldGenerator(val info: FieldInfo):
     }
     else if (info.isFixedWidth) 
       method.addStatement("size += $L", info.bytesPerTag + info.getFixedWidth) // non-repeated
+    else if (info.isEmptyMessage)
+      method.addStatement("size += $L", info.bytesPerTag + 1) // 1 byte for varint "0"
     else if (info.isMessageOrGroup) {
       method.addNamedCode(
         "final int dataSize = $field:N$secondArgs:L.getSerializedSize();\n" +
