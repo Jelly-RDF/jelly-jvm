@@ -8,57 +8,57 @@ import eu.neverblink.jelly.convert.titanium.internal.TitaniumNode;
 import eu.neverblink.jelly.core.RdfHandler;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 
-final class TitaniumAnyStatementHandler implements RdfHandler.AnyStatementHandler<TitaniumNode> {
+final class TitaniumAnyStatementHandler implements RdfHandler.AnyStatementHandler<Object> {
 
     private RdfQuadConsumer consumer;
 
     @Override
-    public void handleQuad(TitaniumNode s, TitaniumNode p, TitaniumNode o, TitaniumNode g) {
+    public void handleQuad(Object s, Object p, Object o, Object g) {
         try {
-            switch (o.type()) {
+            switch (TitaniumNode.typeOf(o)) {
                 case IRI, BLANK -> consumer.quad(
-                    s.asStringValue(),
-                    p.asStringValue(),
-                    o.asStringValue(),
+                    TitaniumNode.iriLikeOf(s),
+                    TitaniumNode.iriLikeOf(p),
+                    TitaniumNode.iriLikeOf(o),
                     null,
                     null,
                     null,
-                    g != null ? g.asStringValue() : null
+                    TitaniumNode.iriLikeOf(g)
                 );
                 case LANG_LITERAL -> {
-                    final var langLiteral = o.asLangLiteral();
+                    final var langLiteral = TitaniumNode.langLiteralOf(o);
                     consumer.quad(
-                        s.asStringValue(),
-                        p.asStringValue(),
+                        TitaniumNode.iriLikeOf(s),
+                        TitaniumNode.iriLikeOf(p),
                         langLiteral.lex(),
                         DT_LANG_STRING,
                         langLiteral.lang(),
                         null,
-                        g != null ? g.asStringValue() : null
+                        TitaniumNode.iriLikeOf(g)
                     );
                 }
                 case SIMPLE_LITERAL -> {
-                    var simpleLiteral = o.asSimpleLiteral();
+                    var simpleLiteral = TitaniumNode.simpleLiteralOf(o);
                     consumer.quad(
-                        s.asStringValue(),
-                        p.asStringValue(),
+                        TitaniumNode.iriLikeOf(s),
+                        TitaniumNode.iriLikeOf(p),
                         simpleLiteral.lex(),
                         DT_STRING,
                         null,
                         null,
-                        g != null ? g.asStringValue() : null
+                        TitaniumNode.iriLikeOf(g)
                     );
                 }
                 case DT_LITERAL -> {
-                    var dtLiteral = o.asDtLiteral();
+                    var dtLiteral = TitaniumNode.dtLiteralOf(o);
                     consumer.quad(
-                        s.asStringValue(),
-                        p.asStringValue(),
+                        TitaniumNode.iriLikeOf(s),
+                        TitaniumNode.iriLikeOf(p),
                         dtLiteral.lex(),
                         dtLiteral.dt(),
                         null,
                         null,
-                        g != null ? g.asStringValue() : null
+                        TitaniumNode.iriLikeOf(g)
                     );
                 }
             }
@@ -68,23 +68,23 @@ final class TitaniumAnyStatementHandler implements RdfHandler.AnyStatementHandle
     }
 
     @Override
-    public void handleTriple(TitaniumNode s, TitaniumNode p, TitaniumNode o) {
+    public void handleTriple(Object s, Object p, Object o) {
         try {
-            switch (o.type()) {
+            switch (TitaniumNode.typeOf(o)) {
                 case IRI, BLANK -> consumer.quad(
-                    s.asStringValue(),
-                    p.asStringValue(),
-                    o.asStringValue(),
+                    TitaniumNode.iriLikeOf(s),
+                    TitaniumNode.iriLikeOf(p),
+                    TitaniumNode.iriLikeOf(o),
                     null,
                     null,
                     null,
                     null
                 );
                 case LANG_LITERAL -> {
-                    final var langLiteral = o.asLangLiteral();
+                    final var langLiteral = TitaniumNode.langLiteralOf(o);
                     consumer.quad(
-                        s.asStringValue(),
-                        p.asStringValue(),
+                        TitaniumNode.iriLikeOf(s),
+                        TitaniumNode.iriLikeOf(p),
                         langLiteral.lex(),
                         DT_LANG_STRING,
                         langLiteral.lang(),
@@ -93,10 +93,10 @@ final class TitaniumAnyStatementHandler implements RdfHandler.AnyStatementHandle
                     );
                 }
                 case SIMPLE_LITERAL -> {
-                    var simpleLiteral = o.asSimpleLiteral();
+                    var simpleLiteral = TitaniumNode.simpleLiteralOf(o);
                     consumer.quad(
-                        s.asStringValue(),
-                        p.asStringValue(),
+                        TitaniumNode.iriLikeOf(s),
+                        TitaniumNode.iriLikeOf(p),
                         simpleLiteral.lex(),
                         DT_STRING,
                         null,
@@ -105,10 +105,10 @@ final class TitaniumAnyStatementHandler implements RdfHandler.AnyStatementHandle
                     );
                 }
                 case DT_LITERAL -> {
-                    var dtLiteral = o.asDtLiteral();
+                    var dtLiteral = TitaniumNode.dtLiteralOf(o);
                     consumer.quad(
-                        s.asStringValue(),
-                        p.asStringValue(),
+                        TitaniumNode.iriLikeOf(s),
+                        TitaniumNode.iriLikeOf(p),
                         dtLiteral.lex(),
                         dtLiteral.dt(),
                         null,

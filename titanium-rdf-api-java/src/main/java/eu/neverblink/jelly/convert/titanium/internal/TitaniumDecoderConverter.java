@@ -7,21 +7,21 @@ import eu.neverblink.jelly.core.ProtoDecoderConverter;
  * A Jelly decoder converter for the titanium-rdf-api.
  */
 @InternalApi
-public final class TitaniumDecoderConverter implements ProtoDecoderConverter<TitaniumNode, String> {
+public final class TitaniumDecoderConverter implements ProtoDecoderConverter<Object, String> {
 
     @Override
-    public TitaniumNode makeSimpleLiteral(String lex) {
-        return new TitaniumNode.SimpleLiteral(lex);
+    public Object makeSimpleLiteral(String lex) {
+        return new TitaniumLiteral.SimpleLiteral(lex);
     }
 
     @Override
-    public TitaniumNode makeLangLiteral(String lex, String lang) {
-        return new TitaniumNode.LangLiteral(lex, lang);
+    public Object makeLangLiteral(String lex, String lang) {
+        return new TitaniumLiteral.LangLiteral(lex, lang);
     }
 
     @Override
-    public TitaniumNode makeDtLiteral(String lex, String dt) {
-        return new TitaniumNode.DtLiteral(lex, dt);
+    public Object makeDtLiteral(String lex, String dt) {
+        return new TitaniumLiteral.DtLiteral(lex, dt);
     }
 
     @Override
@@ -30,24 +30,24 @@ public final class TitaniumDecoderConverter implements ProtoDecoderConverter<Tit
     }
 
     @Override
-    public TitaniumNode makeBlankNode(String label) {
-        return new TitaniumNode.StringNode("_:".concat(label));
+    public Object makeBlankNode(String label) {
+        return "_:".concat(label);
     }
 
     @Override
-    public TitaniumNode makeIriNode(String iri) {
-        return new TitaniumNode.StringNode(iri);
+    public Object makeIriNode(String iri) {
+        return iri;
     }
 
     @Override
-    public TitaniumNode makeTripleNode(TitaniumNode s, TitaniumNode p, TitaniumNode o) {
+    public Object makeTripleNode(Object s, Object p, Object o) {
         throw new UnsupportedOperationException(
             "The titanium-rdf-api implementation of Jelly does not support quoted triples."
         );
     }
 
     @Override
-    public TitaniumNode makeDefaultGraphNode() {
+    public Object makeDefaultGraphNode() {
         return null;
     }
 }

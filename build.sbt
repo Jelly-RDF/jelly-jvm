@@ -451,7 +451,7 @@ lazy val titaniumRdfApiJava = (project in file("titanium-rdf-api-java"))
     publishArtifact := false, // TODO: remove this when ready
     commonSettings,
   )
-  .dependsOn(coreJava)
+  .dependsOn(coreJava % "compile->compile;test->test")
 
 lazy val stream = (project in file("stream"))
   .settings(

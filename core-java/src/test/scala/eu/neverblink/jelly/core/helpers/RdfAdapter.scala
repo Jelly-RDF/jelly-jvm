@@ -14,6 +14,10 @@ object RdfAdapter:
       .setId(id)
       .setValue(value)
 
+  def rdfNameEntry(value: String): RdfNameEntry =
+    RdfNameEntry.newInstance()
+      .setValue(value)
+
   def rdfPrefixEntry(id: Int, value: String): RdfPrefixEntry =
     RdfPrefixEntry.newInstance()
       .setId(id)

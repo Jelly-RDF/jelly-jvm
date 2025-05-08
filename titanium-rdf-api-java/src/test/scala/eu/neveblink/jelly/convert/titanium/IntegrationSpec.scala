@@ -4,6 +4,7 @@ import com.apicatalog.rdf.api.RdfQuadConsumer
 import eu.neverblink.jelly.convert.titanium.TitaniumJellyReader
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -13,37 +14,33 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
  * Integration tests for some Titanium-specific APIs.
  */
 class IntegrationSpec extends AnyWordSpec, Matchers:
-  val testFrame = RdfStreamFrame.newInstance()
-    .addRows(
-      RdfStreamRow.newInstance()
-        .setOptions(JellyOptions.SMALL_STRICT.clone().setPhysicalType(PhysicalStreamType.QUADS))
+  val testFrame = rdfStreamFrame(rows = Seq(
+    rdfStreamRow(
+      JellyOptions.SMALL_STRICT
+        .clone()
+        .setPhysicalType(PhysicalStreamType.QUADS)
+    ),
+    rdfStreamRow(rdfNameEntry(value = "http://example.org/iri")),
+    rdfStreamRow(
+      rdfQuad(
+        rdfIri(0, 1),
+        rdfIri(0, 1),
+        rdfIri(0, 1),
+        rdfIri(0, 1),
+      )
     )
-    .addRows(
-      RdfStreamRow.newInstance()
-        .setName(RdfNameEntry.newInstance().setValue("http://example.org/iri"))
-    )
-    .addRows(
-      RdfStreamRow.newInstance()
-        .setQuad(
-          RdfQuad.newInstance()
-            .setSubject(RdfIri.newInstance().setPrefixId(0).setNameId(1), RdfQuad.S_IRI)
-            .setPredicate(RdfIri.newInstance().setPrefixId(0).setNameId(1), RdfQuad.P_IRI)
-            .setObject(RdfIri.newInstance().setPrefixId(0).setNameId(1), RdfQuad.O_IRI)
-            .setGraph(RdfIri.newInstance().setPrefixId(0).setNameId(1), RdfQuad.G_IRI)
-        )
-    )
+  ))
 
-  val testFrame2 = RdfStreamFrame.newInstance()
-    .addRows(
-      RdfStreamRow.newInstance()
-        .setQuad(
-          RdfQuad.newInstance()
-            .setSubject(RdfIri.newInstance().setPrefixId(0).setNameId(1), RdfQuad.S_IRI)
-            .setPredicate(RdfIri.newInstance().setPrefixId(0).setNameId(1), RdfQuad.P_IRI)
-            .setObject(RdfIri.newInstance().setPrefixId(0).setNameId(1), RdfQuad.O_IRI)
-            .setGraph(RdfIri.newInstance().setPrefixId(0).setNameId(1), RdfQuad.G_IRI)
-        )
+  val testFrame2 = rdfStreamFrame(rows = Seq(
+    rdfStreamRow(
+      rdfQuad(
+        rdfIri(0, 1),
+        rdfIri(0, 1),
+        rdfIri(0, 1),
+        rdfIri(0, 1),
+      )
     )
+  ))
 
   class CollectorConsumer extends RdfQuadConsumer:
     var quads = Seq.empty[(String, String, String, String, String, String, String)]

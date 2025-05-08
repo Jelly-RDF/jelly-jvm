@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.convert.titanium;
 
 import com.apicatalog.rdf.api.RdfQuadConsumer;
-import eu.neverblink.jelly.convert.titanium.internal.TitaniumNode;
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.RdfHandler;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
@@ -26,7 +25,7 @@ public interface TitaniumJellyDecoder {
      */
     static TitaniumJellyDecoder factory(
         RdfStreamOptions supportedOptions,
-        RdfHandler.AnyStatementHandler<TitaniumNode> anyStatementHandler
+        RdfHandler.AnyStatementHandler<Object> anyStatementHandler
     ) {
         return new TitaniumJellyDecoderImpl(supportedOptions, anyStatementHandler);
     }
@@ -36,7 +35,7 @@ public interface TitaniumJellyDecoder {
      * This method uses the default supported options.
      * @return TitaniumJellyDecoder
      */
-    static TitaniumJellyDecoder factory(RdfHandler.AnyStatementHandler<TitaniumNode> anyStatementHandler) {
+    static TitaniumJellyDecoder factory(RdfHandler.AnyStatementHandler<Object> anyStatementHandler) {
         return factory(JellyOptions.DEFAULT_SUPPORTED_OPTIONS, anyStatementHandler);
     }
 

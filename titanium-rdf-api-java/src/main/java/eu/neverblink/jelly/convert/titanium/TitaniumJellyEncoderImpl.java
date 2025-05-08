@@ -5,7 +5,7 @@ import static eu.neverblink.jelly.convert.titanium.TitaniumConstants.DT_STRING;
 import com.apicatalog.rdf.api.RdfConsumerException;
 import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.convert.titanium.internal.TitaniumConverterFactory;
-import eu.neverblink.jelly.convert.titanium.internal.TitaniumNode;
+import eu.neverblink.jelly.convert.titanium.internal.TitaniumLiteral;
 import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
@@ -17,7 +17,7 @@ import java.util.Collection;
 
 final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
 
-    private final ProtoEncoder<TitaniumNode> encoder;
+    private final ProtoEncoder<Object> encoder;
 
     private final Collection<RdfStreamRow> buffer = new ArrayList<>();
 
@@ -69,28 +69,18 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
         // intermediate objects.
         try {
             if (RdfQuadConsumer.isLiteral(datatype, language, direction)) {
-                final TitaniumNode literal;
+                final TitaniumLiteral literal;
                 if (RdfQuadConsumer.isLangString(datatype, language, direction)) {
-                    literal = new TitaniumNode.LangLiteral(object, language);
+                    literal = new TitaniumLiteral.LangLiteral(object, language);
                 } else if (datatype.equals(DT_STRING)) {
-                    literal = new TitaniumNode.SimpleLiteral(object);
+                    literal = new TitaniumLiteral.SimpleLiteral(object);
                 } else {
-                    literal = new TitaniumNode.DtLiteral(object, datatype);
+                    literal = new TitaniumLiteral.DtLiteral(object, datatype);
                 }
 
-                encoder.handleQuad(
-                    new TitaniumNode.StringNode(subject),
-                    new TitaniumNode.StringNode(predicate),
-                    literal,
-                    new TitaniumNode.StringNode(graph)
-                );
+                encoder.handleQuad(subject, predicate, literal, graph);
             } else {
-                encoder.handleQuad(
-                    new TitaniumNode.StringNode(subject),
-                    new TitaniumNode.StringNode(predicate),
-                    new TitaniumNode.StringNode(object),
-                    new TitaniumNode.StringNode(graph)
-                );
+                encoder.handleQuad(subject, predicate, object, graph);
             }
         } catch (RdfProtoSerializationError e) {
             throw new RdfConsumerException(e.getMessage(), e);

@@ -2,7 +2,6 @@ package eu.neverblink.jelly.convert.titanium;
 
 import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.convert.titanium.internal.TitaniumConverterFactory;
-import eu.neverblink.jelly.convert.titanium.internal.TitaniumNode;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoDecoder;
 import eu.neverblink.jelly.core.RdfHandler;
@@ -17,11 +16,11 @@ class TitaniumJellyDecoderImpl implements TitaniumJellyDecoder {
 
     // Decode any physical stream type. Titanium only supports quads, but that's fine. We will
     // implicitly put triples in the default graph.
-    private final ProtoDecoder<TitaniumNode, String> decoder;
+    private final ProtoDecoder<Object, String> decoder;
 
     public TitaniumJellyDecoderImpl(
         RdfStreamOptions supportedOptions,
-        RdfHandler.AnyStatementHandler<TitaniumNode> anyStatementHandler
+        RdfHandler.AnyStatementHandler<Object> anyStatementHandler
     ) {
         this.supportedOptions = supportedOptions;
         this.decoder = TitaniumConverterFactory.getInstance()

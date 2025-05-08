@@ -4,13 +4,16 @@ import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.core.InternalApi;
 
 /**
- * Internal representations of RDF data inside the Titanium converter.
+ * Internal tools to represent RDF data inside the Titanium converter.
  * <p>
  * These are not intended to be used outside of the converter's code.
  */
 @InternalApi
-public sealed interface TitaniumNode {
-    enum TitaniumNodeType {
+public final class TitaniumNode {
+
+    private TitaniumNode() {}
+
+    public enum TitaniumNodeType {
         IRI,
         BLANK,
         SIMPLE_LITERAL,
@@ -18,57 +21,31 @@ public sealed interface TitaniumNode {
         DT_LITERAL,
     }
 
-    TitaniumNodeType type();
-
-    default StringNode asString() {
-        return (StringNode) this;
-    }
-
-    default String asStringValue() {
-        return asString().value();
-    }
-
-    default SimpleLiteral asSimpleLiteral() {
-        return (SimpleLiteral) this;
-    }
-
-    default LangLiteral asLangLiteral() {
-        return (LangLiteral) this;
-    }
-
-    default DtLiteral asDtLiteral() {
-        return (DtLiteral) this;
-    }
-
-    sealed interface TitaniumLiteral extends TitaniumNode {}
-
-    // String used to represent IRIs and blank nodes
-    record StringNode(String value) implements TitaniumNode {
-        @Override
-        public TitaniumNodeType type() {
-            return RdfQuadConsumer.isBlank(value) ? TitaniumNodeType.BLANK : TitaniumNodeType.IRI;
+    public static TitaniumNodeType typeOf(Object node) {
+        if ((node instanceof String iriLike)) {
+            return RdfQuadConsumer.isBlank(iriLike) ? TitaniumNodeType.BLANK : TitaniumNodeType.IRI;
         }
+
+        if ((node instanceof TitaniumLiteral literal)) {
+            return literal.type();
+        }
+
+        return null;
     }
 
-    record SimpleLiteral(String lex) implements TitaniumLiteral {
-        @Override
-        public TitaniumNodeType type() {
-            return TitaniumNodeType.SIMPLE_LITERAL;
-        }
+    public static String iriLikeOf(Object node) {
+        return (String) node;
     }
 
-    // No support for RDF 1.2 directionality... yet.
-    record LangLiteral(String lex, String lang) implements TitaniumLiteral {
-        @Override
-        public TitaniumNodeType type() {
-            return TitaniumNodeType.LANG_LITERAL;
-        }
+    public static TitaniumLiteral.SimpleLiteral simpleLiteralOf(Object node) {
+        return (TitaniumLiteral.SimpleLiteral) node;
     }
 
-    record DtLiteral(String lex, String dt) implements TitaniumLiteral {
-        @Override
-        public TitaniumNodeType type() {
-            return TitaniumNodeType.DT_LITERAL;
-        }
+    public static TitaniumLiteral.LangLiteral langLiteralOf(Object node) {
+        return (TitaniumLiteral.LangLiteral) node;
+    }
+
+    public static TitaniumLiteral.DtLiteral dtLiteralOf(Object node) {
+        return (TitaniumLiteral.DtLiteral) node;
     }
 }
