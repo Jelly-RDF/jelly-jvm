@@ -19,10 +19,9 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;
     private final Collection<RdfStreamRow> rowBuffer;
-    
+
     // Rows ending the graph are always identical
-    private static final RdfStreamRow ROW_GRAPH_END = 
-        RdfStreamRow.newInstance().setGraphEnd(RdfGraphEnd.EMPTY);
+    private static final RdfStreamRow ROW_GRAPH_END = RdfStreamRow.newInstance().setGraphEnd(RdfGraphEnd.EMPTY);
 
     /**
      * Constructor for the ProtoEncoderImpl class.
