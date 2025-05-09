@@ -3,10 +3,12 @@ package eu.neverblink.jelly.convert.rdf4j;
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
+import eu.neverblink.jelly.core.utils.QuadDecoder;
+import eu.neverblink.jelly.core.utils.TripleDecoder;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
-public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value> {
+public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value>, TripleDecoder<Value, Triple>, QuadDecoder<Value, Statement> {
 
     @Override
     public void nodeToProto(NodeEncoder<Value> encoder, Value value) {
@@ -58,5 +60,40 @@ public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value> {
         } else {
             throw new RdfProtoSerializationError("Cannot encode graph node: %s".formatted(value));
         }
+    }
+
+    @Override
+    public Value getQuadSubject(Statement statement) {
+        return statement.getSubject();
+    }
+
+    @Override
+    public Value getQuadPredicate(Statement statement) {
+        return statement.getPredicate();
+    }
+
+    @Override
+    public Value getQuadObject(Statement statement) {
+        return statement.getObject();
+    }
+
+    @Override
+    public Value getQuadGraph(Statement statement) {
+        return statement.getContext();
+    }
+
+    @Override
+    public Value getTripleSubject(Triple triple) {
+        return triple.getSubject();
+    }
+
+    @Override
+    public Value getTriplePredicate(Triple triple) {
+        return triple.getPredicate();
+    }
+
+    @Override
+    public Value getTripleObject(Triple triple) {
+        return triple.getObject();
     }
 }

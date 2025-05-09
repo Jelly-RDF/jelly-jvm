@@ -13,7 +13,7 @@ public interface TripleDecoder<TNode, TTriple> {
      * @param triple the encoded triple
      * @return the decoded triple
      */
-    TNode getSubject(TTriple triple);
+    TNode getTripleSubject(TTriple triple);
 
     /**
      * Extracts the predicate from a triple.
@@ -21,7 +21,7 @@ public interface TripleDecoder<TNode, TTriple> {
      * @param triple the encoded triple
      * @return the decoded triple
      */
-    TNode getPredicate(TTriple triple);
+    TNode getTriplePredicate(TTriple triple);
 
     /**
      * Extracts the object from a triple.
@@ -29,5 +29,5 @@ public interface TripleDecoder<TNode, TTriple> {
      * @param triple the encoded triple
      * @return the decoded triple
      */
-    TNode getObject(TTriple triple);
+    TNode getTripleObject(TTriple triple);
 }

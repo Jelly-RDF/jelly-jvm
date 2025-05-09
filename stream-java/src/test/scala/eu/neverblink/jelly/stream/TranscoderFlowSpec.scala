@@ -1,7 +1,8 @@
 package eu.neverblink.jelly.stream
 
-import eu.ostrzyciel.jelly.core.helpers.MockConverterFactory
-import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
+import eu.neverblink.jelly.core.ProtoTestCases.*
+import eu.neverblink.jelly.core.helpers.MockConverterFactory
+import eu.neverblink.jelly.core.{JellyOptions, ProtoTestCases}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures
@@ -9,6 +10,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.duration.*
+import scala.jdk.CollectionConverters.*
 
 /**
  * Basic functionality tests for the TranscoderFlow class.
@@ -24,24 +26,24 @@ class TranscoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   "fastMergingUnsafe" should {
     "transcode triples" when {
       "frameToFrame" in {
-        Source(Triples1.encodedFull(JellyOptions.smallAllFeatures, 4))
-          .via(TranscoderFlow.fastMergingUnsafe(JellyOptions.smallAllFeatures).frameToFrame)
+        Source(Triples1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 4))
+          .via(TranscoderFlow.fastMergingUnsafe(JellyOptions.SMALL_ALL_FEATURES).frameToFrame)
           .runWith(Sink.seq)
-          .futureValue should be(Triples1.encodedFull(JellyOptions.smallAllFeatures, 4))
+          .futureValue should be(Triples1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 4))
       }
 
       "rowToRow" in {
-        Source(Triples1.encodedFull(JellyOptions.smallAllFeatures, 4).flatMap(_.rows))
-          .via(TranscoderFlow.fastMergingUnsafe(JellyOptions.smallAllFeatures).rowToRow)
+        Source(Triples1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 4).flatMap(_.getRows.asScala))
+          .via(TranscoderFlow.fastMergingUnsafe(JellyOptions.SMALL_ALL_FEATURES).rowToRow)
           .runWith(Sink.seq)
-          .futureValue should be (Triples1.encodedFull(JellyOptions.smallAllFeatures, 4).flatMap(_.rows))
+          .futureValue should be (Triples1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 4).flatMap(_.getRows.asScala))
       }
 
       "rowToFrame" in {
-        Source(Triples1.encodedFull(JellyOptions.smallAllFeatures, 4).flatMap(_.rows))
-          .via(TranscoderFlow.fastMergingUnsafe(JellyOptions.smallAllFeatures).rowToFrame(StreamRowCountLimiter(4)))
+        Source(Triples1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 4).flatMap(_.getRows.asScala))
+          .via(TranscoderFlow.fastMergingUnsafe(JellyOptions.SMALL_ALL_FEATURES).rowToFrame(StreamRowCountLimiter(4)))
           .runWith(Sink.seq)
-          .futureValue should be (Triples1.encodedFull(JellyOptions.smallAllFeatures, 4))
+          .futureValue should be (Triples1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 4))
       }
     }
   }
@@ -49,24 +51,24 @@ class TranscoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   "fastMerging" should {
     "transcode quads" when {
       "frameToFrame" in {
-        Source(Quads1.encodedFull(JellyOptions.smallAllFeatures, 5))
-          .via(TranscoderFlow.fastMerging(JellyOptions.defaultSupportedOptions, JellyOptions.smallAllFeatures).frameToFrame)
+        Source(Quads1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 5))
+          .via(TranscoderFlow.fastMerging(JellyOptions.DEFAULT_SUPPORTED_OPTIONS, JellyOptions.SMALL_ALL_FEATURES).frameToFrame)
           .runWith(Sink.seq)
-          .futureValue should be (Quads1.encodedFull(JellyOptions.smallAllFeatures, 5))
+          .futureValue should be (Quads1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 5))
       }
 
       "rowToRow" in {
-        Source(Quads1.encodedFull(JellyOptions.smallAllFeatures, 5).flatMap(_.rows))
-          .via(TranscoderFlow.fastMerging(JellyOptions.defaultSupportedOptions, JellyOptions.smallAllFeatures).rowToRow)
+        Source(Quads1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 5).flatMap(_.getRows.asScala))
+          .via(TranscoderFlow.fastMerging(JellyOptions.DEFAULT_SUPPORTED_OPTIONS, JellyOptions.SMALL_ALL_FEATURES).rowToRow)
           .runWith(Sink.seq)
-          .futureValue should be (Quads1.encodedFull(JellyOptions.smallAllFeatures, 5).flatMap(_.rows))
+          .futureValue should be (Quads1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 5).flatMap(_.getRows.asScala))
       }
 
       "rowToFrame" in {
-        Source(Quads1.encodedFull(JellyOptions.smallAllFeatures, 5).flatMap(_.rows))
-          .via(TranscoderFlow.fastMerging(JellyOptions.defaultSupportedOptions, JellyOptions.smallAllFeatures).rowToFrame(StreamRowCountLimiter(5)))
+        Source(Quads1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 5).flatMap(_.getRows.asScala))
+          .via(TranscoderFlow.fastMerging(JellyOptions.DEFAULT_SUPPORTED_OPTIONS, JellyOptions.SMALL_ALL_FEATURES).rowToFrame(StreamRowCountLimiter(5)))
           .runWith(Sink.seq)
-          .futureValue should be (Quads1.encodedFull(JellyOptions.smallAllFeatures, 5))
+          .futureValue should be (Quads1.encodedFull(JellyOptions.SMALL_ALL_FEATURES, 5))
       }
     }
   }

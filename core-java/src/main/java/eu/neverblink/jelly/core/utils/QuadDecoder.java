@@ -13,7 +13,7 @@ public interface QuadDecoder<TNode, TQuad> {
      * @param quad the encoded quad
      * @return the decoded quad
      */
-    TNode getSubject(TQuad quad);
+    TNode getQuadSubject(TQuad quad);
 
     /**
      * Extracts the predicate from a quad.
@@ -21,7 +21,7 @@ public interface QuadDecoder<TNode, TQuad> {
      * @param quad the encoded quad
      * @return the decoded quad
      */
-    TNode getPredicate(TQuad quad);
+    TNode getQuadPredicate(TQuad quad);
 
     /**
      * Extracts the object from a quad.
@@ -29,7 +29,7 @@ public interface QuadDecoder<TNode, TQuad> {
      * @param quad the encoded quad
      * @return the decoded quad
      */
-    TNode getObject(TQuad quad);
+    TNode getQuadObject(TQuad quad);
 
     /**
      * Extracts the graph from a quad.
@@ -37,5 +37,5 @@ public interface QuadDecoder<TNode, TQuad> {
      * @param quad the encoded quad
      * @return the decoded quad
      */
-    TNode getGraph(TQuad quad);
+    TNode getQuadGraph(TQuad quad);
 }

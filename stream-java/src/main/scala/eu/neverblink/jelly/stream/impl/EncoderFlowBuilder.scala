@@ -234,7 +234,7 @@ final class EncoderFlowBuilderImpl[TNode]
               // The rows will be accumulated in the buffer and flushed when the next non-namespace
               // declaration element is encountered. This means that unless we encounter a triple/quad,
               // the namespace declaration will not be flushed.
-              case ns: EncodedNamespaceDeclaration[TNode] => encoder.handleNamespace(ns.prefix, ns.iri) ; Nil
+              case ns: EncodedNamespaceDeclaration[_] => encoder.handleNamespace(ns.prefix, ns.iri.asInstanceOf[TNode]) ; Nil
               case other => other.asInstanceOf[TIn] :: Nil
             }
             .via(_child.flowInternal(encoder))
@@ -305,7 +305,8 @@ final class EncoderFlowBuilderImpl[TNode]
 
   /**
    * Builder stage that applies some transformation to the input stream.
-   * @tparam TIn Type of the input elements to the flow in this stage.
+   *
+   * @tparam TIn  Type of the input elements to the flow in this stage.
    * @tparam TOut Type of the input elements of the child stage.
    */
   sealed trait ExtensionBuilder[TIn, TOut](protected val _child: FlowableBuilder[TOut, ?])
@@ -348,9 +349,9 @@ final class EncoderFlowBuilderImpl[TNode]
     Flow[TTriple, RdfStreamFrame, NotUsed] =
       flatFlow(
         e => encoder.handleTriple(
-          tripleDecoder.getSubject(e),
-          tripleDecoder.getPredicate(e),
-          tripleDecoder.getObject(e)
+          tripleDecoder.getTripleSubject(e),
+          tripleDecoder.getTriplePredicate(e),
+          tripleDecoder.getTripleObject(e)
         ),
         limiter,
         encoder
@@ -370,9 +371,9 @@ final class EncoderFlowBuilderImpl[TNode]
     Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
       groupedFlow(
         e => encoder.handleTriple(
-          tripleDecoder.getSubject(e),
-          tripleDecoder.getPredicate(e),
-          tripleDecoder.getObject(e)
+          tripleDecoder.getTripleSubject(e),
+          tripleDecoder.getTriplePredicate(e),
+          tripleDecoder.getTripleObject(e)
         ),
         maybeLimiter,
         encoder
@@ -390,10 +391,10 @@ final class EncoderFlowBuilderImpl[TNode]
     Flow[TQuad, RdfStreamFrame, NotUsed] =
       flatFlow(
         e => encoder.handleQuad(
-          quadDecoder.getSubject(e),
-          quadDecoder.getPredicate(e),
-          quadDecoder.getObject(e),
-          quadDecoder.getGraph(e)
+          quadDecoder.getQuadSubject(e),
+          quadDecoder.getQuadPredicate(e),
+          quadDecoder.getQuadObject(e),
+          quadDecoder.getQuadGraph(e)
         ),
         limiter,
         encoder
@@ -413,10 +414,10 @@ final class EncoderFlowBuilderImpl[TNode]
     Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
       groupedFlow(
         e => encoder.handleQuad(
-          quadDecoder.getSubject(e),
-          quadDecoder.getPredicate(e),
-          quadDecoder.getObject(e),
-          quadDecoder.getGraph(e)
+          quadDecoder.getQuadSubject(e),
+          quadDecoder.getQuadPredicate(e),
+          quadDecoder.getQuadObject(e),
+          quadDecoder.getQuadGraph(e)
         ),
         maybeLimiter,
         encoder
@@ -469,9 +470,9 @@ final class EncoderFlowBuilderImpl[TNode]
       (graphName: TNode, triples: Iterable[TTriple]) => {
         encoder.handleGraphStart(graphName)
         triples.foreach(triple => encoder.handleTriple(
-          tripleDecoder.getSubject(triple),
-          tripleDecoder.getPredicate(triple),
-          tripleDecoder.getObject(triple))
+          tripleDecoder.getTripleSubject(triple),
+          tripleDecoder.getTriplePredicate(triple),
+          tripleDecoder.getTripleObject(triple))
         )
         encoder.handleGraphEnd()
       }
