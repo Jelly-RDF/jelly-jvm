@@ -4,7 +4,7 @@ import java.io.File
 
 object TestCases:
   val triples: Seq[(String, File)] = Seq[String](
-    "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.nt", "rdf-star-blanks.nt",
+    "weather.nt", "p2_ontology.nt", "nt-syntax-subm-01.nt", "rdf-star.ttl", "rdf-star-blanks.ttl",
     "rdf-stax-1-1-2.nt", "riverbench-assist-iot-weather-1-0-2.nt"
   ).map(name => (
     name, File(getClass.getResource("/triples/" + name).toURI)

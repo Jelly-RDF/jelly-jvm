@@ -14,11 +14,11 @@ case object JenaTestStream extends TestStream:
   import eu.ostrzyciel.jelly.convert.jena.given
 
   override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
-    Source.fromIterator(() => AsyncParser.asyncParseTriples(is, Lang.NT, "").asScala)
+    Source.fromIterator(() => AsyncParser.asyncParseTriples(is, Lang.TURTLE, "").asScala)
       .via(EncoderFlow.builder.withLimiter(limiter).flatTriples(jellyOpt).flow)
 
   override def quadSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
-    Source.fromIterator(() => AsyncParser.asyncParseQuads(is, Lang.NQUADS, "").asScala)
+    Source.fromIterator(() => AsyncParser.asyncParseQuads(is, Lang.NQ, "").asScala)
       .via(EncoderFlow.builder.withLimiter(limiter).flatQuads(jellyOpt).flow)
 
   override def graphSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
