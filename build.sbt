@@ -465,6 +465,21 @@ lazy val stream = (project in file("stream"))
   )
   .dependsOn(core % "compile->compile;test->test")
 
+lazy val streamJava = (project in file("stream-java"))
+  .settings(
+    name := "jelly-stream-java",
+    organization := "eu.neverblink.jelly",
+    description := "Utilities for using the Jelly RDF serialization format with Reactive Streams (via Apache Pekko). " +
+      "Java edition.",
+    libraryDependencies ++= Seq(
+      "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
+    ),
+    publishArtifact := false, // TODO: remove this when ready
+    commonSettings,
+  )
+  .dependsOn(coreJava % "compile->compile;test->test")
+
 lazy val grpc = (project in file("grpc"))
   .enablePlugins(PekkoGrpcPlugin)
   .settings(
