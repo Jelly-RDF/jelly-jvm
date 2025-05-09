@@ -542,19 +542,16 @@ lazy val integrationTestsJava = (project in file("integration-tests-java"))
       "com.apicatalog" % "titanium-json-ld" % "1.6.0" % Test,
     ),
     libraryDependencies ++= protobufCompilerDeps,
-//    Compile / PB.targets := Seq(
-//      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
-//    ),
     commonSettings,
   )
   .dependsOn(
-    // stream,
     coreJava % "compile->compile;test->test",
     jenaJava % "compile->compile;test->test",
     jenaPatch % "compile->compile;test->test",
     rdf4jJava,
     rdf4jPatch,
     titaniumRdfApiJava,
+    streamJava
   )
 
 lazy val examples = (project in file("examples"))
