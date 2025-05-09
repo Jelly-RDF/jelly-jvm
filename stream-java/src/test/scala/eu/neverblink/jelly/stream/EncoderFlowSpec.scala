@@ -2,8 +2,10 @@ package eu.neverblink.jelly.stream
 
 import eu.neverblink.jelly.core.ProtoTestCases.*
 import eu.neverblink.jelly.core.helpers.Assertions.*
+import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.helpers.{MockConverterFactory, Mrl}
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.utils.{QuadDecoder, TripleDecoder}
 import eu.neverblink.jelly.core.{JellyConstants, JellyOptions, ProtoTestCases}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
@@ -17,15 +19,18 @@ import scala.jdk.CollectionConverters.*
 class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   given PatienceConfig = PatienceConfig(5.seconds, 100.millis)
-  given MockConverterFactory.type = MockConverterFactory
   given ActorSystem = ActorSystem()
+
+  given MockConverterFactory.type = MockConverterFactory
+  given TripleDecoder[Node, Triple] = MockConverterFactory.encoderConverter
+  given QuadDecoder[Node, Quad] = MockConverterFactory.encoderConverter
 
   "flatTripleStream" should {
     "encode triples" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(1000))
-          .flatTriples[Mrl.Triple](JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .flatTriples[Mrl.Triple](JellyOptions.SMALL_GENERALIZED)
           .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -46,7 +51,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .via(EncoderFlow.builder
           .withLimiter(ByteSizeLimiter(80))
-          .flatTriples(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .flatTriples(JellyOptions.SMALL_GENERALIZED)
           .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -67,7 +72,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))
-          .flatTriples(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .flatTriples(JellyOptions.SMALL_GENERALIZED)
           .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -88,7 +93,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val encoded: Seq[RdfStreamFrame] = Source(Triples2EncodedNsDecl.mrl)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))
-          .flatTriples(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .flatTriples(JellyOptions.SMALL_GENERALIZED)
           .withNamespaceDeclarations
           .flow
         )
@@ -112,7 +117,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .grouped(2)
         .via(EncoderFlow.builder
-          .flatTriplesGrouped(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .flatTriplesGrouped(JellyOptions.SMALL_GENERALIZED)
           .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -136,7 +141,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .grouped(2)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))
-          .flatTriplesGrouped(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .flatTriplesGrouped(JellyOptions.SMALL_GENERALIZED)
           .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -165,7 +170,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .grouped(2)
         .via(
           EncoderFlow.builder
-            .graphs(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+            .graphs(JellyOptions.SMALL_GENERALIZED)
             .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -190,7 +195,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(1000))
-          .flatQuads(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .flatQuads(JellyOptions.SMALL_GENERALIZED)
           .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -213,7 +218,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val encoded: Seq[RdfStreamFrame] = Source(Quads1.mrl)
         .grouped(2)
         .via(EncoderFlow.builder
-          .flatQuadsGrouped(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .flatQuadsGrouped(JellyOptions.SMALL_GENERALIZED)
           .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -239,7 +244,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .grouped(2)
         .via(
           EncoderFlow.builder
-            .datasetsFromQuads(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+            .datasetsFromQuads(JellyOptions.SMALL_GENERALIZED)
             .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -264,7 +269,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
         .via(
           EncoderFlow.builder
-            .namedGraphs(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+            .namedGraphs(JellyOptions.SMALL_GENERALIZED)
             .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -285,7 +290,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))
-          .namedGraphs(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .namedGraphs(JellyOptions.SMALL_GENERALIZED)
           .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -310,7 +315,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .grouped(2)
         .via(
           EncoderFlow.builder
-            .datasets(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+            .datasets(JellyOptions.SMALL_GENERALIZED)
             .flow
         )
         .toMat(Sink.seq)(Keep.right)
@@ -332,7 +337,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .grouped(2)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))
-          .datasets(JellyOptions.SMALL_GENERALIZED)(using MockConverterFactory.encoderConverter)
+          .datasets(JellyOptions.SMALL_GENERALIZED)
           .flow
         )
         .toMat(Sink.seq)(Keep.right)
