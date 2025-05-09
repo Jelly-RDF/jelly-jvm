@@ -5,9 +5,11 @@ import static eu.neverblink.jelly.convert.titanium.TitaniumConstants.DT_STRING;
 
 import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.convert.titanium.internal.TitaniumNode;
+import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.RdfHandler;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 
+@InternalApi
 final class TitaniumAnyStatementHandler implements RdfHandler.AnyStatementHandler<Object> {
 
     private RdfQuadConsumer consumer;

@@ -2,10 +2,14 @@ package eu.neverblink.jelly.convert.jena;
 
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
+import eu.neverblink.jelly.core.utils.QuadDecoder;
+import eu.neverblink.jelly.core.utils.TripleDecoder;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 
-public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
+public final class JenaEncoderConverter
+    implements ProtoEncoderConverter<Node>, TripleDecoder<Node, Triple>, QuadDecoder<Node, Quad> {
 
     @Override
     public void nodeToProto(NodeEncoder<Node> encoder, Node node) {
@@ -32,7 +36,9 @@ public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
             // RDF-star node
             final var t = node.getTriple();
             encoder.makeQuotedTriple(t.getSubject(), t.getPredicate(), t.getObject());
-        } else throw new IllegalArgumentException("Cannot encode node: " + node);
+        } else {
+            throw new IllegalArgumentException("Cannot encode node: " + node);
+        }
     }
 
     @Override
@@ -64,6 +70,43 @@ public final class JenaEncoderConverter implements ProtoEncoderConverter<Node> {
             } else {
                 encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
             }
-        } else throw new IllegalArgumentException("Cannot encode graph node: " + node);
+        } else {
+            throw new IllegalArgumentException("Cannot encode graph node: " + node);
+        }
+    }
+
+    @Override
+    public Node getQuadSubject(Quad quad) {
+        return quad.getSubject();
+    }
+
+    @Override
+    public Node getQuadPredicate(Quad quad) {
+        return quad.getPredicate();
+    }
+
+    @Override
+    public Node getQuadObject(Quad quad) {
+        return quad.getObject();
+    }
+
+    @Override
+    public Node getQuadGraph(Quad quad) {
+        return quad.getGraph();
+    }
+
+    @Override
+    public Node getTripleSubject(Triple triple) {
+        return triple.getSubject();
+    }
+
+    @Override
+    public Node getTriplePredicate(Triple triple) {
+        return triple.getPredicate();
+    }
+
+    @Override
+    public Node getTripleObject(Triple triple) {
+        return triple.getObject();
     }
 }

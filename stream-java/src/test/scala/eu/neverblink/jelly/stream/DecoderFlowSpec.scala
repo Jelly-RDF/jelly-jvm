@@ -1,9 +1,11 @@
 package eu.neverblink.jelly.stream
 
-import eu.ostrzyciel.jelly.core.helpers.Assertions.*
-import eu.ostrzyciel.jelly.core.helpers.MockConverterFactory
-import eu.ostrzyciel.jelly.core.proto.v1.*
-import eu.ostrzyciel.jelly.core.*
+import eu.neverblink.jelly.core.helpers.Assertions.*
+import eu.neverblink.jelly.core.helpers.MockConverterFactory
+import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.*
+import eu.neverblink.jelly.core.ProtoTestCases.*
+import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils
 import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
@@ -12,7 +14,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
-  import eu.ostrzyciel.jelly.core.helpers.Mrl.*
+  import eu.neverblink.jelly.core.helpers.Mrl.*
   given MockConverterFactory.type = MockConverterFactory
   given ActorSystem = ActorSystem()
 
@@ -34,13 +36,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     for n <- Seq(1, 2, 100) do
       s"decode triples, frame size: $n (strict)" in {
         val encoded = Triples1.encodedFull(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(PhysicalStreamType.TRIPLES)
-            .withLogicalType(LogicalStreamType.FLAT_TRIPLES),
+          JellyOptions.SMALL_GENERALIZED.clone()
+            .setPhysicalType(PhysicalStreamType.TRIPLES)
+            .setLogicalType(LogicalStreamType.FLAT_TRIPLES),
           n,
         )
         val decoded: Seq[Triple] = Source(encoded)
-          .via(DecoderFlow.decodeTriples.asFlatTripleStreamStrict)
+          .via(
+            DecoderFlow
+              .decodeTriples
+              .asFlatTripleStreamStrict(using MockConverterFactory, MockConverterFactory.decoderConverter)
+          )
           .toMat(Sink.seq)(Keep.right)
           .run().futureValue
 
@@ -51,13 +57,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       "decode triples",
       LogicalStreamType.FLAT_TRIPLES,
       LogicalStreamType.GRAPHS,
-      DecoderFlow.decodeTriples.asFlatTripleStreamStrict,
-      DecoderFlow.decodeTriples.asFlatTripleStream,
+      DecoderFlow
+        .decodeTriples
+        .asFlatTripleStreamStrict(using MockConverterFactory, MockConverterFactory.decoderConverter),
+      DecoderFlow
+        .decodeTriples
+        .asFlatTripleStream(using MockConverterFactory, MockConverterFactory.decoderConverter),
     )((encodedType, flow) => {
       val encoded = Triples1.encodedFull(
-        JellyOptions.smallGeneralized
-          .withPhysicalType(PhysicalStreamType.TRIPLES)
-          .withLogicalType(encodedType),
+        JellyOptions.SMALL_GENERALIZED.clone()
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
+          .setLogicalType(encodedType),
         100,
       )
       val decoded: Seq[Triple] = Source(encoded)
@@ -72,28 +82,37 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   "snoopStreamOptions with decodeTriples.asFlatTripleStreamStrict" should {
     "decode triples, with options snooping (strict)" in {
       val encoded = Triples1.encodedFull(
-        JellyOptions.smallGeneralized
-          .withPhysicalType(PhysicalStreamType.TRIPLES)
-          .withLogicalType(LogicalStreamType.FLAT_TRIPLES)
-          .withRdfStar(true),
+        JellyOptions.SMALL_GENERALIZED.clone()
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
+          .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .setRdfStar(true),
         100,
       )
       val (optionsF, decodedF) = Source(encoded)
         .viaMat(DecoderFlow.snoopStreamOptions)(Keep.right)
-        .via(DecoderFlow.decodeTriples.asFlatTripleStreamStrict)
+        .via(
+          DecoderFlow
+            .decodeTriples
+            .asFlatTripleStreamStrict(using MockConverterFactory, MockConverterFactory.decoderConverter)
+        )
         .toMat(Sink.seq)(Keep.both)
         .run()
 
       assertDecoded(decodedF.futureValue, Triples1.mrl)
       val options = optionsF.futureValue
       options.isDefined should be (true)
-      options.get.rdfStar should be (true)
-      options.get.logicalType should be (LogicalStreamType.FLAT_TRIPLES)
-      options.get.physicalType should be (PhysicalStreamType.TRIPLES)
+      options.get.getRdfStar should be (true)
+      options.get.getLogicalType should be (LogicalStreamType.FLAT_TRIPLES)
+      options.get.getPhysicalType should be (PhysicalStreamType.TRIPLES)
 
       // Basic tests on logical stream type extensions
-      options.get.logicalType.getRdfStaxType.isDefined should be (true)
-      options.get.logicalType.getRdfStaxAnnotation[Node, Triple](null).size should be (3)
+      LogicalStreamTypeUtils.getRdfStaxType(options.get.getLogicalType) should not be null
+      LogicalStreamTypeUtils.getRdfStaxAnnotation[Node, Datatype, Triple](
+        MockConverterFactory.decoderConverter, 
+        MockConverterFactory.decoderConverter, 
+        options.get.getLogicalType, 
+        null
+      ).size should be (3)
     }
   }
 
@@ -103,13 +122,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         s"decode triples as graphs, frame size: $n",
         LogicalStreamType.GRAPHS,
         LogicalStreamType.FLAT_TRIPLES,
-        DecoderFlow.decodeTriples.asGraphStreamStrict,
-        DecoderFlow.decodeTriples.asGraphStream,
+        DecoderFlow
+          .decodeTriples
+          .asGraphStreamStrict(using MockConverterFactory, MockConverterFactory.decoderConverter),
+        DecoderFlow
+          .decodeTriples
+          .asGraphStream(using MockConverterFactory, MockConverterFactory.decoderConverter),
       )((encodedType, flow) => {
         val encoded = Triples1.encodedFull(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(PhysicalStreamType.TRIPLES)
-            .withLogicalType(encodedType),
+          JellyOptions.SMALL_GENERALIZED.clone()
+            .setPhysicalType(PhysicalStreamType.TRIPLES)
+            .setLogicalType(encodedType),
           n,
         )
         val decoded: Seq[Seq[Triple]] = Source(encoded)
@@ -129,13 +152,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         s"decode quads, frame size: $n",
         LogicalStreamType.FLAT_QUADS,
         LogicalStreamType.DATASETS,
-        DecoderFlow.decodeQuads.asFlatQuadStreamStrict,
-        DecoderFlow.decodeQuads.asFlatQuadStream,
+        DecoderFlow
+          .decodeQuads
+          .asFlatQuadStreamStrict(using MockConverterFactory, MockConverterFactory.decoderConverter),
+        DecoderFlow
+          .decodeQuads
+          .asFlatQuadStream(using MockConverterFactory, MockConverterFactory.decoderConverter),
       )((encodedType, flow) => {
         val encoded = Quads1.encodedFull(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(PhysicalStreamType.QUADS)
-            .withLogicalType(encodedType),
+          JellyOptions.SMALL_GENERALIZED.clone()
+            .setPhysicalType(PhysicalStreamType.QUADS)
+            .setLogicalType(encodedType),
           n,
         )
         val decoded: Seq[Quad] = Source(encoded)
@@ -153,13 +180,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         s"decode quads as groups, frame size: $n",
         LogicalStreamType.DATASETS,
         LogicalStreamType.FLAT_QUADS,
-        DecoderFlow.decodeQuads.asDatasetStreamOfQuadsStrict,
-        DecoderFlow.decodeQuads.asDatasetStreamOfQuads,
+        DecoderFlow
+          .decodeQuads
+          .asDatasetStreamOfQuadsStrict(using MockConverterFactory, MockConverterFactory.decoderConverter),
+        DecoderFlow
+          .decodeQuads
+          .asDatasetStreamOfQuads(using MockConverterFactory, MockConverterFactory.decoderConverter),
       )((encodedType, flow) => {
         val encoded = Quads1.encodedFull(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(PhysicalStreamType.QUADS)
-            .withLogicalType(encodedType),
+          JellyOptions.SMALL_GENERALIZED.clone()
+            .setPhysicalType(PhysicalStreamType.QUADS)
+            .setLogicalType(encodedType),
           n,
         )
         val decoded: Seq[Seq[Quad]] = Source(encoded)
@@ -179,13 +210,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         s"decode graphs as quads, frame size: $n",
         LogicalStreamType.FLAT_QUADS,
         LogicalStreamType.DATASETS,
-        DecoderFlow.decodeGraphs.asFlatQuadStreamStrict,
-        DecoderFlow.decodeGraphs.asFlatQuadStream,
+        DecoderFlow
+          .decodeGraphs
+          .asFlatQuadStreamStrict(using MockConverterFactory, MockConverterFactory.decoderConverter),
+        DecoderFlow
+          .decodeGraphs
+          .asFlatQuadStream(using MockConverterFactory, MockConverterFactory.decoderConverter),
       )((encodedType, flow) => {
         val encoded = Graphs1.encodedFull(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(PhysicalStreamType.GRAPHS)
-            .withLogicalType(encodedType),
+          JellyOptions.SMALL_GENERALIZED.clone()
+            .setPhysicalType(PhysicalStreamType.GRAPHS)
+            .setLogicalType(encodedType),
           n,
         )
         val decoded: Seq[Quad] = Source(encoded)
@@ -203,13 +238,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         s"decode graphs as datasets, frame size: $n",
         LogicalStreamType.DATASETS,
         LogicalStreamType.FLAT_QUADS,
-        DecoderFlow.decodeGraphs.asDatasetStreamOfQuadsStrict,
-        DecoderFlow.decodeGraphs.asDatasetStreamOfQuads,
+        DecoderFlow
+          .decodeGraphs
+          .asDatasetStreamOfQuadsStrict(using MockConverterFactory, MockConverterFactory.decoderConverter),
+        DecoderFlow
+          .decodeGraphs
+          .asDatasetStreamOfQuads(using MockConverterFactory, MockConverterFactory.decoderConverter),
       )((encodedType, flow) => {
         val encoded = Graphs1.encodedFull(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(PhysicalStreamType.GRAPHS)
-            .withLogicalType(encodedType),
+          JellyOptions.SMALL_GENERALIZED.clone()
+            .setPhysicalType(PhysicalStreamType.GRAPHS)
+            .setLogicalType(encodedType),
           n,
         )
         val decoded: Seq[Seq[Quad]] = Source(encoded)
@@ -229,13 +268,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         s"decode named graphs, frame size: $n",
         LogicalStreamType.NAMED_GRAPHS,
         LogicalStreamType.FLAT_QUADS,
-        DecoderFlow.decodeGraphs.asNamedGraphStreamStrict,
-        DecoderFlow.decodeGraphs.asNamedGraphStream,
+        DecoderFlow
+          .decodeGraphs
+          .asNamedGraphStreamStrict(using MockConverterFactory, MockConverterFactory.decoderConverter),
+        DecoderFlow
+          .decodeGraphs
+          .asNamedGraphStream(using MockConverterFactory, MockConverterFactory.decoderConverter),
       )((encodedType, flow) => {
         val encoded = Graphs1.encodedFull(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(PhysicalStreamType.GRAPHS)
-            .withLogicalType(encodedType),
+          JellyOptions.SMALL_GENERALIZED.clone()
+            .setPhysicalType(PhysicalStreamType.GRAPHS)
+            .setLogicalType(encodedType),
           n,
         )
         val decoded: Seq[(Node, Iterable[Triple])] = Source(encoded)
@@ -256,13 +299,17 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         s"decode graphs as datasets, frame size: $n",
         LogicalStreamType.DATASETS,
         LogicalStreamType.FLAT_QUADS,
-        DecoderFlow.decodeGraphs.asDatasetStreamStrict,
-        DecoderFlow.decodeGraphs.asDatasetStream,
+        DecoderFlow
+          .decodeGraphs
+          .asDatasetStreamStrict(using MockConverterFactory, MockConverterFactory.decoderConverter),
+        DecoderFlow
+          .decodeGraphs
+          .asDatasetStream(using MockConverterFactory, MockConverterFactory.decoderConverter),
       )((encodedType, flow) => {
         val encoded = Graphs1.encodedFull(
-          JellyOptions.smallGeneralized
-            .withPhysicalType(PhysicalStreamType.GRAPHS)
-            .withLogicalType(encodedType),
+          JellyOptions.SMALL_GENERALIZED.clone()
+            .setPhysicalType(PhysicalStreamType.GRAPHS)
+            .setLogicalType(encodedType),
           n,
         )
         val decoded: Seq[Seq[(Node, Iterable[Triple])]] = Source(encoded)
@@ -287,11 +334,19 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       for n <- Seq(1, 2, 100) do
         s"decode $name stream to flat, frame size: $n" in {
           val encoded = testCase.encodedFull(
-            JellyOptions.smallGeneralized.withPhysicalType(streamType),
+            JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(streamType),
             n,
           )
           val decoded = Source(encoded)
-            .via(DecoderFlow.decodeAny.asFlatStream)
+            .via(
+              DecoderFlow
+                .decodeAny
+                .asFlatStream(
+                  using MockConverterFactory,
+                  MockConverterFactory.decoderConverter,
+                  MockConverterFactory.decoderConverter
+                )
+            )
             .toMat(Sink.seq)(Keep.right)
             .run().futureValue
 
@@ -304,11 +359,19 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       for n <- Seq(1, 2, 100) do
         s"decode $name stream to grouped, frame size: $n" in {
           val encoded = testCase.encodedFull(
-            JellyOptions.smallGeneralized.withPhysicalType(streamType),
+            JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(streamType),
             n,
           )
           val decoded = Source(encoded)
-            .via(DecoderFlow.decodeAny.asGroupedStream)
+            .via(
+              DecoderFlow
+                .decodeAny
+                .asGroupedStream(
+                  using MockConverterFactory,
+                  MockConverterFactory.decoderConverter,
+                  MockConverterFactory.decoderConverter
+                )
+            )
             .map(_.iterator.toSeq)
             .toMat(Sink.seq)(Keep.right)
             .run().futureValue

@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.stream
 
 import com.typesafe.config.ConfigFactory
-import eu.ostrzyciel.jelly.core.proto.v1.{LogicalStreamType, PhysicalStreamType}
+import eu.neverblink.jelly.core.proto.v1.{LogicalStreamType, PhysicalStreamType}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -9,13 +9,13 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
   "JellyOptionsFromTypesafe" should {
     "produce defaults for empty input" in {
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(ConfigFactory.empty())
-      opt.physicalType should be (PhysicalStreamType.UNSPECIFIED)
-      opt.logicalType should be (LogicalStreamType.UNSPECIFIED)
-      opt.generalizedStatements should be (false)
-      opt.rdfStar should be (false)
-      opt.maxNameTableSize should be (128)
-      opt.maxPrefixTableSize should be (16)
-      opt.maxDatatypeTableSize should be (16)
+      opt.getPhysicalType should be (PhysicalStreamType.UNSPECIFIED)
+      opt.getLogicalType should be (LogicalStreamType.UNSPECIFIED)
+      opt.getGeneralizedStatements should be (false)
+      opt.getRdfStar should be (false)
+      opt.getMaxNameTableSize should be (128)
+      opt.getMaxPrefixTableSize should be (16)
+      opt.getMaxDatatypeTableSize should be (16)
     }
 
     "override all defaults with a different config" in {
@@ -29,13 +29,13 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
         |jelly.datatype-table-size = 8
         |""".stripMargin)
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
-      opt.physicalType should be (PhysicalStreamType.GRAPHS)
-      opt.logicalType should be (LogicalStreamType.FLAT_QUADS)
-      opt.generalizedStatements should be (true)
-      opt.rdfStar should be (true)
-      opt.maxNameTableSize should be (1024)
-      opt.maxPrefixTableSize should be (64)
-      opt.maxDatatypeTableSize should be (8)
+      opt.getPhysicalType should be (PhysicalStreamType.GRAPHS)
+      opt.getLogicalType should be (LogicalStreamType.FLAT_QUADS)
+      opt.getGeneralizedStatements should be (true)
+      opt.getRdfStar should be (true)
+      opt.getMaxNameTableSize should be (1024)
+      opt.getMaxPrefixTableSize should be (64)
+      opt.getMaxDatatypeTableSize should be (8)
     }
 
     "override defaults partially" in {
@@ -45,13 +45,13 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
         |jelly.prefix-table-size = 64
         |""".stripMargin)
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
-      opt.physicalType should be (PhysicalStreamType.QUADS)
-      opt.logicalType should be (LogicalStreamType.UNSPECIFIED)
-      opt.generalizedStatements should be (false)
-      opt.rdfStar should be (false)
-      opt.maxNameTableSize should be (1024)
-      opt.maxPrefixTableSize should be (64)
-      opt.maxDatatypeTableSize should be (16)
+      opt.getPhysicalType should be (PhysicalStreamType.QUADS)
+      opt.getLogicalType should be (LogicalStreamType.UNSPECIFIED)
+      opt.getGeneralizedStatements should be (false)
+      opt.getRdfStar should be (false)
+      opt.getMaxNameTableSize should be (1024)
+      opt.getMaxPrefixTableSize should be (64)
+      opt.getMaxDatatypeTableSize should be (16)
     }
 
     "throw exception on unknown physical stream type" in {
