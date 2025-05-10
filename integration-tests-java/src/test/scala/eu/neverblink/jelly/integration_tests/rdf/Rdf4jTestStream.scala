@@ -1,9 +1,9 @@
 package eu.neverblink.jelly.integration_tests.rdf
 
-import eu.neverblink.jelly.convert.rdf4j.{Rdf4jConverterFactory, Rdf4jDatatype}
-import eu.neverblink.jelly.core.{GraphDeclaration, JellyConverterFactory}
+import eu.neverblink.jelly.convert.rdf4j.{Rdf4jConverterFactory, Rdf4jDatatype, Rdf4jDecoderConverter, Rdf4jEncoderConverter}
+import eu.neverblink.jelly.core.JellyConverterFactory
 import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
-import eu.neverblink.jelly.core.utils.{QuadDecoder, QuadEncoder, TripleDecoder, TripleEncoder}
+import eu.neverblink.jelly.core.utils.{GraphHolder, QuadExtractor, QuadMaker, TripleExtractor, TripleMaker}
 import eu.neverblink.jelly.stream.*
 import org.apache.pekko.Done
 import org.apache.pekko.stream.scaladsl.*
@@ -16,13 +16,7 @@ import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.*
 
 case object Rdf4jTestStream extends TestStream:
-  given JellyConverterFactory[Value, Rdf4jDatatype, ?, ?] = Rdf4jConverterFactory.getInstance()
-
-  given TripleDecoder[Value, Statement] = Rdf4jConverterFactory.getInstance().encoderConverter()
-  given QuadDecoder[Value, Statement] = Rdf4jConverterFactory.getInstance().encoderConverter()
-
-  given TripleEncoder[Value, Statement] = Rdf4jConverterFactory.getInstance().decoderConverter()
-  given QuadEncoder[Value, Statement] = Rdf4jConverterFactory.getInstance().decoderConverter()
+  given JellyConverterFactory[Value, Rdf4jDatatype, Rdf4jEncoderConverter, Rdf4jDecoderConverter] = Rdf4jConverterFactory.getInstance()
 
   override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     // This buffers everything in memory... but I'm too lazy to implement my own RDFHandler for this
@@ -49,7 +43,7 @@ case object Rdf4jTestStream extends TestStream:
     parser.parse(is)
     val graphs = collector.getStatements.asScala.toSeq
       .groupBy(_.getContext)
-      .map(e => GraphDeclaration[Value, Statement](e._1, e._2.asJava))
+      .map(e => GraphHolder[Value, Statement](e._1, e._2.asJava))
     
     Source.fromIterator(() => graphs.iterator)
       .via(EncoderFlow.builder.withLimiter(limiter).namedGraphs(jellyOpt).flow)

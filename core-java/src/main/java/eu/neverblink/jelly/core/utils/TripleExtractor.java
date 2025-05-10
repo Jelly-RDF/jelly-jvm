@@ -1,12 +1,12 @@
 package eu.neverblink.jelly.core.utils;
 
 /**
- * TripleDecoder is a functional interface that decodes a triple from a representation bound to RDF libraries.
+ * TripleExtractor is a functional interface that extracts triple nodes from a representation bound to RDF libraries.
  *
  * @param <TNode> the type of the nodes in the triple
  * @param <TTriple> the type of the encoded triple
  */
-public interface TripleDecoder<TNode, TTriple> {
+public interface TripleExtractor<TNode, TTriple> {
     /**
      * Extracts the subject from a triple.
      *

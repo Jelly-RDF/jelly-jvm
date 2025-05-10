@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.stream.impl
 
-import eu.neverblink.jelly.core.{EncodedNamespaceDeclaration, GraphDeclaration}
-import eu.neverblink.jelly.core.utils.{DatasetAdapter, GraphAdapter, NamespaceAdapter}
+import eu.neverblink.jelly.core.NamespaceDeclaration
+import eu.neverblink.jelly.core.utils.{DatasetAdapter, GraphAdapter, GraphHolder, NamespaceAdapter}
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 
@@ -67,7 +67,7 @@ final class RdfSourceBuilderImpl[TGraph, TDataset, TNode, TTriple, TQuad]:
      * @return source builder that can be materialized into a Pekko Source or further extended
      */
     final def graphAsTriples(graph: TGraph)
-      (using adapter: GraphAdapter[TNode, TTriple, TGraph]):
+      (using adapter: GraphAdapter[TTriple, TGraph]):
     ExtensibleBuilder[TTriple, Nothing, TGraph] =
       new ExtensibleBuilder[TTriple, Nothing, TGraph](None, graph):
         protected def sourceInternal: Source[TTriple, NotUsed] = Source(adapter.triples(graph).asScala.toList)
@@ -96,9 +96,9 @@ final class RdfSourceBuilderImpl[TGraph, TDataset, TNode, TTriple, TQuad]:
      */
     final def datasetAsGraphs(dataset: TDataset)
       (using adapter: DatasetAdapter[TNode, TTriple, TQuad, TDataset]):
-    ExtensibleBuilder[GraphDeclaration[TNode, TTriple], Nothing, TDataset] =
-      new ExtensibleBuilder[GraphDeclaration[TNode, TTriple], Nothing, TDataset](None, dataset):
-        protected def sourceInternal: Source[GraphDeclaration[TNode, TTriple], NotUsed] = Source(
+    ExtensibleBuilder[GraphHolder[TNode, TTriple], Nothing, TDataset] =
+      new ExtensibleBuilder[GraphHolder[TNode, TTriple], Nothing, TDataset](None, dataset):
+        protected def sourceInternal: Source[GraphHolder[TNode, TTriple], NotUsed] = Source(
           adapter.graphs(dataset).asScala.toList
         )
 
@@ -129,10 +129,10 @@ final class RdfSourceBuilderImpl[TGraph, TDataset, TNode, TTriple, TQuad]:
      *                  and the original source type
      * @return source builder that can be materialized into a Pekko Source or further extended
      */
-    final def withNamespaceDeclarations(using converter: NamespaceAdapter[TChild, TSrc]):
-    ExtensibleBuilder[EncodedNamespaceDeclaration[TChild], TApp | TChild, TSrc] =
-      new ExtensibleBuilder[EncodedNamespaceDeclaration[TChild], TApp | TChild, TSrc](Some(this), src):
-        protected def sourceInternal: Source[EncodedNamespaceDeclaration[TChild], NotUsed] =
+    final def withNamespaceDeclarations(using converter: NamespaceAdapter[TSrc]):
+    ExtensibleBuilder[NamespaceDeclaration, TApp | TChild, TSrc] =
+      new ExtensibleBuilder[NamespaceDeclaration, TApp | TChild, TSrc](Some(this), src):
+        protected def sourceInternal: Source[NamespaceDeclaration, NotUsed] =
           Source(converter.namespaces(src).asScala.toList)
 
   end ExtensibleBuilder

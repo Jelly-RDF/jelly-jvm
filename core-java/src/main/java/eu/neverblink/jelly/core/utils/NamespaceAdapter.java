@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.utils;
 
-import eu.neverblink.jelly.core.EncodedNamespaceDeclaration;
+import eu.neverblink.jelly.core.NamespaceDeclaration;
 
 /**
  * Generic interface for making converters from namespace-like structures to
@@ -11,14 +11,13 @@ import eu.neverblink.jelly.core.EncodedNamespaceDeclaration;
  * Warning: the converters assume that the underlying structures are static!
  * If they change during iteration, the results are undefined.
  *
- * @param <TNode> node type
  * @param <TStructure> structure type from which to extract namespaces
  */
-public interface NamespaceAdapter<TNode, TStructure> {
+public interface NamespaceAdapter<TStructure> {
     /**
      * Returns the namespace declarations for the structure.
      *
      * @return namespace declarations
      */
-    Iterable<EncodedNamespaceDeclaration<TNode>> namespaces(TStructure structure);
+    Iterable<NamespaceDeclaration> namespaces(TStructure structure);
 }

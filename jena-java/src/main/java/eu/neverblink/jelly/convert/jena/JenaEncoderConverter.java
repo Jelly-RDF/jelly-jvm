@@ -2,14 +2,14 @@ package eu.neverblink.jelly.convert.jena;
 
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
-import eu.neverblink.jelly.core.utils.QuadDecoder;
-import eu.neverblink.jelly.core.utils.TripleDecoder;
+import eu.neverblink.jelly.core.utils.QuadExtractor;
+import eu.neverblink.jelly.core.utils.TripleExtractor;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 
 public final class JenaEncoderConverter
-    implements ProtoEncoderConverter<Node>, TripleDecoder<Node, Triple>, QuadDecoder<Node, Quad> {
+    implements ProtoEncoderConverter<Node>, TripleExtractor<Node, Triple>, QuadExtractor<Node, Quad> {
 
     @Override
     public void nodeToProto(NodeEncoder<Node> encoder, Node node) {

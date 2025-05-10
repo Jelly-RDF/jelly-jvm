@@ -2,11 +2,11 @@ package eu.neverblink.jelly.stream
 
 import eu.neverblink.jelly.core.ProtoTestCases.*
 import eu.neverblink.jelly.core.helpers.Assertions.*
-import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.helpers.{MockConverterFactory, Mrl}
+import eu.neverblink.jelly.core.helpers.{MockConverterFactory, MockProtoDecoderConverter, MockProtoEncoderConverter, Mrl}
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.jelly.core.utils.{QuadDecoder, TripleDecoder}
-import eu.neverblink.jelly.core.{GraphDeclaration, JellyConstants, JellyOptions, ProtoTestCases}
+import eu.neverblink.jelly.core.utils.*
+import eu.neverblink.jelly.core.*
+import eu.neverblink.jelly.core.helpers.Mrl.{Datatype, Node}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures
@@ -21,9 +21,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   given PatienceConfig = PatienceConfig(5.seconds, 100.millis)
   given ActorSystem = ActorSystem()
 
-  given MockConverterFactory.type = MockConverterFactory
-  given TripleDecoder[Node, Triple] = MockConverterFactory.encoderConverter
-  given QuadDecoder[Node, Quad] = MockConverterFactory.encoderConverter
+  given JellyConverterFactory[Node, Datatype, MockProtoEncoderConverter, MockProtoDecoderConverter] = MockConverterFactory
 
   "flatTripleStream" should {
     "encode triples" in {
@@ -90,7 +88,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     }
 
     "encode triples with namespace declarations" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Triples2EncodedNsDecl.mrl)
+      val encoded: Seq[RdfStreamFrame] = Source(Triples2NsDecl.mrl)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))
           .flatTriples(JellyOptions.SMALL_GENERALIZED)
@@ -102,7 +100,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertEncoded(
         encoded.flatMap(_.getRows.asScala),
-        Triples2EncodedNsDecl.encoded(JellyOptions.SMALL_GENERALIZED.clone()
+        Triples2NsDecl.encoded(JellyOptions.SMALL_GENERALIZED.clone()
           .setPhysicalType(PhysicalStreamType.TRIPLES)
           .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
           .setVersion(JellyConstants.PROTO_VERSION)
@@ -266,7 +264,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   "namedGraphStream" should {
     "encode named graphs" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphDeclaration(e._1, e._2.asJava)))
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphHolder(e._1, e._2.asJava)))
         .via(
           EncoderFlow.builder
             .namedGraphs(JellyOptions.SMALL_GENERALIZED)
@@ -287,7 +285,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     }
 
     "encode named graphs with max row count" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphDeclaration(e._1, e._2.asJava)))
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphHolder(e._1, e._2.asJava)))
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))
           .namedGraphs(JellyOptions.SMALL_GENERALIZED)
@@ -311,7 +309,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   "datasetStream" should {
     "encode datasets" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphDeclaration(e._1, e._2.asJava)))
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphHolder(e._1, e._2.asJava)))
         .grouped(2)
         .via(
           EncoderFlow.builder
@@ -333,7 +331,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     }
 
     "encode datasets with max row count" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphDeclaration(e._1, e._2.asJava)))
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphHolder(e._1, e._2.asJava)))
         .grouped(2)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))

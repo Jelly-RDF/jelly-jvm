@@ -129,44 +129,6 @@ object ProtoTestCases:
       ),
     ))
 
-  object Triples2EncodedNsDecl extends TestCase[Triple | EncodedNamespaceDeclaration[Node]]:
-    val mrl = Seq(
-      EncodedNamespaceDeclaration("test", Iri("https://test.org/test/")),
-      Triple(
-        Iri("https://test.org/test/subject"),
-        Iri("https://test.org/test/predicate"),
-        Iri("https://test.org/ns2/object"),
-      ),
-      EncodedNamespaceDeclaration("ns2", Iri("https://test.org/ns2/")),
-      Triple(
-        Iri("https://test.org/ns2/object"),
-        Iri("https://test.org/test/subject"),
-        Iri("https://test.org/test/predicate"),
-      ),
-    )
-
-    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
-      opt,
-      rdfPrefixEntry(0, "https://test.org/test/"),
-      rdfNameEntry(0, ""),
-      rdfNamespaceDeclaration("test", rdfIri(1, 0)),
-      rdfNameEntry(0, "subject"),
-      rdfNameEntry(0, "predicate"),
-      rdfPrefixEntry(0, "https://test.org/ns2/"),
-      rdfNameEntry(0, "object"),
-      rdfTriple(
-        rdfIri(0, 0),
-        rdfIri(0, 0),
-        rdfIri(2, 0),
-      ),
-      rdfNamespaceDeclaration("ns2", rdfIri(0, 1)),
-      rdfTriple(
-        rdfIri(0, 4),
-        rdfIri(1, 2),
-        rdfIri(0, 0),
-      ),
-    ))
-
   object Quads1 extends TestCase[Quad]:
     val mrl = Seq(
       Quad(

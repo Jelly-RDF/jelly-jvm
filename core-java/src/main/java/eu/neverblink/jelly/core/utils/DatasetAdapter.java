@@ -1,12 +1,12 @@
 package eu.neverblink.jelly.core.utils;
 
-import eu.neverblink.jelly.core.EncodedNamespaceDeclaration;
-import eu.neverblink.jelly.core.GraphDeclaration;
+import eu.neverblink.jelly.core.NamespaceDeclaration;
+
 import java.util.Collections;
 
 /**
  * Generic interface for making converters from dataset-like structures to
- * of triples and quads.
+ * of iterable triples and quads.
  * <p>
  * These converters can be used to feed the streaming encoders in the stream module.
  * <p>
@@ -18,7 +18,7 @@ import java.util.Collections;
  * @param <TQuad> quad type
  * @param <TDataset> dataset type
  */
-public interface DatasetAdapter<TNode, TTriple, TQuad, TDataset> extends NamespaceAdapter<TNode, TDataset> {
+public interface DatasetAdapter<TNode, TTriple, TQuad, TDataset> extends NamespaceAdapter<TDataset> {
     /**
      * Converts the dataset to an iterable of quads.
      * @return iterable of quads
@@ -30,7 +30,7 @@ public interface DatasetAdapter<TNode, TTriple, TQuad, TDataset> extends Namespa
      * This is useful for GRAPHS Jelly streams.
      * @return iterable of GraphEntries
      */
-    Iterable<GraphDeclaration<TNode, TTriple>> graphs(TDataset dataset);
+    Iterable<GraphHolder<TNode, TTriple>> graphs(TDataset dataset);
 
     /**
      * Returns the namespace declarations for the dataset.
@@ -39,7 +39,7 @@ public interface DatasetAdapter<TNode, TTriple, TQuad, TDataset> extends Namespa
      *
      * @return namespace declarations
      */
-    default Iterable<EncodedNamespaceDeclaration<TNode>> namespaces(TDataset dataset) {
+    default Iterable<NamespaceDeclaration> namespaces(TDataset dataset) {
         return Collections::emptyIterator;
     }
 }

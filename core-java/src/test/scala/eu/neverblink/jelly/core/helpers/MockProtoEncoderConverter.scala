@@ -4,14 +4,14 @@ import eu.neverblink.jelly.core.{NodeEncoder, ProtoEncoderConverter, RdfProtoSer
 import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.jelly.core.utils.{QuadDecoder, TripleDecoder}
+import eu.neverblink.jelly.core.utils.{QuadExtractor, TripleExtractor}
 
 import scala.collection.mutable
 
 /**
  * Mock implementation of ProtoEncoderConverter
  */
-class MockProtoEncoderConverter extends ProtoEncoderConverter[Node], TripleDecoder[Node, Triple], QuadDecoder[Node, Quad]:
+class MockProtoEncoderConverter extends ProtoEncoderConverter[Node], TripleExtractor[Node, Triple], QuadExtractor[Node, Quad]:
 
   override def nodeToProto(encoder: NodeEncoder[Node], node: Node): Unit = node match
     case Iri(iri) => encoder.makeIri(iri)

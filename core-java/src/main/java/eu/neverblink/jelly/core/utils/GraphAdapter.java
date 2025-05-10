@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.utils;
 
-import eu.neverblink.jelly.core.EncodedNamespaceDeclaration;
+import eu.neverblink.jelly.core.NamespaceDeclaration;
 import java.util.Collections;
 
 /**
@@ -12,11 +12,10 @@ import java.util.Collections;
  * Warning: the converters assume that the underlying structures are static!
  * If they change during iteration, the results are undefined.
  *
- * @param <TNode> node type
  * @param <TTriple> triple type
  * @param <TGraph> dataset type
  */
-public interface GraphAdapter<TNode, TTriple, TGraph> extends NamespaceAdapter<TNode, TGraph> {
+public interface GraphAdapter<TTriple, TGraph> extends NamespaceAdapter<TGraph> {
     /**
      * Converts the graph to an iterable of triples.
      * @return iterable of triples
@@ -30,7 +29,7 @@ public interface GraphAdapter<TNode, TTriple, TGraph> extends NamespaceAdapter<T
      *
      * @return namespace declarations
      */
-    default Iterable<EncodedNamespaceDeclaration<TNode>> namespaces(TGraph graph) {
+    default Iterable<NamespaceDeclaration> namespaces(TGraph graph) {
         return Collections::emptyIterator;
     }
 }

@@ -1,9 +1,9 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
-import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, given}
+import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, JenaDecoderConverter, JenaEncoderConverter, given}
 import eu.neverblink.jelly.core.{JellyConverterFactory, JellyOptions}
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
-import eu.neverblink.jelly.core.utils.{QuadDecoder, QuadEncoder, TripleDecoder, TripleEncoder}
+import eu.neverblink.jelly.core.utils.{QuadExtractor, QuadMaker, TripleExtractor, TripleMaker}
 import eu.neverblink.jelly.stream.*
 import org.apache.jena.datatypes.RDFDatatype
 import org.apache.jena.graph.{Node, Triple}
@@ -17,13 +17,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.*
 
 class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model, Dataset]:
-  given JellyConverterFactory[Node, RDFDatatype, ?, ?] = JenaConverterFactory.getInstance()
-
-  given TripleDecoder[Node, Triple] = JenaConverterFactory.getInstance().encoderConverter()
-  given QuadDecoder[Node, Quad] = JenaConverterFactory.getInstance().encoderConverter()
-
-  given TripleEncoder[Node, Triple] = JenaConverterFactory.getInstance().decoderConverter()
-  given QuadEncoder[Node, Quad] = JenaConverterFactory.getInstance().decoderConverter()
+  given JellyConverterFactory[Node, RDFDatatype, JenaEncoderConverter, JenaDecoderConverter] = JenaConverterFactory.getInstance()
 
   given JenaAdapters.DATASET_ADAPTER.type = JenaAdapters.DATASET_ADAPTER
   given JenaAdapters.MODEL_ADAPTER.type = JenaAdapters.MODEL_ADAPTER

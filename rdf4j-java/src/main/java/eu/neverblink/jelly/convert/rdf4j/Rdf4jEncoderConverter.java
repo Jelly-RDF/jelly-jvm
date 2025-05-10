@@ -3,13 +3,13 @@ package eu.neverblink.jelly.convert.rdf4j;
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
-import eu.neverblink.jelly.core.utils.QuadDecoder;
-import eu.neverblink.jelly.core.utils.TripleDecoder;
+import eu.neverblink.jelly.core.utils.QuadExtractor;
+import eu.neverblink.jelly.core.utils.TripleExtractor;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
 public class Rdf4jEncoderConverter
-    implements ProtoEncoderConverter<Value>, TripleDecoder<Value, Statement>, QuadDecoder<Value, Statement> {
+    implements ProtoEncoderConverter<Value>, TripleExtractor<Value, Statement>, QuadExtractor<Value, Statement> {
 
     @Override
     public void nodeToProto(NodeEncoder<Value> encoder, Value value) {

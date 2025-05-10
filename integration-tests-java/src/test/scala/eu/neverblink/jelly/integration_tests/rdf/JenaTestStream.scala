@@ -1,9 +1,9 @@
 package eu.neverblink.jelly.integration_tests.rdf
 
-import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
+import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, JenaDecoderConverter, JenaEncoderConverter}
 import eu.neverblink.jelly.core.JellyConverterFactory
 import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
-import eu.neverblink.jelly.core.utils.{QuadDecoder, QuadEncoder, TripleDecoder, TripleEncoder}
+import eu.neverblink.jelly.core.utils.{QuadExtractor, QuadMaker, TripleExtractor, TripleMaker}
 import eu.neverblink.jelly.stream.*
 import org.apache.jena.datatypes.RDFDatatype
 import org.apache.jena.graph.{Node, Triple}
@@ -17,13 +17,13 @@ import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.*
 
 case object JenaTestStream extends TestStream:
-  given JellyConverterFactory[Node, RDFDatatype, ?, ?] = JenaConverterFactory.getInstance()
+  given JellyConverterFactory[Node, RDFDatatype, JenaEncoderConverter, JenaDecoderConverter] = JenaConverterFactory.getInstance()
 
-  given TripleDecoder[Node, Triple] = JenaConverterFactory.getInstance().encoderConverter()
-  given QuadDecoder[Node, Quad] = JenaConverterFactory.getInstance().encoderConverter()
+  given TripleExtractor[Node, Triple] = JenaConverterFactory.getInstance().encoderConverter()
+  given QuadExtractor[Node, Quad] = JenaConverterFactory.getInstance().encoderConverter()
 
-  given TripleEncoder[Node, Triple] = JenaConverterFactory.getInstance().decoderConverter()
-  given QuadEncoder[Node, Quad] = JenaConverterFactory.getInstance().decoderConverter()
+  given TripleMaker[Node, Triple] = JenaConverterFactory.getInstance().decoderConverter()
+  given QuadMaker[Node, Quad] = JenaConverterFactory.getInstance().decoderConverter()
 
   given JenaAdapters.DATASET_GRAPH_ADAPTER.type = JenaAdapters.DATASET_GRAPH_ADAPTER
   given JenaAdapters.MODEL_ADAPTER.type = JenaAdapters.MODEL_ADAPTER

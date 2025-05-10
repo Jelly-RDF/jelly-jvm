@@ -8,8 +8,9 @@ import java.util.function.Function;
  * Utility class for working with iterators.
  * <p>
  * This class provides methods to transform and manipulate iterators in a functional style.
+ * It is mainly used for use in DatasetAdapter and GraphAdapter implementations to transform Iterators.
  */
-public class IteratorUtils {
+public final class IteratorUtils {
 
     private IteratorUtils() {}
 

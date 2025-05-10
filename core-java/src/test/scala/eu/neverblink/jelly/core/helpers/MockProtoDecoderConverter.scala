@@ -2,13 +2,13 @@ package eu.neverblink.jelly.core.helpers
 
 import eu.neverblink.jelly.core.ProtoDecoderConverter
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.utils.{QuadEncoder, TripleEncoder}
+import eu.neverblink.jelly.core.utils.{QuadMaker, TripleMaker}
 
 /**
  * Mock implementation of [[ProtoDecoder]].
  */
 class MockProtoDecoderConverter
-  extends ProtoDecoderConverter[Node, Datatype], TripleEncoder[Node, Triple], QuadEncoder[Node, Quad]:
+  extends ProtoDecoderConverter[Node, Datatype], TripleMaker[Node, Triple], QuadMaker[Node, Quad]:
   override def makeSimpleLiteral(lex: String) = SimpleLiteral(lex)
   override def makeLangLiteral(lex: String, lang: String) = LangLiteral(lex, lang)
   override def makeDtLiteral(lex: String, dt: Datatype) = DtLiteral(lex, dt)

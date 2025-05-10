@@ -1,8 +1,8 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
-import eu.neverblink.jelly.convert.rdf4j.{Rdf4jConverterFactory, Rdf4jDatatype}
+import eu.neverblink.jelly.convert.rdf4j.{Rdf4jConverterFactory, Rdf4jDatatype, Rdf4jDecoderConverter, Rdf4jEncoderConverter}
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
-import eu.neverblink.jelly.core.utils.{QuadDecoder, QuadEncoder, TripleDecoder, TripleEncoder}
+import eu.neverblink.jelly.core.utils.{QuadExtractor, QuadMaker, TripleExtractor, TripleMaker}
 import eu.neverblink.jelly.core.{JellyConverterFactory, JellyOptions}
 import eu.neverblink.jelly.stream.*
 import org.apache.pekko.stream.Materializer
@@ -14,13 +14,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.*
 
 class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement], Seq[Statement]]:
-  given JellyConverterFactory[Value, Rdf4jDatatype, ?, ?] = Rdf4jConverterFactory.getInstance()
-
-  given TripleDecoder[Value, Statement] = Rdf4jConverterFactory.getInstance().encoderConverter()
-  given QuadDecoder[Value, Statement] = Rdf4jConverterFactory.getInstance().encoderConverter()
-
-  given TripleEncoder[Value, Statement] = Rdf4jConverterFactory.getInstance().decoderConverter()
-  given QuadEncoder[Value, Statement] = Rdf4jConverterFactory.getInstance().decoderConverter()
+  given JellyConverterFactory[Value, Rdf4jDatatype, Rdf4jEncoderConverter, Rdf4jDecoderConverter] = Rdf4jConverterFactory.getInstance()
 
   override def name: String = "Reactive (RDF4J)"
 

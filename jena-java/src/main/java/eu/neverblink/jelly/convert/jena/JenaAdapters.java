@@ -1,14 +1,13 @@
 package eu.neverblink.jelly.convert.jena;
 
-import eu.neverblink.jelly.core.EncodedNamespaceDeclaration;
-import eu.neverblink.jelly.core.GraphDeclaration;
+import eu.neverblink.jelly.core.NamespaceDeclaration;
 import eu.neverblink.jelly.core.utils.DatasetAdapter;
 import eu.neverblink.jelly.core.utils.GraphAdapter;
+import eu.neverblink.jelly.core.utils.GraphHolder;
 import eu.neverblink.jelly.core.utils.IteratorUtils;
 import java.util.Collections;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
@@ -22,6 +21,8 @@ import org.apache.jena.sparql.core.Quad;
  * <p>
  * Warning: the adapters assume that the underlying structures are static!
  * If they change during iteration, the results are undefined.
+ * <p>
+ * These converters are mainly used to feed the streaming encoders in the stream module.
  */
 public final class JenaAdapters {
 
@@ -30,18 +31,18 @@ public final class JenaAdapters {
     /**
      * Converter of Jena Graphs to triples.
      */
-    public static final GraphAdapter<Node, Triple, Graph> GRAPH_ADAPTER = new GraphAdapter<>() {
+    public static final GraphAdapter<Triple, Graph> GRAPH_ADAPTER = new GraphAdapter<>() {
         @Override
         public Iterable<Triple> triples(Graph graph) {
             return graph::find;
         }
 
         @Override
-        public Iterable<EncodedNamespaceDeclaration<Node>> namespaces(Graph graph) {
+        public Iterable<NamespaceDeclaration> namespaces(Graph graph) {
             return () -> {
                 final var prefixEntries = graph.getPrefixMapping().getNsPrefixMap().entrySet();
                 return IteratorUtils.map(prefixEntries.iterator(), entry ->
-                    new EncodedNamespaceDeclaration<>(entry.getKey(), NodeFactory.createURI(entry.getValue()))
+                    new NamespaceDeclaration(entry.getKey(), entry.getValue())
                 );
             };
         }
@@ -50,14 +51,14 @@ public final class JenaAdapters {
     /**
      * Converter of Jena Models to triples.
      */
-    public static final GraphAdapter<Node, Triple, Model> MODEL_ADAPTER = new GraphAdapter<>() {
+    public static final GraphAdapter<Triple, Model> MODEL_ADAPTER = new GraphAdapter<>() {
         @Override
         public Iterable<Triple> triples(Model model) {
             return GRAPH_ADAPTER.triples(model.getGraph());
         }
 
         @Override
-        public Iterable<EncodedNamespaceDeclaration<Node>> namespaces(Model model) {
+        public Iterable<NamespaceDeclaration> namespaces(Model model) {
             return GRAPH_ADAPTER.namespaces(model.getGraph());
         }
     };
@@ -73,16 +74,16 @@ public final class JenaAdapters {
             }
 
             @Override
-            public Iterable<GraphDeclaration<Node, Triple>> graphs(DatasetGraph dataset) {
+            public Iterable<GraphHolder<Node, Triple>> graphs(DatasetGraph dataset) {
                 return () -> {
                     final var defaultGraph = dataset.getDefaultGraph();
                     final var defaultGraphTriples = defaultGraph.isEmpty()
-                        ? Collections.<GraphDeclaration<Node, Triple>>emptyIterator()
-                        : IteratorUtils.of(new GraphDeclaration<>(Quad.defaultGraphIRI, defaultGraph::find));
+                        ? Collections.<GraphHolder<Node, Triple>>emptyIterator()
+                        : IteratorUtils.of(new GraphHolder<>(Quad.defaultGraphIRI, defaultGraph::find));
 
                     final var graphNodes = dataset.listGraphNodes();
                     final var graphEntries = IteratorUtils.map(graphNodes, graphNode ->
-                        new GraphDeclaration<>(graphNode, () -> dataset.getGraph(graphNode).find())
+                        new GraphHolder<>(graphNode, () -> dataset.getGraph(graphNode).find())
                     );
 
                     return IteratorUtils.concat(defaultGraphTriples, graphEntries);
@@ -90,11 +91,11 @@ public final class JenaAdapters {
             }
 
             @Override
-            public Iterable<EncodedNamespaceDeclaration<Node>> namespaces(DatasetGraph dataset) {
+            public Iterable<NamespaceDeclaration> namespaces(DatasetGraph dataset) {
                 return () -> {
                     final var prefixEntries = dataset.getDefaultGraph().getPrefixMapping().getNsPrefixMap().entrySet();
                     return IteratorUtils.map(prefixEntries.iterator(), entry ->
-                        new EncodedNamespaceDeclaration<>(entry.getKey(), NodeFactory.createURI(entry.getValue()))
+                        new NamespaceDeclaration(entry.getKey(), entry.getValue())
                     );
                 };
             }
@@ -110,12 +111,12 @@ public final class JenaAdapters {
         }
 
         @Override
-        public Iterable<GraphDeclaration<Node, Triple>> graphs(Dataset dataset) {
+        public Iterable<GraphHolder<Node, Triple>> graphs(Dataset dataset) {
             return DATASET_GRAPH_ADAPTER.graphs(dataset.asDatasetGraph());
         }
 
         @Override
-        public Iterable<EncodedNamespaceDeclaration<Node>> namespaces(Dataset dataset) {
+        public Iterable<NamespaceDeclaration> namespaces(Dataset dataset) {
             return DATASET_GRAPH_ADAPTER.namespaces(dataset.asDatasetGraph());
         }
     };

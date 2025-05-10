@@ -1,8 +1,8 @@
 package eu.neverblink.jelly.stream.impl
 
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.jelly.core.utils.{QuadEncoder, TripleEncoder}
-import eu.neverblink.jelly.core.{JellyConstants, JellyConverterFactory, JellyOptions, ProtoDecoder, RdfHandler}
+import eu.neverblink.jelly.core.utils.{QuadMaker, TripleMaker}
+import eu.neverblink.jelly.core.{JellyConstants, JellyConverterFactory, JellyOptions, ProtoDecoder, ProtoDecoderConverter, RdfHandler}
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.*
 
@@ -110,31 +110,35 @@ trait DecoderFlowOps:
       InterpretableAs.GraphStream:
 
       /** @inheritdoc */
-      override def asFlatTripleStream[TNode, TTriple](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      override def asFlatTripleStream[TNode, TDatatype, TTriple](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, TTriple, NotUsed] = {
+        val tripleMaker = converterFactory.decoderConverter()
+
         val buffer = ListBuffer[TTriple]().asJava
         val handler = new RdfHandler.TripleHandler[TNode] {
           override def handleTriple(subject: TNode, predicate: TNode, obj: TNode): Unit = {
-            buffer.add(triplesEncoder.makeTriple(subject, predicate, obj))
+            buffer.add(tripleMaker.makeTriple(subject, predicate, obj))
           }
         }
 
-        flatStream(buffer, factory.triplesDecoder(handler, supportedOptions))
+        flatStream(buffer, converterFactory.triplesDecoder(handler, supportedOptions))
       }
 
       /** @inheritdoc */
-      override def asGraphStream[TNode, TTriple](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      override def asGraphStream[TNode, TDatatype, TTriple](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed] = {
+        val tripleMaker = converterFactory.decoderConverter()
+
         val buffer = ListBuffer[TTriple]().asJava
         val handler = new RdfHandler.TripleHandler[TNode] {
           override def handleTriple(subject: TNode, predicate: TNode, obj: TNode): Unit = {
-            buffer.add(triplesEncoder.makeTriple(subject, predicate, obj))
+            buffer.add(tripleMaker.makeTriple(subject, predicate, obj))
           }
         }
 
-        groupedStream(buffer, factory.triplesDecoder(handler, supportedOptions))
+        groupedStream(buffer, converterFactory.triplesDecoder(handler, supportedOptions))
       }
 
     end TriplesIngestFlowOps
@@ -148,31 +152,35 @@ trait DecoderFlowOps:
       InterpretableAs.DatasetStreamOfQuads:
 
       /** @inheritdoc */
-      override def asFlatQuadStream[TNode, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      override def asFlatQuadStream[TNode, TDatatype, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, TQuad, NotUsed] = {
+        val quadsMaker = converterFactory.decoderConverter()
+
         val buffer = ListBuffer[TQuad]().asJava
         val handler = new RdfHandler.QuadHandler[TNode] {
           override def handleQuad(subject: TNode, predicate: TNode, obj: TNode, graph: TNode): Unit = {
-            buffer.add(quadsEncoder.makeQuad(subject, predicate, obj, graph))
+            buffer.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
           }
         }
 
-        flatStream(buffer, factory.quadsDecoder(handler, supportedOptions))
+        flatStream(buffer, converterFactory.quadsDecoder(handler, supportedOptions))
       }
 
       /** @inheritdoc */
-      override def asDatasetStreamOfQuads[TNode, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      override def asDatasetStreamOfQuads[TNode, TDatatype, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] = {
+        val quadsMaker = converterFactory.decoderConverter()
+
         val buffer = ListBuffer[TQuad]().asJava
         val handler = new RdfHandler.QuadHandler[TNode] {
           override def handleQuad(subject: TNode, predicate: TNode, obj: TNode, graph: TNode): Unit = {
-            buffer.add(quadsEncoder.makeQuad(subject, predicate, obj, graph))
+            buffer.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
           }
         }
 
-        groupedStream(buffer, factory.quadsDecoder(handler, supportedOptions))
+        groupedStream(buffer, converterFactory.quadsDecoder(handler, supportedOptions))
       }
 
     end QuadsIngestFlowOps
@@ -187,37 +195,43 @@ trait DecoderFlowOps:
       InterpretableAs.DatasetStream:
 
       /** @inheritdoc */
-      override def asFlatQuadStream[TNode, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      override def asFlatQuadStream[TNode, TDatatype, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, TQuad, NotUsed] = {
+        val quadsMaker = converterFactory.decoderConverter()
+
         val buffer = ListBuffer[TQuad]().asJava
         val handler = new RdfHandler.QuadHandler[TNode] {
           override def handleQuad(subject: TNode, predicate: TNode, obj: TNode, graph: TNode): Unit = {
-            buffer.add(quadsEncoder.makeQuad(subject, predicate, obj, graph))
+            buffer.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
           }
         }
 
-        flatStream(buffer, factory.graphsAsQuadsDecoder(handler, supportedOptions))
+        flatStream(buffer, converterFactory.graphsAsQuadsDecoder(handler, supportedOptions))
       }
 
       /** @inheritdoc */
-      override def asDatasetStreamOfQuads[TNode, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      override def asDatasetStreamOfQuads[TNode, TDatatype, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] = {
+        val quadsMaker = converterFactory.decoderConverter()
+
         val buffer = ListBuffer[TQuad]().asJava
         val handler = new RdfHandler.QuadHandler[TNode] {
           override def handleQuad(subject: TNode, predicate: TNode, obj: TNode, graph: TNode): Unit = {
-            buffer.add(quadsEncoder.makeQuad(subject, predicate, obj, graph))
+            buffer.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
           }
         }
 
-        groupedStream(buffer, factory.graphsAsQuadsDecoder(handler, supportedOptions))
+        groupedStream(buffer, converterFactory.graphsAsQuadsDecoder(handler, supportedOptions))
       }
 
       /** @inheritdoc */
-      override def asDatasetStream[TNode, TTriple](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      override def asDatasetStream[TNode, TDatatype, TTriple](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] = {
+        val triplesMaker = converterFactory.decoderConverter()
+
         val buffer = ListBuffer[(TNode, Iterable[TTriple])]().asJava
         val handler = new RdfHandler.GraphHandler[TNode] {
           private var currentGraph: Option[TNode] = None
@@ -231,7 +245,7 @@ trait DecoderFlowOps:
           override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
             currentGraph match {
               case Some(graph) =>
-                currentTriples += triplesEncoder.makeTriple(subject, predicate, `object`)
+                currentTriples += triplesMaker.makeTriple(subject, predicate, `object`)
               case None =>
                 throw new IllegalStateException("No graph started")
             }
@@ -249,13 +263,15 @@ trait DecoderFlowOps:
           }
         }
 
-        groupedStream(buffer, factory.graphsDecoder(handler, supportedOptions))
+        groupedStream(buffer, converterFactory.graphsDecoder(handler, supportedOptions))
       }
 
       /** @inheritdoc */
-      override def asNamedGraphStream[TNode, TTriple](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      override def asNamedGraphStream[TNode, TDatatype, TTriple](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] = {
+        val triplesMaker = converterFactory.decoderConverter()
+
         val buffer = ListBuffer[(TNode, Iterable[TTriple])]().asJava
         val handler = new RdfHandler.GraphHandler[TNode] {
           private var currentGraph: Option[TNode] = None
@@ -269,7 +285,7 @@ trait DecoderFlowOps:
           override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
             currentGraph match {
               case Some(graph) =>
-                currentTriples += triplesEncoder.makeTriple(subject, predicate, `object`)
+                currentTriples += triplesMaker.makeTriple(subject, predicate, `object`)
               case None =>
                 throw new IllegalStateException("No graph started")
             }
@@ -287,7 +303,7 @@ trait DecoderFlowOps:
           }
         }
 
-        flatStream(buffer, factory.graphsDecoder(handler, supportedOptions))
+        flatStream(buffer, converterFactory.graphsDecoder(handler, supportedOptions))
       }
 
     end GraphsIngestFlowOps
@@ -300,39 +316,43 @@ trait DecoderFlowOps:
       InterpretableAs.AnyStream:
 
       /** @inheritdoc */
-      override def asGroupedStream[TNode, TTriple, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      override def asGroupedStream[TNode, TDatatype, TTriple, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed] = {
         val buffer = ListBuffer[TTriple | TQuad]().asJava
         val handler = new RdfHandler.AnyStatementHandler[TNode] {
+          private val maker = converterFactory.decoderConverter()
+
           override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
-            buffer.add(triplesEncoder.makeTriple(subject, predicate, `object`))
+            buffer.add(maker.makeTriple(subject, predicate, `object`))
           }
 
           override def handleQuad(subject: TNode, predicate: TNode, `object`: TNode, graph: TNode): Unit = {
-            buffer.add(quadsEncoder.makeQuad(subject, predicate, `object`, graph))
+            buffer.add(maker.makeQuad(subject, predicate, `object`, graph))
           }
         }
 
-        groupedStream(buffer, factory.anyStatementDecoder(handler, supportedOptions))
+        groupedStream(buffer, converterFactory.anyStatementDecoder(handler, supportedOptions))
       }
 
       /** @inheritdoc */
-      override def asFlatStream[TNode, TTriple, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      override def asFlatStream[TNode, TDatatype, TTriple, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, TTriple | TQuad, NotUsed] = {
         val buffer = ListBuffer[TTriple | TQuad]().asJava
         val handler = new RdfHandler.AnyStatementHandler[TNode] {
+          private val maker = converterFactory.decoderConverter()
+
           override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
-            buffer.add(triplesEncoder.makeTriple(subject, predicate, `object`))
+            buffer.add(maker.makeTriple(subject, predicate, `object`))
           }
 
           override def handleQuad(subject: TNode, predicate: TNode, `object`: TNode, graph: TNode): Unit = {
-            buffer.add(quadsEncoder.makeQuad(subject, predicate, `object`, graph))
+            buffer.add(maker.makeQuad(subject, predicate, `object`, graph))
           }
         }
 
-        flatStream(buffer, factory.anyStatementDecoder(handler, supportedOptions))
+        flatStream(buffer, converterFactory.anyStatementDecoder(handler, supportedOptions))
       }
 
 
@@ -344,14 +364,14 @@ trait DecoderFlowOps:
        * The incoming stream must have its logical type set to FLAT_TRIPLES or its subtype,
        * otherwise the decoding will fail. To allow for any logical type, use .asFlatTripleStream.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      final def asFlatTripleStreamStrict[TNode, TTriple]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      final def asFlatTripleStreamStrict[TNode, TDatatype, TTriple]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, TTriple, NotUsed] =
         asFlatTripleStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setLogicalType(LogicalStreamType.FLAT_TRIPLES))
 
@@ -361,14 +381,14 @@ trait DecoderFlowOps:
        * This method will not check the logical stream type of the incoming stream. Use .asFlatTripleStreamStrict
        * if you want to check this.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      final def asFlatTripleStream[TNode, TTriple]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      final def asFlatTripleStream[TNode, TDatatype, TTriple]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, TTriple, NotUsed] =
         asFlatTripleStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
@@ -377,14 +397,14 @@ trait DecoderFlowOps:
        *
        * @param supportedOptions Options to be supported by the decoder. Use ConvertedFactory.defaultSupportedOptions
        *                         to get the default options and modify them as needed.
-       * @param factory          Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      def asFlatTripleStream[TNode, TTriple](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      def asFlatTripleStream[TNode, TDatatype, TTriple](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, TTriple, NotUsed]
 
 
@@ -395,14 +415,14 @@ trait DecoderFlowOps:
        * The incoming stream must have its logical type set to FLAT_QUADS or its subtype,
        * otherwise the decoding will fail. To allow for any logical type, use .asFlatQuadStream.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param quadsEncoder Implementation of [[QuadEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TQuad Type of quad statements.
        * @return Pekko Streams flow
        */
-      final def asFlatQuadStreamStrict[TNode, TQuad]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      final def asFlatQuadStreamStrict[TNode, TDatatype, TQuad]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, TQuad, NotUsed] =
         asFlatQuadStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setLogicalType(LogicalStreamType.FLAT_QUADS))
 
@@ -412,12 +432,14 @@ trait DecoderFlowOps:
        * This method will not check the logical stream type of the incoming stream. Use .asFlatQuadStreamStrict
        * if you want to check this.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+       * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TQuad Type of quad statements.
        * @return Pekko Streams flow
        */
-      final def asFlatQuadStream[TNode, TQuad]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      final def asFlatQuadStream[TNode, TDatatype, TQuad]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, TQuad, NotUsed] =
         asFlatQuadStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
@@ -426,14 +448,14 @@ trait DecoderFlowOps:
        *
        * @param supportedOptions Options to be supported by the decoder. Use ConvertedFactory.defaultSupportedOptions
        *                         to get the default options and modify them as needed.
-       * @param factory          Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param quadsEncoder Implementation of [[QuadEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TQuad Type of quad statements.
        * @return Pekko Streams flow
        */
-      def asFlatQuadStream[TNode, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      def asFlatQuadStream[TNode, TDatatype, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, TQuad, NotUsed]
 
 
@@ -445,12 +467,14 @@ trait DecoderFlowOps:
        * The incoming stream must have its logical type set to GRAPHS or its subtype,
        * otherwise the decoding will fail. To allow for any logical type, use .asGraphStream.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
+       * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      final def asGraphStreamStrict[TNode, TTriple]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      final def asGraphStreamStrict[TNode, TDatatype, TTriple]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed] =
         asGraphStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setLogicalType(LogicalStreamType.GRAPHS))
 
@@ -461,14 +485,14 @@ trait DecoderFlowOps:
        * This method will not check the logical stream type of the incoming stream. Use .asGraphStreamStrict
        * if you want to check this.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      final def asGraphStream[TNode, TTriple]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      final def asGraphStream[TNode, TDatatype, TTriple]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed] =
         asGraphStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
@@ -478,14 +502,14 @@ trait DecoderFlowOps:
        *
        * @param supportedOptions Options to be supported by the decoder. Use ConvertedFactory.defaultSupportedOptions
        *                         to get the default options and modify them as needed.
-       * @param factory          Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      def asGraphStream[TNode, TTriple](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      def asGraphStream[TNode, TDatatype, TTriple](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed]
 
 
@@ -498,14 +522,14 @@ trait DecoderFlowOps:
        * The incoming stream must have its logical type set to DATASETS or its subtype,
        * otherwise the decoding will fail. To allow for any logical type, use .asDatasetStreamOfQuads.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param quadsEncoder Implementation of [[QuadEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TQuad Type of quad statements.
        * @return Pekko Streams flow
        */
-      final def asDatasetStreamOfQuadsStrict[TNode, TQuad]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      final def asDatasetStreamOfQuadsStrict[TNode, TDatatype, TQuad]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
         asDatasetStreamOfQuads(JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setLogicalType(LogicalStreamType.DATASETS))
 
@@ -517,14 +541,14 @@ trait DecoderFlowOps:
        * This method will not check the logical stream type of the incoming stream. Use .asDatasetStreamOfQuadsStrict
        * if you want to check this.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param quadsEncoder Implementation of [[QuadEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TQuad Type of quad statements.
        * @return Pekko Streams flow
        */
-      final def asDatasetStreamOfQuads[TNode, TQuad]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      final def asDatasetStreamOfQuads[TNode, TDatatype, TQuad]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
         asDatasetStreamOfQuads(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
@@ -535,14 +559,14 @@ trait DecoderFlowOps:
        *
        * @param supportedOptions Options to be supported by the decoder. Use ConvertedFactory.defaultSupportedOptions
        *                         to get the default options and modify them as needed.
-       * @param factory          Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param quadsEncoder Implementation of [[QuadEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TQuad Type of quad statements.
        * @return Pekko Streams flow
        */
-      def asDatasetStreamOfQuads[TNode, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      def asDatasetStreamOfQuads[TNode, TDatatype, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed]
 
 
@@ -555,14 +579,14 @@ trait DecoderFlowOps:
        * The incoming stream must have its logical type set to DATASETS or its subtype,
        * otherwise the decoding will fail. To allow for any logical type, use .asDatasetStream.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      final def asDatasetStreamStrict[TNode, TTriple]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      final def asDatasetStreamStrict[TNode, TDatatype, TTriple]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] =
         asDatasetStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setLogicalType(LogicalStreamType.DATASETS))
 
@@ -574,14 +598,14 @@ trait DecoderFlowOps:
        * This method will not check the logical stream type of the incoming stream. Use .asDatasetStreamStrict
        * if you want to check this.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      final def asDatasetStream[TNode, TTriple]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      final def asDatasetStream[TNode, TDatatype, TTriple]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] =
         asDatasetStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
@@ -592,14 +616,14 @@ trait DecoderFlowOps:
        *
        * @param supportedOptions Options to be supported by the decoder. Use ConvertedFactory.defaultSupportedOptions
        *                         to get the default options and modify them as needed.
-       * @param factory          Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      def asDatasetStream[TNode, TTriple](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      def asDatasetStream[TNode, TDatatype, TTriple](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed]
 
       /**
@@ -610,14 +634,14 @@ trait DecoderFlowOps:
        * The incoming stream must have its logical type set to NAMED_GRAPHS or its subtype,
        * otherwise the decoding will fail. To allow for any logical type, use .asNamedGraphStream.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      final def asNamedGraphStreamStrict[TNode, TTriple]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      final def asNamedGraphStreamStrict[TNode, TDatatype, TTriple]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] =
         asNamedGraphStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setLogicalType(LogicalStreamType.NAMED_GRAPHS))
 
@@ -629,14 +653,14 @@ trait DecoderFlowOps:
        * This method will not check the logical stream type of the incoming stream. Use .asNamedGraphStreamStrict
        * if you want to check this.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      final def asNamedGraphStream[TNode, TTriple]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      final def asNamedGraphStream[TNode, TDatatype, TTriple]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] =
         asNamedGraphStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
@@ -647,14 +671,14 @@ trait DecoderFlowOps:
        *
        * @param supportedOptions Options to be supported by the decoder. Use ConvertedFactory.defaultSupportedOptions
        *                         to get the default options and modify them as needed.
-       * @param factory          Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @return Pekko Streams flow
        */
-      def asNamedGraphStream[TNode, TTriple](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple]):
+      def asNamedGraphStream[TNode, TDatatype, TTriple](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple]]):
       Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed]
 
     trait AnyStream:
@@ -665,16 +689,15 @@ trait DecoderFlowOps:
        * The stream must have a set physical type (UNSPECIFIED is not allowed) and the physical type must not change
        * during the stream.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
-       * @param quadsEncoder Implementation of [[QuadEncoder]].
+       * @param converterFactory        Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @tparam TQuad   Type of quad statements.
        * @return Pekko Streams flow
        */
-      final def asGroupedStream[TNode, TTriple, TQuad]
-      (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      final def asGroupedStream[TNode, TDatatype, TTriple, TQuad]
+      (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed] =
         asGroupedStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
@@ -686,16 +709,15 @@ trait DecoderFlowOps:
        *
        * @param supportedOptions Options to be supported by the decoder. Use ConvertedFactory.defaultSupportedOptions
        *                         to get the default options and modify them as needed.
-       * @param factory          Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
-       * @param quadsEncoder Implementation of [[QuadEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @tparam TQuad   Type of quad statements.
        * @return Pekko Streams flow
        */
-      def asGroupedStream[TNode, TTriple, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      def asGroupedStream[TNode, TDatatype, TTriple, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed]
 
       /**
@@ -704,16 +726,15 @@ trait DecoderFlowOps:
        * The stream must have a set physical type (UNSPECIFIED is not allowed) and the physical type must not change
        * during the stream.
        *
-       * @param factory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
-       * @param quadsEncoder Implementation of [[QuadEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @tparam TQuad   Type of quad statements.
        * @return Pekko Streams flow
        */
-      final def asFlatStream[TNode, TTriple, TQuad]
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      final def asFlatStream[TNode, TDatatype, TTriple, TQuad]
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, TTriple | TQuad, NotUsed] =
         asFlatStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
@@ -725,14 +746,13 @@ trait DecoderFlowOps:
        *
        * @param supportedOptions Options to be supported by the decoder. Use ConvertedFactory.defaultSupportedOptions
        *                         to get the default options and modify them as needed.
-       * @param factory          Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
-       * @param triplesEncoder Implementation of [[TripleEncoder]].
-       * @param quadsEncoder Implementation of [[QuadEncoder]].
+       * @param converterFactory Implementation of [[ConverterFactory]] (e.g., JenaConverterFactory).
        * @tparam TNode   Type of graph node.
+       * @tparam TDatatype Datatype in RDF stream.
        * @tparam TTriple Type of triple statements.
        * @tparam TQuad   Type of quad statements.
        * @return Pekko Streams flow
        */
-      def asFlatStream[TNode, TTriple, TQuad](supportedOptions: RdfStreamOptions)
-        (using factory: JellyConverterFactory[TNode, ?, ?, ?], triplesEncoder: TripleEncoder[TNode, TTriple], quadsEncoder: QuadEncoder[TNode, TQuad]):
+      def asFlatStream[TNode, TDatatype, TTriple, TQuad](supportedOptions: RdfStreamOptions)
+        (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple] & QuadMaker[TNode, TQuad]]):
       Flow[RdfStreamFrame, TTriple | TQuad, NotUsed]

@@ -2,8 +2,8 @@ package eu.neverblink.jelly.stream.impl
 
 import eu.neverblink.jelly.core.ProtoEncoder.Params
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.jelly.core.utils.{QuadDecoder, TripleDecoder}
-import eu.neverblink.jelly.core.{EncodedNamespaceDeclaration, GraphDeclaration, JellyConverterFactory, NamespaceDeclaration, ProtoEncoder}
+import eu.neverblink.jelly.core.utils.{GraphHolder, QuadExtractor, TripleExtractor}
+import eu.neverblink.jelly.core.{JellyConverterFactory, NamespaceDeclaration, ProtoDecoderConverter, ProtoEncoder, ProtoEncoderConverter}
 import eu.neverblink.jelly.stream.SizeLimiter
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.{Flow, Source}
@@ -42,11 +42,11 @@ sealed trait EncoderFlowBuilder[TIn, TChild]:
  *
  * Do not construct this class directly, instead use [[EncoderFlow.builder]].
  *
- * @param factory Converter factory to use for creating encoders.
+ * @param converterFactory Converter factory to use for creating encoders.
  * @tparam TNode Type of RDF nodes in the RDF library.
  */
 final class EncoderFlowBuilderImpl[TNode]
-(using factory: JellyConverterFactory[TNode, ?, ?, ?]):
+  (using converterFactory: JellyConverterFactory[TNode, ?, ?, ?]):
   
   private type TEncoder = ProtoEncoder[TNode]
 
@@ -76,11 +76,11 @@ final class EncoderFlowBuilderImpl[TNode]
      * [[RdfStreamFrame]], which allows to maintain low latency.
      *
      * @param opt Options for the RDF stream.
-     * @param tripleDecoder Triple decoder to use for decoding the triples.
+     * @param converterFactory Converter factory to use for creating encoders.
      * @return FlowableBuilder that can be materialized into a flow or further modified.
      */
     final def flatTriplesGrouped[TTriple](opt: RdfStreamOptions)
-      (using tripleDecoder: TripleDecoder[TNode, TTriple]):
+      (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & TripleExtractor[TNode, TTriple], ?]):
       FlowableBuilder[IterableOnce[TTriple], Nothing] =
         new GroupedTriplesBuilder(opt, maybeLimiter, LogicalStreamType.FLAT_TRIPLES)
 
@@ -93,12 +93,12 @@ final class EncoderFlowBuilderImpl[TNode]
      * [[RdfStreamFrame]] in the output stream IF no frame size limiter is applied.
      *
      * @param opt Options for the RDF stream.
-     * @param tripleDecoder Triple decoder to use for decoding the triples.
+     * @param converterFactory Converter factory to use for creating encoders.
      * @tparam TTriple Type of the triples in the input stream.
      * @return FlowableBuilder that can be materialized into a flow or further modified.
      */
     final def graphs[TTriple](opt: RdfStreamOptions)
-      (using tripleDecoder: TripleDecoder[TNode, TTriple]):
+      (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & TripleExtractor[TNode, TTriple], ?]):
     FlowableBuilder[IterableOnce[TTriple], Nothing] =
       new GroupedTriplesBuilder(opt, maybeLimiter, LogicalStreamType.GRAPHS)
 
@@ -111,12 +111,12 @@ final class EncoderFlowBuilderImpl[TNode]
      * [[RdfStreamFrame]], which allows to maintain low latency.
      *
      * @param opt Options for the RDF stream.
-     * @param quadDecoder Quad decoder to use for decoding the quads.
+     * @param converterFactory Converter factory to use for creating encoders.
      * @tparam TQuad Type of the quads in the input stream.
      * @return FlowableBuilder that can be materialized into a flow or further modified.
      */
     final def flatQuadsGrouped[TQuad](opt: RdfStreamOptions)
-      (using quadDecoder: QuadDecoder[TNode, TQuad]):
+      (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & QuadExtractor[TNode, TQuad], ?]):
     FlowableBuilder[IterableOnce[TQuad], Nothing] =
       new GroupedQuadsBuilder(opt, maybeLimiter, LogicalStreamType.FLAT_QUADS)
 
@@ -129,12 +129,12 @@ final class EncoderFlowBuilderImpl[TNode]
      * [[RdfStreamFrame]] in the output stream IF no frame size limiter is applied.
      *
      * @param opt Options for the RDF stream.
-     * @param quadDecoder Quad decoder to use for decoding the quads.
+     * @param converterFactory Converter factory to use for creating encoders.
      * @tparam TQuad Type of the quads in the input stream.
      * @return FlowableBuilder that can be materialized into a flow or further modified.
      */
     final def datasetsFromQuads[TQuad](opt: RdfStreamOptions)
-      (using quadDecoder: QuadDecoder[TNode, TQuad]):
+      (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & QuadExtractor[TNode, TQuad], ?]):
     FlowableBuilder[IterableOnce[TQuad], Nothing] =
       new GroupedQuadsBuilder(opt, maybeLimiter, LogicalStreamType.DATASETS)
 
@@ -149,13 +149,13 @@ final class EncoderFlowBuilderImpl[TNode]
      * stream IF no frame size limiter is applied.
      *
      * @param opt Options for the RDF stream.
-     * @param tripleDecoder Triple decoder to use for decoding the triples.
+     * @param converterFactory Converter factory to use for creating encoders.
      * @tparam TTriple Type of the triples in the input stream.
      * @return FlowableBuilder that can be materialized into a flow or further modified.
      */
     final def namedGraphs[TTriple](opt: RdfStreamOptions)
-      (using tripleDecoder: TripleDecoder[TNode, TTriple]):
-    FlowableBuilder[GraphDeclaration[TNode, TTriple], Nothing] =
+      (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & TripleExtractor[TNode, TTriple], ?]):
+    FlowableBuilder[GraphHolder[TNode, TTriple], Nothing] =
       new NamedGraphsBuilder(opt, maybeLimiter)
 
     /**
@@ -169,13 +169,13 @@ final class EncoderFlowBuilderImpl[TNode]
      * stream IF no frame size limiter is applied.
      *
      * @param opt Options for the RDF stream.
-     * @param tripleDecoder Triple decoder to use for decoding the triples.
+     * @param converterFactory Converter factory to use for creating encoders.
      * @tparam TTriple Type of the triples in the input stream.
      * @return FlowableBuilder that can be materialized into a flow or further modified.
      */
     final def datasets[TTriple](opt: RdfStreamOptions)
-      (using tripleDecoder: TripleDecoder[TNode, TTriple]):
-    FlowableBuilder[IterableOnce[GraphDeclaration[TNode, TTriple]], Nothing] =
+      (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & TripleExtractor[TNode, TTriple], ?]):
+    FlowableBuilder[IterableOnce[GraphHolder[TNode, TTriple]], Nothing] =
         new DatasetsBuilder(opt, maybeLimiter)
 
   end MaybeLimiterBuilder
@@ -222,19 +222,24 @@ final class EncoderFlowBuilderImpl[TNode]
 
     /**
      * Extends the flow with the capability to encode namespace declarations. The input type of the flow will be
-     * changed to [[EncodedNamespaceDeclaration]] | TIn.
+     * changed to [[NamespaceDeclaration]] | TIn.
      * @return New builder that can encode namespace declarations.
      */
-    final def withNamespaceDeclarations: ExtensionBuilder[EncodedNamespaceDeclaration[TNode] | TIn, TIn] =
-      new ExtensionBuilder[EncodedNamespaceDeclaration[TNode] | TIn, TIn](this) {
+    final def withNamespaceDeclarations[TDatatype]
+      (using converterFactory: JellyConverterFactory[TNode, TDatatype, ?, ? <: ProtoDecoderConverter[TNode, TDatatype]]):
+    ExtensionBuilder[NamespaceDeclaration | TIn, TIn] =
+      new ExtensionBuilder[NamespaceDeclaration | TIn, TIn](this) {
+
+        private val decoderConverter = converterFactory.decoderConverter()
+
         override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder):
-        Flow[EncodedNamespaceDeclaration[TNode] | TIn, RdfStreamFrame, NotUsed] =
-          Flow[EncodedNamespaceDeclaration[TNode] | TIn]
+        Flow[NamespaceDeclaration | TIn, RdfStreamFrame, NotUsed] =
+          Flow[NamespaceDeclaration | TIn]
             .mapConcat {
               // The rows will be accumulated in the buffer and flushed when the next non-namespace
               // declaration element is encountered. This means that unless we encounter a triple/quad,
               // the namespace declaration will not be flushed.
-              case ns: EncodedNamespaceDeclaration[_] => encoder.handleNamespace(ns.prefix, ns.iri.asInstanceOf[TNode]) ; Nil
+              case ns: NamespaceDeclaration => encoder.handleNamespace(ns.prefix, decoderConverter.makeIriNode(ns.iri)) ; Nil
               case other => other.asInstanceOf[TIn] :: Nil
             }
             .via(_child.flowInternal(encoder))
@@ -273,12 +278,12 @@ final class EncoderFlowBuilderImpl[TNode]
      * use the [[flatTriplesGrouped]] method instead.
      *
      * @param opt Options for the RDF stream.
-     * @param tripleDecoder Triple decoder to use for decoding the triples.
+     * @param converterFactory Converter factory to use for creating encoders.
      * @tparam TTriple Type of the triples in the input stream.
      * @return FlowableBuilder that can be materialized into a flow or further modified.
      */
     def flatTriples[TTriple](opt: RdfStreamOptions)
-      (using tripleDecoder: TripleDecoder[TNode, TTriple]):
+      (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & TripleExtractor[TNode, TTriple], ?]):
     FlowableBuilder[TTriple, Nothing] =
       new FlatTriplesBuilder(limiter, opt)
 
@@ -291,12 +296,12 @@ final class EncoderFlowBuilderImpl[TNode]
      * use the [[flatQuadsGrouped]] method instead.
      *
      * @param opt Options for the RDF stream.
-     * @param quadDecoder Quad decoder to use for decoding the quads.
+     * @param converterFactory Converter factory to use for creating encoders.
      * @tparam TQuad Type of the quads in the input stream.
      * @return FlowableBuilder that can be materialized into a flow or further modified.
      */
     def flatQuads[TQuad](opt: RdfStreamOptions)
-      (using quadDecoder: QuadDecoder[TNode, TQuad]):
+      (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & QuadExtractor[TNode, TQuad], ?]):
     FlowableBuilder[TQuad, Nothing] =
       new FlatQuadsBuilder(limiter, opt)
 
@@ -333,7 +338,7 @@ final class EncoderFlowBuilderImpl[TNode]
     override final protected[EncoderFlowBuilderImpl] def buildEncoder(p: Params):
     TEncoder =
       val buffer = ListBuffer[RdfStreamRow]().asJava
-      factory.encoder(p.withAppendableRowBuffer(buffer))
+      converterFactory.encoder(p.withAppendableRowBuffer(buffer))
 
   end EncoderBuilder
 
@@ -342,16 +347,18 @@ final class EncoderFlowBuilderImpl[TNode]
 
   // Flat triples
   private final class FlatTriplesBuilder[TTriple](limiter: SizeLimiter, opt: RdfStreamOptions)
-    (using tripleDecoder: TripleDecoder[TNode, TTriple])
+    (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & TripleExtractor[TNode, TTriple], ?])
     extends EncoderBuilder[TTriple](opt):
+
+    private val tripleExtractor = converterFactory.encoderConverter()
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder):
     Flow[TTriple, RdfStreamFrame, NotUsed] =
       flatFlow(
         e => encoder.handleTriple(
-          tripleDecoder.getTripleSubject(e),
-          tripleDecoder.getTriplePredicate(e),
-          tripleDecoder.getTripleObject(e)
+          tripleExtractor.getTripleSubject(e),
+          tripleExtractor.getTriplePredicate(e),
+          tripleExtractor.getTripleObject(e)
         ),
         limiter,
         encoder
@@ -364,16 +371,18 @@ final class EncoderFlowBuilderImpl[TNode]
   private final class GroupedTriplesBuilder[TTriple](
     opt: RdfStreamOptions, maybeLimiter: Option[SizeLimiter], lst: LogicalStreamType
   )
-    (using tripleDecoder: TripleDecoder[TNode, TTriple])
+    (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & TripleExtractor[TNode, TTriple], ?])
     extends EncoderBuilder[IterableOnce[TTriple]](opt):
+
+    private val tripleExtractor = converterFactory.encoderConverter()
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder):
     Flow[IterableOnce[TTriple], RdfStreamFrame, NotUsed] =
       groupedFlow(
         e => encoder.handleTriple(
-          tripleDecoder.getTripleSubject(e),
-          tripleDecoder.getTriplePredicate(e),
-          tripleDecoder.getTripleObject(e)
+          tripleExtractor.getTripleSubject(e),
+          tripleExtractor.getTriplePredicate(e),
+          tripleExtractor.getTripleObject(e)
         ),
         maybeLimiter,
         encoder
@@ -384,17 +393,19 @@ final class EncoderFlowBuilderImpl[TNode]
 
   // Flat quads
   private final class FlatQuadsBuilder[TQuad](limiter: SizeLimiter, opt: RdfStreamOptions)
-    (using quadDecoder: QuadDecoder[TNode, TQuad])
+    (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & QuadExtractor[TNode, TQuad], ?])
     extends EncoderBuilder[TQuad](opt):
+
+    private val quadExtractor = converterFactory.encoderConverter()
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder):
     Flow[TQuad, RdfStreamFrame, NotUsed] =
       flatFlow(
         e => encoder.handleQuad(
-          quadDecoder.getQuadSubject(e),
-          quadDecoder.getQuadPredicate(e),
-          quadDecoder.getQuadObject(e),
-          quadDecoder.getQuadGraph(e)
+          quadExtractor.getQuadSubject(e),
+          quadExtractor.getQuadPredicate(e),
+          quadExtractor.getQuadObject(e),
+          quadExtractor.getQuadGraph(e)
         ),
         limiter,
         encoder
@@ -407,17 +418,19 @@ final class EncoderFlowBuilderImpl[TNode]
   private final class GroupedQuadsBuilder[TQuad](
     opt: RdfStreamOptions, maybeLimiter: Option[SizeLimiter], lst: LogicalStreamType
   )
-    (using quadDecoder: QuadDecoder[TNode, TQuad])
+    (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & QuadExtractor[TNode, TQuad], ?])
     extends EncoderBuilder[IterableOnce[TQuad]](opt):
+
+    private val quadExtractor = converterFactory.encoderConverter()
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder):
     Flow[IterableOnce[TQuad], RdfStreamFrame, NotUsed] =
       groupedFlow(
         e => encoder.handleQuad(
-          quadDecoder.getQuadSubject(e),
-          quadDecoder.getQuadPredicate(e),
-          quadDecoder.getQuadObject(e),
-          quadDecoder.getQuadGraph(e)
+          quadExtractor.getQuadSubject(e),
+          quadExtractor.getQuadPredicate(e),
+          quadExtractor.getQuadObject(e),
+          quadExtractor.getQuadGraph(e)
         ),
         maybeLimiter,
         encoder
@@ -428,27 +441,33 @@ final class EncoderFlowBuilderImpl[TNode]
 
   // Named graphs
   private final class NamedGraphsBuilder[TTriple](opt: RdfStreamOptions, maybeLimiter: Option[SizeLimiter])
-    (using tripleDecoder: TripleDecoder[TNode, TTriple])
-    extends EncoderBuilder[GraphDeclaration[TNode, TTriple]](opt):
+    (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & TripleExtractor[TNode, TTriple], ?])
+    extends EncoderBuilder[GraphHolder[TNode, TTriple]](opt):
+
+    private val tripleExtractor = converterFactory.encoderConverter()
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder):
-      Flow[GraphDeclaration[TNode, TTriple], RdfStreamFrame, NotUsed] =
-        Flow[GraphDeclaration[TNode, TTriple]]
+      Flow[GraphHolder[TNode, TTriple], RdfStreamFrame, NotUsed] =
+        Flow[GraphHolder[TNode, TTriple]]
           // Make each graph into a 1-element "group"
           .map(Seq(_))
-          .via(groupedFlow[GraphDeclaration[TNode, TTriple]](consumeGraph(encoder), maybeLimiter, encoder))
+          .via(groupedFlow[GraphHolder[TNode, TTriple]](
+            consumeGraph(encoder)(using tripleExtractor), maybeLimiter, encoder
+          ))
 
     override protected def paramMutator(p: Params): Params =
       p.withOptions(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.NAMED_GRAPHS))
 
   // Datasets
   private final class DatasetsBuilder[TTriple](opt: RdfStreamOptions, maybeLimiter: Option[SizeLimiter])
-    (using tripleDecoder: TripleDecoder[TNode, TTriple])
-    extends EncoderBuilder[IterableOnce[GraphDeclaration[TNode, TTriple]]](opt):
+    (using converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[TNode] & TripleExtractor[TNode, TTriple], ?])
+    extends EncoderBuilder[IterableOnce[GraphHolder[TNode, TTriple]]](opt):
+
+    private val tripleExtractor = converterFactory.encoderConverter()
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder): 
-      Flow[IterableOnce[GraphDeclaration[TNode, TTriple]], RdfStreamFrame, NotUsed] =
-        groupedFlow(consumeGraph(encoder), maybeLimiter, encoder)
+      Flow[IterableOnce[GraphHolder[TNode, TTriple]], RdfStreamFrame, NotUsed] =
+        groupedFlow(consumeGraph(encoder)(using tripleExtractor), maybeLimiter, encoder)
 
     override protected def paramMutator(p: Params): Params =
       p.withOptions(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.DATASETS))
@@ -465,15 +484,15 @@ final class EncoderFlowBuilderImpl[TNode]
       .setLogicalType(if opt.getLogicalType == LogicalStreamType.UNSPECIFIED then lst else opt.getLogicalType)
 
   private def consumeGraph[TEncoder <: ProtoEncoder[TNode], TTriple](encoder: TEncoder)
-    (using tripleDecoder: TripleDecoder[TNode, TTriple]):
-  GraphDeclaration[TNode, TTriple] => Unit =
+    (using tripleExtractor: TripleExtractor[TNode, TTriple]):
+  GraphHolder[TNode, TTriple] => Unit =
       graphDeclaration => {
         encoder.handleGraphStart(graphDeclaration.name())
         graphDeclaration.triples().asScala
           .foreach(triple => encoder.handleTriple(
-            tripleDecoder.getTripleSubject(triple),
-            tripleDecoder.getTriplePredicate(triple),
-            tripleDecoder.getTripleObject(triple))
+            tripleExtractor.getTripleSubject(triple),
+            tripleExtractor.getTriplePredicate(triple),
+            tripleExtractor.getTripleObject(triple))
           )
         encoder.handleGraphEnd()
       }

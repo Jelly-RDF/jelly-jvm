@@ -2,15 +2,14 @@ package eu.neverblink.jelly.convert.rdf4j;
 
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
-import eu.neverblink.jelly.core.utils.QuadEncoder;
-import eu.neverblink.jelly.core.utils.TripleEncoder;
+import eu.neverblink.jelly.core.utils.QuadMaker;
+import eu.neverblink.jelly.core.utils.TripleMaker;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
 public final class Rdf4jDecoderConverter
-    implements
-        ProtoDecoderConverter<Value, Rdf4jDatatype>, TripleEncoder<Value, Statement>, QuadEncoder<Value, Statement> {
+    implements ProtoDecoderConverter<Value, Rdf4jDatatype>, TripleMaker<Value, Statement>, QuadMaker<Value, Statement> {
 
     private static final ValueFactory VALUE_FACTORY = SimpleValueFactory.getInstance();
 
