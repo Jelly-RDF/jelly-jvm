@@ -27,6 +27,8 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     protected final LastNodeHolder<TNode> lastSubject = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastPredicate = new LastNodeHolder<>();
     protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
+
+    protected boolean lastGraphSet = false;
     protected TNode lastGraph = null;
 
     protected SpoTerm currentTerm = SpoTerm.SUBJECT;
@@ -103,11 +105,14 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected final void graphNodeToProtoWrapped(TNode node) {
         // Graph nodes may be null in Jena for example... so we need to handle that.
-        if ((node != null || lastGraph != null) && (node == null || !node.equals(lastGraph))) {
-            lastGraph = node;
-            currentTerm = SpoTerm.GRAPH;
-            converter.graphNodeToProto(nodeEncoder.provide(), node);
+        if ((lastGraphSet && node == null && lastGraph == null) || (node != null && node.equals(lastGraph))) {
+            return;
         }
+
+        lastGraphSet = true;
+        lastGraph = node;
+        currentTerm = SpoTerm.GRAPH;
+        converter.graphNodeToProto(nodeEncoder.provide(), node);
     }
 
     @Override

@@ -4,7 +4,7 @@ import com.google.protobuf.CodedOutputStream;
 import java.io.*;
 import java.util.function.Consumer;
 
-public class IoUtils {
+public final class IoUtils {
 
     private IoUtils() {}
 

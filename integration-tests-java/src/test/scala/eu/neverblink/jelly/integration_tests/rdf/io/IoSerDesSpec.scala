@@ -5,7 +5,7 @@ import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.integration_tests.rdf.TestCases
 import eu.neverblink.jelly.integration_tests.util.Measure
-//import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -17,8 +17,7 @@ import scala.jdk.CollectionConverters.*
  * Tests for IO ser/des (Jena RIOT, Jena RIOT streaming, RDF4J Rio, and semi-reactive IO over Pekko Streams).
  */
 class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
-  // TODO: re-enable when the stream module is available
-//  given ActorSystem = ActorSystem("test")
+  given ActorSystem = ActorSystem("test")
 
   val presets: Seq[(Option[RdfStreamOptions], Int, String)] = Seq(
     (Some(JellyOptions.SMALL_GENERALIZED), 1, "small generalized"),

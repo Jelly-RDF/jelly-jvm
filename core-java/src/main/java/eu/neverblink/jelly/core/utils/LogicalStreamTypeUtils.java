@@ -5,7 +5,7 @@ import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import java.util.List;
 import java.util.UUID;
 
-public class LogicalStreamTypeUtils {
+public final class LogicalStreamTypeUtils {
 
     private static final String STAX_PREFIX = "https://w3id.org/stax/ontology#";
 
@@ -104,7 +104,7 @@ public class LogicalStreamTypeUtils {
      */
     public static <TNode, TDatatype, TTriple> List<TTriple> getRdfStaxAnnotation(
         ProtoDecoderConverter<TNode, TDatatype> converter,
-        TripleEncoder<TNode, TTriple> tripleEncoder,
+        TripleMaker<TNode, TTriple> tripleEncoder,
         LogicalStreamType logicalType,
         TNode subjectNode
     ) {

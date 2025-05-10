@@ -1,8 +1,8 @@
 package eu.neverblink.jelly.convert.jena;
 
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
-import eu.neverblink.jelly.core.utils.QuadEncoder;
-import eu.neverblink.jelly.core.utils.TripleEncoder;
+import eu.neverblink.jelly.core.utils.QuadMaker;
+import eu.neverblink.jelly.core.utils.TripleMaker;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -10,7 +10,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 
 public final class JenaDecoderConverter
-    implements ProtoDecoderConverter<Node, RDFDatatype>, TripleEncoder<Node, Triple>, QuadEncoder<Node, Quad> {
+    implements ProtoDecoderConverter<Node, RDFDatatype>, TripleMaker<Node, Triple>, QuadMaker<Node, Quad> {
 
     @Override
     public Node makeSimpleLiteral(String lex) {

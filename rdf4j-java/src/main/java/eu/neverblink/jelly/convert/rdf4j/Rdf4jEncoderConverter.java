@@ -3,10 +3,13 @@ package eu.neverblink.jelly.convert.rdf4j;
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
+import eu.neverblink.jelly.core.utils.QuadExtractor;
+import eu.neverblink.jelly.core.utils.TripleExtractor;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
-public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value> {
+public class Rdf4jEncoderConverter
+    implements ProtoEncoderConverter<Value>, TripleExtractor<Value, Statement>, QuadExtractor<Value, Statement> {
 
     @Override
     public void nodeToProto(NodeEncoder<Value> encoder, Value value) {
@@ -47,7 +50,7 @@ public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value> {
                 encoder.makeLangLiteral(literal, lex, lang.get());
             } else {
                 final var dt = literal.getDatatype();
-                if (dt != XSD.STRING) {
+                if (!dt.equals(XSD.STRING)) {
                     encoder.makeDtLiteral(literal, lex, dt.stringValue());
                 } else {
                     encoder.makeSimpleLiteral(lex);
@@ -58,5 +61,40 @@ public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value> {
         } else {
             throw new RdfProtoSerializationError("Cannot encode graph node: %s".formatted(value));
         }
+    }
+
+    @Override
+    public Value getQuadSubject(Statement statement) {
+        return statement.getSubject();
+    }
+
+    @Override
+    public Value getQuadPredicate(Statement statement) {
+        return statement.getPredicate();
+    }
+
+    @Override
+    public Value getQuadObject(Statement statement) {
+        return statement.getObject();
+    }
+
+    @Override
+    public Value getQuadGraph(Statement statement) {
+        return statement.getContext();
+    }
+
+    @Override
+    public Value getTripleSubject(Statement triple) {
+        return triple.getSubject();
+    }
+
+    @Override
+    public Value getTriplePredicate(Statement triple) {
+        return triple.getPredicate();
+    }
+
+    @Override
+    public Value getTripleObject(Statement triple) {
+        return triple.getObject();
     }
 }

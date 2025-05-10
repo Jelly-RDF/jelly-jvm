@@ -1,13 +1,13 @@
 package eu.neverblink.jelly.core.utils;
 
 /**
- * TripleEncoder is a functional interface that encodes a triple into a representation bound to RDF libraries.
+ * TripleEncoder is a functional interface that makes a triple from nodes into a representation bound to RDF libraries.
  *
  * @param <TNode> the type of the nodes in the triple
  * @param <TTriple> the type of the encoded triple
  */
 @FunctionalInterface
-public interface TripleEncoder<TNode, TTriple> {
+public interface TripleMaker<TNode, TTriple> {
     /**
      * Encodes a triple into a representation bound to RDF libraries.
      *

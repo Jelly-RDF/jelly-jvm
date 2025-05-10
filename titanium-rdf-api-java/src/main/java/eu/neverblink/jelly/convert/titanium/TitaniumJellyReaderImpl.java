@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.titanium;
 import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
 import com.apicatalog.rdf.api.RdfQuadConsumer;
+import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.utils.IoUtils;
@@ -13,6 +14,7 @@ import java.io.InputStream;
  * TitaniumJellyReaderImpl is an implementation of the TitaniumJellyReader interface.
  * It is responsible for parsing Titanium Jelly frames and converting them into RDF quads.
  */
+@InternalApi
 final class TitaniumJellyReaderImpl implements TitaniumJellyReader {
 
     private final RdfStreamOptions supportedOptions;

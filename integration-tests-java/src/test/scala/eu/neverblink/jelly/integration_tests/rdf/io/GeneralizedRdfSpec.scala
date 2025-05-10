@@ -5,7 +5,7 @@ import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.{JellyOptions, RdfProtoDeserializationError}
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.integration_tests.util.Measure
-// import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -19,8 +19,7 @@ import scala.reflect.ClassTag
  * for generalized RDF.
  */
 class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
-  // TODO: re-enable when the stream module is available
-  // given ActorSystem = ActorSystem("test")
+  given ActorSystem = ActorSystem("test")
 
   def frameAsDelimited(frame: RdfStreamFrame): Array[Byte] =
     val os = new ByteArrayOutputStream()
@@ -145,19 +144,17 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
     roundTripTests(JenaStreamSerDes)
   }
 
-  // TODO: re-enable when the stream module is available
-//  "Jena reactive streaming implementation" should {
-//    roundTripTests(JenaReactiveSerDes())
-//  }
+  "Jena reactive streaming implementation" should {
+    roundTripTests(JenaReactiveSerDes())
+  }
 
   "RDF4J implementation" should {
     parsingFailureTests(Rdf4jSerDes)
   }
 
-  // TODO: re-enable when the stream module is available
-//  "RDF4J reactive implementation" should {
-//    parsingFailureTests(Rdf4jReactiveSerDes(), boxed = true)
-//  }
+  "RDF4J reactive implementation" should {
+    parsingFailureTests(Rdf4jReactiveSerDes())
+  }
 
   "Titanium implementation" should {
     parsingFailureTests(TitaniumSerDes)
