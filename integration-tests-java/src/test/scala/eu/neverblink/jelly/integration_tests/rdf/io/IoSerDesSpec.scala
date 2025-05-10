@@ -17,7 +17,6 @@ import scala.jdk.CollectionConverters.*
  * Tests for IO ser/des (Jena RIOT, Jena RIOT streaming, RDF4J Rio, and semi-reactive IO over Pekko Streams).
  */
 class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
-  // TODO: re-enable when the stream module is available
   given ActorSystem = ActorSystem("test")
 
   val presets: Seq[(Option[RdfStreamOptions], Int, String)] = Seq(

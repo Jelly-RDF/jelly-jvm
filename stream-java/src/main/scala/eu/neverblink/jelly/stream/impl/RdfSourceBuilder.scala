@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.stream.impl
 
-import eu.neverblink.jelly.core.NamespaceDeclaration
-import eu.neverblink.jelly.core.utils.FlatteningConverter
+import eu.neverblink.jelly.core.{EncodedNamespaceDeclaration, GraphDeclaration}
+import eu.neverblink.jelly.core.utils.{DatasetAdapter, GraphAdapter, NamespaceAdapter}
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 
@@ -61,44 +61,46 @@ final class RdfSourceBuilderImpl[TGraph, TDataset, TNode, TTriple, TQuad]:
     /**
      * Turn an RDF graph into a stream of triples.
      * @param graph RDF graph
-     * @param converter converter to convert the graph into a stream of triples
+     * @param adapter converter to convert the graph into a stream of triples
      *                  and the original graph type
      * 
      * @return source builder that can be materialized into a Pekko Source or further extended
      */
     final def graphAsTriples(graph: TGraph)
-      (using converter: FlatteningConverter[TGraph, TTriple]):
+      (using adapter: GraphAdapter[TNode, TTriple, TGraph]):
     ExtensibleBuilder[TTriple, Nothing, TGraph] =
       new ExtensibleBuilder[TTriple, Nothing, TGraph](None, graph):
-        protected def sourceInternal: Source[TTriple, NotUsed] = Source(converter.convert(graph).asScala.toList)
+        protected def sourceInternal: Source[TTriple, NotUsed] = Source(adapter.triples(graph).asScala.toList)
 
     /**
      * Turn an RDF dataset into a stream of quads.
      * @param dataset RDF dataset
-     * @param converter converter to convert the dataset into a stream of quads
+     * @param adapter converter to convert the dataset into a stream of quads
      *                  and the original dataset type
      * 
      * @return source builder that can be materialized into a Pekko Source or further extended
      */
     final def datasetAsQuads(dataset: TDataset)
-      (using converter: FlatteningConverter[TDataset, TQuad]):
+      (using adapter: DatasetAdapter[TNode, TTriple, TQuad, TDataset]):
     ExtensibleBuilder[TQuad, Nothing, TDataset] =
       new ExtensibleBuilder[TQuad, Nothing, TDataset](None, dataset):
-        protected def sourceInternal: Source[TQuad, NotUsed] = Source(converter.convert(dataset).asScala.toList)
+        protected def sourceInternal: Source[TQuad, NotUsed] = Source(adapter.quads(dataset).asScala.toList)
 
     /**
      * Turn an RDF dataset into a stream of (node, graph) pairs.
      * @param dataset RDF dataset
-     * @param converter converter to convert the dataset into a stream of (node, graph) pairs
+     * @param adapter converter to convert the dataset into a stream of (node, graph) pairs
      *                  and the original dataset type
      * 
      * @return source builder that can be materialized into a Pekko Source or further extended
      */
     final def datasetAsGraphs(dataset: TDataset)
-      (using converter: FlatteningConverter[TDataset, (TNode, Iterable[TTriple])]):
-    ExtensibleBuilder[(TNode, Iterable[TTriple]), Nothing, TDataset] =
-      new ExtensibleBuilder[(TNode, Iterable[TTriple]), Nothing, TDataset](None, dataset):
-        protected def sourceInternal: Source[(TNode, Iterable[TTriple]), NotUsed] = Source(converter.convert(dataset).asScala.toList)
+      (using adapter: DatasetAdapter[TNode, TTriple, TQuad, TDataset]):
+    ExtensibleBuilder[GraphDeclaration[TNode, TTriple], Nothing, TDataset] =
+      new ExtensibleBuilder[GraphDeclaration[TNode, TTriple], Nothing, TDataset](None, dataset):
+        protected def sourceInternal: Source[GraphDeclaration[TNode, TTriple], NotUsed] = Source(
+          adapter.graphs(dataset).asScala.toList
+        )
 
   end RootBuilder
 
@@ -127,10 +129,10 @@ final class RdfSourceBuilderImpl[TGraph, TDataset, TNode, TTriple, TQuad]:
      *                  and the original source type
      * @return source builder that can be materialized into a Pekko Source or further extended
      */
-    final def withNamespaceDeclarations(using converter: FlatteningConverter[TSrc, NamespaceDeclaration]):
-    ExtensibleBuilder[NamespaceDeclaration, TApp | TChild, TSrc] =
-      new ExtensibleBuilder[NamespaceDeclaration, TApp | TChild, TSrc](Some(this), src):
-        protected def sourceInternal: Source[NamespaceDeclaration, NotUsed] =
-          Source(converter.convert(src).asScala.toList)
+    final def withNamespaceDeclarations(using converter: NamespaceAdapter[TChild, TSrc]):
+    ExtensibleBuilder[EncodedNamespaceDeclaration[TChild], TApp | TChild, TSrc] =
+      new ExtensibleBuilder[EncodedNamespaceDeclaration[TChild], TApp | TChild, TSrc](Some(this), src):
+        protected def sourceInternal: Source[EncodedNamespaceDeclaration[TChild], NotUsed] =
+          Source(converter.namespaces(src).asScala.toList)
 
   end ExtensibleBuilder

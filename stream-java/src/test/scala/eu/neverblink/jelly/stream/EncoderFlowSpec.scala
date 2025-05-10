@@ -6,7 +6,7 @@ import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.helpers.{MockConverterFactory, Mrl}
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{QuadDecoder, TripleDecoder}
-import eu.neverblink.jelly.core.{JellyConstants, JellyOptions, ProtoTestCases}
+import eu.neverblink.jelly.core.{GraphDeclaration, JellyConstants, JellyOptions, ProtoTestCases}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures
@@ -266,7 +266,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   "namedGraphStream" should {
     "encode named graphs" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphDeclaration(e._1, e._2.asJava)))
         .via(
           EncoderFlow.builder
             .namedGraphs(JellyOptions.SMALL_GENERALIZED)
@@ -287,7 +287,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     }
 
     "encode named graphs with max row count" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphDeclaration(e._1, e._2.asJava)))
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))
           .namedGraphs(JellyOptions.SMALL_GENERALIZED)
@@ -311,7 +311,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   "datasetStream" should {
     "encode datasets" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphDeclaration(e._1, e._2.asJava)))
         .grouped(2)
         .via(
           EncoderFlow.builder
@@ -333,7 +333,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
     }
 
     "encode datasets with max row count" in {
-      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl)
+      val encoded: Seq[RdfStreamFrame] = Source(Graphs1.mrl.map(e => GraphDeclaration(e._1, e._2.asJava)))
         .grouped(2)
         .via(EncoderFlow.builder
           .withLimiter(StreamRowCountLimiter(4))
