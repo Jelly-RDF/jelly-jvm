@@ -2,8 +2,8 @@ package eu.neverblink.jelly.stream.impl
 
 import eu.neverblink.jelly.core.ProtoEncoder.Params
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.jelly.core.utils.{TripleDecoder, QuadDecoder}
-import eu.neverblink.jelly.core.{EncodedNamespaceDeclaration, JellyConverterFactory, NamespaceDeclaration, ProtoEncoder}
+import eu.neverblink.jelly.core.utils.{QuadDecoder, TripleDecoder}
+import eu.neverblink.jelly.core.{EncodedNamespaceDeclaration, GraphDeclaration, JellyConverterFactory, NamespaceDeclaration, ProtoEncoder}
 import eu.neverblink.jelly.stream.SizeLimiter
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.{Flow, Source}
@@ -155,7 +155,7 @@ final class EncoderFlowBuilderImpl[TNode]
      */
     final def namedGraphs[TTriple](opt: RdfStreamOptions)
       (using tripleDecoder: TripleDecoder[TNode, TTriple]):
-    FlowableBuilder[(TNode, Iterable[TTriple]), Nothing] =
+    FlowableBuilder[GraphDeclaration[TNode, TTriple], Nothing] =
       new NamedGraphsBuilder(opt, maybeLimiter)
 
     /**
@@ -175,7 +175,7 @@ final class EncoderFlowBuilderImpl[TNode]
      */
     final def datasets[TTriple](opt: RdfStreamOptions)
       (using tripleDecoder: TripleDecoder[TNode, TTriple]):
-    FlowableBuilder[IterableOnce[(TNode, Iterable[TTriple])], Nothing] =
+    FlowableBuilder[IterableOnce[GraphDeclaration[TNode, TTriple]], Nothing] =
         new DatasetsBuilder(opt, maybeLimiter)
 
   end MaybeLimiterBuilder
@@ -429,14 +429,14 @@ final class EncoderFlowBuilderImpl[TNode]
   // Named graphs
   private final class NamedGraphsBuilder[TTriple](opt: RdfStreamOptions, maybeLimiter: Option[SizeLimiter])
     (using tripleDecoder: TripleDecoder[TNode, TTriple])
-    extends EncoderBuilder[(TNode, Iterable[TTriple])](opt):
+    extends EncoderBuilder[GraphDeclaration[TNode, TTriple]](opt):
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder):
-      Flow[(TNode, Iterable[TTriple]), RdfStreamFrame, NotUsed] =
-        Flow[(TNode, Iterable[TTriple])]
+      Flow[GraphDeclaration[TNode, TTriple], RdfStreamFrame, NotUsed] =
+        Flow[GraphDeclaration[TNode, TTriple]]
           // Make each graph into a 1-element "group"
           .map(Seq(_))
-          .via(groupedFlow[(TNode, Iterable[TTriple])](consumeGraph(encoder), maybeLimiter, encoder))
+          .via(groupedFlow[GraphDeclaration[TNode, TTriple]](consumeGraph(encoder), maybeLimiter, encoder))
 
     override protected def paramMutator(p: Params): Params =
       p.withOptions(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.NAMED_GRAPHS))
@@ -444,10 +444,10 @@ final class EncoderFlowBuilderImpl[TNode]
   // Datasets
   private final class DatasetsBuilder[TTriple](opt: RdfStreamOptions, maybeLimiter: Option[SizeLimiter])
     (using tripleDecoder: TripleDecoder[TNode, TTriple])
-    extends EncoderBuilder[IterableOnce[(TNode, Iterable[TTriple])]](opt):
+    extends EncoderBuilder[IterableOnce[GraphDeclaration[TNode, TTriple]]](opt):
 
     override protected[EncoderFlowBuilderImpl] def flowInternal(encoder: TEncoder): 
-      Flow[IterableOnce[(TNode, Iterable[TTriple])], RdfStreamFrame, NotUsed] =
+      Flow[IterableOnce[GraphDeclaration[TNode, TTriple]], RdfStreamFrame, NotUsed] =
         groupedFlow(consumeGraph(encoder), maybeLimiter, encoder)
 
     override protected def paramMutator(p: Params): Params =
@@ -466,19 +466,20 @@ final class EncoderFlowBuilderImpl[TNode]
 
   private def consumeGraph[TEncoder <: ProtoEncoder[TNode], TTriple](encoder: TEncoder)
     (using tripleDecoder: TripleDecoder[TNode, TTriple]):
-    ((TNode, Iterable[TTriple])) => Unit =
-      (graphName: TNode, triples: Iterable[TTriple]) => {
-        encoder.handleGraphStart(graphName)
-        triples.foreach(triple => encoder.handleTriple(
-          tripleDecoder.getTripleSubject(triple),
-          tripleDecoder.getTriplePredicate(triple),
-          tripleDecoder.getTripleObject(triple))
-        )
+  (GraphDeclaration[TNode, TTriple]) => Unit =
+      graphDeclaration => {
+        encoder.handleGraphStart(graphDeclaration.name())
+        graphDeclaration.triples().asScala
+          .foreach(triple => encoder.handleTriple(
+            tripleDecoder.getTripleSubject(triple),
+            tripleDecoder.getTriplePredicate(triple),
+            tripleDecoder.getTripleObject(triple))
+          )
         encoder.handleGraphEnd()
       }
 
   private def flatFlow[TIn](transform: TIn => Unit, limiter: SizeLimiter, encoder: TEncoder):
-    Flow[TIn, RdfStreamFrame, NotUsed] =
+  Flow[TIn, RdfStreamFrame, NotUsed] =
       val buffer = encoder.getAppendableRowBuffer
       Flow[TIn]
         .mapConcat(e => {

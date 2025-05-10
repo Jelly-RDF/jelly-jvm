@@ -8,7 +8,7 @@ import eu.neverblink.jelly.core.utils.TripleDecoder;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
-public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value>, TripleDecoder<Value, Triple>, QuadDecoder<Value, Statement> {
+public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value>, TripleDecoder<Value, Statement>, QuadDecoder<Value, Statement> {
 
     @Override
     public void nodeToProto(NodeEncoder<Value> encoder, Value value) {
@@ -83,17 +83,17 @@ public class Rdf4jEncoderConverter implements ProtoEncoderConverter<Value>, Trip
     }
 
     @Override
-    public Value getTripleSubject(Triple triple) {
+    public Value getTripleSubject(Statement triple) {
         return triple.getSubject();
     }
 
     @Override
-    public Value getTriplePredicate(Triple triple) {
+    public Value getTriplePredicate(Statement triple) {
         return triple.getPredicate();
     }
 
     @Override
-    public Value getTripleObject(Triple triple) {
+    public Value getTripleObject(Statement triple) {
         return triple.getObject();
     }
 }
