@@ -466,7 +466,7 @@ final class EncoderFlowBuilderImpl[TNode]
 
   private def consumeGraph[TEncoder <: ProtoEncoder[TNode], TTriple](encoder: TEncoder)
     (using tripleDecoder: TripleDecoder[TNode, TTriple]):
-  (GraphDeclaration[TNode, TTriple]) => Unit =
+  GraphDeclaration[TNode, TTriple] => Unit =
       graphDeclaration => {
         encoder.handleGraphStart(graphDeclaration.name())
         graphDeclaration.triples().asScala
