@@ -41,7 +41,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      *
      * @return the size of the serialized proto form
      */
-    public int getSerializedSize() {
+    public final int getSerializedSize() {
         if (cachedSize < 0) {
             cachedSize = computeSerializedSize();
         }
@@ -162,9 +162,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      *
      * @return this
      */
-    public MessageType mergeFrom(MessageType other) {
-        throw new RuntimeException("Generated message does not implement mergeFrom");
-    }
+    public abstract MessageType mergeFrom(MessageType other);
 
     /**
      * Serialize to a byte array.
