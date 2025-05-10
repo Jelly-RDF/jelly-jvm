@@ -51,24 +51,26 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     val dec = getFrameDecoder
     frames.flatMap(dec)
 
-  def getFrameDecoder: RdfStreamFrame => Seq[Statement] = (frame: RdfStreamFrame) => {
-    val encoder = Rdf4jConverterFactory.getInstance().decoderConverter()
-
+  def getFrameDecoder: RdfStreamFrame => Seq[Statement] = {
+    val quadsOrTriplesEncoder = Rdf4jConverterFactory.getInstance().decoderConverter()
     val buffer = ListBuffer[Statement]()
     val handler = new AnyStatementHandler[Value] {
       override def handleTriple(subject: Value, predicate: Value, `object`: Value): Unit = {
-        buffer += encoder.makeTriple(subject, predicate, `object`)
+        buffer += quadsOrTriplesEncoder.makeTriple(subject, predicate, `object`)
       }
 
       override def handleQuad(subject: Value, predicate: Value, `object`: Value, graph: Value): Unit = {
-        buffer += encoder.makeQuad(subject, predicate, `object`, graph)
+        buffer += quadsOrTriplesEncoder.makeQuad(subject, predicate, `object`, graph)
       }
     }
 
     val decoder = Rdf4jConverterFactory.getInstance().anyStatementDecoder(handler, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
-    frame.getRows.asScala.foreach(decoder.ingestRow)
-
-    buffer.toSeq
+    (frame: RdfStreamFrame) => {
+      frame.getRows.asScala.foreach(decoder.ingestRow)
+      val result = buffer.toList
+      buffer.clear()
+      result
+    }
   }
 
   def addStreamTypeToOptions(opt: RdfStreamOptions, t: String): RdfStreamOptions =
