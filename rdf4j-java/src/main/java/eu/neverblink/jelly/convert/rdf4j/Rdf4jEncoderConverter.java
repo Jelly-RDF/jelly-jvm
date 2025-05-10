@@ -50,7 +50,7 @@ public class Rdf4jEncoderConverter
                 encoder.makeLangLiteral(literal, lex, lang.get());
             } else {
                 final var dt = literal.getDatatype();
-                if (dt != XSD.STRING) {
+                if (!dt.equals(XSD.STRING)) {
                     encoder.makeDtLiteral(literal, lex, dt.stringValue());
                 } else {
                     encoder.makeSimpleLiteral(lex);
