@@ -506,6 +506,25 @@ lazy val grpc = (project in file("grpc"))
   .dependsOn(core % "compile->compile;test->test;protobuf->protobuf")
   .dependsOn(rdfProtos % "protobuf->protobuf")
 
+lazy val grpcJava = (project in file("grpc-java"))
+  .enablePlugins(PekkoGrpcPlugin)
+  .settings(
+    name := "jelly-grpc-java",
+    description := "Implementation of a gRPC client and server for the Jelly gRPC streaming protocol. Java edition.",
+    libraryDependencies ++= Seq(
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+      "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-discovery" % pekkoV,
+      "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
+      "org.apache.pekko" %% "pekko-grpc-runtime" % pekkoGrpcV,
+    ),
+    excludeDependencies ++= grpcExclusions,
+    commonSettings,
+  )
+  .dependsOn(streamJava % "test->compile")
+  .dependsOn(coreJava % "compile->compile;test->test")
+
 lazy val integrationTests = (project in file("integration-tests"))
   .settings(
     publishArtifact := false,
