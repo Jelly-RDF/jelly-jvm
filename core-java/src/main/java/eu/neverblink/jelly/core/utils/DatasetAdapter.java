@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.core.utils;
 
 import eu.neverblink.jelly.core.NamespaceDeclaration;
-
 import java.util.Collections;
 
 /**
