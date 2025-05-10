@@ -27,7 +27,7 @@ public interface DatasetAdapter<TNode, TTriple, TQuad, TDataset> extends Namespa
     /**
      * Converts the dataset to an iterable of graphs.
      * This is useful for GRAPHS Jelly streams.
-     * @return iterable of GraphEntries
+     * @return iterable of GraphHolders
      */
     Iterable<GraphHolder<TNode, TTriple>> graphs(TDataset dataset);
 

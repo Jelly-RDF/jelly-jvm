@@ -1,12 +1,11 @@
 package eu.neverblink.jelly.stream
 
+import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.ProtoTestCases.*
 import eu.neverblink.jelly.core.helpers.Assertions.*
-import eu.neverblink.jelly.core.helpers.{MockConverterFactory, MockProtoDecoderConverter, MockProtoEncoderConverter, Mrl}
+import eu.neverblink.jelly.core.helpers.{MockConverterFactory, Mrl}
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.*
-import eu.neverblink.jelly.core.*
-import eu.neverblink.jelly.core.helpers.Mrl.{Datatype, Node}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures
@@ -21,7 +20,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   given PatienceConfig = PatienceConfig(5.seconds, 100.millis)
   given ActorSystem = ActorSystem()
 
-  given JellyConverterFactory[Node, Datatype, MockProtoEncoderConverter, MockProtoDecoderConverter] = MockConverterFactory
+  given MockConverterFactory.type = MockConverterFactory
 
   "flatTripleStream" should {
     "encode triples" in {

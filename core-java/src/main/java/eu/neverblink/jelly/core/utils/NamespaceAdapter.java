@@ -3,8 +3,7 @@ package eu.neverblink.jelly.core.utils;
 import eu.neverblink.jelly.core.NamespaceDeclaration;
 
 /**
- * Generic interface for making converters from namespace-like structures to
- * of triples and quads.
+ * Generic interface for making converters from RDF structures to namespace declarations.
  * <p>
  * These converters can be used to feed the streaming encoders in the stream module.
  * <p>

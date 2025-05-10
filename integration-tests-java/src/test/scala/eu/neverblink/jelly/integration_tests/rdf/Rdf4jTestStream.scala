@@ -1,13 +1,12 @@
 package eu.neverblink.jelly.integration_tests.rdf
 
-import eu.neverblink.jelly.convert.rdf4j.{Rdf4jConverterFactory, Rdf4jDatatype, Rdf4jDecoderConverter, Rdf4jEncoderConverter}
-import eu.neverblink.jelly.core.JellyConverterFactory
+import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory
 import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
-import eu.neverblink.jelly.core.utils.{GraphHolder, QuadExtractor, QuadMaker, TripleExtractor, TripleMaker}
+import eu.neverblink.jelly.core.utils.GraphHolder
 import eu.neverblink.jelly.stream.*
 import org.apache.pekko.Done
 import org.apache.pekko.stream.scaladsl.*
-import org.eclipse.rdf4j.model.{Resource, Statement, Value}
+import org.eclipse.rdf4j.model.{Statement, Value}
 import org.eclipse.rdf4j.rio.*
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 
@@ -16,7 +15,7 @@ import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.*
 
 case object Rdf4jTestStream extends TestStream:
-  given JellyConverterFactory[Value, Rdf4jDatatype, Rdf4jEncoderConverter, Rdf4jDecoderConverter] = Rdf4jConverterFactory.getInstance()
+  given Rdf4jConverterFactory = Rdf4jConverterFactory.getInstance()
 
   override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     // This buffers everything in memory... but I'm too lazy to implement my own RDFHandler for this

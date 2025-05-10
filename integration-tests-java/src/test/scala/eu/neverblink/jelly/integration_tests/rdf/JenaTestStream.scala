@@ -1,11 +1,9 @@
 package eu.neverblink.jelly.integration_tests.rdf
 
-import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, JenaDecoderConverter, JenaEncoderConverter}
-import eu.neverblink.jelly.core.JellyConverterFactory
+import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.neverblink.jelly.core.utils.{QuadExtractor, QuadMaker, TripleExtractor, TripleMaker}
 import eu.neverblink.jelly.stream.*
-import org.apache.jena.datatypes.RDFDatatype
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.system.AsyncParser
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
@@ -17,7 +15,7 @@ import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.*
 
 case object JenaTestStream extends TestStream:
-  given JellyConverterFactory[Node, RDFDatatype, JenaEncoderConverter, JenaDecoderConverter] = JenaConverterFactory.getInstance()
+  given JenaConverterFactory = JenaConverterFactory.getInstance()
 
   given TripleExtractor[Node, Triple] = JenaConverterFactory.getInstance().encoderConverter()
   given QuadExtractor[Node, Quad] = JenaConverterFactory.getInstance().encoderConverter()

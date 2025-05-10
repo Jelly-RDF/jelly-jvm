@@ -1,11 +1,11 @@
 package eu.neverblink.jelly.stream
 
-import eu.neverblink.jelly.core.helpers.Assertions.*
-import eu.neverblink.jelly.core.helpers.{MockConverterFactory, MockProtoDecoderConverter, MockProtoEncoderConverter}
-import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.ProtoTestCases.*
-import eu.neverblink.jelly.core.utils.{LogicalStreamTypeUtils, QuadExtractor, QuadMaker, TripleExtractor, TripleMaker}
+import eu.neverblink.jelly.core.helpers.Assertions.*
+import eu.neverblink.jelly.core.helpers.MockConverterFactory
+import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils
 import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
@@ -17,7 +17,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   import eu.neverblink.jelly.core.helpers.Mrl.*
   given ActorSystem = ActorSystem()
 
-  given JellyConverterFactory[Node, Datatype, MockProtoEncoderConverter, MockProtoDecoderConverter] = MockConverterFactory
+  given MockConverterFactory.type = MockConverterFactory
 
   private def runStrictNonStrict[T](
     name: String,
