@@ -51,6 +51,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
         if (graph == null) {
             throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.");
         }
+
         try {
             switch (kind) {
                 case 0 -> {

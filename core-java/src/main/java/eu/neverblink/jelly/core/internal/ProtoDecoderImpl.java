@@ -236,6 +236,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
     public static final class GraphsAsQuadsDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
         private final RdfHandler.QuadHandler<TNode> protoHandler;
+
+        // Sometimes, like in jena, the default graph is represented as a null, so we cannot use the null check on
+        // the graph term.
+        private boolean currentGraphStarted = false;
         private TNode currentGraph = null;
 
         public GraphsAsQuadsDecoder(
@@ -257,6 +261,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         protected void handleGraphStart(RdfGraphStart graphStart) {
+            currentGraphStarted = true;
             currentGraph = convertGraphTerm(
                 graphStart.getGraphFieldNumber() - RdfGraphStart.G_IRI,
                 graphStart.getGraph()
@@ -265,12 +270,13 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         protected void handleGraphEnd() {
+            currentGraphStarted = false;
             currentGraph = null;
         }
 
         @Override
         protected void handleTriple(RdfTriple triple) {
-            if (currentGraph == null) {
+            if (!currentGraphStarted) {
                 throw new RdfProtoDeserializationError("Triple in stream without preceding graph start.");
             }
 
