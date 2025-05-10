@@ -153,7 +153,7 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
   }
 
   "RDF4J reactive implementation" should {
-    parsingFailureTests(Rdf4jReactiveSerDes(), boxed = true)
+    parsingFailureTests(Rdf4jReactiveSerDes())
   }
 
   "Titanium implementation" should {
