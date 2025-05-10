@@ -1,8 +1,8 @@
-package eu.ostrzyciel.jelly.grpc
+package eu.neverblink.jelly.grpc
 
 import com.typesafe.config.ConfigFactory
-import eu.ostrzyciel.jelly.core.proto.v1.*
-import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
+import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.{JellyOptions, ProtoTestCases}
 import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.testkit.typed.scaladsl.ActorTestKit
 import org.apache.pekko.actor.typed.ActorSystem
@@ -19,7 +19,6 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
 
 class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
-  import ProtoTestCases.*
 
   given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
   val conf = ConfigFactory.parseString(
