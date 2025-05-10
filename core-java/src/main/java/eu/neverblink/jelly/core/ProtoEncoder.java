@@ -45,6 +45,18 @@ public abstract class ProtoEncoder<TNode>
         ) {
             return new Params(options, enableNamespaceDeclarations, appendableRowBuffer);
         }
+
+        public Params withOptions(RdfStreamOptions options) {
+            return new Params(options, enableNamespaceDeclarations, appendableRowBuffer);
+        }
+
+        public Params withEnableNamespaceDeclarations(boolean enableNamespaceDeclarations) {
+            return new Params(options, enableNamespaceDeclarations, appendableRowBuffer);
+        }
+
+        public Params withAppendableRowBuffer(Collection<RdfStreamRow> appendableRowBuffer) {
+            return new Params(options, enableNamespaceDeclarations, appendableRowBuffer);
+        }
     }
 
     /**
@@ -98,5 +110,13 @@ public abstract class ProtoEncoder<TNode>
      */
     public RdfStreamOptions getOptions() {
         return options;
+    }
+
+    /**
+     * Returns current appendable row buffer.
+     * @return the appendable row buffer
+     */
+    public Collection<RdfStreamRow> getAppendableRowBuffer() {
+        return appendableRowBuffer;
     }
 }

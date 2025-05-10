@@ -2,12 +2,14 @@ package eu.neverblink.jelly.convert.titanium;
 
 import com.apicatalog.rdf.api.RdfConsumerException;
 import com.apicatalog.rdf.api.RdfQuadConsumer;
+import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 
+@InternalApi
 final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
 
     private final OutputStream outputStream;

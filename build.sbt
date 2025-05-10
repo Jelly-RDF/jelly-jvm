@@ -465,6 +465,21 @@ lazy val stream = (project in file("stream"))
   )
   .dependsOn(core % "compile->compile;test->test")
 
+lazy val streamJava = (project in file("stream-java"))
+  .settings(
+    name := "jelly-stream-java",
+    organization := "eu.neverblink.jelly",
+    description := "Utilities for using the Jelly RDF serialization format with Reactive Streams (via Apache Pekko). " +
+      "Java edition.",
+    libraryDependencies ++= Seq(
+      "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
+    ),
+    publishArtifact := false, // TODO: remove this when ready
+    commonSettings,
+  )
+  .dependsOn(coreJava % "compile->compile;test->test")
+
 lazy val grpc = (project in file("grpc"))
   .enablePlugins(PekkoGrpcPlugin)
   .settings(
@@ -527,19 +542,16 @@ lazy val integrationTestsJava = (project in file("integration-tests-java"))
       "com.apicatalog" % "titanium-json-ld" % "1.6.0" % Test,
     ),
     libraryDependencies ++= protobufCompilerDeps,
-//    Compile / PB.targets := Seq(
-//      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
-//    ),
     commonSettings,
   )
   .dependsOn(
-    // stream,
     coreJava % "compile->compile;test->test",
     jenaJava % "compile->compile;test->test",
     jenaPatch % "compile->compile;test->test",
     rdf4jJava,
     rdf4jPatch,
     titaniumRdfApiJava,
+    streamJava
   )
 
 lazy val examples = (project in file("examples"))
