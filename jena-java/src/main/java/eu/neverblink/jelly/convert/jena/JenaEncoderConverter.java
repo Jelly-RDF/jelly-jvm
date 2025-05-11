@@ -4,6 +4,7 @@ import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.utils.QuadExtractor;
 import eu.neverblink.jelly.core.utils.TripleExtractor;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
@@ -24,7 +25,8 @@ public final class JenaEncoderConverter
             final var lang = node.getLiteralLanguage();
             if (lang.isEmpty()) {
                 // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
-                if (node.getLiteralDatatype() == null) {
+                // We compare by reference, because the datatype is a singleton.
+                if (node.getLiteralDatatype() == XSDDatatype.XSDstring) {
                     encoder.makeSimpleLiteral(node.getLiteralLexicalForm());
                 } else {
                     encoder.makeDtLiteral(node, node.getLiteralLexicalForm(), node.getLiteralDatatypeURI());
@@ -62,7 +64,8 @@ public final class JenaEncoderConverter
             final var lang = node.getLiteralLanguage();
             if (lang.isEmpty()) {
                 // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
-                if (node.getLiteralDatatype() == null) {
+                // We compare by reference, because the datatype is a singleton.
+                if (node.getLiteralDatatype() == XSDDatatype.XSDstring) {
                     encoder.makeSimpleLiteral(node.getLiteralLexicalForm());
                 } else {
                     encoder.makeDtLiteral(node, node.getLiteralLexicalForm(), node.getLiteralDatatypeURI());
