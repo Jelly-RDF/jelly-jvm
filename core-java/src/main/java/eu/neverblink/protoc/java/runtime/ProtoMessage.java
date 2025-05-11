@@ -4,7 +4,6 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.jelly.core.InternalApi;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -20,8 +19,6 @@ import java.util.List;
  * @author Piotr Sowiński
  */
 public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
-
-    protected int cachedSize = -1;
 
     protected ProtoMessage() {}
 
