@@ -2,6 +2,7 @@ package eu.neverblink.jelly.core.buffer;
 
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public final class LazyImmutableRowBuffer implements RowBuffer {

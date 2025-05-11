@@ -83,8 +83,8 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
 
           val frame: RdfStreamFrame = RdfStreamFrame.parseDelimitedFrom(is)
           frame.getRows.size should be > 0
-          frame.getRows.get(0).hasOptions should be(true)
-          val options = frame.getRows.get(0).getOptions
+          frame.getRows.asScala.head.hasOptions should be(true)
+          val options = frame.getRows.asScala.head.getOptions
           val expOpt = JellyLanguage.PRESETS.get(presetName)
           if streamType == "triples" then
             options.getPhysicalType should be(PhysicalStreamType.TRIPLES)

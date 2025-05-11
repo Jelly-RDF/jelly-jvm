@@ -62,7 +62,7 @@ object RuntimeClasses:
   private val RepeatedBoolean = ClassName.get(API_PACKAGE, "RepeatedBoolean")
   private val RepeatedString = ClassName.get(API_PACKAGE, "RepeatedString")
   private val RepeatedBytes = ClassName.get(GOOGLE_PACKAGE, "ByteString")
-  val List: ClassName = ClassName.get(JAVA_UTIL_PACKAGE, "List")
+  val Collection: ClassName = ClassName.get(JAVA_UTIL_PACKAGE, "Collection")
   val ArrayList: ClassName = ClassName.get(JAVA_UTIL_PACKAGE, "ArrayList")
   val RepeatedEnum: ClassName = ClassName.get(API_PACKAGE, "RepeatedEnum")
   val Collections: ClassName = ClassName.get(JAVA_UTIL_PACKAGE, "Collections")
@@ -84,6 +84,6 @@ object RuntimeClasses:
     case TYPE_BOOL => RepeatedBoolean
     case TYPE_ENUM => RepeatedEnum
     case TYPE_STRING => RepeatedString
-    case TYPE_GROUP => List
-    case TYPE_MESSAGE => List
+    case TYPE_GROUP => Collection
+    case TYPE_MESSAGE => Collection
     case TYPE_BYTES => RepeatedBytes

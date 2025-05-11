@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.core.buffer;
 
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
-import java.util.List;
+import java.util.Collection;
 
 public interface RowBuffer {
     boolean isEmpty();
@@ -10,17 +10,17 @@ public interface RowBuffer {
 
     RdfStreamRow.Mutable appendRow();
 
-    List<RdfStreamRow> getRows();
+    Collection<RdfStreamRow> getRows();
 
     static ReusableRowBuffer newReusable(int initialCapacity) {
         return new ReusableRowBuffer(initialCapacity);
     }
 
-    static RowBuffer newLazyImmutable(int initialCapacity) {
+    static LazyImmutableRowBuffer newLazyImmutable(int initialCapacity) {
         return new LazyImmutableRowBuffer(initialCapacity);
     }
 
-    static RowBuffer newLazyImmutable() {
+    static LazyImmutableRowBuffer newLazyImmutable() {
         return new LazyImmutableRowBuffer(16);
     }
 }

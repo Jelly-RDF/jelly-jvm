@@ -6,6 +6,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import scala.jdk.CollectionConverters.*
 
 class IoUtilsSpec extends AnyWordSpec, Matchers:
   private val frameLarge = rdfStreamFrame(Seq(
@@ -79,7 +80,7 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
 
       "input stream is a non-delimited Jelly message (options size =10)" in {
         val os = ByteArrayOutputStream()
-        frameOptionsSize10.getRows.get(0).writeTo(os)
+        frameOptionsSize10.getRows.asScala.head.writeTo(os)
         val bytes = os.toByteArray
 
         val in = new ByteArrayInputStream(bytes)

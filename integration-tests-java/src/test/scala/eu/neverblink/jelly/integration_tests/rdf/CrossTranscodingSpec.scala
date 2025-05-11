@@ -214,7 +214,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
               (r, i) <- frame.getRows.asScala.zipWithIndex
             do
               withClue(s"at frame $frameI row $i ") {
-                r should be (tc.frames(frameI).getRows.asScala(i))
+                r should be (tc.frames(frameI).getRows.asScala.toSeq(i))
               }
           val decoded = decodeToStatements(result)
           decoded.size should be (tc.statements.size)
