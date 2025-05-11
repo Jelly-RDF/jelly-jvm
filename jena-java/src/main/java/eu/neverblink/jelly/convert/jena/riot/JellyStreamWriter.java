@@ -2,6 +2,8 @@ package eu.neverblink.jelly.convert.jena.riot;
 
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
 import eu.neverblink.jelly.core.ProtoEncoder;
+import eu.neverblink.jelly.core.buffer.ReusableRowBuffer;
+import eu.neverblink.jelly.core.buffer.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 import java.io.IOException;
@@ -27,8 +29,9 @@ public final class JellyStreamWriter implements StreamRDF {
     private final JellyFormatVariant formatVariant;
     private final OutputStream outputStream;
 
-    private final Collection<RdfStreamRow> buffer = new ArrayList<>();
+    private final ReusableRowBuffer buffer;
     private final ProtoEncoder<Node> encoder;
+    private final RdfStreamFrame.Mutable reusableFrame;
 
     public JellyStreamWriter(
         JenaConverterFactory converterFactory,
@@ -37,6 +40,8 @@ public final class JellyStreamWriter implements StreamRDF {
     ) {
         this.formatVariant = formatVariant;
         this.outputStream = outputStream;
+        this.buffer = RowBuffer.newReusable(formatVariant.getFrameSize() + 8);
+        this.reusableFrame = RdfStreamFrame.newInstance();
 
         this.encoder = converterFactory.encoder(
             ProtoEncoder.Params.of(formatVariant.getOptions(), formatVariant.isEnableNamespaceDeclarations(), buffer)
@@ -86,14 +91,14 @@ public final class JellyStreamWriter implements StreamRDF {
         // Flush the buffer and finish the stream
         if (!formatVariant.isDelimited()) {
             // Non-delimited variant – whole stream in one frame
-            final var frame = RdfStreamFrame.newInstance();
-            frame.getRows().addAll(buffer);
+            reusableFrame.setRows(buffer.getRows());
+            reusableFrame.resetCachedSize();
             try {
-                frame.writeTo(outputStream);
+                reusableFrame.writeTo(outputStream);
             } catch (IOException e) {
                 throw new RiotException(e);
             }
-            buffer.clear();
+            buffer.reset();
         } else if (!buffer.isEmpty()) {
             flushBuffer();
         }
@@ -106,14 +111,14 @@ public final class JellyStreamWriter implements StreamRDF {
     }
 
     private void flushBuffer() {
-        final var frame = RdfStreamFrame.newInstance();
-        frame.getRows().addAll(buffer);
+        reusableFrame.setRows(buffer.getRows());
+        reusableFrame.resetCachedSize();
         try {
-            frame.writeDelimitedTo(outputStream);
+            reusableFrame.writeDelimitedTo(outputStream);
         } catch (IOException e) {
             throw new RiotException(e);
         } finally {
-            buffer.clear();
+            buffer.reset();
         }
     }
 }

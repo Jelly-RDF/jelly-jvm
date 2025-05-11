@@ -4,6 +4,8 @@ import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.core.ProtoEncoder;
+import eu.neverblink.jelly.core.buffer.ReusableRowBuffer;
+import eu.neverblink.jelly.core.buffer.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
@@ -33,7 +35,9 @@ public final class JellyWriter extends AbstractRDFWriter {
     private final Rdf4jConverterFactory converterFactory;
     private final ValueFactory valueFactory;
     private final OutputStream outputStream;
-    private final Collection<RdfStreamRow> buffer = new ArrayList<>();
+    // Initialized in startRDF()
+    private ReusableRowBuffer buffer = null;
+    private final RdfStreamFrame.Mutable reusableFrame;
 
     private RdfStreamOptions options;
     private ProtoEncoder<Value> encoder;
@@ -52,6 +56,7 @@ public final class JellyWriter extends AbstractRDFWriter {
         this.converterFactory = converterFactory;
         this.valueFactory = valueFactory;
         this.outputStream = outputStream;
+        this.reusableFrame = RdfStreamFrame.newInstance();
     }
 
     @Override
@@ -106,6 +111,7 @@ public final class JellyWriter extends AbstractRDFWriter {
         frameSize = config.get(JellyWriterSettings.FRAME_SIZE);
         enableNamespaceDeclarations = config.get(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS);
         isDelimited = config.get(JellyWriterSettings.DELIMITED_OUTPUT);
+        buffer = RowBuffer.newReusable(frameSize + 8);
         encoder = converterFactory.encoder(ProtoEncoder.Params.of(options, enableNamespaceDeclarations, buffer));
     }
 
@@ -128,10 +134,10 @@ public final class JellyWriter extends AbstractRDFWriter {
         checkWritingStarted();
         if (!isDelimited) {
             // Non-delimited variant – whole stream in one frame
-            final var frame = RdfStreamFrame.newInstance();
-            frame.getRows().addAll(buffer);
+            reusableFrame.setRows(buffer.getRows());
+            reusableFrame.resetCachedSize();
             try {
-                frame.writeTo(outputStream);
+                reusableFrame.writeTo(outputStream);
             } catch (Exception e) {
                 throw new RDFHandlerException("Error writing frame", e);
             }
@@ -158,13 +164,14 @@ public final class JellyWriter extends AbstractRDFWriter {
     }
 
     private void flushBuffer() {
-        final var frame = RdfStreamFrame.newInstance();
-        frame.getRows().addAll(buffer);
+        reusableFrame.setRows(buffer.getRows());
+        reusableFrame.resetCachedSize();
         try {
-            frame.writeDelimitedTo(outputStream);
+            reusableFrame.writeDelimitedTo(outputStream);
         } catch (Exception e) {
             throw new RDFHandlerException("Error writing frame", e);
+        } finally {
+            buffer.reset();
         }
-        buffer.clear();
     }
 }

@@ -18,10 +18,6 @@ import java.util.Collection;
 public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;
-    private final Collection<RdfStreamRow> rowBuffer;
-
-    // Rows ending the graph are always identical
-    private static final RdfStreamRow ROW_GRAPH_END = RdfStreamRow.newInstance().setGraphEnd(RdfGraphEnd.EMPTY);
 
     /**
      * Constructor for the ProtoEncoderImpl class.
@@ -32,31 +28,27 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
      */
     public ProtoEncoderImpl(ProtoEncoderConverter<TNode> converter, ProtoEncoder.Params params) {
         super(converter, params);
-        this.rowBuffer = appendableRowBuffer;
     }
 
     @Override
     public void handleTriple(TNode subject, TNode predicate, TNode object) {
         emitOptions();
         final var triple = tripleToProto(subject, predicate, object);
-        final var mainRow = RdfStreamRow.newInstance().setTriple(triple);
-        rowBuffer.add(mainRow);
+        rowBuffer.appendRow().setTriple(triple);
     }
 
     @Override
     public void handleQuad(TNode subject, TNode predicate, TNode object, TNode graph) {
         emitOptions();
         final var quad = quadToProto(subject, predicate, object, graph);
-        final var mainRow = RdfStreamRow.newInstance().setQuad(quad);
-        rowBuffer.add(mainRow);
+        rowBuffer.appendRow().setQuad(quad);
     }
 
     @Override
     public void handleGraphStart(TNode graph) {
         emitOptions();
         final var graphStart = graphStartToProto(graph);
-        final var graphRow = RdfStreamRow.newInstance().setGraphStart(graphStart);
-        rowBuffer.add(graphRow);
+        rowBuffer.appendRow().setGraphStart(graphStart);
     }
 
     @Override
@@ -64,7 +56,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         if (!hasEmittedOptions) {
             throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one");
         }
-        rowBuffer.add(ROW_GRAPH_END);
+        rowBuffer.appendRow().setGraphEnd(RdfGraphEnd.EMPTY);
     }
 
     @Override
@@ -79,23 +71,22 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         this.currentNsBase = ns;
         this.currentTerm = SpoTerm.NAMESPACE;
         converter.nodeToProto(nodeEncoder.provide(), namespace);
-        final var mainRow = RdfStreamRow.newInstance().setNamespace(ns);
-        rowBuffer.add(mainRow);
+        rowBuffer.appendRow().setNamespace(ns);
     }
 
     @Override
     public void appendNameEntry(RdfNameEntry nameEntry) {
-        rowBuffer.add(RdfStreamRow.newInstance().setName(nameEntry));
+        rowBuffer.appendRow().setName(nameEntry);
     }
 
     @Override
     public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
-        rowBuffer.add(RdfStreamRow.newInstance().setPrefix(prefixEntry));
+        rowBuffer.appendRow().setPrefix(prefixEntry);
     }
 
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
-        rowBuffer.add(RdfStreamRow.newInstance().setDatatype(datatypeEntry));
+        rowBuffer.appendRow().setDatatype(datatypeEntry);
     }
 
     private void emitOptions() {
@@ -104,6 +95,6 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         }
 
         hasEmittedOptions = true;
-        rowBuffer.add(RdfStreamRow.newInstance().setOptions(options));
+        rowBuffer.appendRow().setOptions(options);
     }
 }

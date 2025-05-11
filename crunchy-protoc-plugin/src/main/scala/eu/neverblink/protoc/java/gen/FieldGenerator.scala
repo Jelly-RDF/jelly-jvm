@@ -116,7 +116,7 @@ class FieldGenerator(val info: FieldInfo):
     val field = FieldSpec.builder(storeType, info.fieldName)
       .addJavadoc(Javadoc.forMessageField(info).build)
       .addModifiers(Modifier.PROTECTED)
-    if info.isRepeated && info.isMessage then field.addModifiers(Modifier.FINAL)
+    // if info.isRepeated && info.isMessage then field.addModifiers(Modifier.FINAL)
     if info.isRepeated || info.isBytes || info.isString then
       field.initializer(initializer)
     else if info.isMessageOrGroup then field.initializer("null")
@@ -359,6 +359,20 @@ class FieldGenerator(val info: FieldInfo):
         .addStatement(named("return this"))
       t.addMethod(setBytes.build)
     } else if (info.isRepeated) {
+      val setter = MethodSpec.methodBuilder(info.setterName)
+        .addJavadoc(Javadoc.forMessageField(info)
+          .add("\n@param value the $L to set", info.fieldName)
+          .add("\n@return this")
+          .build
+        )
+        .addAnnotations(info.methodAnnotations)
+        .addModifiers(Modifier.PUBLIC)
+        .returns(info.parentTypeInfo.mutableTypeName)
+        .addParameter(info.getStoreType, "value", Modifier.FINAL)
+        .addStatement(named("$field:N = value"))
+        .addStatement(named("return this"))
+        .build
+      t.addMethod(setter)
       val adder = MethodSpec.methodBuilder(info.adderName)
         .addJavadoc(Javadoc.forMessageField(info)
           .add("\n@param value the $L to add", info.fieldName)

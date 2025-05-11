@@ -2,6 +2,7 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
+import eu.neverblink.jelly.core.buffer.RowBuffer
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.{JellyOptions, ProtoEncoder}
 import eu.neverblink.jelly.integration_tests.rdf.TestCases
@@ -38,7 +39,7 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
     val originalSize = model.size()
     for preset <- presets do
       val (options, presetName) = preset
-      val buffer = new util.ArrayList[RdfStreamRow]()
+      val buffer = RowBuffer.newLazyImmutable()
       val encoder = JenaConverterFactory.getInstance().encoder(
         ProtoEncoder.Params(options, false, buffer)
       )
@@ -46,7 +47,7 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
         t.getSubject, t.getPredicate, t.getObject
       ))
       val frame = RdfStreamFrame.newInstance
-      frame.getRows.addAll(buffer)
+      frame.setRows(buffer.getRows)
       val bytes = frame.toByteArray
 
       runTest(JenaSerDes, "Jena RIOT")

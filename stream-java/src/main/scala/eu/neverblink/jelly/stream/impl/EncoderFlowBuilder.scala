@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.stream.impl
 
 import eu.neverblink.jelly.core.ProtoEncoder.Params
+import eu.neverblink.jelly.core.buffer.{LazyImmutableRowBuffer, RowBuffer}
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{GraphHolder, QuadExtractor, TripleExtractor}
 import eu.neverblink.jelly.core.{JellyConverterFactory, NamespaceDeclaration, ProtoDecoderConverter, ProtoEncoder, ProtoEncoderConverter}
@@ -337,8 +338,8 @@ final class EncoderFlowBuilderImpl[TNode]
 
     override final protected[EncoderFlowBuilderImpl] def buildEncoder(p: Params):
     TEncoder =
-      val buffer = ListBuffer[RdfStreamRow]().asJava
-      converterFactory.encoder(p.withAppendableRowBuffer(buffer))
+      val buffer = RowBuffer.newLazyImmutable(16)
+      converterFactory.encoder(p.withRowBuffer(buffer))
 
   end EncoderBuilder
 
@@ -499,13 +500,11 @@ final class EncoderFlowBuilderImpl[TNode]
 
   private def flatFlow[TIn](transform: TIn => Unit, limiter: SizeLimiter, encoder: TEncoder):
   Flow[TIn, RdfStreamFrame, NotUsed] =
-      val buffer = encoder.getAppendableRowBuffer
+      val buffer = encoder.getRowBuffer
       Flow[TIn]
         .mapConcat(e => {
           transform(e)
-          val rows = buffer.asScala.toList
-          buffer.clear()
-          rows
+          buffer.getRows.asScala
         })
         .via(limiter.flow)
         .map(rows => {
@@ -517,13 +516,12 @@ final class EncoderFlowBuilderImpl[TNode]
   private def groupedFlow[TIn](
     transform: TIn => Unit, maybeLimiter: Option[SizeLimiter], encoder: TEncoder
   ): Flow[IterableOnce[TIn], RdfStreamFrame, NotUsed] =
-    val buffer = encoder.getAppendableRowBuffer
+    val buffer = encoder.getRowBuffer
     maybeLimiter match
       case Some(limiter) =>
         Flow[IterableOnce[TIn]].flatMapConcat(elems => {
           elems.iterator.foreach(transform)
-          val rows = buffer.asScala.toList
-          buffer.clear()
+          val rows = buffer.getRows.asScala.toSeq
           Source(rows)
             .via(limiter.flow)
             .map(rows => {
@@ -535,9 +533,7 @@ final class EncoderFlowBuilderImpl[TNode]
       case None =>
         Flow[IterableOnce[TIn]].map(elems => {
           elems.iterator.foreach(transform)
-          val rows = buffer.asScala.toList
-          buffer.clear()
-
+          val rows = buffer.getRows.asScala
           val frame = RdfStreamFrame.newInstance
           rows.foreach(frame.addRows)
           frame

@@ -6,6 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -250,7 +251,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         inputLimited.decrementRecursionDepth();
     }
 
-    protected static <T extends ProtoMessage<T>> int computeRepeatedMessageSizeNoTag(final List<T> values) {
+    protected static <T extends ProtoMessage<T>> int computeRepeatedMessageSizeNoTag(final Collection<T> values) {
         int dataSize = 0;
         for (final ProtoMessage<?> value : values) {
             int valSize = value.getSerializedSize();
@@ -260,7 +261,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     }
 
     protected static <T extends ProtoMessage<T>> int readRepeatedMessage(
-        final List<T> store,
+        final Collection<T> store,
         final MessageFactory<T> factory,
         final LimitedCodedInputStream input,
         final int tag

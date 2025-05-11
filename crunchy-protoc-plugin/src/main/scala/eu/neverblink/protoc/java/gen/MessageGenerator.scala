@@ -320,6 +320,15 @@ class MessageGenerator(val info: MessageInfo):
       oneOfGenerators.foreach(_.generateComputeSerializedSizeCode(computeSerializedSize))
       computeSerializedSize.addStatement("return size")
     t.addMethod(computeSerializedSize.build)
+    val resetSize = MethodSpec.methodBuilder("resetCachedSize")
+      .addJavadoc("Resets the cached size of this message.\n" +
+        "Call this method if you modify the message after it was serialized.\n" +
+        "NOTE: this is a SHALLOW operation! It will not reset the size of nested messages."
+      )
+      .addModifiers(Modifier.PUBLIC)
+      .returns(classOf[Unit])
+      .addStatement("cachedSize = -1")
+    t.addMethod(resetSize.build)
 
   private def generateCopyFrom(t: TypeSpec.Builder): Unit =
     val copyFrom = MethodSpec.methodBuilder("copyFrom")
