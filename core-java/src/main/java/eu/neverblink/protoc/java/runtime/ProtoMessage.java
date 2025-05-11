@@ -3,6 +3,8 @@ package eu.neverblink.protoc.java.runtime;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import eu.neverblink.jelly.core.InternalApi;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,12 +44,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      *
      * @return the size of the serialized proto form
      */
-    public final int getSerializedSize() {
-        if (cachedSize < 0) {
-            cachedSize = computeSerializedSize();
-        }
-        return cachedSize;
-    }
+    public abstract int getSerializedSize();
 
     /**
      * Computes the number of bytes required to encode this message. This does
@@ -56,11 +53,16 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * @return the size of the serialized proto form
      */
     protected abstract int computeSerializedSize();
-    
+
+    @InternalApi
+    protected abstract int getCachedSize();
+
     public abstract void resetCachedSize();
 
     /**
      * Serializes the message and writes it to {@code output}.
+     * It is the caller's responsibility to ensure that getSerializedSize() was called
+     * before this method. In this class, this is marked with "[X]" in comments.
      *
      * @param output the output to receive the serialized form.
      * @throws IOException if an error occurred writing to {@code output}.
@@ -74,12 +76,14 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * @return this
      */
     public final MessageType writeDelimitedTo(CodedOutputStream output) throws IOException {
+        // [X] Ensure that the serialized size is cached
         output.writeUInt32NoTag(getSerializedSize());
         this.writeTo(output);
         return getThis();
     }
 
     public final MessageType writeDelimitedTo(OutputStream output) throws IOException {
+        // [X] Ensure that the serialized size is cached
         int size = getSerializedSize();
         int bufferSize = CodedOutputStream.computeUInt32SizeNoTag(size) + size;
         if (bufferSize > CodedOutputStream.DEFAULT_BUFFER_SIZE) {
@@ -94,6 +98,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
 
     public final MessageType writeTo(OutputStream output) throws IOException {
         final var codedOutput = CodedOutputStream.newInstance(output);
+        getSerializedSize(); // [X] Ensure that the serialized size is cached
         writeTo(codedOutput);
         codedOutput.flush();
         return getThis();
@@ -194,6 +199,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * write more than length bytes OutOfSpaceException will be thrown
      * and if length bytes are not written then IllegalStateException
      * is thrown.
+     * [X] Ensure that the serialized size is cached -- done by caller.
      */
     public static void toByteArray(ProtoMessage<?> msg, byte[] data, int offset, int length) {
         try {

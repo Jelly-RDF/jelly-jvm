@@ -34,21 +34,23 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
     public void handleTriple(TNode subject, TNode predicate, TNode object) {
         emitOptions();
         final var triple = tripleToProto(subject, predicate, object);
-        rowBuffer.appendRow().setTriple(triple);
+        // Calculate the size of the row now, as all objects are likely still in L1/L2 cache.
+        rowBuffer.appendRow().setTriple(triple).getSerializedSize();
     }
 
     @Override
     public void handleQuad(TNode subject, TNode predicate, TNode object, TNode graph) {
         emitOptions();
         final var quad = quadToProto(subject, predicate, object, graph);
-        rowBuffer.appendRow().setQuad(quad);
+        // Calculate the size of the row now, as all objects are likely still in L1/L2 cache.
+        rowBuffer.appendRow().setQuad(quad).getSerializedSize();
     }
 
     @Override
     public void handleGraphStart(TNode graph) {
         emitOptions();
         final var graphStart = graphStartToProto(graph);
-        rowBuffer.appendRow().setGraphStart(graphStart);
+        rowBuffer.appendRow().setGraphStart(graphStart).getSerializedSize();
     }
 
     @Override
@@ -76,17 +78,17 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     @Override
     public void appendNameEntry(RdfNameEntry nameEntry) {
-        rowBuffer.appendRow().setName(nameEntry);
+        rowBuffer.appendRow().setName(nameEntry).getSerializedSize();
     }
 
     @Override
     public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
-        rowBuffer.appendRow().setPrefix(prefixEntry);
+        rowBuffer.appendRow().setPrefix(prefixEntry).getSerializedSize();
     }
 
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
-        rowBuffer.appendRow().setDatatype(datatypeEntry);
+        rowBuffer.appendRow().setDatatype(datatypeEntry).getSerializedSize();
     }
 
     private void emitOptions() {

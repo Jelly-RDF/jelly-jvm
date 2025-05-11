@@ -253,7 +253,7 @@ class FieldGenerator(val info: FieldInfo):
     else if (info.isRepeated) method.addNamedCode("" + 
       "for (final var _field : $field:N) {$>\n" +
       "$writeTagToOutput:L" +
-      "output.writeUInt32NoTag(_field.getSerializedSize());\n" +
+      "output.writeUInt32NoTag(_field.getCachedSize());\n" +
       "_field.writeTo(output);\n" +
       "$writeEndGroupTagToOutput:L" + 
       "$<}\n", 
@@ -267,7 +267,7 @@ class FieldGenerator(val info: FieldInfo):
     )
     else if (info.isMessageOrGroup) method.addNamedCode("" + // non-repeated
       "$writeTagToOutput:L" +
-      "output.writeUInt32NoTag($field:N.getSerializedSize());\n" +
+      "output.writeUInt32NoTag($field:N.getCachedSize());\n" +
       "$field:N.writeTo(output);\n" +
       "$writeEndGroupTagToOutput:L",
       m
