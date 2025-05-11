@@ -5,10 +5,8 @@ import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
-
 import java.io.IOException;
 import java.io.OutputStream;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -40,7 +38,7 @@ public final class JellyStreamWriter implements StreamRDF {
         this.formatVariant = formatVariant;
         this.outputStream = outputStream;
         this.buffer = RowBuffer.newReusable(formatVariant.getFrameSize() + 8);
-        this.reusableFrame = RdfStreamFrame.newInstance();
+        this.reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
 
         this.encoder = converterFactory.encoder(
             ProtoEncoder.Params.of(formatVariant.getOptions(), formatVariant.isEnableNamespaceDeclarations(), buffer)
@@ -90,7 +88,6 @@ public final class JellyStreamWriter implements StreamRDF {
         // Flush the buffer and finish the stream
         if (!formatVariant.isDelimited()) {
             // Non-delimited variant – whole stream in one frame
-            reusableFrame.setRows(buffer.getRows());
             reusableFrame.resetCachedSize();
             try {
                 reusableFrame.writeTo(outputStream);
@@ -110,7 +107,6 @@ public final class JellyStreamWriter implements StreamRDF {
     }
 
     private void flushBuffer() {
-        reusableFrame.setRows(buffer.getRows());
         reusableFrame.resetCachedSize();
         try {
             reusableFrame.writeDelimitedTo(outputStream);

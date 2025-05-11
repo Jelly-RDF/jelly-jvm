@@ -47,7 +47,7 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
         t.getSubject, t.getPredicate, t.getObject
       ))
       val frame = RdfStreamFrame.newInstance
-      frame.setRows(buffer.getRows)
+      frame.setRows(buffer)
       val bytes = frame.toByteArray
 
       runTest(JenaSerDes, "Jena RIOT")

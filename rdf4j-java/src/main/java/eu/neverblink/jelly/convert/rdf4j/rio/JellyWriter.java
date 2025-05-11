@@ -10,7 +10,6 @@ import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-
 import java.io.OutputStream;
 import java.util.Collection;
 import org.eclipse.rdf4j.model.Statement;
@@ -111,6 +110,7 @@ public final class JellyWriter extends AbstractRDFWriter {
         enableNamespaceDeclarations = config.get(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS);
         isDelimited = config.get(JellyWriterSettings.DELIMITED_OUTPUT);
         buffer = RowBuffer.newReusable(frameSize + 8);
+        reusableFrame.setRows(buffer);
         encoder = converterFactory.encoder(ProtoEncoder.Params.of(options, enableNamespaceDeclarations, buffer));
     }
 
@@ -133,7 +133,6 @@ public final class JellyWriter extends AbstractRDFWriter {
         checkWritingStarted();
         if (!isDelimited) {
             // Non-delimited variant – whole stream in one frame
-            reusableFrame.setRows(buffer.getRows());
             reusableFrame.resetCachedSize();
             try {
                 reusableFrame.writeTo(outputStream);
@@ -163,7 +162,6 @@ public final class JellyWriter extends AbstractRDFWriter {
     }
 
     private void flushBuffer() {
-        reusableFrame.setRows(buffer.getRows());
         reusableFrame.resetCachedSize();
         try {
             reusableFrame.writeDelimitedTo(outputStream);

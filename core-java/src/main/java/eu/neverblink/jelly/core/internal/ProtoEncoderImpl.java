@@ -34,7 +34,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         emitOptions();
         final var triple = tripleToProto(subject, predicate, object);
         // Calculate the size of the row now, as all objects are likely still in L1/L2 cache.
-        rowBuffer.appendRow().setTriple(triple).getSerializedSize();
+        rowBuffer.appendMessage().setTriple(triple).getSerializedSize();
     }
 
     @Override
@@ -42,14 +42,14 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         emitOptions();
         final var quad = quadToProto(subject, predicate, object, graph);
         // Calculate the size of the row now, as all objects are likely still in L1/L2 cache.
-        rowBuffer.appendRow().setQuad(quad).getSerializedSize();
+        rowBuffer.appendMessage().setQuad(quad).getSerializedSize();
     }
 
     @Override
     public void handleGraphStart(TNode graph) {
         emitOptions();
         final var graphStart = graphStartToProto(graph);
-        rowBuffer.appendRow().setGraphStart(graphStart).getSerializedSize();
+        rowBuffer.appendMessage().setGraphStart(graphStart).getSerializedSize();
     }
 
     @Override
@@ -57,7 +57,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         if (!hasEmittedOptions) {
             throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one");
         }
-        rowBuffer.appendRow().setGraphEnd(RdfGraphEnd.EMPTY);
+        rowBuffer.appendMessage().setGraphEnd(RdfGraphEnd.EMPTY);
     }
 
     @Override
@@ -72,22 +72,22 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         this.currentNsBase = ns;
         this.currentTerm = SpoTerm.NAMESPACE;
         converter.nodeToProto(nodeEncoder.provide(), namespace);
-        rowBuffer.appendRow().setNamespace(ns);
+        rowBuffer.appendMessage().setNamespace(ns);
     }
 
     @Override
     public void appendNameEntry(RdfNameEntry nameEntry) {
-        rowBuffer.appendRow().setName(nameEntry).getSerializedSize();
+        rowBuffer.appendMessage().setName(nameEntry).getSerializedSize();
     }
 
     @Override
     public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
-        rowBuffer.appendRow().setPrefix(prefixEntry).getSerializedSize();
+        rowBuffer.appendMessage().setPrefix(prefixEntry).getSerializedSize();
     }
 
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
-        rowBuffer.appendRow().setDatatype(datatypeEntry).getSerializedSize();
+        rowBuffer.appendMessage().setDatatype(datatypeEntry).getSerializedSize();
     }
 
     private void emitOptions() {
@@ -96,6 +96,6 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         }
 
         hasEmittedOptions = true;
-        rowBuffer.appendRow().setOptions(options);
+        rowBuffer.appendMessage().setOptions(options);
     }
 }

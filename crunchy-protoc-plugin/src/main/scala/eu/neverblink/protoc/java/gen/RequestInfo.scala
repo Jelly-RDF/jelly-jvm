@@ -218,7 +218,9 @@ object RequestInfo:
     val protoFieldName: String = descriptor.getName
 
     private def getRepeatedStoreType: TypeName =
-      if (isGroup || isMessage) ParameterizedTypeName.get(repeatedStoreType, getTypeName)
+      if (isGroup || isMessage) ParameterizedTypeName.get(
+        repeatedStoreType, getTypeName, getTypeName.asInstanceOf[ClassName].nestedClass("Mutable")
+      )
       else if (isEnum) ParameterizedTypeName.get(repeatedStoreType, getTypeName)
       else repeatedStoreType
 

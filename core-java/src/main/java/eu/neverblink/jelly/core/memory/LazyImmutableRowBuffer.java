@@ -3,11 +3,9 @@ package eu.neverblink.jelly.core.memory;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-public final class LazyImmutableRowBuffer implements RowBuffer {
+public final class LazyImmutableRowBuffer extends AbstractCollection<RdfStreamRow> implements RowBuffer {
 
     private List<RdfStreamRow> rows = null;
     private int initialCapacity;
@@ -22,6 +20,14 @@ public final class LazyImmutableRowBuffer implements RowBuffer {
     }
 
     @Override
+    public Iterator<RdfStreamRow> iterator() {
+        if (rows == null) {
+            return Collections.emptyIterator();
+        }
+        return rows.iterator();
+    }
+
+    @Override
     public int size() {
         if (rows == null) {
             return 0;
@@ -30,7 +36,7 @@ public final class LazyImmutableRowBuffer implements RowBuffer {
     }
 
     @Override
-    public RdfStreamRow.Mutable appendRow() {
+    public RdfStreamRow.Mutable appendMessage() {
         if (rows == null) {
             rows = new ArrayList<>(initialCapacity);
         }
@@ -62,10 +68,12 @@ public final class LazyImmutableRowBuffer implements RowBuffer {
     public RdfQuad.Mutable newQuad() {
         return QUAD_ALLOCATOR.newInstance();
     }
-    
-    private static final MessageAllocator<RdfTriple.Mutable> TRIPLE_ALLOCATOR =
-        MessageAllocator.heapAllocator(RdfTriple::newInstance);
-    
-    private static final MessageAllocator<RdfQuad.Mutable> QUAD_ALLOCATOR =
-        MessageAllocator.heapAllocator(RdfQuad::newInstance);
+
+    private static final MessageAllocator<RdfTriple.Mutable> TRIPLE_ALLOCATOR = MessageAllocator.heapAllocator(
+        RdfTriple::newInstance
+    );
+
+    private static final MessageAllocator<RdfQuad.Mutable> QUAD_ALLOCATOR = MessageAllocator.heapAllocator(
+        RdfQuad::newInstance
+    );
 }

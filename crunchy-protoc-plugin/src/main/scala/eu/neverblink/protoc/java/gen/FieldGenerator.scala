@@ -127,7 +127,7 @@ class FieldGenerator(val info: FieldInfo):
   private def initializer =
     val initializer = CodeBlock.builder
     if (info.isRepeated && info.isMessageOrGroup)
-      initializer.add("new $T<>()", RuntimeClasses.ArrayList)
+      initializer.add("new $T($T::newInstance)", RuntimeClasses.ListMessageCollection, info.getTypeName)
     else if (info.isRepeated && info.isEnum) initializer.add("$T.newEmptyInstance($T.converter())", RuntimeClasses.RepeatedEnum, info.getTypeName)
     else if (info.isRepeated) initializer.add("$T.newEmptyInstance()", storeType)
     else if (info.isBytes) initializer.add(named("$storeType:T.EMPTY"))

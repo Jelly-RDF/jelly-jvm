@@ -59,7 +59,7 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
     }
 
     @Override
-    public RdfStreamRow.Mutable appendRow() {
+    public RdfStreamRow.Mutable appendMessage() {
         if (visibleSize < initializedSize) {
             // Cast, because the only other alternative is to spill covariance / contravariance
             // considerations across the entire codebase and make everyone's lives miserable.
