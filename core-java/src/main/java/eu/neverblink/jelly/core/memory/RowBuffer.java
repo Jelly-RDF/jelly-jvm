@@ -1,6 +1,8 @@
-package eu.neverblink.jelly.core.buffer;
+package eu.neverblink.jelly.core.memory;
 
+import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
+import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import java.util.Collection;
 
 public interface RowBuffer {
@@ -11,6 +13,10 @@ public interface RowBuffer {
     RdfStreamRow.Mutable appendRow();
 
     Collection<RdfStreamRow> getRows();
+
+    RdfTriple.Mutable newTriple();
+
+    RdfQuad.Mutable newQuad();
 
     static ReusableRowBuffer newReusable(int initialCapacity) {
         return new ReusableRowBuffer(initialCapacity);

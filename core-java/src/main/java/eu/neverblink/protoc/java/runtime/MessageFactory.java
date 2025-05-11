@@ -6,6 +6,6 @@ package eu.neverblink.protoc.java.runtime;
  * @author Florian Enner
  * @since 15 Aug 2019
  */
-public interface MessageFactory<T extends ProtoMessage<T>> {
+public interface MessageFactory<T extends ProtoMessage<?>> {
     T create();
 }

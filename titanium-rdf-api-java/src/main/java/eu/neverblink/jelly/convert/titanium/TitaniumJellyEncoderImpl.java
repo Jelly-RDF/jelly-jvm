@@ -9,14 +9,11 @@ import eu.neverblink.jelly.convert.titanium.internal.TitaniumLiteral;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
-import eu.neverblink.jelly.core.buffer.ReusableRowBuffer;
-import eu.neverblink.jelly.core.buffer.RowBuffer;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
-import java.util.ArrayList;
-import java.util.Collection;
 
 @InternalApi
 final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {

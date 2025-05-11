@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.stream.impl
 
 import eu.neverblink.jelly.core.ProtoEncoder.Params
-import eu.neverblink.jelly.core.buffer.{LazyImmutableRowBuffer, RowBuffer}
+import eu.neverblink.jelly.core.memory.{LazyImmutableRowBuffer, RowBuffer}
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{GraphHolder, QuadExtractor, TripleExtractor}
 import eu.neverblink.jelly.core.{JellyConverterFactory, NamespaceDeclaration, ProtoDecoderConverter, ProtoEncoder, ProtoEncoderConverter}

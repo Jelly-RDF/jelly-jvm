@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core
 
-import eu.neverblink.jelly.core.buffer.RowBuffer
+import eu.neverblink.jelly.core.memory.RowBuffer
 import eu.neverblink.jelly.core.{JellyConstants, JellyOptions, NamespaceDeclaration, RdfProtoSerializationError}
 import eu.neverblink.jelly.core.helpers.*
 import eu.neverblink.jelly.core.helpers.Assertions.*

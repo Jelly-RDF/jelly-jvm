@@ -3,7 +3,7 @@ package eu.neverblink.jelly.convert.jena
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.ProtoEncoder.Params
-import eu.neverblink.jelly.core.buffer.RowBuffer
+import eu.neverblink.jelly.core.memory.RowBuffer
 import eu.neverblink.jelly.core.proto.v1.*
 import org.apache.jena.graph.NodeFactory
 import org.apache.jena.sparql.core.Quad

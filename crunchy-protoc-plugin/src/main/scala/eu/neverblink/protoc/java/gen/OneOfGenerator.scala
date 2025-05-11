@@ -135,7 +135,8 @@ class OneOfGenerator(val info: OneOfInfo):
     )
 
   def generateClearCode(method: MethodSpec.Builder): Unit =
-    method.addStatement("this.$N = null", info.fieldName)
+    // This is not really needed, we can just set the field number to 0
+    // method.addStatement("this.$N = null", info.fieldName)
     method.addStatement("this.$N = 0", info.numberFieldName)
 
   def generateWriteToCode(method: MethodSpec.Builder): Unit =

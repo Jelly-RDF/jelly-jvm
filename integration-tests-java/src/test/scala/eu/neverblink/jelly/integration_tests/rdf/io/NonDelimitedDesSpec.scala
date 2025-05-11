@@ -2,7 +2,7 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
-import eu.neverblink.jelly.core.buffer.RowBuffer
+import eu.neverblink.jelly.core.memory.RowBuffer
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.{JellyOptions, ProtoEncoder}
 import eu.neverblink.jelly.integration_tests.rdf.TestCases

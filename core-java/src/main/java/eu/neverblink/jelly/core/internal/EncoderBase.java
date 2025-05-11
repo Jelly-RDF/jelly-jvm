@@ -50,8 +50,12 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected abstract int getDatatypeTableSize();
 
+    protected abstract RdfTriple.Mutable newTriple();
+
+    protected abstract RdfQuad.Mutable newQuad();
+
     protected final RdfTriple tripleToProto(TNode subject, TNode predicate, TNode object) {
-        final RdfTriple.Mutable triple = RdfTriple.newInstance();
+        final RdfTriple.Mutable triple = newTriple();
         this.currentSpoBase = triple;
         nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
         nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);
@@ -60,7 +64,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     }
 
     protected final RdfQuad quadToProto(TNode subject, TNode predicate, TNode object, TNode graph) {
-        final RdfQuad.Mutable quad = RdfQuad.newInstance();
+        final RdfQuad.Mutable quad = newQuad();
         this.currentSpoBase = quad;
         this.currentGraphBase = quad;
         nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
@@ -76,7 +80,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
      * Used in RDF-Patch for triple add/delete operations.
      */
     protected final RdfQuad tripleInQuadToProto(TNode subject, TNode predicate, TNode object) {
-        final RdfQuad.Mutable quad = RdfQuad.newInstance();
+        final RdfQuad.Mutable quad = newQuad();
         this.currentSpoBase = quad;
         nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
         nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);

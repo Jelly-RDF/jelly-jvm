@@ -132,6 +132,7 @@ class MessageGenerator(val info: MessageInfo):
     generateWriteTo(t)
     generateComputeSerializedSize(t)
     generateMergeFrom(tMutable)
+    generateClear(tMutable)
     generateClone(t)
     // Static utilities
     oneOfGenerators.foreach(_.generateConstants(t))
@@ -325,6 +326,7 @@ class MessageGenerator(val info: MessageInfo):
         "Call this method if you modify the message after it was serialized.\n" +
         "NOTE: this is a SHALLOW operation! It will not reset the size of nested messages."
       )
+      .addAnnotation(classOf[Override])
       .addModifiers(Modifier.PUBLIC)
       .returns(classOf[Unit])
       .addStatement("cachedSize = -1")
@@ -354,6 +356,18 @@ class MessageGenerator(val info: MessageInfo):
     oneOfGenerators.foreach(_.generateMergeFromMessageCode(mergeFrom))
     mergeFrom.addStatement("return this")
     t.addMethod(mergeFrom.build)
+
+  private def generateClear(builder: TypeSpec.Builder): Unit =
+    val clear = MethodSpec.methodBuilder("clear")
+      .addJavadoc(Javadoc.inherit)
+      .addAnnotation(classOf[Override])
+      .addModifiers(Modifier.PUBLIC)
+      .returns(info.mutableTypeName)
+    fields.foreach(_.generateClearCode(clear))
+    oneOfGenerators.foreach(_.generateClearCode(clear))
+    clear.addStatement("cachedSize = -1")
+    clear.addStatement("return this")
+    builder.addMethod(clear.build)
 
   private def generateClone(t: TypeSpec.Builder): Unit =
     t.addSuperinterface(classOf[Cloneable])

@@ -4,15 +4,14 @@ import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.core.ProtoEncoder;
-import eu.neverblink.jelly.core.buffer.ReusableRowBuffer;
-import eu.neverblink.jelly.core.buffer.RowBuffer;
+import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
+
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;

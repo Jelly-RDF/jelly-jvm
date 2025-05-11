@@ -1,10 +1,10 @@
 package eu.neverblink.jelly.core;
 
-import eu.neverblink.jelly.core.buffer.RowBuffer;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.internal.EncoderBase;
+import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
-import java.util.Collection;
+import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 
 /**
  * Base interface for RDF stream encoders.
@@ -95,6 +95,16 @@ public abstract class ProtoEncoder<TNode>
     @Override
     protected int getDatatypeTableSize() {
         return options.getMaxDatatypeTableSize();
+    }
+    
+    @Override
+    protected RdfTriple.Mutable newTriple() {
+        return rowBuffer.newTriple();
+    }
+    
+    @Override
+    protected RdfQuad.Mutable newQuad() {
+        return rowBuffer.newQuad();
     }
 
     /**

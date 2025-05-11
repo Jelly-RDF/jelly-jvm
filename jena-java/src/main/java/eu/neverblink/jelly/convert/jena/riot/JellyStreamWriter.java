@@ -2,14 +2,13 @@ package eu.neverblink.jelly.convert.jena.riot;
 
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
 import eu.neverblink.jelly.core.ProtoEncoder;
-import eu.neverblink.jelly.core.buffer.ReusableRowBuffer;
-import eu.neverblink.jelly.core.buffer.RowBuffer;
+import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
-import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
+
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
+
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;

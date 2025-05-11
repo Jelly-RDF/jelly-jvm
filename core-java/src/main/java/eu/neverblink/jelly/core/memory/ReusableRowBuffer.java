@@ -1,6 +1,8 @@
-package eu.neverblink.jelly.core.buffer;
+package eu.neverblink.jelly.core.memory;
 
+import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
+import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
@@ -11,6 +13,9 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
     private int visibleSize = 0;
     private int initializedSize = 0;
     private int capacity;
+    
+    private final MessageAllocator<RdfTriple.Mutable> tripleAllocator;
+    private final MessageAllocator<RdfQuad.Mutable> quadAllocator;
 
     /**
      * Package-private constructor.
@@ -18,8 +23,12 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
      * @param initialCapacity initial capacity of the buffer
      */
     ReusableRowBuffer(int initialCapacity) {
-        this.rows = new RdfStreamRow[initialCapacity];
-        this.capacity = initialCapacity;
+        // Don't trust the user -- they *might* set this parameter to something very high,
+        // which would result in needlessly large allocations.
+        this.capacity = Math.min(initialCapacity, 2048);
+        this.rows = new RdfStreamRow[capacity];
+        this.tripleAllocator = MessageAllocator.arenaAllocator(RdfTriple::newInstance, capacity);
+        this.quadAllocator = MessageAllocator.arenaAllocator(RdfQuad::newInstance, capacity);
     }
 
     @Override
@@ -76,7 +85,19 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
         return this;
     }
 
+    @Override
+    public RdfTriple.Mutable newTriple() {
+        return tripleAllocator.newInstance();
+    }
+
+    @Override
+    public RdfQuad.Mutable newQuad() {
+        return quadAllocator.newInstance();
+    }
+
     public void reset() {
         visibleSize = 0;
+        tripleAllocator.releaseAll();
+        quadAllocator.releaseAll();
     }
 }

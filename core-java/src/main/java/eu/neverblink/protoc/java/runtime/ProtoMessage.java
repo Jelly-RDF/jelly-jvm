@@ -56,6 +56,8 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * @return the size of the serialized proto form
      */
     protected abstract int computeSerializedSize();
+    
+    public abstract void resetCachedSize();
 
     /**
      * Serializes the message and writes it to {@code output}.
@@ -274,6 +276,12 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         } while ((nextTag = input.in().readTag()) == tag);
         return nextTag;
     }
+
+    /**
+     * Clears all fields in this message and resets the cached size.
+     * @return this
+     */
+    public abstract MessageType clear();
 
     /**
      * Indicates whether another object is "equal to" this one.
