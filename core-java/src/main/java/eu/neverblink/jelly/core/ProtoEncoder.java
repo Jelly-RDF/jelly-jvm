@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.core;
 
-import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.internal.EncoderBase;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
@@ -83,27 +83,27 @@ public abstract class ProtoEncoder<TNode>
     }
 
     @Override
-    protected int getNameTableSize() {
+    protected final int getNameTableSize() {
         return options.getMaxNameTableSize();
     }
 
     @Override
-    protected int getPrefixTableSize() {
+    protected final int getPrefixTableSize() {
         return options.getMaxPrefixTableSize();
     }
 
     @Override
-    protected int getDatatypeTableSize() {
+    protected final int getDatatypeTableSize() {
         return options.getMaxDatatypeTableSize();
     }
-    
+
     @Override
-    protected RdfTriple.Mutable newTriple() {
+    protected final RdfTriple.Mutable newTriple() {
         return rowBuffer.newTriple();
     }
-    
+
     @Override
-    protected RdfQuad.Mutable newQuad() {
+    protected final RdfQuad.Mutable newQuad() {
         return rowBuffer.newQuad();
     }
 

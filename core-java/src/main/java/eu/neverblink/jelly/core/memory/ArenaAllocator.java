@@ -3,7 +3,7 @@ package eu.neverblink.jelly.core.memory;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 
-public class ArenaAllocator<T extends ProtoMessage<?>> implements MessageAllocator<T> {
+public final class ArenaAllocator<T extends ProtoMessage<?>> implements MessageAllocator<T> {
 
     private final MessageFactory<T> factory;
     private final int maxSize;
@@ -28,11 +28,13 @@ public class ArenaAllocator<T extends ProtoMessage<?>> implements MessageAllocat
             // No more space in the arena, allocate a new instance on the heap
             return factory.create();
         }
-
         if (buffer[used] == null) {
-            T instance = factory.create();
-            buffer[used++] = instance;
-            return instance;
+            // Batch-allocate instances to avoid frequent allocations
+            // and to hopefully improve cache locality.
+            for (int i = used; i < Math.min(maxSize, used + 16); i++) {
+                buffer[i] = factory.create();
+            }
+            return buffer[used++];
         } else {
             T instance = buffer[used++];
             instance.clear();

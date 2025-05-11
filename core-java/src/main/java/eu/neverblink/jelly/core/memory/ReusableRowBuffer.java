@@ -14,8 +14,8 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
     private int initializedSize = 0;
     private int capacity;
     
-    private final MessageAllocator<RdfTriple.Mutable> tripleAllocator;
-    private final MessageAllocator<RdfQuad.Mutable> quadAllocator;
+    private final ArenaAllocator<RdfTriple.Mutable> tripleAllocator;
+    private final ArenaAllocator<RdfQuad.Mutable> quadAllocator;
 
     /**
      * Package-private constructor.
@@ -27,8 +27,8 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
         // which would result in needlessly large allocations.
         this.capacity = Math.min(initialCapacity, 2048);
         this.rows = new RdfStreamRow[capacity];
-        this.tripleAllocator = MessageAllocator.arenaAllocator(RdfTriple::newInstance, capacity);
-        this.quadAllocator = MessageAllocator.arenaAllocator(RdfQuad::newInstance, capacity);
+        this.tripleAllocator = new ArenaAllocator<>(RdfTriple::newInstance, capacity);
+        this.quadAllocator = new ArenaAllocator<>(RdfQuad::newInstance, capacity);
     }
 
     @Override
@@ -74,10 +74,13 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
             System.arraycopy(rows, 0, newRows, 0, visibleSize);
             rows = newRows;
         }
-        final var row = RdfStreamRow.newInstance();
-        rows[visibleSize++] = row;
-        initializedSize++;
-        return row;
+        // Batch-allocate instances to avoid frequent allocations
+        // and to hopefully improve cache locality.
+        initializedSize = Math.min(capacity, visibleSize + 16);
+        for (int i = visibleSize; i < initializedSize; i++) {
+            rows[i] = RdfStreamRow.newInstance();
+        }
+        return (RdfStreamRow.Mutable) rows[visibleSize++];
     }
 
     @Override
