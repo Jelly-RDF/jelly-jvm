@@ -1,6 +1,6 @@
 package eu.neverblink.protoc.java.gen
 
-import com.palantir.javapoet.{FieldSpec, MethodSpec, TypeName, TypeSpec}
+import com.palantir.javapoet.{FieldSpec, MethodSpec, ParameterizedTypeName, TypeName, TypeSpec, WildcardTypeName}
 import eu.neverblink.protoc.java.gen.RequestInfo.OneOfInfo
 
 import javax.lang.model.element.Modifier
@@ -34,9 +34,13 @@ import javax.lang.model.element.Modifier
 class OneOfGenerator(val info: OneOfInfo):
   val fields: Seq[RequestInfo.FieldInfo] = info.getFields
   val fieldGenerators: Seq[FieldGenerator] = fields.map(FieldGenerator(_))
+  val isAllMessages: Boolean = fields.forall(_.isMessage)
+  val storageType: TypeName = if isAllMessages then
+    ParameterizedTypeName.get(RuntimeClasses.AbstractMessage, RuntimeClasses.Any)
+  else RuntimeClasses.ObjectType
 
   def generateMemberFields(t: TypeSpec.Builder): Unit =
-    val field = FieldSpec.builder(RuntimeClasses.ObjectType, info.fieldName)
+    val field = FieldSpec.builder(storageType, info.fieldName)
       .addJavadoc(Javadoc.forOneOfField(info).build)
       .addModifiers(Modifier.PROTECTED)
     field.initializer("null")
@@ -61,7 +65,7 @@ class OneOfGenerator(val info: OneOfInfo):
       )
       .addModifiers(Modifier.PUBLIC)
       .returns(info.parentTypeInfo.mutableTypeName)
-      .addParameter(RuntimeClasses.ObjectType, info.fieldName)
+      .addParameter(storageType, info.fieldName)
       .addParameter(TypeName.BYTE, "number")
       .addStatement("this.$N = $N", info.fieldName, info.fieldName)
       .addStatement("this.$N = $L", info.numberFieldName, "number")
@@ -73,7 +77,7 @@ class OneOfGenerator(val info: OneOfInfo):
         info.descriptor.getName
       )
       .addModifiers(Modifier.PUBLIC)
-      .returns(RuntimeClasses.ObjectType)
+      .returns(storageType)
       .addStatement("return $N", info.fieldName)
     t.addMethod(get.build)
     // Get the value -- field number method

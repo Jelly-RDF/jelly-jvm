@@ -2,7 +2,7 @@ package eu.neverblink.protoc.java.gen
 
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type.*
-import com.palantir.javapoet.ClassName
+import com.palantir.javapoet.{ClassName, TypeName, WildcardTypeName}
 
 /*-
  * #%L
@@ -69,6 +69,7 @@ object RuntimeClasses:
   val RepeatedEnum: ClassName = ClassName.get(API_PACKAGE, "RepeatedEnum")
   val Collections: ClassName = ClassName.get(JAVA_UTIL_PACKAGE, "Collections")
   val Base64: ClassName = ClassName.get(JAVA_UTIL_PACKAGE, "Base64")
+  val Any: TypeName = WildcardTypeName.subtypeOf(ObjectType)
 
   def getRepeatedStoreType(t: FieldDescriptorProto.Type): ClassName = t match
     case TYPE_DOUBLE => RepeatedDouble

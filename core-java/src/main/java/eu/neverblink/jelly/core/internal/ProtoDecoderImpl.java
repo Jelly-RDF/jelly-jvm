@@ -96,7 +96,8 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
             return;
         }
 
-        this.currentOptions = options;
+        // We clone this, because the ReusableRowBuffer may call .clear() on this original object.
+        this.currentOptions = options.clone();
     }
 
     @Override

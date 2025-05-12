@@ -165,13 +165,16 @@ public abstract class DecoderBase<TNode, TDatatype> {
      * @return converted node
      */
     protected final TNode convertGraphTermWrapped(int kind, GraphBase graph) {
-        if (graph.getGraph() == null && lastGraph.hasNoValue()) {
+        if (kind < 0 && lastGraph.hasNoValue()) {
             // Special case: Jena and RDF4J allow null graph terms in the input,
             // so we do not treat them as errors.
             return null;
         }
 
-        if (graph.getGraph() == null) {
+        // Checking for null here would not be as reliable, because if we call clear() on the quad,
+        // only the row number is set to 0, but the value is not set to null.
+        // This makes a difference if we are reusing the same object for multiple triples.
+        if (kind < 0) {
             return lastGraph.get();
         }
 
@@ -181,11 +184,11 @@ public abstract class DecoderBase<TNode, TDatatype> {
     }
 
     private TNode convertSpoTermWrapped(int kind, Object term, LastNodeHolder<TNode> lastNodeHolder) {
-        if (term == null && lastNodeHolder.hasNoValue()) {
+        if (kind < 0 && lastNodeHolder.hasNoValue()) {
             throw new RdfProtoDeserializationError("Empty term without previous term.");
         }
 
-        if (term == null) {
+        if (kind < 0) {
             return lastNodeHolder.get();
         }
 
