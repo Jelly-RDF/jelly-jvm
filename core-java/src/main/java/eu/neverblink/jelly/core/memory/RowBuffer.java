@@ -17,8 +17,12 @@ public interface RowBuffer extends MessageCollection<RdfStreamRow, RdfStreamRow.
 
     RdfQuad.Mutable newQuad();
 
-    static ReusableRowBuffer newReusable(int initialCapacity) {
-        return new ReusableRowBuffer(initialCapacity);
+    static ReusableRowBuffer newReusableForEncoder(int initialCapacity) {
+        return new ReusableRowBuffer(initialCapacity, ReusableRowBuffer.ENCODER_CLEAR_POLICY);
+    }
+    
+    static ReusableRowBuffer newReusableForDecoder(int initialCapacity) {
+        return new ReusableRowBuffer(initialCapacity, ReusableRowBuffer.DECODER_CLEAR_POLICY);
     }
 
     static LazyImmutableRowBuffer newLazyImmutable(int initialCapacity) {

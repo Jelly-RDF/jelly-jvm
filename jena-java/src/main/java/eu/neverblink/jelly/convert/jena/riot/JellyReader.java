@@ -5,19 +5,21 @@ import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.RdfHandler;
+import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.utils.IoUtils;
+import eu.neverblink.protoc.java.runtime.MessageFactory;
+import eu.neverblink.protoc.java.runtime.ProtoMessage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.ReaderRIOT;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.system.StreamRDF;
-import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.util.Context;
 
 public final class JellyReader implements ReaderRIOT {
@@ -56,6 +58,9 @@ public final class JellyReader implements ReaderRIOT {
             }
         };
 
+        final ReusableRowBuffer buffer = RowBuffer.newReusableForDecoder(16);
+        final RdfStreamFrame.Mutable reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
+        final MessageFactory<RdfStreamFrame> getReusableFrame = () -> reusableFrame;
         final var decoder = converterFactory.anyStatementDecoder(handler, supportedOptions);
 
         output.start();
@@ -64,14 +69,19 @@ public final class JellyReader implements ReaderRIOT {
             if (delimitingResponse.isDelimited()) {
                 // Delimited Jelly file
                 // In this case, we can read multiple frames
-                readStream(delimitingResponse.newInput(), RdfStreamFrame::parseDelimitedFrom, frame ->
-                    frame.getRows().forEach(decoder::ingestRow)
+                readStream(
+                    delimitingResponse.newInput(),
+                    inputStream -> ProtoMessage.parseDelimitedFrom(inputStream, getReusableFrame),
+                    frame -> {
+                        buffer.forEach(decoder::ingestRow);
+                        reusableFrame.clear();
+                    }
                 );
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame
-                final var frame = RdfStreamFrame.parseFrom(delimitingResponse.newInput());
-                frame.getRows().forEach(decoder::ingestRow);
+                ProtoMessage.parseFrom(delimitingResponse.newInput(), getReusableFrame);
+                buffer.forEach(decoder::ingestRow);
             }
         } catch (IOException e) {
             throw new RiotException(e);

@@ -6,6 +6,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.function.Consumer;
 
 public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> implements RowBuffer {
 
@@ -13,7 +14,8 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
     private int visibleSize = 0;
     private int initializedSize = 0;
     private int capacity;
-    
+    private final Consumer<RdfStreamRow.Mutable> clearPolicy;
+
     private final ArenaAllocator<RdfTriple.Mutable> tripleAllocator;
     private final ArenaAllocator<RdfQuad.Mutable> quadAllocator;
 
@@ -21,12 +23,14 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
      * Package-private constructor.
      * Use RowBuffer.newReusableRowBuffer(int initialCapacity) instead.
      * @param initialCapacity initial capacity of the buffer
+     * @param clearPolicy method to clear the row when it is reused
      */
-    ReusableRowBuffer(int initialCapacity) {
+    ReusableRowBuffer(int initialCapacity, Consumer<RdfStreamRow.Mutable> clearPolicy) {
         // Don't trust the user -- they *might* set this parameter to something very high,
         // which would result in needlessly large allocations.
         this.capacity = Math.min(initialCapacity, 2048);
         this.rows = new RdfStreamRow[capacity];
+        this.clearPolicy = clearPolicy;
         this.tripleAllocator = new ArenaAllocator<>(RdfTriple::newInstance, capacity);
         this.quadAllocator = new ArenaAllocator<>(RdfQuad::newInstance, capacity);
     }
@@ -64,8 +68,8 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
             // Cast, because the only other alternative is to spill covariance / contravariance
             // considerations across the entire codebase and make everyone's lives miserable.
             final var row = (RdfStreamRow.Mutable) rows[visibleSize++];
-            // Reset the cached size of the row, so that it can be reused.
-            row.resetCachedSize();
+            // Clear the row using the specified policy before returning, so that it can be reused.
+            clearPolicy.accept(row);
             return row;
         } else if (visibleSize >= capacity) {
             // Resize the array to make room for more rows.
@@ -98,9 +102,14 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
         return quadAllocator.newInstance();
     }
 
-    public void reset() {
+    @Override
+    public void clear() {
         visibleSize = 0;
         tripleAllocator.releaseAll();
         quadAllocator.releaseAll();
     }
+
+    static final Consumer<RdfStreamRow.Mutable> ENCODER_CLEAR_POLICY = RdfStreamRow::resetCachedSize;
+    
+    static final Consumer<RdfStreamRow.Mutable> DECODER_CLEAR_POLICY = RdfStreamRow::clear;
 }

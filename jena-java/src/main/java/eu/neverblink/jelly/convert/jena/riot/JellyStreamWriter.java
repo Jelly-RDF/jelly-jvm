@@ -37,7 +37,7 @@ public final class JellyStreamWriter implements StreamRDF {
     ) {
         this.formatVariant = formatVariant;
         this.outputStream = outputStream;
-        this.buffer = RowBuffer.newReusable(formatVariant.getFrameSize() + 8);
+        this.buffer = RowBuffer.newReusableForEncoder(formatVariant.getFrameSize() + 8);
         this.reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
 
         this.encoder = converterFactory.encoder(
@@ -94,7 +94,7 @@ public final class JellyStreamWriter implements StreamRDF {
             } catch (IOException e) {
                 throw new RiotException(e);
             }
-            buffer.reset();
+            buffer.clear();
         } else if (!buffer.isEmpty()) {
             flushBuffer();
         }
@@ -113,7 +113,7 @@ public final class JellyStreamWriter implements StreamRDF {
         } catch (IOException e) {
             throw new RiotException(e);
         } finally {
-            buffer.reset();
+            buffer.clear();
         }
     }
 }

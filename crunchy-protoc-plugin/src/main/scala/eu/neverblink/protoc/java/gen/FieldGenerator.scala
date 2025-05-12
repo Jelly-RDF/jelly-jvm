@@ -192,8 +192,8 @@ class FieldGenerator(val info: FieldInfo):
     method.addCode(ensureFieldNotNull)
     if (info.isRepeated && info.isMessageOrGroup) {
       method.addStatement(
-        "tag = $T.readRepeatedMessage($N, $T.getFactory(), inputLimited, tag)",
-        RuntimeClasses.AbstractMessage, info.fieldName, info.getTypeName
+        "tag = $T.readRepeatedMessage($N, inputLimited, tag)",
+        RuntimeClasses.AbstractMessage, info.fieldName
       )
       return false // tag is already read, so don't read again
     } else if (info.isRepeated) {

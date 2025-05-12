@@ -109,7 +109,7 @@ public final class JellyWriter extends AbstractRDFWriter {
         frameSize = config.get(JellyWriterSettings.FRAME_SIZE);
         enableNamespaceDeclarations = config.get(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS);
         isDelimited = config.get(JellyWriterSettings.DELIMITED_OUTPUT);
-        buffer = RowBuffer.newReusable(frameSize + 8);
+        buffer = RowBuffer.newReusableForEncoder(frameSize + 8);
         reusableFrame.setRows(buffer);
         encoder = converterFactory.encoder(ProtoEncoder.Params.of(options, enableNamespaceDeclarations, buffer));
     }
@@ -168,7 +168,7 @@ public final class JellyWriter extends AbstractRDFWriter {
         } catch (Exception e) {
             throw new RDFHandlerException("Error writing frame", e);
         } finally {
-            buffer.reset();
+            buffer.clear();
         }
     }
 }

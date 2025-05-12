@@ -109,7 +109,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * @param <T> the type of the message
      * @throws IOException if an error occurred reading from {@code input}
      */
-    protected static <T extends ProtoMessage<T>> T parseFrom(InputStream input, MessageFactory<T> factory)
+    public static <T extends ProtoMessage<T>> T parseFrom(InputStream input, MessageFactory<T> factory)
         throws IOException {
         final var msg = factory.create();
         final var cin = CodedInputStream.newInstance(input);
@@ -122,7 +122,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      *
      * @return a new message parsed from the input stream or null if there is no message to parse.
      */
-    protected static <T extends ProtoMessage<T>> T parseDelimitedFrom(InputStream input, MessageFactory<T> factory)
+    public static <T extends ProtoMessage<T>> T parseDelimitedFrom(InputStream input, MessageFactory<T> factory)
         throws IOException {
         int size;
         try {
@@ -266,16 +266,14 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     }
 
     protected static <T extends ProtoMessage<T>> int readRepeatedMessage(
-        final Collection<T> store,
-        final MessageFactory<T> factory,
+        final MessageCollection<T, ?> store,
         final LimitedCodedInputStream input,
         final int tag
     ) throws IOException {
         int nextTag;
         do {
-            final var msg = factory.create();
+            final var msg = store.appendMessage();
             mergeDelimitedFrom(msg, input);
-            store.add(msg);
         } while ((nextTag = input.in().readTag()) == tag);
         return nextTag;
     }
