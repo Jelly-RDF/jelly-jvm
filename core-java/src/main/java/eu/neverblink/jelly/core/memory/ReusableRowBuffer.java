@@ -3,7 +3,6 @@ package eu.neverblink.jelly.core.memory;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
-import eu.neverblink.protoc.java.runtime.ProtoMessage;
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
@@ -111,14 +110,6 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
     }
 
     static final Consumer<RdfStreamRow.Mutable> ENCODER_CLEAR_POLICY = RdfStreamRow::resetCachedSize;
-
-    static final Consumer<RdfStreamRow.Mutable> DECODER_CLEAR_POLICY_SHALLOW = RdfStreamRow::clear;
-
-    static final Consumer<RdfStreamRow.Mutable> DECODER_CLEAR_POLICY_DEEP = row -> {
-        if (row.getRow() != null) {
-            row.getRow().clear();
-        } else {
-            row.clear();
-        }
-    };
+    
+    static final Consumer<RdfStreamRow.Mutable> DECODER_CLEAR_POLICY = RdfStreamRow::clear;
 }

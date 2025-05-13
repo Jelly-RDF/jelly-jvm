@@ -22,7 +22,7 @@ public interface RowBuffer extends MessageCollection<RdfStreamRow, RdfStreamRow.
     }
     
     static ReusableRowBuffer newReusableForDecoder(int initialCapacity) {
-        return new ReusableRowBuffer(initialCapacity, ReusableRowBuffer.DECODER_CLEAR_POLICY_DEEP);
+        return new ReusableRowBuffer(initialCapacity, ReusableRowBuffer.DECODER_CLEAR_POLICY);
     }
 
     static LazyImmutableRowBuffer newLazyImmutable(int initialCapacity) {
