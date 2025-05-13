@@ -169,6 +169,7 @@ object RequestInfo:
       )
 
     val isEmptyMessage: Boolean = fieldCount == 0 && oneOfCount == 0
+    val usesFastOneofMerge: Boolean = options.fastOneofMerge.contains(typeName.simpleName())
   }
 
   class FieldInfo(

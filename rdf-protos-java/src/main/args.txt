@@ -14,4 +14,5 @@ implements_RdfPatchNamespace.Mutable=eu.neverblink.jelly.core.internal.proto.NsB
     eu.neverblink.jelly.core.internal.proto.GraphBase.Setters,
 implements_RdfPatchHeader=eu.neverblink.jelly.core.internal.proto.HeaderBase,
 implements_RdfPatchHeader.Mutable=eu.neverblink.jelly.core.internal.proto.HeaderBase.Setters,
+fast_oneof_merge=RdfStreamRow,
 replace_package=eu.ostrzyciel=eu.neverblink

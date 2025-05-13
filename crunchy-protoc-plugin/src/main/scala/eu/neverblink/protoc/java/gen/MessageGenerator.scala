@@ -201,7 +201,7 @@ class MessageGenerator(val info: MessageInfo):
     // Packable fields make this a bit more complex since they need to generate two cases to preserve
     // backwards compatibility. However, any production proto file should already be using the packed
     // option whenever possible, so we don't need to optimize the non-packed case.
-    val enableFallthroughOptimization = true
+    val enableFallthroughOptimization = !info.usesFastOneofMerge
     // Interleave the oneof fields. In Jelly-RDF, this optimizes for the case where s, p, o, g are
     // all RdfIri messages.
     val sortedFields = fields.sortBy(_.info.number) ++
@@ -226,9 +226,11 @@ class MessageGenerator(val info: MessageInfo):
         .addStatement("return this")
       t.addMethod(mergeFrom.build)
       return
-    mergeFrom
-      .beginControlFlow("while (true)")
-      .beginControlFlow("switch (tag)")
+    mergeFrom.beginControlFlow("while (true)")
+    if info.usesFastOneofMerge then
+      // bitshift to get the field number
+      mergeFrom.beginControlFlow("switch (tag >>> 3)")
+    else mergeFrom.beginControlFlow("switch (tag)")
     // Add fields by the expected order and type
     for (i <- sortedFields.indices) {
       val field = sortedFields(i)
@@ -241,21 +243,29 @@ class MessageGenerator(val info: MessageInfo):
         readTag = field.generateMergingCodeFromPacked(mergeFrom)
       }
       else {
-        mergeFrom.beginControlFlow("case $L:", field.info.tag)
+        mergeFrom.beginControlFlow(
+          "case $L:",
+          if info.usesFastOneofMerge then field.info.number else field.info.tag
+        )
         mergeFrom.addComment("$L", field.info.fieldName)
         readTag = maybeOneOf match
-          case Some(oneOf) => oneOf.generateMergingCode(mergeFrom, field)
+          case Some(oneOf) => oneOf.generateMergingCode(mergeFrom, field, info.usesFastOneofMerge)
           case None => field.generateMergingCode(mergeFrom)
       }
       if (readTag) mergeFrom.addCode(named("tag = input.readTag();\n"))
-      if (enableFallthroughOptimization) {
+      if enableFallthroughOptimization then
         // try falling to 0 (exit) at last field
         val nextCase = if (i == sortedFields.size - 1) 0
         else getPackedTagOrTag(sortedFields(i + 1))
         mergeFrom.beginControlFlow("if (tag != $L)", nextCase)
         mergeFrom.addStatement("break")
         mergeFrom.endControlFlow
-      }
+      else if info.usesFastOneofMerge then
+        mergeFrom
+          .beginControlFlow("if (tag == 0)")
+          .addStatement("return this")
+          .endControlFlow
+          .addStatement("break")
       else mergeFrom.addStatement("break")
       mergeFrom.endControlFlow
     }

@@ -50,6 +50,7 @@ class PluginOptions(request: PluginProtos.CodeGeneratorRequest):
   val replacePackageFunction: String => String = parseReplacePackage(map.get("replace_package"))
   val generateDescriptors: Boolean = parseBoolean(map.getOrDefault("gen_descriptors", "true"))
   val implements: Map[String, Seq[String]] = parseImplements(map)
+  val fastOneofMerge: Set[String] = map.getOrDefault("fast_oneof_merge", "").split(";").toSet
 
   private def parseReplacePackage(replaceOption: String): String => String =
     // leave as is
