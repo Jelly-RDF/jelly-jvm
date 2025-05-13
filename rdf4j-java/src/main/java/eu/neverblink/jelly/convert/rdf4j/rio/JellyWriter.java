@@ -4,6 +4,7 @@ import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.core.ProtoEncoder;
+import eu.neverblink.jelly.core.memory.EncoderAllocator;
 import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
@@ -35,6 +36,7 @@ public final class JellyWriter extends AbstractRDFWriter {
     private final OutputStream outputStream;
     // Initialized in startRDF()
     private ReusableRowBuffer buffer = null;
+    private EncoderAllocator allocator = null;
     private final RdfStreamFrame.Mutable reusableFrame;
 
     private RdfStreamOptions options;
@@ -110,8 +112,11 @@ public final class JellyWriter extends AbstractRDFWriter {
         enableNamespaceDeclarations = config.get(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS);
         isDelimited = config.get(JellyWriterSettings.DELIMITED_OUTPUT);
         buffer = RowBuffer.newReusableForEncoder(frameSize + 8);
+        allocator = EncoderAllocator.newArenaAllocator(frameSize + 8);
         reusableFrame.setRows(buffer);
-        encoder = converterFactory.encoder(ProtoEncoder.Params.of(options, enableNamespaceDeclarations, buffer));
+        encoder = converterFactory.encoder(
+            ProtoEncoder.Params.of(options, enableNamespaceDeclarations, buffer, allocator)
+        );
     }
 
     @Override
@@ -169,6 +174,7 @@ public final class JellyWriter extends AbstractRDFWriter {
             throw new RDFHandlerException("Error writing frame", e);
         } finally {
             buffer.clear();
+            allocator.releaseAll();
         }
     }
 }

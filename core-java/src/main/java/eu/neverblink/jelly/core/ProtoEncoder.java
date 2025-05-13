@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core;
 
 import eu.neverblink.jelly.core.internal.EncoderBase;
+import eu.neverblink.jelly.core.memory.EncoderAllocator;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
@@ -26,29 +27,51 @@ public abstract class ProtoEncoder<TNode>
      *      the stream version will be 1 (Jelly 1.0.0).
      * @param rowBuffer buffer for storing stream rows that should go into a stream frame.
      *      The encoder will append the rows to this buffer.
+     * @param allocator allocator for proto class instances. Obtain it from {@link EncoderAllocator}.
+     *      If unsure, just pass in EncoderAllocator.newHeapAllocator().
+     *
      */
-    public record Params(RdfStreamOptions options, boolean enableNamespaceDeclarations, RowBuffer rowBuffer) {
+    public record Params(
+        RdfStreamOptions options,
+        boolean enableNamespaceDeclarations,
+        RowBuffer rowBuffer,
+        EncoderAllocator allocator
+    ) {
         /**
          * Creates a new instance of Params.
          * @param options options for this stream (required)
          * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
          * @param rowBuffer buffer for storing stream rows that should go into a stream frame.
+         * @param allocator allocator for proto class instances. Obtain it from {@link EncoderAllocator}.
          * @return a new instance of Params
          */
+        public static Params of(
+            RdfStreamOptions options,
+            boolean enableNamespaceDeclarations,
+            RowBuffer rowBuffer,
+            EncoderAllocator allocator
+        ) {
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
+        }
+
         public static Params of(RdfStreamOptions options, boolean enableNamespaceDeclarations, RowBuffer rowBuffer) {
-            return new Params(options, enableNamespaceDeclarations, rowBuffer);
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, EncoderAllocator.newHeapAllocator());
         }
 
         public Params withOptions(RdfStreamOptions options) {
-            return new Params(options, enableNamespaceDeclarations, rowBuffer);
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
         }
 
         public Params withEnableNamespaceDeclarations(boolean enableNamespaceDeclarations) {
-            return new Params(options, enableNamespaceDeclarations, rowBuffer);
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
         }
 
         public Params withRowBuffer(RowBuffer rowBuffer) {
-            return new Params(options, enableNamespaceDeclarations, rowBuffer);
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
+        }
+
+        public Params withAllocator(EncoderAllocator allocator) {
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
         }
     }
 
@@ -67,6 +90,11 @@ public abstract class ProtoEncoder<TNode>
      */
     protected final RowBuffer rowBuffer;
 
+    /**
+     * Allocator for RdfTriple and RdfQuad instances.
+     */
+    protected final EncoderAllocator allocator;
+
     protected ProtoEncoder(ProtoEncoderConverter<TNode> converter, Params params) {
         super(converter);
         this.options = params.options
@@ -80,6 +108,7 @@ public abstract class ProtoEncoder<TNode>
             );
         this.enableNamespaceDeclarations = params.enableNamespaceDeclarations;
         this.rowBuffer = params.rowBuffer;
+        this.allocator = params.allocator;
     }
 
     @Override
@@ -99,12 +128,12 @@ public abstract class ProtoEncoder<TNode>
 
     @Override
     protected final RdfTriple.Mutable newTriple() {
-        return rowBuffer.newTriple();
+        return allocator.newTriple();
     }
 
     @Override
     protected final RdfQuad.Mutable newQuad() {
-        return rowBuffer.newQuad();
+        return allocator.newQuad();
     }
 
     /**

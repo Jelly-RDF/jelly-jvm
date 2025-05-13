@@ -1,13 +1,16 @@
 package eu.neverblink.jelly.core.memory;
 
-import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
-import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
+/**
+ * Buffer of RdfStreamRow messages, which will re-use the same internal array of RdfStreamRow
+ * objects when it is cleared. You must NEVER keep a reference to the rows after calling clear(),
+ * because they will be reused and their contents will be cleared.
+ */
 public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> implements RowBuffer {
 
     private RdfStreamRow[] rows;
@@ -15,9 +18,6 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
     private int initializedSize = 0;
     private int capacity;
     private final Consumer<RdfStreamRow.Mutable> clearPolicy;
-
-    private final ArenaAllocator<RdfTriple.Mutable> tripleAllocator;
-    private final ArenaAllocator<RdfQuad.Mutable> quadAllocator;
 
     /**
      * Package-private constructor.
@@ -31,8 +31,6 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
         this.capacity = Math.min(initialCapacity, 2048);
         this.rows = new RdfStreamRow[capacity];
         this.clearPolicy = clearPolicy;
-        this.tripleAllocator = new ArenaAllocator<>(RdfTriple::newInstance, capacity);
-        this.quadAllocator = new ArenaAllocator<>(RdfQuad::newInstance, capacity);
     }
 
     @Override
@@ -93,24 +91,16 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
     }
 
     @Override
-    public RdfTriple.Mutable newTriple() {
-        return tripleAllocator.newInstance();
-    }
-
-    @Override
-    public RdfQuad.Mutable newQuad() {
-        return quadAllocator.newInstance();
-    }
-
-    @Override
     public void clear() {
         visibleSize = 0;
-        tripleAllocator.releaseAll();
-        quadAllocator.releaseAll();
     }
 
+    /**
+     * For encoding, we just reset the cached size of the rows, because the contents will be
+     * overwritten anyway.
+     */
     static final Consumer<RdfStreamRow.Mutable> ENCODER_CLEAR_POLICY = RdfStreamRow::resetCachedSize;
 
     // No-op
-    static final Consumer<RdfStreamRow.Mutable> DECODER_CLEAR_POLICY = RdfStreamRow::clear;
+    static final Consumer<RdfStreamRow.Mutable> DECODER_CLEAR_POLICY = row -> {};
 }

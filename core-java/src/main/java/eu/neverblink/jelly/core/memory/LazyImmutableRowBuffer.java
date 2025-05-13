@@ -1,15 +1,24 @@
 package eu.neverblink.jelly.core.memory;
 
-import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
-import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import java.util.*;
 
+/**
+ * Buffer of RdfStreamRow messages, which will create a new internal array of RdfStreamRow
+ * objects when it is cleared. The returned list of rows is immutable from the perspective of the
+ * buffer -- it will not be modified after it is returned and can be safely passed around with
+ * indefinite lifetime.
+ */
 public final class LazyImmutableRowBuffer extends AbstractCollection<RdfStreamRow> implements RowBuffer {
 
     private List<RdfStreamRow> rows = null;
     private int initialCapacity;
 
+    /**
+     * Package-private constructor.
+     * Use RowBuffer.newLazyImmutable instead.
+     * @param initialCapacity initial capacity of the buffer
+     */
     LazyImmutableRowBuffer(int initialCapacity) {
         this.initialCapacity = initialCapacity;
     }
@@ -58,22 +67,4 @@ public final class LazyImmutableRowBuffer extends AbstractCollection<RdfStreamRo
         rows = null;
         return toReturn;
     }
-
-    @Override
-    public RdfTriple.Mutable newTriple() {
-        return TRIPLE_ALLOCATOR.newInstance();
-    }
-
-    @Override
-    public RdfQuad.Mutable newQuad() {
-        return QUAD_ALLOCATOR.newInstance();
-    }
-
-    private static final MessageAllocator<RdfTriple.Mutable> TRIPLE_ALLOCATOR = MessageAllocator.heapAllocator(
-        RdfTriple::newInstance
-    );
-
-    private static final MessageAllocator<RdfQuad.Mutable> QUAD_ALLOCATOR = MessageAllocator.heapAllocator(
-        RdfQuad::newInstance
-    );
 }

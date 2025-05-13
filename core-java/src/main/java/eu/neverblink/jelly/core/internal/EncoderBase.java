@@ -50,8 +50,16 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected abstract int getDatatypeTableSize();
 
+    /**
+     * Should return a new instance of the RdfTriple class, via the used allocator.
+     * @return a new RdfTriple instance
+     */
     protected abstract RdfTriple.Mutable newTriple();
 
+    /**
+     * Should return a new instance of the RdfQuad class, via the used allocator.
+     * @return a new RdfQuad instance
+     */
     protected abstract RdfQuad.Mutable newQuad();
 
     protected final RdfTriple tripleToProto(TNode subject, TNode predicate, TNode object) {

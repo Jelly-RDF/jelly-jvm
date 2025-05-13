@@ -1,15 +1,13 @@
 package eu.neverblink.jelly.core
 
-import eu.neverblink.jelly.core.memory.RowBuffer
-import eu.neverblink.jelly.core.{JellyConstants, JellyOptions, NamespaceDeclaration, RdfProtoSerializationError}
 import eu.neverblink.jelly.core.helpers.*
 import eu.neverblink.jelly.core.helpers.Assertions.*
 import eu.neverblink.jelly.core.helpers.Mrl.*
+import eu.neverblink.jelly.core.memory.{EncoderAllocator, RowBuffer}
 import eu.neverblink.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
 
 class ProtoEncoderSpec extends AnyWordSpec, Matchers:
@@ -28,6 +26,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         options,
         enableNamespaceDeclarations = false,
         rowBuffer = buffer,
+        allocator = EncoderAllocator.newHeapAllocator(),
       ))
       Triples1.mrl.foreach(triple => encoder.handleTriple(triple.s, triple.p, triple.o))
       assertEncoded(buffer.getRows.asScala.toSeq, Triples1.encoded(options))
@@ -43,6 +42,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         options,
         enableNamespaceDeclarations = true,
         rowBuffer = buffer,
+        allocator = EncoderAllocator.newHeapAllocator(),
       ))
 
       for triple <- Triples2NsDecl.mrl do
@@ -63,6 +63,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         options,
         enableNamespaceDeclarations = false,
         rowBuffer = buffer,
+        allocator = EncoderAllocator.newHeapAllocator(),
       ))
 
       Quads1.mrl.foreach(quad => encoder.handleQuad(quad.s, quad.p, quad.o, quad.g))
@@ -79,6 +80,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         options,
         enableNamespaceDeclarations = false,
         rowBuffer = buffer,
+        allocator = EncoderAllocator.newHeapAllocator(),
       ))
 
       for quad <- Quads1.mrl do
@@ -97,6 +99,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         options,
         enableNamespaceDeclarations = false,
         rowBuffer = buffer,
+        allocator = EncoderAllocator.newHeapAllocator(),
       ))
 
       Quads2RepeatDefault.mrl.foreach(quad => encoder.handleQuad(quad.s, quad.p, quad.o, quad.g))
@@ -113,6 +116,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         options,
         enableNamespaceDeclarations = false,
         rowBuffer = buffer,
+        allocator = EncoderAllocator.newHeapAllocator(),
       ))
 
       for (graphName, triples) <- Graphs1.mrl do
@@ -133,6 +137,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         options,
         enableNamespaceDeclarations = false,
         rowBuffer = buffer,
+        allocator = EncoderAllocator.newHeapAllocator(),
       ))
 
       val error = intercept[RdfProtoSerializationError] {
@@ -151,6 +156,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         options,
         enableNamespaceDeclarations = false,
         rowBuffer = buffer,
+        allocator = EncoderAllocator.newHeapAllocator(),
       ))
 
       val error = intercept[RdfProtoSerializationError] {
@@ -169,6 +175,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         options,
         enableNamespaceDeclarations = false,
         rowBuffer = buffer,
+        allocator = EncoderAllocator.newHeapAllocator(),
       ))
 
       val error = intercept[RdfProtoSerializationError] {

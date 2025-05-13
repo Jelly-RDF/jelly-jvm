@@ -41,7 +41,7 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
       val (options, presetName) = preset
       val buffer = RowBuffer.newLazyImmutable()
       val encoder = JenaConverterFactory.getInstance().encoder(
-        ProtoEncoder.Params(options, false, buffer)
+        ProtoEncoder.Params.of(options, false, buffer)
       )
       model.getGraph.find().asScala.foreach(t => encoder.handleTriple(
         t.getSubject, t.getPredicate, t.getObject

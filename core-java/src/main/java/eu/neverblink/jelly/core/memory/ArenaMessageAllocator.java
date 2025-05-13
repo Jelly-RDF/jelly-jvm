@@ -1,9 +1,16 @@
 package eu.neverblink.jelly.core.memory;
 
+import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 
-public final class ArenaAllocator<T extends ProtoMessage<?>> implements MessageAllocator<T> {
+/**
+ * Helper class for EncoderAllocator.ArenaAllocator.
+ * Maintains an object array (on the heap) of ProtoMessage instances.
+ * @param <T> The type of ProtoMessage to allocate.
+ */
+@InternalApi
+final class ArenaMessageAllocator<T extends ProtoMessage<?>> {
 
     private final MessageFactory<T> factory;
     private final int maxSize;
@@ -12,12 +19,11 @@ public final class ArenaAllocator<T extends ProtoMessage<?>> implements MessageA
     private T[] buffer = null;
     private int used = 0;
 
-    ArenaAllocator(MessageFactory<T> factory, int maxSize) {
+    ArenaMessageAllocator(MessageFactory<T> factory, int maxSize) {
         this.factory = factory;
         this.maxSize = maxSize;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public T newInstance() {
         if (buffer == null) {
@@ -42,7 +48,6 @@ public final class ArenaAllocator<T extends ProtoMessage<?>> implements MessageA
         }
     }
 
-    @Override
     public void releaseAll() {
         used = 0;
     }

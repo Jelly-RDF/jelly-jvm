@@ -2,6 +2,7 @@ package eu.neverblink.jelly.convert.jena.riot;
 
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
 import eu.neverblink.jelly.core.ProtoEncoder;
+import eu.neverblink.jelly.core.memory.EncoderAllocator;
 import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
@@ -27,6 +28,7 @@ public final class JellyStreamWriter implements StreamRDF {
     private final OutputStream outputStream;
 
     private final ReusableRowBuffer buffer;
+    private final EncoderAllocator allocator;
     private final ProtoEncoder<Node> encoder;
     private final RdfStreamFrame.Mutable reusableFrame;
 
@@ -38,10 +40,16 @@ public final class JellyStreamWriter implements StreamRDF {
         this.formatVariant = formatVariant;
         this.outputStream = outputStream;
         this.buffer = RowBuffer.newReusableForEncoder(formatVariant.getFrameSize() + 8);
+        this.allocator = EncoderAllocator.newArenaAllocator(formatVariant.getFrameSize() + 8);
         this.reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
 
         this.encoder = converterFactory.encoder(
-            ProtoEncoder.Params.of(formatVariant.getOptions(), formatVariant.isEnableNamespaceDeclarations(), buffer)
+            ProtoEncoder.Params.of(
+                formatVariant.getOptions(),
+                formatVariant.isEnableNamespaceDeclarations(),
+                buffer,
+                allocator
+            )
         );
     }
 
@@ -95,6 +103,7 @@ public final class JellyStreamWriter implements StreamRDF {
                 throw new RiotException(e);
             }
             buffer.clear();
+            allocator.releaseAll();
         } else if (!buffer.isEmpty()) {
             flushBuffer();
         }
@@ -114,6 +123,7 @@ public final class JellyStreamWriter implements StreamRDF {
             throw new RiotException(e);
         } finally {
             buffer.clear();
+            allocator.releaseAll();
         }
     }
 }
