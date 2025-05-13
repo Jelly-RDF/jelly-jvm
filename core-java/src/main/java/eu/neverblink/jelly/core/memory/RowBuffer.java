@@ -54,7 +54,7 @@ public interface RowBuffer extends MessageCollection<RdfStreamRow, RdfStreamRow.
 
     /**
      * Creates a new LazyImmutableRowBuffer, for decoding or encoding.
-     * After getRows() or clear() is called, it will completely recreate the buffer and allocate 
+     * After getRows() or clear() is called, it will completely recreate the buffer and allocate
      * new RdfStreamRow objects for you.
      * It won't allocate anything, until you call appendMessage().
      * You should use this if you are not sure about the lifetimes of your RdfStreamRow objects.
