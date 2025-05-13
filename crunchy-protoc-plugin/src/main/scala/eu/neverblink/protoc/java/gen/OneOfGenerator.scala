@@ -177,8 +177,7 @@ class OneOfGenerator(val info: OneOfInfo):
         .addStatement("final $T $N", field.info.getTypeName, field.info.fieldName)
         .beginControlFlow("if ($N == $L)", info.numberFieldName, field.info.descriptor.getNumber)
         .addStatement("$N = $N()", field.info.fieldName, field.info.getterName)
-        .endControlFlow
-        .beginControlFlow("else")
+        .nextControlFlow("else")
         .addStatement("$N = $T.newInstance()", field.info.fieldName, field.info.getTypeName)
         .addStatement("$N($N)", field.info.setterName, field.info.fieldName)
         .endControlFlow
