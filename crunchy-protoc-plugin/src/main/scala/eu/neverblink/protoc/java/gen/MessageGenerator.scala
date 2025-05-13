@@ -217,7 +217,8 @@ class MessageGenerator(val info: MessageInfo):
       )
     }
     mergeFrom.addStatement("final $T input = inputLimited.in()", RuntimeClasses.CodedInputStream)
-      .addStatement(named("int tag = input.readTag()"))
+    if !info.usesFastOneofMerge then
+      mergeFrom.addStatement(named("int tag = input.readTag()"))
 
     // If this is an empty message, we can skip the whole switch statement
     if info.isEmptyMessage then
@@ -228,6 +229,7 @@ class MessageGenerator(val info: MessageInfo):
       return
     mergeFrom.beginControlFlow("while (true)")
     if info.usesFastOneofMerge then
+      mergeFrom.addStatement("int tag = input.readTag()")
       // bitshift to get the field number
       mergeFrom.beginControlFlow("switch (tag >>> 3)")
     else mergeFrom.beginControlFlow("switch (tag)")
@@ -252,7 +254,7 @@ class MessageGenerator(val info: MessageInfo):
           case Some(oneOf) => oneOf.generateMergingCode(mergeFrom, field, info.usesFastOneofMerge)
           case None => field.generateMergingCode(mergeFrom)
       }
-      if (readTag) mergeFrom.addCode(named("tag = input.readTag();\n"))
+      if (readTag && !info.usesFastOneofMerge) mergeFrom.addCode(named("tag = input.readTag();\n"))
       if enableFallthroughOptimization then
         // try falling to 0 (exit) at last field
         val nextCase = if (i == sortedFields.size - 1) 0
@@ -260,12 +262,6 @@ class MessageGenerator(val info: MessageInfo):
         mergeFrom.beginControlFlow("if (tag != $L)", nextCase)
         mergeFrom.addStatement("break")
         mergeFrom.endControlFlow
-      else if info.usesFastOneofMerge then
-        mergeFrom
-          .beginControlFlow("if (tag == 0)")
-          .addStatement("return this")
-          .endControlFlow
-          .addStatement("break")
       else mergeFrom.addStatement("break")
       mergeFrom.endControlFlow
     }
