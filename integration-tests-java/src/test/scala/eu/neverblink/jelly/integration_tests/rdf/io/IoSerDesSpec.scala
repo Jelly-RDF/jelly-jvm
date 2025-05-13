@@ -98,48 +98,46 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     (if opt.isEmpty || opt.get.getRdfStar then impl.supportsRdfStar else true) &&
     (if opt.isEmpty || opt.get.getGeneralizedStatements then impl.supportsGeneralizedStatements else true)
 
-  // TODO: re-enable reactive tests when the stream module is available
-  // TODO: re-enable Titanium tests when its integration is available
   runTest(JenaSerDes, JenaSerDes)
   runTest(JenaSerDes, JenaStreamSerDes)
   runTest(JenaSerDes, Rdf4jSerDes)
-//  runTest(JenaSerDes, Rdf4jReactiveSerDes())
+  runTest(JenaSerDes, Rdf4jReactiveSerDes())
 
   runTest(JenaStreamSerDes, JenaSerDes)
   runTest(JenaStreamSerDes, JenaStreamSerDes)
   runTest(JenaStreamSerDes, Rdf4jSerDes)
-//  runTest(JenaStreamSerDes, Rdf4jReactiveSerDes())
+  runTest(JenaStreamSerDes, Rdf4jReactiveSerDes())
 
   runTest(Rdf4jSerDes, JenaSerDes)
   runTest(Rdf4jSerDes, JenaStreamSerDes)
   runTest(Rdf4jSerDes, Rdf4jSerDes)
-//  runTest(Rdf4jSerDes, Rdf4jReactiveSerDes())
+  runTest(Rdf4jSerDes, Rdf4jReactiveSerDes())
 
-//  runTest(Rdf4jReactiveSerDes(), JenaSerDes)
-//  runTest(Rdf4jReactiveSerDes(), JenaStreamSerDes)
-//  runTest(Rdf4jReactiveSerDes(), Rdf4jSerDes)
-//  runTest(Rdf4jReactiveSerDes(), Rdf4jReactiveSerDes())
+  runTest(Rdf4jReactiveSerDes(), JenaSerDes)
+  runTest(Rdf4jReactiveSerDes(), JenaStreamSerDes)
+  runTest(Rdf4jReactiveSerDes(), Rdf4jSerDes)
+  runTest(Rdf4jReactiveSerDes(), Rdf4jReactiveSerDes())
 
   // the Jena reactive implementation only has a serializer
-//  runTest(JenaReactiveSerDes(), JenaSerDes)
-//  runTest(JenaReactiveSerDes(), JenaStreamSerDes)
-//  runTest(JenaReactiveSerDes(), Rdf4jSerDes)
-//  runTest(JenaReactiveSerDes(), Rdf4jReactiveSerDes())
+  runTest(JenaReactiveSerDes(), JenaSerDes)
+  runTest(JenaReactiveSerDes(), JenaStreamSerDes)
+  runTest(JenaReactiveSerDes(), Rdf4jSerDes)
+  runTest(JenaReactiveSerDes(), Rdf4jReactiveSerDes())
 
   // Titanium as serializer
   runTest(TitaniumSerDes, TitaniumSerDes)
   runTest(TitaniumSerDes, JenaSerDes)
   runTest(TitaniumSerDes, JenaStreamSerDes)
   runTest(TitaniumSerDes, Rdf4jSerDes)
-//  runTest(TitaniumSerDes, Rdf4jReactiveSerDes())
-//  runTest(TitaniumSerDes, JenaReactiveSerDes())
+  runTest(TitaniumSerDes, Rdf4jReactiveSerDes())
+  runTest(TitaniumSerDes, JenaReactiveSerDes())
 
   // Titanium as deserializer
   runTest(JenaSerDes, TitaniumSerDes)
   runTest(JenaStreamSerDes, TitaniumSerDes)
   runTest(Rdf4jSerDes, TitaniumSerDes)
-//  runTest(Rdf4jReactiveSerDes(), TitaniumSerDes)
-//  runTest(JenaReactiveSerDes(), TitaniumSerDes)
+  runTest(Rdf4jReactiveSerDes(), TitaniumSerDes)
+  runTest(JenaReactiveSerDes(), TitaniumSerDes)
 
   private def runTest[TMSer : Measure, TDSer : Measure, TMDes : Measure, TDDes : Measure](
     ser: NativeSerDes[TMSer, TDSer],
