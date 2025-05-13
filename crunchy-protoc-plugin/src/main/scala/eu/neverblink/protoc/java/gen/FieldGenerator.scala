@@ -116,7 +116,7 @@ class FieldGenerator(val info: FieldInfo):
     val field = FieldSpec.builder(storeType, info.fieldName)
       .addJavadoc(Javadoc.forMessageField(info).build)
       .addModifiers(Modifier.PROTECTED)
-    if info.isRepeated && info.isMessage then field.addModifiers(Modifier.FINAL)
+    // if info.isRepeated && info.isMessage then field.addModifiers(Modifier.FINAL)
     if info.isRepeated || info.isBytes || info.isString then
       field.initializer(initializer)
     else if info.isMessageOrGroup then field.initializer("null")
@@ -127,7 +127,7 @@ class FieldGenerator(val info: FieldInfo):
   private def initializer =
     val initializer = CodeBlock.builder
     if (info.isRepeated && info.isMessageOrGroup)
-      initializer.add("new $T<>()", RuntimeClasses.ArrayList)
+      initializer.add("new $T($T::newInstance)", RuntimeClasses.ListMessageCollection, info.getTypeName)
     else if (info.isRepeated && info.isEnum) initializer.add("$T.newEmptyInstance($T.converter())", RuntimeClasses.RepeatedEnum, info.getTypeName)
     else if (info.isRepeated) initializer.add("$T.newEmptyInstance()", storeType)
     else if (info.isBytes) initializer.add(named("$storeType:T.EMPTY"))
@@ -192,8 +192,8 @@ class FieldGenerator(val info: FieldInfo):
     method.addCode(ensureFieldNotNull)
     if (info.isRepeated && info.isMessageOrGroup) {
       method.addStatement(
-        "tag = $T.readRepeatedMessage($N, $T.getFactory(), inputLimited, tag)",
-        RuntimeClasses.AbstractMessage, info.fieldName, info.getTypeName
+        "tag = $T.readRepeatedMessage($N, inputLimited, tag)",
+        RuntimeClasses.AbstractMessage, info.fieldName
       )
       return false // tag is already read, so don't read again
     } else if (info.isRepeated) {
@@ -253,7 +253,7 @@ class FieldGenerator(val info: FieldInfo):
     else if (info.isRepeated) method.addNamedCode("" + 
       "for (final var _field : $field:N) {$>\n" +
       "$writeTagToOutput:L" +
-      "output.writeUInt32NoTag(_field.getSerializedSize());\n" +
+      "output.writeUInt32NoTag(_field.getCachedSize());\n" +
       "_field.writeTo(output);\n" +
       "$writeEndGroupTagToOutput:L" + 
       "$<}\n", 
@@ -267,7 +267,7 @@ class FieldGenerator(val info: FieldInfo):
     )
     else if (info.isMessageOrGroup) method.addNamedCode("" + // non-repeated
       "$writeTagToOutput:L" +
-      "output.writeUInt32NoTag($field:N.getSerializedSize());\n" +
+      "output.writeUInt32NoTag($field:N.getCachedSize());\n" +
       "$field:N.writeTo(output);\n" +
       "$writeEndGroupTagToOutput:L",
       m
@@ -359,6 +359,20 @@ class FieldGenerator(val info: FieldInfo):
         .addStatement(named("return this"))
       t.addMethod(setBytes.build)
     } else if (info.isRepeated) {
+      val setter = MethodSpec.methodBuilder(info.setterName)
+        .addJavadoc(Javadoc.forMessageField(info)
+          .add("\n@param value the $L to set", info.fieldName)
+          .add("\n@return this")
+          .build
+        )
+        .addAnnotations(info.methodAnnotations)
+        .addModifiers(Modifier.PUBLIC)
+        .returns(info.parentTypeInfo.mutableTypeName)
+        .addParameter(info.getStoreType, "value", Modifier.FINAL)
+        .addStatement(named("$field:N = value"))
+        .addStatement(named("return this"))
+        .build
+      t.addMethod(setter)
       val adder = MethodSpec.methodBuilder(info.adderName)
         .addJavadoc(Javadoc.forMessageField(info)
           .add("\n@param value the $L to add", info.fieldName)

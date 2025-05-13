@@ -169,6 +169,7 @@ object RequestInfo:
       )
 
     val isEmptyMessage: Boolean = fieldCount == 0 && oneOfCount == 0
+    val usesFastOneofMerge: Boolean = options.fastOneofMerge.contains(typeName.simpleName())
   }
 
   class FieldInfo(
@@ -218,9 +219,11 @@ object RequestInfo:
     val protoFieldName: String = descriptor.getName
 
     private def getRepeatedStoreType: TypeName =
-      if (isGroup || isMessage) return ParameterizedTypeName.get(repeatedStoreType, getTypeName)
-      else if (isEnum) return ParameterizedTypeName.get(repeatedStoreType, getTypeName)
-      repeatedStoreType
+      if (isGroup || isMessage) ParameterizedTypeName.get(
+        repeatedStoreType, getTypeName, getTypeName.asInstanceOf[ClassName].nestedClass("Mutable")
+      )
+      else if (isEnum) ParameterizedTypeName.get(repeatedStoreType, getTypeName)
+      else repeatedStoreType
 
     def isFixedWidth: Boolean = FieldUtil.isFixedWidth(descriptor.getType)
 

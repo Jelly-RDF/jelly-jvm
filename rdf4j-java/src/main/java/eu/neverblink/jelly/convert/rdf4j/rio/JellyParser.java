@@ -5,15 +5,17 @@ import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.core.RdfHandler;
+import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.utils.IoUtils;
+import eu.neverblink.protoc.java.runtime.MessageFactory;
+import eu.neverblink.protoc.java.runtime.ProtoMessage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Collection;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -84,6 +86,9 @@ public final class JellyParser extends AbstractRDFParser {
             }
         };
 
+        final ReusableRowBuffer buffer = RowBuffer.newReusableForDecoder(16);
+        final RdfStreamFrame.Mutable reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
+        final MessageFactory<RdfStreamFrame> getReusableFrame = () -> reusableFrame;
         final var decoder = converterFactory.anyStatementDecoder(handler, options);
 
         rdfHandler.startRDF();
@@ -92,14 +97,19 @@ public final class JellyParser extends AbstractRDFParser {
             if (delimitingResponse.isDelimited()) {
                 // Delimited Jelly file
                 // In this case, we can read multiple frames
-                readStream(delimitingResponse.newInput(), RdfStreamFrame::parseDelimitedFrom, frame ->
-                    frame.getRows().forEach(decoder::ingestRow)
+                readStream(
+                    delimitingResponse.newInput(),
+                    inputStream -> ProtoMessage.parseDelimitedFrom(inputStream, getReusableFrame),
+                    frame -> {
+                        buffer.forEach(decoder::ingestRow);
+                        frame.clear();
+                    }
                 );
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame
-                final var frame = RdfStreamFrame.parseFrom(delimitingResponse.newInput());
-                frame.getRows().forEach(decoder::ingestRow);
+                ProtoMessage.parseFrom(delimitingResponse.newInput(), getReusableFrame);
+                reusableFrame.getRows().forEach(decoder::ingestRow);
             }
         } finally {
             rdfHandler.endRDF();

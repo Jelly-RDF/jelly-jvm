@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.jena
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.ProtoEncoder.Params
+import eu.neverblink.jelly.core.memory.RowBuffer
 import eu.neverblink.jelly.core.proto.v1.*
 import org.apache.jena.graph.NodeFactory
 import org.apache.jena.sparql.core.Quad
@@ -24,39 +25,39 @@ class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
   
   "JenaProtoEncoder" should {
     "encode a null graph node as default graph" in {
-      val buffer = new mutable.ArrayBuffer[RdfStreamRow]()
+      val buffer = RowBuffer.newLazyImmutable()
       val encoder = JenaConverterFactory.getInstance().encoder(
-        Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava)
+        Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer)
       )
       encoder.handleGraphStart(null)
       buffer.size should be (2)
-      buffer(1) should be (encodedDefaultGraph)
+      buffer.getRows.get(1) should be (encodedDefaultGraph)
     }
     
     "encode an explicitly named default graph as default graph" in {
-      val buffer = new mutable.ArrayBuffer[RdfStreamRow]()
+      val buffer = RowBuffer.newLazyImmutable()
       val encoder = JenaConverterFactory.getInstance().encoder(
-        Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava)
+        Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer)
       )
       encoder.handleGraphStart(Quad.defaultGraphIRI)
       buffer.size should be (2)
-      buffer(1) should be (encodedDefaultGraph)
+      buffer.getRows.get(1) should be (encodedDefaultGraph)
     }
     
     "encode a generated default graph as default graph" in {
-      val buffer = new mutable.ArrayBuffer[RdfStreamRow]()
+      val buffer = RowBuffer.newLazyImmutable()
       val encoder = JenaConverterFactory.getInstance().encoder(
-        Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava)
+        Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer)
       )
       encoder.handleGraphStart(Quad.defaultGraphNodeGenerated)
       buffer.size should be (2)
-      buffer(1) should be (encodedDefaultGraph)
+      buffer.getRows.get(1) should be (encodedDefaultGraph)
     }
 
     "encode an xsd:string literal as a simple literal (no datatype)" in {
-      val buffer = new mutable.ArrayBuffer[RdfStreamRow]()
+      val buffer = RowBuffer.newLazyImmutable()
       val encoder = JenaConverterFactory.getInstance().encoder(
-        Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer.asJava)
+        Params.of(JellyOptions.SMALL_GENERALIZED, false, buffer)
       )
       encoder.handleQuad(
         NodeFactory.createBlankNode(),
@@ -65,7 +66,7 @@ class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
         NodeFactory.createLiteralString("test"),
       )
       buffer.size should be (2) // 1 for the options, 1 for the triple
-      val row = buffer(1)
+      val row = buffer.getRows.get(1)
       row.getQuad.getOLiteral.getLiteralKind should be (null)
       row.getQuad.getGLiteral.getLiteralKind should be (null)
     }

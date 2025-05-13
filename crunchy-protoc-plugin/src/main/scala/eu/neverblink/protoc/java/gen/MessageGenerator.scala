@@ -130,8 +130,9 @@ class MessageGenerator(val info: MessageInfo):
     generateMergeFromMessage(tMutable)
     generateEquals(t)
     generateWriteTo(t)
-    generateComputeSerializedSize(t)
+    generateSerializedSize(t)
     generateMergeFrom(tMutable)
+    generateClear(tMutable)
     generateClone(t)
     // Static utilities
     oneOfGenerators.foreach(_.generateConstants(t))
@@ -156,7 +157,7 @@ class MessageGenerator(val info: MessageInfo):
     val equals = MethodSpec.methodBuilder("equals")
       .addJavadoc(Javadoc.inherit)
       .addAnnotation(classOf[Override])
-      .addModifiers(Modifier.PUBLIC)
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .returns(classOf[Boolean])
       .addParameter(classOf[AnyRef], "o")
     // Reference equality check
@@ -187,7 +188,8 @@ class MessageGenerator(val info: MessageInfo):
     val mergeFrom = MethodSpec.methodBuilder("mergeFrom")
       .addJavadoc(Javadoc.inherit)
       .addAnnotation(classOf[Override])
-      .addModifiers(Modifier.PUBLIC).returns(info.mutableTypeName)
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+      .returns(info.mutableTypeName)
       .addParameter(RuntimeClasses.LimitedCodedInputStream, "inputLimited", Modifier.FINAL)
       .addException(classOf[IOException])
     // Fallthrough optimization:
@@ -199,7 +201,7 @@ class MessageGenerator(val info: MessageInfo):
     // Packable fields make this a bit more complex since they need to generate two cases to preserve
     // backwards compatibility. However, any production proto file should already be using the packed
     // option whenever possible, so we don't need to optimize the non-packed case.
-    val enableFallthroughOptimization = true
+    val enableFallthroughOptimization = !info.usesFastOneofMerge
     // Interleave the oneof fields. In Jelly-RDF, this optimizes for the case where s, p, o, g are
     // all RdfIri messages.
     val sortedFields = fields.sortBy(_.info.number) ++
@@ -215,7 +217,8 @@ class MessageGenerator(val info: MessageInfo):
       )
     }
     mergeFrom.addStatement("final $T input = inputLimited.in()", RuntimeClasses.CodedInputStream)
-      .addStatement(named("int tag = input.readTag()"))
+    if !info.usesFastOneofMerge then
+      mergeFrom.addStatement(named("int tag = input.readTag()"))
 
     // If this is an empty message, we can skip the whole switch statement
     if info.isEmptyMessage then
@@ -224,9 +227,12 @@ class MessageGenerator(val info: MessageInfo):
         .addStatement("return this")
       t.addMethod(mergeFrom.build)
       return
-    mergeFrom
-      .beginControlFlow("while (true)")
-      .beginControlFlow("switch (tag)")
+    mergeFrom.beginControlFlow("while (true)")
+    if info.usesFastOneofMerge then
+      mergeFrom.addStatement("int tag = input.readTag()")
+      // bitshift to get the field number
+      mergeFrom.beginControlFlow("switch (tag >>> 3)")
+    else mergeFrom.beginControlFlow("switch (tag)")
     // Add fields by the expected order and type
     for (i <- sortedFields.indices) {
       val field = sortedFields(i)
@@ -239,21 +245,23 @@ class MessageGenerator(val info: MessageInfo):
         readTag = field.generateMergingCodeFromPacked(mergeFrom)
       }
       else {
-        mergeFrom.beginControlFlow("case $L:", field.info.tag)
+        mergeFrom.beginControlFlow(
+          "case $L:",
+          if info.usesFastOneofMerge then field.info.number else field.info.tag
+        )
         mergeFrom.addComment("$L", field.info.fieldName)
         readTag = maybeOneOf match
-          case Some(oneOf) => oneOf.generateMergingCode(mergeFrom, field)
+          case Some(oneOf) => oneOf.generateMergingCode(mergeFrom, field, info.usesFastOneofMerge)
           case None => field.generateMergingCode(mergeFrom)
       }
-      if (readTag) mergeFrom.addCode(named("tag = input.readTag();\n"))
-      if (enableFallthroughOptimization) {
+      if (readTag && !info.usesFastOneofMerge) mergeFrom.addCode(named("tag = input.readTag();\n"))
+      if enableFallthroughOptimization then
         // try falling to 0 (exit) at last field
         val nextCase = if (i == sortedFields.size - 1) 0
         else getPackedTagOrTag(sortedFields(i + 1))
         mergeFrom.beginControlFlow("if (tag != $L)", nextCase)
         mergeFrom.addStatement("break")
         mergeFrom.endControlFlow
-      }
       else mergeFrom.addStatement("break")
       mergeFrom.endControlFlow
     }
@@ -285,7 +293,7 @@ class MessageGenerator(val info: MessageInfo):
     val writeTo = MethodSpec.methodBuilder("writeTo")
       .addJavadoc(Javadoc.inherit)
       .addAnnotation(classOf[Override])
-      .addModifiers(Modifier.PUBLIC)
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .returns(classOf[Unit])
       .addParameter(RuntimeClasses.CodedOutputStream, "output", Modifier.FINAL)
       .addException(classOf[IOException])
@@ -299,11 +307,29 @@ class MessageGenerator(val info: MessageInfo):
     oneOfGenerators.foreach(_.generateWriteToCode(writeTo))
     t.addMethod(writeTo.build)
 
-  private def generateComputeSerializedSize(t: TypeSpec.Builder): Unit =
+  private def generateSerializedSize(t: TypeSpec.Builder): Unit =
+    val cachedSize = FieldSpec.builder(classOf[Int], "cachedSize")
+      .addModifiers(Modifier.PROTECTED)
+      .initializer("-1")
+      .build
+    t.addField(cachedSize)
+    val getSerializedSize = MethodSpec.methodBuilder("getSerializedSize")
+      .addJavadoc(Javadoc.inherit)
+      .addAnnotation(classOf[Override])
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+      .returns(classOf[Int])
+      .addCode(CodeBlock.builder()
+        .beginControlFlow("if (cachedSize < 0)")
+        .addStatement("cachedSize = computeSerializedSize()")
+        .endControlFlow
+        .addStatement("return cachedSize")
+        .build
+      )
+    t.addMethod(getSerializedSize.build)
     val computeSerializedSize = MethodSpec.methodBuilder("computeSerializedSize")
       .addJavadoc(Javadoc.inherit)
       .addAnnotation(classOf[Override])
-      .addModifiers(Modifier.PROTECTED)
+      .addModifiers(Modifier.PROTECTED, Modifier.FINAL)
       .returns(classOf[Int])
     if info.isEmptyMessage then
       computeSerializedSize.addStatement("return 0")
@@ -320,13 +346,29 @@ class MessageGenerator(val info: MessageInfo):
       oneOfGenerators.foreach(_.generateComputeSerializedSizeCode(computeSerializedSize))
       computeSerializedSize.addStatement("return size")
     t.addMethod(computeSerializedSize.build)
+    val getCached = MethodSpec.methodBuilder("getCachedSize")
+      .addAnnotation(classOf[Override])
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+      .returns(classOf[Int])
+      .addStatement("return cachedSize")
+    t.addMethod(getCached.build)
+    val resetSize = MethodSpec.methodBuilder("resetCachedSize")
+      .addJavadoc("Resets the cached size of this message.\n" +
+        "Call this method if you modify the message after it was serialized.\n" +
+        "NOTE: this is a SHALLOW operation! It will not reset the size of nested messages."
+      )
+      .addAnnotation(classOf[Override])
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+      .returns(classOf[Unit])
+      .addStatement("cachedSize = -1")
+    t.addMethod(resetSize.build)
 
   private def generateCopyFrom(t: TypeSpec.Builder): Unit =
     val copyFrom = MethodSpec.methodBuilder("copyFrom")
       .addJavadoc(Javadoc.inherit)
       .addAnnotation(classOf[Override])
       .addParameter(info.typeName, "other", Modifier.FINAL)
-      .addModifiers(Modifier.PUBLIC)
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .returns(info.mutableTypeName)
     copyFrom.addStatement("cachedSize = other.cachedSize")
     fields.foreach(_.generateCopyFromCode(copyFrom))
@@ -339,19 +381,32 @@ class MessageGenerator(val info: MessageInfo):
       .addJavadoc(Javadoc.inherit)
       .addAnnotation(classOf[Override])
       .addParameter(info.typeName, "other", Modifier.FINAL)
-      .addModifiers(Modifier.PUBLIC).returns(info.mutableTypeName)
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+      .returns(info.mutableTypeName)
     mergeFrom.addStatement("cachedSize = -1")
     fields.foreach(_.generateMergeFromMessageCode(mergeFrom))
     oneOfGenerators.foreach(_.generateMergeFromMessageCode(mergeFrom))
     mergeFrom.addStatement("return this")
     t.addMethod(mergeFrom.build)
 
+  private def generateClear(builder: TypeSpec.Builder): Unit =
+    val clear = MethodSpec.methodBuilder("clear")
+      .addJavadoc(Javadoc.inherit)
+      .addAnnotation(classOf[Override])
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+      .returns(info.mutableTypeName)
+    fields.foreach(_.generateClearCode(clear))
+    oneOfGenerators.foreach(_.generateClearCode(clear))
+    clear.addStatement("cachedSize = -1")
+    clear.addStatement("return this")
+    builder.addMethod(clear.build)
+
   private def generateClone(t: TypeSpec.Builder): Unit =
     t.addSuperinterface(classOf[Cloneable])
     t.addMethod(MethodSpec.methodBuilder("clone")
       .addJavadoc(Javadoc.inherit)
       .addAnnotation(classOf[Override])
-      .addModifiers(Modifier.PUBLIC)
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .returns(info.mutableTypeName)
       .addStatement("return newInstance().copyFrom(this)")
       .build
@@ -426,7 +481,7 @@ class MessageGenerator(val info: MessageInfo):
     val factoryMethod = MethodSpec.methodBuilder("create")
       .addJavadoc(Javadoc.inherit)
       .addAnnotation(classOf[Override])
-      .addModifiers(Modifier.PUBLIC)
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .returns(info.typeName)
       .addStatement("return $T.newInstance()", info.typeName)
       .build

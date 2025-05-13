@@ -144,8 +144,8 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
         // Compare rows directly -- they must be kept in order
         frame.getRows should be(tc.getRows)
         // However, maps are not guaranteed to be in order, so we first sort it
-        frame.getMetadata.asScala.sortBy(_.getKey) should be(
-          tc.getMetadata.asScala.sortBy(_.getKey)
+        frame.getMetadata.asScala.toSeq.sortBy(_.getKey) should be(
+          tc.getMetadata.asScala.toSeq.sortBy(_.getKey)
         )
       }
     }

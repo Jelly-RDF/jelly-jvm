@@ -135,7 +135,8 @@ class OneOfGenerator(val info: OneOfInfo):
     )
 
   def generateClearCode(method: MethodSpec.Builder): Unit =
-    method.addStatement("this.$N = null", info.fieldName)
+    // This is not really needed, we can just set the field number to 0
+    // method.addStatement("this.$N = null", info.fieldName)
     method.addStatement("this.$N = 0", info.numberFieldName)
 
   def generateWriteToCode(method: MethodSpec.Builder): Unit =
@@ -163,25 +164,34 @@ class OneOfGenerator(val info: OneOfInfo):
   /**
    * @return true if the tag needs to be read
    */
-  def generateMergingCode(method: MethodSpec.Builder, field: FieldGenerator): Boolean =
+  def generateMergingCode(method: MethodSpec.Builder, field: FieldGenerator, fastOneof: Boolean): Boolean =
     if field.info.isEmptyMessage then
       // We simply set the correct field number and the value to the singleton instance
       method
         .addStatement("$N($T.EMPTY)", field.info.setterName, field.info.getTypeName)
         .addStatement("input.skipField(tag)")
     else if field.info.isMessage then
-      // If the field is already set to the same kind of message, we merge it.
-      // Otherwise, we create a new instance of the message and merge it.
-      method
-        .addStatement("final $T $N", field.info.getTypeName, field.info.fieldName)
-        .beginControlFlow("if ($N == $L)", info.numberFieldName, field.info.descriptor.getNumber)
-        .addStatement("$N = $N()", field.info.fieldName, field.info.getterName)
-        .endControlFlow
-        .beginControlFlow("else")
-        .addStatement("$N = $T.newInstance()", field.info.fieldName, field.info.getTypeName)
-        .addStatement("$N($N)", field.info.setterName, field.info.fieldName)
-        .endControlFlow
-        .addStatement("ProtoMessage.mergeDelimitedFrom($N, inputLimited)", field.info.fieldName)
+      if fastOneof then
+        method
+          .addStatement(
+            "final $T $N = $T.newInstance()",
+            field.info.getTypeName, field.info.fieldName, field.info.getTypeName,
+          )
+          .addStatement("$N($N)", field.info.setterName, field.info.fieldName)
+          .addStatement("ProtoMessage.mergeDelimitedFrom($N, inputLimited)", field.info.fieldName)
+      else
+        // If the field is already set to the same kind of message, we merge it.
+        // Otherwise, we create a new instance of the message and merge it.
+        method
+          .addStatement("final $T $N", field.info.getTypeName, field.info.fieldName)
+          .beginControlFlow("if ($N == $L)", info.numberFieldName, field.info.descriptor.getNumber)
+          .addStatement("$N = $N()", field.info.fieldName, field.info.getterName)
+          .endControlFlow
+          .beginControlFlow("else")
+          .addStatement("$N = $T.newInstance()", field.info.fieldName, field.info.getTypeName)
+          .addStatement("$N($N)", field.info.setterName, field.info.fieldName)
+          .endControlFlow
+          .addStatement("ProtoMessage.mergeDelimitedFrom($N, inputLimited)", field.info.fieldName)
     else if field.info.isString then
       method.addStatement("$N(input.readStringRequireUtf8())", field.info.setterName)
     else if field.info.isPrimitive then

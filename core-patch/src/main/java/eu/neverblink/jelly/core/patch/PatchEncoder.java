@@ -4,6 +4,8 @@ import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.internal.EncoderBase;
+import eu.neverblink.jelly.core.proto.v1.RdfQuad;
+import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchRow;
 import java.util.Collection;
@@ -65,5 +67,15 @@ public abstract class PatchEncoder<TNode>
     @Override
     protected int getDatatypeTableSize() {
         return options.getMaxDatatypeTableSize();
+    }
+
+    @Override
+    protected RdfTriple.Mutable newTriple() {
+        throw new UnsupportedOperationException("Not supported in PatchEncoder");
+    }
+
+    @Override
+    protected RdfQuad.Mutable newQuad() {
+        return RdfQuad.newInstance();
     }
 }

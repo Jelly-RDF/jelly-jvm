@@ -1,9 +1,11 @@
 package eu.neverblink.jelly.core;
 
 import eu.neverblink.jelly.core.internal.EncoderBase;
+import eu.neverblink.jelly.core.memory.EncoderAllocator;
+import eu.neverblink.jelly.core.memory.RowBuffer;
+import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
-import java.util.Collection;
+import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 
 /**
  * Base interface for RDF stream encoders.
@@ -23,39 +25,53 @@ public abstract class ProtoEncoder<TNode>
      * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
      *      If true, this will raise the stream version to 2 (Jelly 1.1.0). Otherwise,
      *      the stream version will be 1 (Jelly 1.0.0).
-     * @param appendableRowBuffer buffer for storing stream rows that should go into a stream frame.
+     * @param rowBuffer buffer for storing stream rows that should go into a stream frame.
      *      The encoder will append the rows to this buffer.
+     * @param allocator allocator for proto class instances. Obtain it from {@link EncoderAllocator}.
+     *      If unsure, just pass in EncoderAllocator.newHeapAllocator().
+     *
      */
     public record Params(
         RdfStreamOptions options,
         boolean enableNamespaceDeclarations,
-        Collection<RdfStreamRow> appendableRowBuffer
+        RowBuffer rowBuffer,
+        EncoderAllocator allocator
     ) {
         /**
          * Creates a new instance of Params.
          * @param options options for this stream (required)
          * @param enableNamespaceDeclarations whether to allow namespace declarations in the stream.
-         * @param appendableRowBuffer buffer for storing stream rows that should go into a stream frame.
+         * @param rowBuffer buffer for storing stream rows that should go into a stream frame.
+         * @param allocator allocator for proto class instances. Obtain it from {@link EncoderAllocator}.
          * @return a new instance of Params
          */
         public static Params of(
             RdfStreamOptions options,
             boolean enableNamespaceDeclarations,
-            Collection<RdfStreamRow> appendableRowBuffer
+            RowBuffer rowBuffer,
+            EncoderAllocator allocator
         ) {
-            return new Params(options, enableNamespaceDeclarations, appendableRowBuffer);
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
+        }
+
+        public static Params of(RdfStreamOptions options, boolean enableNamespaceDeclarations, RowBuffer rowBuffer) {
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, EncoderAllocator.newHeapAllocator());
         }
 
         public Params withOptions(RdfStreamOptions options) {
-            return new Params(options, enableNamespaceDeclarations, appendableRowBuffer);
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
         }
 
         public Params withEnableNamespaceDeclarations(boolean enableNamespaceDeclarations) {
-            return new Params(options, enableNamespaceDeclarations, appendableRowBuffer);
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
         }
 
-        public Params withAppendableRowBuffer(Collection<RdfStreamRow> appendableRowBuffer) {
-            return new Params(options, enableNamespaceDeclarations, appendableRowBuffer);
+        public Params withRowBuffer(RowBuffer rowBuffer) {
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
+        }
+
+        public Params withAllocator(EncoderAllocator allocator) {
+            return new Params(options, enableNamespaceDeclarations, rowBuffer, allocator);
         }
     }
 
@@ -72,7 +88,12 @@ public abstract class ProtoEncoder<TNode>
     /**
      * Buffer for storing stream rows that should go into a stream frame.
      */
-    protected final Collection<RdfStreamRow> appendableRowBuffer;
+    protected final RowBuffer rowBuffer;
+
+    /**
+     * Allocator for RdfTriple and RdfQuad instances.
+     */
+    protected final EncoderAllocator allocator;
 
     protected ProtoEncoder(ProtoEncoderConverter<TNode> converter, Params params) {
         super(converter);
@@ -86,22 +107,33 @@ public abstract class ProtoEncoder<TNode>
                     : JellyConstants.PROTO_VERSION_1_0_X
             );
         this.enableNamespaceDeclarations = params.enableNamespaceDeclarations;
-        this.appendableRowBuffer = params.appendableRowBuffer;
+        this.rowBuffer = params.rowBuffer;
+        this.allocator = params.allocator;
     }
 
     @Override
-    protected int getNameTableSize() {
+    protected final int getNameTableSize() {
         return options.getMaxNameTableSize();
     }
 
     @Override
-    protected int getPrefixTableSize() {
+    protected final int getPrefixTableSize() {
         return options.getMaxPrefixTableSize();
     }
 
     @Override
-    protected int getDatatypeTableSize() {
+    protected final int getDatatypeTableSize() {
         return options.getMaxDatatypeTableSize();
+    }
+
+    @Override
+    protected final RdfTriple.Mutable newTriple() {
+        return allocator.newTriple();
+    }
+
+    @Override
+    protected final RdfQuad.Mutable newQuad() {
+        return allocator.newQuad();
     }
 
     /**
@@ -113,10 +145,10 @@ public abstract class ProtoEncoder<TNode>
     }
 
     /**
-     * Returns current appendable row buffer.
-     * @return the appendable row buffer
+     * Returns the internal row buffer.
+     * @return row buffer
      */
-    public Collection<RdfStreamRow> getAppendableRowBuffer() {
-        return appendableRowBuffer;
+    public RowBuffer getRowBuffer() {
+        return rowBuffer;
     }
 }

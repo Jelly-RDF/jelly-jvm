@@ -9,19 +9,18 @@ import eu.neverblink.jelly.convert.titanium.internal.TitaniumLiteral;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
-import java.util.ArrayList;
-import java.util.Collection;
 
 @InternalApi
 final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
 
     private final ProtoEncoder<Object> encoder;
 
-    private final Collection<RdfStreamRow> buffer = new ArrayList<>();
+    private final RowBuffer buffer = RowBuffer.newLazyImmutable(16);
 
     public TitaniumJellyEncoderImpl(RdfStreamOptions options) {
         // We set the stream type to QUADS, as this is the only type supported by Titanium.
@@ -44,12 +43,12 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
 
     @Override
     public Iterable<RdfStreamRow> getRows() {
-        return buffer;
+        return buffer.getRows();
     }
 
     @Override
     public void clearRows() {
-        buffer.clear();
+        buffer.getRows();
     }
 
     @Override
