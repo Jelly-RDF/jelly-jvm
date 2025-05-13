@@ -192,28 +192,43 @@ class MessageGenerator(val info: MessageInfo):
       .returns(info.mutableTypeName)
       .addParameter(RuntimeClasses.LimitedCodedInputStream, "inputLimited", Modifier.FINAL)
       .addException(classOf[IOException])
+    // Fallthrough optimization:
+    //
+    // Reads tag after case parser and checks if it can fall-through. In the ideal case if all fields are set
+    // and the expected order matches the incoming data, the switch would only need to be executed once
+    // for the first field.
+    //
+    // Packable fields make this a bit more complex since they need to generate two cases to preserve
+    // backwards compatibility. However, any production proto file should already be using the packed
+    // option whenever possible, so we don't need to optimize the non-packed case.
+    val enableFallthroughOptimization = true
     // Interleave the oneof fields. In Jelly-RDF, this optimizes for the case where s, p, o, g are
     // all RdfIri messages.
-    val sortedFields = fields ++ oneOfGenerators.flatMap(oneOf => oneOf.fieldGenerators)
-      .sortBy(_.info.number)
+    val sortedFields = fields.sortBy(_.info.number) ++
+      oneOfGenerators.flatMap(oneOf => oneOf.fieldGenerators.zipWithIndex)
+      .sortBy(_._2)
+      .map(_._1)
+    if (enableFallthroughOptimization) {
+      mergeFrom.addComment("Enabled Fall-Through Optimization")
+      mergeFrom.addAnnotation(AnnotationSpec
+        .builder(classOf[SuppressWarnings])
+        .addMember("value", "$S", "fallthrough")
+        .build
+      )
+    }
     mergeFrom.addStatement("final $T input = inputLimited.in()", RuntimeClasses.CodedInputStream)
+      .addStatement(named("int tag = input.readTag()"))
 
     // If this is an empty message, we can skip the whole switch statement
     if info.isEmptyMessage then
       mergeFrom
-        .addStatement("input.skipField(input.readTag())")
+        .addStatement("input.skipField(tag)")
         .addStatement("return this")
       t.addMethod(mergeFrom.build)
       return
     mergeFrom
-      .addStatement(named("int tag = input.readTag()"))
       .beginControlFlow("while (true)")
-      // bit-shift the tag to make the field numbers dense, compiling to a tableswitch instead of
-      // a lookupswitch
-      .addStatement(named("int _number = tag >>> 3"))
-      .beginControlFlow("switch (_number)")
-    // zero means invalid tag / end of data
-    mergeFrom.beginControlFlow("case 0:").addStatement("return this").endControlFlow
+      .beginControlFlow("switch (tag)")
     // Add fields by the expected order and type
     for (i <- sortedFields.indices) {
       val field = sortedFields(i)
@@ -221,29 +236,35 @@ class MessageGenerator(val info: MessageInfo):
       // Assume all packable fields are written packed. Add non-packed cases to the end.
       var readTag = true
       if (field.info.isPackable) {
-        mergeFrom.beginControlFlow("case $L:", field.info.number)
+        mergeFrom.beginControlFlow("case $L:", field.info.packedTag)
         mergeFrom.addComment("$L [packed=true]", field.info.fieldName)
         readTag = field.generateMergingCodeFromPacked(mergeFrom)
       }
       else {
-        mergeFrom.beginControlFlow("case $L:", field.info.number)
+        mergeFrom.beginControlFlow("case $L:", field.info.tag)
         mergeFrom.addComment("$L", field.info.fieldName)
         readTag = maybeOneOf match
           case Some(oneOf) => oneOf.generateMergingCode(mergeFrom, field)
           case None => field.generateMergingCode(mergeFrom)
       }
       if (readTag) mergeFrom.addCode(named("tag = input.readTag();\n"))
-      mergeFrom.addStatement("break")
+      if (enableFallthroughOptimization) {
+        // try falling to 0 (exit) at last field
+        val nextCase = if (i == sortedFields.size - 1) 0
+        else getPackedTagOrTag(sortedFields(i + 1))
+        mergeFrom.beginControlFlow("if (tag != $L)", nextCase)
+        mergeFrom.addStatement("break")
+        mergeFrom.endControlFlow
+      }
+      else mergeFrom.addStatement("break")
       mergeFrom.endControlFlow
     }
+    // zero means invalid tag / end of data
+    mergeFrom.beginControlFlow("case 0:").addStatement("return this").endControlFlow
     // default case -> skip field
     val ifSkipField = named("if (!input.skipField(tag))")
-    mergeFrom.beginControlFlow("default:")
-      .beginControlFlow(ifSkipField)
-      .addStatement("return this")
-      .endControlFlow
-      .addStatement("break")
-      .endControlFlow
+    mergeFrom.beginControlFlow("default:").beginControlFlow(ifSkipField).addStatement("return this")
+    mergeFrom.endControlFlow.addStatement(named("tag = input.readTag()")).addStatement("break").endControlFlow
     // Generate missing non-packed cases for packable fields for compatibility reasons
     for (field <- sortedFields) {
       if (field.info.isPackable) {
