@@ -12,7 +12,6 @@ import java.util.Collection;
  * and readers. Otherwise, use the lazy immutable buffer, it never reuses the proto objects.
  */
 public interface RowBuffer extends MessageCollection<RdfStreamRow, RdfStreamRow.Mutable> {
-
     /**
      * Returns true if the buffer is empty.
      * @return true if the buffer is empty, false otherwise
@@ -26,7 +25,7 @@ public interface RowBuffer extends MessageCollection<RdfStreamRow, RdfStreamRow.
     int size();
 
     /**
-     * Returns an iterator over the rows in the buffer.
+     * Returns a collection of rows and clears the buffer.
      * @return iterator
      */
     Collection<RdfStreamRow> getRows();
@@ -55,8 +54,8 @@ public interface RowBuffer extends MessageCollection<RdfStreamRow, RdfStreamRow.
 
     /**
      * Creates a new LazyImmutableRowBuffer, for decoding or encoding.
-     * After clear() is called, it will completely recreate the buffer and allocate new RdfStreamRow
-     * objects for you.
+     * After getRows() or clear() is called, it will completely recreate the buffer and allocate 
+     * new RdfStreamRow objects for you.
      * It won't allocate anything, until you call appendMessage().
      * You should use this if you are not sure about the lifetimes of your RdfStreamRow objects.
      * @param initialCapacity initial capacity of the buffer

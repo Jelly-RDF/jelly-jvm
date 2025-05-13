@@ -5,7 +5,7 @@ import java.util.*;
 
 /**
  * Buffer of RdfStreamRow messages, which will create a new internal array of RdfStreamRow
- * objects when it is cleared. The returned list of rows is immutable from the perspective of the
+ * objects when getRows() is called. The returned list of rows is immutable from the perspective of the
  * buffer -- it will not be modified after it is returned and can be safely passed around with
  * indefinite lifetime.
  */
@@ -66,5 +66,10 @@ public final class LazyImmutableRowBuffer extends AbstractCollection<RdfStreamRo
         final var toReturn = rows;
         rows = null;
         return toReturn;
+    }
+
+    @Override
+    public void clear() {
+        getRows();
     }
 }

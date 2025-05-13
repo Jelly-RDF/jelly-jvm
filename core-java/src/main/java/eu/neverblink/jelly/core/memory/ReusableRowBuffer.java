@@ -101,6 +101,9 @@ public final class ReusableRowBuffer extends AbstractCollection<RdfStreamRow> im
      */
     static final Consumer<RdfStreamRow.Mutable> ENCODER_CLEAR_POLICY = RdfStreamRow::resetCachedSize;
 
-    // No-op
+    /**
+     * For decoding, we don't even need to reset the cached size, as it's not used anyway.
+     * The contents will be overwritten.
+     */
     static final Consumer<RdfStreamRow.Mutable> DECODER_CLEAR_POLICY = row -> {};
 }
