@@ -36,7 +36,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     // We will need a JenaConverterFactory to convert between Jelly and Jena
     given JenaConverterFactory = JenaConverterFactory.getInstance()
 
-    // We need to import the Jena adapters for Jelly
+    // We need to import the Jena adapters to turn Model/Dataset into a stream of statements
     given JenaAdapters.DATASET_ADAPTER.type = JenaAdapters.DATASET_ADAPTER
     given JenaAdapters.MODEL_ADAPTER.type = JenaAdapters.MODEL_ADAPTER
 
