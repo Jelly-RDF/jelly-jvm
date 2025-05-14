@@ -532,20 +532,22 @@ lazy val integrationTests = (project in file("integration-tests"))
   )
 
 lazy val integrationTestsJava = (project in file("integration-tests-java"))
+  .enablePlugins(ProtobufPlugin)
   .settings(
     publishArtifact := false,
     name := "jelly-integration-tests-java",
+    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
       "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV % Test,
       "com.apicatalog" % "titanium-json-ld" % "1.6.0" % Test,
     ),
-    libraryDependencies ++= protobufCompilerDeps,
-//    Compile / PB.targets := Seq(
-//      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
-//    ),
+    libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
+    Compile / compile := (Compile / compile).dependsOn(ProtobufConfig / protobufRunProtoc).value,
+    ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
     commonSettings,
+    publishArtifact := false
   )
   .dependsOn(
     coreJava % "compile->compile;test->test",
