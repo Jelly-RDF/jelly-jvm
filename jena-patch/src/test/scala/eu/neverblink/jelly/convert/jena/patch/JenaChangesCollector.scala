@@ -64,10 +64,10 @@ final class JenaChangesCollector(stType: PatchStatementType) extends RDFChanges:
     else g
 
   def addPrefix(gn: Node, prefix: String, uriStr: String): Unit =
-    changes += AddPrefix(gn, prefix, uriStr)
+    changes += AddPrefix(coerceGraph(gn), prefix, uriStr)
 
   def deletePrefix(gn: Node, prefix: String): Unit =
-    changes += DeletePrefix(gn, prefix)
+    changes += DeletePrefix(coerceGraph(gn), prefix)
 
   def txnBegin(): Unit =
     changes += TxnBegin

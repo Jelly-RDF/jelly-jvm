@@ -45,7 +45,6 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     }
 
     private final Options options;
-    private final JenaPatchConverterFactory converterFactory;
     private final OutputStream outputStream;
 
     private final RdfPatchOptions patchOptions;
@@ -62,7 +61,6 @@ public final class RdfPatchWriterJelly implements RDFChanges {
 
     public RdfPatchWriterJelly(Options options, JenaPatchConverterFactory converterFactory, OutputStream outputStream) {
         this.options = options;
-        this.converterFactory = converterFactory;
         this.outputStream = outputStream;
 
         this.patchOptions = options
