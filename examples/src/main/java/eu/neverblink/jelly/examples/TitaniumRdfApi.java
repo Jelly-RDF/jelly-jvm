@@ -9,12 +9,8 @@ import java.io.*;
 
 public class TitaniumRdfApi implements Example {
 
-    public static void main(String[] args) {
-        try {
-            new TitaniumRdfApi().run(args);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void main(String[] args) throws Exception {
+        new TitaniumRdfApi().run(args);
     }
 
     public void run(String[] args) throws Exception {

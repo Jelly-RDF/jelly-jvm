@@ -7,13 +7,13 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class ExamplesSpec extends AnyWordSpec, Matchers, JenaTest:
   val examples: Seq[Example] = Seq(
-    JenaRiot,
-    JenaRiotStreaming,
+    JenaRiot(),
+    JenaRiotStreaming(),
     PekkoStreamsDecoderFlow,
     PekkoStreamsEncoderFlow,
     PekkoStreamsEncoderSource,
     PekkoStreamsWithIo,
-    Rdf4jRio,
+    Rdf4jRio(),
   )
 
   for example <- examples do
