@@ -544,11 +544,8 @@ lazy val integrationTestsJava = (project in file("integration-tests-java"))
       "com.apicatalog" % "titanium-json-ld" % "1.6.0" % Test,
     ),
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
-//    ProtobufConfig / javaSource := (sourceManaged.value / "main"),
     Compile / compile := (Compile / compile).dependsOn(ProtobufConfig / protobufRunProtoc).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
-//    Compile / sourceManaged := sourceManaged.value / "main",
-//    Test / sourceManaged := sourceManaged.value / "main",
     commonSettings,
     publishArtifact := false
   )
