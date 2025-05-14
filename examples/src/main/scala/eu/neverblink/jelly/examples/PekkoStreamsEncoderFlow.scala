@@ -3,16 +3,15 @@ package eu.neverblink.jelly.examples
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.utils.GraphHolder
+import eu.neverblink.jelly.examples.shared.ScalaExample
 import eu.neverblink.jelly.stream.*
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
-import eu.neverblink.jelly.examples.shared.ScalaExample
 
 import java.io.File
-import scala.collection.immutable
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext}
 import scala.jdk.CollectionConverters.*
@@ -46,13 +45,13 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
     // Load the example dataset
     val dataset = RDFDataMgr.loadDataset(File(getClass.getResource("/weather-graphs.trig").toURI).toURI.toString)
 
-    // First, let's see what views of the dataset can we obtain using Jelly's Iterable adapters:
+    // First, let's see what views of the dataset can we obtain using Jelly's adapters:
     // 1. Iterable of all quads in the dataset
-    val quads: immutable.Iterable[Quad] = JenaAdapters.DATASET_ADAPTER.quads(dataset).asScala.toList
+    val quads: Iterable[Quad] = JenaAdapters.DATASET_ADAPTER.quads(dataset).asScala
     // 2. Iterable of all graphs (named and default) in the dataset
-    val graphs: immutable.Iterable[GraphHolder[Node, Triple]] = JenaAdapters.DATASET_ADAPTER.graphs(dataset).asScala.toList
+    val graphs: Iterable[GraphHolder[Node, Triple]] = JenaAdapters.DATASET_ADAPTER.graphs(dataset).asScala
     // 3. Iterable of all triples in the default graph
-    val triples: immutable.Iterable[Triple] = JenaAdapters.MODEL_ADAPTER.triples(dataset.getDefaultModel).asScala.toList
+    val triples: Iterable[Triple] = JenaAdapters.MODEL_ADAPTER.triples(dataset.getDefaultModel).asScala
 
     // Note: here we are not turning the frames into bytes, but just printing their size in bytes.
     // You can find an example of how to turn a frame into a byte array in the `PekkoStreamsEncoderSource` example.
@@ -61,7 +60,7 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
     // Let's try encoding this as flat RDF streams (streams of triples or quads)
     // https://w3id.org/stax/ontology#flatQuadStream
     println(f"Encoding ${quads.size} quads as a flat RDF quad stream")
-    val flatQuadsFuture = Source(quads)
+    val flatQuadsFuture = Source(quads.toList)
       .via(EncoderFlow.builder
         // This encoder requires a size limiter – otherwise a stream frame could have infinite length!
         .withLimiter(StreamRowCountLimiter(20))
@@ -74,7 +73,7 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
 
     // https://w3id.org/stax/ontology#flatTripleStream
     println(f"\n\nEncoding ${triples.size} triples as a flat RDF triple stream")
-    val flatTriplesFuture = Source(triples)
+    val flatTriplesFuture = Source(triples.toList)
       .via(EncoderFlow.builder
         // This encoder requires a size limiter – otherwise a stream frame could have infinite length!
         .withLimiter(ByteSizeLimiter(500))
@@ -104,7 +103,7 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
     // graph in each frame (message). This is very common in (for example) IoT systems.
     // https://w3id.org/stax/ontology#namedGraphStream
     println(f"\n\nEncoding ${graphs.size} graphs as a named graph stream")
-    val namedGraphsFuture = Source(graphs)
+    val namedGraphsFuture = Source(graphs.toList)
       .via(EncoderFlow.builder
         // Do not use a size limiter here – we want exactly one graph in each frame
         .namedGraphs(JellyOptions.SMALL_STRICT)

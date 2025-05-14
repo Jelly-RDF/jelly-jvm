@@ -1,16 +1,16 @@
 package eu.neverblink.jelly.examples
 
-import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, given}
+import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.examples.shared.ScalaExample
 import eu.neverblink.jelly.stream.*
-import org.apache.jena.graph.{Graph, Node, Triple}
+import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.query.Dataset
+import org.apache.jena.rdf.model.Model
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
-import eu.neverblink.jelly.examples.shared.ScalaExample
-import org.apache.jena.rdf.model.Model
 
 import java.io.File
 import scala.collection.immutable
@@ -147,7 +147,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     Await.result(future2.recover {
       // eu.neverblink.jelly.core.JellyExceptions$RdfProtoDeserializationError:
       // Incoming stream type is not TRIPLES.
-      case e: Exception => println(e.getCause)
+      case e: Exception => println(e)
     }, 10.seconds)
 
     // We can get around this by using the "decodeAny" method, which will pick the appropriate decoder
@@ -178,7 +178,17 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     val streamOptions = Await.result(snoopFuture._1, 10.seconds)
     val decodedQuads2 = Await.result(snoopFuture._2, 10.seconds)
 
-    val streamOptionsIndented = ("\n" + streamOptions.get.toString.strip).replace("\n", "\n  ")
+    val streamOptionsIndented =
+      s"""
+        |   streamName: ${streamOptions.get.getStreamName}
+        |   physicalType: ${streamOptions.get.getPhysicalType}
+        |   logicalType: ${streamOptions.get.getLogicalType}
+        |   generalizedStatements: ${streamOptions.get.getGeneralizedStatements}
+        |   rdfStar: ${streamOptions.get.getRdfStar}
+        |   maxNameTableSize: ${streamOptions.get.getMaxNameTableSize}
+        |   maxPrefixTableSize: ${streamOptions.get.getMaxPrefixTableSize}
+        |   maxDatatypeTableSize: ${streamOptions.get.getMaxDatatypeTableSize}
+        |""".stripMargin
     println(s"Stream options: $streamOptionsIndented")
     println(s"Decoded ${decodedQuads2.size} quads.")
 
@@ -197,15 +207,15 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
       JenaAdapters.MODEL_ADAPTER.type
     ):
   (Seq[Array[Byte]], Seq[Array[Byte]], Seq[Array[Byte]]) =
-    val quadStream = RdfSource.builder[Model, Dataset, Node, Triple, Quad]().datasetAsQuads(dataset).source
+    val quadStream = RdfSource.builder().datasetAsQuads(dataset).source
       .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(500)).flatQuads(JellyOptions.SMALL_STRICT).flow)
       
-    val tripleStream = RdfSource.builder[Model, Dataset, Node, Triple, Quad]()
+    val tripleStream = RdfSource.builder()
       .graphAsTriples(dataset.getDefaultModel)
       .source
       .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(250)).flatTriples(JellyOptions.SMALL_STRICT).flow)
       
-    val graphStream = RdfSource.builder[Model, Dataset, Node, Triple, Quad]()
+    val graphStream = RdfSource.builder()
       .datasetAsGraphs(dataset)
       .source
       .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(500)).namedGraphs(JellyOptions.SMALL_STRICT).flow)
