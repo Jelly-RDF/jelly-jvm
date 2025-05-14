@@ -29,13 +29,6 @@ lazy val scalapbV = "0.11.17"
 lazy val protobufV = "4.30.2"
 lazy val javapoetV = "0.7.0"
 
-// List of exclusions for the grpc module and its dependencies
-lazy val grpcExclusions = Seq(
-  ExclusionRule(organization = "org.scala-lang.modules", name = "scala-collection-compat_2.13"),
-  ExclusionRule(organization = "com.thesamet.scalapb", name = "lenses_2.13"),
-  ExclusionRule(organization = "com.thesamet.scalapb", name = "scalapb-runtime_2.13"),
-)
-
 // Dependencies used for subprojects that generate Scala code from protobuf files
 lazy val protobufCompilerDeps = Seq(
   "com.thesamet.scalapb" %% "compilerplugin" % scalapbV,
@@ -480,32 +473,6 @@ lazy val streamJava = (project in file("stream-java"))
   )
   .dependsOn(coreJava % "compile->compile;test->test")
 
-lazy val grpc = (project in file("grpc"))
-  .enablePlugins(PekkoGrpcPlugin)
-  .settings(
-    name := "jelly-grpc",
-    description := "Implementation of a gRPC client and server for the Jelly gRPC streaming protocol.",
-    libraryDependencies ++= Seq(
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-      "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
-      "org.apache.pekko" %% "pekko-discovery" % pekkoV,
-      "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
-      "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
-      "org.apache.pekko" %% "pekko-grpc-runtime" % pekkoGrpcV,
-    ),
-    // Add the shared proto sources
-    Compile / PB.protoSources ++= Seq(
-      (rdfProtos / baseDirectory).value / "src" / "main" / "protobuf_shared",
-      (rdfProtos / baseDirectory).value / "src" / "main" / "protobuf",
-    ),
-    Compile / PB.generate / excludeFilter := "rdf.proto",
-    excludeDependencies ++= grpcExclusions,
-    commonSettings,
-  )
-  .dependsOn(stream % "test->compile")
-  .dependsOn(core % "compile->compile;test->test;protobuf->protobuf")
-  .dependsOn(rdfProtos % "protobuf->protobuf")
-
 lazy val integrationTests = (project in file("integration-tests"))
   .settings(
     publishArtifact := false,
@@ -563,12 +530,17 @@ lazy val examples = (project in file("examples"))
   .settings(
     publishArtifact := false,
     name := "jelly-examples",
+    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
       "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV,
     ),
-    excludeDependencies ++= grpcExclusions,
     commonSettings,
   )
-  .dependsOn(grpc, stream, jena % "compile->compile;test->test", rdf4j, titaniumRdfApi)
+  .dependsOn(
+    streamJava,
+    jenaJava % "compile->compile;test->test",
+    rdf4jJava,
+    titaniumRdfApiJava
+  )

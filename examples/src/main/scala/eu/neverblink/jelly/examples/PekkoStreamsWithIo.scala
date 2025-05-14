@@ -1,8 +1,8 @@
-package eu.ostrzyciel.jelly.examples
+package eu.neverblink.jelly.examples
 
-import eu.ostrzyciel.jelly.convert.jena.given
-import eu.ostrzyciel.jelly.core.JellyOptions
-import eu.ostrzyciel.jelly.stream.*
+import eu.neverblink.jelly.convert.jena.given
+import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.stream.*
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.query.Dataset
 import org.apache.jena.riot.RDFDataMgr
@@ -10,12 +10,13 @@ import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.apache.pekko.util.ByteString
+import eu.neverblink.jelly.examples.shared.Example
 
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.zip.GZIPInputStream
 import scala.collection.immutable
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.*
+import scala.concurrent.{Await, ExecutionContext}
 import scala.util.Using
 
 /**
@@ -26,13 +27,13 @@ import scala.util.Using
  * as otherwise it would be impossible to tell where one stream frame ends and another one begins.
  *
  * If you are working with something like MQTT, Kafka, JMS, AMQP... then check the examples in
- * [[eu.ostrzyciel.jelly.examples.PekkoStreamsEncoderFlow]].
+ * [[eu.neverblink.jelly.examples.PekkoStreamsEncoderFlow]].
  *
  * In this example we are using Apache Jena as the RDF library (note the import:
- * `import eu.ostrzyciel.jelly.convert.jena.given`).
+ * `import eu.neverblink.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoStreamsWithIo extends shared.ScalaExample:
+object PekkoStreamsWithIo extends Example:
   def main(args: Array[String]): Unit =
     // We will need a Pekko actor system to run the streams
     given actorSystem: ActorSystem = ActorSystem()
@@ -63,7 +64,7 @@ object PekkoStreamsWithIo extends shared.ScalaExample:
     Using.resource(new FileOutputStream("weather.jelly")) { outputStream =>
       val writeFuture = Source(decodedTriples)
         // Encode the triples to Jelly
-        .via(EncoderFlow.builder
+        .via(EncoderFlow.builder()
           .withLimiter(ByteSizeLimiter(500))
           .flatTriples(JellyOptions.smallStrict)
           .flow
@@ -82,7 +83,7 @@ object PekkoStreamsWithIo extends shared.ScalaExample:
     // We will again write the decoded triples to a Jelly file, but this time use Pekko's facilities.
     println("\n\nWriting the decoded triples to a new Jelly file with Pekko Streams' utilities...")
     val writeFuture = Source(decodedTriples)
-      .via(EncoderFlow.builder
+      .via(EncoderFlow.builder()
         .withLimiter(ByteSizeLimiter(500))
         .flatTriples(JellyOptions.smallStrict)
         .flow

@@ -1,34 +1,43 @@
-package eu.ostrzyciel.jelly.examples
+package eu.neverblink.jelly.examples
 
-import eu.ostrzyciel.jelly.convert.jena.given
-import eu.ostrzyciel.jelly.core.JellyOptions
-import eu.ostrzyciel.jelly.stream.*
+import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, given}
+import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.stream.*
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.query.Dataset
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
+import eu.neverblink.jelly.examples.shared.Example
 
 import java.io.File
 import scala.collection.immutable
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.*
+import scala.concurrent.{Await, ExecutionContext}
 
 /**
- * Example of using the [[eu.ostrzyciel.jelly.stream.DecoderFlow]] utility to turn incoming Jelly streams
+ * Example of using the [[eu.neverblink.jelly.stream.DecoderFlow]] utility to turn incoming Jelly streams
  * into usable RDF data.
  *
  * In this example we are using Apache Jena as the RDF library (note the import:
- * `import eu.ostrzyciel.jelly.convert.jena.given`).
+ * `import eu.neverblink.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoStreamsDecoderFlow extends shared.ScalaExample:
+object PekkoStreamsDecoderFlow extends Example:
   def main(args: Array[String]): Unit =
     // We will need a Pekko actor system to run the streams
     given actorSystem: ActorSystem = ActorSystem()
     // And an execution context for the futures
     given ExecutionContext = actorSystem.getDispatcher
+
+    // We will need a JenaConverterFactory to convert between Jelly and Jena
+    given JenaConverterFactory = JenaConverterFactory.getInstance()
+
+    // We need to import the Jena adapters for Jelly
+    given JenaAdapters.DATASET_ADAPTER.type = JenaAdapters.DATASET_ADAPTER
+    given JenaAdapters.MODEL_ADAPTER.type = JenaAdapters.MODEL_ADAPTER
+
 
     // Load the example dataset
     val dataset = RDFDataMgr.loadDataset(File(getClass.getResource("/weather-graphs.trig").toURI).toURI.toString)
@@ -79,24 +88,24 @@ object PekkoStreamsDecoderFlow extends shared.ScalaExample:
       .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuadsStrict)
       .runWith(Sink.seq)
     Await.result(future.recover {
-      // eu.ostrzyciel.jelly.core.JellyExceptions$RdfProtoDeserializationError:
+      // eu.neverblink.jelly.core.JellyExceptions$RdfProtoDeserializationError:
       // Expected logical stream type LOGICAL_STREAM_TYPE_DATASETS, got LOGICAL_STREAM_TYPE_FLAT_QUADS.
       // LOGICAL_STREAM_TYPE_FLAT_QUADS is not a subtype of LOGICAL_STREAM_TYPE_DATASETS.
       case e: Exception => println(e.getCause)
     }, 10.seconds)
 
     // We can also pass entirely custom supported options to the decoder, instead of the defaults
-    // (see [[JellyOptions.defaultSupportedOptions]]). This is useful if we want to decode a stream with
+    // (see [[JellyOptions.DEFAULT_SUPPORTED_OPTIONS]]). This is useful if we want to decode a stream with
     // for example very large lookup tables or we want to put stricter limits on the streams that we accept.
     println(f"\n\nDecoding quads as an RDF dataset stream with custom supported options...")
-    val customSupportedOptions = JellyOptions.defaultSupportedOptions
-      .withMaxNameTableSize(50) // This is too small for the stream we are decoding
+    val customSupportedOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone()
+      .setMaxNameTableSize(50) // This is too small for the stream we are decoding
     val customSupportedOptionsFuture = Source(encodedQuads)
       .via(JellyIo.fromBytes)
       .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuads(customSupportedOptions))
       .runWith(Sink.seq)
     Await.result(customSupportedOptionsFuture.recover {
-      // eu.ostrzyciel.jelly.core.JellyExceptions$RdfProtoDeserializationError:
+      // eu.neverblink.jelly.core.RdfProtoDeserializationError:
       // The stream uses a name table size of 128, which is larger than the maximum supported size of 50.
       // To read this stream, set maxNameTableSize to at least 128 in the supportedOptions for this decoder.
       case e: Exception => println(e.getCause)
@@ -113,7 +122,7 @@ object PekkoStreamsDecoderFlow extends shared.ScalaExample:
     println(s"Decoded ${decodedTriples.size} triples.")
 
     // We can interpret the GRAPHS stream in a few ways, see
-    // [[eu.ostrzyciel.jelly.stream.DecoderFlow.GraphsIngestFlowOps]] for more details.
+    // [[eu.neverblink.jelly.stream.DecoderFlow.GraphsIngestFlowOps]] for more details.
     // Here we will treat it as an RDF named graph stream.
     println(f"\n\nDecoding graphs as an RDF named graph stream...")
     val decodedGraphsFuture = Source(encodedGraphs)
@@ -134,7 +143,7 @@ object PekkoStreamsDecoderFlow extends shared.ScalaExample:
       .via(DecoderFlow.decodeTriples.asFlatTripleStream)
       .runWith(Sink.seq)
     Await.result(future2.recover {
-      // eu.ostrzyciel.jelly.core.JellyExceptions$RdfProtoDeserializationError:
+      // eu.neverblink.jelly.core.JellyExceptions$RdfProtoDeserializationError:
       // Incoming stream type is not TRIPLES.
       case e: Exception => println(e.getCause)
     }, 10.seconds)
@@ -167,7 +176,7 @@ object PekkoStreamsDecoderFlow extends shared.ScalaExample:
     val streamOptions = Await.result(snoopFuture._1, 10.seconds)
     val decodedQuads2 = Await.result(snoopFuture._2, 10.seconds)
 
-    val streamOptionsIndented = ("\n" + streamOptions.get.toProtoString.strip).replace("\n", "\n  ")
+    val streamOptionsIndented = ("\n" + streamOptions.get.toString.strip).replace("\n", "\n  ")
     println(s"Stream options: $streamOptionsIndented")
     println(s"Decoded ${decodedQuads2.size} quads.")
 
@@ -179,13 +188,13 @@ object PekkoStreamsDecoderFlow extends shared.ScalaExample:
    */
   private def getEncodedData(dataset: Dataset)(using ActorSystem, ExecutionContext):
   (Seq[Array[Byte]], Seq[Array[Byte]], Seq[Array[Byte]]) =
-    val quadStream = RdfSource.builder.datasetAsQuads(dataset).source
+    val quadStream = RdfSource.builder().datasetAsQuads(dataset).source
       .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(500)).flatQuads(JellyOptions.smallStrict).flow)
       
-    val tripleStream = RdfSource.builder.graphAsTriples(dataset.getDefaultModel).source
+    val tripleStream = RdfSource.builder().graphAsTriples(dataset.getDefaultModel).source
       .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(250)).flatTriples(JellyOptions.smallStrict).flow)
       
-    val graphStream = RdfSource.builder.datasetAsGraphs(dataset).source
+    val graphStream = RdfSource.builder().datasetAsGraphs(dataset).source
       .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(500)).namedGraphs(JellyOptions.smallStrict).flow)
       
     val results = Seq(quadStream, tripleStream, graphStream).map { stream =>

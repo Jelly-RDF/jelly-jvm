@@ -1,32 +1,33 @@
-package eu.ostrzyciel.jelly.examples
+package eu.neverblink.jelly.examples
 
-import eu.ostrzyciel.jelly.convert.jena.given
-import eu.ostrzyciel.jelly.core.JellyOptions
-import eu.ostrzyciel.jelly.stream.*
+import eu.neverblink.jelly.convert.jena.given
+import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.stream.*
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
+import eu.neverblink.jelly.examples.shared.Example
 
 import java.io.File
 import scala.collection.immutable
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.*
+import scala.concurrent.{Await, ExecutionContext}
 
 /**
- * Example of using the [[eu.ostrzyciel.jelly.stream.EncoderFlow]] utility to encode RDF data as Jelly streams.
+ * Example of using the [[eu.neverblink.jelly.stream.EncoderFlow]] utility to encode RDF data as Jelly streams.
  * 
  * Here, the RDF data is turned into a series of byte buffers, with each buffer corresponding to exactly one frame.
  * This is suitable if your streaming protocol (e.g., Kafka, MQTT, AMQP) already frames the messages.
  * If you are writing to a raw socket or file, then you must use the DELIMITED variant of Jelly instead.
- * See [[eu.ostrzyciel.jelly.examples.PekkoStreamsWithIo]] for examples of that.
+ * See [[eu.neverblink.jelly.examples.PekkoStreamsWithIo]] for examples of that.
  *
  * In this example we are using Apache Jena as the RDF library (note the import:
- * `import eu.ostrzyciel.jelly.convert.jena.given`).
+ * `import eu.neverblink.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoStreamsEncoderFlow extends shared.ScalaExample:
+object PekkoStreamsEncoderFlow extends Example:
   def main(args: Array[String]): Unit =
     // We will need a Pekko actor system to run the streams
     given actorSystem: ActorSystem = ActorSystem()

@@ -1,9 +1,10 @@
-package eu.ostrzyciel.jelly.examples
+package eu.neverblink.jelly.examples
 
-import eu.ostrzyciel.jelly.convert.jena.riot.*
-import eu.ostrzyciel.jelly.core.*
+import eu.neverblink.jelly.convert.jena.riot.*
+import eu.neverblink.jelly.core.*
 import org.apache.jena.rdf.model.ModelFactory
-import org.apache.jena.riot.{RDFDataMgr, RDFFormat, RDFParser, RDFWriterRegistry, RIOT}
+import org.apache.jena.riot.*
+import eu.neverblink.jelly.examples.shared.Example
 
 import java.io.{File, FileOutputStream}
 import scala.util.Using
@@ -14,7 +15,7 @@ import scala.util.Using
  *
  * See also: https://jena.apache.org/documentation/io/
  */
-object JenaRiot extends shared.ScalaExample:
+object JenaRiot extends Example:
   def main(args: Array[String]): Unit =
     // Load the RDF graph from an N-Triples file
     val model = RDFDataMgr.loadModel(File(getClass.getResource("/weather.nt").toURI).toURI.toString)
@@ -63,18 +64,20 @@ object JenaRiot extends shared.ScalaExample:
     // Custom Jelly format – change any settings you like
     val customFormat = new RDFFormat(
       JellyLanguage.JELLY,
-      JellyFormatVariant(
-        opt = JellyOptions.smallStrict
-          .withMaxPrefixTableSize(0) // disable the prefix table
-          .withStreamName("My weather stream"), // add metadata to the stream
-        frameSize = 16 // make RdfStreamFrames with 16 rows each
-      )
+      JellyFormatVariant.builder()
+        .options(
+          JellyOptions.SMALL_STRICT.clone()
+            .setMaxPrefixTableSize(0) // disable the prefix table
+            .setStreamName("My weather stream") // add metadata to the stream
+        )
+        .frameSize(16) // make RdfStreamFrames with 16 rows each
+        .build()
     )
 
     // Jena requires us to register the custom format – once for graphs and once for datasets,
     // as Jelly supports both.
-    RDFWriterRegistry.register(customFormat, JellyGraphWriterFactory)
-    RDFWriterRegistry.register(customFormat, JellyDatasetWriterFactory)
+    RDFWriterRegistry.register(customFormat, JellyGraphWriterFactory())
+    RDFWriterRegistry.register(customFormat, JellyDatasetWriterFactory())
 
     Using.resource(new FileOutputStream("weather-quads-custom.jelly")) { out =>
       // Write the dataset to a Jelly file using the custom format
@@ -93,8 +96,9 @@ object JenaRiot extends shared.ScalaExample:
     // By default, the parser has limits on for example the maximum size of the lookup tables.
     // The default supported options are [[JellyOptions.defaultSupportedOptions]].
     // You can change these limits by creating your own options object.
-    val customOptions = JellyOptions.defaultSupportedOptions
-      .withMaxNameTableSize(50) // set the maximum size of the name table to 100
+    val customOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+      .clone()
+      .setMaxNameTableSize(50) // set the maximum size of the name table to 100
     // Create a Context object with the custom options
     val parserContext = RIOT.getContext.copy()
       .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, customOptions)

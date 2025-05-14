@@ -1,25 +1,26 @@
-package eu.ostrzyciel.jelly.examples
+package eu.neverblink.jelly.examples
 
-import eu.ostrzyciel.jelly.core.JellyOptions
-import eu.ostrzyciel.jelly.convert.jena.given
-import eu.ostrzyciel.jelly.stream.*
+import eu.neverblink.jelly.convert.jena.given
+import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.stream.*
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
+import eu.neverblink.jelly.examples.shared.Example
 
 import java.io.File
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.*
+import scala.concurrent.{Await, ExecutionContext}
 
 /**
- * Example of using the [[eu.ostrzyciel.jelly.stream.RdfSource]] and [[eu.ostrzyciel.jelly.stream.EncoderFlow]] 
+ * Example of using the [[eu.neverblink.jelly.stream.RdfSource]] and [[eu.neverblink.jelly.stream.EncoderFlow]] 
  * utilities to encode single RDF graphs and datasets as Jelly streams.
  *
  * In this example we are using Apache Jena as the RDF library (note the import:
- * `import eu.ostrzyciel.jelly.convert.jena.given`).
+ * `import eu.neverblink.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoStreamsEncoderSource extends shared.ScalaExample:
+object PekkoStreamsEncoderSource extends Example:
   def main(args: Array[String]): Unit =
     // We will need a Pekko actor system to run the streams
     given actorSystem: ActorSystem = ActorSystem()
@@ -33,7 +34,7 @@ object PekkoStreamsEncoderSource extends shared.ScalaExample:
     println(s"Streaming the model to memory...")
 
     // Create a Pekko Streams Source[Triple] from the Jena model
-    val encodedModelFuture = RdfSource.builder.graphAsTriples(model).source
+    val encodedModelFuture = RdfSource.builder().graphAsTriples(model).source
       // Encode the stream as a flat RDF triple stream
       .via(EncoderFlow.builder
         .withLimiter(ByteSizeLimiter(2000))

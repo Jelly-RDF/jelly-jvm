@@ -1,11 +1,12 @@
-package eu.ostrzyciel.jelly.examples
+package eu.neverblink.jelly.examples
 
-import eu.ostrzyciel.jelly.convert.jena.riot.*
-import eu.ostrzyciel.jelly.core.JellyOptions
-import eu.ostrzyciel.jelly.core.proto.v1.PhysicalStreamType
+import eu.neverblink.jelly.convert.jena.riot.*
+import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType
 import org.apache.jena.graph.{NodeFactory, Triple}
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
 import org.apache.jena.riot.{RDFDataMgr, RDFParser, RIOT}
+import eu.neverblink.jelly.examples.shared.Example
 
 import java.io.{File, FileOutputStream}
 import scala.util.Using
@@ -15,7 +16,7 @@ import scala.util.Using
  *
  * See also: https://jena.apache.org/documentation/io/streaming-io.html
  */
-object JenaRiotStreaming extends shared.ScalaExample:
+object JenaRiotStreaming extends Example:
   def main(args: Array[String]): Unit =
     // Initialize a Jena StreamRDF to consume the statements
     val readerStream = StreamRDFLib.count()
@@ -54,11 +55,11 @@ object JenaRiotStreaming extends shared.ScalaExample:
 
     // Try writing some triples to a file
     // We need to create an instance of RdfStreamOptions to pass to the writer:
-    val options = JellyOptions.smallStrict
+    val options = JellyOptions.SMALL_STRICT.clone()
       // The stream writer does not know if we will be writing triples or quads – we
       // have to specify the physical stream type explicitly.
-      .withPhysicalType(PhysicalStreamType.TRIPLES)
-      .withStreamName("A stream of 10 triples")
+      .setPhysicalType(PhysicalStreamType.TRIPLES)
+      .setStreamName("A stream of 10 triples")
 
     // To pass the options, we use Jena's Context mechanism
     val context = RIOT.getContext.copy()
