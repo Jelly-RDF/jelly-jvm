@@ -120,7 +120,7 @@ def define_env(env):
 
     @env.macro
     def code_example(file_name):
-        prefix = 'examples/src/main/scala/eu/ostrzyciel/jelly/examples/'
+        prefix = 'examples/src/main/scala/eu/neverblink/jelly/examples/'
         if file_name.endswith('.java'):
             dir_name = 'examples_java'
             lang = 'java'

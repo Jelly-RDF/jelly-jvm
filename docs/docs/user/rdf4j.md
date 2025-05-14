@@ -12,7 +12,7 @@ The module also implements the {{ javadoc_link_pretty('core', 'IterableAdapter')
 
 `jelly-rdf4j` implements an RDF writer and parser for [Eclipse RDF4J's Rio library](https://rdf4j.org/documentation/programming/rio/). This means you can use Jelly just like any other RDF serialization format (e.g., RDF/XML, Turtle). See the example below:
 
-{{ code_example('Rdf4jRio.scala') }}
+{{ code_example('Rdf4jRio.java') }}
 
 Usage notes:
 
