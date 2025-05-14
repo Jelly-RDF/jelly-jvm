@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.examples
 
-import eu.neverblink.jelly.convert.jena.given
+import eu.neverblink.jelly.convert.jena.{JenaConverterFactory, given}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.stream.*
 import org.apache.jena.graph.{Node, Triple}
@@ -10,7 +10,7 @@ import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.apache.pekko.util.ByteString
-import eu.neverblink.jelly.examples.shared.Example
+import eu.neverblink.jelly.examples.shared.ScalaExample
 
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.zip.GZIPInputStream
@@ -33,12 +33,15 @@ import scala.util.Using
  * `import eu.neverblink.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoStreamsWithIo extends Example:
+object PekkoStreamsWithIo extends ScalaExample:
   def main(args: Array[String]): Unit =
     // We will need a Pekko actor system to run the streams
     given actorSystem: ActorSystem = ActorSystem()
     // And an execution context for the futures
     given ExecutionContext = actorSystem.getDispatcher
+
+    // We will need a JenaConverterFactory to convert between Jelly and Jena
+    given JenaConverterFactory = JenaConverterFactory.getInstance()
 
     // We will read a gzipped Jelly file from disk and decode it on the fly, as we are decompressing it.
     println("Decoding a gzipped Jelly file with Pekko Streams...")
@@ -64,9 +67,9 @@ object PekkoStreamsWithIo extends Example:
     Using.resource(new FileOutputStream("weather.jelly")) { outputStream =>
       val writeFuture = Source(decodedTriples)
         // Encode the triples to Jelly
-        .via(EncoderFlow.builder()
+        .via(EncoderFlow.builder
           .withLimiter(ByteSizeLimiter(500))
-          .flatTriples(JellyOptions.smallStrict)
+          .flatTriples(JellyOptions.SMALL_STRICT)
           .flow
         )
         // Write the Jelly frames to a Java byte stream.
@@ -83,9 +86,9 @@ object PekkoStreamsWithIo extends Example:
     // We will again write the decoded triples to a Jelly file, but this time use Pekko's facilities.
     println("\n\nWriting the decoded triples to a new Jelly file with Pekko Streams' utilities...")
     val writeFuture = Source(decodedTriples)
-      .via(EncoderFlow.builder()
+      .via(EncoderFlow.builder
         .withLimiter(ByteSizeLimiter(500))
-        .flatTriples(JellyOptions.smallStrict)
+        .flatTriples(JellyOptions.SMALL_STRICT)
         .flow
       )
       // Convert the frames into Pekko's byte strings.

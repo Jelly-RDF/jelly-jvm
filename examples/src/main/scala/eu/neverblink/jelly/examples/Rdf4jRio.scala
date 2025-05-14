@@ -6,7 +6,7 @@ import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
-import eu.neverblink.jelly.examples.shared.Example
+import eu.neverblink.jelly.examples.shared.ScalaExample
 
 import java.io.{File, FileOutputStream}
 import scala.jdk.CollectionConverters.*
@@ -17,7 +17,7 @@ import scala.util.Using
  *
  * See also: https://rdf4j.org/documentation/programming/rio/
  */
-object Rdf4jRio extends Example:
+object Rdf4jRio extends ScalaExample:
   def main(args: Array[String]): Unit =
     // Load the RDF graph from an N-Triples file
     val inputFile = File(getClass.getResource("/weather.nt").toURI)

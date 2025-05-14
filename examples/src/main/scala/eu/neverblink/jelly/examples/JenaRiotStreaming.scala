@@ -6,7 +6,7 @@ import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType
 import org.apache.jena.graph.{NodeFactory, Triple}
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
 import org.apache.jena.riot.{RDFDataMgr, RDFParser, RIOT}
-import eu.neverblink.jelly.examples.shared.Example
+import eu.neverblink.jelly.examples.shared.ScalaExample
 
 import java.io.{File, FileOutputStream}
 import scala.util.Using
@@ -16,7 +16,7 @@ import scala.util.Using
  *
  * See also: https://jena.apache.org/documentation/io/streaming-io.html
  */
-object JenaRiotStreaming extends Example:
+object JenaRiotStreaming extends ScalaExample:
   def main(args: Array[String]): Unit =
     // Initialize a Jena StreamRDF to consume the statements
     val readerStream = StreamRDFLib.count()

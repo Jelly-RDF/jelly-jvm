@@ -3,13 +3,14 @@ package eu.neverblink.jelly.examples
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, given}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.stream.*
-import org.apache.jena.graph.{Node, Triple}
+import org.apache.jena.graph.{Graph, Node, Triple}
 import org.apache.jena.query.Dataset
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
-import eu.neverblink.jelly.examples.shared.Example
+import eu.neverblink.jelly.examples.shared.ScalaExample
+import org.apache.jena.rdf.model.Model
 
 import java.io.File
 import scala.collection.immutable
@@ -24,10 +25,11 @@ import scala.concurrent.{Await, ExecutionContext}
  * `import eu.neverblink.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoStreamsDecoderFlow extends Example:
+object PekkoStreamsDecoderFlow extends ScalaExample:
   def main(args: Array[String]): Unit =
     // We will need a Pekko actor system to run the streams
     given actorSystem: ActorSystem = ActorSystem()
+
     // And an execution context for the futures
     given ExecutionContext = actorSystem.getDispatcher
 
@@ -186,16 +188,27 @@ object PekkoStreamsDecoderFlow extends Example:
   /**
    * Helper method to produce encoded data from a dataset.
    */
-  private def getEncodedData(dataset: Dataset)(using ActorSystem, ExecutionContext):
+  private def getEncodedData(dataset: Dataset)
+    (
+      using ActorSystem,
+      ExecutionContext,
+      JenaConverterFactory,
+      JenaAdapters.DATASET_ADAPTER.type,
+      JenaAdapters.MODEL_ADAPTER.type
+    ):
   (Seq[Array[Byte]], Seq[Array[Byte]], Seq[Array[Byte]]) =
-    val quadStream = RdfSource.builder().datasetAsQuads(dataset).source
-      .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(500)).flatQuads(JellyOptions.smallStrict).flow)
+    val quadStream = RdfSource.builder[Model, Dataset, Node, Triple, Quad]().datasetAsQuads(dataset).source
+      .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(500)).flatQuads(JellyOptions.SMALL_STRICT).flow)
       
-    val tripleStream = RdfSource.builder().graphAsTriples(dataset.getDefaultModel).source
-      .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(250)).flatTriples(JellyOptions.smallStrict).flow)
+    val tripleStream = RdfSource.builder[Model, Dataset, Node, Triple, Quad]()
+      .graphAsTriples(dataset.getDefaultModel)
+      .source
+      .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(250)).flatTriples(JellyOptions.SMALL_STRICT).flow)
       
-    val graphStream = RdfSource.builder().datasetAsGraphs(dataset).source
-      .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(500)).namedGraphs(JellyOptions.smallStrict).flow)
+    val graphStream = RdfSource.builder[Model, Dataset, Node, Triple, Quad]()
+      .datasetAsGraphs(dataset)
+      .source
+      .via(EncoderFlow.builder.withLimiter(ByteSizeLimiter(500)).namedGraphs(JellyOptions.SMALL_STRICT).flow)
       
     val results = Seq(quadStream, tripleStream, graphStream).map { stream =>
       val streamFuture = stream

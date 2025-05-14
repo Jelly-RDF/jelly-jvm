@@ -1,12 +1,16 @@
 package eu.neverblink.jelly.examples
 
-import eu.neverblink.jelly.convert.jena.given
+import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, given}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.stream.*
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
-import eu.neverblink.jelly.examples.shared.Example
+import eu.neverblink.jelly.examples.shared.ScalaExample
+import org.apache.jena.graph.{Node, Triple}
+import org.apache.jena.query.Dataset
+import org.apache.jena.rdf.model.Model
+import org.apache.jena.sparql.core.Quad
 
 import java.io.File
 import scala.concurrent.duration.*
@@ -20,12 +24,19 @@ import scala.concurrent.{Await, ExecutionContext}
  * `import eu.neverblink.jelly.convert.jena.given`).
  * The same can be achieved with RDF4J just by importing a different module.
  */
-object PekkoStreamsEncoderSource extends Example:
+object PekkoStreamsEncoderSource extends ScalaExample:
   def main(args: Array[String]): Unit =
     // We will need a Pekko actor system to run the streams
     given actorSystem: ActorSystem = ActorSystem()
     // And an execution context for the futures
     given ExecutionContext = actorSystem.getDispatcher
+
+    // We will need a JenaConverterFactory to convert between Jelly and Jena
+    given JenaConverterFactory = JenaConverterFactory.getInstance()
+
+    // We need to import the Jena adapters for Jelly
+    given JenaAdapters.DATASET_ADAPTER.type = JenaAdapters.DATASET_ADAPTER
+    given JenaAdapters.MODEL_ADAPTER.type = JenaAdapters.MODEL_ADAPTER
 
     // Load an example RDF graph from an N-Triples file
     val model = RDFDataMgr.loadModel(File(getClass.getResource("/weather.nt").toURI).toURI.toString)
@@ -38,12 +49,12 @@ object PekkoStreamsEncoderSource extends Example:
       // Encode the stream as a flat RDF triple stream
       .via(EncoderFlow.builder
         .withLimiter(ByteSizeLimiter(2000))
-        .flatTriples(JellyOptions.smallStrict)
+        .flatTriples(JellyOptions.SMALL_STRICT)
         .flow
       )
       // wireTap: print the size of the frames
       // Notice in the output that the frames are slightly bigger than 2000 bytes.
-      .wireTap(frame => println(s"Frame with ${frame.rows.size} rows, ${frame.serializedSize} bytes on wire"))
+      .wireTap(frame => println(s"Frame with ${frame.getRows.size} rows, ${frame.getSerializedSize} bytes on wire"))
       // Convert each stream frame to bytes
       .via(JellyIo.toBytes)
       // Collect the stream into a sequence
@@ -66,7 +77,7 @@ object PekkoStreamsEncoderSource extends Example:
 
     // Here we stream this is as a GRAPHS stream (physical type)
     // You can also use .datasetAsQuads to stream as QUADS
-    val encodedDatasetFuture = RdfSource.builder
+    val encodedDatasetFuture = RdfSource.builder[Model, Dataset, Node, Triple, Quad]()
       .datasetAsGraphs(dataset)
       .withNamespaceDeclarations // Include namespace declarations in the stream
       .source
@@ -75,7 +86,7 @@ object PekkoStreamsEncoderSource extends Example:
         // Note that for this particular encoder, we can skip the limiter entirely – but this can lead to huge frames!
         // So, be careful with that, or may get an out-of-memory error.
         .withLimiter(StreamRowCountLimiter(30))
-        .namedGraphs(JellyOptions.smallStrict)
+        .namedGraphs(JellyOptions.SMALL_STRICT)
         // We must also allow for namespace declarations, because our source contains them
         .withNamespaceDeclarations
         .flow
@@ -83,7 +94,7 @@ object PekkoStreamsEncoderSource extends Example:
       // wireTap: print the size of the frames
       // Note that some frames smaller than the limit – this is because this encoder will always split frames
       // on graph boundaries.
-      .wireTap(frame => println(s"Frame with ${frame.rows.size} rows, ${frame.serializedSize} bytes on wire"))
+      .wireTap(frame => println(s"Frame with ${frame.getRows.size} rows, ${frame.getSerializedSize} bytes on wire"))
       // Convert each stream frame to bytes
       .via(JellyIo.toBytes)
       // Collect the stream into a sequence

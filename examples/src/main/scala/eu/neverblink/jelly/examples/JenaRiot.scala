@@ -4,7 +4,7 @@ import eu.neverblink.jelly.convert.jena.riot.*
 import eu.neverblink.jelly.core.*
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.riot.*
-import eu.neverblink.jelly.examples.shared.Example
+import eu.neverblink.jelly.examples.shared.ScalaExample
 
 import java.io.{File, FileOutputStream}
 import scala.util.Using
@@ -15,7 +15,7 @@ import scala.util.Using
  *
  * See also: https://jena.apache.org/documentation/io/
  */
-object JenaRiot extends Example:
+object JenaRiot extends ScalaExample:
   def main(args: Array[String]): Unit =
     // Load the RDF graph from an N-Triples file
     val model = RDFDataMgr.loadModel(File(getClass.getResource("/weather.nt").toURI).toURI.toString)
