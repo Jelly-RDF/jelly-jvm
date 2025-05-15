@@ -1,16 +1,13 @@
 package eu.neverblink.jelly.examples
 
-import eu.neverblink.jelly.convert.jena.{JenaConverterFactory, given}
+import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.examples.shared.ScalaExample
 import eu.neverblink.jelly.stream.*
-import org.apache.jena.graph.{Node, Triple}
-import org.apache.jena.query.Dataset
-import org.apache.jena.riot.RDFDataMgr
-import org.apache.jena.sparql.core.Quad
+import org.apache.jena.graph.Triple
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.apache.pekko.util.ByteString
-import eu.neverblink.jelly.examples.shared.ScalaExample
 
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.zip.GZIPInputStream

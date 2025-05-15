@@ -2,12 +2,9 @@ package eu.neverblink.jelly.examples
 
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
-import eu.neverblink.jelly.core.utils.GraphHolder
 import eu.neverblink.jelly.examples.shared.ScalaExample
 import eu.neverblink.jelly.stream.*
-import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.RDFDataMgr
-import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 
@@ -45,22 +42,20 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
     // Load the example dataset
     val dataset = RDFDataMgr.loadDataset(File(getClass.getResource("/weather-graphs.trig").toURI).toURI.toString)
 
-    // First, let's see what views of the dataset can we obtain using Jelly's adapters:
-    // 1. Iterable of all quads in the dataset
-    val quads: Iterable[Quad] = JenaAdapters.DATASET_ADAPTER.quads(dataset).asScala
-    // 2. Iterable of all graphs (named and default) in the dataset
-    val graphs: Iterable[GraphHolder[Node, Triple]] = JenaAdapters.DATASET_ADAPTER.graphs(dataset).asScala
-    // 3. Iterable of all triples in the default graph
-    val triples: Iterable[Triple] = JenaAdapters.MODEL_ADAPTER.triples(dataset.getDefaultModel).asScala
-
     // Note: here we are not turning the frames into bytes, but just printing their size in bytes.
     // You can find an example of how to turn a frame into a byte array in the `PekkoStreamsEncoderSource` example.
     // This is done with: .via(JellyIo.toBytes)
 
     // Let's try encoding this as flat RDF streams (streams of triples or quads)
     // https://w3id.org/stax/ontology#flatQuadStream
-    println(f"Encoding ${quads.size} quads as a flat RDF quad stream")
-    val flatQuadsFuture = Source(quads.toList)
+
+    // We will use RdfSource to transform the dataset into a stream of quads
+    val quads = RdfSource.builder()
+      .datasetAsQuads(dataset)
+      .source
+
+    println(f"Encoding ${dataset.asDatasetGraph.size} quads as a flat RDF quad stream")
+    val flatQuadsFuture = quads
       .via(EncoderFlow.builder
         // This encoder requires a size limiter – otherwise a stream frame could have infinite length!
         .withLimiter(StreamRowCountLimiter(20))
@@ -72,8 +67,14 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
     Await.ready(flatQuadsFuture, 10.seconds)
 
     // https://w3id.org/stax/ontology#flatTripleStream
-    println(f"\n\nEncoding ${triples.size} triples as a flat RDF triple stream")
-    val flatTriplesFuture = Source(triples.toList)
+
+    // We will use RdfSource to transform the default graph of the dataset into a stream of triples
+    val triples = RdfSource.builder()
+      .graphAsTriples(dataset.getDefaultModel)
+      .source
+
+    println(f"\n\nEncoding ${dataset.getDefaultModel.size} triples as a flat RDF triple stream")
+    val flatTriplesFuture = triples
       .via(EncoderFlow.builder
         // This encoder requires a size limiter – otherwise a stream frame could have infinite length!
         .withLimiter(ByteSizeLimiter(500))
@@ -87,9 +88,10 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
     // We can also stream already grouped triples or quads – for example, if your system generates batches of
     // N triples, you can just send those batches straight to be encoded, with one batch = one stream frame.
     // https://w3id.org/stax/ontology#flatQuadStream
-    println(f"\n\nEncoding ${quads.size} quads as a flat RDF quad stream, grouped in batches of 10")
-    // First, group the quads into batches of 8
-    val groupedQuadsFuture = Source.fromIterator(() => quads.grouped(10))
+    println(f"\n\nEncoding ${dataset.asDatasetGraph.stream.count} quads as a flat RDF quad stream, grouped in batches of 10")
+    // First, group the quads into batches of 10
+    val groupedQuadsFuture = quads
+      .grouped(10)
       .via(EncoderFlow.builder
         // Do not use a size limiter here – we want exactly one batch in each frame
         .flatQuadsGrouped(JellyOptions.SMALL_STRICT)
@@ -102,8 +104,14 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
     // Now, let's try grouped streams. Let's say we want to stream all graphs in a dataset, but put exactly one
     // graph in each frame (message). This is very common in (for example) IoT systems.
     // https://w3id.org/stax/ontology#namedGraphStream
-    println(f"\n\nEncoding ${graphs.size} graphs as a named graph stream")
-    val namedGraphsFuture = Source(graphs.toList)
+
+    // We will use RdfSource to transform the dataset into a stream of named graphs
+    val graphs = RdfSource.builder()
+      .datasetAsGraphs(dataset)
+      .source
+
+    println(f"\n\nEncoding ${dataset.asDatasetGraph.size} graphs as a named graph stream")
+    val namedGraphsFuture = graphs
       .via(EncoderFlow.builder
         // Do not use a size limiter here – we want exactly one graph in each frame
         .namedGraphs(JellyOptions.SMALL_STRICT)
@@ -118,7 +126,13 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
     // repeated a few times. This type of stream is also pretty common in practical applications.
     // https://w3id.org/stax/ontology#graphStream
     println(f"\n\nEncoding 5 RDF graphs as a graph stream")
-    val graphsFuture = Source.repeat(triples)
+    val graphsFuture = Source
+      .repeat(
+        // We will collect the triples of the default graph and repeat this iterable continually
+        // This is just an example – in a real application you would probably be streaming
+        // a stream of graphs from a source like Kafka or MQTT
+        dataset.getDefaultModel.getGraph.find.asScala.toList
+      )
       .take(5)
       .via(EncoderFlow.builder
         // Do not use a size limiter here – we want exactly one graph in each frame

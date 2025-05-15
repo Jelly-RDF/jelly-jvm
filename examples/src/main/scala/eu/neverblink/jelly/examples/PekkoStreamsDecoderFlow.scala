@@ -6,7 +6,6 @@ import eu.neverblink.jelly.examples.shared.ScalaExample
 import eu.neverblink.jelly.stream.*
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.query.Dataset
-import org.apache.jena.rdf.model.Model
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.actor.ActorSystem
