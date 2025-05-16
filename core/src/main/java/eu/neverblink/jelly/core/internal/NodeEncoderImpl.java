@@ -1,11 +1,11 @@
 package eu.neverblink.jelly.core.internal;
 
+import static eu.neverblink.jelly.core.internal.BaseJellyOptions.MIN_NAME_TABLE_SIZE;
+
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.proto.v1.*;
 import java.util.LinkedHashMap;
 import java.util.Objects;
-
-import static eu.neverblink.jelly.core.internal.BaseJellyOptions.MIN_NAME_TABLE_SIZE;
 
 /**
  * Encodes RDF nodes native to the used RDF library (e.g., Apache Jena, RDF4J) into Jelly's protobuf objects.
