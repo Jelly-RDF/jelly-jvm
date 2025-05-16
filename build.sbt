@@ -348,9 +348,9 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   )
   .dependsOn(core % "compile->compile;test->test")
 
-lazy val stream = (project in file("stream"))
+lazy val stream = (project in file("pekko-stream"))
   .settings(
-    name := "jelly-pekko-streams",
+    name := "jelly-pekko-stream",
     description := "Utilities for using the Jelly RDF serialization format with Reactive Streams (via Apache Pekko).",
     libraryDependencies ++= Seq(
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
