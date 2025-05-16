@@ -1,8 +1,8 @@
-package eu.neverblink.jelly.stream
+package eu.neverblink.jelly.pekko.stream
 
 import eu.neverblink.jelly.core.JellyConverterFactory
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.jelly.stream.impl.EncoderFlowBuilderImpl
+import eu.neverblink.jelly.pekko.stream.impl.EncoderFlowBuilderImpl
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Flow
 

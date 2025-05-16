@@ -1,4 +1,4 @@
-package eu.neverblink.jelly.stream
+package eu.neverblink.jelly.pekko.stream
 
 import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.ProtoTestCases.*

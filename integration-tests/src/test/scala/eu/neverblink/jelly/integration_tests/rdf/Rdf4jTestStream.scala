@@ -3,7 +3,7 @@ package eu.neverblink.jelly.integration_tests.rdf
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory
 import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.neverblink.jelly.core.utils.GraphHolder
-import eu.neverblink.jelly.stream.*
+import eu.neverblink.jelly.pekko.stream.{DecoderFlow, EncoderFlow, SizeLimiter}
 import org.apache.pekko.Done
 import org.apache.pekko.stream.scaladsl.*
 import org.eclipse.rdf4j.model.{Statement, Value}

@@ -5,7 +5,7 @@ import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
 import eu.neverblink.jelly.integration_tests.*
 import eu.neverblink.jelly.integration_tests.rdf.util.Comparisons
-import eu.neverblink.jelly.stream.*
+import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, SizeLimiter, StreamRowCountLimiter}
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
 import org.apache.jena.sparql.core.DatasetGraph

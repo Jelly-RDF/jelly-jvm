@@ -1,4 +1,4 @@
-package eu.neverblink.jelly.stream.impl
+package eu.neverblink.jelly.pekko.stream.impl
 
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
 import org.apache.pekko.stream.scaladsl.*

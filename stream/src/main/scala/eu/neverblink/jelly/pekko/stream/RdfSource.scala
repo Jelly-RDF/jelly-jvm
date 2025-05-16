@@ -1,6 +1,6 @@
-package eu.neverblink.jelly.stream
+package eu.neverblink.jelly.pekko.stream
 
-import eu.neverblink.jelly.stream.impl.RdfSourceBuilderImpl
+import eu.neverblink.jelly.pekko.stream.impl.RdfSourceBuilderImpl
 
 /**
  * Utility object for creating RDF stream sources.

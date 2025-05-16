@@ -1,4 +1,4 @@
-package eu.neverblink.jelly.stream.impl
+package eu.neverblink.jelly.pekko.stream.impl
 
 import eu.neverblink.jelly.core.NamespaceDeclaration
 import eu.neverblink.jelly.core.utils.{DatasetAdapter, GraphAdapter, GraphHolder, NamespaceAdapter}

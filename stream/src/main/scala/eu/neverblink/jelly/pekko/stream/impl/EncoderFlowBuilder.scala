@@ -1,11 +1,11 @@
-package eu.neverblink.jelly.stream.impl
+package eu.neverblink.jelly.pekko.stream.impl
 
 import eu.neverblink.jelly.core.ProtoEncoder.Params
 import eu.neverblink.jelly.core.memory.{LazyImmutableRowBuffer, RowBuffer}
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{GraphHolder, QuadExtractor, TripleExtractor}
 import eu.neverblink.jelly.core.{JellyConverterFactory, NamespaceDeclaration, ProtoDecoderConverter, ProtoEncoder, ProtoEncoderConverter}
-import eu.neverblink.jelly.stream.SizeLimiter
+import eu.neverblink.jelly.pekko.stream.SizeLimiter
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.{Flow, Source}
 

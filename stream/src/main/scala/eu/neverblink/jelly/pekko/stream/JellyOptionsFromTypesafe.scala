@@ -1,4 +1,4 @@
-package eu.neverblink.jelly.stream
+package eu.neverblink.jelly.pekko.stream
 
 import com.typesafe.config.{Config, ConfigFactory}
 import eu.neverblink.jelly.core.proto.v1.{LogicalStreamType, PhysicalStreamType, RdfStreamOptions}

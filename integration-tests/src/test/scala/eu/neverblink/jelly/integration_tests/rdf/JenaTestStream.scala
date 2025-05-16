@@ -3,7 +3,7 @@ package eu.neverblink.jelly.integration_tests.rdf
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.neverblink.jelly.core.utils.{QuadExtractor, QuadMaker, TripleExtractor, TripleMaker}
-import eu.neverblink.jelly.stream.*
+import eu.neverblink.jelly.pekko.stream.{DecoderFlow, EncoderFlow, RdfSource, SizeLimiter}
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.system.AsyncParser
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}

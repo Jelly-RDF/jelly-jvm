@@ -1,4 +1,4 @@
-package eu.neverblink.jelly.stream
+package eu.neverblink.jelly.pekko.stream
 
 import eu.neverblink.jelly.core.ProtoTestCases.*
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamFrame}

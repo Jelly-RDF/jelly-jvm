@@ -2,11 +2,11 @@ package eu.neverblink.jelly.examples
 
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, given}
 import eu.neverblink.jelly.core.JellyOptions
-import eu.neverblink.jelly.stream.*
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import eu.neverblink.jelly.examples.shared.ScalaExample
+import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, EncoderFlow, JellyIo, RdfSource, StreamRowCountLimiter}
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.query.Dataset
 import org.apache.jena.rdf.model.Model
@@ -17,7 +17,7 @@ import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext}
 
 /**
- * Example of using the [[eu.neverblink.jelly.stream.RdfSource]] and [[eu.neverblink.jelly.stream.EncoderFlow]] 
+ * Example of using the [[RdfSource]] and [[EncoderFlow]]
  * utilities to encode single RDF graphs and datasets as Jelly streams.
  *
  * In this example we are using Apache Jena as the RDF library (note the import:

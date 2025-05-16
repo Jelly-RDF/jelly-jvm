@@ -3,7 +3,7 @@ package eu.neverblink.jelly.examples
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.examples.shared.ScalaExample
-import eu.neverblink.jelly.stream.*
+import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, EncoderFlow, RdfSource, StreamRowCountLimiter}
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
@@ -14,7 +14,7 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.jdk.CollectionConverters.*
 
 /**
- * Example of using the [[eu.neverblink.jelly.stream.EncoderFlow]] utility to encode RDF data as Jelly streams.
+ * Example of using the [[EncoderFlow]] utility to encode RDF data as Jelly streams.
  * 
  * Here, the RDF data is turned into a series of byte buffers, with each buffer corresponding to exactly one frame.
  * This is suitable if your streaming protocol (e.g., Kafka, MQTT, AMQP) already frames the messages.

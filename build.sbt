@@ -1,7 +1,3 @@
-// Scala 2 version used for meta-programming – transforming the generated proto classes.
-// Not used to compile any of the Jelly projects.
-lazy val scala2MetaVersion = "2.13.15"
-
 ThisBuild / scalaVersion := "3.3.6"
 ThisBuild / organization := "eu.neverblink.jelly"
 ThisBuild / homepage := Some(url("https://w3id.org/jelly/jelly-jvm"))
@@ -26,7 +22,6 @@ lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
 lazy val protobufV = "4.31.0"
 lazy val javapoetV = "0.7.0"
-
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
@@ -149,7 +144,6 @@ lazy val rdfProtos = (project in file("rdf-protos"))
   .enablePlugins(ProtobufPlugin)
   .settings(
     name := "jelly-protos",
-    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufV,
     ),
@@ -173,7 +167,6 @@ lazy val rdfProtos = (project in file("rdf-protos"))
 lazy val core = (project in file("core"))
   .settings(
     name := "jelly-core",
-    organization := "eu.neverblink.jelly",
     description := "Core code for serializing and deserializing RDF data in the Jelly format.",
     libraryDependencies ++= Seq(
       "com.google.protobuf" % "protobuf-java" % protobufV,
@@ -205,7 +198,6 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
   .enablePlugins(ProtobufPlugin)
   .settings(
     name := "jelly-core-protos-google",
-    organization := "eu.neverblink.jelly",
     description := "Optional proto classes for Jelly-RDF (rdf.proto) compiled with Google's " +
       "official Java protoc plugin. This is not needed, unless you need some functionality " +
       "that is only available with the more heavyweight, Google-style proto classes, like " +
@@ -221,7 +213,6 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
 lazy val corePatch = (project in file("core-patch"))
   .settings(
     name := "jelly-core-patch",
-    organization := "eu.neverblink.jelly",
     description := "Core code for the RDF Patch Jelly extension.",
     Compile / sourceGenerators += Def.task {
       // Copy from the managed source directory to the output directory
@@ -251,7 +242,6 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
   .enablePlugins(ProtobufPlugin)
   .settings(
     name := "jelly-core-patch-protos-google",
-    organization := "eu.neverblink.jelly",
     description := "Optional proto classes for Jelly-Patch (patch.proto) compiled with Google's " +
       "official Java protoc plugin. This is not needed, unless you need some functionality " +
       "that is only available with the more heavyweight, Google-style proto classes, like " +
@@ -267,7 +257,6 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
 lazy val jena = (project in file("jena"))
   .settings(
     name := "jelly-jena",
-    organization := "eu.neverblink.jelly",
     description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-core" % jenaV,
@@ -282,7 +271,6 @@ lazy val jena = (project in file("jena"))
 lazy val jenaPatch = (project in file("jena-patch"))
   .settings(
     name := "jelly-jena-patch",
-    organization := "eu.neverblink.jelly",
     description := "Jelly-Patch integration for Apache Jena.",
     libraryDependencies ++= Seq(
       "org.apache.jena" % "jena-rdfpatch" % jenaV,
@@ -313,7 +301,6 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
-    organization := "eu.neverblink.jelly",
     description := "Jelly parsers, serializers, and other utilities for RDF4J.",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
@@ -326,7 +313,6 @@ lazy val rdf4j = (project in file("rdf4j"))
 lazy val rdf4jPatch = (project in file("rdf4j-patch"))
   .settings(
     name := "jelly-rdf4j-patch",
-    organization := "eu.neverblink.jelly",
     description := "Jelly-Patch integration for RDF4J.",
     commonSettings,
   )
@@ -349,7 +335,6 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
 lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   .settings(
     name := "jelly-titanium-rdf-api",
-    organization := "eu.neverblink.jelly",
     description := "Implementation of the Titanium RDF API for Jelly-JVM. " +
       "See: https://github.com/filip26/titanium-rdf-api \n\n" +
       "If you are already using RDF4J or Jena, it's recommended to use their dedicated " +
@@ -366,7 +351,6 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
 lazy val stream = (project in file("stream"))
   .settings(
     name := "jelly-pekko-streams",
-    organization := "eu.neverblink.jelly",
     description := "Utilities for using the Jelly RDF serialization format with Reactive Streams (via Apache Pekko).",
     libraryDependencies ++= Seq(
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
@@ -382,7 +366,6 @@ lazy val integrationTests = (project in file("integration-tests"))
   .settings(
     publishArtifact := false,
     name := "jelly-integration-tests",
-    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
@@ -409,7 +392,6 @@ lazy val examples = (project in file("examples"))
   .settings(
     publishArtifact := false,
     name := "jelly-examples",
-    organization := "eu.neverblink.jelly",
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,

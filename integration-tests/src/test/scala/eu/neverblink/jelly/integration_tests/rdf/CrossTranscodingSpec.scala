@@ -4,7 +4,7 @@ import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory
 import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.RdfHandler.AnyStatementHandler
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.jelly.stream.*
+import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, SizeLimiter, StreamRowCountLimiter}
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.sparql.core.DatasetGraph

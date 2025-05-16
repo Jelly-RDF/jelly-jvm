@@ -1,6 +1,6 @@
-package eu.neverblink.jelly.stream
+package eu.neverblink.jelly.pekko.stream
 
-import eu.neverblink.jelly.stream.impl.JellyIoOps.*
+import eu.neverblink.jelly.pekko.stream.impl.JellyIoOps.*
 
 /**
  * Convenience methods for working with Jelly over IO streams.

@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.integration_tests.rdf
 
 import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
-import eu.neverblink.jelly.stream.*
+import eu.neverblink.jelly.pekko.stream.SizeLimiter
 import org.apache.pekko.stream.scaladsl.*
 import org.apache.pekko.{Done, NotUsed}
 

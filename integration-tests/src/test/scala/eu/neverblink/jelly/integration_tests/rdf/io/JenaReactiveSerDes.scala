@@ -3,7 +3,7 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
-import eu.neverblink.jelly.stream.*
+import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, EncoderFlow, JellyIo, RdfSource}
 import org.apache.jena.query.Dataset
 import org.apache.jena.rdf.model.Model
 import org.apache.pekko.stream.Materializer
