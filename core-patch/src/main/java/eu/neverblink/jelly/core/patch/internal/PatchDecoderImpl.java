@@ -1,5 +1,7 @@
 package eu.neverblink.jelly.core.patch.internal;
 
+import static eu.neverblink.jelly.core.internal.BaseJellyOptions.*;
+
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.DecoderBase;
 import eu.neverblink.jelly.core.internal.LastNodeHolder;
@@ -37,7 +39,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     @Override
     protected int getNameTableSize() {
         if (currentOptions == null) {
-            return JellyOptions.SMALL_NAME_TABLE_SIZE;
+            return SMALL_NAME_TABLE_SIZE;
         }
 
         return currentOptions.getMaxNameTableSize();
@@ -46,7 +48,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     @Override
     protected int getPrefixTableSize() {
         if (currentOptions == null) {
-            return JellyOptions.SMALL_PREFIX_TABLE_SIZE;
+            return SMALL_PREFIX_TABLE_SIZE;
         }
 
         return currentOptions.getMaxPrefixTableSize();
@@ -55,7 +57,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     @Override
     protected int getDatatypeTableSize() {
         if (currentOptions == null) {
-            return JellyOptions.SMALL_DT_TABLE_SIZE;
+            return SMALL_DT_TABLE_SIZE;
         }
 
         return currentOptions.getMaxDatatypeTableSize();

@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core.internal;
 
 import static eu.neverblink.jelly.core.JellyOptions.*;
+import static eu.neverblink.jelly.core.internal.BaseJellyOptions.*;
 
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;

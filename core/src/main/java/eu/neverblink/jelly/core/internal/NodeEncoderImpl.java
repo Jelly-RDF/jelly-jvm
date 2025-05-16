@@ -1,5 +1,7 @@
 package eu.neverblink.jelly.core.internal;
 
+import static eu.neverblink.jelly.core.internal.BaseJellyOptions.MIN_NAME_TABLE_SIZE;
+
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.proto.v1.*;
 import java.util.LinkedHashMap;
@@ -100,11 +102,11 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             prefixLookup = null;
             iriNodeCache = null;
         }
-        if (nameTableSize < JellyOptions.MIN_NAME_TABLE_SIZE) {
+        if (nameTableSize < MIN_NAME_TABLE_SIZE) {
             throw new RdfProtoSerializationError(
                 "Requested name table size of %d is too small. The minimum is %d.".formatted(
                         nameTableSize,
-                        JellyOptions.MIN_NAME_TABLE_SIZE
+                        MIN_NAME_TABLE_SIZE
                     )
             );
         }
