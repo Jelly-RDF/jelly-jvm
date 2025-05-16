@@ -12,7 +12,7 @@ The module also implements the {{ javadoc_link_pretty('core', 'IterableAdapter')
 
 `jelly-jena` implements an RDF writer and reader for [Apache Jena's RIOT library](https://jena.apache.org/documentation/io/). This means you can use Jelly just like, for example, Turtle or RDF/XML. See the example below:
 
-{{ code_example('JenaRiot.scala') }}
+{{ code_example('JenaRiot.java') }}
 
 Usage notes:
 
@@ -25,7 +25,7 @@ Usage notes:
 
 `jelly-jena` also implements a streaming writer ([`StreamRDF` API in Jena](https://jena.apache.org/documentation/io/streaming-io.html)). Using it is similar to the regular RIOT writer, with a slightly different setup:
 
-{{ code_example('JenaRiotStreaming.scala') }}
+{{ code_example('JenaRiotStreaming.java') }}
 
 
 ## See also

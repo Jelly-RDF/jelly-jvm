@@ -1,21 +1,16 @@
-package eu.ostrzyciel.jelly.examples;
+package eu.neverblink.jelly.examples;
 
 import com.apicatalog.rdf.nquads.NQuadsReader;
 import com.apicatalog.rdf.nquads.NQuadsWriter;
-import eu.ostrzyciel.jelly.convert.titanium.TitaniumJellyReader;
-import eu.ostrzyciel.jelly.convert.titanium.TitaniumJellyWriter;
-import eu.ostrzyciel.jelly.examples.shared.Example;
+import eu.neverblink.jelly.convert.titanium.TitaniumJellyReader;
+import eu.neverblink.jelly.convert.titanium.TitaniumJellyWriter;
+import eu.neverblink.jelly.examples.shared.Example;
 import java.io.*;
-import java.net.URISyntaxException;
 
 public class TitaniumRdfApi implements Example {
 
-    public static void main(String[] args) {
-        try {
-            new TitaniumRdfApi().run(args);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void main(String[] args) throws Exception {
+        new TitaniumRdfApi().run(args);
     }
 
     public void run(String[] args) throws Exception {
