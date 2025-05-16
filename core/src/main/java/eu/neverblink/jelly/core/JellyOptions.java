@@ -1,5 +1,7 @@
 package eu.neverblink.jelly.core;
 
+import static eu.neverblink.jelly.core.internal.BaseJellyOptions.*;
+
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils;
@@ -11,19 +13,6 @@ import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils;
 public class JellyOptions {
 
     private JellyOptions() {}
-
-    public static final int BIG_NAME_TABLE_SIZE = 4000;
-    public static final int BIG_PREFIX_TABLE_SIZE = 150;
-    public static final int BIG_DT_TABLE_SIZE = 32;
-
-    public static final int SMALL_NAME_TABLE_SIZE = 128;
-    public static final int SMALL_PREFIX_TABLE_SIZE = 16;
-    public static final int SMALL_DT_TABLE_SIZE = 16;
-
-    /**
-     * Minimum size of the name table, according to the spec.
-     */
-    public static final int MIN_NAME_TABLE_SIZE = 8;
 
     /**
      * "Big" preset suitable for high-volume streams and larger machines.
@@ -165,92 +154,8 @@ public class JellyOptions {
      * @throws RdfProtoDeserializationError if the requested options are not supported.
      */
     public static void checkCompatibility(RdfStreamOptions requestedOptions, RdfStreamOptions supportedOptions) {
-        checkBaseCompatibility(requestedOptions, supportedOptions);
+        checkBaseCompatibility(requestedOptions, supportedOptions, JellyConstants.PROTO_VERSION);
         checkLogicalStreamType(requestedOptions, supportedOptions.getLogicalType());
-    }
-
-    /**
-     * Check if the requested options are compatible with the supported options and the system.
-     *
-     * @param requestedOptions requested options
-     * @param supportedOptions supported options
-     *
-     * @throws RdfProtoDeserializationError on validation error
-     */
-    private static void checkBaseCompatibility(RdfStreamOptions requestedOptions, RdfStreamOptions supportedOptions) {
-        if (
-            requestedOptions.getVersion() > supportedOptions.getVersion() ||
-            requestedOptions.getVersion() > JellyConstants.PROTO_VERSION
-        ) {
-            throw new RdfProtoDeserializationError(
-                "Unsupported proto version: %s. Was expecting at most version %s. This library version supports up to version %s.".formatted(
-                        requestedOptions.getVersion(),
-                        supportedOptions.getVersion(),
-                        JellyConstants.PROTO_VERSION
-                    )
-            );
-        }
-        if (requestedOptions.getGeneralizedStatements() && !supportedOptions.getGeneralizedStatements()) {
-            throw new RdfProtoDeserializationError(
-                "The stream uses generalized statements, which are not supported. " +
-                "Either disable generalized statements or enable them in the supportedOptions."
-            );
-        }
-        if (requestedOptions.getRdfStar() && !supportedOptions.getRdfStar()) {
-            throw new RdfProtoDeserializationError(
-                "The stream uses RDF-star, which is not supported. " +
-                "Either disable RDF-star or enable it in the supportedOptions."
-            );
-        }
-
-        checkTableSize(
-            "Name",
-            requestedOptions.getMaxNameTableSize(),
-            supportedOptions.getMaxNameTableSize(),
-            MIN_NAME_TABLE_SIZE
-        );
-        checkTableSize("Prefix", requestedOptions.getMaxPrefixTableSize(), supportedOptions.getMaxPrefixTableSize());
-        checkTableSize(
-            "Datatype",
-            requestedOptions.getMaxDatatypeTableSize(),
-            supportedOptions.getMaxDatatypeTableSize()
-        );
-    }
-
-    /**
-     * Checks if the table size is within the supported range.
-     *
-     * @param name Name of the table (for error messages).
-     * @param size Size of the table.
-     * @param supportedSize Maximum supported size of the table.
-     * @param minSize Minimum supported size of the table.
-     *
-     * @throws RdfProtoDeserializationError if the table size is not within the supported range.
-     */
-    @InternalApi
-    public static void checkTableSize(String name, int size, int supportedSize, int minSize) {
-        if (size > supportedSize) {
-            throw new RdfProtoDeserializationError(
-                "The stream uses a %s table size of %s, which is larger than the maximum supported size of %s.".formatted(
-                        name.toLowerCase(),
-                        size,
-                        supportedSize
-                    )
-            );
-        }
-        if (size < minSize) {
-            throw new RdfProtoDeserializationError(
-                "The stream uses a %s table size of %s, which is smaller than the minimum supported size of %s.".formatted(
-                        name.toLowerCase(),
-                        size,
-                        minSize
-                    )
-            );
-        }
-    }
-
-    public static void checkTableSize(String name, int size, int supportedSize) {
-        checkTableSize(name, size, supportedSize, 0);
     }
 
     /**

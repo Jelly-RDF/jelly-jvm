@@ -8,11 +8,13 @@ implements_RdfGraphStart=eu.neverblink.jelly.core.internal.proto.GraphBase,
 implements_RdfGraphStart.Mutable=eu.neverblink.jelly.core.internal.proto.GraphBase.Setters,
 implements_RdfNamespaceDeclaration=eu.neverblink.jelly.core.internal.proto.NsBase,
 implements_RdfNamespaceDeclaration.Mutable=eu.neverblink.jelly.core.internal.proto.NsBase.Setters,
+implements_RdfStreamOptions=eu.neverblink.jelly.core.internal.proto.OptionsBase,
 implements_RdfPatchNamespace=eu.neverblink.jelly.core.internal.proto.NsBase;
     eu.neverblink.jelly.core.internal.proto.GraphBase,
 implements_RdfPatchNamespace.Mutable=eu.neverblink.jelly.core.internal.proto.NsBase.Setters;
     eu.neverblink.jelly.core.internal.proto.GraphBase.Setters,
 implements_RdfPatchHeader=eu.neverblink.jelly.core.internal.proto.HeaderBase,
 implements_RdfPatchHeader.Mutable=eu.neverblink.jelly.core.internal.proto.HeaderBase.Setters,
+implements_RdfPatchOptions=eu.neverblink.jelly.core.internal.proto.OptionsBase,
 fast_oneof_merge=RdfStreamRow,
 replace_package=eu.ostrzyciel=eu.neverblink

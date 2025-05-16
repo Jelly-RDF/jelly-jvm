@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.patch;
 
-import static eu.neverblink.jelly.core.JellyOptions.checkTableSize;
+import static eu.neverblink.jelly.core.internal.BaseJellyOptions.checkBaseCompatibility;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyOptions;
@@ -75,7 +75,7 @@ public class JellyPatchOptions {
      * @throws RdfProtoDeserializationError on validation error
      */
     public static void checkCompatibility(RdfPatchOptions requestedOptions, RdfPatchOptions supportedOptions) {
-        checkBaseCompatibility(requestedOptions, supportedOptions);
+        checkBaseCompatibility(requestedOptions, supportedOptions, JellyPatchConstants.PROTO_VERSION);
 
         if (requestedOptions.getStreamType() == PatchStreamType.UNSPECIFIED) {
             throw new RdfProtoDeserializationError(
@@ -95,51 +95,6 @@ public class JellyPatchOptions {
                 )
             );
         }
-    }
-
-    /**
-     * Check if the requested options are compatible with the supported options and the system.
-     *
-     * @param requestedOptions requested options
-     * @param supportedOptions supported options
-     *
-     * @throws RdfProtoDeserializationError on validation error
-     */
-    private static void checkBaseCompatibility(RdfPatchOptions requestedOptions, RdfPatchOptions supportedOptions) {
-        // TODO: This method copies logic of JellyOptions. Both options (RdfStreamOptions and RdfPatchOptions) should be
-        //  merged under a common interface.
-        if (
-            requestedOptions.getVersion() > supportedOptions.getVersion() ||
-            requestedOptions.getVersion() > JellyPatchConstants.PROTO_VERSION
-        ) {
-            throw new RdfProtoDeserializationError(
-                "Unsupported proto version: %s. Was expecting at most version %s. This library version supports up to version %s.".formatted(
-                        requestedOptions.getVersion(),
-                        supportedOptions.getVersion(),
-                        JellyPatchConstants.PROTO_VERSION
-                    )
-            );
-        }
-        if (requestedOptions.getGeneralizedStatements() && !supportedOptions.getGeneralizedStatements()) {
-            throw new RdfProtoDeserializationError(
-                "The stream uses generalized statements, which are not supported. " +
-                "Either disable generalized statements or enable them in the supportedOptions."
-            );
-        }
-        if (requestedOptions.getRdfStar() && !supportedOptions.getRdfStar()) {
-            throw new RdfProtoDeserializationError(
-                "The stream uses RDF-star, which is not supported. " +
-                "Either disable RDF-star or enable it in the supportedOptions."
-            );
-        }
-
-        checkTableSize("Name", requestedOptions.getMaxNameTableSize(), supportedOptions.getMaxNameTableSize(), 8);
-        checkTableSize("Prefix", requestedOptions.getMaxPrefixTableSize(), supportedOptions.getMaxPrefixTableSize());
-        checkTableSize(
-            "Datatype",
-            requestedOptions.getMaxDatatypeTableSize(),
-            supportedOptions.getMaxDatatypeTableSize()
-        );
     }
 
     /**

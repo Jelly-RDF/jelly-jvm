@@ -5,6 +5,8 @@ import eu.neverblink.jelly.core.proto.v1.*;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
+import static eu.neverblink.jelly.core.internal.BaseJellyOptions.MIN_NAME_TABLE_SIZE;
+
 /**
  * Encodes RDF nodes native to the used RDF library (e.g., Apache Jena, RDF4J) into Jelly's protobuf objects.
  * This class performs a lot of caching to avoid encoding the same node multiple times. It is absolutely NOT
@@ -100,11 +102,11 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             prefixLookup = null;
             iriNodeCache = null;
         }
-        if (nameTableSize < JellyOptions.MIN_NAME_TABLE_SIZE) {
+        if (nameTableSize < MIN_NAME_TABLE_SIZE) {
             throw new RdfProtoSerializationError(
                 "Requested name table size of %d is too small. The minimum is %d.".formatted(
                         nameTableSize,
-                        JellyOptions.MIN_NAME_TABLE_SIZE
+                        MIN_NAME_TABLE_SIZE
                     )
             );
         }
