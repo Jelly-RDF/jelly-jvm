@@ -26,7 +26,7 @@ lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
 // !! When updating ScalaPB also change the version of the plugin in plugins.sbt
 lazy val scalapbV = "0.11.17"
-lazy val protobufV = "4.30.2"
+lazy val protobufV = "4.31.0"
 lazy val javapoetV = "0.7.0"
 
 // Dependencies used for subprojects that generate Scala code from protobuf files
