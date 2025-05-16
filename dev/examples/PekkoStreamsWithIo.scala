@@ -3,7 +3,7 @@ package eu.neverblink.jelly.examples
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.examples.shared.ScalaExample
-import eu.neverblink.jelly.stream.*
+import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, DecoderFlow, EncoderFlow, JellyIo}
 import org.apache.jena.graph.Triple
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
