@@ -371,36 +371,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start-scala-apache-jena" class="md-nav__link">
+  <a href="#quick-start-apache-jena" class="md-nav__link">
     <span class="md-ellipsis">
-      Quick start – Scala &amp; Apache Jena
+      Quick start – Apache Jena
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start-java-titanium-rdf-api" class="md-nav__link">
+  <a href="#quick-start-titanium-rdf-api" class="md-nav__link">
     <span class="md-ellipsis">
-      Quick start – Java &amp; Titanium RDF API
+      Quick start – Titanium RDF API
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#rdf-streams" class="md-nav__link">
+  <a href="#rdf-pekko-streams" class="md-nav__link">
     <span class="md-ellipsis">
-      RDF streams
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#grpc-streaming" class="md-nav__link">
-    <span class="md-ellipsis">
-      gRPC streaming
+      RDF Pekko Streams
     </span>
   </a>
   
@@ -966,36 +957,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start-scala-apache-jena" class="md-nav__link">
+  <a href="#quick-start-apache-jena" class="md-nav__link">
     <span class="md-ellipsis">
-      Quick start – Scala &amp; Apache Jena
+      Quick start – Apache Jena
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start-java-titanium-rdf-api" class="md-nav__link">
+  <a href="#quick-start-titanium-rdf-api" class="md-nav__link">
     <span class="md-ellipsis">
-      Quick start – Java &amp; Titanium RDF API
+      Quick start – Titanium RDF API
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#rdf-streams" class="md-nav__link">
+  <a href="#rdf-pekko-streams" class="md-nav__link">
     <span class="md-ellipsis">
-      RDF streams
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#grpc-streaming" class="md-nav__link">
-    <span class="md-ellipsis">
-      gRPC streaming
+      RDF Pekko Streams
     </span>
   </a>
   
@@ -1054,134 +1036,247 @@
 
 <h1 id="jelly-jvm-getting-started-for-developers">Jelly-JVM – getting started for developers</h1>
 <p><em>If you don't want to code anything and only use Jelly with your Apache Jena/RDF4J application, see <a href="../getting-started-plugins/">the dedicated guide</a> about using Jelly-JVM as a plugin.</em></p>
-<p>This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. Jelly-JVM is written in Scala, but it <a href="#quick-start-java-titanium-rdf-api">can be used from Java as well</a>.</p>
-<h2 id="quick-start-scala-apache-jena">Quick start – Scala &amp; Apache Jena</h2>
+<p>This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. The core of Jelly-JVM is written in Java, but the reactive streaming module for Apache Pekko <a href="../user/reactive/">is written entirely in Scala</a>, along with unit and integration tests.</p>
+<h2 id="quick-start-apache-jena">Quick start – Apache Jena</h2>
 <p>Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: <code>jelly-jena</code>, <code>jelly-rdf4j</code>, <a href="../user/titanium/"><code>jelly-titanium-rdf-api</code></a><sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. In our examples we will use Jena, so let's add this to your <code>build.sbt</code> file:</p>
-<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;2.10.3&quot;</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">libraryDependencies</span><span class="w"> </span><span class="o">++=</span><span class="w"> </span><span class="nc">Seq</span><span class="p">(</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="s">&quot;eu.ostrzyciel.jelly&quot;</span><span class="w"> </span><span class="o">%%</span><span class="w"> </span><span class="s">&quot;jelly-jena&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Maven</label><label for="__tabbed_1_2">Gradle</label><label for="__tabbed_1_3">SBT</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-xml highlight"><span class="filename">pom.xml</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">&lt;dependency&gt;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>eu.neverblink.jelly<span class="nt">&lt;/groupId&gt;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jelly-jena<span class="nt">&lt;/artifactId&gt;</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>2.10.3<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
-<p>If you are working with Maven, add this to your <code>pom.xml</code>:</p>
-<div class="language-xml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">&lt;dependency&gt;</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>eu.ostrzyciel.jelly<span class="nt">&lt;/groupId&gt;</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jelly-jena_3<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>2.10.3<span class="nt">&lt;/version&gt;</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nt">&lt;/dependency&gt;</span>
+</div>
+<div class="tabbed-block">
+<div class="language-groovy highlight"><span class="filename">build.gradle</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">dependencies</span><span class="w"> </span><span class="o">{</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="n">implementation</span><span class="w"> </span><span class="s2">&quot;eu.neverblink.jelly:jelly-jena:${jellyVersion}&quot;</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="o">}</span>
 </span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;2.10.3&quot;</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">libraryDependencies</span><span class="w"> </span><span class="o">++=</span><span class="w"> </span><span class="nc">Seq</span><span class="p">(</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="s">&quot;eu.neverblink.jelly&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="s">&quot;jelly-jena&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
 <p>Now you can serialize/deserialize Jelly data with Apache Jena. Jelly is fully integrated with Jena, so it should all just magically work. Here is a simple example of reading a <code>.jelly</code> file (in this case, a metadata file from <a href="https://w3id.org/riverbench/">RiverBench</a>) with <a href="https://jena.apache.org/documentation/io/">RIOT</a>:</p>
-<div class="language-scala highlight"><span class="filename">Deserialization example (Scala 3)</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="n">*</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="nc">RDFDataMgr</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1">// Load an RDF graph from a Jelly file</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="kd">val</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">RDFDataMgr</span><span class="p">.</span><span class="n">loadModel</span><span class="p">(</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="s">&quot;https://w3id.org/riverbench/v/2.0.1.jelly&quot;</span><span class="p">,</span><span class="w"> </span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span><span class="nc">JellyLanguage</span><span class="p">.</span><span class="nc">JELLY</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">)</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="c1">// Print the size of the model</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">println</span><span class="p">(</span><span class="s">s&quot;Loaded an RDF graph with </span><span class="si">${</span><span class="n">model</span><span class="p">.</span><span class="n">size</span><span class="si">}</span><span class="s"> triples&quot;</span><span class="p">)</span>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Java</label><label for="__tabbed_2_2">Scala</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-java highlight"><span class="filename">Deserialization example (Java)</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">eu.neverblink.jelly.convert.jena.riot.JellyLanguage</span><span class="p">;</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.jena.rdf.model.Model</span><span class="p">;</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.jena.riot.RDFDataMgr</span><span class="p">;</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1">// Load an RDF graph from a Jelly file</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">Model</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RDFDataMgr</span><span class="p">.</span><span class="na">loadModel</span><span class="p">(</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="s">&quot;https://w3id.org/riverbench/v/2.0.1.jelly&quot;</span><span class="p">,</span><span class="w"> </span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="n">JellyLanguage</span><span class="p">.</span><span class="na">JELLY</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">);</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1">// Print the size of the model</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;Loaded an RDF graph with &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">model</span><span class="p">.</span><span class="na">size</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">&quot; triples&quot;</span><span class="p">);</span>
 </span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-scala highlight"><span class="filename">Deserialization example (Scala 3)</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">neverblink</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="nc">RDFDataMgr</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1">// Load an RDF graph from a Jelly file</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kd">val</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">RDFDataMgr</span><span class="p">.</span><span class="n">loadModel</span><span class="p">(</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="s">&quot;https://w3id.org/riverbench/v/2.0.1.jelly&quot;</span><span class="p">,</span><span class="w"> </span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="nc">JellyLanguage</span><span class="p">.</span><span class="nc">JELLY</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">)</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1">// Print the size of the model</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">println</span><span class="p">(</span><span class="s">s&quot;Loaded an RDF graph with </span><span class="si">${</span><span class="n">model</span><span class="p">.</span><span class="n">size</span><span class="si">}</span><span class="s"> triples&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
 <p>Serialization is just as easy:</p>
-<div class="language-scala highlight"><span class="filename">Serialization example (Scala 3)</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="n">*</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="nc">RDFDataMgr</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">import</span><span class="w"> </span><span class="nn">java</span><span class="p">.</span><span class="nn">io</span><span class="p">.</span><span class="nc">FileOutputStream</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">import</span><span class="w"> </span><span class="nn">scala</span><span class="p">.</span><span class="nn">util</span><span class="p">.</span><span class="nc">Using</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1">// Omitted here: creating an RDF model.</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1">// You can use the one from the previous example.</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="nc">Using</span><span class="p">.</span><span class="n">resource</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="nc">FileOutputStream</span><span class="p">(</span><span class="s">&quot;metadata.jelly&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">=&gt;</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span><span class="c1">// Write the model to a Jelly file</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span><span class="nc">RDFDataMgr</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="nc">JellyLanguage</span><span class="p">.</span><span class="nc">JELLY</span><span class="p">)</span>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span><span class="n">println</span><span class="p">(</span><span class="s">&quot;Saved the model to metadata.jelly&quot;</span><span class="p">)</span>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">}</span>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Java</label><label for="__tabbed_3_2">Scala</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-java highlight"><span class="filename">Serialization example (Java)</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">eu.neverblink.jelly.convert.jena.riot.JellyLanguage</span><span class="p">;</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.jena.rdf.model.Model</span><span class="p">;</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.jena.riot.RDFDataMgr</span><span class="p">;</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">java.io.FileOutputStream</span><span class="p">;</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1">// Omitted here: creating an RDF model.</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1">// You can use the one from the previous example.</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="k">try</span><span class="w"> </span><span class="p">(</span><span class="n">FileOutputStream</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">FileOutputStream</span><span class="p">(</span><span class="s">&quot;metadata.jelly&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">  </span><span class="c1">// Write the model to a Jelly file</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span><span class="n">RDFDataMgr</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="n">JellyLanguage</span><span class="p">.</span><span class="na">JELLY</span><span class="p">);</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;Saved the model to metadata.jelly&quot;</span><span class="p">);</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="p">}</span>
 </span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-scala highlight"><span class="filename">Serialization example (Scala 3)</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">neverblink</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="nc">RDFDataMgr</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">import</span><span class="w"> </span><span class="nn">java</span><span class="p">.</span><span class="nn">io</span><span class="p">.</span><span class="nc">FileOutputStream</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">import</span><span class="w"> </span><span class="nn">scala</span><span class="p">.</span><span class="nn">util</span><span class="p">.</span><span class="nc">Using</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">// Omitted here: creating an RDF model.</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1">// You can use the one from the previous example.</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="nc">Using</span><span class="p">.</span><span class="n">resource</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="nc">FileOutputStream</span><span class="p">(</span><span class="s">&quot;metadata.jelly&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">=&gt;</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">  </span><span class="c1">// Write the model to a Jelly file</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span><span class="nc">RDFDataMgr</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="nc">JellyLanguage</span><span class="p">.</span><span class="nc">JELLY</span><span class="p">)</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">  </span><span class="n">println</span><span class="p">(</span><span class="s">&quot;Saved the model to metadata.jelly&quot;</span><span class="p">)</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="p">}</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
 <p><a href="../user/jena/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Use Jelly-JVM with Apache Jena</a></p>
 <p><a href="../user/rdf4j/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Use Jelly-JVM with RDF4J</a></p>
 <p><a href="../user/titanium/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Use Jelly-JVM with Titanium RDF API</a></p>
-<h2 id="quick-start-java-titanium-rdf-api">Quick start – Java &amp; Titanium RDF API</h2>
+<h2 id="quick-start-titanium-rdf-api">Quick start – Titanium RDF API</h2>
 <p>If you aren't using a big RDF library like Jena or RDF4J, the simplest way to get started is to use the <a href="../user/titanium/">Titanium RDF API</a>:</p>
-<div class="language-xml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">&lt;dependency&gt;</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>eu.ostrzyciel.jelly<span class="nt">&lt;/groupId&gt;</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jelly-titanium-rdf-api_3<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>2.10.3<span class="nt">&lt;/version&gt;</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nt">&lt;/dependency&gt;</span>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:3"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Maven</label><label for="__tabbed_4_2">Gradle</label><label for="__tabbed_4_3">SBT</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-xml highlight"><span class="filename">pom.xml</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">&lt;dependency&gt;</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>eu.neverblink.jelly<span class="nt">&lt;/groupId&gt;</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jelly-titanium-rdf-api<span class="nt">&lt;/artifactId&gt;</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>2.10.3<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-groovy highlight"><span class="filename">build.gradle</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">dependencies</span><span class="w"> </span><span class="o">{</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="n">implementation</span><span class="w"> </span><span class="s2">&quot;eu.neverblink.jelly:jelly-titanium-rdf-api:${jellyVersion}&quot;</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="o">}</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;2.10.3&quot;</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">libraryDependencies</span><span class="w"> </span><span class="o">++=</span><span class="w"> </span><span class="nc">Seq</span><span class="p">(</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="s">&quot;eu.neverblink.jelly&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="s">&quot;jelly-titanium-rdf-api&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
 <p>You can write a Jelly file like this, using the simple <code>RdfQuadConsumer</code> interface:</p>
-<div class="language-java highlight"><span class="filename">Titanium writer example (Java)</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">var</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TitaniumJellyWriter</span><span class="p">.</span><span class="na">factory</span><span class="p">(</span><span class="n">outputStream</span><span class="p">);</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">writer</span><span class="p">.</span><span class="na">quad</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span><span class="w"> </span><span class="n">predicate</span><span class="p">,</span><span class="w"> </span><span class="n">object</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+<div class="language-java highlight"><span class="filename">Titanium writer example (Java)</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kd">var</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TitaniumJellyWriter</span><span class="p">.</span><span class="na">factory</span><span class="p">(</span><span class="n">outputStream</span><span class="p">);</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">writer</span><span class="p">.</span><span class="na">quad</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span><span class="w"> </span><span class="n">predicate</span><span class="p">,</span><span class="w"> </span><span class="n">object</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
 </span></code></pre></div>
 <p>Where <code>outputStream</code> is a Java <code>OutputStream</code> hooked up to, for example, a file on disk.</p>
 <p>And read it like this, pointing the reader to an <code>RdfQuadConsumer</code>:</p>
-<div class="language-java highlight"><span class="filename">Titanium reader example (Java)</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">var</span><span class="w"> </span><span class="n">reader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TitaniumJellyReader</span><span class="p">.</span><span class="na">factory</span><span class="p">();</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">reader</span><span class="p">.</span><span class="na">parseAll</span><span class="p">(</span><span class="n">quadConsumer</span><span class="p">,</span><span class="w"> </span><span class="n">inputStream</span><span class="p">);</span>
+<div class="language-java highlight"><span class="filename">Titanium reader example (Java)</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kd">var</span><span class="w"> </span><span class="n">reader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TitaniumJellyReader</span><span class="p">.</span><span class="na">factory</span><span class="p">();</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">reader</span><span class="p">.</span><span class="na">parseAll</span><span class="p">(</span><span class="n">quadConsumer</span><span class="p">,</span><span class="w"> </span><span class="n">inputStream</span><span class="p">);</span>
 </span></code></pre></div>
 <p>In this way, you can simply convert between Jelly, <a href="https://github.com/filip26/titanium-json-ld">JSON-LD</a>, <a href="https://github.com/filip26/iridium-cbor-ld">CBOR-LD</a>, <a href="https://github.com/filip26/titanium-rdf-n-quads">N-Quads</a> and other libraries supporting the <code>RdfQuadConsumer</code> interface.</p>
 <p><a href="../user/titanium/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> More on using Jelly-JVM with Titanium RDF API</a></p>
-<h2 id="rdf-streams">RDF streams</h2>
-<p>Now, the real power of Jelly lies in its streaming capabilities. Not only can it stream individual RDF triples/quads (this is called <a href="https://w3id.org/stax/dev/taxonomy/#flat-rdf-stream"><em>flat streaming</em></a>), but it can also very effectively handle streams of RDF graphs or datasets. To work with streams, you need to use the <code>jelly-stream</code> module, which is based on the <a href="https://pekko.apache.org/docs/pekko/current/stream/index.html">Apache Pekko Streams</a> library. So, let's update our dependencies:</p>
-<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;2.10.3&quot;</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">libraryDependencies</span><span class="w"> </span><span class="o">++=</span><span class="w"> </span><span class="nc">Seq</span><span class="p">(</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="s">&quot;eu.ostrzyciel.jelly&quot;</span><span class="w"> </span><span class="o">%%</span><span class="w"> </span><span class="s">&quot;jelly-jena&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="s">&quot;eu.ostrzyciel.jelly&quot;</span><span class="w"> </span><span class="o">%%</span><span class="w"> </span><span class="s">&quot;jelly-stream&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">)</span>
+<h2 id="rdf-pekko-streams">RDF Pekko Streams</h2>
+<p>Now, the real power of Jelly lies in its streaming capabilities. Not only can it stream individual RDF triples/quads (this is called <a href="https://w3id.org/stax/dev/taxonomy/#flat-rdf-stream"><em>flat streaming</em></a>), but it can also very effectively handle streams of RDF graphs or datasets. To work with streams, you need to use the <code>jelly-pekko-stream</code> module, which is based on the <a href="https://pekko.apache.org/docs/pekko/current/stream/index.html">Apache Pekko Streams</a> library. So, let's update our dependencies:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:3"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><input id="__tabbed_5_3" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Maven</label><label for="__tabbed_5_2">Gradle</label><label for="__tabbed_5_3">SBT</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-xml highlight"><span class="filename">pom.xml</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">&lt;dependency&gt;</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>eu.neverblink.jelly<span class="nt">&lt;/groupId&gt;</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jelly-pekko-stream_3<span class="nt">&lt;/artifactId&gt;</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>2.10.3<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-groovy highlight"><span class="filename">build.gradle</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">dependencies</span><span class="w"> </span><span class="o">{</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="n">implementation</span><span class="w"> </span><span class="s2">&quot;eu.neverblink.jelly:jelly-pekko-stream_3:${jellyVersion}&quot;</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="o">}</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;2.10.3&quot;</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">libraryDependencies</span><span class="w"> </span><span class="o">++=</span><span class="w"> </span><span class="nc">Seq</span><span class="p">(</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="s">&quot;eu.neverblink.jelly&quot;</span><span class="w"> </span><span class="o">%%</span><span class="w"> </span><span class="s">&quot;jelly-jena&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span><span class="s">&quot;eu.neverblink.jelly&quot;</span><span class="w"> </span><span class="o">%%</span><span class="w"> </span><span class="s">&quot;jelly-pekko-stream&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="p">)</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
 <p>Now, let's say we have a stream of RDF graphs – for example each graph corresponds to one set of measurements from an IoT sensor. We want to have a stream that turns these graphs into their serialized representations (byte arrays), which we can then send over the network. Here is how to do it:</p>
-<div class="language-scala highlight"><span class="filename">Reactive streaming example (Scala 3)</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// We need to import &quot;jena.given&quot; for Jena-to-Jelly conversions</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="k">given</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="n">*</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nc">JellyOptions</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">ostrzyciel</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">stream</span><span class="p">.</span><span class="n">*</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="nc">RDFDataMgr</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">pekko</span><span class="p">.</span><span class="nn">actor</span><span class="p">.</span><span class="nc">ActorSystem</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">pekko</span><span class="p">.</span><span class="nn">stream</span><span class="p">.</span><span class="nn">scaladsl</span><span class="p">.</span><span class="n">*</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="k">import</span><span class="w"> </span><span class="nn">scala</span><span class="p">.</span><span class="nn">concurrent</span><span class="p">.</span><span class="nc">ExecutionContext</span>
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
-</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="c1">// We will need a Pekko actor system to run the streams</span>
-</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="k">given</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">:</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="p">()</span>
-</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1">// And an execution context for the futures</span>
-</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="k">given</span><span class="w"> </span><span class="nc">ExecutionContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">.</span><span class="n">getDispatcher</span>
-</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
-</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="c1">// Load an RDF graph for testing</span>
-</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="kd">val</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">RDFDataMgr</span><span class="p">.</span><span class="n">loadModel</span><span class="p">(</span>
-</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">  </span><span class="s">&quot;https://w3id.org/riverbench/v/2.0.1.jelly&quot;</span><span class="p">,</span><span class="w"> </span>
-</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">  </span><span class="nc">JellyLanguage</span><span class="p">.</span><span class="nc">JELLY</span>
-</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="p">)</span>
-</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>
-</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="nc">Source</span><span class="p">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="w"> </span><span class="c1">// Create a stream of the same model over and over</span>
-</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">  </span><span class="p">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w"> </span><span class="c1">// Take only the first 10 elements in the stream</span>
-</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="w">  </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="n">_</span><span class="p">.</span><span class="n">asTriples</span><span class="p">)</span><span class="w"> </span><span class="c1">// Convert each model to an iterable of triples</span>
-</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="w">  </span><span class="p">.</span><span class="n">via</span><span class="p">(</span><span class="nc">EncoderFlow</span><span class="p">.</span><span class="n">graphStream</span><span class="p">(</span><span class="w"> </span><span class="c1">// Encode each iterable to a Jelly stream frame</span>
-</span><span id="__span-8-27"><a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="w">    </span><span class="n">maybeLimiter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">None</span><span class="p">,</span><span class="w"> </span><span class="c1">// 1 RDF graph = 1 message</span>
-</span><span id="__span-8-28"><a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="w">    </span><span class="nc">JellyOptions</span><span class="p">.</span><span class="n">smallStrict</span><span class="p">,</span><span class="w"> </span><span class="c1">// Jelly compression settings preset</span>
-</span><span id="__span-8-29"><a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="w">  </span><span class="p">))</span>
-</span><span id="__span-8-30"><a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="w">  </span><span class="p">.</span><span class="n">via</span><span class="p">(</span><span class="nc">JellyIo</span><span class="p">.</span><span class="n">toBytes</span><span class="p">)</span><span class="w"> </span><span class="c1">// Convert the stream frames to a byte arrays</span>
-</span><span id="__span-8-31"><a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="w">  </span><span class="p">.</span><span class="n">runForeach</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">bytes</span><span class="w"> </span><span class="o">=&gt;</span>
-</span><span id="__span-8-32"><a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a><span class="w">    </span><span class="c1">// Just print the length of each byte array in the stream.</span>
-</span><span id="__span-8-33"><a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a><span class="w">    </span><span class="c1">// You can also hook this up to MQTT, Kafka, etc.</span>
-</span><span id="__span-8-34"><a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a><span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">s&quot;Streamed </span><span class="si">${</span><span class="n">bytes</span><span class="p">.</span><span class="n">length</span><span class="si">}</span><span class="s"> bytes&quot;</span><span class="p">)</span>
-</span><span id="__span-8-35"><a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-8-36"><a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a><span class="w">  </span><span class="p">.</span><span class="n">onComplete</span><span class="p">(</span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">.</span><span class="n">terminate</span><span class="p">())</span>
+<div class="language-scala highlight"><span class="filename">Apache Pekko Reactive streaming example (Scala 3)</span><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// We need to import &quot;jena.given&quot; for Jena-to-Jelly conversions</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">neverblink</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">jena</span><span class="p">.{</span><span class="nc">JenaAdapters</span><span class="p">,</span><span class="w"> </span><span class="nc">JenaConverterFactory</span><span class="p">}</span>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">neverblink</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">convert</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">neverblink</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">core</span><span class="p">.</span><span class="nc">JellyOptions</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="k">import</span><span class="w"> </span><span class="nn">eu</span><span class="p">.</span><span class="nn">neverblink</span><span class="p">.</span><span class="nn">jelly</span><span class="p">.</span><span class="nn">stream</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">jena</span><span class="p">.</span><span class="nn">riot</span><span class="p">.</span><span class="nc">RDFDataMgr</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">pekko</span><span class="p">.</span><span class="nn">actor</span><span class="p">.</span><span class="nc">ActorSystem</span>
+</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="k">import</span><span class="w"> </span><span class="nn">org</span><span class="p">.</span><span class="nn">apache</span><span class="p">.</span><span class="nn">pekko</span><span class="p">.</span><span class="nn">stream</span><span class="p">.</span><span class="nn">scaladsl</span><span class="p">.</span><span class="n">*</span>
+</span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>
+</span><span id="__span-15-10"><a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="k">import</span><span class="w"> </span><span class="nn">scala</span><span class="p">.</span><span class="nn">concurrent</span><span class="p">.</span><span class="nc">ExecutionContext</span>
+</span><span id="__span-15-11"><a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>
+</span><span id="__span-15-12"><a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="c1">// We will need a Pekko actor system to run the streams</span>
+</span><span id="__span-15-13"><a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="k">given</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">:</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="p">()</span>
+</span><span id="__span-15-14"><a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>
+</span><span id="__span-15-15"><a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="c1">// And an execution context for the futures</span>
+</span><span id="__span-15-16"><a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="k">given</span><span class="w"> </span><span class="nc">ExecutionContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">.</span><span class="n">getDispatcher</span>
+</span><span id="__span-15-17"><a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>
+</span><span id="__span-15-18"><a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="c1">// We will need a JenaConverterFactory to convert between Jelly and Jena</span>
+</span><span id="__span-15-19"><a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="k">given</span><span class="w"> </span><span class="nc">JenaConverterFactory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JenaConverterFactory</span><span class="p">.</span><span class="n">getInstance</span><span class="p">()</span>
+</span><span id="__span-15-20"><a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a>
+</span><span id="__span-15-21"><a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a><span class="c1">// We need to import the Jena adapters to turn Model/Dataset into a stream of statements</span>
+</span><span id="__span-15-22"><a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a><span class="k">given</span><span class="w"> </span><span class="nc">JenaAdapters</span><span class="p">.</span><span class="nc">DATASET_ADAPTER</span><span class="p">.</span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JenaAdapters</span><span class="p">.</span><span class="nc">DATASET_ADAPTER</span>
+</span><span id="__span-15-23"><a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a><span class="k">given</span><span class="w"> </span><span class="nc">JenaAdapters</span><span class="p">.</span><span class="nc">MODEL_ADAPTER</span><span class="p">.</span><span class="k">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JenaAdapters</span><span class="p">.</span><span class="nc">MODEL_ADAPTER</span>
+</span><span id="__span-15-24"><a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a>
+</span><span id="__span-15-25"><a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a><span class="c1">// Load an RDF graph for testing</span>
+</span><span id="__span-15-26"><a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a><span class="kd">val</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">RDFDataMgr</span><span class="p">.</span><span class="n">loadModel</span><span class="p">(</span>
+</span><span id="__span-15-27"><a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a><span class="w">  </span><span class="s">&quot;https://w3id.org/riverbench/v/2.0.1.jelly&quot;</span><span class="p">,</span><span class="w"> </span>
+</span><span id="__span-15-28"><a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a><span class="w">  </span><span class="nc">JellyLanguage</span><span class="p">.</span><span class="nc">JELLY</span>
+</span><span id="__span-15-29"><a id="__codelineno-15-29" name="__codelineno-15-29" href="#__codelineno-15-29"></a><span class="p">)</span>
+</span><span id="__span-15-30"><a id="__codelineno-15-30" name="__codelineno-15-30" href="#__codelineno-15-30"></a>
+</span><span id="__span-15-31"><a id="__codelineno-15-31" name="__codelineno-15-31" href="#__codelineno-15-31"></a><span class="nc">Source</span><span class="p">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="w"> </span><span class="c1">// Create a stream of the same model over and over</span>
+</span><span id="__span-15-32"><a id="__codelineno-15-32" name="__codelineno-15-32" href="#__codelineno-15-32"></a><span class="w">  </span><span class="p">.</span><span class="n">take</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w"> </span><span class="c1">// Take only the first 10 elements in the stream</span>
+</span><span id="__span-15-33"><a id="__codelineno-15-33" name="__codelineno-15-33" href="#__codelineno-15-33"></a><span class="w">  </span><span class="p">.</span><span class="n">flatMap</span><span class="p">(</span><span class="n">model</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nc">RdfSource</span><span class="p">.</span><span class="n">builder</span><span class="w"> </span><span class="c1">// Convert each model to a source of triples</span>
+</span><span id="__span-15-34"><a id="__codelineno-15-34" name="__codelineno-15-34" href="#__codelineno-15-34"></a><span class="w">    </span><span class="p">.</span><span class="n">graphAsTriples</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="w"> </span>
+</span><span id="__span-15-35"><a id="__codelineno-15-35" name="__codelineno-15-35" href="#__codelineno-15-35"></a><span class="w">    </span><span class="p">.</span><span class="n">source</span>
+</span><span id="__span-15-36"><a id="__codelineno-15-36" name="__codelineno-15-36" href="#__codelineno-15-36"></a><span class="w">  </span><span class="p">)</span>
+</span><span id="__span-15-37"><a id="__codelineno-15-37" name="__codelineno-15-37" href="#__codelineno-15-37"></a><span class="w">  </span><span class="p">.</span><span class="n">via</span><span class="p">(</span><span class="nc">EncoderFlow</span><span class="p">.</span><span class="n">graphStream</span><span class="p">(</span><span class="w"> </span><span class="c1">// Encode each iterable to a Jelly stream frame</span>
+</span><span id="__span-15-38"><a id="__codelineno-15-38" name="__codelineno-15-38" href="#__codelineno-15-38"></a><span class="w">    </span><span class="n">maybeLimiter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">None</span><span class="p">,</span><span class="w"> </span><span class="c1">// 1 RDF graph = 1 message</span>
+</span><span id="__span-15-39"><a id="__codelineno-15-39" name="__codelineno-15-39" href="#__codelineno-15-39"></a><span class="w">    </span><span class="nc">JellyOptions</span><span class="p">.</span><span class="n">smallStrict</span><span class="p">,</span><span class="w"> </span><span class="c1">// Jelly compression settings preset</span>
+</span><span id="__span-15-40"><a id="__codelineno-15-40" name="__codelineno-15-40" href="#__codelineno-15-40"></a><span class="w">  </span><span class="p">))</span>
+</span><span id="__span-15-41"><a id="__codelineno-15-41" name="__codelineno-15-41" href="#__codelineno-15-41"></a><span class="w">  </span><span class="p">.</span><span class="n">via</span><span class="p">(</span><span class="nc">JellyIo</span><span class="p">.</span><span class="n">toBytes</span><span class="p">)</span><span class="w"> </span><span class="c1">// Convert the stream frames to a byte arrays</span>
+</span><span id="__span-15-42"><a id="__codelineno-15-42" name="__codelineno-15-42" href="#__codelineno-15-42"></a><span class="w">  </span><span class="p">.</span><span class="n">runForeach</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">bytes</span><span class="w"> </span><span class="o">=&gt;</span>
+</span><span id="__span-15-43"><a id="__codelineno-15-43" name="__codelineno-15-43" href="#__codelineno-15-43"></a><span class="w">    </span><span class="c1">// Just print the length of each byte array in the stream.</span>
+</span><span id="__span-15-44"><a id="__codelineno-15-44" name="__codelineno-15-44" href="#__codelineno-15-44"></a><span class="w">    </span><span class="c1">// You can also hook this up to MQTT, Kafka, etc.</span>
+</span><span id="__span-15-45"><a id="__codelineno-15-45" name="__codelineno-15-45" href="#__codelineno-15-45"></a><span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">s&quot;Streamed </span><span class="si">${</span><span class="n">bytes</span><span class="p">.</span><span class="n">length</span><span class="si">}</span><span class="s"> bytes&quot;</span><span class="p">)</span>
+</span><span id="__span-15-46"><a id="__codelineno-15-46" name="__codelineno-15-46" href="#__codelineno-15-46"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-15-47"><a id="__codelineno-15-47" name="__codelineno-15-47" href="#__codelineno-15-47"></a><span class="w">  </span><span class="p">.</span><span class="n">onComplete</span><span class="p">(</span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">actorSystem</span><span class="p">.</span><span class="n">terminate</span><span class="p">())</span>
 </span></code></pre></div>
 <p>Jelly will compress this stream on-the-fly, so if the data is repetitive, it will be very efficient. If you run this code, you will notice that the byte sizes for the later graphs are smaller, even though we are sending the same graph over and over again. But, even if each graph is completely different, Jelly still should be much faster than other serialization formats.</p>
 <p>These <em>streams</em> are very powerful, because they are reactive and asynchronous – in short, this means you can hook this up to any data source and any data sink – and you can scale it up as much as you want. If you are unfamiliar with the concept of reactive streams, we recommend you start with <a href="https://pekko.apache.org/docs/pekko/current/stream/stream-flows-and-basics.html">this Apache Pekko Streams guide</a>.</p>
 <p>Jelly-JVM supports streaming serialization and deserialization of all types of streams in the <a href="https://w3id.org/stax/dev/taxonomy/">RDF Stream Taxonomy</a>. You can read more about the theory of this and all available stream types in the <a href="https://w3id.org/jelly/dev/user-guide">Jelly protocol documentation</a>.</p>
 <p><a href="../user/reactive/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about reactive streaming with Jelly-JVM</a></p>
 <p><a href="https://w3id.org/jelly/dev/user-guide"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about the types of streams in Jelly</a></p>
-<h2 id="grpc-streaming">gRPC streaming</h2>
-<p>Jelly is a bit more than just a serialization format – it also defines a <a href="https://grpc.io/">gRPC</a>-based straming protocol. You can use it for streaming RDF data between microservices, to build a pub/sub system, or to publish RDF data to the web.</p>
-<p><a href="../user/grpc/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about using Jelly gRPC protocol servers and clients</a></p>
+<!--
+## gRPC streaming
+
+Jelly is a bit more than just a serialization format – it also defines a [gRPC](https://grpc.io/)-based straming protocol. You can use it for streaming RDF data between microservices, to build a pub/sub system, or to publish RDF data to the web.
+
+[:octicons-arrow-right-24: Learn more about using Jelly gRPC protocol servers and clients](user/grpc.md)
+-->
+
 <h2 id="further-reading">Further reading</h2>
 <ul>
 <li><a href="../user/jena/">Using Jelly-JVM with Apache Jena</a></li>
 <li><a href="../user/rdf4j/">Using Jelly-JVM with RDF4J</a></li>
 <li><a href="../user/titanium/">Using Jelly-JVM with Titanium RDF API</a></li>
-<li><a href="../user/reactive/">Reactive streaming with Jelly-JVM</a> – using the <code>jelly-stream</code> module and <a href="https://pekko.apache.org/docs/pekko/current/stream/index.html">Apache Pekko Streams</a></li>
-<li><a href="../user/grpc/">Using Jelly gRPC protocol servers and clients</a></li>
+<li><a href="../user/reactive/">Reactive streaming with Jelly-JVM and Apache Pekko</a> – using the <code>jelly-pekko-stream</code> module and <a href="https://pekko.apache.org/docs/pekko/current/stream/index.html">Apache Pekko Streams</a></li>
+</ul>
+<!-- - [Using Jelly gRPC protocol servers and clients](user/grpc.md) -->
+<ul>
 <li><a href="../user/utilities/">Other useful utilities in Jelly-JVM</a></li>
 <li><a href="../user/low-level/">Low-level usage of Jelly-JVM</a></li>
 </ul>
@@ -1225,7 +1320,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">April 8, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">May 17, 2025</span>
   </span>
 
     
@@ -1252,6 +1347,8 @@
             </div>
           
           
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
@@ -1308,7 +1405,7 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.tabs.link"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
       <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
