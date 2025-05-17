@@ -47,6 +47,14 @@ lazy val commonSettings = Seq(
   crossVersion := CrossVersion.binary,
 )
 
+// Shared settings for all Java-only modules
+lazy val commonJavaSettings = Seq(
+  // Disable Scala features for this module
+  crossPaths := false,
+  crossVersion := CrossVersion.disabled,
+  autoScalaLibrary := false,
+)
+
 lazy val prepareGoogleProtos = taskKey[Seq[File]](
   "Copies and modifies proto files before Google protoc-java compilation"
 )
@@ -186,12 +194,12 @@ lazy val core = (project in file("core"))
       }
     }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
     Compile / sourceManaged := sourceManaged.value / "main",
-    publishArtifact := false, // TODO: remove this when ready
     commonSettings,
+    commonJavaSettings,
   )
   .dependsOn(
     // Test-time dependency on Google protos for ProtoAuxiliarySpec
-    coreProtosGoogle % "compile->test",
+    coreProtosGoogle % "test->compile",
   )
 
 lazy val coreProtosGoogle = (project in file("core-protos-google"))
@@ -207,7 +215,7 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
     Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
-    publishArtifact := false, // TODO: remove this when ready
+    commonJavaSettings,
   )
 
 lazy val corePatch = (project in file("core-patch"))
@@ -229,13 +237,13 @@ lazy val corePatch = (project in file("core-patch"))
       }
     }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
     Compile / sourceManaged := sourceManaged.value / "main",
-    publishArtifact := false, // TODO: remove this when ready
     commonSettings,
+    commonJavaSettings,
   )
   .dependsOn(
     core % "compile->compile;test->test",
     // Test-time dependency on Google protos for PatchProtoSpec
-    corePatchProtosGoogle % "compile->test",
+    corePatchProtosGoogle % "test->compile",
   )
 
 lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
@@ -251,7 +259,7 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
     Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "patch.proto"),
-    publishArtifact := false, // TODO: remove this when ready
+    commonJavaSettings,
   ).dependsOn(coreProtosGoogle)
 
 lazy val jena = (project in file("jena"))
@@ -265,6 +273,7 @@ lazy val jena = (project in file("jena"))
       "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
     ),
     commonSettings,
+    commonJavaSettings,
   )
   .dependsOn(core)
 
@@ -276,6 +285,7 @@ lazy val jenaPatch = (project in file("jena-patch"))
       "org.apache.jena" % "jena-rdfpatch" % jenaV,
     ),
     commonSettings,
+    commonJavaSettings,
   )
   .dependsOn(corePatch, jena)
 
@@ -295,6 +305,7 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
     // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
     publishArtifact := false,
     commonSettings,
+    commonJavaSettings,
   )
   .dependsOn(core)
 
@@ -307,6 +318,7 @@ lazy val rdf4j = (project in file("rdf4j"))
       "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
     ),
     commonSettings,
+    commonJavaSettings,
   )
   .dependsOn(core)
 
@@ -315,6 +327,7 @@ lazy val rdf4jPatch = (project in file("rdf4j-patch"))
     name := "jelly-rdf4j-patch",
     description := "Jelly-Patch integration for RDF4J.",
     commonSettings,
+    commonJavaSettings,
   )
   .dependsOn(corePatch, rdf4j)
 
@@ -329,6 +342,7 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
     // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
     publishArtifact := false,
     commonSettings,
+    commonJavaSettings,
   )
   .dependsOn(core)
 
@@ -343,8 +357,8 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
     libraryDependencies ++= Seq(
       "com.apicatalog" % "titanium-rdf-api" % titaniumApiV,
     ),
-    publishArtifact := false, // TODO: remove this when ready
     commonSettings,
+    commonJavaSettings,
   )
   .dependsOn(core % "compile->compile;test->test")
 
@@ -356,7 +370,6 @@ lazy val stream = (project in file("pekko-stream"))
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
     ),
-    publishArtifact := false, // TODO: remove this when ready
     commonSettings,
   )
   .dependsOn(core % "compile->compile;test->test")
