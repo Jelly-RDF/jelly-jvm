@@ -2,7 +2,7 @@
 
 *If you don't want to code anything and only use Jelly with your Apache Jena/RDF4J application, see [the dedicated guide](getting-started-plugins.md) about using Jelly-JVM as a plugin.*
 
-This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. Jelly-JVM is mainly written in Java, but some modules [are written entirely in Scala](user/reactive.md), as well as unit and integration tests.
+This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. The core of Jelly-JVM is written in Java, but the reactive streaming modules [are written entirely in Scala](user/reactive.md), along with unit and integration tests.
 
 ## Quick start – Apache Jena
 
