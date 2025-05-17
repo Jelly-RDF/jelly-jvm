@@ -2,9 +2,9 @@
 
 *If you don't want to code anything and only use Jelly with your Apache Jena/RDF4J application, see [the dedicated guide](getting-started-plugins.md) about using Jelly-JVM as a plugin.*
 
-This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. Jelly-JVM is written in Scala, but it [can be used from Java as well](#quick-start-java-titanium-rdf-api).
+This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. Jelly-JVM is mainly written in Java, but some modules [are written entirely in Scala](user/reactive.md), as well as unit and integration tests.
 
-## Quick start – Scala & Apache Jena
+## Quick start – Scala or Java & Apache Jena
 
 Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: `jelly-jena`, `jelly-rdf4j`, [`jelly-titanium-rdf-api`](user/titanium.md)[^1]. In our examples we will use Jena, so let's add this to your `build.sbt` file:
 
@@ -21,9 +21,17 @@ If you are working with Maven, add this to your `pom.xml`:
 ```xml
 <dependency>
     <groupId>eu.ostrzyciel.jelly</groupId>
-    <artifactId>jelly-jena_3</artifactId>
+    <artifactId>jelly-jena</artifactId>
     <version>{{ jvm_package_version() }}</version>
 </dependency>
+```
+
+If you are using Gradle, add this to your `build.gradle`:
+
+```groovy
+dependencies {
+    implementation "eu.ostrzyciel.jelly:jelly-jena:${jellyVersion}"
+}
 ```
 
 Now you can serialize/deserialize Jelly data with Apache Jena. Jelly is fully integrated with Jena, so it should all just magically work. Here is a simple example of reading a `.jelly` file (in this case, a metadata file from [RiverBench](https://w3id.org/riverbench/)) with [RIOT](https://jena.apache.org/documentation/io/):
@@ -40,6 +48,22 @@ val model = RDFDataMgr.loadModel(
 // Print the size of the model
 println(s"Loaded an RDF graph with ${model.size} triples")
 ```
+
+```java title="Deserialization example (Java)"
+import eu.ostrzyciel.jelly.convert.jena.riot.JellyLanguage;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
+
+// Load an RDF graph from a Jelly file
+Model model = RDFDataMgr.loadModel(
+  "https://w3id.org/riverbench/v/2.0.1.jelly", 
+  JellyLanguage.JELLY
+);
+
+// Print the size of the model
+System.out.println("Loaded an RDF graph with " + model.size() + " triples");
+```
+
 
 Serialization is just as easy:
 
@@ -60,6 +84,23 @@ Using.resource(new FileOutputStream("metadata.jelly")) { out =>
 }
 ```
 
+```java title="Serialization example (Java)"
+import eu.ostrzyciel.jelly.convert.jena.riot.JellyLanguage;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
+
+import java.io.FileOutputStream;
+
+// Omitted here: creating an RDF model.
+// You can use the one from the previous example.
+
+try (FileOutputStream out = new FileOutputStream("metadata.jelly")) {
+  // Write the model to a Jelly file
+  RDFDataMgr.write(out, model, JellyLanguage.JELLY);
+  System.out.println("Saved the model to metadata.jelly");
+}
+```
+
 [:octicons-arrow-right-24: Use Jelly-JVM with Apache Jena](user/jena.md)
 
 [:octicons-arrow-right-24: Use Jelly-JVM with RDF4J](user/rdf4j.md)
@@ -73,9 +114,17 @@ If you aren't using a big RDF library like Jena or RDF4J, the simplest way to ge
 ```xml
 <dependency>
     <groupId>eu.ostrzyciel.jelly</groupId>
-    <artifactId>jelly-titanium-rdf-api_3</artifactId>
+    <artifactId>jelly-titanium-rdf-api</artifactId>
     <version>{{ jvm_package_version() }}</version>
 </dependency>
+```
+
+If you are using Gradle, add this to your `build.gradle`:
+
+```groovy
+dependencies {
+    implementation "eu.ostrzyciel.jelly:jelly-titanium-rdf-api:${jellyVersion}"
+}
 ```
 
 You can write a Jelly file like this, using the simple `RdfQuadConsumer` interface:
@@ -101,14 +150,14 @@ In this way, you can simply convert between Jelly, [JSON-LD](https://github.com/
 
 ## RDF streams
 
-Now, the real power of Jelly lies in its streaming capabilities. Not only can it stream individual RDF triples/quads (this is called [_flat streaming_](https://w3id.org/stax/dev/taxonomy/#flat-rdf-stream)), but it can also very effectively handle streams of RDF graphs or datasets. To work with streams, you need to use the `jelly-stream` module, which is based on the [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html) library. So, let's update our dependencies:
+Now, the real power of Jelly lies in its streaming capabilities. Not only can it stream individual RDF triples/quads (this is called [_flat streaming_](https://w3id.org/stax/dev/taxonomy/#flat-rdf-stream)), but it can also very effectively handle streams of RDF graphs or datasets. To work with streams, you need to use the `jelly-pekko-stream` module, which is based on the [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html) library. So, let's update our dependencies:
 
 ```scala title="build.sbt"
 lazy val jellyVersion = "{{ jvm_package_version() }}"
 
 libraryDependencies ++= Seq(
   "eu.ostrzyciel.jelly" %% "jelly-jena" % jellyVersion,
-  "eu.ostrzyciel.jelly" %% "jelly-stream" % jellyVersion,
+  "eu.ostrzyciel.jelly" %% "jelly-pekko-stream" % jellyVersion,
 )
 ```
 
@@ -116,7 +165,7 @@ Now, let's say we have a stream of RDF graphs – for example each graph corresp
 
 ```scala title="Reactive streaming example (Scala 3)"
 // We need to import "jena.given" for Jena-to-Jelly conversions
-import eu.ostrzyciel.jelly.convert.jena.given
+import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.ostrzyciel.jelly.convert.jena.riot.*
 import eu.ostrzyciel.jelly.core.JellyOptions
 import eu.ostrzyciel.jelly.stream.*
@@ -128,8 +177,16 @@ import scala.concurrent.ExecutionContext
 
 // We will need a Pekko actor system to run the streams
 given actorSystem: ActorSystem = ActorSystem()
+
 // And an execution context for the futures
 given ExecutionContext = actorSystem.getDispatcher
+
+// We will need a JenaConverterFactory to convert between Jelly and Jena
+given JenaConverterFactory = JenaConverterFactory.getInstance()
+
+// We need to import the Jena adapters to turn Model/Dataset into a stream of statements
+given JenaAdapters.DATASET_ADAPTER.type = JenaAdapters.DATASET_ADAPTER
+given JenaAdapters.MODEL_ADAPTER.type = JenaAdapters.MODEL_ADAPTER
 
 // Load an RDF graph for testing
 val model = RDFDataMgr.loadModel(
@@ -139,7 +196,10 @@ val model = RDFDataMgr.loadModel(
 
 Source.repeat(model) // Create a stream of the same model over and over
   .take(10) // Take only the first 10 elements in the stream
-  .map(_.asTriples) // Convert each model to an iterable of triples
+  .flatMap(model => RdfSource.builder // Convert each model to a source of triples
+    .graphAsTriples(model) 
+    .source
+  )
   .via(EncoderFlow.graphStream( // Encode each iterable to a Jelly stream frame
     maybeLimiter = None, // 1 RDF graph = 1 message
     JellyOptions.smallStrict, // Jelly compression settings preset
@@ -163,19 +223,21 @@ Jelly-JVM supports streaming serialization and deserialization of all types of s
 
 [:octicons-arrow-right-24: Learn more about the types of streams in Jelly]({{ proto_link('user-guide') }})
 
+<!--
 ## gRPC streaming
 
 Jelly is a bit more than just a serialization format – it also defines a [gRPC](https://grpc.io/)-based straming protocol. You can use it for streaming RDF data between microservices, to build a pub/sub system, or to publish RDF data to the web.
 
 [:octicons-arrow-right-24: Learn more about using Jelly gRPC protocol servers and clients](user/grpc.md)
+-->
 
 ## Further reading
 
 - [Using Jelly-JVM with Apache Jena](user/jena.md)
 - [Using Jelly-JVM with RDF4J](user/rdf4j.md)
 - [Using Jelly-JVM with Titanium RDF API](user/titanium.md)
-- [Reactive streaming with Jelly-JVM](user/reactive.md) – using the `jelly-stream` module and [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html)
-- [Using Jelly gRPC protocol servers and clients](user/grpc.md)
+- [Reactive streaming with Jelly-JVM](user/reactive.md) – using the `jelly-pekko-stream` module and [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html)
+<!-- - [Using Jelly gRPC protocol servers and clients](user/grpc.md) -->
 - [Other useful utilities in Jelly-JVM](user/utilities.md)
 - [Low-level usage of Jelly-JVM](user/low-level.md)
 

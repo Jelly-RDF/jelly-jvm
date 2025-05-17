@@ -33,11 +33,13 @@ But, this library also gives you the full stack of utilities for scalable RDF st
 - [`jelly-titanium-rdf-api`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/titanium-rdf-api/src) – integration with the minimalistic [Titanium RDF API](https://github.com/filip26/titanium-rdf-api).
   - [![jelly-titanium-rdf-api Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-titanium-rdf-api/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-titanium-rdf-api) [![javadoc](https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-titanium-rdf-api_3/javadoc.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-titanium-rdf-api_3)
 
-- [`jelly-stream`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/stream/src) – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT...
+- [`jelly-pekko-stream`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/pekko-stream/src) – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT...
   - [![jelly-stream Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream) [![javadoc](https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-stream_3/javadoc.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-stream_3)
 
+<!--
 - [`jelly-grpc`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/grpc/src) – implementation of a gRPC client and server for the full Jelly protocol.
   - [![jelly-grpc Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc) [![javadoc](https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-grpc_3/javadoc.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-grpc_3)
+-->
 
 ### Other – not published to Maven
 

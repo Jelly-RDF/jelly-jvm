@@ -34,11 +34,13 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-titanium-rdf-api` – integration with the [Titanium RDF API](https://github.com/filip26/titanium-rdf-api). **[:octicons-arrow-right-24: Learn more](user/titanium.md)**
     - {{ module_badges('titanium-rdf-api') }}
 
-- `jelly-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT... **[:octicons-arrow-right-24: Learn more](user/reactive.md)**
+- `jelly-pekko-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT... **[:octicons-arrow-right-24: Learn more](user/reactive.md)**
     - {{ module_badges('stream') }}
 
+<!--
 - `jelly-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}). **[:octicons-arrow-right-24: Learn more](user/grpc.md)**
     - {{ module_badges('grpc') }}
+-->
 
 ## Plugin JARs
 
@@ -68,7 +70,7 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
     - [RDF4J integration](user/rdf4j.md)
     - [Titanium RDF API integration](user/titanium.md) **(new in 2.9.0!)**
     - [Reactive streaming](user/reactive.md)
-    - [gRPC](user/grpc.md)
+    <!-- - [gRPC](user/grpc.md) -->
     - [Useful utilities](user/utilities.md)
     - [Compatibility policy](user/compatibility.md)
 - Developer guide
