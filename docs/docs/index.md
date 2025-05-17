@@ -50,10 +50,11 @@ Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 24 are tested i
 
 The following table shows the compatibility of the Jelly-JVM implementation with other libraries:
 
-| Jelly-JVM | Scala                     | Java | RDF4J | Apache Jena | Apache Pekko |
-| --------- | :-----------------------: | :--: | :---: | :---------: | :----------: |
-| [2.0.x](https://w3id.org/jelly/jelly-jvm/2.0.x) – [**{{ jvm_package_version_minor() }}**](https://w3id.org/jelly/jelly-jvm/{{ jvm_package_version_minor() }}) | 3.3.x (LTS)               | 17+  | 5.x.x | 5.x.x       | 1.1.x        |
-| [1.0.x](https://w3id.org/jelly/jelly-jvm/1.0.x)     | 3.3.x (LTS)<br>2.13.x[^1] | 11+  | 4.x.x | 4.x.x       | 1.0.x        |
+| Jelly-JVM                                                                                                                                         | Java |           Scala           | RDF4J | Apache Jena | Apache Pekko |
+|---------------------------------------------------------------------------------------------------------------------------------------------------|:----:|:-------------------------:| :---: | :---------: | :----------: |
+| [3.0.x](https://w3id.org/jelly/jelly-jvm/3.0.x) – [**{{ jvm_package_version() }}**](https://w3id.org/jelly/jelly-jvm/{{ jvm_package_version() }}) | 17+  |      3.3.x (LTS)[^3]      | 5.x.x | 5.x.x       | 1.1.x        |
+| [2.0.x](https://w3id.org/jelly/jelly-jvm/2.0.x) – [2.10.x](https://w3id.org/jelly/jelly-jvm/2.10.x)                                               | 17+  |        3.3.x (LTS)        | 5.x.x | 5.x.x       | 1.1.x        |
+| [1.0.x](https://w3id.org/jelly/jelly-jvm/1.0.x)                                                                                                                                      | 11+  | 3.3.x (LTS)<br>2.13.x[^1] | 4.x.x | 4.x.x       | 1.0.x        |
 
 See the **[compatibility policy](user/compatibility.md)** for more details and the **[release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)**.
 
@@ -93,3 +94,4 @@ The development of the Jelly protocol, its implementations, and supporting tooli
 
 [^1]: Scala 2.13-compatible builds of Jelly-JVM are available for Jelly-JVM 1.0.x. Scala 2 support was removed in subsequent versions. [See more details](https://w3id.org/jelly/jelly-jvm/1.0.x/user/scala2).
 [^2]: As of `3.0.0` the gRPC module is not included in the main Jelly-JVM distribution. It will be restored in `3.1.0` and the documentation updated accordingly.
+[^3]: Scala version applies **only** to the `jelly-pekko-stream` module. The other modules **do not depend** on Scala and are compatible with any version of Java 17+.
