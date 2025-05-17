@@ -4,7 +4,7 @@
 
 This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. Jelly-JVM is mainly written in Java, but some modules [are written entirely in Scala](user/reactive.md), as well as unit and integration tests.
 
-## Quick start – Scala or Java & Apache Jena
+## Quick start – Apache Jena
 
 Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: `jelly-jena`, `jelly-rdf4j`, [`jelly-titanium-rdf-api`](user/titanium.md)[^1]. In our examples we will use Jena, so let's add this to your `build.sbt` file:
 
