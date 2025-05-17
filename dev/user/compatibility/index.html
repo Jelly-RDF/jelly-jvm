@@ -1022,7 +1022,8 @@
 <p>Jelly-JVM follows <a href="https://semver.org/">Semantic Versioning 2.0.0</a>, with MAJOR.MINOR.PATCH releases. Please see the compatibility table on the <a href="../../">main page</a> for the current compatibility information. The documentation is versioned to match each Jelly-JVM MAJOR.MINOR version.</p>
 <h2 id="jvm-and-scala">JVM and Scala</h2>
 <p>The current version of Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 24 are tested in CI and are guaranteed to work. We recommend using a recent release of <a href="https://www.graalvm.org/">GraalVM</a> to get the best performance. If you need Java 11 support, you should use <a href="https://w3id.org/jelly/jelly-jvm/1.0.x">Jelly-JVM 1.0.x</a>.</p>
-<p>Jelly is built with <a href="https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html">Scala 3 LTS releases</a> and supports only Scala 3. If you need Scala 2 support, you should use <a href="https://w3id.org/jelly/jelly-jvm/1.0.x">Jelly-JVM 1.0.x</a>.</p>
+<p>The current version of Jelly-JVM has some modules (currently <code>jelly-pekko-stream</code>) built with <a href="https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html">Scala 3 LTS releases</a> and support only Scala 3. </p>
+<p>Jelly-JVM 2.x.x was written entirely in Scala 3, using <a href="https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html">Scala LTS releases</a>.</p>
 <h2 id="rdf-libraries">RDF libraries</h2>
 <p>Major-version upgrades of RDF4J and Apache Jena (e.g., updating from 4.0.x to 5.0.x) are done in Jelly-JVM MINOR releases. Jelly-JVM generally does not use any complex features of these libraries, so it should work with multiple versions without any problems.</p>
 <p>If you do encounter any compatibility issues, please report them on the <a href="https://github.com/Jelly-RDF/jelly-jvm/issues">issue tracker</a>.</p>
