@@ -32,13 +32,13 @@ The following presets are available:
     - `BIG_RDF_STAR`
     - `BIG_ALL_FEATURES`
 
-To use one of these presets, use the `--set` CLI option with the `https://ostrzyciel.eu/jelly/riot/symbols#preset` symbol:
+To use one of these presets, use the `--set` CLI option with the `https://neverblink.eu/jelly/riot/symbols#preset` symbol:
 
 !!! example "Example: converting a Turtle file to Jelly with a big preset (strict)"
 
     ```shell
     ./riot --stream=jelly \
-        --set="https://ostrzyciel.eu/jelly/riot/symbols#preset=BIG_STRICT" \
+        --set="https://neverblink.eu/jelly/riot/symbols#preset=BIG_STRICT" \
         data.ttl > data.jelly
     ```
 
@@ -46,7 +46,7 @@ To use one of these presets, use the `--set` CLI option with the `https://ostrzy
 
     ```shell
     ./tdb2.tdbdump --tdb=path/to/assembler.ttl \
-        --set="https://ostrzyciel.eu/jelly/riot/symbols#preset=BIG_ALL_FEATURES" \
+        --set="https://neverblink.eu/jelly/riot/symbols#preset=BIG_ALL_FEATURES" \
         --stream=jelly > mydb.jelly
     ```
 

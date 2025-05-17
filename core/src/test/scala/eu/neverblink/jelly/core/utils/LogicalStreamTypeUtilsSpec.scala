@@ -110,6 +110,24 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
         a2Triple.o should be (Iri(LogicalStreamTypeUtils.getRdfStaxType(streamType)))
       }
 
+      s"return RDF STaX annotation for $streamType and $subjectNode using factory" in {
+        val a = LogicalStreamTypeUtils.getRdfStaxAnnotation(
+          MockConverterFactory,
+          streamType,
+          subjectNode
+        )
+        a.size should be (3)
+
+        val a0Triple = a.get(0)
+
+        a0Triple.s should be (subjectNode)
+        a0Triple.p should be (Iri("https://w3id.org/stax/ontology#hasStreamTypeUsage"))
+
+        val a2Triple = a.get(2)
+
+        a2Triple.o should be (Iri(LogicalStreamTypeUtils.getRdfStaxType(streamType)))
+      }
+
     for subjectNode <- subjectNodes do
       s"throw exception for RDF STaX annotation for UNSPECIFIED and $subjectNode" in {
         val error = intercept[IllegalArgumentException] {

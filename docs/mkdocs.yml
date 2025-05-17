@@ -22,6 +22,8 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
@@ -46,6 +48,7 @@ theme:
     - search.highlight
     - content.code.copy
     - content.action.edit
+    - content.tabs.link
 
   palette: 
     # Palette toggle for light mode
