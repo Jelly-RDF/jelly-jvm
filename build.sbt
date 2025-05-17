@@ -53,6 +53,10 @@ lazy val commonJavaSettings = Seq(
   crossPaths := false,
   crossVersion := CrossVersion.disabled,
   autoScalaLibrary := false,
+  libraryDependencies ++= Seq(
+    // Add test-time dependency on Scala for ScalaTest
+    "org.scala-lang" %% "scala3-library" % (ThisBuild / scalaVersion).value % Test,
+  ),
 )
 
 lazy val prepareGoogleProtos = taskKey[Seq[File]](
