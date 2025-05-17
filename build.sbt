@@ -389,7 +389,6 @@ lazy val integrationTests = (project in file("integration-tests"))
     Compile / compile := (Compile / compile).dependsOn(ProtobufConfig / protobufRunProtoc).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
     commonSettings,
-    publishArtifact := false
   )
   .dependsOn(
     core % "compile->compile;test->test",
