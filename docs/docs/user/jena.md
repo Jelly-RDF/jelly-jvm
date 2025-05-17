@@ -31,5 +31,5 @@ Usage notes:
 ## See also
 
 - [Useful utilities](utilities.md)
-- [Reactive streaming with Jelly-JVM](reactive.md)
+- [Reactive streaming with Jelly-JVM and Apache Pekko](reactive.md)
 - [Using Jelly with Jena's CLI tools](jena-cli.md)

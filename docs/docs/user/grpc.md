@@ -10,7 +10,7 @@ This guide explains the functionalities of the `jelly-grpc` module, which implem
 
     If you are unfamiliar with gRPC, we recommend you first read some introductory material on the **[gRPC website](https://grpc.io/)** or in the **[Apache Pekko gRPC documentation](https://pekko.apache.org/docs/pekko-grpc/current/index.html)**.
 
-    The `jelly-grpc` module builds on the functionalities of `jelly-stream`, so we recommend you first read the **[reactive streaming guide](reactive.md)**.
+    The `jelly-grpc` module builds on the functionalities of `jelly-stream`, so we recommend you first read the **[Apache Pekko reactive streaming guide](reactive.md)**.
 
     You may also want to first skim the **[Jelly gRPC streaming protocol specification]({{ proto_link('specification/streaming') }})** to understand the protocol's structure.
 
@@ -26,6 +26,6 @@ Of course, you can also implement the server or the client from scratch, if you 
 
 ## See also
 
-- [Reactive streaming with Jelly-JVM](reactive.md)
+- [Reactive streaming with Jelly-JVM and Apache Pekko](reactive.md)
 - [Useful utilities](utilities.md)
     - [Using Typesafe config to configure Jelly](utilities.md#jelly-configuration-from-typesafe-config)

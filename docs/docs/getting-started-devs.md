@@ -2,104 +2,113 @@
 
 *If you don't want to code anything and only use Jelly with your Apache Jena/RDF4J application, see [the dedicated guide](getting-started-plugins.md) about using Jelly-JVM as a plugin.*
 
-This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. The core of Jelly-JVM is written in Java, but the reactive streaming modules [are written entirely in Scala](user/reactive.md), along with unit and integration tests.
+This guide explains a few of the basic functionalities of Jelly-JVM and how to use them in your code. The core of Jelly-JVM is written in Java, but the reactive streaming module for Apache Pekko [is written entirely in Scala](user/reactive.md), along with unit and integration tests.
 
 ## Quick start – Apache Jena
 
 Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: `jelly-jena`, `jelly-rdf4j`, [`jelly-titanium-rdf-api`](user/titanium.md)[^1]. In our examples we will use Jena, so let's add this to your `build.sbt` file:
 
-```scala title="build.sbt"
-lazy val jellyVersion = "{{ jvm_package_version() }}"
+=== "Maven"
 
-libraryDependencies ++= Seq(
-  "eu.neverblink.jelly" % "jelly-jena" % jellyVersion,
-)
-```
+    ```xml title="pom.xml"
+    <dependency>
+        <groupId>eu.neverblink.jelly</groupId>
+        <artifactId>jelly-jena</artifactId>
+        <version>{{ jvm_package_version() }}</version>
+    </dependency>
+    ```
 
-If you are working with Maven, add this to your `pom.xml`:
+=== "Gradle"
 
-```xml
-<dependency>
-    <groupId>eu.neverblink.jelly</groupId>
-    <artifactId>jelly-jena</artifactId>
-    <version>{{ jvm_package_version() }}</version>
-</dependency>
-```
+    ```groovy title="build.gradle"
+    dependencies {
+        implementation "eu.neverblink.jelly:jelly-jena:${jellyVersion}"
+    }
+    ```
 
-If you are using Gradle, add this to your `build.gradle`:
+=== "SBT"
 
-```groovy
-dependencies {
-    implementation "eu.neverblink.jelly:jelly-jena:${jellyVersion}"
-}
-```
+    ```scala title="build.sbt"
+    lazy val jellyVersion = "{{ jvm_package_version() }}"
+    libraryDependencies ++= Seq(
+      "eu.neverblink.jelly" % "jelly-jena" % jellyVersion,
+    )
+    ```
 
 Now you can serialize/deserialize Jelly data with Apache Jena. Jelly is fully integrated with Jena, so it should all just magically work. Here is a simple example of reading a `.jelly` file (in this case, a metadata file from [RiverBench](https://w3id.org/riverbench/)) with [RIOT](https://jena.apache.org/documentation/io/):
 
-```scala title="Deserialization example (Scala 3)"
-import eu.neverblink.jelly.convert.jena.riot.*
-import org.apache.jena.riot.RDFDataMgr
+=== "Java"
 
-// Load an RDF graph from a Jelly file
-val model = RDFDataMgr.loadModel(
-  "https://w3id.org/riverbench/v/2.0.1.jelly", 
-  JellyLanguage.JELLY
-)
-// Print the size of the model
-println(s"Loaded an RDF graph with ${model.size} triples")
-```
+    ```java title="Deserialization example (Java)"
+    import eu.neverblink.jelly.convert.jena.riot.JellyLanguage;
+    import org.apache.jena.rdf.model.Model;
+    import org.apache.jena.riot.RDFDataMgr;
+    
+    // Load an RDF graph from a Jelly file
+    Model model = RDFDataMgr.loadModel(
+      "https://w3id.org/riverbench/v/2.0.1.jelly", 
+      JellyLanguage.JELLY
+    );
 
-```java title="Deserialization example (Java)"
-import eu.neverblink.jelly.convert.jena.riot.JellyLanguage;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.RDFDataMgr;
+    // Print the size of the model
+    System.out.println("Loaded an RDF graph with " + model.size() + " triples");
+    ```
 
-// Load an RDF graph from a Jelly file
-Model model = RDFDataMgr.loadModel(
-  "https://w3id.org/riverbench/v/2.0.1.jelly", 
-  JellyLanguage.JELLY
-);
+=== "Scala"
 
-// Print the size of the model
-System.out.println("Loaded an RDF graph with " + model.size() + " triples");
-```
+    ```scala title="Deserialization example (Scala 3)"
+    import eu.neverblink.jelly.convert.jena.riot.*
+    import org.apache.jena.riot.RDFDataMgr
+    
+    // Load an RDF graph from a Jelly file
+    val model = RDFDataMgr.loadModel(
+      "https://w3id.org/riverbench/v/2.0.1.jelly", 
+      JellyLanguage.JELLY
+    )
+    // Print the size of the model
+    println(s"Loaded an RDF graph with ${model.size} triples")
+    ```
 
 
 Serialization is just as easy:
 
-```scala title="Serialization example (Scala 3)"
-import eu.neverblink.jelly.convert.jena.riot.*
-import org.apache.jena.riot.RDFDataMgr
+=== "Java"
 
-import java.io.FileOutputStream
-import scala.util.Using
+    ```java title="Serialization example (Java)"
+    import eu.neverblink.jelly.convert.jena.riot.JellyLanguage;
+    import org.apache.jena.rdf.model.Model;
+    import org.apache.jena.riot.RDFDataMgr;
+    
+    import java.io.FileOutputStream;
+    
+    // Omitted here: creating an RDF model.
+    // You can use the one from the previous example.
+    
+    try (FileOutputStream out = new FileOutputStream("metadata.jelly")) {
+      // Write the model to a Jelly file
+      RDFDataMgr.write(out, model, JellyLanguage.JELLY);
+      System.out.println("Saved the model to metadata.jelly");
+    }
+    ```
 
-// Omitted here: creating an RDF model.
-// You can use the one from the previous example.
+=== "Scala"
 
-Using.resource(new FileOutputStream("metadata.jelly")) { out =>
-  // Write the model to a Jelly file
-  RDFDataMgr.write(out, model, JellyLanguage.JELLY)
-  println("Saved the model to metadata.jelly")
-}
-```
-
-```java title="Serialization example (Java)"
-import eu.neverblink.jelly.convert.jena.riot.JellyLanguage;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.RDFDataMgr;
-
-import java.io.FileOutputStream;
-
-// Omitted here: creating an RDF model.
-// You can use the one from the previous example.
-
-try (FileOutputStream out = new FileOutputStream("metadata.jelly")) {
-  // Write the model to a Jelly file
-  RDFDataMgr.write(out, model, JellyLanguage.JELLY);
-  System.out.println("Saved the model to metadata.jelly");
-}
-```
+    ```scala title="Serialization example (Scala 3)"
+    import eu.neverblink.jelly.convert.jena.riot.*
+    import org.apache.jena.riot.RDFDataMgr
+    
+    import java.io.FileOutputStream
+    import scala.util.Using
+    
+    // Omitted here: creating an RDF model.
+    // You can use the one from the previous example.
+    
+    Using.resource(new FileOutputStream("metadata.jelly")) { out =>
+      // Write the model to a Jelly file
+      RDFDataMgr.write(out, model, JellyLanguage.JELLY)
+      println("Saved the model to metadata.jelly")
+    }
+    ```
 
 [:octicons-arrow-right-24: Use Jelly-JVM with Apache Jena](user/jena.md)
 
@@ -107,25 +116,36 @@ try (FileOutputStream out = new FileOutputStream("metadata.jelly")) {
 
 [:octicons-arrow-right-24: Use Jelly-JVM with Titanium RDF API](user/titanium.md)
 
-## Quick start – Java & Titanium RDF API
+## Quick start – Titanium RDF API
 
 If you aren't using a big RDF library like Jena or RDF4J, the simplest way to get started is to use the [Titanium RDF API](user/titanium.md):
 
-```xml
-<dependency>
-    <groupId>eu.neverblink.jelly</groupId>
-    <artifactId>jelly-titanium-rdf-api</artifactId>
-    <version>{{ jvm_package_version() }}</version>
-</dependency>
-```
+=== "Maven"
 
-If you are using Gradle, add this to your `build.gradle`:
+    ```xml title="pom.xml"
+    <dependency>
+        <groupId>eu.neverblink.jelly</groupId>
+        <artifactId>jelly-titanium-rdf-api</artifactId>
+        <version>{{ jvm_package_version() }}</version>
+    </dependency>
+    ```
 
-```groovy
-dependencies {
-    implementation "eu.neverblink.jelly:jelly-titanium-rdf-api:${jellyVersion}"
-}
-```
+=== "Gradle"
+
+    ```groovy title="build.gradle"
+    dependencies {
+        implementation "eu.neverblink.jelly:jelly-titanium-rdf-api:${jellyVersion}"
+    }
+    ```
+
+=== "SBT"
+
+    ```scala title="build.sbt"
+    lazy val jellyVersion = "{{ jvm_package_version() }}"
+    libraryDependencies ++= Seq(
+      "eu.neverblink.jelly" % "jelly-titanium-rdf-api" % jellyVersion,
+    )
+    ```
 
 You can write a Jelly file like this, using the simple `RdfQuadConsumer` interface:
 
@@ -148,22 +168,42 @@ In this way, you can simply convert between Jelly, [JSON-LD](https://github.com/
 [:octicons-arrow-right-24: More on using Jelly-JVM with Titanium RDF API](user/titanium.md)
 
 
-## RDF streams
+## RDF Pekko Streams
 
 Now, the real power of Jelly lies in its streaming capabilities. Not only can it stream individual RDF triples/quads (this is called [_flat streaming_](https://w3id.org/stax/dev/taxonomy/#flat-rdf-stream)), but it can also very effectively handle streams of RDF graphs or datasets. To work with streams, you need to use the `jelly-pekko-stream` module, which is based on the [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html) library. So, let's update our dependencies:
 
-```scala title="build.sbt"
-lazy val jellyVersion = "{{ jvm_package_version() }}"
+=== "Maven"
 
-libraryDependencies ++= Seq(
-  "eu.neverblink.jelly" %% "jelly-jena" % jellyVersion,
-  "eu.neverblink.jelly" %% "jelly-pekko-stream" % jellyVersion,
-)
-```
+    ```xml title="pom.xml"
+    <dependency>
+        <groupId>eu.neverblink.jelly</groupId>
+        <artifactId>jelly-pekko-stream_3</artifactId>
+        <version>{{ jvm_package_version() }}</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+
+    ```groovy title="build.gradle"
+    dependencies {
+        implementation "eu.neverblink.jelly:jelly-pekko-stream_3:${jellyVersion}"
+    }
+    ```
+
+=== "SBT"
+
+    ```scala title="build.sbt"
+    lazy val jellyVersion = "{{ jvm_package_version() }}"
+    
+    libraryDependencies ++= Seq(
+      "eu.neverblink.jelly" %% "jelly-jena" % jellyVersion,
+      "eu.neverblink.jelly" %% "jelly-pekko-stream" % jellyVersion,
+    )
+    ```
 
 Now, let's say we have a stream of RDF graphs – for example each graph corresponds to one set of measurements from an IoT sensor. We want to have a stream that turns these graphs into their serialized representations (byte arrays), which we can then send over the network. Here is how to do it:
 
-```scala title="Reactive streaming example (Scala 3)"
+```scala title="Apache Pekko Reactive streaming example (Scala 3)"
 // We need to import "jena.given" for Jena-to-Jelly conversions
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.convert.jena.riot.*
@@ -236,7 +276,7 @@ Jelly is a bit more than just a serialization format – it also defines a [gRPC
 - [Using Jelly-JVM with Apache Jena](user/jena.md)
 - [Using Jelly-JVM with RDF4J](user/rdf4j.md)
 - [Using Jelly-JVM with Titanium RDF API](user/titanium.md)
-- [Reactive streaming with Jelly-JVM](user/reactive.md) – using the `jelly-pekko-stream` module and [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html)
+- [Reactive streaming with Jelly-JVM and Apache Pekko](user/reactive.md) – using the `jelly-pekko-stream` module and [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html)
 <!-- - [Using Jelly gRPC protocol servers and clients](user/grpc.md) -->
 - [Other useful utilities in Jelly-JVM](user/utilities.md)
 - [Low-level usage of Jelly-JVM](user/low-level.md)

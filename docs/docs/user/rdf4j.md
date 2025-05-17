@@ -24,4 +24,4 @@ Usage notes:
 ## See also
 
 - [Useful utilities](utilities.md)
-- [Reactive streaming with Jelly-JVM](reactive.md)
+- [Reactive streaming with Jelly-JVM and Apache Pekko](reactive.md)

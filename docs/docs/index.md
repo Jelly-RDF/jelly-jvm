@@ -67,7 +67,7 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
     - [Apache Jena integration](user/jena.md)
     - [RDF4J integration](user/rdf4j.md)
     - [Titanium RDF API integration](user/titanium.md) **(new in 2.9.0!)**
-    - [Reactive streaming](user/reactive.md)
+    - [Reactive streaming with Apache Pekko](user/reactive.md)
     - [gRPC](user/grpc.md)[^2]
     - [Useful utilities](user/utilities.md)
     - [Compatibility policy](user/compatibility.md)

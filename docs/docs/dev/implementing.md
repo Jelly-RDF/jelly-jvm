@@ -22,9 +22,9 @@ To do this, you will need to implement three interfaces from the `jelly-core` mo
     - Example for Jena: [JenaConverterFactory]({{ git_link('jena/src/main/java/eu/neverblink/jelly/convert/jena/JenaConverterFactory.java') }})
 
 
-## Supporting streams
+## Supporting reactive streams with Apache Pekko Streams
 
-If you want to enable stream support for your library, it will be useful to implement the following utility interfaces from `jelly-core`: `QuadExtractor` and `QuadMaker` for Quads and `TripleExtractor` and `TripleMaker` for Triples. 
+If you want to enable reactive stream support for your library, it will be useful to implement the following utility interfaces from `jelly-core`: `QuadExtractor` and `QuadMaker` for Quads and `TripleExtractor` and `TripleMaker` for Triples. 
 
 These interfaces are used to extract triples/quads from the input stream and create them from the output stream. In `jelly-pekko-stream` module we expect your `ProtoDecoderConverter` to implement `TripleMaker` and `QuadMaker` interfaces, and your `ProtoEncoderConverter` to implement `TripleExtractor` and `QuadExtractor` interfaces. 
 

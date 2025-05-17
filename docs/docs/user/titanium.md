@@ -4,23 +4,31 @@ If you are already using Jena or RDF4J, you should use the [`jelly-jena`](jena.m
 
 ## Installation
 
-`jelly-titanium-rdf-api` has a pure Java API and is available on Maven Central. To include it in your project, add the following dependency to your `pom.xml`:
+`jelly-titanium-rdf-api` is available on Maven Central. To include it in your project, add the following dependency to your `pom.xml`:
 
-```xml
-<dependency>
-    <groupId>eu.neverblink.jelly</groupId>
-    <artifactId>jelly-titanium-rdf-api</artifactId>
-    <version>{{ jvm_package_version() }}</version>
-</dependency>
-```
+=== "Maven"
 
-If you are using Gradle, add the following to your `build.gradle`:
+    ```xml title="pom.xml"
+    <dependency>
+        <groupId>eu.neverblink.jelly</groupId>
+        <artifactId>jelly-titanium-rdf-api</artifactId>
+        <version>{{ jvm_package_version() }}</version>
+    </dependency>
+    ```
 
-```groovy
-dependencies {
-    implementation 'eu.neverblink.jelly:jelly-titanium-rdf-api:{{ jvm_package_version() }}'
-}
-```
+=== "Gradle"
+
+    ```groovy title="build.gradle"
+    dependencies {
+        implementation 'eu.neverblink.jelly:jelly-titanium-rdf-api:{{ jvm_package_version() }}'
+    }
+    ```
+
+=== "SBT"
+
+    ```scala title="build.sbt"
+    libraryDependencies += "eu.neverblink.jelly" % "jelly-titanium-rdf-api" % "{{ jvm_package_version() }}"
+    ```
 
 ## Basic I/O operations
 

@@ -1,6 +1,6 @@
 # User guide – reactive streaming
 
-This guide explains the reactive streaming functionalities of the `jelly-pekko-stream` module.
+This guide explains the reactive streaming functionalities of the `jelly-pekko-stream` module with Apache Pekko Streams.
 
 !!! info "Prerequisites"
 
