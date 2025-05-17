@@ -12,7 +12,7 @@ Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you shou
 lazy val jellyVersion = "{{ jvm_package_version() }}"
 
 libraryDependencies ++= Seq(
-  "eu.neverblink.jelly" %% "jelly-jena" % jellyVersion,
+  "eu.neverblink.jelly" % "jelly-jena" % jellyVersion,
 )
 ```
 
