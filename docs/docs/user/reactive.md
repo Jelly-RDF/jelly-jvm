@@ -24,25 +24,25 @@ So, for example, an encoder flow for flat triple streams would have a type of `#
 
 ## Encoding any RDF data as a flat or grouped stream (`EncoderFlow`)
 
-The {{ javadoc_link_pretty('stream', 'EncoderFlow$') }} provides many options for turning RDF data into Jelly streams, including both grouped and flat streams. Every [type of RDF stream in Jelly]({{ proto_link('user-guide#stream-types') }}) can be created using this API.
+The {{ scaladoc_link_pretty('stream', 'EncoderFlow$') }} provides many options for turning RDF data into Jelly streams, including both grouped and flat streams. Every [type of RDF stream in Jelly]({{ proto_link('user-guide#stream-types') }}) can be created using this API.
 
 {{ code_example('PekkoStreamsEncoderFlow.scala') }}
 
 ## Encoding a single RDF graph or dataset as a flat stream (`EncoderSource`)
 
-There are also convenience methods for creating flat RDF streams (i.e., flat streams of triples or quads) from  a single graph or dataset. You can do this by chaining {{ javadoc_link_pretty('stream', 'RdfSource$') }} with {{ javadoc_link_pretty('stream', 'EncoderFlow$') }}, as shown in the example.
+There are also convenience methods for creating flat RDF streams (i.e., flat streams of triples or quads) from  a single graph or dataset. You can do this by chaining {{ scaladoc_link_pretty('stream', 'RdfSource$') }} with {{ scaladoc_link_pretty('stream', 'EncoderFlow$') }}, as shown in the example.
 
 {{ code_example('PekkoStreamsEncoderSource.scala') }}
 
 ## Decoding RDF streams (`DecoderFlow`)
 
-The {{ javadoc_link_pretty('stream', 'DecoderFlow$') }} provides methods for decoding flat and grouped streams. There is no opposite equivalent to `EncoderSource` for decoding, though. This would require constructing an RDF graph or dataset from statements, which is a process that can vary a lot depending on your application. You will have to do this part yourself.
+The {{ scaladoc_link_pretty('stream', 'DecoderFlow$') }} provides methods for decoding flat and grouped streams. There is no opposite equivalent to `EncoderSource` for decoding, though. This would require constructing an RDF graph or dataset from statements, which is a process that can vary a lot depending on your application. You will have to do this part yourself.
 
 {{ code_example('PekkoStreamsDecoderFlow.scala') }}
 
 ## Byte streams (delimited variant)
 
-In all of the examples above, we used the [non-delimited variant of Jelly]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}), which is appropriate for, e.g., sending Jelly data over [gRPC](grpc.md) or Kafka. If you want to write Jelly data to a file or a socket, you will need to use the delimited variant. `jelly-pekko-stream` provides a few methods for this in {{ javadoc_link_pretty('stream', 'JellyIo') }}.
+In all of the examples above, we used the [non-delimited variant of Jelly]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}), which is appropriate for, e.g., sending Jelly data over [gRPC](grpc.md) or Kafka. If you want to write Jelly data to a file or a socket, you will need to use the delimited variant. `jelly-pekko-stream` provides a few methods for this in {{ scaladoc_link_pretty('stream', 'JellyIo') }}.
 
 {{ code_example('PekkoStreamsWithIo.scala') }}
 

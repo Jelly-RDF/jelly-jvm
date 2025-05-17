@@ -3,6 +3,9 @@
 import os
 import subprocess
 
+# !!! Change this if you want to add or update convert modules
+JELLY_CONVERT_MODULES = ['jena', 'rdf4j', 'titanium']
+
 
 def define_env(env):
     # Override for use in local development
@@ -101,10 +104,8 @@ def define_env(env):
     def proto_link(page: str = ''):
         version = proto_version()
         return f'https://w3id.org/jelly/{version}/{page}'
-    
 
-    @env.macro
-    def module_badges(module, is_scala: bool = False):
+    def _module_badges(module, is_scala: bool = False):
         version = jvm_version()
 
         scala_suffix = ''
@@ -115,7 +116,14 @@ def define_env(env):
             return f'[![Browse jelly-{module} versions](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}) [![Browse latest jelly-{module} API docs](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-{module}{scala_suffix}/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-{module}{scala_suffix})'
         else:
             return f'[![See jelly-{module} {version} module details](https://img.shields.io/badge/jelly--{module}-{version.replace("-", "--")}-green.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/{version}) [![Browse jelly-{module} {version} API docs](https://img.shields.io/badge/javadoc-{version.replace("-", "--")}-brightgreen.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-{module}{scala_suffix}/{version})'
-    
+
+    @env.macro
+    def java_module_badges(module):
+        return _module_badges(module, is_scala=False)
+
+    @env.macro
+    def scala_module_badges(module):
+        return _module_badges(module, is_scala=True)
 
     def transform_nav_item(item):
         if list(item.values())[0] == 'https://w3id.org/jelly/':
@@ -143,12 +151,10 @@ def define_env(env):
     {code.replace('\n', '\n    ')}
     ```
 """
-    
 
-    @env.macro
-    def javadoc_link(module: str, clazz: str, is_scala: bool = False):
+    def _javadoc_link(module: str, clazz: str, is_scala: bool = False):
         version = jvm_package_version()
-        if module in ['jena', 'rdf4j']:
+        if module in JELLY_CONVERT_MODULES:
             clazz = f'eu/neverblink/jelly/convert/{module}/{clazz}'
         else:
             clazz = f'eu/neverblink/jelly/{module}/{clazz}'
@@ -161,18 +167,34 @@ def define_env(env):
             scala_suffix = '_3'
 
         return f'https://javadoc.io/static/eu.neverblink.jelly/jelly-{module}{scala_suffix}/{version}/{clazz}.html'
-    
 
     @env.macro
-    def javadoc_link_pretty(module: str, clazz: str, fun: str = '', is_scala: bool = False):
-        if module in ['jena', 'rdf4j']:
+    def javadoc_link(module: str, clazz: str):
+        return _javadoc_link(module, clazz, is_scala=False)
+
+    @env.macro
+    def scaladoc_link(module: str, clazz: str):
+        return _javadoc_link(module, clazz, is_scala=True)
+
+    @env.macro
+    def javadoc_link_pretty(module: str, clazz: str, fun: str = ''):
+        if module in JELLY_CONVERT_MODULES:
             name = f'eu.neverblink.jelly.convert.{module}.{clazz}'
         else:
             name = f'eu.neverblink.jelly.{module}.{clazz}'
         if fun:
             name += f'.{fun}'
-        return f"[`{name.replace('$', '')}` :material-api:]({javadoc_link(module, clazz, is_scala)})"
-    
+        return f"[`{name.replace('$', '')}` :material-api:]({_javadoc_link(module, clazz, is_scala=False)})"
+
+    @env.macro
+    def scaladoc_link_pretty(module: str, clazz: str, fun: str = ''):
+        if module in JELLY_CONVERT_MODULES:
+            name = f'eu.neverblink.jelly.convert.{module}.{clazz}'
+        else:
+            name = f'eu.neverblink.jelly.{module}.{clazz}'
+        if fun:
+            name += f'.{fun}'
+        return f"[`{name.replace('$', '')}` :material-api:]({_javadoc_link(module, clazz, is_scala=True)})"
 
     env.conf['nav'] = [
         transform_nav_item(item)
