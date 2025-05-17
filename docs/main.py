@@ -107,9 +107,9 @@ def define_env(env):
     def module_badges(module):
         version = jvm_version()
         if version == 'dev':
-            return f'[![Browse jelly-{module} versions](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}) [![Browse latest jelly-{module} API docs](https://javadoc.io/badge2/eu.ostrzyciel.jelly/jelly-{module}_3/javadoc.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-{module}_3)'
+            return f'[![Browse jelly-{module} versions](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}) [![Browse latest jelly-{module} API docs](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-{module}_3/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-{module}_3)'
         else:
-            return f'[![See jelly-{module} {version} module details](https://img.shields.io/badge/jelly--{module}-{version.replace("-", "--")}-green.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/{version}) [![Browse jelly-{module} {version} API docs](https://img.shields.io/badge/javadoc-{version.replace("-", "--")}-brightgreen.svg)](https://javadoc.io/doc/eu.ostrzyciel.jelly/jelly-{module}_3/{version})'
+            return f'[![See jelly-{module} {version} module details](https://img.shields.io/badge/jelly--{module}-{version.replace("-", "--")}-green.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/{version}) [![Browse jelly-{module} {version} API docs](https://img.shields.io/badge/javadoc-{version.replace("-", "--")}-brightgreen.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-{module}_3/{version})'
     
 
     def transform_nav_item(item):
@@ -144,21 +144,21 @@ def define_env(env):
     def javadoc_link(module: str, clazz: str):
         version = jvm_package_version()
         if module in ['jena', 'rdf4j']:
-            clazz = f'eu/ostrzyciel/jelly/convert/{module}/{clazz}'
+            clazz = f'eu/neverblink/jelly/convert/{module}/{clazz}'
         else:
-            clazz = f'eu/ostrzyciel/jelly/{module}/{clazz}'
+            clazz = f'eu/neverblink/jelly/{module}/{clazz}'
         clazz = clazz.replace('.', '/')
         if version == 'dev':
             version = 'latest'
-        return f'https://javadoc.io/static/eu.ostrzyciel.jelly/jelly-{module}_3/{version}/{clazz}.html'
+        return f'https://javadoc.io/static/eu.neverblink.jelly/jelly-{module}_3/{version}/{clazz}.html'
     
 
     @env.macro
     def javadoc_link_pretty(module: str, clazz: str, fun: str = ''):
         if module in ['jena', 'rdf4j']:
-            name = f'eu.ostrzyciel.jelly.convert.{module}.{clazz}'
+            name = f'eu.neverblink.jelly.convert.{module}.{clazz}'
         else:
-            name = f'eu.ostrzyciel.jelly.{module}.{clazz}'
+            name = f'eu.neverblink.jelly.{module}.{clazz}'
         if fun:
             name += f'.{fun}'
         return f"[`{name.replace('$', '')}` :material-api:]({javadoc_link(module, clazz)})"

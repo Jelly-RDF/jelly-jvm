@@ -1,6 +1,9 @@
 package eu.neverblink.jelly.core.utils;
 
+import eu.neverblink.jelly.core.JellyConverterFactory;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
+import eu.neverblink.jelly.core.ProtoEncoder;
+import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import java.util.List;
 import java.util.UUID;
@@ -127,5 +130,44 @@ public final class LogicalStreamTypeUtils {
                 converter.makeIriNode(typeIri)
             )
         );
+    }
+
+    /**
+     * Returns an RDF-STaX annotation for the logical stream type, in RDF. The annotation simply states that
+     * &lt;subjectNode&gt; has a stream type usage, and that stream type usage has this stream type.
+     * <p>
+     * Example in Turtle for a flat triple stream:
+     * &lt;subjectNode&gt; stax:hasStreamTypeUsage [
+     *     a stax:RdfStreamTypeUsage ;
+     *     stax:hasStreamType stax:flatTripleStream
+     * ] .
+     * <p>
+     * This is a wrapper for the {@link #getRdfStaxAnnotation(ProtoDecoderConverter, TripleMaker, LogicalStreamType, Object)},
+     * that assumes that the decoder implements the {@link ProtoDecoderConverter} interface and {@link TripleMaker} interface.
+     *
+     * @param <TNode> the type of RDF nodes
+     * @param <TDatatype> the type of RDF triples
+     * @param <TTriple> the type of RDF triples
+     * @param <TEncoder> the type of RDF encoders
+     * @param <TDecoder> the type of RDF decoders
+     * @param factory the converter factory to use for creating RDF nodes
+     * @param logicalType the logical stream type
+     * @param subjectNode the subject node to annotate
+     * @throws IllegalArgumentException if the logical stream type is not supported
+     * @return the RDF-STaX annotation
+     */
+    public static <
+        TNode,
+        TDatatype,
+        TTriple,
+        TEncoder extends ProtoEncoderConverter<TNode>,
+        TDecoder extends ProtoDecoderConverter<TNode, TDatatype> & TripleMaker<TNode, TTriple>
+    > List<TTriple> getRdfStaxAnnotation(
+        JellyConverterFactory<TNode, TDatatype, TEncoder, TDecoder> factory,
+        LogicalStreamType logicalType,
+        TNode subjectNode
+    ) {
+        var converter = factory.decoderConverter();
+        return getRdfStaxAnnotation(converter, converter, logicalType, subjectNode);
     }
 }

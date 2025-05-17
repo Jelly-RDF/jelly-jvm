@@ -8,13 +8,19 @@ If you are already using Jena or RDF4J, you should use the [`jelly-jena`](jena.m
 
 ```xml
 <dependency>
-    <groupId>eu.ostrzyciel.jelly</groupId>
-    <artifactId>jelly-titanium-rdf-api_3</artifactId>
+    <groupId>eu.neverblink.jelly</groupId>
+    <artifactId>jelly-titanium-rdf-api</artifactId>
     <version>{{ jvm_package_version() }}</version>
 </dependency>
 ```
 
-Note that while the API is in Java, the code does depend on Scala. The dependency on Scala is expected to be removed in Jelly-JVM 3.0.0.
+If you are using Gradle, add the following to your `build.gradle`:
+
+```groovy
+dependencies {
+    implementation 'eu.neverblink.jelly:jelly-titanium-rdf-api:{{ jvm_package_version() }}'
+}
+```
 
 ## Basic I/O operations
 
@@ -26,7 +32,7 @@ Full example of integration with the [`titanium-rdf-n-quads`](https://github.com
 
 ## Low-level usage
 
-Titanium RDF API does not implement types for RDF primitives, so the Jelly integration with it is a bit different from the ones for Jena and RDF4J. Currently, the [Pekko Streams API](reactive.md) is not supported, and the `ConverterFactory` for Titanium is not part of the public API.
+Titanium RDF API does not implement types for RDF primitives, so the Jelly integration with it is a bit different from the ones for Jena and RDF4J. Currently, the [Pekko Streams API](reactive.md) is not supported, and the `JellyConverterFactory` for Titanium is not part of the public API.
 
 But, you can still access a part of the low-level API directly. This would be useful if you wanted to integrate Titanium with Kafka or some other custom serialization pipeline.
 

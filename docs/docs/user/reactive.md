@@ -1,6 +1,6 @@
 # User guide – reactive streaming
 
-This guide explains the reactive streaming functionalities of the `jelly-stream` module.
+This guide explains the reactive streaming functionalities of the `jelly-pekko-stream` module.
 
 !!! info "Prerequisites"
 
@@ -9,7 +9,7 @@ This guide explains the reactive streaming functionalities of the `jelly-stream`
     We also recommend you first read about the **[RDF stream types in Jelly]({{ proto_link('user-guide#stream-types') }})**. Otherwise, this guide may not make much sense.
 
 
-You can use `jelly-stream` with any RDF library that has a full Jelly integration, such as [Apache Jena](jena.md) (using `jelly-jena`) or [RDF4J](rdf4j.md) (using `jelly-rdf4j`)[^1]. The streaming API is generic and identical across all libraries.
+You can use `jelly-pekko-stream` with any RDF library that has a full Jelly integration, such as [Apache Jena](jena.md) (using `jelly-jena`) or [RDF4J](rdf4j.md) (using `jelly-rdf4j`)[^1]. The streaming API is generic and identical across all libraries.
 
 ## Basic concepts
 
@@ -42,7 +42,7 @@ The {{ javadoc_link_pretty('stream', 'DecoderFlow$') }} provides methods for dec
 
 ## Byte streams (delimited variant)
 
-In all of the examples above, we used the [non-delimited variant of Jelly]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}), which is appropriate for, e.g., sending Jelly data over [gRPC](grpc.md) or Kafka. If you want to write Jelly data to a file or a socket, you will need to use the delimited variant. `jelly-stream` provides a few methods for this in {{ javadoc_link_pretty('stream', 'JellyIo') }}.
+In all of the examples above, we used the [non-delimited variant of Jelly]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}), which is appropriate for, e.g., sending Jelly data over [gRPC](grpc.md) or Kafka. If you want to write Jelly data to a file or a socket, you will need to use the delimited variant. `jelly-pekko-stream` provides a few methods for this in {{ javadoc_link_pretty('stream', 'JellyIo') }}.
 
 {{ code_example('PekkoStreamsWithIo.scala') }}
 

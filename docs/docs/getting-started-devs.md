@@ -12,7 +12,7 @@ Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you shou
 lazy val jellyVersion = "{{ jvm_package_version() }}"
 
 libraryDependencies ++= Seq(
-  "eu.ostrzyciel.jelly" %% "jelly-jena" % jellyVersion,
+  "eu.neverblink.jelly" %% "jelly-jena" % jellyVersion,
 )
 ```
 
@@ -20,7 +20,7 @@ If you are working with Maven, add this to your `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>eu.ostrzyciel.jelly</groupId>
+    <groupId>eu.neverblink.jelly</groupId>
     <artifactId>jelly-jena</artifactId>
     <version>{{ jvm_package_version() }}</version>
 </dependency>
@@ -30,14 +30,14 @@ If you are using Gradle, add this to your `build.gradle`:
 
 ```groovy
 dependencies {
-    implementation "eu.ostrzyciel.jelly:jelly-jena:${jellyVersion}"
+    implementation "eu.neverblink.jelly:jelly-jena:${jellyVersion}"
 }
 ```
 
 Now you can serialize/deserialize Jelly data with Apache Jena. Jelly is fully integrated with Jena, so it should all just magically work. Here is a simple example of reading a `.jelly` file (in this case, a metadata file from [RiverBench](https://w3id.org/riverbench/)) with [RIOT](https://jena.apache.org/documentation/io/):
 
 ```scala title="Deserialization example (Scala 3)"
-import eu.ostrzyciel.jelly.convert.jena.riot.*
+import eu.neverblink.jelly.convert.jena.riot.*
 import org.apache.jena.riot.RDFDataMgr
 
 // Load an RDF graph from a Jelly file
@@ -50,7 +50,7 @@ println(s"Loaded an RDF graph with ${model.size} triples")
 ```
 
 ```java title="Deserialization example (Java)"
-import eu.ostrzyciel.jelly.convert.jena.riot.JellyLanguage;
+import eu.neverblink.jelly.convert.jena.riot.JellyLanguage;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 
@@ -68,7 +68,7 @@ System.out.println("Loaded an RDF graph with " + model.size() + " triples");
 Serialization is just as easy:
 
 ```scala title="Serialization example (Scala 3)"
-import eu.ostrzyciel.jelly.convert.jena.riot.*
+import eu.neverblink.jelly.convert.jena.riot.*
 import org.apache.jena.riot.RDFDataMgr
 
 import java.io.FileOutputStream
@@ -85,7 +85,7 @@ Using.resource(new FileOutputStream("metadata.jelly")) { out =>
 ```
 
 ```java title="Serialization example (Java)"
-import eu.ostrzyciel.jelly.convert.jena.riot.JellyLanguage;
+import eu.neverblink.jelly.convert.jena.riot.JellyLanguage;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 
@@ -113,7 +113,7 @@ If you aren't using a big RDF library like Jena or RDF4J, the simplest way to ge
 
 ```xml
 <dependency>
-    <groupId>eu.ostrzyciel.jelly</groupId>
+    <groupId>eu.neverblink.jelly</groupId>
     <artifactId>jelly-titanium-rdf-api</artifactId>
     <version>{{ jvm_package_version() }}</version>
 </dependency>
@@ -123,7 +123,7 @@ If you are using Gradle, add this to your `build.gradle`:
 
 ```groovy
 dependencies {
-    implementation "eu.ostrzyciel.jelly:jelly-titanium-rdf-api:${jellyVersion}"
+    implementation "eu.neverblink.jelly:jelly-titanium-rdf-api:${jellyVersion}"
 }
 ```
 
@@ -156,8 +156,8 @@ Now, the real power of Jelly lies in its streaming capabilities. Not only can it
 lazy val jellyVersion = "{{ jvm_package_version() }}"
 
 libraryDependencies ++= Seq(
-  "eu.ostrzyciel.jelly" %% "jelly-jena" % jellyVersion,
-  "eu.ostrzyciel.jelly" %% "jelly-pekko-stream" % jellyVersion,
+  "eu.neverblink.jelly" %% "jelly-jena" % jellyVersion,
+  "eu.neverblink.jelly" %% "jelly-pekko-stream" % jellyVersion,
 )
 ```
 
@@ -166,9 +166,9 @@ Now, let's say we have a stream of RDF graphs – for example each graph corresp
 ```scala title="Reactive streaming example (Scala 3)"
 // We need to import "jena.given" for Jena-to-Jelly conversions
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
-import eu.ostrzyciel.jelly.convert.jena.riot.*
-import eu.ostrzyciel.jelly.core.JellyOptions
-import eu.ostrzyciel.jelly.stream.*
+import eu.neverblink.jelly.convert.jena.riot.*
+import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.stream.*
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
