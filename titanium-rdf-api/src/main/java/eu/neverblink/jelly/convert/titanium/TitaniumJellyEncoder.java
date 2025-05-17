@@ -37,7 +37,7 @@ public interface TitaniumJellyEncoder extends RdfQuadConsumer {
 
     /**
      * Returns the rows in the encoded row buffer as a collection and clears the buffer.
-     * @return java.util.Iterable<RdfStreamRow>
+     * @return java.util.Iterable&lt;RdfStreamRow&gt;
      */
     Iterable<RdfStreamRow> getRows();
 
