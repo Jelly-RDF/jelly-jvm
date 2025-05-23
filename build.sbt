@@ -12,7 +12,6 @@ ThisBuild / developers := List(
     url("https://github.com/Ostrzyciel"),
   ),
 )
-ThisBuild / sonatypeCredentialHost := xerial.sbt.Sonatype.sonatypeCentralHost
 
 lazy val pekkoV = "1.1.3"
 lazy val pekkoGrpcV = "1.1.1"
