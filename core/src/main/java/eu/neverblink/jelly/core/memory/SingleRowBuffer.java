@@ -25,7 +25,7 @@ public final class SingleRowBuffer extends AbstractCollection<RdfStreamRow> impl
     SingleRowBuffer(Consumer<RdfStreamRow> consumer) {
         this.consumer = consumer;
     }
-    
+
     @Override
     public Collection<RdfStreamRow> getRows() {
         return this;
