@@ -269,8 +269,13 @@ class MessageGenerator(val info: MessageInfo):
     mergeFrom.beginControlFlow("case 0:").addStatement("return this").endControlFlow
     // default case -> skip field
     val ifSkipField = named("if (!input.skipField(tag))")
-    mergeFrom.beginControlFlow("default:").beginControlFlow(ifSkipField).addStatement("return this")
-    mergeFrom.endControlFlow.addStatement(named("tag = input.readTag()")).addStatement("break").endControlFlow
+    mergeFrom.beginControlFlow("default:")
+      .beginControlFlow(ifSkipField)
+      .addStatement("return this")
+      .endControlFlow
+    if enableFallthroughOptimization then
+      mergeFrom.addStatement(named("tag = input.readTag()"))
+    mergeFrom.addStatement("break").endControlFlow
     // Generate missing non-packed cases for packable fields for compatibility reasons
     for (field <- sortedFields) {
       if (field.info.isPackable) {
