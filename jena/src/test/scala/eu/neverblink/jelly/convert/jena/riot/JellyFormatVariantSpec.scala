@@ -13,7 +13,7 @@ class JellyFormatVariantSpec extends AnyWordSpec, Matchers:
         .frameSize(512)
         .enableNamespaceDeclarations(true)
         .build()
-      variant.toString should be ("Variant")
+      variant.toString should be (JellyFormatVariant.VARIANT_NAME)
       variant.getOptions.getStreamName should be ("Test")
       variant.getOptions.getRdfStar should be (true)
       variant.getFrameSize should be (512)
