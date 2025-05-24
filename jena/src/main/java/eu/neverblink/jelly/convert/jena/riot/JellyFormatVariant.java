@@ -112,7 +112,8 @@ public final class JellyFormatVariant extends RDFFormatVariant {
         boolean isDelimited,
         int frameSize
     ) {
-        super(options.getStreamName());
+        // Constant, because all writers can handle all variants
+        super("Variant");
         this.options = options;
         this.enableNamespaceDeclarations = enableNamespaceDeclarations;
         this.isDelimited = isDelimited;
