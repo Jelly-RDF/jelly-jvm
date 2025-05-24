@@ -2,6 +2,8 @@
 
 Jelly-JVM is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
+Jelly-JVM contributors: https://github.com/Jelly-RDF/jelly-jvm/graphs/contributors
+
 ## Jelly maintainer
 
 Jelly-JVM was originally created by [Piotr Sowiński](https://ostrzyciel.eu) ([GitHub](https://github.com/Ostrzyciel)) and is currently maintained by [NeverBlink](https://neverblink.eu).
