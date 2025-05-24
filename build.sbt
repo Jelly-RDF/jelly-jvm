@@ -432,6 +432,7 @@ lazy val jmh = (project in file("jmh"))
       "org.openjdk.jmh" % "jmh-core" % jmhV,
       "org.openjdk.jmh" % "jmh-generator-annprocess" % jmhV,
     ),
+    publishArtifact := false,
     commonSettings,
   )
   .dependsOn(core)
