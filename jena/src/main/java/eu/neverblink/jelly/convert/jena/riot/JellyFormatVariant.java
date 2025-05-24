@@ -18,6 +18,8 @@ public final class JellyFormatVariant extends RDFFormatVariant {
     public static final int DEFAULT_FRAME_SIZE = 256;
     public static final boolean DEFAULT_ENABLE_NAMESPACE_DECLARATIONS = false;
     public static final boolean DEFAULT_DELIMITED = true;
+    // Constant name for all variants of the Jelly format, as all writers can handle all variants.
+    public static final String VARIANT_NAME = "Variant";
 
     private final RdfStreamOptions options;
     private final boolean enableNamespaceDeclarations;
@@ -112,7 +114,8 @@ public final class JellyFormatVariant extends RDFFormatVariant {
         boolean isDelimited,
         int frameSize
     ) {
-        super(options.getStreamName());
+        // Constant, because all writers can handle all variants
+        super(VARIANT_NAME);
         this.options = options;
         this.enableNamespaceDeclarations = enableNamespaceDeclarations;
         this.isDelimited = isDelimited;
