@@ -5,7 +5,6 @@ import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.RdfHandler;
-import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
@@ -58,10 +57,11 @@ public final class JellyReader implements ReaderRIOT {
             }
         };
 
-        final ReusableRowBuffer buffer = RowBuffer.newReusableForDecoder(16);
+        final var decoder = converterFactory.anyStatementDecoder(handler, supportedOptions);
+        // Single row buffer -- rows are passed to the decoder immediately after being read
+        final RowBuffer buffer = RowBuffer.newSingle(decoder::ingestRow);
         final RdfStreamFrame.Mutable reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
         final MessageFactory<RdfStreamFrame> getReusableFrame = () -> reusableFrame;
-        final var decoder = converterFactory.anyStatementDecoder(handler, supportedOptions);
 
         output.start();
         try {
@@ -72,16 +72,13 @@ public final class JellyReader implements ReaderRIOT {
                 readStream(
                     delimitingResponse.newInput(),
                     inputStream -> ProtoMessage.parseDelimitedFrom(inputStream, getReusableFrame),
-                    frame -> {
-                        buffer.forEach(decoder::ingestRow);
-                        reusableFrame.clear();
-                    }
+                    frame -> buffer.clear()
                 );
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame
                 ProtoMessage.parseFrom(delimitingResponse.newInput(), getReusableFrame);
-                buffer.forEach(decoder::ingestRow);
+                buffer.clear();
             }
         } catch (IOException e) {
             throw new RiotException(e);

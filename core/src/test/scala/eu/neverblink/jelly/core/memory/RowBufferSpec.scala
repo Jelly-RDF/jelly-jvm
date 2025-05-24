@@ -1,8 +1,10 @@
 package eu.neverblink.jelly.core.memory
 
-import eu.neverblink.jelly.core.proto.v1.RdfNameEntry
+import eu.neverblink.jelly.core.proto.v1.{RdfNameEntry, RdfStreamRow}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
+import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.*
 
 class RowBufferSpec extends AnyWordSpec, Matchers:
@@ -119,5 +121,53 @@ class RowBufferSpec extends AnyWordSpec, Matchers:
     "not throw if the user demands a buffer that is very large" in {
       val buffer = RowBuffer.newReusableForDecoder(Int.MaxValue)
       buffer.size should be(0)
+    }
+  }
+
+  "SingleRowBuffer" should {
+    "work for an empty buffer" in {
+      val consumerBuffer = ArrayBuffer[RdfStreamRow]()
+      val buffer = RowBuffer.newSingle(row => consumerBuffer.append(row.clone()))
+      buffer.size should be(0)
+      buffer.isEmpty should be(true)
+      buffer.getRows.size() should be(0)
+      buffer.iterator().hasNext should be(false)
+    }
+
+    "process rows, maintaining capacity of 1" in {
+      val consumerBuffer = ArrayBuffer[RdfStreamRow]()
+      val buffer = RowBuffer.newSingle(row => consumerBuffer.append(row.clone()))
+      buffer.size should be(0)
+      for (f <- 0 until 10) {
+        for (i <- 0 until 10) {
+          buffer.appendMessage()
+            .setName(RdfNameEntry.newInstance().setId(i))
+            .getSerializedSize
+          buffer.size should be(1)
+          buffer.isEmpty should be(false)
+          buffer.getRows.size() should be(1)
+          buffer.iterator().hasNext should be(true)
+          buffer.iterator().next().getName.getId should be(i)
+          consumerBuffer.size should be(i)
+          if i > 0 then
+            consumerBuffer.last.getName.getId should be(i - 1)
+        }
+        buffer.clear()
+        buffer.size should be(0)
+        buffer.isEmpty should be(true)
+        buffer.getRows.size() should be(0)
+        buffer.iterator().hasNext should be(false)
+        intercept[NoSuchElementException] {
+          buffer.iterator().next()
+        }
+        consumerBuffer.size should be(10)
+        consumerBuffer.last.getName.getId should be(9)
+        consumerBuffer.clear()
+
+        // Repeated clear() should not do anything
+        buffer.clear()
+        buffer.size should be(0)
+        consumerBuffer.size should be(0)
+      }
     }
   }

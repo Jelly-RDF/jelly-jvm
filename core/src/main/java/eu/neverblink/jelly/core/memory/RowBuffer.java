@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.memory;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 import eu.neverblink.protoc.java.runtime.MessageCollection;
 import java.util.Collection;
+import java.util.function.Consumer;
 
 /**
  * Buffer of RdfStreamRow messages, used both by the encoder and decoder.
@@ -71,5 +72,24 @@ public interface RowBuffer extends MessageCollection<RdfStreamRow, RdfStreamRow.
      */
     static LazyImmutableRowBuffer newLazyImmutable() {
         return new LazyImmutableRowBuffer(16);
+    }
+
+    /**
+     * Creates a new SingleRowBuffer, for decoding only.
+     * This buffer will only hold a single row at a time. This row will be passed to the consumer
+     * when appendMessage() is called for the next row, or when clear() is called.
+     * <p>
+     * To use this correctly, you must: (1) set the consumer to ProtoDecoder::ingestRow,
+     * (2) call clear() at the end of each frame, and (3) never maintain a reference to the row
+     * that is passed to the consumer.
+     * <p>
+     * The advantage of this buffer is that it only ever allocates a single RdfStreamRow object,
+     * resulting in a very low memory footprint. As compared to the reusable buffer, it has
+     * better cache locality.
+     * @param consumer consumer to which the row will be passed
+     * @return a new SingleRowBuffer
+     */
+    static RowBuffer newSingle(Consumer<RdfStreamRow> consumer) {
+        return new SingleRowBuffer(consumer);
     }
 }

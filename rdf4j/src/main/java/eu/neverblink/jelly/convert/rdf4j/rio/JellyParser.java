@@ -86,10 +86,11 @@ public final class JellyParser extends AbstractRDFParser {
             }
         };
 
-        final ReusableRowBuffer buffer = RowBuffer.newReusableForDecoder(16);
+        final var decoder = converterFactory.anyStatementDecoder(handler, options);
+        // Single row buffer -- rows are passed to the decoder immediately after being read
+        final RowBuffer buffer = RowBuffer.newSingle(decoder::ingestRow);
         final RdfStreamFrame.Mutable reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
         final MessageFactory<RdfStreamFrame> getReusableFrame = () -> reusableFrame;
-        final var decoder = converterFactory.anyStatementDecoder(handler, options);
 
         rdfHandler.startRDF();
         try {
@@ -100,16 +101,13 @@ public final class JellyParser extends AbstractRDFParser {
                 readStream(
                     delimitingResponse.newInput(),
                     inputStream -> ProtoMessage.parseDelimitedFrom(inputStream, getReusableFrame),
-                    frame -> {
-                        buffer.forEach(decoder::ingestRow);
-                        frame.clear();
-                    }
+                    frame -> buffer.clear()
                 );
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame
                 ProtoMessage.parseFrom(delimitingResponse.newInput(), getReusableFrame);
-                reusableFrame.getRows().forEach(decoder::ingestRow);
+                buffer.clear();
             }
         } finally {
             rdfHandler.endRDF();
