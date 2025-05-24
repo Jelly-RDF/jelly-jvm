@@ -243,7 +243,8 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         return msg;
     }
 
-    protected static <T extends ProtoMessage<T>> void mergeDelimitedFrom(T msg, LimitedCodedInputStream inputLimited)
+    @InternalApi
+    public static <T extends ProtoMessage<T>> void mergeDelimitedFrom(T msg, LimitedCodedInputStream inputLimited)
         throws IOException {
         inputLimited.checkRecursionDepth();
         inputLimited.incrementRecursionDepth();

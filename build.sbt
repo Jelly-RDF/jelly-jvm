@@ -21,6 +21,7 @@ lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
 lazy val protobufV = "4.31.0"
 lazy val javapoetV = "0.7.0"
+lazy val jmhV = "1.37"
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
@@ -420,3 +421,18 @@ lazy val examples = (project in file("examples"))
     rdf4j,
     titaniumRdfApi
   )
+
+lazy val jmh = (project in file("jmh"))
+  .enablePlugins(JmhPlugin)
+  .settings(
+    publishArtifact := false,
+    name := "jelly-jmh",
+    description := "JMH benchmarks for Jelly-JVM.",
+    libraryDependencies ++= Seq(
+      "org.openjdk.jmh" % "jmh-core" % jmhV,
+      "org.openjdk.jmh" % "jmh-generator-annprocess" % jmhV,
+    ),
+    publishArtifact := false,
+    commonSettings,
+  )
+  .dependsOn(core)
