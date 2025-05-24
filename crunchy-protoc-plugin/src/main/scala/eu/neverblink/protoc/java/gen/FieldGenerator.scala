@@ -323,7 +323,7 @@ class FieldGenerator(val info: FieldInfo):
   def generateMemberMethods(t: TypeSpec.Builder, tMutable: TypeSpec.Builder): Unit =
     generateInitializedMethod(tMutable)
     generateGetMethods(t)
-    if (info.isEnum) generateExtraEnumAccessors(t)
+    if (info.isEnum) generateExtraEnumAccessors(t, tMutable)
     generateSetMethods(tMutable)
 
   private def generateInitializedMethod(t: TypeSpec.Builder): Unit =
@@ -444,7 +444,7 @@ class FieldGenerator(val info: FieldInfo):
    *
    * @param t
    */
-  private def generateExtraEnumAccessors(t: TypeSpec.Builder): Unit = {
+  private def generateExtraEnumAccessors(t: TypeSpec.Builder, tMutable: TypeSpec.Builder): Unit = {
     if (!info.isEnum || info.isRepeated) return
     // Overload to get the internal store without conversion
     t.addMethod(MethodSpec.methodBuilder(info.getterName + "Value")
@@ -462,7 +462,7 @@ class FieldGenerator(val info: FieldInfo):
       .build
     )
     // Overload to set the internal value without conversion
-    t.addMethod(MethodSpec.methodBuilder(info.setterName + "Value")
+    tMutable.addMethod(MethodSpec.methodBuilder(info.setterName + "Value")
       .addAnnotations(info.methodAnnotations)
       .addJavadoc(named("" +
         "Sets the value of the internal enum store. This does not\n" +
@@ -475,7 +475,7 @@ class FieldGenerator(val info: FieldInfo):
       ))
       .addModifiers(Modifier.PUBLIC)
       .addParameter(classOf[Int], "value", Modifier.FINAL)
-      .returns(info.parentType)
+      .returns(info.parentTypeInfo.mutableTypeName)
       .addNamedCode("" + "$field:N = value;\n" + "return this;\n", m)
       .build
     )
