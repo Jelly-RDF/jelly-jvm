@@ -56,21 +56,3 @@ class RdfIriParseBench:
     for i <- 0 until input.size do
       val iri = RdfIri.newInstance()
       ProtoMessage.mergeDelimitedFrom(iri, cis, ProtoMessage.DEFAULT_MAX_RECURSION_DEPTH)
-
-//  @Benchmark
-//  @OutputTimeUnit(TimeUnit.NANOSECONDS)
-//  @BenchmarkMode(Array(Mode.AverageTime))
-//  def fallthroughSwitch(input: BenchInput): Unit =
-//    val inputStream = input.getInputStream
-//    for i <- 0 until input.size do
-//      val iri = RdfIriParseFallthrough.newInstance()
-//      ProtoMessage.mergeDelimitedFrom(iri, inputStream)
-//
-//  @Benchmark
-//  @OutputTimeUnit(TimeUnit.NANOSECONDS)
-//  @BenchmarkMode(Array(Mode.AverageTime))
-//  def tableSwitch(input: BenchInput): Unit =
-//    val inputStream = input.getInputStream
-//    for i <- 0 until input.size do
-//      val iri = RdfIriParseTableswitch.newInstance()
-//      ProtoMessageOriginal.mergeDelimitedFrom(iri, inputStream)
