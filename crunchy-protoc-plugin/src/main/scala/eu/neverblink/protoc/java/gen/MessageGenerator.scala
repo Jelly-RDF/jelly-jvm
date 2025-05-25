@@ -190,7 +190,8 @@ class MessageGenerator(val info: MessageInfo):
       .addAnnotation(classOf[Override])
       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .returns(info.mutableTypeName)
-      .addParameter(RuntimeClasses.LimitedCodedInputStream, "inputLimited", Modifier.FINAL)
+      .addParameter(RuntimeClasses.CodedInputStream, "input", Modifier.FINAL)
+      .addParameter(classOf[Int], "remainingDepth", Modifier.FINAL)
       .addException(classOf[IOException])
     // Fallthrough optimization:
     //
@@ -216,7 +217,6 @@ class MessageGenerator(val info: MessageInfo):
         .build
       )
     }
-    mergeFrom.addStatement("final $T input = inputLimited.in()", RuntimeClasses.CodedInputStream)
     if !info.usesFastOneofMerge then
       mergeFrom.addStatement(named("int tag = input.readTag()"))
 
@@ -432,19 +432,6 @@ class MessageGenerator(val info: MessageInfo):
       .addParameter(classOf[Array[Byte]], "data", Modifier.FINAL)
       .returns(info.typeName)
       .addStatement("return $T.mergeFrom(newInstance(), data)", RuntimeClasses.AbstractMessage)
-      .build
-    )
-    t.addMethod(MethodSpec.methodBuilder("parseFrom")
-      .addJavadoc(
-        "Parse this message in NON-delimited form from a {@link $T}.\n" +
-        "This assumes that the message spans the entire input stream.",
-        RuntimeClasses.LimitedCodedInputStream
-      )
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-      .addException(classOf[IOException])
-      .addParameter(RuntimeClasses.LimitedCodedInputStream, "input", Modifier.FINAL)
-      .returns(info.typeName)
-      .addStatement("return $T.mergeFrom(newInstance(), input)", RuntimeClasses.AbstractMessage)
       .build
     )
     t.addMethod(MethodSpec.methodBuilder("parseFrom")

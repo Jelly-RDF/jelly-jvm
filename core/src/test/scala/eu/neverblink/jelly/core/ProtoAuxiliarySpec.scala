@@ -74,9 +74,9 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
       }
     }
 
-    val deeplyNestedFrame = {
+    def makeDeepFrame(depth: Int): RdfStreamFrame = {
       var triple = RdfTriple.newInstance()
-      for (i <- 1 to 100) {
+      for (_ <- 1 to depth) {
         triple = RdfTriple.newInstance()
           .setSTripleTerm(triple)
       }
@@ -84,22 +84,41 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
         .addRows(RdfStreamRow.newInstance().setTriple(triple))
     }
 
+    val depth65Frame = makeDeepFrame(65)
+    val depth60Frame = makeDeepFrame(60)
+
     "[SECURITY] reject parsing too deeply nested messages (non-delimited)" in {
-      val bytes = deeplyNestedFrame.toByteArray
+      val bytes = depth65Frame.toByteArray
       val exception = intercept[RuntimeException] {
         RdfStreamFrame.parseFrom(bytes)
       }
-      exception.getMessage should include("depth exceeded: 65")
+      exception.getMessage should include("Maximum recursion depth exceeded")
     }
 
     "[SECURITY] reject parsing too deeply nested messages (delimited)" in {
       val os = new ByteArrayOutputStream()
-      deeplyNestedFrame.writeDelimitedTo(os)
+      depth65Frame.writeDelimitedTo(os)
       val bytes = os.toByteArray
       val exception = intercept[RuntimeException] {
         RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
       }
-      exception.getMessage should include("depth exceeded: 65")
+      exception.getMessage should include("Maximum recursion depth exceeded")
+    }
+
+    "allow parsing deeply nested messages within the limit (non-delimited)" in {
+      // This should succeed, as the depth is below the default maximum recursion depth.
+      val bytes = depth60Frame.toByteArray
+      val frame = RdfStreamFrame.parseFrom(bytes)
+      frame should be(depth60Frame)
+    }
+
+    "allow parsing deeply nested messages within the limit (delimited)" in {
+      // This should succeed, as the depth is below the default maximum recursion depth.
+      val os = new ByteArrayOutputStream()
+      depth60Frame.writeDelimitedTo(os)
+      val bytes = os.toByteArray
+      val frame = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
+      frame should be(depth60Frame)
     }
 
     "not preserve the cached size on clone()" in {
