@@ -101,6 +101,20 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
       }
       exception.getMessage should include("depth exceeded: 65")
     }
+
+    "not preserve the cached size on clone()" in {
+      // .clone() should not preserve the cached size, as the cloned object will likely be modified
+      // right after cloning.
+      // Cloning while preserving the cached size leads to weird, hard-to-debug issues, for example:
+      // https://github.com/Jelly-RDF/cli/pull/126
+      val frame = RdfStreamFrame.newInstance()
+        .addRows(RdfStreamRow.newInstance().setTriple(RdfTriple.newInstance()))
+      val s = frame.getSerializedSize
+      s should be > 0
+      frame.getCachedSize should be (s)
+      val clonedFrame = frame.clone()
+      clonedFrame.getCachedSize should be(-1)
+    }
   }
 
   // Tests for the core-protos-google module
