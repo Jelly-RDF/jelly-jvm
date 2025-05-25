@@ -150,10 +150,10 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * Parse {@code input} as a message of this type and merge it with the
      * message being built.
      *
-     * @return this
+     * @return last read tag or 0 if the end of the message was reached.
      */
     @InternalApi
-    public abstract MessageType mergeFrom(CodedInputStream input, int remainingDepth) throws IOException;
+    public abstract int mergeFrom(CodedInputStream input, int remainingDepth) throws IOException;
 
     /**
      * Merge {@code other} into the message being built. {@code other} must have the exact same type
@@ -247,8 +247,9 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     @InternalApi
     public static <T extends ProtoMessage<T>> T mergeFrom(T msg, CodedInputStream input, int remainingDepth)
         throws IOException {
-        msg.mergeFrom(input, remainingDepth - 1);
-        input.checkLastTagWas(0);
+        if (msg.mergeFrom(input, remainingDepth - 1) != 0) {
+            throw new InvalidProtocolBufferException("Protocol message end-group tag did not match expected tag.");
+        }
         return msg;
     }
 
@@ -263,8 +264,9 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         }
         final int length = input.readRawVarint32();
         final int oldLimit = input.pushLimit(length);
-        msg.mergeFrom(input, remainingDepth - 1);
-        input.checkLastTagWas(0);
+        if (msg.mergeFrom(input, remainingDepth - 1) != 0) {
+            throw new InvalidProtocolBufferException("Protocol message end-group tag did not match expected tag.");
+        }
         input.popLimit(oldLimit);
     }
 
