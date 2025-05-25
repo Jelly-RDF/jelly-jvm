@@ -189,7 +189,7 @@ class MessageGenerator(val info: MessageInfo):
       .addJavadoc(Javadoc.inherit)
       .addAnnotation(classOf[Override])
       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-      .returns(info.mutableTypeName)
+      .returns(classOf[Int])
       .addParameter(RuntimeClasses.CodedInputStream, "input", Modifier.FINAL)
       .addParameter(classOf[Int], "remainingDepth", Modifier.FINAL)
       .addException(classOf[IOException])
@@ -217,14 +217,19 @@ class MessageGenerator(val info: MessageInfo):
         .build
       )
     }
-    if !info.usesFastOneofMerge then
+    if !info.usesFastOneofMerge && !info.isEmptyMessage then
       mergeFrom.addStatement(named("int tag = input.readTag()"))
 
     // If this is an empty message, we can skip the whole switch statement
+    val ifSkipField = named("if (!input.skipField(tag))")
     if info.isEmptyMessage then
       mergeFrom
-        .addStatement("input.skipField(tag)")
-        .addStatement("return this")
+        .beginControlFlow("while (true)")
+        .addStatement(named("int tag = input.readTag()"))
+        .beginControlFlow(ifSkipField)
+        .addStatement("return tag")
+        .endControlFlow
+        .endControlFlow
       t.addMethod(mergeFrom.build)
       return
     mergeFrom.beginControlFlow("while (true)")
@@ -266,12 +271,11 @@ class MessageGenerator(val info: MessageInfo):
       mergeFrom.endControlFlow
     }
     // zero means invalid tag / end of data
-    mergeFrom.beginControlFlow("case 0:").addStatement("return this").endControlFlow
+    mergeFrom.beginControlFlow("case 0:").addStatement("return tag").endControlFlow
     // default case -> skip field
-    val ifSkipField = named("if (!input.skipField(tag))")
     mergeFrom.beginControlFlow("default:")
       .beginControlFlow(ifSkipField)
-      .addStatement("return this")
+      .addStatement("return tag")
       .endControlFlow
     if enableFallthroughOptimization then
       mergeFrom.addStatement(named("tag = input.readTag()"))
