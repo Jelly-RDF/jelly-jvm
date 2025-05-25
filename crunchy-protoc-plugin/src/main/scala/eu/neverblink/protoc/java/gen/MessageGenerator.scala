@@ -375,7 +375,11 @@ class MessageGenerator(val info: MessageInfo):
       .addParameter(info.typeName, "other", Modifier.FINAL)
       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .returns(info.mutableTypeName)
-    copyFrom.addStatement("cachedSize = other.cachedSize")
+    // Reset cached size -- definitely do not copy it from the other message, because this object
+    // will likely be modified right after copying, leading to an incorrect cached size.
+    // Cloning while preserving the cached size leads to weird, hard-to-debug issues, for example:
+    // https://github.com/Jelly-RDF/cli/pull/126
+    copyFrom.addStatement("cachedSize = -1")
     fields.foreach(_.generateCopyFromCode(copyFrom))
     oneOfGenerators.foreach(_.generateCopyFromCode(copyFrom))
     copyFrom.addStatement("return this")
