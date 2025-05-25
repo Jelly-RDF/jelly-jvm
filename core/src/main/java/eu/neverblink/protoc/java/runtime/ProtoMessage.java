@@ -19,7 +19,7 @@ import java.util.List;
  * @author Piotr Sowiński
  */
 public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
-    
+
     /**
      * Default maximum recursion depth for parsing messages.
      * This is used to prevent stack overflow errors when parsing deeply nested messages.
