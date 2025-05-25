@@ -20,6 +20,12 @@ import java.util.List;
  */
 public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
 
+    /**
+     * Default maximum recursion depth for parsing messages.
+     * This is used to prevent stack overflow errors when parsing deeply nested messages.
+     */
+    public static final int DEFAULT_MAX_RECURSION_DEPTH = 64;
+
     protected ProtoMessage() {}
 
     /**
@@ -113,7 +119,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         throws IOException {
         final var msg = factory.create();
         final var cin = CodedInputStream.newInstance(input);
-        msg.mergeFrom(new LimitedCodedInputStream(cin));
+        msg.mergeFrom(cin, DEFAULT_MAX_RECURSION_DEPTH);
         return msg;
     }
 
@@ -135,8 +141,8 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
             throw new InvalidProtocolBufferException(e);
         }
         final var msg = factory.create();
-        final var limitedInput = LimitedCodedInputStream.newInstance(input, size);
-        msg.mergeFrom(limitedInput);
+        final var codedInput = CodedInputStream.newInstance(new LimitedInputStream(input, size));
+        msg.mergeFrom(codedInput, DEFAULT_MAX_RECURSION_DEPTH);
         return msg;
     }
 
@@ -146,7 +152,8 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      *
      * @return this
      */
-    public abstract MessageType mergeFrom(LimitedCodedInputStream input) throws IOException;
+    @InternalApi
+    public abstract MessageType mergeFrom(CodedInputStream input, int remainingDepth) throws IOException;
 
     /**
      * Merge {@code other} into the message being built. {@code other} must have the exact same type
@@ -226,7 +233,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         throws InvalidProtocolBufferException {
         try {
             final var input = CodedInputStream.newInstance(data, off, len);
-            return mergeFrom(msg, new LimitedCodedInputStream(input));
+            return mergeFrom(msg, input, DEFAULT_MAX_RECURSION_DEPTH);
         } catch (InvalidProtocolBufferException e) {
             throw e;
         } catch (IOException e) {
@@ -237,26 +244,31 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     /**
      * Parse {@code input} as a message of this type and merge it with the message being built.
      */
-    public static <T extends ProtoMessage<T>> T mergeFrom(T msg, LimitedCodedInputStream input) throws IOException {
-        msg.mergeFrom(input);
-        input.in().checkLastTagWas(0);
+    @InternalApi
+    public static <T extends ProtoMessage<T>> T mergeFrom(T msg, CodedInputStream input, int remainingDepth)
+        throws IOException {
+        msg.mergeFrom(input, remainingDepth - 1);
+        input.checkLastTagWas(0);
         return msg;
     }
 
     @InternalApi
-    public static <T extends ProtoMessage<T>> void mergeDelimitedFrom(T msg, LimitedCodedInputStream inputLimited)
-        throws IOException {
-        inputLimited.checkRecursionDepth();
-        inputLimited.incrementRecursionDepth();
-        final CodedInputStream input = inputLimited.in();
+    public static <T extends ProtoMessage<T>> void mergeDelimitedFrom(
+        T msg,
+        CodedInputStream input,
+        int remainingDepth
+    ) throws IOException {
+        if (remainingDepth < 0) {
+            throw new RuntimeException("Maximum recursion depth exceeded");
+        }
         final int length = input.readRawVarint32();
         final int oldLimit = input.pushLimit(length);
-        msg.mergeFrom(inputLimited);
+        msg.mergeFrom(input, remainingDepth - 1);
         input.checkLastTagWas(0);
         input.popLimit(oldLimit);
-        inputLimited.decrementRecursionDepth();
     }
 
+    @InternalApi
     protected static <T extends ProtoMessage<T>> int computeRepeatedMessageSizeNoTag(final Collection<T> values) {
         int dataSize = 0;
         for (final ProtoMessage<?> value : values) {
@@ -266,16 +278,18 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         return dataSize;
     }
 
+    @InternalApi
     protected static <T extends ProtoMessage<T>> int readRepeatedMessage(
         final MessageCollection<T, ?> store,
-        final LimitedCodedInputStream input,
-        final int tag
+        final CodedInputStream input,
+        final int tag,
+        final int remainingDepth
     ) throws IOException {
         int nextTag;
         do {
             final var msg = store.appendMessage();
-            mergeDelimitedFrom(msg, input);
-        } while ((nextTag = input.in().readTag()) == tag);
+            mergeDelimitedFrom(msg, input, remainingDepth);
+        } while ((nextTag = input.readTag()) == tag);
         return nextTag;
     }
 

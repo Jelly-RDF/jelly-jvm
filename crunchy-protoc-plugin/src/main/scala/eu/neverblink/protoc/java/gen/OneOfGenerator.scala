@@ -178,7 +178,7 @@ class OneOfGenerator(val info: OneOfInfo):
             field.info.getTypeName, field.info.fieldName, field.info.getTypeName,
           )
           .addStatement("$N($N)", field.info.setterName, field.info.fieldName)
-          .addStatement("ProtoMessage.mergeDelimitedFrom($N, inputLimited)", field.info.fieldName)
+          .addStatement("ProtoMessage.mergeDelimitedFrom($N, input, remainingDepth)", field.info.fieldName)
       else
         // If the field is already set to the same kind of message, we merge it.
         // Otherwise, we create a new instance of the message and merge it.
@@ -191,7 +191,7 @@ class OneOfGenerator(val info: OneOfInfo):
           .addStatement("$N = $T.newInstance()", field.info.fieldName, field.info.getTypeName)
           .addStatement("$N($N)", field.info.setterName, field.info.fieldName)
           .endControlFlow
-          .addStatement("ProtoMessage.mergeDelimitedFrom($N, inputLimited)", field.info.fieldName)
+          .addStatement("ProtoMessage.mergeDelimitedFrom($N, input, remainingDepth)", field.info.fieldName)
     else if field.info.isString then
       method.addStatement("$N(input.readStringRequireUtf8())", field.info.setterName)
     else if field.info.isPrimitive then

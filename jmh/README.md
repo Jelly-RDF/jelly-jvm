@@ -17,3 +17,9 @@ To run with the perfasm profiler, use:
 ```bash
 sbt jmh/Jmh/run -f1 -prof "perfasm:intelSyntax=true;tooBigThreshold=1500;top=3" .*RdfIriParseBench.*
 ```
+
+Run this to get all options for perfasm:
+
+```bash
+sbt jmh/Jmh/run -f1 -prof "perfasm:help"
+```

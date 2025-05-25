@@ -2,8 +2,7 @@ package eu.neverblink.jelly.jmh
 
 import com.google.protobuf.CodedInputStream
 import eu.neverblink.jelly.core.proto.v1.RdfIri
-import eu.neverblink.jelly.jmh.impl.{RdfIriParseFallthrough, RdfIriParseTableswitch}
-import eu.neverblink.protoc.java.runtime.{LimitedCodedInputStream, ProtoMessage}
+import eu.neverblink.protoc.java.runtime.ProtoMessage
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
@@ -23,11 +22,11 @@ object RdfIriParseBench:
 
     val size = 1000
 
-    def getInputStream: LimitedCodedInputStream =
+    def getInputStream: CodedInputStream =
       val is = new java.io.ByteArrayInputStream(toParse)
       val cis = CodedInputStream.newInstance(is)
       cis.pushLimit(toParse.length)
-      LimitedCodedInputStream(cis)
+      cis
 
     @Setup(Level.Trial)
     def setup(): Unit =
@@ -53,25 +52,7 @@ class RdfIriParseBench:
   @OutputTimeUnit(TimeUnit.NANOSECONDS)
   @BenchmarkMode(Array(Mode.AverageTime))
   def currentImplementation(input: BenchInput): Unit =
-    val inputStream = input.getInputStream
+    val cis = input.getInputStream
     for i <- 0 until input.size do
       val iri = RdfIri.newInstance()
-      ProtoMessage.mergeDelimitedFrom(iri, inputStream)
-
-  @Benchmark
-  @OutputTimeUnit(TimeUnit.NANOSECONDS)
-  @BenchmarkMode(Array(Mode.AverageTime))
-  def fallthroughSwitch(input: BenchInput): Unit =
-    val inputStream = input.getInputStream
-    for i <- 0 until input.size do
-      val iri = RdfIriParseFallthrough.newInstance()
-      ProtoMessage.mergeDelimitedFrom(iri, inputStream)
-
-  @Benchmark
-  @OutputTimeUnit(TimeUnit.NANOSECONDS)
-  @BenchmarkMode(Array(Mode.AverageTime))
-  def tableSwitch(input: BenchInput): Unit =
-    val inputStream = input.getInputStream
-    for i <- 0 until input.size do
-      val iri = RdfIriParseTableswitch.newInstance()
-      ProtoMessage.mergeDelimitedFrom(iri, inputStream)
+      ProtoMessage.mergeDelimitedFrom(iri, cis, ProtoMessage.DEFAULT_MAX_RECURSION_DEPTH)
