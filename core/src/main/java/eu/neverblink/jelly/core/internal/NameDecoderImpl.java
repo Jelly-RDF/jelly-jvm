@@ -125,8 +125,6 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
     @SuppressWarnings("unchecked")
     @Override
     public TIri decode(int prefixId, int nameId) {
-        final var originalPrefixId = prefixId;
-
         lastNameIdReference = ((lastNameIdReference + 1) & ((nameId - 1) >> 31)) + nameId;
         NameLookupEntry nameEntry;
         try {
@@ -134,7 +132,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new RdfProtoDeserializationError(
                 ("Encountered an invalid name table reference (out of bounds). " +
-                    "Name ID: %d, Prefix ID: %d").formatted(nameId, originalPrefixId)
+                    "Name ID: %d, Prefix ID: %d").formatted(nameId, prefixId)
             );
         }
 
@@ -142,6 +140,7 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         // Equivalent to:
         //   if (prefixId == 0) prefixId = lastPrefixIdReference;
         //   else lastPrefixIdReference = prefixId;
+        final int originalPrefixId = prefixId;
         lastPrefixIdReference = prefixId = (((prefixId - 1) >> 31) & lastPrefixIdReference) + prefixId;
         if (prefixId != 0) {
             // Name and prefix

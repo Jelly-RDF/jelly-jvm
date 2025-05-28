@@ -18,20 +18,30 @@ import eu.neverblink.jelly.core.proto.v1.*;
 public abstract class DecoderBase<TNode, TDatatype> {
 
     protected final ProtoDecoderConverter<TNode, TDatatype> converter;
-    protected final LazyProperty<NameDecoder<TNode>> nameDecoder;
-    protected final LazyProperty<DecoderLookup<TDatatype>> datatypeLookup;
+    private NameDecoder<TNode> nameDecoder = null;
+    private DecoderLookup<TDatatype> datatypeLookup = null;
 
-    protected final LastNodeHolder<TNode> lastSubject = new LastNodeHolder<>();
-    protected final LastNodeHolder<TNode> lastPredicate = new LastNodeHolder<>();
-    protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
-    protected final LastNodeHolder<TNode> lastGraph = new LastNodeHolder<>();
+    protected TNode lastSubject = null;
+    protected TNode lastPredicate = null;
+    protected TNode lastObject = null;
+    protected TNode lastGraph = null;
 
     protected DecoderBase(ProtoDecoderConverter<TNode, TDatatype> converter) {
         this.converter = converter;
-        this.datatypeLookup = new LazyProperty<>(() -> new DecoderLookup<>(getDatatypeTableSize()));
-        this.nameDecoder = new LazyProperty<>(() ->
-            new NameDecoderImpl<>(getPrefixTableSize(), getNameTableSize(), converter::makeIriNode)
-        );
+    }
+
+    protected final NameDecoder<TNode> getNameDecoder() {
+        if (nameDecoder == null) {
+            nameDecoder = new NameDecoderImpl<>(getPrefixTableSize(), getNameTableSize(), converter::makeIriNode);
+        }
+        return nameDecoder;
+    }
+
+    protected final DecoderLookup<TDatatype> getDatatypeLookup() {
+        if (datatypeLookup == null) {
+            datatypeLookup = new DecoderLookup<>(getDatatypeTableSize());
+        }
+        return datatypeLookup;
     }
 
     protected abstract int getNameTableSize();
@@ -56,7 +66,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
             switch (kind) {
                 case 0 -> {
                     final var iri = (RdfIri) graph;
-                    return nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId());
+                    return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
                 }
                 case 1 -> {
                     final var bnode = (String) graph;
@@ -89,7 +99,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
             switch (kind) {
                 case 0 -> {
                     final var iri = (RdfIri) term;
-                    return nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId());
+                    return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
                 }
                 case 1 -> {
                     final var bnode = (String) term;
@@ -119,7 +129,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
                 return converter.makeLangLiteral(literal.getLex(), literal.getLangtag());
             }
             case RdfLiteral.DATATYPE -> {
-                return converter.makeDtLiteral(literal.getLex(), datatypeLookup.provide().get(literal.getDatatype()));
+                return converter.makeDtLiteral(literal.getLex(), getDatatypeLookup().get(literal.getDatatype()));
             }
             default -> {
                 return converter.makeSimpleLiteral(literal.getLex());
@@ -129,33 +139,71 @@ public abstract class DecoderBase<TNode, TDatatype> {
 
     /**
      * Convert the subject from an SPO-like message to a node, while respecting repeated terms.
+     * <p>
+     * The logic here is repeated in the other SPO methods for permance reasons (avoiding additional reference passing).
      * @param spo SPO-like message to extract the subject from
      * @return converted node
      */
     protected final TNode convertSubjectTermWrapped(SpoBase spo) {
-        return convertSpoTermWrapped(spo.getSubjectFieldNumber() - RdfTriple.S_IRI, spo.getSubject(), lastSubject);
+        int kind = spo.getSubjectFieldNumber() - RdfTriple.S_IRI;
+        final var term = spo.getSubject();
+        if (term == null && lastSubject == null) {
+            throw new RdfProtoDeserializationError("Empty subject term without previous term.");
+        }
+
+        if (term == null) {
+            return lastSubject;
+        }
+
+        final var node = convertTerm(kind, term);
+        lastSubject = node;
+        return node;
     }
 
     /**
      * Convert the predicate from an SPO-like message to a node, while respecting repeated terms.
+     * <p>
+     * The logic here is repeated in the other SPO methods for permance reasons (avoiding additional reference passing).
      * @param spo SPO-like message to extract the predicate from
      * @return converted node
      */
     protected final TNode convertPredicateTermWrapped(SpoBase spo) {
-        return convertSpoTermWrapped(
-            spo.getPredicateFieldNumber() - RdfTriple.P_IRI,
-            spo.getPredicate(),
-            lastPredicate
-        );
+        int kind = spo.getPredicateFieldNumber() - RdfTriple.P_IRI;
+        final var term = spo.getPredicate();
+        if (term == null && lastPredicate == null) {
+            throw new RdfProtoDeserializationError("Empty subject term without previous term.");
+        }
+
+        if (term == null) {
+            return lastPredicate;
+        }
+
+        final var node = convertTerm(kind, term);
+        lastPredicate = node;
+        return node;
     }
 
     /**
      * Convert the object from an SPO-like message to a node, while respecting repeated terms.
+     * <p>
+     * The logic here is repeated in the other SPO methods for permance reasons (avoiding additional reference passing).
      * @param spo SPO-like message to extract the object from
      * @return converted node
      */
     protected final TNode convertObjectTermWrapped(SpoBase spo) {
-        return convertSpoTermWrapped(spo.getObjectFieldNumber() - RdfTriple.O_IRI, spo.getObject(), lastObject);
+        int kind = spo.getObjectFieldNumber() - RdfTriple.O_IRI;
+        final var term = spo.getObject();
+        if (term == null && lastObject == null) {
+            throw new RdfProtoDeserializationError("Empty subject term without previous term.");
+        }
+
+        if (term == null) {
+            return lastObject;
+        }
+
+        final var node = convertTerm(kind, term);
+        lastObject = node;
+        return node;
     }
 
     /**
@@ -165,32 +213,18 @@ public abstract class DecoderBase<TNode, TDatatype> {
      * @return converted node
      */
     protected final TNode convertGraphTermWrapped(int kind, GraphBase graph) {
-        if (graph.getGraph() == null && lastGraph.hasNoValue()) {
+        if (graph.getGraph() == null && lastGraph == null) {
             // Special case: Jena and RDF4J allow null graph terms in the input,
             // so we do not treat them as errors.
             return null;
         }
 
         if (graph.getGraph() == null) {
-            return lastGraph.get();
+            return lastGraph;
         }
 
         final var node = convertGraphTerm(kind, graph.getGraph());
-        lastGraph.set(node);
-        return node;
-    }
-
-    private TNode convertSpoTermWrapped(int kind, Object term, LastNodeHolder<TNode> lastNodeHolder) {
-        if (term == null && lastNodeHolder.hasNoValue()) {
-            throw new RdfProtoDeserializationError("Empty term without previous term.");
-        }
-
-        if (term == null) {
-            return lastNodeHolder.get();
-        }
-
-        final var node = convertTerm(kind, term);
-        lastNodeHolder.set(node);
+        lastGraph = node;
         return node;
     }
 }
