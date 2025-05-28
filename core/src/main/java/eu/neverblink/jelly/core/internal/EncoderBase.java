@@ -22,11 +22,11 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     }
 
     protected final ProtoEncoderConverter<TNode> converter;
-    protected final LazyProperty<NodeEncoder<TNode>> nodeEncoder;
+    private NodeEncoder<TNode> nodeEncoder;
 
-    protected final LastNodeHolder<TNode> lastSubject = new LastNodeHolder<>();
-    protected final LastNodeHolder<TNode> lastPredicate = new LastNodeHolder<>();
-    protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
+    protected TNode lastSubject = null;
+    protected TNode lastPredicate = null;
+    protected TNode lastObject = null;
 
     protected boolean lastGraphSet = false;
     protected TNode lastGraph = null;
@@ -39,9 +39,13 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected EncoderBase(ProtoEncoderConverter<TNode> converter) {
         this.converter = converter;
-        this.nodeEncoder = new LazyProperty<>(() ->
-            NodeEncoderImpl.create(this, getPrefixTableSize(), getNameTableSize(), getDatatypeTableSize())
-        );
+    }
+
+    protected final NodeEncoder<TNode> nodeEncoder() {
+        if (nodeEncoder == null) {
+            nodeEncoder = NodeEncoderImpl.create(this, getPrefixTableSize(), getNameTableSize(), getDatatypeTableSize());
+        }
+        return nodeEncoder;
     }
 
     protected abstract int getNameTableSize();
