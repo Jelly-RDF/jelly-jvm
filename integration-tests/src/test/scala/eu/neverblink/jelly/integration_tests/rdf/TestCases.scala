@@ -15,3 +15,11 @@ object TestCases:
   ).map(name => (
     name, File(getClass.getResource("/quads/" + name).toURI)
   ))
+
+  val protocolVocabulary = File(getClass.getResource("/protocol/vocabulary.ttl").toURI)
+
+  val protocolCollections: Seq[(String, File)] = Seq(
+    "rdf/from_jelly", "rdf/to_jelly"
+  ).map(name => (
+    name, File(getClass.getResource("/protocol/" + name + "/manifest.ttl").toURI)
+  ))
