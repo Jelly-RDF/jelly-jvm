@@ -23,3 +23,6 @@ object TestCases:
   ).map(name => (
     name, File(getClass.getResource("/protocol/" + name + "/manifest.ttl").toURI)
   ))
+
+  def getProtocolTestActionFile(testAction: String): File =
+    File(getClass.getResource("/protocol/" + testAction).toURI)

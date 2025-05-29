@@ -87,22 +87,22 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
     }
 
     "round-trip quads" in {
-      val quads = impl.readQuadsJelly(ByteArrayInputStream(bytesQuads), None)
+      val quads = impl.readQuadsOrGraphsJelly(ByteArrayInputStream(bytesQuads), None)
       md.size(quads) should be(1)
       val os = new ByteArrayOutputStream()
       impl.writeQuadsJelly(os, quads, None, 100)
       os.size() should be > 10
-      val quads2 = impl.readQuadsJelly(ByteArrayInputStream(os.toByteArray), None)
+      val quads2 = impl.readQuadsOrGraphsJelly(ByteArrayInputStream(os.toByteArray), None)
       md.size(quads2) should be(1)
     }
 
     "round-trip graphs" in {
-      val graphs = impl.readQuadsJelly(ByteArrayInputStream(bytesGraphs), None)
+      val graphs = impl.readQuadsOrGraphsJelly(ByteArrayInputStream(bytesGraphs), None)
       md.size(graphs) should be(1)
       val os = new ByteArrayOutputStream()
       impl.writeQuadsJelly(os, graphs, None, 100)
       os.size() should be > 10
-      val graphs2 = impl.readQuadsJelly(ByteArrayInputStream(os.toByteArray), None)
+      val graphs2 = impl.readQuadsOrGraphsJelly(ByteArrayInputStream(os.toByteArray), None)
       md.size(graphs2) should be(1)
     }
 
@@ -126,13 +126,13 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
 
     "fail to parse quads" in {
       checkException(intercept[Throwable] {
-        impl.readQuadsJelly(ByteArrayInputStream(bytesQuads), None)
+        impl.readQuadsOrGraphsJelly(ByteArrayInputStream(bytesQuads), None)
       })
     }
 
     "fail to parse graphs" in {
       checkException(intercept[Throwable] {
-        impl.readQuadsJelly(ByteArrayInputStream(bytesGraphs), None)
+        impl.readQuadsOrGraphsJelly(ByteArrayInputStream(bytesGraphs), None)
       })
     }
 

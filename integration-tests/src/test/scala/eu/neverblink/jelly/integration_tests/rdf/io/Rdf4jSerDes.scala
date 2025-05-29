@@ -8,7 +8,7 @@ import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 
-import java.io.{InputStream, OutputStream}
+import java.io.{File, InputStream, OutputStream, FileInputStream}
 import scala.jdk.CollectionConverters.*
 
 given seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
@@ -18,7 +18,7 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
 
   override def supportsGeneralizedStatements: Boolean = false
 
-  private def read(is: InputStream, format: RDFFormat, supportedOptions: Option[RdfStreamOptions] = None): 
+  private def read(streams: Seq[InputStream], format: RDFFormat, supportedOptions: Option[RdfStreamOptions] = None):
   Seq[Statement] =
     val parser = Rio.createParser(format)
     val collector = new StatementCollector()
@@ -26,18 +26,25 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
     supportedOptions.foreach(opt =>
       parser.setParserConfig(JellyParserSettings.from(opt))
     )
-    parser.parse(is)
+    for is <- streams do
+      parser.parse(is)
     collector.getStatements.asScala.toSeq
 
-  override def readTriplesW3C(is: InputStream): Seq[Statement] = read(is, RDFFormat.TURTLESTAR)
+  override def readTriplesW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.TURTLESTAR)
 
-  override def readQuadsW3C(is: InputStream): Seq[Statement] = read(is, RDFFormat.NQUADS)
+  override def readTriplesW3C(streams: Seq[File]): Seq[Statement] =
+    read(streams.map(FileInputStream(_)), RDFFormat.TURTLESTAR)
+
+  override def readQuadsW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.NQUADS)
+
+  override def readQuadsW3C(files: Seq[File]): Seq[Statement] = 
+    read(files.map(FileInputStream(_)), RDFFormat.NQUADS)
 
   override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] = 
-    read(is, JellyFormat.JELLY, supportedOptions)
+    read(Seq(is), JellyFormat.JELLY, supportedOptions)
 
-  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] = 
-    read(is, JellyFormat.JELLY, supportedOptions)
+  override def readQuadsOrGraphsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
+    read(Seq(is), JellyFormat.JELLY, supportedOptions)
 
   private def write(os: OutputStream, model: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     val conf = if opt.isDefined then 

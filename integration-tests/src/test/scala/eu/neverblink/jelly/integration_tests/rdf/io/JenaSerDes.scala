@@ -8,7 +8,7 @@ import org.apache.jena.query.{Dataset, DatasetFactory}
 import org.apache.jena.rdf.model.{Model, ModelFactory}
 import org.apache.jena.riot.*
 
-import java.io.{InputStream, OutputStream}
+import java.io.{File, InputStream, OutputStream}
 import scala.jdk.CollectionConverters.*
 
 given Measure[Model] = (m: Model) => m.size()
@@ -22,12 +22,24 @@ object JenaSerDes extends NativeSerDes[Model, Dataset]:
     RDFDataMgr.read(m, is, RDFLanguages.NT)
     m
 
+  override def readTriplesW3C(streams: Seq[File]): Model =
+    val m = ModelFactory.createDefaultModel()
+    for stream <- streams do
+      RDFDataMgr.read(m, stream.toURI.toString, RDFLanguages.NT)
+    m
+
   def readQuadsW3C(is: InputStream): Dataset =
     val ds = DatasetFactory.create()
     RDFDataMgr.read(ds, is, RDFLanguages.NQUADS)
     ds
 
-  def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Dataset =
+  override def readQuadsW3C(files: Seq[File]): Dataset =
+    val ds = DatasetFactory.create()
+    for file <- files do
+      RDFDataMgr.read(ds, file.toURI.toString, RDFLanguages.NQUADS)
+    ds
+
+  def readQuadsOrGraphsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Dataset =
     val context = RIOT.getContext.copy()
       .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS))
     val ds = DatasetFactory.create()
