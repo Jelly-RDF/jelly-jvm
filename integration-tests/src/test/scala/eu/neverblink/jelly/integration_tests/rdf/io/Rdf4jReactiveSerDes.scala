@@ -8,7 +8,7 @@ import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.*
 import org.eclipse.rdf4j.model.{Statement, Value}
 
-import java.io.{InputStream, OutputStream}
+import java.io.{File, InputStream, OutputStream}
 import scala.concurrent.Await
 import scala.concurrent.duration.*
 
@@ -21,7 +21,11 @@ class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement
 
   override def readTriplesW3C(is: InputStream): Seq[Statement] = Rdf4jSerDes.readTriplesW3C(is)
 
+  override def readTriplesW3C(streams: Seq[File]): Seq[Statement] = Rdf4jSerDes.readTriplesW3C(streams)
+
   override def readQuadsW3C(is: InputStream): Seq[Statement] = Rdf4jSerDes.readQuadsW3C(is)
+
+  override def readQuadsW3C(files: Seq[File]): Seq[Statement] = Rdf4jSerDes.readQuadsW3C(files)
 
   private def read(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
     val f = JellyIo.fromIoStream(is)
@@ -32,7 +36,7 @@ class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement
   override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
     read(is, supportedOptions)
 
-  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
+  override def readQuadsOrGraphsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
     read(is, supportedOptions)
 
   override def writeTriplesJelly(os: OutputStream, model: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =

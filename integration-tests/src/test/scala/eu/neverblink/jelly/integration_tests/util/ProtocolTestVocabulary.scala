@@ -68,6 +68,21 @@ object ProtocolTestVocabulary:
     def isTestRdfFromJelly: Boolean =
       resource.hasProperty(RDF.`type`, testEntryTestRdfFromJellyProperty)
 
+    def hasPhysicalTypeTriplesRequirement: Boolean =
+      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementPhysicalTypeTriplesProperty)
+
+    def hasPhysicalTypeQuadsRequirement: Boolean =
+      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementPhysicalTypeQuadsProperty)
+
+    def hasPhysicalTypeGraphsRequirement: Boolean =
+      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementPhysicalTypeGraphsProperty)
+
+    def hasRdfStarRequirement: Boolean =
+      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementRdfStarProperty)
+
+    def hasGeneralizedStatementsRequirement: Boolean =
+      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementGeneralizedStatementsProperty)
+
     def extractTestRequirements: Set[Resource] =
       resource
         .listProperties(testEntryRequiresProperty)

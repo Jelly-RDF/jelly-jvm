@@ -9,7 +9,7 @@ import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
 import org.apache.jena.riot.{RDFLanguages, RDFParser, RIOT}
 import org.apache.jena.sparql.core.Quad
 
-import java.io.{InputStream, OutputStream}
+import java.io.{File, InputStream, OutputStream, FileInputStream}
 
 // Separate givens to avoid name clashes and ambiguous implicits
 given mSeqTriples: Measure[Seq[Triple]] = (s: Seq[Triple]) => s.size
@@ -28,11 +28,27 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]]:
       .parse(StreamRDFLib.sinkTriples(sink))
     sink.result
 
+  override def readTriplesW3C(streams: Seq[File]): Seq[Triple] =
+    val sink = SinkSeq[Triple]()
+    for stream <- streams do
+      RDFParser.source(FileInputStream(stream))
+        .lang(RDFLanguages.NT)
+        .parse(StreamRDFLib.sinkTriples(sink))
+    sink.result
+
   override def readQuadsW3C(is: InputStream): Seq[Quad] =
     val sink = SinkSeq[Quad]()
     RDFParser.source(is)
       .lang(RDFLanguages.NQ)
       .parse(StreamRDFLib.sinkQuads(sink))
+    sink.result
+
+  override def readQuadsW3C(files: Seq[File]): Seq[Quad] =
+    val sink = SinkSeq[Quad]()
+    for file <- files do
+      RDFParser.source(FileInputStream(file))
+        .lang(RDFLanguages.NQ)
+        .parse(StreamRDFLib.sinkQuads(sink))
     sink.result
 
   override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Triple] =
@@ -45,7 +61,7 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]]:
       .parse(StreamRDFLib.sinkTriples(sink))
     sink.result
 
-  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Quad] =
+  override def readQuadsOrGraphsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Quad] =
     val context = RIOT.getContext.copy()
       .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS))
     val sink = SinkSeq[Quad]()

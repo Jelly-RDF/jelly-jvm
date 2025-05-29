@@ -8,7 +8,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
 import eu.neverblink.jelly.integration_tests.rdf.helpers.TitaniumDatasetEmitter
 import eu.neverblink.jelly.integration_tests.util.Measure
 
-import java.io.{InputStream, InputStreamReader, OutputStream}
+import java.io.{File, FileInputStream, InputStream, InputStreamReader, OutputStream}
 
 given mTitaniumDataset: Measure[RdfDataset] = (ds: RdfDataset) => ds.size
 
@@ -25,8 +25,17 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset]:
     val ds = RdfDatasetSupplier()
     reader.provide(ds)
     ds.get()
+  
+  override def readTriplesW3C(streams: Seq[File]): RdfDataset =
+    val ds = RdfDatasetSupplier()
+    for stream <- streams do
+      val reader = NQuadsReader(InputStreamReader(FileInputStream(stream)))
+      reader.provide(ds)
+    ds.get()
 
   override def readQuadsW3C(is: InputStream): RdfDataset = readTriplesW3C(is)
+
+  override def readQuadsW3C(files: Seq[File]): RdfDataset = readTriplesW3C(files)
 
   override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): RdfDataset =
     val reader = TitaniumJellyReader.factory(
@@ -36,7 +45,7 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset]:
     reader.parseAll(ds, is)
     ds.get()
 
-  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): RdfDataset =
+  override def readQuadsOrGraphsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): RdfDataset =
     readTriplesJelly(is, supportedOptions)
 
   override def writeTriplesJelly(os: OutputStream, model: RdfDataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit =

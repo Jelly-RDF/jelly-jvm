@@ -8,7 +8,7 @@ import org.apache.jena.query.Dataset
 import org.apache.jena.rdf.model.Model
 import org.apache.pekko.stream.Materializer
 
-import java.io.{InputStream, OutputStream}
+import java.io.{File, InputStream, OutputStream}
 import scala.concurrent.Await
 import scala.concurrent.duration.*
 
@@ -20,12 +20,16 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
 
   val name = "Reactive writes (Apache Jena)"
 
-  override def readTriplesW3C(is: InputStream) = JenaSerDes.readTriplesW3C(is)
+  override def readTriplesW3C(is: InputStream): Model = JenaSerDes.readTriplesW3C(is)
+
+  override def readTriplesW3C(streams: Seq[File]): Model = JenaSerDes.readTriplesW3C(streams)
 
   override def readQuadsW3C(is: InputStream): Dataset = JenaSerDes.readQuadsW3C(is)
 
-  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Dataset =
-    JenaSerDes.readQuadsJelly(is, supportedOptions)
+  override def readQuadsW3C(files: Seq[File]): Dataset = JenaSerDes.readQuadsW3C(files)
+
+  override def readQuadsOrGraphsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Dataset =
+    JenaSerDes.readQuadsOrGraphsJelly(is, supportedOptions)
 
   override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Model =
     JenaSerDes.readTriplesJelly(is, supportedOptions)

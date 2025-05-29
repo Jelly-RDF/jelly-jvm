@@ -1,3 +1,6 @@
+import scala.language.postfixOps
+import scala.sys.process.*
+
 ThisBuild / scalaVersion := "3.3.6"
 ThisBuild / organization := "eu.neverblink.jelly"
 ThisBuild / homepage := Some(url("https://w3id.org/jelly/jelly-jvm"))
@@ -22,6 +25,8 @@ lazy val titaniumNqV = "1.0.2"
 lazy val protobufV = "4.31.1"
 lazy val javapoetV = "0.7.0"
 lazy val jmhV = "1.37"
+
+lazy val jellyCliV = "0.4.4"
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
@@ -63,6 +68,7 @@ lazy val prepareGoogleProtos = taskKey[Seq[File]](
   "Copies and modifies proto files before Google protoc-java compilation"
 )
 lazy val generatePluginRunScript = taskKey[Seq[File]]("Generate the run script for the protoc plugin")
+lazy val downloadJellyCli = taskKey[File]("Downloads Jelly CLI jar file")
 
 /**
  * Used for core*ProtosGoogle modules.
@@ -149,6 +155,30 @@ def runProtoc(
     // println(newArgs)
     originalRunner(newArgs)
   }
+}
+
+def doDownloadJellyCli(targetDir: File): File = {
+  targetDir.mkdirs()
+
+  println(s"Downloading Jelly CLI v$jellyCliV")
+  val targetFile = file((targetDir.asPath / "jelly-cli.jar").toString)
+  // Very dumb check for if the file exists and its size is not 0,
+  // helps on trains with unstable coverage and high speeds.
+  if (targetFile.exists() && targetFile.length() > 0) {
+    println(s"Will not attempt to download Jelly CLI (located ${targetFile.getAbsolutePath}) as it exists. If tests fail, try cleaning the project files.")
+    return targetFile
+  }
+
+  url(s"https://github.com/Jelly-RDF/cli/releases/download/v$jellyCliV/jelly-cli.jar") #> targetFile !
+
+  if (!targetFile.exists()) {
+    throw new RuntimeException(
+      s"Failed to download Jelly CLI to ${targetFile.getAbsolutePath}. " +
+        "Please check your internet connection and try again."
+    )
+  }
+
+  targetFile
 }
 
 // Intermediate project that generates the Java code from the protobuf files
@@ -392,6 +422,8 @@ lazy val integrationTests = (project in file("integration-tests"))
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
     Compile / compile := (Compile / compile).dependsOn(ProtobufConfig / protobufRunProtoc).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
+    downloadJellyCli := { doDownloadJellyCli((Compile / resourceManaged).value) },
+    Compile / compile := (Compile / compile).dependsOn(downloadJellyCli).value,
     commonSettings,
   )
   .dependsOn(
