@@ -8,12 +8,12 @@ import org.eclipse.rdf4j.model.Statement
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 
-import java.io.{File, InputStream, OutputStream, FileInputStream}
+import java.io.{File, FileInputStream, FileOutputStream, InputStream, OutputStream}
 import scala.jdk.CollectionConverters.*
 
 given seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
 
-object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
+object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]], ProtocolSerDes[Statement, Statement]:
   val name = "RDF4J"
 
   override def supportsGeneralizedStatements: Boolean = false
@@ -28,23 +28,40 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
     )
     for is <- streams do
       parser.parse(is)
+
     collector.getStatements.asScala.toSeq
+
 
   override def readTriplesW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.TURTLESTAR)
 
-  override def readTriplesW3C(streams: Seq[File]): Seq[Statement] =
-    read(streams.map(FileInputStream(_)), RDFFormat.TURTLESTAR)
+  override def readTriplesW3C(files: Seq[File]): Seq[Statement] =
+    val fileIss = files.map(FileInputStream(_))
+    val result = read(fileIss, RDFFormat.TURTLESTAR)
+    fileIss.foreach(_.close())
+    result
 
   override def readQuadsW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.NQUADS)
 
-  override def readQuadsW3C(files: Seq[File]): Seq[Statement] = 
-    read(files.map(FileInputStream(_)), RDFFormat.NQUADS)
+  override def readQuadsW3C(files: Seq[File]): Seq[Statement] =
+    val fileIss = files.map(FileInputStream(_))
+    val result = read(fileIss, RDFFormat.NQUADS)
+    fileIss.foreach(_.close())
+    result
 
   override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] = 
     read(Seq(is), JellyFormat.JELLY, supportedOptions)
 
-  override def readQuadsOrGraphsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
+  override def readTriplesJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
+    read(Seq(FileInputStream(file)), JellyFormat.JELLY, supportedOptions)
+
+  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
     read(Seq(is), JellyFormat.JELLY, supportedOptions)
+
+  override def readQuadsOrGraphsJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[Statement] =
+    val fileIs = FileInputStream(file)
+    val result = read(Seq(fileIs), JellyFormat.JELLY, supportedOptions)
+    fileIs.close()
+    result
 
   private def write(os: OutputStream, model: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     val conf = if opt.isDefined then 
@@ -63,6 +80,16 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]]:
     // quads in RDF4J. Thus, the writer will default to QUADS.
     write(os, model, opt.map(_.clone.setPhysicalType(PhysicalStreamType.TRIPLES)), frameSize)
 
+  override def writeTriplesJelly(file: File, triples: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+    val fileOs = new FileOutputStream(file)
+    write(fileOs, triples, opt, frameSize)
+    fileOs.close()
+
   override def writeQuadsJelly(os: OutputStream, dataset: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     // No need to set the physical type, because the writer will default to QUADS.
     write(os, dataset, opt, frameSize)
+
+  override def writeQuadsJelly(file: File, quads: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+    val fileOs = new FileOutputStream(file)
+    write(fileOs, quads, opt, frameSize)
+    fileOs.close()

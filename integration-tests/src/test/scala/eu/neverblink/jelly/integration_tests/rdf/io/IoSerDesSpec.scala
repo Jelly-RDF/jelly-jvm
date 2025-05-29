@@ -216,7 +216,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             data.size should be > 0
             checkStreamOptions(data, "quads", preset)
 
-            val ds2 = des.readQuadsOrGraphsJelly(ByteArrayInputStream(data), None)
+            val ds2 = des.readQuadsJelly(ByteArrayInputStream(data), None)
             val deserializedSize = summon[Measure[TDDes]].size(ds2)
             // Add -2 to account for the different statement counting of RDF4J and Jena
             deserializedSize should be <= originalSize
