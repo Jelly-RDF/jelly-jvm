@@ -1,9 +1,7 @@
 package eu.neverblink.jelly.integration_tests.rdf
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
-import eu.neverblink.jelly.core.JellyOptions
-import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
-import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
+import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.rdf.io.*
 import eu.neverblink.jelly.integration_tests.util.JellyCli
 import eu.neverblink.jelly.integration_tests.util.ProtocolTestVocabulary.*
@@ -13,7 +11,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.{File, FileInputStream, FileOutputStream}
+import java.io.{File, FileInputStream}
 import java.util.UUID.randomUUID
 
 class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
@@ -21,21 +19,19 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
 
   val frameSize = 10
 
-  runSerializationTest(JenaSerDes)
   runSerializationTest(JenaStreamSerDes)
   runSerializationTest(Rdf4jSerDes)
   runSerializationTest(Rdf4jReactiveSerDes())
   runSerializationTest(JenaReactiveSerDes())
   runSerializationTest(TitaniumSerDes)
 
-  runDeserializationTest(JenaSerDes)
   runDeserializationTest(JenaStreamSerDes)
   runDeserializationTest(Rdf4jSerDes)
   runDeserializationTest(Rdf4jReactiveSerDes())
   runDeserializationTest(JenaReactiveSerDes())
   runDeserializationTest(TitaniumSerDes)
 
-  private def runSerializationTest[TMSer, TDSer](ser: NativeSerDes[TMSer, TDSer]): Unit =
+  private def runSerializationTest[TTSer, TQSer](ser: ProtocolSerDes[TTSer, TQSer]): Unit =
     for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
       val manifestModel = ModelFactory.createDefaultModel()
       manifestModel.read(manifestFile.toURI.toString)
@@ -60,10 +56,7 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             val actualTriplesFile = File.createTempFile(s"test-triples-$randomUUID", ".jelly")
             val exception = try {
               val actualTriples = ser.readTriplesW3C(serializationInputFiles)
-
-              val actualTriplesFileOutputStream = FileOutputStream(actualTriplesFile)
-              ser.writeTriplesJelly(actualTriplesFileOutputStream, actualTriples, streamOptions, frameSize)
-              actualTriplesFileOutputStream.close()
+              ser.writeTriplesJelly(actualTriplesFile, actualTriples, streamOptions, frameSize)
               None
             } catch {
               case exception: Exception => Some(exception)
@@ -81,10 +74,7 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             val actualQuadsFile = File.createTempFile(s"test-quads-$randomUUID", ".jelly")
             val exception = try {
               val actualQuads = ser.readQuadsW3C(serializationInputFiles)
-
-              val actualTriplesFileOutputStream = FileOutputStream(actualQuadsFile)
-              ser.writeQuadsJelly(actualTriplesFileOutputStream, actualQuads, streamOptions, frameSize)
-              actualTriplesFileOutputStream.close()
+              ser.writeQuadsJelly(actualQuadsFile, actualQuads, streamOptions, frameSize)
               None
             } catch {
               case exception: Exception => Some(exception)
@@ -94,7 +84,7 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             throw new IllegalStateException(s"Test entry ${testEntry.extractTestUri} does not have a valid physical type requirement")
         }
 
-  private def runDeserializationTest[TMDes, TDDes](des: NativeSerDes[TMDes, TDDes]): Unit =
+  private def runDeserializationTest[TTDes, TQDes](des: ProtocolSerDes[TTDes, TQDes]): Unit =
     for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
       val manifestModel = ModelFactory.createDefaultModel()
       manifestModel.read(manifestFile.toURI.toString)
@@ -115,10 +105,7 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
 
           if testEntry.hasPhysicalTypeTriplesRequirement then
             // Triples
-            val inFileStream = FileInputStream(inFile)
-            val actualTriples = des.readTriplesJelly(inFileStream, None)
-            inFileStream.close()
-            
+            val actualTriples = des.readTriplesJelly(inFile, None)
             val expectedTriples = des.readTriplesW3C(testResultFiles)
             actualTriples shouldBe expectedTriples // TODO: actual proper testing
         }
