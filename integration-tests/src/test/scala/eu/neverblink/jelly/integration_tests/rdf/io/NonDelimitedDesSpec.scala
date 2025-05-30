@@ -11,7 +11,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, FileInputStream}
-import java.util
 import scala.jdk.CollectionConverters.*
 
 /**

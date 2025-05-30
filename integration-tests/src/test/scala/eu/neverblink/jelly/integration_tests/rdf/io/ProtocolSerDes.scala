@@ -1,10 +1,11 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
+import eu.neverblink.jelly.integration_tests.util.RdfCompareHydrator
 
 import java.io.File
 
-trait ProtocolSerDes[TTriple, TQuad]:
+trait ProtocolSerDes[TNode, TTriple, TQuad] extends RdfCompareHydrator[TNode, TTriple | TQuad]:
   def name: String
 
   def readTriplesW3C(files: Seq[File]): Seq[TTriple]
@@ -15,6 +16,6 @@ trait ProtocolSerDes[TTriple, TQuad]:
 
   def writeTriplesJelly(file: File, triples: Seq[TTriple], opt: Option[RdfStreamOptions], frameSize: Int): Unit
   def writeQuadsJelly(file: File, quads: Seq[TQuad], opt: Option[RdfStreamOptions], frameSize: Int): Unit
-  
+
   def supportsRdfStar: Boolean
   def supportsGeneralizedStatements: Boolean

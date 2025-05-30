@@ -4,7 +4,8 @@ import eu.neverblink.jelly.convert.rdf4j.rio
 import eu.neverblink.jelly.convert.rdf4j.rio.{JellyFormat, JellyParserSettings, JellyWriterSettings}
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.util.Measure
-import org.eclipse.rdf4j.model.Statement
+import org.eclipse.rdf4j.model.impl.{SimpleTriple, SimpleValueFactory}
+import org.eclipse.rdf4j.model.{Statement, Value}
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 
@@ -13,7 +14,7 @@ import scala.jdk.CollectionConverters.*
 
 given seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
 
-object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]], ProtocolSerDes[Statement, Statement]:
+object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]], ProtocolSerDes[Value, Statement, Statement]:
   val name = "RDF4J"
 
   override def supportsGeneralizedStatements: Boolean = false
@@ -93,3 +94,20 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]], Protoco
     val fileOs = new FileOutputStream(file)
     write(fileOs, quads, opt, frameSize)
     fileOs.close()
+
+  override def isBlank(node: Value): Boolean = node.isBNode
+
+  override def getBlankNodeLabel(node: Value): String = node.stringValue()
+
+  override def isNodeTriple(node: Value): Boolean = node.isTriple
+
+  override def asNodeTriple(node: Value): Statement =
+    val triple = node.asInstanceOf[SimpleTriple]
+    // We have to convert into statement because node triple is not statement in Rdf4j
+    SimpleValueFactory.getInstance.createStatement(triple.getSubject, triple.getPredicate, triple.getObject)
+
+  override def iterateTerms(statement: Statement): Seq[Value] =
+    if statement.getContext != null then
+      Seq(statement.getSubject, statement.getPredicate, statement.getObject, statement.getContext)
+    else
+      Seq(statement.getSubject, statement.getPredicate, statement.getObject)
