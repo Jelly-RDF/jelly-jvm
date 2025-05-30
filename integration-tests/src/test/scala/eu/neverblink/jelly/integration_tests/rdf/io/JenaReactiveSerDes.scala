@@ -2,7 +2,7 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
-import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
+import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.pekko.stream.*
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.query.Dataset

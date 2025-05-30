@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.integration_tests.rdf
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
-import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
+import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions, PhysicalStreamType}
 import eu.neverblink.jelly.integration_tests.rdf.io.*
 import eu.neverblink.jelly.integration_tests.util.JellyCli
 import eu.neverblink.jelly.integration_tests.util.OrderedRdfCompare
@@ -38,8 +38,14 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       manifestModel.read(manifestFile.toURI.toString)
       val testEntries = manifestModel.extractTestEntries
         .filter(_.isTestRdfToJelly)
-        .filter(entry => !entry.hasRdfStarRequirement || entry.hasRdfStarRequirement && ser.supportsRdfStar)
+        .filter(entry =>
+          !entry.hasRdfStarRequirement
+            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeTriplesRequirement && ser.supportsRdfStar(PhysicalStreamType.TRIPLES)
+            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeQuadsRequirement && ser.supportsRdfStar(PhysicalStreamType.QUADS)
+            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeGraphsRequirement && ser.supportsRdfStar(PhysicalStreamType.GRAPHS)
+        )
         .filter(entry => !entry.hasGeneralizedStatementsRequirement || entry.hasGeneralizedStatementsRequirement && ser.supportsGeneralizedStatements)
+        .filter(entry => !entry.isTestRejected)
 
       for testEntry <- testEntries do
         s"Serializer ${ser.name}: Protocol test ${testEntry.extractTestUri} - ${testEntry.extractTestName}" in {
@@ -91,8 +97,14 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       manifestModel.read(manifestFile.toURI.toString)
       val testEntries = manifestModel.extractTestEntries
         .filter(_.isTestRdfFromJelly)
-        .filter(entry => !entry.hasRdfStarRequirement || entry.hasRdfStarRequirement && des.supportsRdfStar)
+        .filter(entry =>
+          !entry.hasRdfStarRequirement
+            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeTriplesRequirement && des.supportsRdfStar(PhysicalStreamType.TRIPLES)
+            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeQuadsRequirement && des.supportsRdfStar(PhysicalStreamType.QUADS)
+            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeGraphsRequirement && des.supportsRdfStar(PhysicalStreamType.GRAPHS)
+        )
         .filter(entry => !entry.hasGeneralizedStatementsRequirement || entry.hasGeneralizedStatementsRequirement && des.supportsGeneralizedStatements)
+        .filter(entry => !entry.isTestRejected)
 
       for testEntry <- testEntries do
         s"Deserializer ${des.name}: Protocol test ${testEntry.extractTestUri} - ${testEntry.extractTestName}" in {
