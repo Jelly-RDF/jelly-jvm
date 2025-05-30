@@ -1,19 +1,19 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
 import com.apicatalog.rdf.nquads.NQuadsReader
-import com.apicatalog.rdf.{RdfDataset, RdfDatasetSupplier, RdfNQuad, RdfTriple}
+import com.apicatalog.rdf.{RdfDataset, RdfDatasetSupplier, RdfNQuad, RdfValue}
 import eu.neverblink.jelly.convert.titanium.{TitaniumJellyReader, TitaniumJellyWriter}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
 import eu.neverblink.jelly.integration_tests.rdf.helpers.TitaniumDatasetEmitter
 import eu.neverblink.jelly.integration_tests.util.Measure
 
-import java.io.{File, FileInputStream, FileOutputStream, InputStream, InputStreamReader, OutputStream}
+import java.io.*
 import scala.jdk.CollectionConverters.*
 
 given mTitaniumDataset: Measure[RdfDataset] = (ds: RdfDataset) => ds.size
 
-object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerDes[RdfNQuad, RdfNQuad]:
+object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerDes[RdfValue, RdfNQuad, RdfNQuad]:
 
   override def name: String = "Titanium"
 
@@ -73,13 +73,29 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
     readTriplesJelly(file, supportedOptions)
 
   override def writeTriplesJelly(file: File, triples: Seq[RdfNQuad], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+    val fileOs = FileOutputStream(file)
     val writer = TitaniumJellyWriter.factory(
-      FileOutputStream(file),
+      fileOs,
       opt.getOrElse(JellyOptions.SMALL_STRICT),
       frameSize,
     )
     TitaniumDatasetEmitter.emitDatasetTo(triples, writer)
     writer.close()
+    fileOs.close()
 
   override def writeQuadsJelly(file: File, quads: Seq[RdfNQuad], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     writeTriplesJelly(file, quads, opt, frameSize)
+
+  override def isBlank(node: RdfValue): Boolean = node.isBlankNode
+
+  override def getBlankNodeLabel(node: RdfValue): String = node.getValue
+
+  override def isNodeTriple(node: RdfValue): Boolean = node.isInstanceOf[RdfNQuad]
+
+  override def asNodeTriple(node: RdfValue): RdfNQuad = node.asInstanceOf[RdfNQuad]
+
+  override def iterateTerms(statement: RdfNQuad): Seq[RdfValue] =
+    if statement.getGraphName.isPresent then
+      Seq(statement.getSubject, statement.getPredicate, statement.getObject, statement.getGraphName.get)
+    else
+      Seq(statement.getSubject, statement.getPredicate, statement.getObject)

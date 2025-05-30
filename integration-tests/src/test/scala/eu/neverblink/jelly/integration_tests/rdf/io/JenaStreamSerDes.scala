@@ -4,7 +4,7 @@ import eu.neverblink.jelly.convert.jena.riot.JellyLanguage
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
 import eu.neverblink.jelly.integration_tests.util.Measure
-import org.apache.jena.graph.Triple
+import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
 import org.apache.jena.riot.{RDFLanguages, RDFParser, RIOT}
 import org.apache.jena.sparql.core.Quad
@@ -18,7 +18,7 @@ given mSeqQuads: Measure[Seq[Quad]] = (s: Seq[Quad]) => s.size
 /**
  * Jena ser/des implementation using RIOT's streaming API (StreamRDF).
  */
-object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSerDes[Triple, Quad]:
+object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSerDes[Node, Triple, Quad]:
   override def name: String = "Jena (StreamRDF)"
 
   override def readTriplesW3C(is: InputStream): Seq[Triple] =
@@ -151,3 +151,17 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
     override def flush(): Unit = ()
 
     override def close(): Unit = ()
+
+  override def isBlank(node: Node): Boolean = node.isBlank
+
+  override def getBlankNodeLabel(node: Node): String = node.getBlankNodeLabel
+
+  override def isNodeTriple(node: Node): Boolean = node.isNodeTriple
+
+  override def iterateTerms(node: Triple | Quad): Seq[Node] =
+    node match {
+      case t: Triple => t.getSubject :: t.getPredicate :: t.getObject :: Nil
+      case q: Quad => q.getSubject :: q.getPredicate :: q.getObject :: q.getGraph :: Nil
+    }
+
+  override def asNodeTriple(node: Node): Triple | Quad = node.getTriple

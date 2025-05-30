@@ -3,19 +3,19 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
-import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, DecoderFlow, EncoderFlow, JellyIo, RdfSource}
-import org.apache.jena.graph.Triple
+import eu.neverblink.jelly.pekko.stream.*
+import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.query.Dataset
 import org.apache.jena.rdf.model.Model
 import org.apache.jena.sparql.core.Quad
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.{Sink, Source}
 
-import java.io.{File, FileInputStream, FileOutputStream, InputStream, OutputStream}
+import java.io.*
 import scala.concurrent.Await
 import scala.concurrent.duration.*
 
-class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model, Dataset], ProtocolSerDes[Triple, Quad]:
+class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model, Dataset], ProtocolSerDes[Node, Triple, Quad]:
   given JenaConverterFactory = JenaConverterFactory.getInstance()
 
   given JenaAdapters.DATASET_ADAPTER.type = JenaAdapters.DATASET_ADAPTER
@@ -99,3 +99,13 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
       .runWith(JellyIo.toIoStream(fileOs))
     Await.ready(f, 10.seconds)
     fileOs.close()
+
+  override def isBlank(node: Node): Boolean = JenaStreamSerDes.isBlank(node)
+
+  override def getBlankNodeLabel(node: Node): String = JenaStreamSerDes.getBlankNodeLabel(node)
+
+  override def isNodeTriple(node: Node): Boolean = JenaStreamSerDes.isNodeTriple(node)
+
+  override def iterateTerms(node: Triple | Quad): Seq[Node] = JenaStreamSerDes.iterateTerms(node)
+
+  override def asNodeTriple(node: Node): Triple | Quad = JenaStreamSerDes.asNodeTriple(node)

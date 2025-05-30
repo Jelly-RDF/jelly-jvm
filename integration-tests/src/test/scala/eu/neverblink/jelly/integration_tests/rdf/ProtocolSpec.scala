@@ -4,6 +4,7 @@ import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.rdf.io.*
 import eu.neverblink.jelly.integration_tests.util.JellyCli
+import eu.neverblink.jelly.integration_tests.util.OrderedRdfCompare
 import eu.neverblink.jelly.integration_tests.util.ProtocolTestVocabulary.*
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.pekko.actor.ActorSystem
@@ -31,7 +32,7 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   runDeserializationTest(JenaReactiveSerDes())
   runDeserializationTest(TitaniumSerDes)
 
-  private def runSerializationTest[TTSer, TQSer](ser: ProtocolSerDes[TTSer, TQSer]): Unit =
+  private def runSerializationTest[TNSer, TTSer, TQSer](ser: ProtocolSerDes[TNSer, TTSer, TQSer]): Unit =
     for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
       val manifestModel = ModelFactory.createDefaultModel()
       manifestModel.read(manifestFile.toURI.toString)
@@ -84,7 +85,7 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             throw new IllegalStateException(s"Test entry ${testEntry.extractTestUri} does not have a valid physical type requirement")
         }
 
-  private def runDeserializationTest[TTDes, TQDes](des: ProtocolSerDes[TTDes, TQDes]): Unit =
+  private def runDeserializationTest[TNDes, TTDes, TQDes](des: ProtocolSerDes[TNDes, TTDes, TQDes]): Unit =
     for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
       val manifestModel = ModelFactory.createDefaultModel()
       manifestModel.read(manifestFile.toURI.toString)
@@ -105,9 +106,43 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
 
           if testEntry.hasPhysicalTypeTriplesRequirement then
             // Triples
-            val actualTriples = des.readTriplesJelly(inFile, None)
-            val expectedTriples = des.readTriplesW3C(testResultFiles)
-            actualTriples shouldBe expectedTriples // TODO: actual proper testing
+
+            val exception = try {
+              val actualTriples = des.readTriplesJelly(inFile, None)
+              val expectedTriples = des.readTriplesW3C(testResultFiles)
+              if testEntry.isTestPositive then
+                OrderedRdfCompare.compare(des, expectedTriples, actualTriples)
+
+              None
+            } catch {
+              case exception: Exception => Some(exception)
+            }
+
+            if testEntry.isTestNegative then
+              exception shouldNot be (None)
+
+            if testEntry.isTestPositive && exception.isDefined then
+              throw exception.get // Rethrow exception if test is positive
+
+
+          if testEntry.hasPhysicalTypeQuadsRequirement || testEntry.hasPhysicalTypeGraphsRequirement then
+            // Quads
+            val exception = try {
+              val actualQuads = des.readQuadsOrGraphsJelly(inFile, None)
+              val expectedQuads = des.readQuadsW3C(testResultFiles)
+              if testEntry.isTestPositive then
+                OrderedRdfCompare.compare(des, expectedQuads, actualQuads)
+
+              None
+            } catch {
+              case exception: Exception => Some(exception)
+            }
+
+            if testEntry.isTestNegative then
+              exception shouldNot be (None)
+
+            if testEntry.isTestPositive && exception.isDefined then
+              throw exception.get // Rethrow exception if test is positive
         }
 
   private def extractStreamOptions(streamOptionsFile: File): RdfStreamOptions = {
