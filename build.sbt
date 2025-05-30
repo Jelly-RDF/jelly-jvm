@@ -416,6 +416,7 @@ lazy val integrationTests = (project in file("integration-tests"))
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-rio-trig" % rdf4jV % Test,
       "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV % Test,
       "com.apicatalog" % "titanium-json-ld" % "1.6.0" % Test,
     ),

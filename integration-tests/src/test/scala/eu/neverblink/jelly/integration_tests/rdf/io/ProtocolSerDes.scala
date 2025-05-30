@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
+import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
 import eu.neverblink.jelly.integration_tests.util.RdfCompareHydrator
 
@@ -17,5 +18,5 @@ trait ProtocolSerDes[TNode, TTriple, TQuad] extends RdfCompareHydrator[TNode, TT
   def writeTriplesJelly(file: File, triples: Seq[TTriple], opt: Option[RdfStreamOptions], frameSize: Int): Unit
   def writeQuadsJelly(file: File, quads: Seq[TQuad], opt: Option[RdfStreamOptions], frameSize: Int): Unit
 
-  def supportsRdfStar: Boolean
+  def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = true
   def supportsGeneralizedStatements: Boolean

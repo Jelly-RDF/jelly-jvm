@@ -19,6 +19,11 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]], Protoco
 
   override def supportsGeneralizedStatements: Boolean = false
 
+  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean =
+    physicalStreamType match
+      case PhysicalStreamType.TRIPLES => true
+      case _ => false
+
   private def read(streams: Seq[InputStream], format: RDFFormat, supportedOptions: Option[RdfStreamOptions] = None):
   Seq[Statement] =
     val parser = Rio.createParser(format)
@@ -41,11 +46,11 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]], Protoco
     fileIss.foreach(_.close())
     result
 
-  override def readQuadsW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.NQUADS)
+  override def readQuadsW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.TRIGSTAR)
 
   override def readQuadsW3C(files: Seq[File]): Seq[Statement] =
     val fileIss = files.map(FileInputStream(_))
-    val result = read(fileIss, RDFFormat.NQUADS)
+    val result = read(fileIss, RDFFormat.TRIGSTAR)
     fileIss.foreach(_.close())
     result
 

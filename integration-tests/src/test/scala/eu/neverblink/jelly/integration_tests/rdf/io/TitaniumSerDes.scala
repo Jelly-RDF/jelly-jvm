@@ -4,7 +4,7 @@ import com.apicatalog.rdf.nquads.NQuadsReader
 import com.apicatalog.rdf.{RdfDataset, RdfDatasetSupplier, RdfNQuad, RdfValue}
 import eu.neverblink.jelly.convert.titanium.{TitaniumJellyReader, TitaniumJellyWriter}
 import eu.neverblink.jelly.core.JellyOptions
-import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
+import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.rdf.helpers.TitaniumDatasetEmitter
 import eu.neverblink.jelly.integration_tests.util.Measure
 
@@ -18,6 +18,8 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
   override def name: String = "Titanium"
 
   override def supportsRdfStar: Boolean = false
+
+  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
 
   override def supportsGeneralizedStatements: Boolean = false
 

@@ -9,6 +9,7 @@ object ProtocolTestVocabulary:
   val testsPrefix = "https://w3id.org/jelly/dev/tests"
   val manifestPrefix = "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#"
   val testEntryPrefix = "https://w3id.org/jelly/dev/tests/vocab#"
+  val rdftPrefix = "http://www.w3.org/ns/rdftest#"
 
   val manifestEntriesProperty: Property = ResourceFactory.createProperty(manifestPrefix, "entries")
   val manifestTypeProperty: Property = ResourceFactory.createProperty(manifestPrefix, "Manifest")
@@ -32,6 +33,10 @@ object ProtocolTestVocabulary:
   
   val testEntryActionProperty: Property = ResourceFactory.createProperty(manifestPrefix, "action")
   val testEntryResultProperty: Property = ResourceFactory.createProperty(manifestPrefix, "result")
+
+  val testEntryApprovalProperty: Property = ResourceFactory.createProperty(rdftPrefix, "approval")
+
+  val testEntryApprovalRejectedProperty: Property = ResourceFactory.createProperty(rdftPrefix, "Rejected")
 
   extension (model: Model)
     def extractTestEntries: List[Resource] =
@@ -123,3 +128,7 @@ object ProtocolTestVocabulary:
         .map(_.getURI.stripPrefix(testsPrefix + "/"))
         .toList
     }
+
+    def isTestRejected: Boolean =
+      resource.hasProperty(testEntryApprovalProperty, testEntryApprovalRejectedProperty)
+  
