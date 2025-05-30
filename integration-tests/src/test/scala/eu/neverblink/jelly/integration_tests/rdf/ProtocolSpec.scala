@@ -73,6 +73,8 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
               exception shouldNot be (None)
 
             if testEntry.isTestPositive then
+              if exception.isDefined then
+                throw exception.get // Rethrow exception if test is positive
               val outputFileExact = outputFile.getOrElse { throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an output file") }
               JellyCli.rdfValidate(actualTriplesFile, outputFileExact, streamOptionsFile, None) shouldBe 0
 
@@ -86,6 +88,15 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             } catch {
               case exception: Exception => Some(exception)
             }
+            
+            if testEntry.isTestNegative then
+              exception shouldNot be (None)
+              
+            if testEntry.isTestPositive then
+              if exception.isDefined then
+                throw exception.get // Rethrow exception if test is positive
+              val outputFileExact = outputFile.getOrElse { throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an output file") }
+              JellyCli.rdfValidate(actualQuadsFile, outputFileExact, streamOptionsFile, None) shouldBe 0
 
           else
             throw new IllegalStateException(s"Test entry ${testEntry.extractTestUri} does not have a valid physical type requirement")
@@ -130,6 +141,9 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
               case exception: Exception => Some(exception)
             }
 
+            if exception.isDefined then
+              exception.get.printStackTrace()
+
             if testEntry.isTestNegative then
               exception shouldNot be (None)
 
@@ -149,6 +163,9 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             } catch {
               case exception: Exception => Some(exception)
             }
+
+            if exception.isDefined then
+              exception.get.printStackTrace()
 
             if testEntry.isTestNegative then
               exception shouldNot be (None)

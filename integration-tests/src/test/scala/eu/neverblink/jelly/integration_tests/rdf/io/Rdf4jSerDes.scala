@@ -46,11 +46,11 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]], Protoco
     fileIss.foreach(_.close())
     result
 
-  override def readQuadsW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.TRIGSTAR)
+  override def readQuadsW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.NQUADS)
 
   override def readQuadsW3C(files: Seq[File]): Seq[Statement] =
     val fileIss = files.map(FileInputStream(_))
-    val result = read(fileIss, RDFFormat.TRIGSTAR)
+    val result = read(fileIss, RDFFormat.NQUADS)
     fileIss.foreach(_.close())
     result
 
