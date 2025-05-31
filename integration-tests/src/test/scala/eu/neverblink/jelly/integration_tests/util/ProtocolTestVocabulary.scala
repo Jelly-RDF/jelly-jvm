@@ -29,7 +29,7 @@ object ProtocolTestVocabulary:
   val testEntryRequirementPhysicalTypeQuadsProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementPhysicalTypeQuads")
   val testEntryRequirementPhysicalTypeGraphsProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementPhysicalTypeGraphs")
   val testEntryRequirementRdfStarProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementRdfStar")
-  val testEntryRequirementGeneralizedStatementsProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementGeneralizedStatements")
+  val testEntryRequirementGeneralizedStatementsProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementGeneralizedRdf")
   
   val testEntryActionProperty: Property = ResourceFactory.createProperty(manifestPrefix, "action")
   val testEntryResultProperty: Property = ResourceFactory.createProperty(manifestPrefix, "result")
