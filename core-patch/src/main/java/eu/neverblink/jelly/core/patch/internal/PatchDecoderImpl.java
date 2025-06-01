@@ -115,7 +115,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
         patchHandler.addNamespace(
             nsRow.getName(),
             // The value is required for the namespace add operation
-            nameDecoder.provide().decode(valueIri.getPrefixId(), valueIri.getNameId()),
+            getNameDecoder().decode(valueIri.getPrefixId(), valueIri.getNameId()),
             convertGraphTermWrapped(nsRow.getGraphFieldNumber() - RdfPatchNamespace.G_IRI, nsRow)
         );
     }
@@ -143,15 +143,15 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     }
 
     private void handleName(RdfNameEntry name) {
-        nameDecoder.provide().updateNames(name);
+        getNameDecoder().updateNames(name);
     }
 
     private void handlePrefix(RdfPrefixEntry prefix) {
-        nameDecoder.provide().updatePrefixes(prefix);
+        getNameDecoder().updatePrefixes(prefix);
     }
 
     private void handleDatatype(RdfDatatypeEntry dtRow) {
-        datatypeLookup.provide().update(dtRow.getId(), converter.makeDatatype(dtRow.getValue()));
+        getDatatypeLookup().update(dtRow.getId(), converter.makeDatatype(dtRow.getValue()));
     }
 
     private void handleHeader(RdfPatchHeader hRow) {
@@ -185,7 +185,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
             return null;
         }
 
-        return nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId());
+        return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
     }
 
     @ExperimentalApi

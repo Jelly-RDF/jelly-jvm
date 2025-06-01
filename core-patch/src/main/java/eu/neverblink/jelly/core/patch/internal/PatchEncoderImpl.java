@@ -123,7 +123,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         this.currentNsBase = namespace;
         if (iriValue != null) {
             this.currentTerm = SpoTerm.NAMESPACE;
-            converter.nodeToProto(nodeEncoder.provide(), iriValue);
+            converter.nodeToProto(getNodeEncoder(), iriValue);
         }
         if (graph != null) {
             this.currentGraphBase = namespace;
@@ -139,7 +139,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         final var header = RdfPatchHeader.newInstance().setKey(key);
         this.currentHeaderBase = header;
         this.currentTerm = SpoTerm.HEADER;
-        converter.nodeToProto(nodeEncoder.provide(), value);
+        converter.nodeToProto(getNodeEncoder(), value);
         var mainRow = RdfPatchRow.newInstance().setHeader(header);
         rowBuffer.add(mainRow);
     }
