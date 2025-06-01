@@ -4,7 +4,6 @@ import static eu.neverblink.jelly.core.internal.BaseJellyOptions.*;
 
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.DecoderBase;
-import eu.neverblink.jelly.core.internal.LastNodeHolder;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
 import eu.neverblink.jelly.core.patch.PatchDecoder;
 import eu.neverblink.jelly.core.patch.PatchHandler;
@@ -22,7 +21,6 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
     private RdfPatchOptions currentOptions;
     private boolean isFrameStreamType = false;
     private boolean isPunctuatedStreamType = false;
-    private final LastNodeHolder<TNode> lastNsGraph = new LastNodeHolder<>();
 
     protected PatchDecoderImpl(
         ProtoDecoderConverter<TNode, TDatatype> converter,
