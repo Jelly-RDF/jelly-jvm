@@ -12,7 +12,7 @@ import java.util.function.Function;
  * @param <TIri> The type of the IRI in the target RDF library.
  */
 @InternalApi
-final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
+public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     private static final class NameLookupEntry {
 
