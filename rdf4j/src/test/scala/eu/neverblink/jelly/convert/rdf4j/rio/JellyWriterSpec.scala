@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.convert.rdf4j.rio
 
 import eu.neverblink.jelly.core.utils.IoUtils
-import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
+import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, LogicalStreamType}
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -81,5 +81,20 @@ class JellyWriterSpec extends AnyWordSpec, Matchers:
       val f = RdfStreamFrame.parseFrom(response.newInput())
       f.getRows.size should be > 10_000
       response.newInput().available() should be(0)
+    }
+
+    "retail logicalType in options if set" in {
+      val os = new ByteArrayOutputStream()
+      val writer = JellyWriterFactory().getWriter(os)
+      writer.set(JellyWriterSettings.LOGICAL_TYPE, LogicalStreamType.GRAPHS)
+      writer.startRDF()
+      writer.handleStatement(testStatement)
+      writer.endRDF()
+      val bytes = os.toByteArray
+      val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
+      response.isDelimited should be(true)
+      val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
+      f should not be null
+      f.getRows.iterator.next.getOptions.getLogicalType should be(LogicalStreamType.GRAPHS)
     }
   }

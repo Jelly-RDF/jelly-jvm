@@ -38,7 +38,7 @@ class TitaniumJellyWriterSpec extends AnyWordSpec, Matchers:
       writer.getOptions should be (
         JellyOptions.BIG_STRICT.clone()
           .setPhysicalType(PhysicalStreamType.QUADS)
-          .setLogicalType(LogicalStreamType.FLAT_QUADS)
+          .setLogicalType(LogicalStreamType.DATASETS)
           .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
       )
       writer.getOutputStream should be (os)

@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.convert.rdf4j.rio;
 
+import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import org.eclipse.rdf4j.rio.WriterConfig;
@@ -34,6 +35,7 @@ public final class JellyWriterSettings extends WriterConfig {
     public JellyWriterSettings setJellyOptions(RdfStreamOptions options) {
         this.set(STREAM_NAME, options.getStreamName());
         this.set(PHYSICAL_TYPE, options.getPhysicalType());
+        this.set(LOGICAL_TYPE, options.getLogicalType());
         this.set(ALLOW_RDF_STAR, options.getRdfStar());
         this.set(MAX_NAME_TABLE_SIZE, options.getMaxNameTableSize());
         this.set(MAX_PREFIX_TABLE_SIZE, options.getMaxPrefixTableSize());
@@ -76,6 +78,12 @@ public final class JellyWriterSettings extends WriterConfig {
         "eu.neverblink.jelly.convert.rdf4j.rio.physicalType",
         "Physical stream type",
         PhysicalStreamType.QUADS
+    );
+
+    public static final ClassRioSetting<LogicalStreamType> LOGICAL_TYPE = new ClassRioSetting<>(
+        "eu.neverblink.jelly.convert.rdf4j.rio.logicalType",
+        "Logical stream type",
+        LogicalStreamType.UNSPECIFIED
     );
 
     public static final BooleanRioSetting ALLOW_RDF_STAR = new BooleanRioSetting(

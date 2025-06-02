@@ -27,7 +27,11 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
         final var supportedOptions = options
             .clone()
             .setPhysicalType(PhysicalStreamType.QUADS)
-            .setLogicalType(LogicalStreamType.FLAT_QUADS)
+            .setLogicalType(
+                options.getLogicalType() == LogicalStreamType.UNSPECIFIED
+                    ? LogicalStreamType.FLAT_QUADS
+                    : options.getLogicalType()
+            )
             // It's impossible to emit generalized statements or RDF-star in Titanium.
             .setGeneralizedStatements(false)
             .setRdfStar(false);
