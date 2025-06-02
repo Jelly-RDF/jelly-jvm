@@ -116,7 +116,33 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
       }
     }
 
-  "retain `logicalType` if it is set in options in JellyStreamWriterFactory" in {
+  "retain `logicalType` if it is set in options in JellyStreamWriterFactory for triples" in {
+    val factory = (f: RDFFormat, ctx: Context, out: OutputStream) => {
+      val w = JellyStreamWriterFactory().create(out, f, ctx)
+      w.triple(triple)
+      w.finish()
+    }
+
+    val os = new ByteArrayOutputStream()
+    val format = RDFFormat(JellyLanguage.JELLY)
+    val ctx = new Context()
+    val options = JellyLanguage.PRESETS.get("SMALL_ALL_FEATURES")
+      .clone
+      .setLogicalType(LogicalStreamType.GRAPHS)
+
+    ctx.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, options)
+    factory(format, ctx, os)
+    val bytes = os.toByteArray
+    bytes should not be empty
+    val is = new ByteArrayInputStream(bytes)
+    val frame: RdfStreamFrame = RdfStreamFrame.parseDelimitedFrom(is)
+    frame.getRows.size should be > 0
+    frame.getRows.asScala.head.hasOptions should be(true)
+    val optionsWritten = frame.getRows.asScala.head.getOptions
+    optionsWritten.getLogicalType should be(LogicalStreamType.GRAPHS)
+  }
+
+  "retain `logicalType` if it is set in options in JellyStreamWriterFactory for quads" in {
     val factory = (f: RDFFormat, ctx: Context, out: OutputStream) => {
       val w = JellyStreamWriterFactory().create(out, f, ctx)
       w.quad(Quad.create(null, triple))
