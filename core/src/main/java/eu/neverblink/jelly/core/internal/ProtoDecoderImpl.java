@@ -108,8 +108,8 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         switch (row.getRowFieldNumber()) {
             case RdfStreamRow.OPTIONS -> handleOptions(row.getOptions());
-            case RdfStreamRow.NAME -> nameDecoder.provide().updateNames(row.getName());
-            case RdfStreamRow.PREFIX -> nameDecoder.provide().updatePrefixes(row.getPrefix());
+            case RdfStreamRow.NAME -> getNameDecoder().updateNames(row.getName());
+            case RdfStreamRow.PREFIX -> getNameDecoder().updatePrefixes(row.getPrefix());
             case RdfStreamRow.DATATYPE -> handleDatatype(row.getDatatype());
             case RdfStreamRow.NAMESPACE -> handleNamespace(row.getNamespace());
             case RdfStreamRow.TRIPLE -> handleTriple(row.getTriple());
@@ -126,15 +126,12 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
     }
 
     protected void handleDatatype(RdfDatatypeEntry datatype) {
-        datatypeLookup.provide().update(datatype.getId(), converter.makeDatatype(datatype.getValue()));
+        getDatatypeLookup().update(datatype.getId(), converter.makeDatatype(datatype.getValue()));
     }
 
     protected void handleNamespace(RdfNamespaceDeclaration namespace) {
         final var iri = namespace.getValue();
-        protoHandler.handleNamespace(
-            namespace.getName(),
-            nameDecoder.provide().decode(iri.getPrefixId(), iri.getNameId())
-        );
+        protoHandler.handleNamespace(namespace.getName(), getNameDecoder().decode(iri.getPrefixId(), iri.getNameId()));
     }
 
     protected void handleTriple(RdfTriple triple) {

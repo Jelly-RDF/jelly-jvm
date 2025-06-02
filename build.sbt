@@ -435,4 +435,4 @@ lazy val jmh = (project in file("jmh"))
     publishArtifact := false,
     commonSettings,
   )
-  .dependsOn(core)
+  .dependsOn(core, jena)

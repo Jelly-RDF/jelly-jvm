@@ -2,7 +2,6 @@ package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.proto.*;
-import eu.neverblink.jelly.core.internal.utils.LazyProperty;
 import eu.neverblink.jelly.core.proto.v1.*;
 
 /**
@@ -22,11 +21,11 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     }
 
     protected final ProtoEncoderConverter<TNode> converter;
-    protected final LazyProperty<NodeEncoder<TNode>> nodeEncoder;
+    private NodeEncoder<TNode> nodeEncoder;
 
-    protected final LastNodeHolder<TNode> lastSubject = new LastNodeHolder<>();
-    protected final LastNodeHolder<TNode> lastPredicate = new LastNodeHolder<>();
-    protected final LastNodeHolder<TNode> lastObject = new LastNodeHolder<>();
+    protected TNode lastSubject = null;
+    protected TNode lastPredicate = null;
+    protected TNode lastObject = null;
 
     protected boolean lastGraphSet = false;
     protected TNode lastGraph = null;
@@ -39,9 +38,18 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected EncoderBase(ProtoEncoderConverter<TNode> converter) {
         this.converter = converter;
-        this.nodeEncoder = new LazyProperty<>(() ->
-            NodeEncoderImpl.create(this, getPrefixTableSize(), getNameTableSize(), getDatatypeTableSize())
-        );
+    }
+
+    protected final NodeEncoder<TNode> getNodeEncoder() {
+        if (nodeEncoder == null) {
+            nodeEncoder = NodeEncoderImpl.create(
+                this,
+                getPrefixTableSize(),
+                getNameTableSize(),
+                getDatatypeTableSize()
+            );
+        }
+        return nodeEncoder;
     }
 
     protected abstract int getNameTableSize();
@@ -65,9 +73,9 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     protected final RdfTriple tripleToProto(TNode subject, TNode predicate, TNode object) {
         final RdfTriple.Mutable triple = newTriple();
         this.currentSpoBase = triple;
-        nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
-        nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);
-        nodeToProtoWrapped(object, lastObject, SpoTerm.OBJECT);
+        subjectNodeToProtoWrapped(subject);
+        predicateNodeToProtoWrapped(predicate);
+        objectNodeToProtoWrapped(object);
         return triple;
     }
 
@@ -75,9 +83,9 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         final RdfQuad.Mutable quad = newQuad();
         this.currentSpoBase = quad;
         this.currentGraphBase = quad;
-        nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
-        nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);
-        nodeToProtoWrapped(object, lastObject, SpoTerm.OBJECT);
+        subjectNodeToProtoWrapped(subject);
+        predicateNodeToProtoWrapped(predicate);
+        objectNodeToProtoWrapped(object);
         graphNodeToProtoWrapped(graph);
         return quad;
     }
@@ -90,9 +98,9 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     protected final RdfQuad tripleInQuadToProto(TNode subject, TNode predicate, TNode object) {
         final RdfQuad.Mutable quad = newQuad();
         this.currentSpoBase = quad;
-        nodeToProtoWrapped(subject, lastSubject, SpoTerm.SUBJECT);
-        nodeToProtoWrapped(predicate, lastPredicate, SpoTerm.PREDICATE);
-        nodeToProtoWrapped(object, lastObject, SpoTerm.OBJECT);
+        subjectNodeToProtoWrapped(subject);
+        predicateNodeToProtoWrapped(predicate);
+        objectNodeToProtoWrapped(object);
         return quad;
     }
 
@@ -103,15 +111,31 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         final RdfGraphStart.Mutable graphStart = RdfGraphStart.newInstance();
         this.currentGraphBase = graphStart;
         currentTerm = SpoTerm.GRAPH;
-        converter.graphNodeToProto(nodeEncoder.provide(), graph);
+        converter.graphNodeToProto(getNodeEncoder(), graph);
         return graphStart;
     }
 
-    private void nodeToProtoWrapped(TNode node, LastNodeHolder<TNode> lastNodeHolder, SpoTerm term) {
-        if (!node.equals(lastNodeHolder.get())) {
-            lastNodeHolder.set(node);
-            currentTerm = term;
-            converter.nodeToProto(nodeEncoder.provide(), node);
+    private void subjectNodeToProtoWrapped(TNode node) {
+        if (!node.equals(lastSubject)) {
+            lastSubject = node;
+            currentTerm = SpoTerm.SUBJECT;
+            converter.nodeToProto(getNodeEncoder(), node);
+        }
+    }
+
+    private void predicateNodeToProtoWrapped(TNode node) {
+        if (!node.equals(lastPredicate)) {
+            lastPredicate = node;
+            currentTerm = SpoTerm.PREDICATE;
+            converter.nodeToProto(getNodeEncoder(), node);
+        }
+    }
+
+    private void objectNodeToProtoWrapped(TNode node) {
+        if (!node.equals(lastObject)) {
+            lastObject = node;
+            currentTerm = SpoTerm.OBJECT;
+            converter.nodeToProto(getNodeEncoder(), node);
         }
     }
 
@@ -124,7 +148,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         lastGraphSet = true;
         lastGraph = node;
         currentTerm = SpoTerm.GRAPH;
-        converter.graphNodeToProto(nodeEncoder.provide(), node);
+        converter.graphNodeToProto(getNodeEncoder(), node);
     }
 
     @Override
@@ -169,12 +193,13 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         // Encode the quoted triple
         final RdfTriple.Mutable quotedTriple = RdfTriple.newInstance();
         currentSpoBase = quotedTriple;
+        final var nodeEncoder = getNodeEncoder();
         currentTerm = SpoTerm.SUBJECT;
-        converter.nodeToProto(nodeEncoder.provide(), subject);
+        converter.nodeToProto(nodeEncoder, subject);
         currentTerm = SpoTerm.PREDICATE;
-        converter.nodeToProto(nodeEncoder.provide(), predicate);
+        converter.nodeToProto(nodeEncoder, predicate);
         currentTerm = SpoTerm.OBJECT;
-        converter.nodeToProto(nodeEncoder.provide(), object);
+        converter.nodeToProto(nodeEncoder, object);
         // Restore the previous state and set the quoted triple
         currentSpoBase = parent;
         currentTerm = parentTerm;

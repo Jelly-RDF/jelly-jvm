@@ -287,7 +287,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
       
-      error.getMessage should include ("Empty term without previous term")
+      error.getMessage should include ("Empty subject term without previous term")
     }
 
     "throw exception on an empty term in a quoted triple" in {
