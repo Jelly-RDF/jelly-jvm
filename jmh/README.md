@@ -9,7 +9,7 @@ sbt jmh/Jmh/run
 Or an individual benchmark, in this case with 10 warmup iterations and 10 iterations:
 
 ```bash
-jmh/Jmh/run -wi 10 -i 10 .*RdfIriParseBench.*
+sbt jmh/Jmh/run -wi 10 -i 10 .*RdfIriParseBench.*
 ```
 
 To run with the perfasm profiler, use:
