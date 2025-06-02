@@ -42,7 +42,12 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected final NodeEncoder<TNode> getNodeEncoder() {
         if (nodeEncoder == null) {
-            nodeEncoder = NodeEncoderImpl.create(this, getPrefixTableSize(), getNameTableSize(), getDatatypeTableSize());
+            nodeEncoder = NodeEncoderImpl.create(
+                this,
+                getPrefixTableSize(),
+                getNameTableSize(),
+                getDatatypeTableSize()
+            );
         }
         return nodeEncoder;
     }

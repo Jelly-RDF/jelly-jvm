@@ -131,10 +131,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
     protected void handleNamespace(RdfNamespaceDeclaration namespace) {
         final var iri = namespace.getValue();
-        protoHandler.handleNamespace(
-            namespace.getName(),
-            getNameDecoder().decode(iri.getPrefixId(), iri.getNameId())
-        );
+        protoHandler.handleNamespace(namespace.getName(), getNameDecoder().decode(iri.getPrefixId(), iri.getNameId()));
     }
 
     protected void handleTriple(RdfTriple triple) {
