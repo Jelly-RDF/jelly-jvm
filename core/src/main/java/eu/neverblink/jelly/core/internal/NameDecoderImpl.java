@@ -5,6 +5,7 @@ import eu.neverblink.jelly.core.NameDecoder;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
+import java.util.Arrays;
 import java.util.function.Function;
 
 /**
@@ -12,7 +13,7 @@ import java.util.function.Function;
  * @param <TIri> The type of the IRI in the target RDF library.
  */
 @InternalApi
-final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
+public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
     private static final class NameLookupEntry {
 
@@ -34,7 +35,8 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
     }
 
     private final NameLookupEntry[] nameLookup;
-    private final PrefixLookupEntry[] prefixLookup;
+    private final String[] prefixLookupStrings;
+    private final int[] prefixLookupSerials;
 
     private int lastPrefixIdReference = 0;
     private int lastNameIdReference = 0;
@@ -54,14 +56,14 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
     public NameDecoderImpl(int prefixTableSize, int nameTableSize, Function<String, TIri> iriFactory) {
         this.iriFactory = iriFactory;
         nameLookup = new NameLookupEntry[nameTableSize + 1];
-        prefixLookup = new PrefixLookupEntry[prefixTableSize + 1];
 
         for (int i = 1; i < nameTableSize + 1; i++) {
             nameLookup[i] = new NameLookupEntry();
         }
-        for (int i = 1; i < prefixTableSize + 1; i++) {
-            prefixLookup[i] = new PrefixLookupEntry();
-        }
+
+        prefixLookupStrings = new String[prefixTableSize + 1];
+        prefixLookupSerials = new int[prefixTableSize + 1];
+        Arrays.fill(prefixLookupSerials, -1);
     }
 
     /**
@@ -101,11 +103,15 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
     @Override
     public void updatePrefixes(RdfPrefixEntry prefixEntry) {
         int id = prefixEntry.getId();
+        if (id < 0) {
+            throw new RdfProtoDeserializationError(
+                "Invalid prefix ID %d – prefix ID must not be negative.".formatted(id)
+            );
+        }
         lastPrefixIdSet = ((lastPrefixIdSet + 1) & ((id - 1) >> 31)) + id;
         try {
-            PrefixLookupEntry entry = prefixLookup[lastPrefixIdSet];
-            entry.prefix = prefixEntry.getValue();
-            entry.serial++;
+            prefixLookupStrings[lastPrefixIdSet] = prefixEntry.getValue();
+            prefixLookupSerials[lastPrefixIdSet]++;
         } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
             throw new RdfProtoDeserializationError(
                 "Prefix entry with ID %d is out of bounds of the prefix lookup table.".formatted(id)
@@ -144,21 +150,22 @@ final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         lastPrefixIdReference = prefixId = (((prefixId - 1) >> 31) & lastPrefixIdReference) + prefixId;
         if (prefixId != 0) {
             // Name and prefix
-            PrefixLookupEntry prefixEntry;
+            int prefixSerial;
             try {
-                prefixEntry = prefixLookup[prefixId];
+                prefixSerial = prefixLookupSerials[prefixId];
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new RdfProtoDeserializationError(
                     ("Encountered an invalid prefix table reference (out of bounds). " +
                         "Prefix ID: %d, Name ID: %d").formatted(prefixId, nameId)
                 );
             }
-            if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
+            if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixSerial) {
                 // Update the last prefix
                 nameEntry.lastPrefixId = prefixId;
-                nameEntry.lastPrefixSerial = prefixEntry.serial;
+                nameEntry.lastPrefixSerial = prefixSerial;
                 // And compute a new IRI
-                nameEntry.lastIri = iriFactory.apply(prefixEntry.prefix.concat(nameEntry.name));
+                String prefixString = prefixLookupStrings[prefixId];
+                nameEntry.lastIri = iriFactory.apply(prefixString.concat(nameEntry.name));
                 return (TIri) nameEntry.lastIri;
             }
             if (nameEntry.lastIri == null) {
