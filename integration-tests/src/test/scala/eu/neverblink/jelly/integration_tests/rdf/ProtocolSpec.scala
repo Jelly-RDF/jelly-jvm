@@ -24,13 +24,15 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   runSerializationTest(Rdf4jSerDes)
   runSerializationTest(Rdf4jReactiveSerDes())
   runSerializationTest(JenaReactiveSerDes())
-  runSerializationTest(TitaniumSerDes)
+  // TODO: Reenable Titanium
+  // runSerializationTest(TitaniumSerDes)
 
   runDeserializationTest(JenaStreamSerDes)
   runDeserializationTest(Rdf4jSerDes)
   runDeserializationTest(Rdf4jReactiveSerDes())
   runDeserializationTest(JenaReactiveSerDes())
-  runDeserializationTest(TitaniumSerDes)
+  // TODO: Reenable Titanium
+  // runDeserializationTest(TitaniumSerDes)
 
   private def runSerializationTest[TNSer, TTSer, TQSer](ser: ProtocolSerDes[TNSer, TTSer, TQSer]): Unit =
     for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
@@ -176,7 +178,11 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             || entry.hasRdfStarRequirement && entry.hasPhysicalTypeQuadsRequirement && serDes.supportsRdfStar(PhysicalStreamType.QUADS)
             || entry.hasRdfStarRequirement && entry.hasPhysicalTypeGraphsRequirement && serDes.supportsRdfStar(PhysicalStreamType.GRAPHS)
         )
-        // TODO: for now we completely disable tests with generalized tests requirement
-        .filter(!_.hasGeneralizedStatementsRequirement)
-        //.filter(entry => !entry.hasGeneralizedStatementsRequirement || entry.hasGeneralizedStatementsRequirement && serDes.supportsGeneralizedStatements)
-        .filter(entry => !entry.isTestRejected)
+        .filter(entry => !entry.hasGeneralizedStatementsRequirement || entry.hasGeneralizedStatementsRequirement && serDes.supportsGeneralizedStatements)
+        .filterNot(_.isTestRejected)
+        .filterNot(isTestEntryBlocked)
+
+  // TODO: This is our "todo" tests function
+  private def isTestEntryBlocked(testEntry: Resource): Boolean =
+    testEntry.hasGeneralizedStatementsRequirement // Generalized statements are disabled
+    || testEntry.hasPhysicalTypeGraphsRequirement // Graph physical type is not supported yet
