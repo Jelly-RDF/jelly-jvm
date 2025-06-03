@@ -21,5 +21,3 @@ class JellyFormatVariantSpec extends AnyWordSpec, Matchers:
       variant.isDelimited should be (false)
     }
   }
-
-

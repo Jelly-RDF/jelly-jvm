@@ -89,12 +89,12 @@ public final class JellyWriter extends AbstractRDFWriter {
             physicalType = PhysicalStreamType.QUADS;
         }
 
-        LogicalStreamType logicalType;
-        if (physicalType == PhysicalStreamType.TRIPLES) {
+        var logicalType = config.get(JellyWriterSettings.LOGICAL_TYPE);
+        if (physicalType == PhysicalStreamType.TRIPLES && logicalType == LogicalStreamType.UNSPECIFIED) {
             logicalType = LogicalStreamType.FLAT_TRIPLES;
-        } else if (physicalType == PhysicalStreamType.QUADS) {
+        } else if (physicalType == PhysicalStreamType.QUADS && logicalType == LogicalStreamType.UNSPECIFIED) {
             logicalType = LogicalStreamType.FLAT_QUADS;
-        } else {
+        } else if (logicalType == LogicalStreamType.UNSPECIFIED) {
             throw new IllegalStateException("Unsupported stream type: " + physicalType);
         }
 
