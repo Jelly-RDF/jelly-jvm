@@ -10,14 +10,10 @@ object JellyCli:
     optionsFile: Option[File],
     frameIndexToCompare: Option[Int]
   ): Int =
-    val jellyCliFile = File(getClass.getResource("/jelly-cli.jar").getFile)
-
-    val javaBinary =
-      if System.getProperty("os.name").toLowerCase.contains("windows") then "java.exe"
-      else "java"
+    val jellyCliFile = File(getClass.getResource("/jelly-cli").getFile)
 
     val command = Seq(
-      javaBinary, "-jar", jellyCliFile.getAbsolutePath,
+      jellyCliFile.getAbsolutePath,
       "rdf", "validate",
       s"--compare-to-rdf-file=${expectedJelly.getAbsolutePath}",
       "--compare-ordered=true",

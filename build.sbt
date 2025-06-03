@@ -160,16 +160,31 @@ def runProtoc(
 def doDownloadJellyCli(targetDir: File): File = {
   targetDir.mkdirs()
 
-  println(s"Downloading Jelly CLI v$jellyCliV")
-  val targetFile = targetDir / "jelly-cli.jar"
+  val targetFile = targetDir / "jelly-cli"
   // Very dumb check for if the file exists and its size is not 0,
   // helps on trains with unstable coverage and high speeds.
   if (targetFile.exists() && targetFile.length() > 0) {
     println(s"Will not attempt to download Jelly CLI (located ${targetFile.getAbsolutePath}) as it exists. If tests fail, try cleaning the project files.")
+    targetFile.setExecutable(true)
     return targetFile
   }
 
-  url(s"https://github.com/Jelly-RDF/cli/releases/download/v$jellyCliV/jelly-cli.jar") #> targetFile !
+  println(s"Downloading Jelly CLI v$jellyCliV")
+
+  val architecture = System.getProperty("os.arch") match {
+    case "aarch64" | "arm64" => "arm64"
+    case "x86_64" | "amd64" => "x86_64"
+    case _ => throw new RuntimeException(s"Unsupported architecture: ${System.getProperty("os.arch")}")
+  }
+
+  val os = System.getProperty("os.name").toLowerCase match {
+    case os if os.contains("windows") => "windows"
+    case os if os.contains("mac") => "mac"
+    case os if os.contains("linux") => "linux"
+    case _ => throw new RuntimeException(s"Unsupported operating system: ${System.getProperty("os.name")}")
+  }
+
+  url(s"https://github.com/Jelly-RDF/cli/releases/download/v$jellyCliV/jelly-cli-$os-$architecture") #> targetFile !
 
   if (!targetFile.exists()) {
     throw new RuntimeException(
@@ -178,6 +193,7 @@ def doDownloadJellyCli(targetDir: File): File = {
     )
   }
 
+  targetFile.setExecutable(true)
   targetFile
 }
 
