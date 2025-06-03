@@ -15,26 +15,26 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{File, FileInputStream}
 import java.util.UUID.randomUUID
 
-class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
+class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   given ActorSystem = ActorSystem("test")
 
   val frameSize = 10
 
-  runSerializationTest(JenaStreamSerDes)
-  runSerializationTest(Rdf4jSerDes)
-  runSerializationTest(Rdf4jReactiveSerDes())
-  runSerializationTest(JenaReactiveSerDes())
+  runRdfToJellyTests(JenaStreamSerDes)
+  runRdfToJellyTests(Rdf4jSerDes)
+  runRdfToJellyTests(Rdf4jReactiveSerDes())
+  runRdfToJellyTests(JenaReactiveSerDes())
   // TODO: Reenable Titanium
-  // runSerializationTest(TitaniumSerDes)
+  // runRdfToJellyTests(TitaniumSerDes)
 
-  runDeserializationTest(JenaStreamSerDes)
-  runDeserializationTest(Rdf4jSerDes)
-  runDeserializationTest(Rdf4jReactiveSerDes())
-  runDeserializationTest(JenaReactiveSerDes())
+  runRdfFromJellyTests(JenaStreamSerDes)
+  runRdfFromJellyTests(Rdf4jSerDes)
+  runRdfFromJellyTests(Rdf4jReactiveSerDes())
+  runRdfFromJellyTests(JenaReactiveSerDes())
   // TODO: Reenable Titanium
-  // runDeserializationTest(TitaniumSerDes)
+  // runRdfFromJellyTests(TitaniumSerDes)
 
-  private def runSerializationTest[TNSer, TTSer, TQSer](ser: ProtocolSerDes[TNSer, TTSer, TQSer]): Unit =
+  private def runRdfToJellyTests[TNSer, TTSer, TQSer](ser: ProtocolSerDes[TNSer, TTSer, TQSer]): Unit =
     for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
       val manifestModel = ModelFactory.createDefaultModel()
       manifestModel.read(manifestFile.toURI.toString)
@@ -97,7 +97,7 @@ class ProtocolSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             throw new IllegalStateException(s"Test entry ${testEntry.extractTestUri} does not have a valid physical type requirement")
         }
 
-  private def runDeserializationTest[TNDes, TTDes, TQDes](des: ProtocolSerDes[TNDes, TTDes, TQDes]): Unit =
+  private def runRdfFromJellyTests[TNDes, TTDes, TQDes](des: ProtocolSerDes[TNDes, TTDes, TQDes]): Unit =
     for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
       val manifestModel = ModelFactory.createDefaultModel()
       manifestModel.read(manifestFile.toURI.toString)

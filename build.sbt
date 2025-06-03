@@ -441,8 +441,8 @@ lazy val integrationTests = (project in file("integration-tests"))
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
     downloadJellyCli := { doDownloadJellyCli((Test / resourceManaged).value) },
     Test / resourceGenerators += Def.task {
-      val cliJar = downloadJellyCli.value
-      Seq(cliJar)
+      val cliBinary = downloadJellyCli.value
+      Seq(cliBinary)
     },
     commonSettings,
   )

@@ -7,7 +7,6 @@ import eu.neverblink.jelly.integration_tests.util.Measure
 import org.apache.jena.query.{Dataset, DatasetFactory}
 import org.apache.jena.rdf.model.{Model, ModelFactory}
 import org.apache.jena.riot.*
-import org.apache.jena.riot.system.StreamRDFLib
 
 import java.io.{InputStream, OutputStream}
 import scala.jdk.CollectionConverters.*
