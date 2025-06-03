@@ -26,7 +26,7 @@ lazy val protobufV = "4.31.1"
 lazy val javapoetV = "0.7.0"
 lazy val jmhV = "1.37"
 
-lazy val jellyCliV = "0.4.4"
+lazy val jellyCliV = "0.4.5"
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
@@ -161,7 +161,7 @@ def doDownloadJellyCli(targetDir: File): File = {
   targetDir.mkdirs()
 
   println(s"Downloading Jelly CLI v$jellyCliV")
-  val targetFile = file((targetDir.asPath / "jelly-cli.jar").toString)
+  val targetFile = targetDir / "jelly-cli.jar"
   // Very dumb check for if the file exists and its size is not 0,
   // helps on trains with unstable coverage and high speeds.
   if (targetFile.exists() && targetFile.length() > 0) {
@@ -423,8 +423,11 @@ lazy val integrationTests = (project in file("integration-tests"))
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
     Compile / compile := (Compile / compile).dependsOn(ProtobufConfig / protobufRunProtoc).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
-    downloadJellyCli := { doDownloadJellyCli((Compile / resourceManaged).value) },
-    Compile / compile := (Compile / compile).dependsOn(downloadJellyCli).value,
+    downloadJellyCli := { doDownloadJellyCli((Test / resourceManaged).value) },
+    Test / resourceGenerators += Def.task {
+      val cliJar = downloadJellyCli.value
+      Seq(cliJar)
+    },
     commonSettings,
   )
   .dependsOn(
