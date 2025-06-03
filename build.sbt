@@ -1,3 +1,6 @@
+import scala.language.postfixOps
+import scala.sys.process.*
+
 ThisBuild / scalaVersion := "3.3.6"
 ThisBuild / organization := "eu.neverblink.jelly"
 ThisBuild / homepage := Some(url("https://w3id.org/jelly/jelly-jvm"))
@@ -22,6 +25,8 @@ lazy val titaniumNqV = "1.0.2"
 lazy val protobufV = "4.31.1"
 lazy val javapoetV = "0.7.0"
 lazy val jmhV = "1.37"
+
+lazy val jellyCliV = "0.4.5"
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
@@ -63,6 +68,7 @@ lazy val prepareGoogleProtos = taskKey[Seq[File]](
   "Copies and modifies proto files before Google protoc-java compilation"
 )
 lazy val generatePluginRunScript = taskKey[Seq[File]]("Generate the run script for the protoc plugin")
+lazy val downloadJellyCli = taskKey[File]("Downloads Jelly CLI binary file")
 
 /**
  * Used for core*ProtosGoogle modules.
@@ -149,6 +155,46 @@ def runProtoc(
     // println(newArgs)
     originalRunner(newArgs)
   }
+}
+
+def doDownloadJellyCli(targetDir: File): File = {
+  targetDir.mkdirs()
+
+  val targetFile = targetDir / "jelly-cli"
+  // Very dumb check for if the file exists and its size is not 0,
+  // helps on trains with unstable coverage and high speeds.
+  if (targetFile.exists() && targetFile.length() > 0) {
+    println(s"Will not attempt to download Jelly CLI (located ${targetFile.getAbsolutePath}) as it exists. If tests fail, try cleaning the project files.")
+    targetFile.setExecutable(true)
+    return targetFile
+  }
+
+  println(s"Downloading Jelly CLI v$jellyCliV")
+
+  val architecture = System.getProperty("os.arch") match {
+    case "aarch64" | "arm64" => "arm64"
+    case "x86_64" | "amd64" => "x86_64"
+    case _ => throw new RuntimeException(s"Unsupported architecture: ${System.getProperty("os.arch")}")
+  }
+
+  val os = System.getProperty("os.name").toLowerCase match {
+    case os if os.contains("windows") => "windows"
+    case os if os.contains("mac") => "mac"
+    case os if os.contains("linux") => "linux"
+    case _ => throw new RuntimeException(s"Unsupported operating system: ${System.getProperty("os.name")}")
+  }
+
+  url(s"https://github.com/Jelly-RDF/cli/releases/download/v$jellyCliV/jelly-cli-$os-$architecture") #> targetFile !
+
+  if (!targetFile.exists()) {
+    throw new RuntimeException(
+      s"Failed to download Jelly CLI to ${targetFile.getAbsolutePath}. " +
+        "Please check your internet connection and try again."
+    )
+  }
+
+  targetFile.setExecutable(true)
+  targetFile
 }
 
 // Intermediate project that generates the Java code from the protobuf files
@@ -386,12 +432,18 @@ lazy val integrationTests = (project in file("integration-tests"))
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-rio-trig" % rdf4jV % Test,
       "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV % Test,
       "com.apicatalog" % "titanium-json-ld" % "1.6.0" % Test,
     ),
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
     Compile / compile := (Compile / compile).dependsOn(ProtobufConfig / protobufRunProtoc).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
+    downloadJellyCli := { doDownloadJellyCli((Test / resourceManaged).value) },
+    Test / resourceGenerators += Def.task {
+      val cliBinary = downloadJellyCli.value
+      Seq(cliBinary)
+    },
     commonSettings,
   )
   .dependsOn(
