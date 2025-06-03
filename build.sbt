@@ -68,7 +68,7 @@ lazy val prepareGoogleProtos = taskKey[Seq[File]](
   "Copies and modifies proto files before Google protoc-java compilation"
 )
 lazy val generatePluginRunScript = taskKey[Seq[File]]("Generate the run script for the protoc plugin")
-lazy val downloadJellyCli = taskKey[File]("Downloads Jelly CLI jar file")
+lazy val downloadJellyCli = taskKey[File]("Downloads Jelly CLI binary file")
 
 /**
  * Used for core*ProtosGoogle modules.
