@@ -5,7 +5,6 @@ import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
-
 import java.util.Collection;
 
 /**
