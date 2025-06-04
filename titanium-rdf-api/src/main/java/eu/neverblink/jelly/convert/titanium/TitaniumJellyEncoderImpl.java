@@ -9,18 +9,18 @@ import eu.neverblink.jelly.convert.titanium.internal.TitaniumLiteral;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
+import eu.neverblink.jelly.core.memory.EncoderAllocator;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
-import java.util.Collection;
 
 @InternalApi
 final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
 
     private final ProtoEncoder<Object> encoder;
 
+    private final EncoderAllocator allocator;
     private final RowBuffer buffer;
 
     public TitaniumJellyEncoderImpl(RdfStreamOptions options, int frameSize) {
@@ -38,8 +38,9 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
             .setRdfStar(false);
 
         this.buffer = RowBuffer.newReusableForEncoder(frameSize + 8);
+        this.allocator = EncoderAllocator.newArenaAllocator(frameSize + 8);
         this.encoder = TitaniumConverterFactory.getInstance()
-            .encoder(ProtoEncoder.Params.of(supportedOptions, false, this.buffer));
+            .encoder(ProtoEncoder.Params.of(supportedOptions, false, this.buffer, this.allocator));
     }
 
     public TitaniumJellyEncoderImpl(RdfStreamOptions options) {
@@ -59,6 +60,7 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
     @Override
     public void clearRows() {
         buffer.clear();
+        allocator.releaseAll();
     }
 
     @Override
