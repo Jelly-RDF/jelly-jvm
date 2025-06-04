@@ -16,12 +16,14 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
     private final int frameSize;
 
     private final TitaniumJellyEncoder encoder;
+    private final RdfStreamFrame.Mutable reusableFrame;
 
     TitaniumJellyWriterImpl(OutputStream outputStream, RdfStreamOptions options, int frameSize) {
         this.outputStream = outputStream;
         this.frameSize = frameSize;
 
-        this.encoder = new TitaniumJellyEncoderImpl(options);
+        this.encoder = new TitaniumJellyEncoderImpl(options, frameSize);
+        this.reusableFrame = RdfStreamFrame.newInstance();
     }
 
     @Override
@@ -51,12 +53,10 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
     ) throws RdfConsumerException {
         encoder.quad(subject, predicate, object, datatype, language, direction, graph);
         if (encoder.getRowCount() >= frameSize) {
-            final var frame = RdfStreamFrame.newInstance();
-            for (final var row : encoder.getRows()) {
-                frame.addRows(row);
-            }
+            reusableFrame.resetCachedSize();
+            reusableFrame.setRows(encoder.getRows());
             try {
-                frame.writeDelimitedTo(outputStream);
+                reusableFrame.writeDelimitedTo(outputStream);
             } catch (IOException e) {
                 throw new RdfConsumerException(e);
             }
@@ -70,11 +70,9 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
     @Override
     public void close() throws IOException {
         if (encoder.getRowCount() > 0) {
-            final var frame = RdfStreamFrame.newInstance();
-            for (final var row : encoder.getRows()) {
-                frame.addRows(row);
-            }
-            frame.writeDelimitedTo(outputStream);
+            reusableFrame.resetCachedSize();
+            reusableFrame.setRows(encoder.getRows());
+            reusableFrame.writeDelimitedTo(outputStream);
 
             encoder.clearRows();
         }

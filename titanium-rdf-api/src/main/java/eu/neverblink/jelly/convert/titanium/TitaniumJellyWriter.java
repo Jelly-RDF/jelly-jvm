@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.convert.titanium;
 
 import com.apicatalog.rdf.api.RdfQuadConsumer;
-import eu.neverblink.jelly.convert.titanium.TitaniumJellyWriterImpl;
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import java.io.OutputStream;
