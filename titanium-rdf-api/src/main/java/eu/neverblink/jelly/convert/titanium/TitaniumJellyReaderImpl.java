@@ -4,9 +4,12 @@ import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
 import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.core.InternalApi;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.utils.IoUtils;
+import eu.neverblink.protoc.java.runtime.MessageFactory;
+import eu.neverblink.protoc.java.runtime.ProtoMessage;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -45,12 +48,16 @@ final class TitaniumJellyReaderImpl implements TitaniumJellyReader {
     private void parseInternal(RdfQuadConsumer consumer, InputStream inputStream, boolean oneFrame) throws IOException {
         handler.assignConsumer(consumer);
 
+        final RowBuffer buffer = RowBuffer.newSingle(row -> decoder.ingestRow(consumer, row));
+        final RdfStreamFrame.Mutable reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
+        final MessageFactory<RdfStreamFrame> getReusableFrame = () -> reusableFrame;
+
         var delimitingResponse = IoUtils.autodetectDelimiting(inputStream);
         if (!delimitingResponse.isDelimited()) {
             // File contains a single frame
             var newIn = delimitingResponse.newInput();
-            var frame = RdfStreamFrame.parseFrom(newIn);
-            decoder.ingestFrame(consumer, frame);
+            ProtoMessage.parseFrom(newIn, getReusableFrame);
+            buffer.clear();
             return;
         }
 
@@ -58,14 +65,16 @@ final class TitaniumJellyReaderImpl implements TitaniumJellyReader {
         if (oneFrame) {
             // May contain multiple frames, but we only want one
             var newIn = delimitingResponse.newInput();
-            var frame = RdfStreamFrame.parseDelimitedFrom(newIn);
-            decoder.ingestFrame(consumer, frame);
+            ProtoMessage.parseDelimitedFrom(newIn, getReusableFrame);
+            buffer.clear();
             return;
         }
 
         // May contain multiple frames
-        readStream(delimitingResponse.newInput(), RdfStreamFrame::parseDelimitedFrom, frame ->
-            decoder.ingestFrame(consumer, frame)
+        readStream(
+            delimitingResponse.newInput(),
+            is -> ProtoMessage.parseDelimitedFrom(is, getReusableFrame),
+            frame -> buffer.clear()
         );
     }
 }
