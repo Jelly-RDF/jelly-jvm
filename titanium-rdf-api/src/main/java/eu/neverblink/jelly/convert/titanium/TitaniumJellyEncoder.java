@@ -2,8 +2,10 @@ package eu.neverblink.jelly.convert.titanium;
 
 import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.core.JellyOptions;
+import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
+import java.util.Collection;
 
 /**
  * Low-level encoder of Jelly data. You can use this for implementing your own Jelly serializers.
@@ -37,9 +39,9 @@ public interface TitaniumJellyEncoder extends RdfQuadConsumer {
 
     /**
      * Returns the rows in the encoded row buffer as a collection and clears the buffer.
-     * @return java.util.Iterable&lt;RdfStreamRow&gt;
+     * @return RowBuffer
      */
-    Iterable<RdfStreamRow> getRows();
+    RowBuffer getRows();
 
     /**
      * Clears the encoded row buffer.

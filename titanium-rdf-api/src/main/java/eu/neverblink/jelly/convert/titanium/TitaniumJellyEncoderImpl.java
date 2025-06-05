@@ -9,20 +9,21 @@ import eu.neverblink.jelly.convert.titanium.internal.TitaniumLiteral;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
+import eu.neverblink.jelly.core.memory.EncoderAllocator;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 
 @InternalApi
 final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
 
     private final ProtoEncoder<Object> encoder;
 
-    private final RowBuffer buffer = RowBuffer.newLazyImmutable(16);
+    private final EncoderAllocator allocator;
+    private final RowBuffer buffer;
 
-    public TitaniumJellyEncoderImpl(RdfStreamOptions options) {
+    public TitaniumJellyEncoderImpl(RdfStreamOptions options, int frameSize) {
         // We set the stream type to QUADS, as this is the only type supported by Titanium.
         final var supportedOptions = options
             .clone()
@@ -36,8 +37,14 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
             .setGeneralizedStatements(false)
             .setRdfStar(false);
 
+        this.buffer = RowBuffer.newReusableForEncoder(frameSize + 8);
+        this.allocator = EncoderAllocator.newArenaAllocator(frameSize + 8);
         this.encoder = TitaniumConverterFactory.getInstance()
-            .encoder(ProtoEncoder.Params.of(supportedOptions, false, buffer));
+            .encoder(ProtoEncoder.Params.of(supportedOptions, false, this.buffer, this.allocator));
+    }
+
+    public TitaniumJellyEncoderImpl(RdfStreamOptions options) {
+        this(options, 256);
     }
 
     @Override
@@ -46,13 +53,14 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
     }
 
     @Override
-    public Iterable<RdfStreamRow> getRows() {
-        return buffer.getRows();
+    public RowBuffer getRows() {
+        return buffer;
     }
 
     @Override
     public void clearRows() {
-        buffer.getRows();
+        buffer.clear();
+        allocator.releaseAll();
     }
 
     @Override
