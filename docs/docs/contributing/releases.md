@@ -1,4 +1,4 @@
-# Developer guide – releases
+# Releasing Jelly-JVM
 
 ## Full (versioned) releases
 

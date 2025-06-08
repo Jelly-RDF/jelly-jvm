@@ -290,7 +290,7 @@ Jelly is a bit more than just a serialization format – it also defines a [gRPC
 - [Jelly JVM benchmarks](https://github.com/Jelly-RDF/jvm-benchmarks/tree/main) – research software for testing the performance of Jelly-JVM and other RDF serializations in Apache Jena. It uses most of Jelly-JVM's features.
 
 
-[^1]: There is nothing stopping you from using more than one at the same time. You can also pretty easily add support for any other Java-based RDF library by implementing a few interfaces. [More details here](dev/implementing.md).
+[^1]: There is nothing stopping you from using more than one at the same time. You can also pretty easily add support for any other Java-based RDF library by implementing a few interfaces. [More details here](user/implementing.md).
 
 ## Questions?
 
