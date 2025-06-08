@@ -5,6 +5,7 @@ import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
 import eu.neverblink.jelly.integration_tests.util.Measure
 import org.apache.jena.graph.{Node, Triple}
+import org.apache.jena.riot.lang.LabelToNode
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
 import org.apache.jena.riot.{RDFLanguages, RDFParser, RIOT}
 import org.apache.jena.sparql.core.Quad
@@ -33,6 +34,8 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
     for file <- files do
       RDFParser.source(file.getPath)
         .lang(RDFLanguages.NT)
+        // Preserve original blank node labels to match blank nodes IDs across different files
+        .labelToNode(LabelToNode.createUseLabelAsGiven())
         .parse(StreamRDFLib.sinkTriples(sink))
     sink.result
 
@@ -48,6 +51,8 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
     for file <- files do
       RDFParser.source(file.getPath)
         .lang(RDFLanguages.NQ)
+        // Preserve original blank node labels to match blank nodes IDs across different files
+        .labelToNode(LabelToNode.createUseLabelAsGiven())
         .parse(StreamRDFLib.sinkQuads(sink))
     sink.result
 

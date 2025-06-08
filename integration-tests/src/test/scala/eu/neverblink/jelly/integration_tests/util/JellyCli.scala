@@ -10,7 +10,14 @@ object JellyCli:
     optionsFile: Option[File],
     frameIndexToCompare: Option[Int]
   ): Int =
-    val jellyCliFile = File(getClass.getResource("/jelly-cli").getFile)
+    val jellyCliFile = try {
+      File(getClass.getResource("/jelly-cli").getFile)
+    } catch {
+      case t: Throwable =>
+        throw new RuntimeException("jelly-cli not found in resources. Please ensure it is included " +
+          "in the classpath. Running `sbt test` should resolve this.", t)
+    }
+
 
     val command = Seq(
       jellyCliFile.getAbsolutePath,
