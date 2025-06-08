@@ -107,15 +107,17 @@ def define_env(env):
 
     def _module_badges(module, is_scala: bool = False):
         version = jvm_version()
+        if version == 'dev':
+            version = jvm_package_version()
 
         scala_suffix = ''
         if is_scala:
             scala_suffix = '_3'
 
         if version == 'dev':
-            return f'[![Browse jelly-{module} versions](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}) [![Browse latest jelly-{module} API docs](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-{module}{scala_suffix}/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-{module}{scala_suffix})'
+            return f'[![Maven Central Version](https://img.shields.io/badge/maven--central-{version.replace("-", "--")}-green.svg)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-{module}{scala_suffix}/{version}) [![Browse latest jelly-{module} API docs](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-{module}{scala_suffix}/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-{module}{scala_suffix})'
         else:
-            return f'[![See jelly-{module} {version} module details](https://img.shields.io/badge/jelly--{module}-{version.replace("-", "--")}-green.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-{module}/{version}) [![Browse jelly-{module} {version} API docs](https://img.shields.io/badge/javadoc-{version.replace("-", "--")}-brightgreen.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-{module}{scala_suffix}/{version})'
+            return f'[![Maven Central Version](https://img.shields.io/badge/maven--central-{version.replace("-", "--")}-green.svg)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-{module}{scala_suffix}/{version}) [![Browse jelly-{module} {version} API docs](https://img.shields.io/badge/javadoc-{version.replace("-", "--")}-brightgreen.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-{module}{scala_suffix}/{version})'
 
     @env.macro
     def java_module_badges(module):

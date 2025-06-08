@@ -22,21 +22,23 @@ But, this library also gives you the full stack of utilities for scalable RDF st
 ### Published to Maven Central
 
 - [`jelly-core`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/core/src) – core generic code for serializing/deserializing Jelly data. You need an additional module (like `jelly-jena`) to integrate it with a specific RDF library. 
-  - [![jelly-core Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-core) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-core/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-core) 
+  - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-core)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-core) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-core/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-core) 
 
 - [`jelly-jena`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/jena/src) – interop code for the [Apache Jena](https://jena.apache.org/) library.
-  - [![jelly-jena Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-jena) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-jena/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-jena)
+  - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-jena)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-jena) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-jena/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-jena)
 
 - [`jelly-rdf4j`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/rdf4j/src) – interop code for the [Eclipse RDF4J](https://rdf4j.org/) library.
-  - [![jelly-rdf4j Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-rdf4j) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-rdf4j/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-rdf4j)
+  - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-rdf4j)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-rdf4j) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-rdf4j/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-rdf4j)
 
 - [`jelly-titanium-rdf-api`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/titanium-rdf-api/src) – integration with the minimalistic [Titanium RDF API](https://github.com/filip26/titanium-rdf-api).
-  - [![jelly-titanium-rdf-api Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-titanium-rdf-api/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-titanium-rdf-api) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-titanium-rdf-api/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-titanium-rdf-api)
+  - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-titanium-rdf-api)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-titanium-rdf-api) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-titanium-rdf-api/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-titanium-rdf-api)
 
 - [`jelly-pekko-stream`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/pekko-stream/src) – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT...
-  - [![jelly-stream Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-stream) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-stream_3/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-stream_3)
+  - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-pekko-stream_3)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-pekko-stream_3) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-pekko-stream_3/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-pekko-stream_3)
 
 <!--
+TODO: update shields/badges here when the module is ready
+
 - [`jelly-grpc`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/grpc/src) – implementation of a gRPC client and server for the full Jelly protocol.
   - [![jelly-grpc Scala version support](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc/latest.svg)](https://index.scala-lang.org/jelly-rdf/jelly-jvm/jelly-grpc) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-grpc/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-grpc)
 -->
