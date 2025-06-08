@@ -76,10 +76,10 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
     - [gRPC](user/grpc.md)[^2]
     - [Useful utilities](user/utilities.md)
     - [Compatibility policy](user/compatibility.md)
-- Developer guide
-    - [Releases](dev/releases.md)
-    - [Implementing Jelly for other libraries](dev/implementing.md)
+    - [Implementing Jelly for other libraries](user/implementing.md)
 - [Contributing to Jelly-JVM](contributing/index.md)
+    - [Releases](contributing/releases.md)
+- [Performance benchmarks](performance/index.md) – how fast is Jelly-JVM?
 - [License and citation](licensing.md)
 - [Release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)
 - [Main Jelly website]({{ proto_link( '' ) }}) – including the Jelly protocol specification and explanation of the various stream types.

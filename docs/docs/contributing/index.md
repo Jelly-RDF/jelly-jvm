@@ -48,7 +48,7 @@ Jelly-JVM uses the exact same documentation system as the main [Jelly documentat
 
 ## Releases
 
-See the [dedicated page on making releases](../dev/releases.md).
+See the [dedicated page on making releases](releases.md).
 
 ## See also
 

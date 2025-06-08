@@ -38,4 +38,4 @@ To serialize triples/quads into a stream frame:
 
 - [Useful utilities](utilities.md)
 - [Reactive streaming with Jelly-JVM](reactive.md)
-- [Implementing Jelly-JVM for a new RDF library](../dev/implementing.md)
+- [Implementing Jelly-JVM for a new RDF library](implementing.md)

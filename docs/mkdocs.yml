@@ -8,6 +8,10 @@ plugins:
   - macros
   - git-revision-date-localized:
       enable_creation_date: true
+  - redirects:
+      redirect_maps:
+        'dev/implementing.md': 'user/implementing.md'
+        'dev/releases.md': 'contributing/releases.md'
 
 markdown_extensions:
   - attr_list
@@ -100,11 +104,10 @@ nav:
     - Useful utilities: 'user/utilities.md'
     - Low-level usage: 'user/low-level.md'
     - Compatibility policy: 'user/compatibility.md'
-  - Developer guide:
-    - Releases: 'dev/releases.md'
-    - Implementing Jelly for other libraries: 'dev/implementing.md'
+    - Implementing Jelly for other libraries: 'user/implementing.md'  
   - Contributing:
     - 'contributing/index.md'
+    - Releases: 'contributing/releases.md'
     - Code of conduct: 'contributing/code_of_conduct.md'
   - Licensing and citation: 'licensing.md'
   - Back to main Jelly docs ↩: 'https://w3id.org/jelly/'
