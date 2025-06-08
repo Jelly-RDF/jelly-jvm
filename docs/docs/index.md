@@ -35,10 +35,14 @@ The implementation is split into a few modules that can be used separately:
     - {{ java_module_badges('titanium-rdf-api') }}
 
 - `jelly-pekko-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT... **[:octicons-arrow-right-24: Learn more](user/reactive.md)**
-    - {{ scala_module_badges('stream') }}
+    - {{ scala_module_badges('pekko-stream') }}
+
+<!--
+TODO: update shields/badges here when the module is ready
 
 - `jelly-grpc`[^2] – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}). **[:octicons-arrow-right-24: Learn more](user/grpc.md)**
     - {{ scala_module_badges('grpc') }}
+-->
 
 ## Plugin JARs
 
@@ -46,7 +50,7 @@ We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](
 
 ## Compatibility
 
-Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 24 are tested in CI and are guaranteed to work. Jelly is built with [Scala 3 LTS releases](https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html).
+Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 24 are tested in CI and are guaranteed to work. The modules integrating with Pekko Streams use Scala and are built with [Scala 3 LTS releases](https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html).
 
 The following table shows the compatibility of the Jelly-JVM implementation with other libraries:
 
@@ -93,5 +97,5 @@ The development of the Jelly protocol, its implementations, and supporting tooli
 ![European Funds for Smart Economy, Republic of Poland, Co-funded by the European Union](assets/featured/feng_rp_eu.png)
 
 [^1]: Scala 2.13-compatible builds of Jelly-JVM are available for Jelly-JVM 1.0.x. Scala 2 support was removed in subsequent versions. [See more details](https://w3id.org/jelly/jelly-jvm/1.0.x/user/scala2).
-[^2]: As of `3.0.0` the gRPC module is not included in the main Jelly-JVM distribution. It will be restored in `3.1.0` and the documentation updated accordingly.
+[^2]: As of `3.1.0` the gRPC module is not included in the main Jelly-JVM distribution. It will be restored in `3.2.0` and the documentation updated accordingly.
 [^3]: Scala version applies **only** to the `jelly-pekko-stream` module. The other modules **do not depend** on Scala and are compatible with any version of Java 17+.
