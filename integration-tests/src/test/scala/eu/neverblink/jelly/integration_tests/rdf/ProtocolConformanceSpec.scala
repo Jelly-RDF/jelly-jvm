@@ -192,11 +192,8 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
   private def isTestEntryBlockedById(testEntry: Resource): Boolean =
     // Unknown error
     // eu.neverblink.jelly.core.RdfProtoDeserializationError: Prefix entry with ID 0 is out of bounds of the prefix lookup table.
+    // This is caused by an invalid test case: https://github.com/Jelly-RDF/jelly-protobuf/issues/82
     testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_005")
-    // Does not fail
-    || testEntry.extractTestUri.contains("to_jelly/triples_rdf_1_1/neg_001")
-    // Does not fail
-    || testEntry.extractTestUri.contains("to_jelly/triples_rdf_1_1/neg_002")
     // java.lang.IllegalStateException: Expected 6 RDF elements, but got 0 elements.
     //    at eu.neverblink.jelly.integration_tests.util.OrderedRdfCompare$.compare(OrderedRdfCompare.scala:23)
     //    at eu.neverblink.jelly.integration_tests.rdf.ProtocolSpec.f$proxy2$1(ProtocolSpec.scala:125)

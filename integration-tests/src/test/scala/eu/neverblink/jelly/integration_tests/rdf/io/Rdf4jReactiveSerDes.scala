@@ -62,7 +62,8 @@ class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement
         .flow
       )
       .runWith(JellyIo.toIoStream(os))
-    Await.ready(f, 10.seconds)
+    // Use Await.result to rethrow any exceptions that occur during the stream processing
+    Await.result(f, 10.seconds)
 
   override def writeTriplesJelly(file: File, triples: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     val fileOs = new FileOutputStream(file)
@@ -73,7 +74,7 @@ class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement
         .flow
       )
       .runWith(JellyIo.toIoStream(fileOs))
-    Await.ready(f, 10.seconds)
+    Await.result(f, 10.seconds)
     fileOs.close()
 
   override def writeQuadsJelly(os: OutputStream, dataset: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
@@ -84,7 +85,7 @@ class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement
         .flow
       )
       .runWith(JellyIo.toIoStream(os))
-    Await.ready(f, 10.seconds)
+    Await.result(f, 10.seconds)
 
   override def writeQuadsJelly(file: File, quads: Seq[Statement], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
     val fileOs = new FileOutputStream(file)
@@ -95,7 +96,7 @@ class Rdf4jReactiveSerDes(using Materializer) extends NativeSerDes[Seq[Statement
         .flow
       )
       .runWith(JellyIo.toIoStream(fileOs))
-    Await.ready(f, 10.seconds)
+    Await.result(f, 10.seconds)
     fileOs.close()
 
   override def isBlank(node: Value): Boolean = Rdf4jSerDes.isBlank(node)

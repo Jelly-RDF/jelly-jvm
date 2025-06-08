@@ -41,6 +41,7 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
     val f = JellyIo.fromIoStream(is)
       .via(DecoderFlow.decodeAny.asFlatStream(supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)))
       .runWith(Sink.seq)
+    // Use Await.result to rethrow any exceptions that occur during the stream processing
     Await.result(f, 10.seconds)
 
   override def readTriplesJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[Triple] =
@@ -62,7 +63,7 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
         .flow
       )
       .runWith(JellyIo.toIoStream(os))
-    Await.ready(f, 10.seconds)
+    Await.result(f, 10.seconds)
 
   override def writeTriplesJelly
   (os: OutputStream, model: Model, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
@@ -73,7 +74,7 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
         .flow
       )
       .runWith(JellyIo.toIoStream(os))
-    Await.ready(f, 10.seconds)
+    Await.result(f, 10.seconds)
 
 
   override def writeTriplesJelly(file: File, triples: Seq[Triple], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
@@ -85,7 +86,7 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
         .flow
       )
       .runWith(JellyIo.toIoStream(fileOs))
-    Await.ready(f, 10.seconds)
+    Await.result(f, 10.seconds)
     fileOs.close()
 
   override def writeQuadsJelly(file: File, quads: Seq[Quad], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
@@ -97,7 +98,7 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
         .flow
       )
       .runWith(JellyIo.toIoStream(fileOs))
-    Await.ready(f, 10.seconds)
+    Await.result(f, 10.seconds)
     fileOs.close()
 
   override def isBlank(node: Node): Boolean = JenaStreamSerDes.isBlank(node)
