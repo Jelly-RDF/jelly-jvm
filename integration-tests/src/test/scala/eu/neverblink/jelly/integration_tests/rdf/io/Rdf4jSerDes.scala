@@ -29,6 +29,8 @@ object Rdf4jSerDes extends NativeSerDes[Seq[Statement], Seq[Statement]], Protoco
     val parser = Rio.createParser(format)
     val collector = new StatementCollector()
     parser.setRDFHandler(collector)
+    // Preserve original blank node labels to match blank nodes IDs across different files
+    parser.setPreserveBNodeIDs(true)
     supportedOptions.foreach(opt =>
       parser.setParserConfig(JellyParserSettings.from(opt))
     )
