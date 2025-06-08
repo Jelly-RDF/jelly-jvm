@@ -22,6 +22,7 @@ object JellyCli:
     val command = Seq(
       jellyCliFile.getAbsolutePath,
       "rdf", "validate",
+      "--debug",
       s"--compare-to-rdf-file=${expectedJelly.getAbsolutePath}",
       "--compare-ordered=true",
       frameIndexToCompare.map(i => s"--compare-frame-index=$i").getOrElse(""),
