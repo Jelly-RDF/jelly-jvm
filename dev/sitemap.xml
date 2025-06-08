@@ -25,11 +25,7 @@
          <lastmod>2025-06-08</lastmod>
     </url>
     <url>
-         <loc>https://jelly-rdf.github.io/jelly-jvm/dev/dev/implementing/</loc>
-         <lastmod>2025-06-08</lastmod>
-    </url>
-    <url>
-         <loc>https://jelly-rdf.github.io/jelly-jvm/dev/dev/releases/</loc>
+         <loc>https://jelly-rdf.github.io/jelly-jvm/dev/contributing/releases/</loc>
          <lastmod>2025-06-08</lastmod>
     </url>
     <url>
@@ -38,6 +34,10 @@
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/grpc/</loc>
+         <lastmod>2025-06-08</lastmod>
+    </url>
+    <url>
+         <loc>https://jelly-rdf.github.io/jelly-jvm/dev/user/implementing/</loc>
          <lastmod>2025-06-08</lastmod>
     </url>
     <url>

@@ -10,22 +10,28 @@
       
       
       
+        <link rel="canonical" href="https://jelly-rdf.github.io/jelly-jvm/dev/user/implementing/">
       
       
+        <link rel="prev" href="../compatibility/">
       
-      <link rel="icon" href="/jelly-jvm/dev/assets/jelly_color.png">
+      
+        <link rel="next" href="../../contributing/">
+      
+      
+      <link rel="icon" href="../../assets/jelly_color.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
     
       
-        <title>Jelly-JVM</title>
+        <title>Implementing Jelly for other libraries - Jelly-JVM</title>
       
     
     
-      <link rel="stylesheet" href="/jelly-jvm/dev/assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
       
         
-        <link rel="stylesheet" href="/jelly-jvm/dev/assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -44,9 +50,9 @@
       
     
     
-      <link rel="stylesheet" href="/jelly-jvm/dev/stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("/jelly-jvm/dev",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -55,8 +61,10 @@
     
     
     
+        
+    
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Jelly-JVM" />
+    <meta property="og:title" content="Jelly-JVM – Implementing Jelly for other libraries" />
     <meta property="og:description" content="Jelly-JVM is a JVM (Scala) implementation of the Jelly RDF streaming protocol." />
     <meta property="og:image" content="https://w3id.org/jelly/jelly-jvm/dev/assets/social.png" />
     <meta property="og:image:type" content="image/jpeg" />
@@ -82,6 +90,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#developer-guide-implementing-conversions-for-other-libraries" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -98,9 +111,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/jelly-jvm/dev/." title="Jelly-JVM" class="md-header__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
+    <a href="../.." title="Jelly-JVM" class="md-header__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
       
-  <img src="/jelly-jvm/dev/assets/jelly_white.png" alt="logo">
+  <img src="../../assets/jelly_white.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -117,7 +130,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Implementing Jelly for other libraries
             
           </span>
         </div>
@@ -235,9 +248,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/jelly-jvm/dev/." title="Jelly-JVM" class="md-nav__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
+    <a href="../.." title="Jelly-JVM" class="md-nav__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
       
-  <img src="/jelly-jvm/dev/assets/jelly_white.png" alt="logo">
+  <img src="../../assets/jelly_white.png" alt="logo">
 
     </a>
     Jelly-JVM
@@ -264,7 +277,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -286,7 +299,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/getting-started-plugins/" class="md-nav__link">
+      <a href="../../getting-started-plugins/" class="md-nav__link">
         
   
   
@@ -308,7 +321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/getting-started-devs/" class="md-nav__link">
+      <a href="../../getting-started-devs/" class="md-nav__link">
         
   
   
@@ -327,8 +340,10 @@
       
   
   
+    
   
   
+  
     
     
       
@@ -356,11 +371,11 @@
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -376,7 +391,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             User guide
@@ -390,7 +405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/jena/" class="md-nav__link">
+      <a href="../jena/" class="md-nav__link">
         
   
   
@@ -413,7 +428,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/jena-cli/" class="md-nav__link">
+      <a href="../jena-cli/" class="md-nav__link">
         
   
   
@@ -436,7 +451,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/rdf4j/" class="md-nav__link">
+      <a href="../rdf4j/" class="md-nav__link">
         
   
   
@@ -459,7 +474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/titanium/" class="md-nav__link">
+      <a href="../titanium/" class="md-nav__link">
         
   
   
@@ -482,7 +497,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/reactive/" class="md-nav__link">
+      <a href="../reactive/" class="md-nav__link">
         
   
   
@@ -505,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/grpc/" class="md-nav__link">
+      <a href="../grpc/" class="md-nav__link">
         
   
   
@@ -528,7 +543,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/utilities/" class="md-nav__link">
+      <a href="../utilities/" class="md-nav__link">
         
   
   
@@ -551,7 +566,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/low-level/" class="md-nav__link">
+      <a href="../low-level/" class="md-nav__link">
         
   
   
@@ -574,7 +589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/compatibility/" class="md-nav__link">
+      <a href="../compatibility/" class="md-nav__link">
         
   
   
@@ -594,10 +609,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/user/implementing/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Implementing Jelly for other libraries
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -608,6 +645,44 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#basics-of-implementing-conversions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basics of implementing conversions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supporting-reactive-streams-with-apache-pekko-streams" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supporting reactive streams with Apache Pekko Streams
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -649,7 +724,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="/jelly-jvm/dev/contributing/" class="md-nav__link ">
+            <a href="../../contributing/" class="md-nav__link ">
               
   
   
@@ -684,7 +759,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/contributing/releases/" class="md-nav__link">
+      <a href="../../contributing/releases/" class="md-nav__link">
         
   
   
@@ -707,7 +782,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/contributing/code_of_conduct/" class="md-nav__link">
+      <a href="../../contributing/code_of_conduct/" class="md-nav__link">
         
   
   
@@ -737,7 +812,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/jelly-jvm/dev/licensing/" class="md-nav__link">
+      <a href="../../licensing/" class="md-nav__link">
         
   
   
@@ -791,6 +866,34 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#basics-of-implementing-conversions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basics of implementing conversions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supporting-reactive-streams-with-apache-pekko-streams" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supporting reactive streams with Apache Pekko Streams
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -802,8 +905,103 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+  
+    <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/docs/user/implementing.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="developer-guide-implementing-conversions-for-other-libraries">Developer guide – implementing conversions for other libraries</h1>
+<h2 id="basics-of-implementing-conversions">Basics of implementing conversions</h2>
+<p>Currently converters for the two most popular RDF JVM libraries are implemented – RDF4J and Jena. But it is possible to implement your own converters and adapt the Jelly serialization code to any RDF library with little effort.</p>
+<p>To do this, you will need to implement three interfaces from the <code>jelly-core</code> module: <code>ProtoEncoderConverter</code>, <code>ProtoDecoderConverter</code>, and <code>JellyConverterFactory</code>.</p>
+<ul>
+<li>
+<p><strong>ProtoEncoderConverter (serialization)</strong></p>
+<ul>
+<li><code>nodeToProto</code> and <code>graphToProto</code> should translate into Jelly's representation all possible variations of RDF terms in the SPO and G positions, respectively.</li>
+<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/jena/src/main/java/eu/neverblink/jelly/convert/jena/JenaEncoderConverter.java">JenaEncoderConverter</a></li>
+<li>You can skip implementing this interface if you don't need serialization.</li>
+<li>You can also skip implementing some methods (make them throw an exception or return null) if, for example, you don't want to work with quads.</li>
+</ul>
+</li>
+<li>
+<p><strong>ProtoDecoderConverter (deserialization)</strong></p>
+<ul>
+<li>The <code>make*</code> methods should construct new RDF terms and statements.</li>
+<li>Example implementation for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/jena/src/main/java/eu/neverblink/jelly/convert/jena/JenaDecoderConverter.java">JenaDecoderConverter</a></li>
+<li>You can skip implementing this interface if you don't need deserialization.</li>
+<li>You can also skip implementing some methods (make them throw an exception or return null) if, for example, you don't want to work with quads or RDF-star.</li>
+</ul>
+</li>
+<li>
+<p><strong>JellyConverterFactory</strong> – wrapper that allows other modules to use your converter.</p>
+<ul>
+<li>The methods should just return new instances (or singletons, if appropriate for your use case) of your <code>ProtoEncoderConverter</code> and <code>ProtoDecoderConverter</code> implementations.</li>
+<li>Example for Jena: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/jena/src/main/java/eu/neverblink/jelly/convert/jena/JenaConverterFactory.java">JenaConverterFactory</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="supporting-reactive-streams-with-apache-pekko-streams">Supporting reactive streams with Apache Pekko Streams</h2>
+<p>If you want to enable reactive stream support for your library, it will be useful to implement the following utility interfaces from <code>jelly-core</code>: <code>QuadExtractor</code> and <code>QuadMaker</code> for Quads and <code>TripleExtractor</code> and <code>TripleMaker</code> for Triples. </p>
+<p>These interfaces are used to extract triples/quads from the input stream and create them from the output stream. In <code>jelly-pekko-stream</code> module we expect your <code>ProtoDecoderConverter</code> to implement <code>TripleMaker</code> and <code>QuadMaker</code> interfaces, and your <code>ProtoEncoderConverter</code> to implement <code>TripleExtractor</code> and <code>QuadExtractor</code> interfaces. </p>
+<p>The implementation of these interfaces is very simple and should be similar to the following examples:</p>
+<ul>
+<li><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/jena/src/main/java/eu/neverblink/jelly/convert/jena/JenaEncoderConverter.java">JenaEncoderConverter</a> which implements <code>TripleExtractor&lt;Node, Triple&gt;</code> and <code>QuadExtractor&lt;Node, Quad&gt;</code> interfaces.</li>
+<li><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/jena/src/main/java/eu/neverblink/jelly/convert/jena/JenaDecoderConverter.java">JenaDecoderConverter</a> which implements <code>TripleMaker&lt;Node, Triple&gt;</code> and <code>QuadMaker&lt;Node, Quad&gt;</code> interfaces.</li>
+</ul>
+<p>Additionally, to support <code>RdfSourceBuilder</code> Dataset/Graph to Triples, Quads and Graphs conversions, you may find it useful to create implementations of <code>DatasetAdapter</code> and <code>GraphAdapter</code> utilis interfaces located in <code>jelly-core</code>. A good example of implementing such interfaces can be found in the <code>jena</code> module: <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/jena/src/main/java/eu/neverblink/jelly/convert/jena/JenaAdapters.java">JenaAdapters</a>.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">May 17, 2025</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 3, 2024</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -866,10 +1064,10 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "/jelly-jvm/dev", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.tabs.link"], "search": "/jelly-jvm/dev/assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="/jelly-jvm/dev/assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
       
     
   </body>
