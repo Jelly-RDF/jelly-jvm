@@ -222,7 +222,6 @@ lazy val rdfProtos = (project in file("rdf-protos"))
         (ProtobufConfig / protobufRunProtoc).value,
       )
     }.dependsOn(crunchyProtocPlugin / generatePluginRunScript).value,
-    ProtobufConfig / protobufExcludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "grpc.proto"),
     publishArtifact := false,
   )
 
@@ -494,3 +493,22 @@ lazy val jmh = (project in file("jmh"))
     commonSettings,
   )
   .dependsOn(core, jena)
+
+
+lazy val grpc = (project in file("grpc"))
+  .settings(
+    name := "jelly-grpc",
+    description := "Implementation of a gRPC client and server for the Jelly gRPC streaming protocol.",
+    libraryDependencies ++= Seq(
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+      "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-discovery" % pekkoV,
+      "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
+      "org.apache.pekko" %% "pekko-grpc-runtime" % pekkoGrpcV,
+    ),
+    commonSettings,
+  )
+  .dependsOn(stream % "test->compile")
+  .dependsOn(core % "compile->compile;test->test;protobuf->protobuf")
+  .dependsOn(rdfProtos % "protobuf->protobuf")
