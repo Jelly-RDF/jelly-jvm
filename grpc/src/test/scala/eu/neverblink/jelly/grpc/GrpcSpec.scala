@@ -1,8 +1,8 @@
 package eu.neverblink.jelly.grpc
 
-import com.typesafe.config.ConfigFactory
-import eu.ostrzyciel.jelly.core.proto.v1.*
-import eu.ostrzyciel.jelly.core.{JellyOptions, ProtoTestCases}
+import com.typesafe.config.{Config, ConfigFactory}
+import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.core.{JellyOptions, ProtoTestCases}
 import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.testkit.typed.scaladsl.ActorTestKit
 import org.apache.pekko.actor.typed.ActorSystem
@@ -17,12 +17,13 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
+import scala.jdk.CollectionConverters.*
 
 class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   import ProtoTestCases.*
 
   given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
-  val conf = ConfigFactory.parseString(
+  val conf: Config = ConfigFactory.parseString(
     """
       |pekko.http.server.preview.enable-http2 = on
       |pekko.grpc.client.jelly-no-gzip.host = 127.0.0.1
@@ -39,7 +40,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
       |""".stripMargin)
     .withFallback(ConfigFactory.defaultApplication())
 
-  val testKit = ActorTestKit(conf)
+  val testKit: ActorTestKit = ActorTestKit(conf)
   val serverSystem: ActorSystem[_] = testKit.system
 
   class TestService(storedData: Map[String, Seq[RdfStreamFrame]]) extends RdfStreamService:
@@ -51,36 +52,36 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
       in.toMat(Sink.seq)(Keep.right)
         .run()
         .map(data => {
-          receivedData(data.head.rows.head.row.options.streamName) = data
-          RdfStreamReceived()
+          receivedData(data.head.getRows.asScala.head.getOptions.getStreamName) = data
+          RdfStreamReceived.EMPTY
         })
 
     override def subscribeRdf(in: RdfStreamSubscribe) =
-      Source(storedData(in.topic))
+      Source(storedData(in.getTopic))
 
   val data = Map(
     "triples" -> Triples1.encodedFull(
-      JellyOptions.smallGeneralized
-        .withStreamName("triples")
-        .withPhysicalType(PhysicalStreamType.TRIPLES),
+      JellyOptions.SMALL_GENERALIZED.clone()
+        .setStreamName("triples")
+        .setPhysicalType(PhysicalStreamType.TRIPLES),
       1
     ),
     "quads" -> Quads1.encodedFull(
-      JellyOptions.smallGeneralized
-        .withStreamName("quads")
-        .withPhysicalType(PhysicalStreamType.QUADS),
+      JellyOptions.SMALL_GENERALIZED.clone()
+        .setStreamName("quads")
+        .setPhysicalType(PhysicalStreamType.QUADS),
       3
     ),
     "quads_2" -> Quads2RepeatDefault.encodedFull(
-      JellyOptions.smallGeneralized
-        .withStreamName("quads_2")
-        .withPhysicalType(PhysicalStreamType.QUADS),
+      JellyOptions.SMALL_GENERALIZED.clone()
+        .setStreamName("quads_2")
+        .setPhysicalType(PhysicalStreamType.QUADS),
       10
     ),
     "graphs" -> Graphs1.encodedFull(
-      JellyOptions.smallGeneralized
-        .withStreamName("graphs")
-        .withPhysicalType(PhysicalStreamType.GRAPHS),
+      JellyOptions.SMALL_GENERALIZED.clone()
+        .setStreamName("graphs")
+        .setPhysicalType(PhysicalStreamType.GRAPHS),
       1
     ),
   )
@@ -110,7 +111,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
       "receiving a subscription" should {
         for (caseName, toStream) <- data do
           s"stream $caseName" in {
-            val received = client.subscribeRdf(RdfStreamSubscribe(caseName))
+            val received = client.subscribeRdf(RdfStreamSubscribe.newInstance().setTopic(caseName))
               .toMat(Sink.seq)(Keep.right)
               .run()
               .futureValue
@@ -125,7 +126,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
             val received = client.publishRdf(Source(toStream))
               .futureValue
 
-            received should be (RdfStreamReceived())
+            received should be (RdfStreamReceived.EMPTY)
             serverService.receivedData(caseName) should be (toStream)
           }
       }
