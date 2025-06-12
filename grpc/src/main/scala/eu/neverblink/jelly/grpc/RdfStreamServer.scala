@@ -1,8 +1,6 @@
 package eu.neverblink.jelly.grpc
 
 import com.typesafe.config.Config
-import com.typesafe.scalalogging.LazyLogging
-import eu.neverblink.jelly.core.proto.v1.*
 import org.apache.pekko.Done
 import org.apache.pekko.actor.typed.ActorSystem
 import org.apache.pekko.http.scaladsl.Http

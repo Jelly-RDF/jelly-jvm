@@ -5,6 +5,7 @@ import eu.neverblink.jelly.core.proto.v1.{Grpc, RdfStreamFrame, RdfStreamReceive
 import eu.neverblink.jelly.grpc.utils.{CrunchyMarshaller, CrunchyProtobufSerializer}
 import org.apache.pekko
 import org.apache.pekko.NotUsed
+import org.apache.pekko.grpc.ServiceDescription
 import org.apache.pekko.stream.scaladsl.Source
 
 import scala.concurrent.Future
@@ -27,27 +28,27 @@ trait RdfStreamService {
 
 }
 
-object RdfStreamService extends pekko.grpc.ServiceDescription {
+object RdfStreamService extends ServiceDescription {
   val name = "eu.neverblink.jelly.core.proto.v1.RdfStreamService"
 
   val descriptor: Descriptors.FileDescriptor =
     Grpc.getDescriptor;
 
   object Serializers {
-
     val RdfStreamSubscribeSerializer = new CrunchyProtobufSerializer[RdfStreamSubscribe](RdfStreamSubscribe.parseFrom)
 
     val RdfStreamFrameSerializer = new CrunchyProtobufSerializer[RdfStreamFrame](RdfStreamFrame.parseFrom)
 
+    // Caused by: com.google.protobuf.InvalidProtocolBufferException:
+    // While parsing a protocol message, the input ended unexpectedly in the middle of a field.  
+    // This could mean either that the input has been truncated or that an embedded message misreported its own length.
     val RdfStreamReceivedSerializer = new CrunchyProtobufSerializer[RdfStreamReceived](RdfStreamReceived.parseFrom)
-
   }
 
   object MethodDescriptors {
     import Serializers.*
     import io.grpc.MethodDescriptor
-
-
+    
     val subscribeRdfDescriptor: MethodDescriptor[RdfStreamSubscribe, RdfStreamFrame] =
       MethodDescriptor.newBuilder()
         .setType(

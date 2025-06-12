@@ -15,7 +15,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 
@@ -48,7 +48,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     given ExecutionContext = system.executionContext
     var receivedData: mutable.Map[String, Seq[RdfStreamFrame]] = mutable.Map()
 
-    override def publishRdf(in: Source[RdfStreamFrame, NotUsed]) =
+    override def publishRdf(in: Source[RdfStreamFrame, NotUsed]): Future[RdfStreamReceived] =
       in.toMat(Sink.seq)(Keep.right)
         .run()
         .map(data => {
@@ -56,7 +56,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
           RdfStreamReceived.EMPTY
         })
 
-    override def subscribeRdf(in: RdfStreamSubscribe) =
+    override def subscribeRdf(in: RdfStreamSubscribe): Source[RdfStreamFrame, NotUsed] =
       Source(storedData(in.getTopic))
 
   val data = Map(
