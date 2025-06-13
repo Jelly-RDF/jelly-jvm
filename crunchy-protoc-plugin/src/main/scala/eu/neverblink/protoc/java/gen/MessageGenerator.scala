@@ -226,6 +226,9 @@ class MessageGenerator(val info: MessageInfo):
       mergeFrom
         .beginControlFlow("while (true)")
         .addStatement(named("int tag = input.readTag()"))
+        .beginControlFlow(named("if (tag == 0)"))
+        .addStatement("return 0")
+        .endControlFlow()
         .beginControlFlow(ifSkipField)
         .addStatement("return tag")
         .endControlFlow

@@ -136,6 +136,19 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
     }
   }
 
+  "RdfGraphEnd" should {
+    "round-trip an empty message, non-delimited" in {
+      // This test is also applicable to other always-empty messages
+      // (e.g., transactions in Jelly-Patch, ACK messages in gRPC)
+      val end = RdfGraphEnd.newInstance()
+      // This will be an empty array
+      val bytes = end.toByteArray
+      // Parsing this 0-length array should yield the same empty message
+      val parsedEnd = RdfGraphEnd.parseFrom(bytes)
+      parsedEnd should be(end)
+    }
+  }
+
   // Tests for the core-protos-google module
   "proto.google.v1.RdfStreamFrame" should {
     "round-trip with non-delimited bytes" when {
