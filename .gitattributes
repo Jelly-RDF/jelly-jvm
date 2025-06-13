@@ -1,0 +1,3 @@
+# Mark Jelly files as binary
+*.jelly binary
+*.jellyp binary
