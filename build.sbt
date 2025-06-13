@@ -40,8 +40,8 @@ lazy val commonSettings = Seq(
   ),
   javacOptions ++= Seq(
     "-source", "17",
-    // Currently, impossible to enable this without breaking the build due to warnings in protobuf generated code.
-    // "-Werror",
+    "-target", "17",
+    "-Werror",
     // TODO: enable more warnings
   ),
   assemblyJarName := s"${name.value}.jar",
@@ -135,6 +135,7 @@ lazy val crunchyProtocPlugin = (project in file("crunchy-protoc-plugin"))
       Seq(script)
     }.dependsOn(Compile / compile).value,
     publishArtifact := false,
+    commonSettings,
   )
 
 def runProtoc(
@@ -265,6 +266,8 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
     Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
+    // Don't throw errors, because Google's protoc generates code with a lot of warnings
+    javacOptions := javacOptions.value.filterNot(_ == "-Werror"),
     commonJavaSettings,
   )
 
