@@ -201,6 +201,8 @@ def doDownloadJellyCli(targetDir: File): File = {
   targetFile
 }
 
+val grpcJavaSourceFiles = Seq("Grpc.java", "RdfStreamSubscribe.java", "RdfStreamReceived.java")
+
 // Intermediate project that generates the Java code from the protobuf files
 lazy val rdfProtos = (project in file("rdf-protos"))
   .enablePlugins(ProtobufPlugin)
@@ -237,14 +239,18 @@ lazy val core = (project in file("core"))
       val inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) /
         "src_managed" / "main" / "compiled_protobuf" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+
       val javaFiles = (inputDir * "*.java").get
-      javaFiles.map { file =>
-        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
-        IO.copyFile(file, outputFile)
-        outputFile
-      }
+      javaFiles
+        .filterNot { file => grpcJavaSourceFiles.contains(file.getName) }
+        .map { file =>
+          val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+          IO.copyFile(file, outputFile)
+          outputFile
+        }
     }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
     Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
@@ -497,7 +503,7 @@ lazy val jmh = (project in file("jmh"))
 
 lazy val grpc = (project in file("grpc"))
   .settings(
-    name := "jelly-grpc",
+    name := "jelly-pekko-grpc",
     description := "Implementation of a gRPC client and server for the Jelly gRPC streaming protocol.",
     libraryDependencies ++= Seq(
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
@@ -507,8 +513,26 @@ lazy val grpc = (project in file("grpc"))
       "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
       "org.apache.pekko" %% "pekko-grpc-runtime" % pekkoGrpcV,
     ),
+    Compile / sourceGenerators += Def.task {
+      // Copy from the managed source directory to the output directory
+      val inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) /
+        "src_managed" / "main" / "compiled_protobuf" /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+
+      val outputDir = sourceManaged.value / "main" /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+
+      val javaFiles = (inputDir * "*.java").get
+      javaFiles
+        .filter { file => grpcJavaSourceFiles.contains(file.getName) }
+        .map { file =>
+          val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+          IO.copyFile(file, outputFile)
+          outputFile
+        }
+    }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
+    Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
   )
   .dependsOn(stream % "test->compile")
-  .dependsOn(core % "compile->compile;test->test;protobuf->protobuf")
-  .dependsOn(rdfProtos % "protobuf->protobuf")
+  .dependsOn(core % "compile->compile;test->test")
