@@ -37,12 +37,8 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-pekko-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT... **[:octicons-arrow-right-24: Learn more](user/reactive.md)**
     - {{ scala_module_badges('pekko-stream') }}
 
-<!--
-TODO: update shields/badges here when the module is ready
-
-- `jelly-grpc`[^2] – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}). **[:octicons-arrow-right-24: Learn more](user/grpc.md)**
+- `jelly-pekko-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}). **[:octicons-arrow-right-24: Learn more](user/grpc.md)**
     - {{ scala_module_badges('grpc') }}
--->
 
 ## Plugin JARs
 
@@ -56,7 +52,7 @@ The following table shows the compatibility of the Jelly-JVM implementation with
 
 | Jelly-JVM                                                                                                                                         | Java |           Scala           | RDF4J | Apache Jena | Apache Pekko |
 |---------------------------------------------------------------------------------------------------------------------------------------------------|:----:|:-------------------------:| :---: | :---------: | :----------: |
-| [3.0.x](https://w3id.org/jelly/jelly-jvm/3.0.x) – [**{{ jvm_package_version() }}**](https://w3id.org/jelly/jelly-jvm/{{ jvm_package_version() }}) | 17+  |      3.3.x (LTS)[^3]      | 5.x.x | 5.x.x       | 1.1.x        |
+| [3.0.x](https://w3id.org/jelly/jelly-jvm/3.0.x) – [**{{ jvm_package_version() }}**](https://w3id.org/jelly/jelly-jvm/{{ jvm_package_version() }}) | 17+  |      3.3.x (LTS)[^2]      | 5.x.x | 5.x.x       | 1.1.x        |
 | [2.0.x](https://w3id.org/jelly/jelly-jvm/2.0.x) – [2.10.x](https://w3id.org/jelly/jelly-jvm/2.10.x)                                               | 17+  |        3.3.x (LTS)        | 5.x.x | 5.x.x       | 1.1.x        |
 | [1.0.x](https://w3id.org/jelly/jelly-jvm/1.0.x)                                                                                                                                      | 11+  | 3.3.x (LTS)<br>2.13.x[^1] | 4.x.x | 4.x.x       | 1.0.x        |
 
@@ -73,7 +69,7 @@ Below is a list of all documentation pages about Jelly-JVM. You can also browse 
     - [RDF4J integration](user/rdf4j.md)
     - [Titanium RDF API integration](user/titanium.md) **(new in 2.9.0!)**
     - [Reactive streaming with Apache Pekko](user/reactive.md)
-    - [gRPC](user/grpc.md)[^2]
+    - [gRPC](user/grpc.md)
     - [Useful utilities](user/utilities.md)
     - [Compatibility policy](user/compatibility.md)
     - [Implementing Jelly for other libraries](user/implementing.md)
@@ -96,5 +92,4 @@ The development of the Jelly protocol, its implementations, and supporting tooli
 ![European Funds for Smart Economy, Republic of Poland, Co-funded by the European Union](assets/featured/feng_rp_eu.png)
 
 [^1]: Scala 2.13-compatible builds of Jelly-JVM are available for Jelly-JVM 1.0.x. Scala 2 support was removed in subsequent versions. [See more details](https://w3id.org/jelly/jelly-jvm/1.0.x/user/scala2).
-[^2]: As of `3.1.0` the gRPC module is not included in the main Jelly-JVM distribution. It will be restored in `3.2.0` and the documentation updated accordingly.
-[^3]: Scala version applies **only** to the `jelly-pekko-stream` module. The other modules **do not depend** on Scala and are compatible with any version of Java 17+.
+[^2]: Scala version applies **only** to the `jelly-pekko-stream` module. The other modules **do not depend** on Scala and are compatible with any version of Java 17+.

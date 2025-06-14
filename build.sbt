@@ -482,7 +482,8 @@ lazy val examples = (project in file("examples"))
     stream,
     jena % "compile->compile;test->test",
     rdf4j,
-    titaniumRdfApi
+    titaniumRdfApi,
+    grpc
   )
 
 lazy val jmh = (project in file("jmh"))
