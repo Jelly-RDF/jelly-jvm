@@ -6,7 +6,7 @@ This guide explains the functionalities of the `jelly-grpc` module, which implem
 
     If you are unfamiliar with gRPC, we recommend you first read some introductory material on the **[gRPC website](https://grpc.io/)** or in the **[Apache Pekko gRPC documentation](https://pekko.apache.org/docs/pekko-grpc/current/index.html)**.
 
-    The `jelly-pekko-grpc` module builds on the functionalities of `jelly-stream`, so we recommend you first read the **[Apache Pekko reactive streaming guide](reactive.md)**.
+    The `jelly-pekko-grpc` module builds on the functionalities of `jelly-pekko-stream`, so we recommend you first read the **[Apache Pekko reactive streaming guide](reactive.md)**.
 
     You may also want to first skim the **[Jelly gRPC streaming protocol specification]({{ proto_link('specification/streaming') }})** to understand the protocol's structure.
 
