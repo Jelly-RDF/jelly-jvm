@@ -25,6 +25,7 @@ lazy val titaniumNqV = "1.0.2"
 lazy val protobufV = "4.31.1"
 lazy val javapoetV = "0.7.0"
 lazy val jmhV = "1.37"
+lazy val grpcV = "1.73.0"
 
 lazy val jellyCliV = "0.4.5"
 
@@ -201,6 +202,8 @@ def doDownloadJellyCli(targetDir: File): File = {
   targetFile
 }
 
+val grpcJavaSourceFiles = Seq("Grpc.java", "RdfStreamSubscribe.java", "RdfStreamReceived.java")
+
 // Intermediate project that generates the Java code from the protobuf files
 lazy val rdfProtos = (project in file("rdf-protos"))
   .enablePlugins(ProtobufPlugin)
@@ -222,7 +225,6 @@ lazy val rdfProtos = (project in file("rdf-protos"))
         (ProtobufConfig / protobufRunProtoc).value,
       )
     }.dependsOn(crunchyProtocPlugin / generatePluginRunScript).value,
-    ProtobufConfig / protobufExcludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "grpc.proto"),
     publishArtifact := false,
   )
 
@@ -238,14 +240,18 @@ lazy val core = (project in file("core"))
       val inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) /
         "src_managed" / "main" / "compiled_protobuf" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+
       val javaFiles = (inputDir * "*.java").get
-      javaFiles.map { file =>
-        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
-        IO.copyFile(file, outputFile)
-        outputFile
-      }
+      javaFiles
+        .filterNot { file => grpcJavaSourceFiles.contains(file.getName) }
+        .map { file =>
+          val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+          IO.copyFile(file, outputFile)
+          outputFile
+        }
     }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
     Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
@@ -477,7 +483,8 @@ lazy val examples = (project in file("examples"))
     stream,
     jena % "compile->compile;test->test",
     rdf4j,
-    titaniumRdfApi
+    titaniumRdfApi,
+    grpc
   )
 
 lazy val jmh = (project in file("jmh"))
@@ -494,3 +501,41 @@ lazy val jmh = (project in file("jmh"))
     commonSettings,
   )
   .dependsOn(core, jena)
+
+
+lazy val grpc = (project in file("pekko-grpc"))
+  .settings(
+    name := "jelly-pekko-grpc",
+    description := "Implementation of a gRPC client and server for the Jelly gRPC streaming protocol.",
+    libraryDependencies ++= Seq(
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+      "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-discovery" % pekkoV,
+      "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
+      "org.apache.pekko" %% "pekko-grpc-runtime" % pekkoGrpcV,
+      "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
+      "io.grpc" % "grpc-services" % grpcV % Test,
+    ),
+    Compile / sourceGenerators += Def.task {
+      // Copy from the managed source directory to the output directory
+      val inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) /
+        "src_managed" / "main" / "compiled_protobuf" /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+
+      val outputDir = sourceManaged.value / "main" /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
+
+      val javaFiles = (inputDir * "*.java").get
+      javaFiles
+        .filter { file => grpcJavaSourceFiles.contains(file.getName) }
+        .map { file =>
+          val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+          IO.copyFile(file, outputFile)
+          outputFile
+        }
+    }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
+    Compile / sourceManaged := sourceManaged.value / "main",
+    commonSettings,
+  )
+  .dependsOn(stream % "test->compile")
+  .dependsOn(core % "compile->compile;test->test")

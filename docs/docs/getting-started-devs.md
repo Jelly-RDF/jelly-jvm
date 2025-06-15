@@ -263,13 +263,11 @@ Jelly-JVM supports streaming serialization and deserialization of all types of s
 
 [:octicons-arrow-right-24: Learn more about the types of streams in Jelly]({{ proto_link('user-guide') }})
 
-<!--
 ## gRPC streaming
 
 Jelly is a bit more than just a serialization format – it also defines a [gRPC](https://grpc.io/)-based straming protocol. You can use it for streaming RDF data between microservices, to build a pub/sub system, or to publish RDF data to the web.
 
 [:octicons-arrow-right-24: Learn more about using Jelly gRPC protocol servers and clients](user/grpc.md)
--->
 
 ## Further reading
 
@@ -277,7 +275,7 @@ Jelly is a bit more than just a serialization format – it also defines a [gRPC
 - [Using Jelly-JVM with RDF4J](user/rdf4j.md)
 - [Using Jelly-JVM with Titanium RDF API](user/titanium.md)
 - [Reactive streaming with Jelly-JVM and Apache Pekko](user/reactive.md) – using the `jelly-pekko-stream` module and [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html)
-<!-- - [Using Jelly gRPC protocol servers and clients](user/grpc.md) -->
+- [Using Jelly gRPC protocol servers and clients](user/grpc.md)
 - [Other useful utilities in Jelly-JVM](user/utilities.md)
 - [Low-level usage of Jelly-JVM](user/low-level.md)
 
