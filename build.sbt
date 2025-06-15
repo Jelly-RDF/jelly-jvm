@@ -25,6 +25,7 @@ lazy val titaniumNqV = "1.0.2"
 lazy val protobufV = "4.31.1"
 lazy val javapoetV = "0.7.0"
 lazy val jmhV = "1.37"
+lazy val grpcV = "1.73.0"
 
 lazy val jellyCliV = "0.4.5"
 
@@ -511,8 +512,9 @@ lazy val grpc = (project in file("pekko-grpc"))
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
       "org.apache.pekko" %% "pekko-discovery" % pekkoV,
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
-      "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
       "org.apache.pekko" %% "pekko-grpc-runtime" % pekkoGrpcV,
+      "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoV % Test,
+      "io.grpc" % "grpc-services" % grpcV % Test,
     ),
     Compile / sourceGenerators += Def.task {
       // Copy from the managed source directory to the output directory

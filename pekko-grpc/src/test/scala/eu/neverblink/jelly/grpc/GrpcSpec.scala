@@ -13,8 +13,15 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import io.grpc.ManagedChannelBuilder
+import io.grpc.reflection.v1alpha.ServerReflectionGrpc
+import io.grpc.reflection.v1alpha.ServerReflectionRequest
+import io.grpc.reflection.v1alpha.ServerReflectionResponse
+import io.grpc.stub.StreamObserver
 
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
@@ -129,5 +136,49 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
             received should be (RdfStreamReceived.EMPTY)
             serverService.receivedData(caseName) should be (toStream)
           }
+      }
+
+      "responding correctly to reflections requests" in {
+        val channel = ManagedChannelBuilder
+          .forAddress("127.0.0.1", 8080)
+          .usePlaintext()
+          .build()
+
+        val stub = ServerReflectionGrpc.newStub(channel)
+
+        val latch = new CountDownLatch(1)
+        val responses = new ListBuffer[ServerReflectionResponse]()
+        val responseObserver = new StreamObserver[ServerReflectionResponse] {
+          override def onNext(response: ServerReflectionResponse): Unit = {
+            responses += response
+          }
+          override def onError(t: Throwable): Unit = {
+            latch.countDown()
+            fail(s"Error in reflection request: ${t.getMessage}")
+          }
+          override def onCompleted(): Unit = {
+            latch.countDown()
+          }
+        }
+
+        val requestObserver = stub.serverReflectionInfo(responseObserver)
+        val request = ServerReflectionRequest.newBuilder()
+          .setHost("127.0.0.1:8080")
+          .setListServices("")
+          .build()
+
+        requestObserver.onNext(request)
+        requestObserver.onCompleted()
+
+        latch.await(5, TimeUnit.SECONDS)
+
+        responses should have size 1
+        val response = responses.head
+
+        response.getListServicesResponse.getServiceList.asScala
+          .map(_.getName)
+          .should(contain("eu.ostrzyciel.jelly.core.proto.v1.RdfStreamService"))
+
+        channel.shutdown()
       }
     }
