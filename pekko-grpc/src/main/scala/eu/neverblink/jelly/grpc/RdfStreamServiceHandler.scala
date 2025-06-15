@@ -19,7 +19,7 @@ object RdfStreamServiceHandler {
    * Creates a `HttpRequest` to `HttpResponse` handler that can be used in for example `Http().bindAndHandleAsync`
    * for the generated partial function handler and ends with `StatusCodes.NotFound` if the request is not matching.
    *
-   * Use `org.apache.pekko.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
+   * Use `ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
    * several services.
    */
   def apply(implementation: RdfStreamService)(implicit system: ClassicActorSystemProvider): model.HttpRequest => Future[model.HttpResponse] =
@@ -29,7 +29,7 @@ object RdfStreamServiceHandler {
    * Creates a `HttpRequest` to `HttpResponse` handler that can be used in for example `Http().bindAndHandleAsync`
    * for the generated partial function handler and ends with `StatusCodes.NotFound` if the request is not matching.
    *
-   * Use `org.apache.pekko.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
+   * Use `ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
    * several services.
    */
   def apply(implementation: RdfStreamService, eHandler: ActorSystem => PartialFunction[Throwable, Trailers])(implicit system: ClassicActorSystemProvider): model.HttpRequest => Future[model.HttpResponse] =
@@ -39,7 +39,7 @@ object RdfStreamServiceHandler {
    * Creates a `HttpRequest` to `HttpResponse` handler that can be used in for example `Http().bindAndHandleAsync`
    * for the generated partial function handler and ends with `StatusCodes.NotFound` if the request is not matching.
    *
-   * Use `org.apache.pekko.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
+   * Use `ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
    * several services.
    *
    * Registering a gRPC service under a custom prefix is not widely supported and strongly discouraged by the specification.
@@ -51,7 +51,7 @@ object RdfStreamServiceHandler {
    * Creates a `HttpRequest` to `HttpResponse` handler that can be used in for example `Http().bindAndHandleAsync`
    * for the generated partial function handler and ends with `StatusCodes.NotFound` if the request is not matching.
    *
-   * Use `org.apache.pekko.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
+   * Use `ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
    * several services.
    *
    * Registering a gRPC service under a custom prefix is not widely supported and strongly discouraged by the specification.
@@ -66,7 +66,7 @@ object RdfStreamServiceHandler {
    * for the generated partial function handler. The generated handler falls back to a reflection handler for
    * `RdfStreamService` and ends with `StatusCodes.NotFound` if the request is not matching.
    *
-   * Use `org.apache.pekko.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
+   * Use `ServiceHandler.concatOrNotFound` with `RdfStreamServiceHandler.partial` when combining
    * several services.
    */
   def withServerReflection(implementation: RdfStreamService)(implicit system: ClassicActorSystemProvider): model.HttpRequest => Future[model.HttpResponse] =
@@ -77,7 +77,7 @@ object RdfStreamServiceHandler {
 
   /**
    * Creates a partial `HttpRequest` to `HttpResponse` handler that can be combined with handlers of other
-   * services with `org.apache.pekko.grpc.scaladsl.ServiceHandler.concatOrNotFound` and then used in for example
+   * services with `ServiceHandler.concatOrNotFound` and then used in for example
    * `Http().bindAndHandleAsync`.
    *
    * Use `RdfStreamServiceHandler.apply` if the server is only handling one service.
@@ -94,15 +94,12 @@ object RdfStreamServiceHandler {
     def handle(request: model.HttpRequest, method: String): Future[model.HttpResponse] =
       GrpcMarshalling.negotiated(request, (reader, writer) =>
         (method match {
-
           case "SubscribeRdf" =>
-
             GrpcMarshalling.unmarshal(request.entity)(RdfStreamSubscribeSerializer, mat, reader)
               .map(implementation.subscribeRdf)
               .map(e => GrpcMarshalling.marshalStream(e, eHandler)(RdfStreamFrameSerializer, writer, system))
 
           case "PublishRdf" =>
-
             GrpcMarshalling.unmarshalStream(request.entity)(RdfStreamFrameSerializer, mat, reader)
               .flatMap(implementation.publishRdf)
               .map(e => GrpcMarshalling.marshal(e, eHandler)(RdfStreamReceivedSerializer, writer, system))

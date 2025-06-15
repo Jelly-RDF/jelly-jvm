@@ -25,23 +25,17 @@ trait RdfStreamService {
    * the INVALID_ARGUMENT error.
    */
   def publishRdf(in: Source[RdfStreamFrame, NotUsed]): Future[RdfStreamReceived]
-
 }
 
 object RdfStreamService extends ServiceDescription {
-  val name = "eu.neverblink.jelly.core.proto.v1.RdfStreamService"
+  val name = "eu.ostrzyciel.jelly.core.proto.v1.RdfStreamService"
 
   val descriptor: Descriptors.FileDescriptor =
     Grpc.getDescriptor;
 
   object Serializers {
     val RdfStreamSubscribeSerializer = new CrunchyProtobufSerializer[RdfStreamSubscribe](RdfStreamSubscribe.parseFrom)
-
     val RdfStreamFrameSerializer = new CrunchyProtobufSerializer[RdfStreamFrame](RdfStreamFrame.parseFrom)
-
-    // Caused by: com.google.protobuf.InvalidProtocolBufferException:
-    // While parsing a protocol message, the input ended unexpectedly in the middle of a field.  
-    // This could mean either that the input has been truncated or that an embedded message misreported its own length.
     val RdfStreamReceivedSerializer = new CrunchyProtobufSerializer[RdfStreamReceived](RdfStreamReceived.parseFrom)
   }
 
@@ -54,7 +48,7 @@ object RdfStreamService extends ServiceDescription {
         .setType(
           MethodDescriptor.MethodType.SERVER_STREAMING
         )
-        .setFullMethodName(MethodDescriptor.generateFullMethodName("eu.neverblink.jelly.core.proto.v1.RdfStreamService", "SubscribeRdf"))
+        .setFullMethodName(MethodDescriptor.generateFullMethodName(name, "SubscribeRdf"))
         .setRequestMarshaller(new CrunchyMarshaller(RdfStreamSubscribeSerializer))
         .setResponseMarshaller(new CrunchyMarshaller(RdfStreamFrameSerializer))
         .setSampledToLocalTracing(true)
@@ -65,7 +59,7 @@ object RdfStreamService extends ServiceDescription {
         .setType(
           MethodDescriptor.MethodType.CLIENT_STREAMING
         )
-        .setFullMethodName(MethodDescriptor.generateFullMethodName("eu.neverblink.jelly.core.proto.v1.RdfStreamService", "PublishRdf"))
+        .setFullMethodName(MethodDescriptor.generateFullMethodName(name, "PublishRdf"))
         .setRequestMarshaller(new CrunchyMarshaller(RdfStreamFrameSerializer))
         .setResponseMarshaller(new CrunchyMarshaller(RdfStreamReceivedSerializer))
         .setSampledToLocalTracing(true)
