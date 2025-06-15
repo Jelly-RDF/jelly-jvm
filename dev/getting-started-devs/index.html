@@ -398,6 +398,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#grpc-streaming" class="md-nav__link">
+    <span class="md-ellipsis">
+      gRPC streaming
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#further-reading" class="md-nav__link">
     <span class="md-ellipsis">
       Further reading
@@ -937,6 +946,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#grpc-streaming" class="md-nav__link">
+    <span class="md-ellipsis">
+      gRPC streaming
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#further-reading" class="md-nav__link">
     <span class="md-ellipsis">
       Further reading
@@ -1213,23 +1231,16 @@
 <p>Jelly-JVM supports streaming serialization and deserialization of all types of streams in the <a href="https://w3id.org/stax/dev/taxonomy/">RDF Stream Taxonomy</a>. You can read more about the theory of this and all available stream types in the <a href="https://w3id.org/jelly/dev/user-guide">Jelly protocol documentation</a>.</p>
 <p><a href="../user/reactive/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about reactive streaming with Jelly-JVM</a></p>
 <p><a href="https://w3id.org/jelly/dev/user-guide"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about the types of streams in Jelly</a></p>
-<!--
-## gRPC streaming
-
-Jelly is a bit more than just a serialization format – it also defines a [gRPC](https://grpc.io/)-based straming protocol. You can use it for streaming RDF data between microservices, to build a pub/sub system, or to publish RDF data to the web.
-
-[:octicons-arrow-right-24: Learn more about using Jelly gRPC protocol servers and clients](user/grpc.md)
--->
-
+<h2 id="grpc-streaming">gRPC streaming</h2>
+<p>Jelly is a bit more than just a serialization format – it also defines a <a href="https://grpc.io/">gRPC</a>-based straming protocol. You can use it for streaming RDF data between microservices, to build a pub/sub system, or to publish RDF data to the web.</p>
+<p><a href="../user/grpc/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about using Jelly gRPC protocol servers and clients</a></p>
 <h2 id="further-reading">Further reading</h2>
 <ul>
 <li><a href="../user/jena/">Using Jelly-JVM with Apache Jena</a></li>
 <li><a href="../user/rdf4j/">Using Jelly-JVM with RDF4J</a></li>
 <li><a href="../user/titanium/">Using Jelly-JVM with Titanium RDF API</a></li>
 <li><a href="../user/reactive/">Reactive streaming with Jelly-JVM and Apache Pekko</a> – using the <code>jelly-pekko-stream</code> module and <a href="https://pekko.apache.org/docs/pekko/current/stream/index.html">Apache Pekko Streams</a></li>
-</ul>
-<!-- - [Using Jelly gRPC protocol servers and clients](user/grpc.md) -->
-<ul>
+<li><a href="../user/grpc/">Using Jelly gRPC protocol servers and clients</a></li>
 <li><a href="../user/utilities/">Other useful utilities in Jelly-JVM</a></li>
 <li><a href="../user/low-level/">Low-level usage of Jelly-JVM</a></li>
 </ul>
@@ -1273,7 +1284,7 @@ Jelly is a bit more than just a serialization format – it also defines a [gRPC
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">June 8, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">June 15, 2025</span>
   </span>
 
     
