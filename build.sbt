@@ -44,6 +44,9 @@ lazy val commonSettings = Seq(
     "-Werror",
     // TODO: enable more warnings
   ),
+  // Explicitly specify the options for javadoc, otherwise sbt will pass all javacOptions to it
+  // which will cause an error.
+  Compile / doc / javacOptions := Seq("-source", "17"),
   assemblyJarName := s"${name.value}.jar",
   assemblyMergeStrategy := {
     case x if x.endsWith("module-info.class") => MergeStrategy.concat
