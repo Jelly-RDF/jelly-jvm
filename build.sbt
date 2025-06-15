@@ -502,7 +502,7 @@ lazy val jmh = (project in file("jmh"))
   .dependsOn(core, jena)
 
 
-lazy val grpc = (project in file("grpc"))
+lazy val grpc = (project in file("pekko-grpc"))
   .settings(
     name := "jelly-pekko-grpc",
     description := "Implementation of a gRPC client and server for the Jelly gRPC streaming protocol.",
