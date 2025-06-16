@@ -3,8 +3,27 @@
 import os
 import subprocess
 
-# !!! Change this if you want to add or update convert modules
-JELLY_CONVERT_MODULES = ['jena', 'rdf4j', 'titanium']
+JELLY_PACKAGE_BASE = 'eu.neverblink.jelly'
+
+# !!! Change this if you want to add or update modules package bases
+JELLY_MODULE_TO_PACKAGE_BASE = {
+    'jena': 'convert.jena',
+    'rdf4j': 'convert.rdf4j',
+    'titanium-rdf-api': 'convert.titanium',
+    'pekko-stream': 'pekko.stream',
+    'pekko-grpc': 'pekko.grpc',
+}
+
+
+def get_package_base_by_module(module: str) -> str:
+    if module in JELLY_MODULE_TO_PACKAGE_BASE:
+        return f'{JELLY_PACKAGE_BASE}.{JELLY_MODULE_TO_PACKAGE_BASE[module]}'
+    else:
+        return f'{JELLY_PACKAGE_BASE}.{module}'
+
+
+def get_package_path_by_module(module: str) -> str:
+    return get_package_base_by_module(module).replace('.', '/')
 
 
 def define_env(env):
@@ -156,10 +175,7 @@ def define_env(env):
 
     def _javadoc_link(module: str, clazz: str, is_scala: bool = False):
         version = jvm_package_version()
-        if module in JELLY_CONVERT_MODULES:
-            clazz = f'eu/neverblink/jelly/convert/{module}/{clazz}'
-        else:
-            clazz = f'eu/neverblink/jelly/{module}/{clazz}'
+        clazz = f'{get_package_base_by_module(module)}/{clazz}'
         clazz = clazz.replace('.', '/')
         if version == 'dev':
             version = 'latest'
@@ -170,6 +186,19 @@ def define_env(env):
 
         return f'https://javadoc.io/static/eu.neverblink.jelly/jelly-{module}{scala_suffix}/{version}/{clazz}.html'
 
+    def _javadoc_link_package(module: str, package_name: str, is_scala: bool = False):
+        version = jvm_package_version()
+        package_name = f'{get_package_base_by_module(module)}/{package_name}'
+        package_name = package_name.replace('.', '/')
+        if version == 'dev':
+            version = 'latest'
+
+        scala_suffix = ''
+        if is_scala:
+            scala_suffix = '_3'
+
+        return f'https://javadoc.io/static/eu.neverblink.jelly/jelly-{module}{scala_suffix}/{version}/{package_name}/package-summary.html'
+
     @env.macro
     def javadoc_link(module: str, clazz: str):
         return _javadoc_link(module, clazz, is_scala=False)
@@ -179,24 +208,36 @@ def define_env(env):
         return _javadoc_link(module, clazz, is_scala=True)
 
     @env.macro
+    def javadoc_package_link(module: str, package_name: str):
+        return _javadoc_link_package(module, package_name, is_scala=False)
+
+    @env.macro
+    def scaladoc_package_link(module: str, package_name: str):
+        return _javadoc_link_package(module, package_name, is_scala=True)
+
+    @env.macro
     def javadoc_link_pretty(module: str, clazz: str, fun: str = ''):
-        if module in JELLY_CONVERT_MODULES:
-            name = f'eu.neverblink.jelly.convert.{module}.{clazz}'
-        else:
-            name = f'eu.neverblink.jelly.{module}.{clazz}'
+        name = f'{get_package_base_by_module(module)}.{clazz}'
         if fun:
             name += f'.{fun}'
         return f"[`{name.replace('$', '')}` :material-api:]({_javadoc_link(module, clazz, is_scala=False)})"
 
     @env.macro
     def scaladoc_link_pretty(module: str, clazz: str, fun: str = ''):
-        if module in JELLY_CONVERT_MODULES:
-            name = f'eu.neverblink.jelly.convert.{module}.{clazz}'
-        else:
-            name = f'eu.neverblink.jelly.{module}.{clazz}'
+        name = f'{get_package_base_by_module(module)}.{clazz}'
         if fun:
             name += f'.{fun}'
         return f"[`{name.replace('$', '')}` :material-api:]({_javadoc_link(module, clazz, is_scala=True)})"
+
+    @env.macro
+    def javadoc_package_link_pretty(module: str, package_name: str):
+        name = f'{get_package_base_by_module(module)}.{package_name}'
+        return f"[`{name}` :material-api:]({_javadoc_link_package(module, package_name)})"
+
+    @env.macro
+    def scaladoc_package_link_pretty(module: str, package_name: str):
+        name = f'{get_package_base_by_module(module)}.{package_name}'
+        return f"[`{name}` :material-api:]({_javadoc_link_package(module, package_name, is_scala=True)})"
 
     env.conf['nav'] = [
         transform_nav_item(item)
