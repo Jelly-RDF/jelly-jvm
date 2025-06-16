@@ -38,7 +38,7 @@ The implementation is split into a few modules that can be used separately:
     - {{ scala_module_badges('pekko-stream') }}
 
 - `jelly-pekko-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}). **[:octicons-arrow-right-24: Learn more](user/grpc.md)**
-    - {{ scala_module_badges('grpc') }}
+    - {{ scala_module_badges('pekko-grpc') }}
 
 ## Plugin JARs
 
