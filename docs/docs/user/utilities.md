@@ -227,7 +227,7 @@ Finally, there are also stream type checking and manipulation utilities:
 
 The [`jelly-pekko-stream` module](reactive.md) also implements a utility for configuring Jelly serialization options using the [Typesafe config library](https://github.com/lightbend/config), which is commonly used in [Apache Pekko](https://pekko.apache.org/) applications.
 
-The utility is provided by the {{ scaladoc_link_pretty('stream', 'JellyOptionsFromTypesafe$') }} object. For example:
+The utility is provided by the {{ scaladoc_link_pretty('pekko-stream', 'JellyOptionsFromTypesafe$') }} object. For example:
 
 ```scala title="Scala example"
 import com.typesafe.config.ConfigFactory

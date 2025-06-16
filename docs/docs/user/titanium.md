@@ -32,7 +32,7 @@ If you are already using Jena or RDF4J, you should use the [`jelly-jena`](jena.m
 
 ## Basic I/O operations
 
-The module implements a simple Jelly file reader and writer for Titanium. See the classes {{ javadoc_link_pretty('titanium', 'JellyTitaniumReader') }} and {{ javadoc_link_pretty('titanium', 'JellyTitaniumWriter') }}. You should simply instantiate them using the `.factory` static method and then either push quads into the writer, or instruct the reader to push quads into another quad consumer.
+The module implements a simple Jelly file reader and writer for Titanium. See the classes {{ javadoc_link_pretty('titanium-rdf-api', 'TitaniumJellyReader') }} and {{ javadoc_link_pretty('titanium-rdf-api', 'TitaniumJellyWriter') }}. You should simply instantiate them using the `.factory` static method and then either push quads into the writer, or instruct the reader to push quads into another quad consumer.
 
 Full example of integration with the [`titanium-rdf-n-quads`](https://github.com/filip26/titanium-rdf-n-quads) library:
 
@@ -44,7 +44,7 @@ Titanium RDF API does not implement types for RDF primitives, so the Jelly integ
 
 But, you can still access a part of the low-level API directly. This would be useful if you wanted to integrate Titanium with Kafka or some other custom serialization pipeline.
 
-To do this, use the {{ javadoc_link_pretty('titanium', 'JellyTitaniumDecoder') }} and {{ javadoc_link_pretty('titanium', 'JellyTitaniumEncoder') }} classes directly.
+To do this, use the {{ javadoc_link_pretty('titanium-rdf-api', 'TitaniumJellyDecoder') }} and {{ javadoc_link_pretty('titanium-rdf-api', 'TitaniumJellyEncoder') }} classes directly.
 
 ## Integrations
 
