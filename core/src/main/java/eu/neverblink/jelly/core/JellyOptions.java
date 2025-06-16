@@ -127,7 +127,7 @@ public class JellyOptions {
      *   This MUST be called before any data (besides the stream options) is ingested. Otherwise, the options may
      *   request something dangerous, like allocating a very large lookup table, which could be used to perform a
      *   denial-of-service attack.
-     * - By implementations the gRPC streaming service from the jelly-grpc module to check if the client is
+     * - By implementations the gRPC streaming service from the jelly-pekko-grpc module to check if the client is
      *   requesting stream options that the server can support.
      * <p>
      * We check:
