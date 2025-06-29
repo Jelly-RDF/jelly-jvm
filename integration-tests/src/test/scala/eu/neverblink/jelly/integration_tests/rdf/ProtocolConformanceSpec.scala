@@ -24,15 +24,13 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
   runRdfToJellyTests(Rdf4jSerDes)
   runRdfToJellyTests(Rdf4jReactiveSerDes())
   runRdfToJellyTests(JenaReactiveSerDes())
-  // TODO: Reenable Titanium
-  // runRdfToJellyTests(TitaniumSerDes)
+  runRdfToJellyTests(TitaniumSerDes)
 
   runRdfFromJellyTests(JenaStreamSerDes)
   runRdfFromJellyTests(Rdf4jSerDes)
   runRdfFromJellyTests(Rdf4jReactiveSerDes())
   runRdfFromJellyTests(JenaReactiveSerDes())
-  // TODO: Reenable Titanium
-  // runRdfFromJellyTests(TitaniumSerDes)
+  runRdfFromJellyTests(TitaniumSerDes)
 
   private def runRdfToJellyTests[TNSer, TTSer, TQSer](ser: ProtocolSerDes[TNSer, TTSer, TQSer]): Unit =
     s"Serializer ${ser.name}" when {
@@ -180,6 +178,9 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
             || entry.hasRdfStarRequirement && entry.hasPhysicalTypeGraphsRequirement && serDes.supportsRdfStar(PhysicalStreamType.GRAPHS)
         )
         .filter(entry => !entry.hasGeneralizedStatementsRequirement || entry.hasGeneralizedStatementsRequirement && serDes.supportsGeneralizedStatements)
+        .filter(entry => !entry.hasPhysicalTypeTriplesRequirement || entry.hasPhysicalTypeTriplesRequirement && serDes.supportsTriples)
+        .filter(entry => !entry.hasPhysicalTypeQuadsRequirement || entry.hasPhysicalTypeQuadsRequirement && serDes.supportsQuads)
+        .filter(entry => !entry.hasPhysicalTypeGraphsRequirement || entry.hasPhysicalTypeGraphsRequirement && serDes.supportsGraphs)
         .filterNot(_.isTestRejected)
         .filterNot(isTestEntryBlocked)
 
@@ -201,4 +202,8 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     // Protocol message tag had invalid wire type.
     // com.google.protobuf.InvalidProtocolBufferException$InvalidWireTypeException: Protocol message tag had invalid wire type.
     || testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_003")
-    
+    // Titanium parser: Unexpected end of input, expected [].
+    // com.apicatalog.rdf.nquads.NQuadsReaderException: Unexpected end of input, expected [].
+    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_001")
+    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_003")
+    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_004")
