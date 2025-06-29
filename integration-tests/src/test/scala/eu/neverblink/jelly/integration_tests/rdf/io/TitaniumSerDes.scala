@@ -17,6 +17,8 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
 
   override def name: String = "Titanium"
 
+  override def supportsTriples: Boolean = false
+
   override def supportsRdfStar: Boolean = false
 
   override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
