@@ -37,7 +37,7 @@ But, this library also gives you the full stack of utilities for scalable RDF st
   - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-pekko-stream_3)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-pekko-stream_3) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-pekko-stream_3/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-pekko-stream_3)
 
 - [`jelly-pekko-grpc`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/pekko-grpc/src) – implementation of a gRPC client and server for the full Jelly protocol, based on Pekko Streams.
-  - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-pekko-grpc)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-pekko-grpc) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-pekko-grpc/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-pekko-grpc)
+  - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-pekko-grpc_3)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-pekko-grpc_3) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-pekko-grpc_3/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-pekko-grpc_3)
 
 ### Other – not published to Maven
 
