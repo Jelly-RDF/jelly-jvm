@@ -198,9 +198,3 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     // Protocol message tag had invalid wire type.
     // com.google.protobuf.InvalidProtocolBufferException$InvalidWireTypeException: Protocol message tag had invalid wire type.
     || testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_003")
-    // Titanium parser: Unexpected end of input, expected [].
-    // com.apicatalog.rdf.nquads.NQuadsReaderException: Unexpected end of input, expected [].
-//    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_001")
-//    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_003")
-//    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_004")
-//    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_005")
