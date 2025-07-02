@@ -129,7 +129,7 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
     override def getGraphNames: util.Set[RdfResource] =
       throw new UnsupportedOperationException("Graph names are not supported in this dataset")
 
-    override def getGraph(graphName: RdfResource): Optional[RdfGraph] =
+    override def getGraph(graphName: RdfResource): util.Optional[RdfGraph] =
       throw new UnsupportedOperationException("Graph retrieval is not supported in this dataset")
 
     override def size(): Int =
