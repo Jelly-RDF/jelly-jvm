@@ -191,19 +191,16 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     || isTestEntryBlockedById(testEntry) // Blocked by reason of test failing in specific instances
 
   private def isTestEntryBlockedById(testEntry: Resource): Boolean =
-    // Unknown error
-    // eu.neverblink.jelly.core.RdfProtoDeserializationError: Prefix entry with ID 0 is out of bounds of the prefix lookup table.
-    // This is caused by an invalid test case: https://github.com/Jelly-RDF/jelly-protobuf/issues/82
-    testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_005")
     // java.lang.IllegalStateException: Expected 6 RDF elements, but got 0 elements.
     //    at eu.neverblink.jelly.integration_tests.util.OrderedRdfCompare$.compare(OrderedRdfCompare.scala:23)
     //    at eu.neverblink.jelly.integration_tests.rdf.ProtocolSpec.f$proxy2$1(ProtocolSpec.scala:125)
-    || testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_017")
+    testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_017")
     // Protocol message tag had invalid wire type.
     // com.google.protobuf.InvalidProtocolBufferException$InvalidWireTypeException: Protocol message tag had invalid wire type.
     || testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_003")
     // Titanium parser: Unexpected end of input, expected [].
     // com.apicatalog.rdf.nquads.NQuadsReaderException: Unexpected end of input, expected [].
-    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_001")
-    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_003")
-    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_004")
+//    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_001")
+//    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_003")
+//    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_004")
+//    || testEntry.extractTestUri.contains("to_jelly/quads_rdf_1_1/pos_005")

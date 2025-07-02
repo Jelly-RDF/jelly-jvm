@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
 import com.apicatalog.rdf.nquads.NQuadsReader
-import com.apicatalog.rdf.{RdfDataset, RdfDatasetSupplier, RdfNQuad, RdfValue}
+import com.apicatalog.rdf.{RdfDataset, RdfDatasetSupplier, RdfGraph, RdfNQuad, RdfResource, RdfTriple, RdfValue}
 import eu.neverblink.jelly.convert.titanium.{TitaniumJellyReader, TitaniumJellyWriter}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
@@ -9,6 +9,8 @@ import eu.neverblink.jelly.integration_tests.rdf.helpers.TitaniumDatasetEmitter
 import eu.neverblink.jelly.integration_tests.util.Measure
 
 import java.io.*
+import java.util
+import java.util.Optional
 import scala.jdk.CollectionConverters.*
 
 given mTitaniumDataset: Measure[RdfDataset] = (ds: RdfDataset) => ds.size
@@ -27,15 +29,18 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
 
   override def readTriplesW3C(is: InputStream): RdfDataset =
     val reader = NQuadsReader(InputStreamReader(is))
-    val ds = RdfDatasetSupplier()
+    val ds = RdfDatasetSupplier(SinkRdfDataset())
     reader.provide(ds)
     ds.get()
 
   override def readTriplesW3C(streams: Seq[File]): Seq[RdfNQuad] =
-    val ds = RdfDatasetSupplier()
+    val ds = RdfDatasetSupplier(SinkRdfDataset())
     for stream <- streams do
-      val reader = NQuadsReader(InputStreamReader(FileInputStream(stream)))
+      val is = FileInputStream(stream)
+      val reader = NQuadsReader(InputStreamReader(is))
       reader.provide(ds)
+      is.close()
+
     ds.get().toList.asScala.toSeq
 
   override def readQuadsW3C(is: InputStream): RdfDataset = readTriplesW3C(is)
@@ -46,7 +51,7 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
     val reader = TitaniumJellyReader.factory(
       supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
     )
-    val ds = RdfDatasetSupplier()
+    val ds = RdfDatasetSupplier(SinkRdfDataset())
     reader.parseAll(ds, is)
     ds.get()
 
@@ -69,7 +74,7 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
     val reader = TitaniumJellyReader.factory(
       supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
     )
-    val ds = RdfDatasetSupplier()
+    val ds = RdfDatasetSupplier(SinkRdfDataset())
     reader.parseAll(ds, FileInputStream(file))
     ds.get().toList.asScala.toSeq
 
@@ -103,3 +108,29 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
       Seq(statement.getSubject, statement.getPredicate, statement.getObject, statement.getGraphName.get)
     else
       Seq(statement.getSubject, statement.getPredicate, statement.getObject)
+
+  // Utility rdf dataset collector that does not discard duplicates
+  class SinkRdfDataset extends RdfDataset:
+    private val nquads = new util.ArrayList[RdfNQuad]()
+
+    override def getDefaultGraph: RdfGraph =
+      throw new UnsupportedOperationException("Default graph is not supported in this dataset")
+
+    override def add(nquad: RdfNQuad): RdfDataset =
+      nquads.add(nquad)
+      this
+
+    override def add(triple: RdfTriple): RdfDataset =
+      throw new UnsupportedOperationException("Triples are not supported in this dataset")
+
+    override def toList: util.List[RdfNQuad] =
+      nquads
+
+    override def getGraphNames: util.Set[RdfResource] =
+      throw new UnsupportedOperationException("Graph names are not supported in this dataset")
+
+    override def getGraph(graphName: RdfResource): Optional[RdfGraph] =
+      throw new UnsupportedOperationException("Graph retrieval is not supported in this dataset")
+
+    override def size(): Int =
+      nquads.size()
