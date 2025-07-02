@@ -198,3 +198,4 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     // Protocol message tag had invalid wire type.
     // com.google.protobuf.InvalidProtocolBufferException$InvalidWireTypeException: Protocol message tag had invalid wire type.
     || testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_003")
+    
