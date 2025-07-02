@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
 import com.apicatalog.rdf.nquads.NQuadsReader
-import com.apicatalog.rdf.{RdfDataset, RdfDatasetSupplier, RdfGraph, RdfNQuad, RdfResource, RdfTriple, RdfValue}
+import com.apicatalog.rdf.*
 import eu.neverblink.jelly.convert.titanium.{TitaniumJellyReader, TitaniumJellyWriter}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
