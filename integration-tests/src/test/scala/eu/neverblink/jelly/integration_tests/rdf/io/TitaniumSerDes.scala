@@ -10,7 +10,6 @@ import eu.neverblink.jelly.integration_tests.util.Measure
 
 import java.io.*
 import java.util
-import java.util.Optional
 import scala.jdk.CollectionConverters.*
 
 given mTitaniumDataset: Measure[RdfDataset] = (ds: RdfDataset) => ds.size
