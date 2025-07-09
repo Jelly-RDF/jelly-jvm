@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../assets/jelly_color.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -877,7 +877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="https://w3id.org/jelly/1.1.2/" class="md-nav__link">
+      <a href="https://w3id.org/jelly/dev/" class="md-nav__link">
         
   
   
@@ -997,7 +997,7 @@
 
 
   
-    <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/docs/getting-started-devs.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/docs/getting-started-devs.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1016,7 +1016,7 @@
 <div class="language-xml highlight"><span class="filename">pom.xml</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">&lt;dependency&gt;</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>eu.neverblink.jelly<span class="nt">&lt;/groupId&gt;</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jelly-jena<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.2.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.2.1<span class="nt">&lt;/version&gt;</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
 </div>
@@ -1027,7 +1027,7 @@
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;3.2.0&quot;</span>
+<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;3.2.1&quot;</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">libraryDependencies</span><span class="w"> </span><span class="o">++=</span><span class="w"> </span><span class="nc">Seq</span><span class="p">(</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="s">&quot;eu.neverblink.jelly&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="s">&quot;jelly-jena&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span>
@@ -1118,7 +1118,7 @@
 <div class="language-xml highlight"><span class="filename">pom.xml</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">&lt;dependency&gt;</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>eu.neverblink.jelly<span class="nt">&lt;/groupId&gt;</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jelly-titanium-rdf-api<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.2.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.2.1<span class="nt">&lt;/version&gt;</span>
 </span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
 </div>
@@ -1129,7 +1129,7 @@
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;3.2.0&quot;</span>
+<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;3.2.1&quot;</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">libraryDependencies</span><span class="w"> </span><span class="o">++=</span><span class="w"> </span><span class="nc">Seq</span><span class="p">(</span>
 </span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="s">&quot;eu.neverblink.jelly&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="s">&quot;jelly-titanium-rdf-api&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
 </span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="p">)</span>
@@ -1156,7 +1156,7 @@
 <div class="language-xml highlight"><span class="filename">pom.xml</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">&lt;dependency&gt;</span>
 </span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>eu.neverblink.jelly<span class="nt">&lt;/groupId&gt;</span>
 </span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jelly-pekko-stream_3<span class="nt">&lt;/artifactId&gt;</span>
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.2.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.2.1<span class="nt">&lt;/version&gt;</span>
 </span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="nt">&lt;/dependency&gt;</span>
 </span></code></pre></div>
 </div>
@@ -1167,7 +1167,7 @@
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;3.2.0&quot;</span>
+<div class="language-scala highlight"><span class="filename">build.sbt</span><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">jellyVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;3.2.1&quot;</span>
 </span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
 </span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">libraryDependencies</span><span class="w"> </span><span class="o">++=</span><span class="w"> </span><span class="nc">Seq</span><span class="p">(</span>
 </span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="s">&quot;eu.neverblink.jelly&quot;</span><span class="w"> </span><span class="o">%%</span><span class="w"> </span><span class="s">&quot;jelly-jena&quot;</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">jellyVersion</span><span class="p">,</span>
@@ -1228,9 +1228,9 @@
 </span></code></pre></div>
 <p>Jelly will compress this stream on-the-fly, so if the data is repetitive, it will be very efficient. If you run this code, you will notice that the byte sizes for the later graphs are smaller, even though we are sending the same graph over and over again. But, even if each graph is completely different, Jelly still should be much faster than other serialization formats.</p>
 <p>These <em>streams</em> are very powerful, because they are reactive and asynchronous – in short, this means you can hook this up to any data source and any data sink – and you can scale it up as much as you want. If you are unfamiliar with the concept of reactive streams, we recommend you start with <a href="https://pekko.apache.org/docs/pekko/current/stream/stream-flows-and-basics.html">this Apache Pekko Streams guide</a>.</p>
-<p>Jelly-JVM supports streaming serialization and deserialization of all types of streams in the <a href="https://w3id.org/stax/dev/taxonomy/">RDF Stream Taxonomy</a>. You can read more about the theory of this and all available stream types in the <a href="https://w3id.org/jelly/1.1.2/user-guide">Jelly protocol documentation</a>.</p>
+<p>Jelly-JVM supports streaming serialization and deserialization of all types of streams in the <a href="https://w3id.org/stax/dev/taxonomy/">RDF Stream Taxonomy</a>. You can read more about the theory of this and all available stream types in the <a href="https://w3id.org/jelly/dev/user-guide">Jelly protocol documentation</a>.</p>
 <p><a href="../user/reactive/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about reactive streaming with Jelly-JVM</a></p>
-<p><a href="https://w3id.org/jelly/1.1.2/user-guide"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about the types of streams in Jelly</a></p>
+<p><a href="https://w3id.org/jelly/dev/user-guide"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about the types of streams in Jelly</a></p>
 <h2 id="grpc-streaming">gRPC streaming</h2>
 <p>Jelly is a bit more than just a serialization format – it also defines a <a href="https://grpc.io/">gRPC</a>-based straming protocol. You can use it for streaming RDF data between microservices, to build a pub/sub system, or to publish RDF data to the web.</p>
 <p><a href="../user/grpc/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Learn more about using Jelly gRPC protocol servers and clients</a></p>
@@ -1246,7 +1246,7 @@
 </ul>
 <h2 id="example-applications-using-jelly-jvm">Example applications using Jelly-JVM</h2>
 <ul>
-<li><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v3.2.0/examples/src">The <code>examples</code> directory in the Jelly-JVM repo</a> contains code snippets that demonstrate how to use the library in various scenarios.</li>
+<li><a href="https://github.com/Jelly-RDF/jelly-jvm/blob/v3.2.1/examples/src">The <code>examples</code> directory in the Jelly-JVM repo</a> contains code snippets that demonstrate how to use the library in various scenarios.</li>
 <li><a href="https://github.com/Jelly-RDF/cli"><code>jelly-cli</code> command-line utility</a> can help you convert to/from Jelly, as well as validate and debug Jelly files.</li>
 <li>Nanopub <a href="https://github.com/knowledgepixels/nanopub-registry">Registry</a> and <a href="https://github.com/knowledgepixels/nanopub-query">Query</a> are production applications of Jelly. They use Jelly-JVM for inter-service communication, using the RDF4J integration.</li>
 <li><a href="https://github.com/RiverBench/ci-worker">RiverBench ci-worker</a> – a real-world application that is used for processing large RDF datasets in a CI/CD pipeline. It uses Jelly-JVM for serialization and deserialization with Apache Jena. It also uses extensively Apache Pekko Streams.</li>
@@ -1372,7 +1372,7 @@
       <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.tabs.link"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>
