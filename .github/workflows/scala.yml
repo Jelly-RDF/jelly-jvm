@@ -60,14 +60,6 @@ jobs:
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
 
-    - name: Archive code coverage results
-      uses: actions/upload-artifact@v4
-      if: ${{ matrix.java == vars.java_latest }}
-      with:
-        name: coverage-report
-        path: target/scala-*/scoverage-report/
-        retention-days: 14
-
   # Test publishing to a local repository
   test-publish:
     runs-on: ubuntu-latest
