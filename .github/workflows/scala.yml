@@ -25,7 +25,7 @@ jobs:
           - os: ubuntu-latest
             java: 21
           - os: ubuntu-latest
-            java: ${{ vars.java_latest }}
+            java: ${{ env.java_latest }}
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -46,16 +46,16 @@ jobs:
     - name: Build and test
       shell: bash
       run: sbt -v +test
-      if: ${{ matrix.java != vars.java_latest }}
+      if: ${{ matrix.java != env.java_latest }}
 
     - name: Build and test (with coverage)
       shell: bash
       run: sbt -v clean coverage +test coverageReport coverageAggregate
-      if: ${{ matrix.java == vars.java_latest }}
+      if: ${{ matrix.java == env.java_latest }}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
-      if: ${{ matrix.java == vars.java_latest }}
+      if: ${{ matrix.java == env.java_latest }}
       with:
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -74,7 +74,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: temurin
-        java-version: ${{ vars.java_publish }}
+        java-version: ${{ env.java_publish }}
 
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
@@ -96,7 +96,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: temurin
-        java-version: ${{ vars.java_publish }}
+        java-version: ${{ env.java_publish }}
 
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
