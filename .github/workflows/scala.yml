@@ -50,7 +50,7 @@ jobs:
 
     - name: Build and test (with coverage)
       shell: bash
-      run: sbt -v +test coverageReport coverageAggregate
+      run: sbt -v coverage +test coverageReport coverageAggregate
       if: ${{ matrix.java == env.java_latest }}
 
     - name: Upload coverage to Codecov
