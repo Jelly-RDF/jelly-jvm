@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  java_latest: 24
+  java_publish: 17
+
 jobs:
   # Run scalatest
   test:
@@ -42,6 +46,19 @@ jobs:
     - name: Build and test
       shell: bash
       run: sbt -v +test
+      if: ${{ matrix.java != env.java_latest }}
+
+    - name: Build and test (with coverage)
+      shell: bash
+      run: sbt -v coverage +test coverageReport coverageAggregate
+      if: ${{ matrix.java == env.java_latest }}
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      if: ${{ matrix.java == env.java_latest }}
+      with:
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   # Test publishing to a local repository
   test-publish:
@@ -57,7 +74,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: temurin
-        java-version: 17
+        java-version: ${{ env.java_publish }}
 
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
@@ -79,7 +96,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: temurin
-        java-version: 17
+        java-version: ${{ env.java_publish }}
 
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
