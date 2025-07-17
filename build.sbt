@@ -16,7 +16,7 @@ ThisBuild / developers := List(
   ),
 )
 
-lazy val pekkoV = "1.1.4"
+lazy val pekkoV = "1.1.5"
 lazy val pekkoGrpcV = "1.1.1"
 lazy val jenaV = "5.3.0"
 lazy val rdf4jV = "5.1.3"
