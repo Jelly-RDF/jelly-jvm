@@ -1,10 +1,14 @@
 package eu.neverblink.jelly.pekko.stream.impl
 
+import com.google.protobuf.CodedInputStream
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
+import eu.neverblink.protoc.java.runtime.ProtoMessage
 import org.apache.pekko.stream.scaladsl.*
+import org.apache.pekko.util.ByteString
 import org.apache.pekko.{Done, NotUsed}
 
 import java.io.{ByteArrayOutputStream, OutputStream}
+import scala.jdk.CollectionConverters.*
 import scala.concurrent.Future
 
 /**
@@ -47,6 +51,24 @@ object JellyIoOps:
      */
     final def fromBytes: Flow[Array[Byte], RdfStreamFrame, NotUsed] =
       Flow[Array[Byte]].map(RdfStreamFrame.parseFrom)
+
+    final def delimitedFromStream: Flow[ByteString, RdfStreamFrame, NotUsed] =
+      Flow[ByteString]
+        .via(protobufFraming(Int.MaxValue))
+        .map(byteString => {
+          val byteStrings = byteString.asByteBuffers
+          val codedInputStream = if byteStrings.size > 1 then
+            CodedInputStream.newInstance(byteStrings.map(_.asReadOnlyBuffer()).asJava)
+          else
+            CodedInputStream.newInstance(byteStrings.head.asReadOnlyBuffer())
+          val frame = RdfStreamFrame.newInstance()
+          ProtoMessage.mergeFrom(frame, codedInputStream, ProtoMessage.DEFAULT_MAX_RECURSION_DEPTH)
+        })
+
+    private[stream] final def protobufFraming(maxMessageSize: Int): Flow[ByteString, ByteString, NotUsed] =
+      Flow[ByteString]
+        .via(ProtobufMessageFramingStage(maxMessageSize))
+        .named("protobufFraming")
 
   trait FrameSource:
     /**
