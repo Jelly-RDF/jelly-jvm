@@ -2,7 +2,7 @@ package eu.neverblink.jelly.pekko.stream
 
 import com.google.protobuf.CodedOutputStream
 import eu.neverblink.jelly.core.ProtoTestCases.*
-import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamFrame}
+import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfNameEntry, RdfStreamFrame, RdfStreamRow}
 import eu.neverblink.jelly.core.{JellyOptions, ProtoTestCases}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
@@ -217,4 +217,45 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
       ex shouldBe a[FramingException]
       ex.getMessage should include ("Delimiting varint too long (over 5 bytes)")
     }
+  }
+
+  "delimitedFromStream" should {
+    for (name, numFrames, frameSize, inputChunkSize) <- framingTestCases do
+      s"work for $name" in {
+        val dataSizes = collection.mutable.ListBuffer[Int]()
+        val byteStrings = Iterator
+          .continually(r.nextInt(frameSize + 2) + frameSize - (frameSize / 2))
+          .take(numFrames)
+          .map(size => {
+            val dataSize = Math.max(size - 6, 1)
+            dataSizes += dataSize
+            val nameEntry = RdfNameEntry.newInstance()
+              .setValue("a".repeat(dataSize))
+            val row = RdfStreamRow.newInstance().setName(nameEntry)
+            val frame = RdfStreamFrame.newInstance().addRows(row)
+            val frameSize = frame.getSerializedSize
+            val prefixLen = CodedOutputStream.computeInt32SizeNoTag(frameSize)
+            val data = new Array[Byte](frameSize + prefixLen)
+            val output = CodedOutputStream.newInstance(data)
+            output.writeInt32NoTag(frameSize)
+            frame.writeTo(output)
+            output.flush()
+            ByteString(data)
+          })
+          .reduce((a, b) => a ++ b)
+          .grouped(inputChunkSize)
+          .toSeq
+
+        val result = Source(byteStrings)
+          .via(JellyIo.fromByteStreamDelimited)
+          .runWith(Sink.seq)
+          .futureValue
+
+        result.size shouldEqual numFrames
+        for (frame, expectedSize) <- result.zip(dataSizes) do {
+          frame.getRows.size() shouldEqual 1
+          val name = frame.getRows.iterator().next().getName
+          name.getValue.length shouldEqual expectedSize
+        }
+      }
   }

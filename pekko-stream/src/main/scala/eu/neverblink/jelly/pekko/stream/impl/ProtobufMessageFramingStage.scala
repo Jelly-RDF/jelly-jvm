@@ -5,6 +5,27 @@ import org.apache.pekko.stream.scaladsl.Framing.FramingException
 import org.apache.pekko.stream.stage.*
 import org.apache.pekko.util.ByteString
 
+/**
+ * A GraphStage that frames Protobuf messages based on their varint-encoded length prefix.
+ *
+ * This stage reads a stream of ByteStrings and emits complete (non-delimited) Protobuf messages as ByteStrings.
+ * It expects the Protobuf messages to be prefixed with a varint that indicates the length of the message.
+ * 
+ * This is largely based on `DelimiterFramingStage` from Apache Pekko.
+ * Original source:
+ * https://github.com/apache/pekko/blob/947ee49293dd57cb488259efac356accfb5c18d3/stream/src/main/scala/org/apache/pekko/stream/scaladsl/Framing.scala#L209
+ * 
+ * Original license notice:
+ * 
+ * Licensed to the Apache Software Foundation (ASF) under one or more * license agreements; and
+ * to You under the Apache License, version 2.0: https://www.apache.org/licenses/LICENSE-2.0 This
+ * file is part of the Apache Pekko project, which was derived from Akka.
+ *
+ * Copyright (C) 2015-2022 Lightbend Inc. <https://www.lightbend.com>
+ *
+ * @param maxMessageSize
+ *   The maximum allowed size for a Protobuf message. If a message exceeds this size, the stage will fail.
+ */
 class ProtobufMessageFramingStage(val maxMessageSize: Int)
     extends GraphStage[FlowShape[ByteString, ByteString]]:
 
