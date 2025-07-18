@@ -55,12 +55,12 @@ object JellyIoOps:
     /**
      * Convert a stream of NON-DELIMITED bytes into a stream of Jelly frames. Each ByteString in the stream
      * MUST correspond to exactly one Jelly frame and contain no additional data (e.g., no length prefix).
-     * 
+     *
      * If you are reading from a file or socket, you should use the `fromByteStringsDelimited` method instead.
-     * 
+     *
      * This method is useful when you have a stream of Jelly frames that are already delimited, such as when
      * reading from Kafka or gRPC.
-     * 
+     *
      * @return Pekko Flow
      */
     final def fromByteStrings: Flow[ByteString, RdfStreamFrame, NotUsed] =
@@ -84,7 +84,7 @@ object JellyIoOps:
      *
      * Using this method you can read Jelly files from a file or socket in a fully reactive manner,
      * without any blocking operations. It's useful when combined with Pekko's `FileIO` API.
-     * 
+     *
      * @param maxMessageSize Maximum allowed size for a Protobuf message, in bytes.
      *                       If a message exceeds this size, the stage will fail.
      *                       It is highly recommended to set this to a reasonable value, like 4MB (the default).
