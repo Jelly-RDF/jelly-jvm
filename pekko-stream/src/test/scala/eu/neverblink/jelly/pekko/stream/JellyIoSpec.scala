@@ -2,7 +2,7 @@ package eu.neverblink.jelly.pekko.stream
 
 import com.google.protobuf.CodedOutputStream
 import eu.neverblink.jelly.core.ProtoTestCases.*
-import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfNameEntry, RdfStreamFrame, RdfStreamRow}
+import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.{JellyOptions, ProtoTestCases}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
