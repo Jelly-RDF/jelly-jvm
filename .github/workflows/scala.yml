@@ -58,6 +58,7 @@ jobs:
       if: ${{ matrix.java == env.java_latest }}
       with:
         fail_ci_if_error: false
+        slug: Jelly-RDF/jelly-jvm
         token: ${{ secrets.CODECOV_TOKEN }}
 
   # Test publishing to a local repository
