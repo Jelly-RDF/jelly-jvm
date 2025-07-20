@@ -1,14 +1,12 @@
 package eu.neverblink.jelly.pekko.stream.impl
 
-import com.google.protobuf.CodedInputStream
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
-import eu.neverblink.protoc.java.runtime.ProtoMessage
+import eu.neverblink.jelly.pekko.stream.PekkoUtil
 import org.apache.pekko.stream.scaladsl.*
 import org.apache.pekko.util.ByteString
 import org.apache.pekko.{Done, NotUsed}
 
 import java.io.{ByteArrayOutputStream, OutputStream}
-import scala.jdk.CollectionConverters.*
 import scala.concurrent.Future
 
 /**
@@ -55,25 +53,18 @@ object JellyIoOps:
     /**
      * Convert a stream of NON-DELIMITED bytes into a stream of Jelly frames. Each ByteString in the stream
      * MUST correspond to exactly one Jelly frame and contain no additional data (e.g., no length prefix).
-     * 
+     *
      * If you are reading from a file or socket, you should use the `fromByteStringsDelimited` method instead.
-     * 
+     *
      * This method is useful when you have a stream of Jelly frames that are already delimited, such as when
      * reading from Kafka or gRPC.
-     * 
+     *
      * @return Pekko Flow
      */
     final def fromByteStrings: Flow[ByteString, RdfStreamFrame, NotUsed] =
-      Flow[ByteString].map(byteString => {
-        val byteBuffers = byteString.asByteBuffers
-        // If the ByteString contains only one ByteBuffer, we pass it directly to CodedInputStream.
-        // CodedInputStream will then apply extra optimizations for faster parsing.
-        val codedInputStream = if byteBuffers.size == 1 then
-          CodedInputStream.newInstance(byteBuffers.head)
-        else CodedInputStream.newInstance(byteBuffers.asJava)
-        val frame = RdfStreamFrame.newInstance()
-        ProtoMessage.mergeFrom(frame, codedInputStream, ProtoMessage.DEFAULT_MAX_RECURSION_DEPTH)
-      })
+      Flow[ByteString].map(byteString =>
+        PekkoUtil.parseFromByteString(byteString, RdfStreamFrame.getFactory)
+      )
 
     /**
      * Convert a stream of DELIMITED bytes into a stream of Jelly frames. The ByteStrings may be chunked
@@ -84,7 +75,7 @@ object JellyIoOps:
      *
      * Using this method you can read Jelly files from a file or socket in a fully reactive manner,
      * without any blocking operations. It's useful when combined with Pekko's `FileIO` API.
-     * 
+     *
      * @param maxMessageSize Maximum allowed size for a Protobuf message, in bytes.
      *                       If a message exceeds this size, the stage will fail.
      *                       It is highly recommended to set this to a reasonable value, like 4MB (the default).

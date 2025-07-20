@@ -34,9 +34,9 @@ object RdfStreamService extends ServiceDescription {
     Grpc.getDescriptor;
 
   object Serializers {
-    val RdfStreamSubscribeSerializer = new CrunchyProtobufSerializer[RdfStreamSubscribe](RdfStreamSubscribe.parseFrom)
-    val RdfStreamFrameSerializer = new CrunchyProtobufSerializer[RdfStreamFrame](RdfStreamFrame.parseFrom)
-    val RdfStreamReceivedSerializer = new CrunchyProtobufSerializer[RdfStreamReceived](RdfStreamReceived.parseFrom)
+    val RdfStreamSubscribeSerializer = new CrunchyProtobufSerializer[RdfStreamSubscribe](RdfStreamSubscribe.getFactory)
+    val RdfStreamFrameSerializer = new CrunchyProtobufSerializer[RdfStreamFrame](RdfStreamFrame.getFactory)
+    val RdfStreamReceivedSerializer = new CrunchyProtobufSerializer[RdfStreamReceived](RdfStreamReceived.getFactory)
   }
 
   object MethodDescriptors {
