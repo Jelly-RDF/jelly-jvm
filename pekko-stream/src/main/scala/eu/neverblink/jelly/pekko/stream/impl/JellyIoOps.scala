@@ -53,29 +53,50 @@ object JellyIoOps:
       Flow[Array[Byte]].map(RdfStreamFrame.parseFrom)
 
     /**
+     * Convert a stream of NON-DELIMITED bytes into a stream of Jelly frames. Each ByteString in the stream
+     * MUST correspond to exactly one Jelly frame and contain no additional data (e.g., no length prefix).
+     * 
+     * If you are reading from a file or socket, you should use the `fromByteStringsDelimited` method instead.
+     * 
+     * This method is useful when you have a stream of Jelly frames that are already delimited, such as when
+     * reading from Kafka or gRPC.
+     * 
+     * @return Pekko Flow
+     */
+    final def fromByteStrings: Flow[ByteString, RdfStreamFrame, NotUsed] =
+      Flow[ByteString].map(byteString => {
+        val byteBuffers = byteString.asByteBuffers
+        // If the ByteString contains only one ByteBuffer, we pass it directly to CodedInputStream.
+        // CodedInputStream will then apply extra optimizations for faster parsing.
+        val codedInputStream = if byteBuffers.size == 1 then
+          CodedInputStream.newInstance(byteBuffers.head)
+        else CodedInputStream.newInstance(byteBuffers.asJava)
+        val frame = RdfStreamFrame.newInstance()
+        ProtoMessage.mergeFrom(frame, codedInputStream, ProtoMessage.DEFAULT_MAX_RECURSION_DEPTH)
+      })
+
+    /**
      * Convert a stream of DELIMITED bytes into a stream of Jelly frames. The ByteStrings may be chunked
      * in an arbitrary way, the stream will be framed based on the Protobuf varint-encoded length prefix.
      *
      * For example, one input ByteString may contain multiple Jelly frames, a part of a Jelly frame, or
      * any combination of these.
      *
-     * Using this method, you can read Jelly files from a file or socket in a fully reactive manner,
-     * without any blocking operations.
+     * Using this method you can read Jelly files from a file or socket in a fully reactive manner,
+     * without any blocking operations. It's useful when combined with Pekko's `FileIO` API.
+     * 
+     * @param maxMessageSize Maximum allowed size for a Protobuf message, in bytes.
+     *                       If a message exceeds this size, the stage will fail.
+     *                       It is highly recommended to set this to a reasonable value, like 4MB (the default).
      *
      * @return Pekko Flow
      */
-    final def fromByteStreamDelimited: Flow[ByteString, RdfStreamFrame, NotUsed] =
+    final def fromByteStringsDelimited(
+      maxMessageSize: Int = 4 * 1024 * 1024
+    ): Flow[ByteString, RdfStreamFrame, NotUsed] =
       Flow[ByteString]
-        .via(protobufFraming(Int.MaxValue))
-        .map(byteString => {
-          val byteStrings = byteString.asByteBuffers
-          val codedInputStream = if byteStrings.size > 1 then
-            CodedInputStream.newInstance(byteStrings.map(_.asReadOnlyBuffer()).asJava)
-          else
-            CodedInputStream.newInstance(byteStrings.head.asReadOnlyBuffer())
-          val frame = RdfStreamFrame.newInstance()
-          ProtoMessage.mergeFrom(frame, codedInputStream, ProtoMessage.DEFAULT_MAX_RECURSION_DEPTH)
-        })
+        .via(protobufFraming(maxMessageSize))
+        .via(fromByteStrings)
 
     /**
      * Frame Protobuf messages based on their varint-encoded length prefix.
@@ -85,13 +106,14 @@ object JellyIoOps:
      *
      * The implementation is non-blocking and fully reactive.
      *
-     * The method is made package-private only for use in tests.
-     *
-     * @param maxMessageSize Maximum allowed size for a Protobuf message.
+     * @param maxMessageSize Maximum allowed size for a Protobuf message, in bytes.
      *                       If a message exceeds this size, the stage will fail.
+     *                       It is highly recommended to set this to a reasonable value, like 4MB (the default).
      * @return
      */
-    private[stream] final def protobufFraming(maxMessageSize: Int): Flow[ByteString, ByteString, NotUsed] =
+    final def protobufFraming(
+      maxMessageSize: Int = 4 * 1024 * 1024
+    ): Flow[ByteString, ByteString, NotUsed] =
       Flow[ByteString]
         .via(ProtobufMessageFramingStage(maxMessageSize))
         .named("protobufFraming")

@@ -26,7 +26,7 @@ import org.apache.pekko.util.ByteString
  * @param maxMessageSize
  *   The maximum allowed size for a Protobuf message. If a message exceeds this size, the stage will fail.
  */
-class ProtobufMessageFramingStage(val maxMessageSize: Int)
+private[stream] final class ProtobufMessageFramingStage(val maxMessageSize: Int)
     extends GraphStage[FlowShape[ByteString, ByteString]]:
 
   val in: Inlet[ByteString] = Inlet[ByteString]("ProtobufMessageFramingStage.in")

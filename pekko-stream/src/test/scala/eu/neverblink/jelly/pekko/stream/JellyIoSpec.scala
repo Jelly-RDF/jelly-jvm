@@ -247,7 +247,7 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .toSeq
 
         val result = Source(byteStrings)
-          .via(JellyIo.fromByteStreamDelimited)
+          .via(JellyIo.fromByteStringsDelimited())
           .runWith(Sink.seq)
           .futureValue
 
@@ -258,4 +258,21 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
           name.getValue.length shouldEqual expectedSize
         }
       }
+
+    "restrict maximum message size" in {
+      val bos = ByteArrayOutputStream()
+      val cos = CodedOutputStream.newInstance(bos)
+      cos.writeInt32NoTag(1000) // size
+      cos.flush()
+      val input = ByteString(bos.toByteArray) ++ ByteString(Array.fill[Byte](1000)(1))
+
+      val resultFail = Source.single(input)
+        .via(JellyIo.fromByteStringsDelimited(999)) // too small
+        .runWith(Sink.seq)
+
+      val ex = resultFail.failed.futureValue
+      ex shouldBe a[FramingException]
+      ex.getMessage should include ("Maximum allowed Protobuf message size is 999 but decoded " +
+        "delimiter reported size 1000")
+    }
   }
