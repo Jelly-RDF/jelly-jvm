@@ -106,7 +106,7 @@ object PekkoStreamsWithIo extends ScalaExample:
     val readFuture = FileIO.fromPath(File("weather2.jelly").toPath)
       // Convert the byte strings to Jelly frames -- this will automatically detect the delimiters
       // and re-chunk the stream if necessary.
-      .via(JellyIo.fromByteStringsDelimited)
+      .via(JellyIo.fromByteStringsDelimited())
       // Decode the Jelly frames to triples.
       .via(DecoderFlow.decodeTriples.asFlatTripleStream)
       .runWith(Sink.seq)
