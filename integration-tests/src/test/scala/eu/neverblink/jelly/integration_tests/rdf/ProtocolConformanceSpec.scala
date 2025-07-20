@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.integration_tests.rdf
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
+import eu.neverblink.jelly.core.helpers.TestIoUtil.withSilencedOutput
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamFrame, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.rdf.io.*
 import eu.neverblink.jelly.integration_tests.util.JellyCli
@@ -32,7 +33,9 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
   runRdfFromJellyTests(JenaReactiveSerDes())
   runRdfFromJellyTests(TitaniumSerDes)
 
-  private def runRdfToJellyTests[TNSer, TTSer, TQSer](ser: ProtocolSerDes[TNSer, TTSer, TQSer]): Unit =
+  private def runRdfToJellyTests[TNSer, TTSer, TQSer](
+    ser: ProtocolSerDes[TNSer, TTSer, TQSer]
+  ): Unit =
     s"Serializer ${ser.name}" when {
       for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
         val manifestModel = ModelFactory.createDefaultModel()
@@ -43,61 +46,74 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
 
         for testEntry <- testEntries do
           s"Protocol test ${testEntry.extractTestUri} – ${testEntry.extractTestName}" in {
-            val testActionFiles = testEntry.extractTestActions.map(TestCases.getProtocolTestActionFile)
-            val testResultFiles = testEntry.extractTestResults.map(TestCases.getProtocolTestActionFile)
-
-            val streamOptionsFile = testActionFiles.find(_.getName == "stream_options.jelly")
-            val serializationInputFiles = testActionFiles.filterNot(_.getName == "stream_options.jelly")
-
-            val outputFile = testResultFiles.find(_.getName == "out.jelly")
-
-            val streamOptions = streamOptionsFile.map(extractStreamOptions)
-            if testEntry.hasPhysicalTypeTriplesRequirement then
-              // Triples
-              val actualTriplesFile = File.createTempFile(s"test-triples-$randomUUID", ".jelly")
-              val exception = try {
-                val actualTriples = ser.readTriplesW3C(serializationInputFiles)
-                ser.writeTriplesJelly(actualTriplesFile, actualTriples, streamOptions, frameSize)
-                None
-              } catch {
-                case exception: Exception => Some(exception)
-              }
-
-              if testEntry.isTestNegative then
-                exception shouldNot be (None)
-
-              if testEntry.isTestPositive then
-                if exception.isDefined then
-                  throw exception.get // Rethrow exception if test is positive
-                val outputFileExact = outputFile.getOrElse { throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an output file") }
-                JellyCli.rdfValidate(actualTriplesFile, outputFileExact, streamOptionsFile, None) shouldBe 0
-
-            else if testEntry.hasPhysicalTypeQuadsRequirement || testEntry.hasPhysicalTypeGraphsRequirement then
-              // Quads
-              val actualQuadsFile = File.createTempFile(s"test-quads-$randomUUID", ".jelly")
-              val exception = try {
-                val actualQuads = ser.readQuadsW3C(serializationInputFiles)
-                ser.writeQuadsJelly(actualQuadsFile, actualQuads, streamOptions, frameSize)
-                None
-              } catch {
-                case exception: Exception => Some(exception)
-              }
-
-              if testEntry.isTestNegative then
-                exception shouldNot be (None)
-
-              if testEntry.isTestPositive then
-                if exception.isDefined then
-                  throw exception.get // Rethrow exception if test is positive
-                val outputFileExact = outputFile.getOrElse { throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an output file") }
-                JellyCli.rdfValidate(actualQuadsFile, outputFileExact, streamOptionsFile, None) shouldBe 0
-
-            else
-              throw new IllegalStateException(s"Test entry ${testEntry.extractTestUri} does not have a valid physical type requirement")
+            singleRdfToJellyTest(testEntry, ser)
           }
     }
 
-  private def runRdfFromJellyTests[TNDes, TTDes, TQDes](des: ProtocolSerDes[TNDes, TTDes, TQDes]): Unit =
+  private def singleRdfToJellyTest[TNSer, TTSer, TQSer](
+    testEntry: Resource, ser: ProtocolSerDes[TNSer, TTSer, TQSer]
+  ): Unit = withSilencedOutput {
+    val testActionFiles = testEntry.extractTestActions.map(TestCases.getProtocolTestActionFile)
+    val testResultFiles = testEntry.extractTestResults.map(TestCases.getProtocolTestActionFile)
+
+    val streamOptionsFile = testActionFiles.find(_.getName == "stream_options.jelly")
+    val serializationInputFiles = testActionFiles.filterNot(_.getName == "stream_options.jelly")
+
+    val outputFile = testResultFiles.find(_.getName == "out.jelly")
+
+    val streamOptions = streamOptionsFile.map(extractStreamOptions)
+    if testEntry.hasPhysicalTypeTriplesRequirement then
+      // Triples
+      val actualTriplesFile = File.createTempFile(s"test-triples-$randomUUID", ".jelly")
+      val exception = try {
+        val actualTriples = ser.readTriplesW3C(serializationInputFiles)
+        ser.writeTriplesJelly(actualTriplesFile, actualTriples, streamOptions, frameSize)
+        None
+      } catch {
+        case exception: Exception => Some(exception)
+      }
+
+      if testEntry.isTestNegative then
+        exception shouldNot be(None)
+
+      if testEntry.isTestPositive then
+        if exception.isDefined then
+          throw exception.get // Rethrow exception if test is positive
+        val outputFileExact = outputFile.getOrElse {
+          throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an output file")
+        }
+        JellyCli.rdfValidate(actualTriplesFile, outputFileExact, streamOptionsFile, None) shouldBe 0
+
+    else if testEntry.hasPhysicalTypeQuadsRequirement || testEntry.hasPhysicalTypeGraphsRequirement then
+      // Quads
+      val actualQuadsFile = File.createTempFile(s"test-quads-$randomUUID", ".jelly")
+      val exception = try {
+        val actualQuads = ser.readQuadsW3C(serializationInputFiles)
+        ser.writeQuadsJelly(actualQuadsFile, actualQuads, streamOptions, frameSize)
+        None
+      } catch {
+        case exception: Exception => Some(exception)
+      }
+
+      if testEntry.isTestNegative then
+        exception shouldNot be(None)
+
+      if testEntry.isTestPositive then
+        if exception.isDefined then
+          throw exception.get // Rethrow exception if test is positive
+        val outputFileExact = outputFile.getOrElse {
+          throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an output file")
+        }
+        JellyCli.rdfValidate(actualQuadsFile, outputFileExact, streamOptionsFile, None) shouldBe 0
+
+    else
+      throw new IllegalStateException(s"Test entry ${testEntry.extractTestUri} does not have a valid physical type requirement")
+  }
+
+
+  private def runRdfFromJellyTests[TNDes, TTDes, TQDes](
+    des: ProtocolSerDes[TNDes, TTDes, TQDes]
+  ): Unit =
     s"Deserializer ${des.name}" when {
       for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
         val manifestModel = ModelFactory.createDefaultModel()
@@ -108,58 +124,64 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
 
         for testEntry <- testEntries do
           s"Protocol test ${testEntry.extractTestUri} – ${testEntry.extractTestName}" in {
-            val testActionFiles = testEntry.extractTestActions.map(TestCases.getProtocolTestActionFile)
-            val testResultFiles = testEntry.extractTestResults.map(TestCases.getProtocolTestActionFile)
-            val serializationInputFiles = testActionFiles.filterNot(_.getName == "stream_options.jelly")
-
-            val inFile = testActionFiles.find(_.getName == "in.jelly").getOrElse {
-              throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an input file")
-            }
-
-            if testEntry.hasPhysicalTypeTriplesRequirement then
-              // Triples
-              val exception = try {
-                val actualTriples = des.readTriplesJelly(inFile, None)
-                val expectedTriples = des.readTriplesW3C(testResultFiles)
-                if testEntry.isTestPositive then
-                  OrderedRdfCompare.compare(des, expectedTriples, actualTriples)
-                None
-              } catch {
-                case exception: Exception => Some(exception)
-              }
-
-              if exception.isDefined then
-                exception.get.printStackTrace()
-
-              if testEntry.isTestNegative then
-                exception shouldNot be (None)
-
-              if testEntry.isTestPositive && exception.isDefined then
-                throw exception.get // Rethrow exception if test is positive
-
-            if testEntry.hasPhysicalTypeQuadsRequirement || testEntry.hasPhysicalTypeGraphsRequirement then
-              // Quads
-              val exception = try {
-                val actualQuads = des.readQuadsOrGraphsJelly(inFile, None)
-                val expectedQuads = des.readQuadsW3C(testResultFiles)
-                if testEntry.isTestPositive then
-                  OrderedRdfCompare.compare(des, expectedQuads, actualQuads)
-
-                None
-              } catch {
-                case exception: Exception => Some(exception)
-              }
-
-              if exception.isDefined then
-                exception.get.printStackTrace()
-
-              if testEntry.isTestNegative then
-                exception shouldNot be (None)
-
-              if testEntry.isTestPositive && exception.isDefined then
-                throw exception.get // Rethrow exception if test is positive
+            singleRdfFromJellyTest(testEntry, des)
           }
     }
+
+  private def singleRdfFromJellyTest[TNDes, TTDes, TQDes](
+    testEntry: Resource, des: ProtocolSerDes[TNDes, TTDes, TQDes]
+  ): Unit = withSilencedOutput {
+    val testActionFiles = testEntry.extractTestActions.map(TestCases.getProtocolTestActionFile)
+    val testResultFiles = testEntry.extractTestResults.map(TestCases.getProtocolTestActionFile)
+    val serializationInputFiles = testActionFiles.filterNot(_.getName == "stream_options.jelly")
+
+    val inFile = testActionFiles.find(_.getName == "in.jelly").getOrElse {
+      throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an input file")
+    }
+
+    if testEntry.hasPhysicalTypeTriplesRequirement then
+      // Triples
+      val exception = try {
+        val actualTriples = des.readTriplesJelly(inFile, None)
+        val expectedTriples = des.readTriplesW3C(testResultFiles)
+        if testEntry.isTestPositive then
+          OrderedRdfCompare.compare(des, expectedTriples, actualTriples)
+        None
+      } catch {
+        case exception: Exception => Some(exception)
+      }
+
+      if exception.isDefined then
+        exception.get.printStackTrace(Console.err)
+
+      if testEntry.isTestNegative then
+        exception shouldNot be(None)
+
+      if testEntry.isTestPositive && exception.isDefined then
+        throw exception.get // Rethrow exception if test is positive
+
+    if testEntry.hasPhysicalTypeQuadsRequirement || testEntry.hasPhysicalTypeGraphsRequirement then
+      // Quads
+      val exception = try {
+        val actualQuads = des.readQuadsOrGraphsJelly(inFile, None)
+        val expectedQuads = des.readQuadsW3C(testResultFiles)
+        if testEntry.isTestPositive then
+          OrderedRdfCompare.compare(des, expectedQuads, actualQuads)
+
+        None
+      } catch {
+        case exception: Exception => Some(exception)
+      }
+
+      if exception.isDefined then
+        exception.get.printStackTrace(Console.err)
+
+      if testEntry.isTestNegative then
+        exception shouldNot be(None)
+
+      if testEntry.isTestPositive && exception.isDefined then
+        throw exception.get // Rethrow exception if test is positive
+  }
 
   private def extractStreamOptions(streamOptionsFile: File): RdfStreamOptions = {
     val inputStream = FileInputStream(streamOptionsFile)

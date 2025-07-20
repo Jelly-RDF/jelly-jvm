@@ -15,6 +15,8 @@ ThisBuild / developers := List(
     url("https://github.com/Ostrzyciel"),
   ),
 )
+// Allow scalatest to control the logging output
+Test / logBuffered := false
 
 lazy val pekkoV = "1.1.5"
 lazy val pekkoGrpcV = "1.1.1"
@@ -480,6 +482,7 @@ lazy val examples = (project in file("examples"))
     commonSettings,
   )
   .dependsOn(
+    core % "compile->compile;test->test",
     stream,
     jena % "compile->compile;test->test",
     rdf4j,

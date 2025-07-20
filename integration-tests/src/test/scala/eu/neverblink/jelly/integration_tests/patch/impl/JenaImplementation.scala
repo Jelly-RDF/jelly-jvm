@@ -32,14 +32,12 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
     collector
 
   override def readRdf(files: Seq[File], stType: PatchStatementType, flat: Boolean): JenaChangesCollector =
-    System.out.println("Reading RDF from files")
     val collector = JenaChangesCollector(stType)
     for filename <- files do
       val in = new FileInputStream(filename)
       RDFPatchReaderText(in).apply(collector)
       in.close()
       if !flat then collector.segment()
-    System.out.println("Finished reading RDF from files")
     collector
 
   override def readJelly(in: InputStream, supportedOptions: Option[RdfPatchOptions]): JenaChangesCollector =

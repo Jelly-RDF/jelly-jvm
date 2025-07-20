@@ -29,7 +29,7 @@ object JellyCli:
       optionsFile.map(file => s"--options-file=${file.getAbsolutePath}").getOrElse(""),
       actualJelly.getAbsolutePath
     ).filter(_ != "")
-    
+
     println(s"Running command: ${command.mkString(" ")}")
 
     val process = Process(command)
