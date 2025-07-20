@@ -15,6 +15,8 @@ ThisBuild / developers := List(
     url("https://github.com/Ostrzyciel"),
   ),
 )
+// Allow scalatest to control the logging output
+Test / logBuffered := false
 
 lazy val pekkoV = "1.1.5"
 lazy val pekkoGrpcV = "1.1.1"
