@@ -152,7 +152,7 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
       }
 
       if exception.isDefined then
-        exception.get.printStackTrace()
+        exception.get.printStackTrace(Console.err)
 
       if testEntry.isTestNegative then
         exception shouldNot be(None)
@@ -174,7 +174,7 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
       }
 
       if exception.isDefined then
-        exception.get.printStackTrace()
+        exception.get.printStackTrace(Console.err)
 
       if testEntry.isTestNegative then
         exception shouldNot be(None)

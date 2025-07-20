@@ -2,6 +2,7 @@ package eu.neverblink.jelly.integration_tests.rdf
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.*
+import eu.neverblink.jelly.core.helpers.TestIoUtil.withSilencedOutput
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
 import eu.neverblink.jelly.integration_tests.*
 import eu.neverblink.jelly.integration_tests.rdf.util.Comparisons
@@ -142,7 +143,9 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
 
   "test suite" should {
     "print encoded RDF sizes" in {
-      for (key, value) <- encodedSizes do
-        print(s"$key size: $value\n")
+      withSilencedOutput {
+        for (key, value) <- encodedSizes do
+          print(s"$key size: $value\n")
+      }
     }
   }
