@@ -56,6 +56,14 @@ lazy val commonSettings = Seq(
     case x => assemblyMergeStrategy.value(x)
   },
   crossVersion := CrossVersion.binary,
+  jacocoAggregateReportSettings := JacocoReportSettings(
+    formats = Seq(JacocoReportFormats.XML)
+  ),
+  Test / javaOptions ++= Seq(
+    // Disable Jacoco instrumentation by default, to make test execution faster and to make it pass
+    // on JDK 22+ where Jacoco instrumentation is not supported.
+    "-Djacoco.skip=true"
+  )
 )
 
 // Shared settings for all Java-only modules
@@ -279,6 +287,7 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
     // Don't throw errors, because Google's protoc generates code with a lot of warnings
     javacOptions := javacOptions.value.filterNot(_ == "-Werror"),
+    commonSettings,
     commonJavaSettings,
   )
 
@@ -323,6 +332,7 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
     Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
     ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "patch.proto"),
+    commonSettings,
     commonJavaSettings,
   ).dependsOn(coreProtosGoogle)
 
@@ -500,7 +510,6 @@ lazy val jmh = (project in file("jmh"))
       "org.openjdk.jmh" % "jmh-core" % jmhV,
       "org.openjdk.jmh" % "jmh-generator-annprocess" % jmhV,
     ),
-    publishArtifact := false,
     commonSettings,
   )
   .dependsOn(core, jena)
