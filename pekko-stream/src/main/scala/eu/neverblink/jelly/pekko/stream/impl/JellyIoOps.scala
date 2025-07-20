@@ -1,14 +1,12 @@
 package eu.neverblink.jelly.pekko.stream.impl
 
-import com.google.protobuf.CodedInputStream
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
-import eu.neverblink.protoc.java.runtime.ProtoMessage
+import eu.neverblink.jelly.pekko.stream.PekkoUtil
 import org.apache.pekko.stream.scaladsl.*
 import org.apache.pekko.util.ByteString
 import org.apache.pekko.{Done, NotUsed}
 
 import java.io.{ByteArrayOutputStream, OutputStream}
-import scala.jdk.CollectionConverters.*
 import scala.concurrent.Future
 
 /**
@@ -64,16 +62,9 @@ object JellyIoOps:
      * @return Pekko Flow
      */
     final def fromByteStrings: Flow[ByteString, RdfStreamFrame, NotUsed] =
-      Flow[ByteString].map(byteString => {
-        val byteBuffers = byteString.asByteBuffers
-        // If the ByteString contains only one ByteBuffer, we pass it directly to CodedInputStream.
-        // CodedInputStream will then apply extra optimizations for faster parsing.
-        val codedInputStream = if byteBuffers.size == 1 then
-          CodedInputStream.newInstance(byteBuffers.head)
-        else CodedInputStream.newInstance(byteBuffers.asJava)
-        val frame = RdfStreamFrame.newInstance()
-        ProtoMessage.mergeFrom(frame, codedInputStream, ProtoMessage.DEFAULT_MAX_RECURSION_DEPTH)
-      })
+      Flow[ByteString].map(byteString =>
+        PekkoUtil.parseFromByteString(byteString, RdfStreamFrame.getFactory)
+      )
 
     /**
      * Convert a stream of DELIMITED bytes into a stream of Jelly frames. The ByteStrings may be chunked

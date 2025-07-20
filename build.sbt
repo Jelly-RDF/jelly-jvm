@@ -537,5 +537,5 @@ lazy val grpc = (project in file("pekko-grpc"))
     Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
   )
-  .dependsOn(stream % "test->compile")
+  .dependsOn(stream)
   .dependsOn(core % "compile->compile;test->test")
