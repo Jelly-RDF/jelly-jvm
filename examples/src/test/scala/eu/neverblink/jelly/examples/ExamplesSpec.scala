@@ -9,11 +9,13 @@ class ExamplesSpec extends AnyWordSpec, Matchers, JenaTest:
   val examples: Seq[Example] = Seq(
     JenaRiot(),
     JenaRiotStreaming(),
+    PekkoGrpc,
     PekkoStreamsDecoderFlow,
     PekkoStreamsEncoderFlow,
     PekkoStreamsEncoderSource,
     PekkoStreamsWithIo,
     Rdf4jRio(),
+    TitaniumRdfApi(),
   )
 
   for example <- examples do
