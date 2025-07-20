@@ -34,13 +34,13 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     """
       |pekko.http.server.preview.enable-http2 = on
       |pekko.grpc.client.jelly-no-gzip.host = 127.0.0.1
-      |pekko.grpc.client.jelly-no-gzip.port = 18080
+      |pekko.grpc.client.jelly-no-gzip.port = 8080
       |pekko.grpc.client.jelly-no-gzip.enable-gzip = false
       |pekko.grpc.client.jelly-no-gzip.use-tls = false
       |pekko.grpc.client.jelly-no-gzip.backend = netty
       |
       |pekko.grpc.client.jelly-gzip.host = 127.0.0.1
-      |pekko.grpc.client.jelly-gzip.port = 18081
+      |pekko.grpc.client.jelly-gzip.port = 8081
       |pekko.grpc.client.jelly-gzip.enable-gzip = true
       |pekko.grpc.client.jelly-gzip.use-tls = false
       |pekko.grpc.client.jelly-gzip.backend = netty
