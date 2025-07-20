@@ -46,6 +46,22 @@ The pull requests are expected to be formatted before being submitted. For Intel
 
 Jelly-JVM uses the exact same documentation system as the main [Jelly documentation]({{ proto_link() }}). Further information on editing the documentation can be found in the [Contributing to the Jelly documentation]({{ proto_link('contributing') }}) guide.
 
+## Tests
+
+We expect all pull requests to include tests for new features or bug fixes – expected coverage is 90% or higher. Tests are written in Scala using [ScalaTest](https://www.scalatest.org/). You can run the tests with the following command:
+
+```bash
+sbt test
+```
+
+Or, to test only one module (in this case, `core`):
+
+```bash
+sbt core/test
+```
+
+Some tests produce a lot of output on the console. You may want to silence it by setting the `JELLY_TEST_SILENCE_OUTPUT` environment variable to `true`. This is done for example in the CI pipeline.
+
 ## Releases
 
 See the [dedicated page on making releases](releases.md).
