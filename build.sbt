@@ -17,6 +17,11 @@ ThisBuild / developers := List(
 )
 // Allow scalatest to control the logging output
 Test / logBuffered := false
+Test / javaOptions ++= Seq(
+  // Disable Jacoco instrumentation by default, to make test execution faster and to make it pass
+  // on JDK 22+ where Jacoco instrumentation is not supported.
+  "-Djacoco.skip=true"
+)
 
 lazy val pekkoV = "1.1.5"
 lazy val pekkoGrpcV = "1.1.1"

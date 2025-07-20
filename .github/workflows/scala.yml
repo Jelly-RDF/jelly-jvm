@@ -91,7 +91,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: temurin
-        java-version: ${{ env.java_publish }}
+        java-version: 21 # coverage must run on an LTS version
 
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
