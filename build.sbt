@@ -56,6 +56,9 @@ lazy val commonSettings = Seq(
     case x => assemblyMergeStrategy.value(x)
   },
   crossVersion := CrossVersion.binary,
+  jacocoAggregateReportSettings := JacocoReportSettings(
+    formats = Seq(JacocoReportFormats.XML)
+  )
 )
 
 // Shared settings for all Java-only modules
@@ -500,7 +503,6 @@ lazy val jmh = (project in file("jmh"))
       "org.openjdk.jmh" % "jmh-core" % jmhV,
       "org.openjdk.jmh" % "jmh-generator-annprocess" % jmhV,
     ),
-    publishArtifact := false,
     commonSettings,
   )
   .dependsOn(core, jena)

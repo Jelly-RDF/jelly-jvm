@@ -1,0 +1,5 @@
+ignore:
+  - "docs"
+  - "jmh"  # benchmarks for development purposes
+  - "integration-tests"  # only tests
+  - "crunchy-protoc-plugin"  # Not shipped to users, only used for compilation

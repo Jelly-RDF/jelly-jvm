@@ -48,18 +48,33 @@ jobs:
     - name: Build and test
       shell: bash
       run: sbt -v +test
-      if: ${{ matrix.java != env.java_latest }}
 
-    - name: Build and test (with coverage)
+  test-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: ${{ env.java_latest }}
+
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
+
+    - name: Build and test with coverage
       shell: bash
-      run: sbt -v coverage +test coverageReport coverageAggregate
-      if: ${{ matrix.java == env.java_latest }}
+      run: sbt -v coverage +test coverageReport coverageAggregate jacocoAggregate
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
-      if: ${{ matrix.java == env.java_latest }}
       with:
-        fail_ci_if_error: false
+        fail_ci_if_error: true # This is an independent check, so it's okay to fail
         slug: Jelly-RDF/jelly-jvm
         token: ${{ secrets.CODECOV_TOKEN }}
 
