@@ -482,6 +482,7 @@ lazy val examples = (project in file("examples"))
     commonSettings,
   )
   .dependsOn(
+    core % "compile->compile;test->test",
     stream,
     jena % "compile->compile;test->test",
     rdf4j,
