@@ -3,7 +3,7 @@ package eu.neverblink.jelly.examples
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.examples.shared.ScalaExample
-import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, DecoderFlow, EncoderFlow, JellyIo}
+import eu.neverblink.jelly.pekko.stream.*
 import org.apache.jena.graph.Triple
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
@@ -96,5 +96,22 @@ object PekkoStreamsWithIo extends ScalaExample:
 
     Await.ready(writeFuture, 10.seconds)
     println("Done writing the Jelly file.")
+
+    // -----------------------------------------------------------
+    // In the same way, we can read the Jelly file back using Pekko Streams.
+    // The advantage of this approach is that it is non-blocking and fully reactive, so you won't have
+    // blocked threads while waiting for the file to be read. You also don't need to worry about
+    // freeing resources, as Pekko Streams will handle that for you.
+    println("\n\nReading the Jelly file back with Pekko Streams (reactive parser)...")
+    val readFuture = FileIO.fromPath(File("weather2.jelly").toPath)
+      // Convert the byte strings to Jelly frames -- this will automatically detect the delimiters
+      // and re-chunk the stream if necessary.
+      .via(JellyIo.fromByteStringsDelimited())
+      // Decode the Jelly frames to triples.
+      .via(DecoderFlow.decodeTriples.asFlatTripleStream)
+      .runWith(Sink.seq)
+
+    val readTriples = Await.result(readFuture, 10.seconds)
+    println(s"Read ${readTriples.size} triples from the Jelly file.")
 
     actorSystem.terminate()
