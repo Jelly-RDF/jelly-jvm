@@ -23,13 +23,10 @@ public final class JenaChangesCollector implements RDFChanges {
 
     /**
      * Creates a new JenaChangesCollector with the specified statement type.
-     * <p>
-     * Public only for tests, use JellyPatchOpt.changesCollector instead.
      *
      * @param stType How to interpret the statements: TRIPLES or QUADS.
      */
-    @InternalApi
-    public JenaChangesCollector(PatchStatementType stType) {
+    JenaChangesCollector(PatchStatementType stType) {
         this.stType = stType;
     }
 

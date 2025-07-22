@@ -28,12 +28,12 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
   override def name: String = "Jena"
 
   override def readRdf(in: InputStream, stType: PatchStatementType): JenaChangesCollector =
-    val collector = JenaChangesCollector(stType)
+    val collector = JellyPatchOps.changesCollector(stType)
     RDFPatchReaderText(in).apply(collector)
     collector
 
   override def readRdf(files: Seq[File], stType: PatchStatementType, flat: Boolean): JenaChangesCollector =
-    val collector = JenaChangesCollector(stType)
+    val collector = JellyPatchOps.changesCollector(stType)
     for filename <- files do
       val in = new FileInputStream(filename)
       RDFPatchReaderText(in).apply(collector)
@@ -42,7 +42,7 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
     collector
 
   override def readJelly(in: InputStream, supportedOptions: Option[RdfPatchOptions]): JenaChangesCollector =
-    val collector = JenaChangesCollector(PatchStatementType.UNSPECIFIED)
+    val collector = JellyPatchOps.changesCollector(PatchStatementType.UNSPECIFIED)
     RdfPatchReaderJelly(
       RdfPatchReaderJelly.Options(supportedOptions.getOrElse(JellyPatchOptions.DEFAULT_SUPPORTED_OPTIONS)),
       JenaPatchConverterFactory.getInstance(),
