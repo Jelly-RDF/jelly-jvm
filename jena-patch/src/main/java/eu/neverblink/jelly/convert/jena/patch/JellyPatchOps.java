@@ -74,7 +74,7 @@ public class JellyPatchOps {
      * @param stType How to interpret the statements: TRIPLES or QUADS.
      * @return A Jena RDFChanges collector that can be used to collect changes and replay them later.
      */
-    public static RDFChanges changesCollector(PatchStatementType stType) {
+    public static JenaChangesCollector changesCollector(PatchStatementType stType) {
         return new JenaChangesCollector(stType);
     }
 }
