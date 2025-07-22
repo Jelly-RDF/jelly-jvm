@@ -473,7 +473,7 @@ lazy val integrationTests = (project in file("integration-tests"))
   .dependsOn(
     core % "compile->compile;test->test",
     jena % "compile->compile;test->test",
-    jenaPatch % "compile->compile;test->test",
+    jenaPatch,
     rdf4j,
     rdf4jPatch,
     titaniumRdfApi,
