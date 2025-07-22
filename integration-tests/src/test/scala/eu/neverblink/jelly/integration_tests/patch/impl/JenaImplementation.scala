@@ -10,11 +10,12 @@ import org.scalatest.matchers.should.Matchers.*
 
 import java.io.{File, FileInputStream, InputStream, OutputStream}
 import scala.annotation.experimental
+import scala.jdk.CollectionConverters.*
 
 given TestComparable[JenaChangesCollector] = new TestComparable[JenaChangesCollector]:
   override def compare(a: JenaChangesCollector, e: JenaChangesCollector): Unit =
     a.size should be (e.size)
-    for ((ar, er), i) <- a.getChanges.zip(e.getChanges).zipWithIndex do
+    for ((ar, er), i) <- a.getChanges.asScala.zip(e.getChanges.asScala).zipWithIndex do
       withClue(f"at index $i") {
         ar should be (er)
       }
@@ -58,7 +59,7 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
       JenaPatchConverterFactory.getInstance(),
       out
     )
-    patch.replay(w, callStartFinish = true)
+    patch.replay(w, true)
 
   override def supportsGeneralizedStatements: Boolean = true
 
