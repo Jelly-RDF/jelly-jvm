@@ -1,10 +1,10 @@
 package eu.neverblink.jelly.convert.jena.patch;
 
+import eu.neverblink.jelly.convert.jena.patch.internal.VectorDirectRead;
 import eu.neverblink.jelly.core.ExperimentalApi;
-import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfpatch.RDFChanges;
 import org.apache.jena.sparql.core.Quad;
@@ -14,11 +14,13 @@ import org.apache.jena.sparql.core.Quad;
  * <p>
  * This class collects changes in a list and allows them to be replayed to a destination RDFChanges instance.
  * It supports both triples and quads based on the specified PatchStatementType.
+ * <p>
+ * This class is absolutely NOT thread-safe. You should only either write to it or read from it at any given time.
  */
 @ExperimentalApi
 public final class JenaChangesCollector implements RDFChanges {
 
-    private final List<JenaChangesItem> items = new ArrayList<>();
+    private final VectorDirectRead<JenaChangesItem> items = new VectorDirectRead<>();
     private final PatchStatementType stType;
 
     /**
@@ -53,8 +55,12 @@ public final class JenaChangesCollector implements RDFChanges {
      */
     public void replay(RDFChanges destination, boolean callStartFinish) {
         if (callStartFinish) destination.start();
-        for (JenaChangesItem item : items) {
-            item.applyTo(destination);
+        // Use the underlying array directly for performance and to skip various bounds checks.
+        // TODO: consider using a an array of JenaChangesItem instead of Object[] to skip casts.
+        final var array = items.getArrayUnsafe();
+        for (int i = 0; i < items.size(); i++) {
+            final var element = (JenaChangesItem) array[i];
+            element.applyTo(destination);
         }
         if (callStartFinish) destination.finish();
     }
