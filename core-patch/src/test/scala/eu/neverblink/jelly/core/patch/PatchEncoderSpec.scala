@@ -35,6 +35,21 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
           testCase.mrl.foreach(_.apply(encoder))
           assertEncoded(buffer.toSeq, testCase.encoded(encoder.options))
         }
+
+        s"precompute the size of each patch row ($desc)" in {
+          val buffer = ListBuffer[RdfPatchRow]()
+          val encoder = MockPatchConverterFactory.encoder(Pep(
+            JellyPatchOptions.SMALL_GENERALIZED.clone
+              .setStatementType(statementType)
+              .setStreamType(streamType),
+            buffer.asJava
+          ))
+          testCase.mrl.foreach(_.apply(encoder))
+          for (row, ix) <- buffer.zipWithIndex do
+            withClue(s"Row $ix: ${row.getRow}") {
+              row.getCachedSize should be > 0
+            }
+        }
       }
     }
 
