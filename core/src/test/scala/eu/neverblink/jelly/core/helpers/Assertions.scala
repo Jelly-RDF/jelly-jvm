@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.helpers
 
-import eu.neverblink.jelly.core.helpers.Mrl.{Statement}
+import eu.neverblink.jelly.core.helpers.Mrl.Statement
 import eu.neverblink.jelly.core.helpers.RdfAdapter.extractRdfStreamRow
 import eu.neverblink.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
@@ -24,3 +24,9 @@ object Assertions extends AnyWordSpec, Matchers:
         obsRow should be(expRow)
       }
     observed.size should be(expected.size)
+
+  def assertSizesPrecomputed(observed: Seq[RdfStreamRow]): Unit =
+    for (row, ix) <- observed.zipWithIndex do
+      withClue(s"Row $ix: ${row.getRow}") {
+        row.getCachedSize should be > 0
+      }
