@@ -50,7 +50,10 @@ public abstract class PatchEncoder<TNode>
      */
     protected PatchEncoder(ProtoEncoderConverter<TNode> converter, Params params) {
         super(converter);
-        this.options = params.options;
+        this.options = params.options
+            .clone()
+            // Override the user's version setting with what is really supported by the encoder.
+            .setVersion(JellyPatchConstants.PROTO_VERSION_1_0_X);
         this.rowBuffer = params.appendableRowBuffer;
     }
 
