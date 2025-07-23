@@ -28,6 +28,14 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     private static final RdfPatchRow ROW_TX_ABORT = RdfPatchRow.newInstance()
         .setTransactionAbort(RdfPatchTransactionAbort.EMPTY);
 
+    static {
+        // Pre-calculate the serialized sizes of the static rows to avoid repeated calculations
+        ROW_PUNCTUATION.getSerializedSize();
+        ROW_TX_START.getSerializedSize();
+        ROW_TX_COMMIT.getSerializedSize();
+        ROW_TX_ABORT.getSerializedSize();
+    }
+
     /**
      * Constructor.
      *
@@ -40,17 +48,25 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
 
     @Override
     public void appendNameEntry(RdfNameEntry nameEntry) {
-        rowBuffer.add(RdfPatchRow.newInstance().setName(nameEntry));
+        final var row = RdfPatchRow.newInstance().setName(nameEntry);
+        // Calculate the size of the row now, as all objects are likely still in L1/L2 cache.
+        row.getSerializedSize();
+        rowBuffer.add(row);
     }
 
     @Override
     public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
-        rowBuffer.add(RdfPatchRow.newInstance().setPrefix(prefixEntry));
+        final var row = RdfPatchRow.newInstance().setPrefix(prefixEntry);
+        // Calculate the size of the row now, as all objects are likely still in L1/L2 cache.
+        row.getSerializedSize();
+        rowBuffer.add(row);
     }
 
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
-        rowBuffer.add(RdfPatchRow.newInstance().setDatatype(datatypeEntry));
+        final var row = RdfPatchRow.newInstance().setDatatype(datatypeEntry);
+        row.getSerializedSize();
+        rowBuffer.add(row);
     }
 
     @Override
@@ -58,6 +74,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         emitOptions();
         final var quad = quadToProto(subject, predicate, object, graph);
         final var mainRow = RdfPatchRow.newInstance().setStatementAdd(quad);
+        mainRow.getSerializedSize();
         rowBuffer.add(mainRow);
     }
 
@@ -66,6 +83,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         emitOptions();
         final var quad = quadToProto(subject, predicate, object, graph);
         final var mainRow = RdfPatchRow.newInstance().setStatementDelete(quad);
+        mainRow.getSerializedSize();
         rowBuffer.add(mainRow);
     }
 
@@ -74,6 +92,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         emitOptions();
         final var triple = tripleInQuadToProto(subject, predicate, object);
         final var mainRow = RdfPatchRow.newInstance().setStatementAdd(triple);
+        mainRow.getSerializedSize();
         rowBuffer.add(mainRow);
     }
 
@@ -82,6 +101,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         emitOptions();
         final var triple = tripleInQuadToProto(subject, predicate, object);
         final var mainRow = RdfPatchRow.newInstance().setStatementDelete(triple);
+        mainRow.getSerializedSize();
         rowBuffer.add(mainRow);
     }
 
@@ -107,6 +127,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void addNamespace(String name, TNode iriValue, TNode graph) {
         final var namespace = encodeNamespace(name, iriValue, graph);
         final var mainRow = RdfPatchRow.newInstance().setNamespaceAdd(namespace);
+        mainRow.getSerializedSize();
         rowBuffer.add(mainRow);
     }
 
@@ -114,6 +135,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void deleteNamespace(String name, TNode iriValue, TNode graph) {
         final var namespace = encodeNamespace(name, iriValue, graph);
         final var mainRow = RdfPatchRow.newInstance().setNamespaceDelete(namespace);
+        mainRow.getSerializedSize();
         rowBuffer.add(mainRow);
     }
 
@@ -140,7 +162,8 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         this.currentHeaderBase = header;
         this.currentTerm = SpoTerm.HEADER;
         converter.nodeToProto(getNodeEncoder(), value);
-        var mainRow = RdfPatchRow.newInstance().setHeader(header);
+        final var mainRow = RdfPatchRow.newInstance().setHeader(header);
+        mainRow.getSerializedSize();
         rowBuffer.add(mainRow);
     }
 
@@ -159,6 +182,8 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         }
 
         hasEmittedOptions = true;
-        rowBuffer.add(RdfPatchRow.newInstance().setOptions(options));
+        final var row = RdfPatchRow.newInstance().setOptions(options);
+        row.getSerializedSize();
+        rowBuffer.add(row);
     }
 }
