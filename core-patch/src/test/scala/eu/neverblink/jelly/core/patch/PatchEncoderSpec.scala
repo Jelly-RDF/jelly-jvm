@@ -74,4 +74,22 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
         }
       }
     }
+
+    "clone the provided options and override the version" in {
+      val options = JellyPatchOptions.SMALL_GENERALIZED
+        .clone
+        .setStatementType(PatchStatementType.TRIPLES)
+        .setStreamType(PatchStreamType.PUNCTUATED)
+        .setVersion(123)
+      val buffer = ListBuffer[RdfPatchRow]()
+      val encoder = MockPatchConverterFactory.encoder(Pep(
+        options,
+        buffer.asJava
+      ))
+      encoder.punctuation() // write anything
+      buffer.size shouldBe 2
+      buffer.head.getOptions shouldNot be theSameInstanceAs options
+      buffer.head.getOptions.getVersion shouldBe JellyPatchConstants.PROTO_VERSION_1_0_X
+      options.getVersion shouldBe 123 // original options should not be modified
+    }
   }
