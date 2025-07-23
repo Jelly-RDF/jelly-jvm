@@ -57,7 +57,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         if (!hasEmittedOptions) {
             throw new RdfProtoSerializationError("Cannot end a delimited graph before starting one");
         }
-        rowBuffer.appendMessage().setGraphEnd(RdfGraphEnd.EMPTY);
+        rowBuffer.appendMessage().setGraphEnd(RdfGraphEnd.EMPTY).getSerializedSize();
     }
 
     @Override
@@ -72,7 +72,7 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         this.currentNsBase = ns;
         this.currentTerm = SpoTerm.NAMESPACE;
         converter.nodeToProto(getNodeEncoder(), namespace);
-        rowBuffer.appendMessage().setNamespace(ns);
+        rowBuffer.appendMessage().setNamespace(ns).getSerializedSize();
     }
 
     @Override
@@ -96,6 +96,6 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         }
 
         hasEmittedOptions = true;
-        rowBuffer.appendMessage().setOptions(options);
+        rowBuffer.appendMessage().setOptions(options).getSerializedSize();
     }
 }
