@@ -28,8 +28,12 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         rowBuffer = buffer,
         allocator = EncoderAllocator.newHeapAllocator(),
       ))
+
       Triples1.mrl.foreach(triple => encoder.handleTriple(triple.s, triple.p, triple.o))
-      assertEncoded(buffer.getRows.asScala.toSeq, Triples1.encoded(options))
+
+      val observed = buffer.getRows.asScala.toSeq
+      assertEncoded(observed, Triples1.encoded(options))
+      assertSizesPrecomputed(observed)
     }
 
     "encode triple statements with ns decls and an external buffer" in {
@@ -50,7 +54,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
           case t: Triple => encoder.handleTriple(t.s, t.p, t.o)
           case ns: NamespaceDeclaration => encoder.handleNamespace(ns.prefix, Iri(ns.iri))
 
-      assertEncoded(buffer.getRows.asScala.toSeq, Triples2NsDecl.encoded(options))
+      val observed = buffer.getRows.asScala.toSeq
+      assertEncoded(observed, Triples2NsDecl.encoded(options))
+      assertSizesPrecomputed(observed)
     }
 
     "encode quad statements" in {
@@ -67,7 +73,10 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       Quads1.mrl.foreach(quad => encoder.handleQuad(quad.s, quad.p, quad.o, quad.g))
-      assertEncoded(buffer.getRows.asScala.toSeq, Quads1.encoded(options))
+
+      val observed = buffer.getRows.asScala.toSeq
+      assertEncoded(observed, Quads1.encoded(options))
+      assertSizesPrecomputed(observed)
     }
 
     "encode quad statements with an external buffer" in {
@@ -86,7 +95,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       for quad <- Quads1.mrl do
         encoder.handleQuad(quad.s, quad.p, quad.o, quad.g)
 
-      assertEncoded(buffer.getRows.asScala.toSeq, Quads1.encoded(options))
+      val observed = buffer.getRows.asScala.toSeq
+      assertEncoded(observed, Quads1.encoded(options))
+      assertSizesPrecomputed(observed)
     }
 
     "encode quad statements (repeated default graph)" in {
@@ -103,7 +114,10 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       ))
 
       Quads2RepeatDefault.mrl.foreach(quad => encoder.handleQuad(quad.s, quad.p, quad.o, quad.g))
-      assertEncoded(buffer.getRows.asScala.toSeq, Quads2RepeatDefault.encoded(options))
+
+      val observed = buffer.getRows.asScala.toSeq
+      assertEncoded(observed, Quads2RepeatDefault.encoded(options))
+      assertSizesPrecomputed(observed)
     }
 
     "encode graphs with an external buffer" in {
@@ -125,7 +139,9 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
           encoder.handleTriple(triple.s, triple.p, triple.o)
         encoder.handleGraphEnd()
 
-      assertEncoded(buffer.getRows.asScala.toSeq, Graphs1.encoded(options))
+      val observed = buffer.getRows.asScala.toSeq
+      assertEncoded(observed, Graphs1.encoded(options))
+      assertSizesPrecomputed(observed)
     }
 
     "not allow to end a graph before starting one" in {
