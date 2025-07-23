@@ -27,7 +27,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         .setTransactionCommit(RdfPatchTransactionCommit.EMPTY);
     private static final RdfPatchRow ROW_TX_ABORT = RdfPatchRow.newInstance()
         .setTransactionAbort(RdfPatchTransactionAbort.EMPTY);
-    
+
     static {
         // Pre-calculate the serialized sizes of the static rows to avoid repeated calculations
         ROW_PUNCTUATION.getSerializedSize();
