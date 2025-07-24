@@ -73,6 +73,14 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
         frame should be (tc)
       }
     }
+    
+    "round-trip with delimited bytes (.toByteArrayDelimited)" when {
+      for ((name, tc) <- testCases) do s"test case $name" in {
+        val bytes = tc.toByteArrayDelimited
+        val frame = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
+        frame should be (tc)
+      }
+    }
 
     def makeDeepFrame(depth: Int): RdfStreamFrame = {
       var triple = RdfTriple.newInstance()
