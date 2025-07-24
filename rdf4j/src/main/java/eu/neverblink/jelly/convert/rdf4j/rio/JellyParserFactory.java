@@ -16,7 +16,16 @@ public final class JellyParserFactory implements RDFParserFactory {
 
     @Override
     public RDFParser getParser() {
-        final var converterFactory = Rdf4jConverterFactory.getInstance();
+        return getParser(Rdf4jConverterFactory.getInstance());
+    }
+
+    /**
+     * Creates a new JellyParser instance with the specified converter factory.
+     * @param converterFactory
+     * The converter factory to use for creating RDF4J values.
+     * @return a new JellyParser instance
+     */
+    public RDFParser getParser(Rdf4jConverterFactory converterFactory) {
         return new JellyParser(converterFactory);
     }
 }
