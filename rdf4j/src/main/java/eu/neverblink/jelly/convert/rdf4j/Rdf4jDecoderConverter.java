@@ -11,44 +11,63 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 public final class Rdf4jDecoderConverter
     implements ProtoDecoderConverter<Value, Rdf4jDatatype>, TripleMaker<Value, Statement>, QuadMaker<Value, Statement> {
 
-    private static final ValueFactory VALUE_FACTORY = SimpleValueFactory.getInstance();
+    private final ValueFactory vf;
+
+    /**
+     * Creates a new Rdf4jDecoderConverter.
+     * <p>
+     * This converter uses the {@link SimpleValueFactory} to create RDF4J values. You can override this by
+     * used the one-parameter constructor that takes a {@link ValueFactory} instance.
+     */
+    public Rdf4jDecoderConverter() {
+        vf = SimpleValueFactory.getInstance();
+    }
+
+    /**
+     * Creates a new Rdf4jDecoderConverter with a custom ValueFactory.
+     *
+     * @param vf the ValueFactory to use for creating RDF4J values
+     */
+    public Rdf4jDecoderConverter(ValueFactory vf) {
+        this.vf = vf;
+    }
 
     @Override
     public Value makeSimpleLiteral(String lex) {
-        return VALUE_FACTORY.createLiteral(lex);
+        return vf.createLiteral(lex);
     }
 
     @Override
     public Value makeLangLiteral(String lex, String lang) {
-        return VALUE_FACTORY.createLiteral(lex, lang);
+        return vf.createLiteral(lex, lang);
     }
 
     @Override
     public Value makeDtLiteral(String lex, Rdf4jDatatype dt) {
-        return VALUE_FACTORY.createLiteral(lex, dt.dt(), dt.coreDatatype());
+        return vf.createLiteral(lex, dt.dt(), dt.coreDatatype());
     }
 
     @Override
     public Rdf4jDatatype makeDatatype(String dt) {
-        final var iri = VALUE_FACTORY.createIRI(dt);
+        final var iri = vf.createIRI(dt);
         return new Rdf4jDatatype(iri, CoreDatatype.from(iri));
     }
 
     @Override
     public Value makeBlankNode(String label) {
-        return VALUE_FACTORY.createBNode(label);
+        return vf.createBNode(label);
     }
 
     @Override
     public Value makeIriNode(String iri) {
-        return VALUE_FACTORY.createIRI(iri);
+        return vf.createIRI(iri);
     }
 
     @Override
     public Value makeTripleNode(Value s, Value p, Value o) {
         try {
             // RDF4J doesn't accept generalized statements (unlike Jena) which is why we need to do a type cast here.
-            return VALUE_FACTORY.createTriple((Resource) s, (IRI) p, o);
+            return vf.createTriple((Resource) s, (IRI) p, o);
         } catch (ClassCastException e) {
             throw new RdfProtoDeserializationError(
                 "Cannot create generalized triple node with %s, %s, %s".formatted(s, p, o),
@@ -65,7 +84,7 @@ public final class Rdf4jDecoderConverter
     @Override
     public Statement makeQuad(Value subject, Value predicate, Value object, Value graph) {
         try {
-            return VALUE_FACTORY.createStatement((Resource) subject, (IRI) predicate, object, (Resource) graph);
+            return vf.createStatement((Resource) subject, (IRI) predicate, object, (Resource) graph);
         } catch (ClassCastException e) {
             throw new RdfProtoDeserializationError(
                 "Cannot create generalized quad with %s, %s, %s, %s".formatted(subject, predicate, object, graph),
@@ -77,7 +96,7 @@ public final class Rdf4jDecoderConverter
     @Override
     public Statement makeTriple(Value subject, Value predicate, Value object) {
         try {
-            return VALUE_FACTORY.createStatement((Resource) subject, (IRI) predicate, object);
+            return vf.createStatement((Resource) subject, (IRI) predicate, object);
         } catch (ClassCastException e) {
             throw new RdfProtoDeserializationError(
                 "Cannot create generalized triple with %s, %s, %s".formatted(subject, predicate, object),

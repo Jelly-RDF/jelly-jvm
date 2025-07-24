@@ -5,7 +5,6 @@ import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.core.RdfHandler;
-import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
@@ -17,6 +16,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.Collection;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
@@ -25,7 +25,7 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFParser;
 
 public final class JellyParser extends AbstractRDFParser {
 
-    private final Rdf4jConverterFactory converterFactory;
+    private Rdf4jConverterFactory converterFactory;
 
     public JellyParser(Rdf4jConverterFactory converterFactory) {
         this.converterFactory = converterFactory;
@@ -46,6 +46,21 @@ public final class JellyParser extends AbstractRDFParser {
         settings.add(JellyParserSettings.MAX_PREFIX_TABLE_SIZE);
         settings.add(JellyParserSettings.MAX_DATATYPE_TABLE_SIZE);
         return settings;
+    }
+
+    /**
+     * Set the value factory that the parser should use.
+     * <p>
+     * NOTE: this will wholly override the ConverterFactory provided in the constructor.
+     *
+     * @param valueFactory The value factory that the parser should use.
+     * @return this JellyParser instance, for method chaining
+     */
+    @Override
+    public JellyParser setValueFactory(ValueFactory valueFactory) {
+        super.setValueFactory(valueFactory);
+        this.converterFactory = Rdf4jConverterFactory.getInstance(valueFactory);
+        return this;
     }
 
     /**
