@@ -2,7 +2,7 @@ package eu.neverblink.jelly.convert.rdf4j.rio
 
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.jelly.core.{JellyConstants, JellyOptions, ProtoTestCases}
+import eu.neverblink.jelly.core.{JellyConstants, JellyOptions}
 import org.eclipse.rdf4j.model.Literal
 import org.eclipse.rdf4j.model.base.AbstractValueFactory
 import org.eclipse.rdf4j.model.impl.SimpleLiteral
