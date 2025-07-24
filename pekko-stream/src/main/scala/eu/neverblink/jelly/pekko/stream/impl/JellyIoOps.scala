@@ -6,7 +6,7 @@ import org.apache.pekko.stream.scaladsl.*
 import org.apache.pekko.util.ByteString
 import org.apache.pekko.{Done, NotUsed}
 
-import java.io.{ByteArrayOutputStream, OutputStream}
+import java.io.OutputStream
 import scala.concurrent.Future
 
 /**
@@ -33,11 +33,35 @@ object JellyIoOps:
      * @return Pekko Flow
      */
     final def toBytesDelimited: Flow[RdfStreamFrame, Array[Byte], NotUsed] =
-      Flow[RdfStreamFrame].map(f => {
-        val os = ByteArrayOutputStream()
-        f.writeDelimitedTo(os)
-        os.toByteArray
-      })
+      Flow[RdfStreamFrame].map(_.toByteArrayDelimited)
+
+    /**
+     * Convert a stream of Jelly frames into a stream of NON-DELIMITED ByteStrings.
+     *
+     * Each ByteString in the stream will contain exactly one Jelly frame, without any additional
+     * data (e.g., no length prefix).
+     *
+     * @return
+     */
+    final def toByteStrings: Flow[RdfStreamFrame, ByteString, NotUsed] =
+      // "fromArrayUnsafe" is completely fine here, because we are guaranteed that the
+      // byte array will not be modified later.
+      toBytes.map(ByteString.fromArrayUnsafe)
+
+    /**
+     * Convert a stream of Jelly frames into a stream of DELIMITED ByteStrings.
+     *
+     * Each ByteString in the stream will contain exactly one Jelly frame, with a length prefix
+     * (so it can be read in a fully reactive manner).
+     *
+     * You can safely use this method to write to a file or socket.
+     *
+     * @return
+     */
+    final def toByteStringsDelimited: Flow[RdfStreamFrame, ByteString, NotUsed] =
+      // "fromArrayUnsafe" is completely fine here, because we are guaranteed that the
+      // byte array will not be modified later.
+      toBytesDelimited.map(ByteString.fromArrayUnsafe)
 
   trait FlowToFrames:
     /**

@@ -186,6 +186,30 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     }
 
     /**
+     * Serialize to a byte array with a length-delimiter prepended.
+     * <p>
+     * If you are writing to an internal buffer before sending the data over the network,
+     * this should be slightly more efficient than writing to a ByteArrayOutputStream.
+     *
+     * @return byte array with the serialized data and a length-delimiter prepended.
+     */
+    public final byte[] toByteArrayDelimited() {
+        // [X] Ensure that the serialized size is cached
+        final int messageSize = getSerializedSize();
+        final int delimiterSize = CodedOutputStream.computeUInt32SizeNoTag(messageSize);
+        final byte[] result = new byte[delimiterSize + messageSize];
+        final CodedOutputStream output = CodedOutputStream.newInstance(result);
+        try {
+            output.writeUInt32NoTag(messageSize);
+            this.writeTo(output);
+            output.checkNoSpaceLeft();
+        } catch (IOException e) {
+            throw new RuntimeException("Serializing to a byte array threw an IOException (should never happen).", e);
+        }
+        return result;
+    }
+
+    /**
      * Serialize to a byte array.
      *
      * @return byte array with the serialized data.

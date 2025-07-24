@@ -72,6 +72,32 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
       }
   }
 
+  "toByteStrings and fromByteStrings" should {
+    for (name, testCase) <- cases do
+      s"work for $name" in {
+        val decoded = Source.fromIterator(() => testCase.iterator)
+          .via(JellyIo.toByteStrings)
+          .via(JellyIo.fromByteStrings)
+          .runWith(Sink.seq)
+          .futureValue
+
+        decoded shouldEqual testCase
+      }
+  }
+
+  "toByteStringsDelimited and fromByteStringsDelimited" should {
+    for (name, testCase) <- cases do
+      s"work for $name" in {
+        val decoded = Source.fromIterator(() => testCase.iterator)
+          .via(JellyIo.toByteStringsDelimited)
+          .via(JellyIo.fromByteStringsDelimited())
+          .runWith(Sink.seq)
+          .futureValue
+
+        decoded shouldEqual testCase
+      }
+  }
+
   "toIoStream and fromIoStream" should {
     for (name, testCase) <- cases do
       s"work for $name" in {
