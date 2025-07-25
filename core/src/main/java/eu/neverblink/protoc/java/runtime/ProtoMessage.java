@@ -94,11 +94,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     public final MessageType writeDelimitedTo(OutputStream output) throws IOException {
         // [X] Ensure that the serialized size is cached
         final int size = getSerializedSize();
-        final int bufferSize = Integer.min(
-            CodedOutputStream.computeUInt32SizeNoTag(size) + size,
-            MAX_OUTPUT_STREAM_BUFFER_SIZE
-        );
-        final var codedOutput = CodedOutputStream.newInstance(output, bufferSize);
+        final var codedOutput = ProtobufUtil.createCodedOutputStream(output, size);
         codedOutput.writeUInt32NoTag(size);
         writeTo(codedOutput);
         codedOutput.flush();
@@ -108,11 +104,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     public final MessageType writeTo(OutputStream output) throws IOException {
         // [X] Ensure that the serialized size is cached
         final int size = getSerializedSize();
-        final int bufferSize = Integer.min(
-            CodedOutputStream.computeUInt32SizeNoTag(size),
-            MAX_OUTPUT_STREAM_BUFFER_SIZE
-        );
-        final var codedOutput = CodedOutputStream.newInstance(output, bufferSize);
+        final var codedOutput = ProtobufUtil.createCodedOutputStream(output, size);
         writeTo(codedOutput);
         codedOutput.flush();
         return getThis();

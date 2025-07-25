@@ -129,6 +129,37 @@ object ProtoTestCases:
       ),
     ))
 
+  object Triples3LongStrings extends TestCase[Triple]:
+    val mrl = Seq(
+      Triple(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        SimpleLiteral("a" * 1000),
+      ),
+      Triple(
+        Iri("https://test.org/test/subject"),
+        Iri("https://test.org/test/predicate"),
+        SimpleLiteral("b" * 1000),
+      ),
+    )
+
+    def encoded(opt: RdfStreamOptions) = wrapEncoded(Seq(
+      opt,
+      rdfPrefixEntry(0, "https://test.org/test/"),
+      rdfNameEntry(0, "subject"),
+      rdfNameEntry(0, "predicate"),
+      rdfTriple(
+        rdfIri(1, 0),
+        rdfIri(0, 0),
+        rdfLiteral("a" * 1000),
+      ),
+      rdfTriple(
+        null,
+        null,
+        rdfLiteral("b" * 1000),
+      ),
+    ))
+
   object Quads1 extends TestCase[Quad]:
     val mrl = Seq(
       Quad(
