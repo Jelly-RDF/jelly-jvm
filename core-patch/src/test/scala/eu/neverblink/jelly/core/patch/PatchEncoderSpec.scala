@@ -7,6 +7,7 @@ import eu.neverblink.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
+import eu.neverblink.jelly.core.memory.EncoderAllocator
 import eu.neverblink.jelly.core.patch.helpers.PatchAdapter.*
 
 import scala.annotation.experimental
@@ -30,7 +31,8 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
             JellyPatchOptions.SMALL_GENERALIZED.clone
               .setStatementType(statementType)
               .setStreamType(streamType),
-            buffer.asJava
+            buffer.asJava,
+            EncoderAllocator.newHeapAllocator()
           ))
           testCase.mrl.foreach(_.apply(encoder))
           assertEncoded(buffer.toSeq, testCase.encoded(encoder.options))
@@ -42,7 +44,8 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
             JellyPatchOptions.SMALL_GENERALIZED.clone
               .setStatementType(statementType)
               .setStreamType(streamType),
-            buffer.asJava
+            buffer.asJava,
+            EncoderAllocator.newHeapAllocator()
           ))
           testCase.mrl.foreach(_.apply(encoder))
           for (row, ix) <- buffer.zipWithIndex do
@@ -61,7 +64,8 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
             JellyPatchOptions.SMALL_GENERALIZED.clone
               .setStatementType(PatchStatementType.TRIPLES)
               .setStreamType(st),
-            buffer.asJava
+            buffer.asJava,
+            EncoderAllocator.newHeapAllocator()
           ))
           val e = intercept[RdfProtoSerializationError] {
             encoder.punctuation()
@@ -78,7 +82,8 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
             JellyPatchOptions.SMALL_STRICT.clone
               .setStatementType(statementType)
               .setStreamType(PatchStreamType.PUNCTUATED),
-            buffer.asJava
+            buffer.asJava,
+            EncoderAllocator.newHeapAllocator()
           ))
           testCase.mrl.foreach(_.apply(encoder))
           encoder.punctuation()
@@ -99,7 +104,8 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
       val buffer = ListBuffer[RdfPatchRow]()
       val encoder = MockPatchConverterFactory.encoder(Pep(
         options,
-        buffer.asJava
+        buffer.asJava,
+        EncoderAllocator.newHeapAllocator()
       ))
       encoder.punctuation() // write anything
       buffer.size shouldBe 2
