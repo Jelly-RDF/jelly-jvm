@@ -6,6 +6,8 @@ import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.*;
 
+import java.util.function.BiConsumer;
+
 /**
  * Stateful encoder of a protobuf RDF stream.
  * <p>
@@ -69,9 +71,9 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         emitOptions();
 
         final var ns = RdfNamespaceDeclaration.newInstance().setName(prefix);
-        this.currentNsBase = ns;
-        this.currentTerm = SpoTerm.NAMESPACE;
-        converter.nodeToProto(getNodeEncoder(), namespace);
+        final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) -> 
+            ns.setValue((RdfIri) encoded);
+        converter.nodeToProto(getNodeEncoder(), namespace, consumer);
         rowBuffer.appendMessage().setNamespace(ns).getSerializedSize();
     }
 

@@ -3,9 +3,12 @@ package eu.neverblink.jelly.core.patch.internal;
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.patch.PatchEncoder;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
+import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.neverblink.jelly.core.proto.v1.patch.*;
+
+import java.util.function.BiConsumer;
 
 /**
  * Implementation of PatchEncoder.
@@ -127,15 +130,13 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     private RdfPatchNamespace encodeNamespace(String name, TNode iriValue, TNode graph) {
         emitOptions();
         final var namespace = RdfPatchNamespace.newInstance().setName(name);
-        this.currentNsBase = namespace;
         if (iriValue != null) {
-            this.currentTerm = SpoTerm.NAMESPACE;
-            converter.nodeToProto(getNodeEncoder(), iriValue);
+            final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
+                namespace.setValue((RdfIri) encoded);
+            converter.nodeToProto(getNodeEncoder(), iriValue, consumer);
         }
         if (graph != null) {
-            this.currentGraphBase = namespace;
-            this.currentTerm = SpoTerm.GRAPH;
-            this.graphNodeToProtoWrapped(graph);
+            this.graphNodeToProtoWrapped(namespace, graph);
         }
         return namespace;
     }
@@ -144,9 +145,10 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void header(String key, TNode value) {
         emitOptions();
         final var header = RdfPatchHeader.newInstance().setKey(key);
-        this.currentHeaderBase = header;
-        this.currentTerm = SpoTerm.HEADER;
-        converter.nodeToProto(getNodeEncoder(), value);
+        // Header's field numbers are aligned with TERM_* constants, with an offset of 1.
+        final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
+            header.setValue(encoded, (byte) (kind + 1));
+        converter.nodeToProto(getNodeEncoder(), value, consumer);
         rowBuffer.appendMessage().setHeader(header).getSerializedSize();
     }
 

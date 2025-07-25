@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.internal;
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.proto.*;
 import eu.neverblink.jelly.core.proto.v1.*;
+import java.util.function.BiConsumer;
 
 /**
  * Base interface for Jelly proto encoders. Only for internal use.
@@ -10,15 +11,6 @@ import eu.neverblink.jelly.core.proto.v1.*;
  */
 @InternalApi
 public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
-
-    protected enum SpoTerm {
-        SUBJECT,
-        PREDICATE,
-        OBJECT,
-        GRAPH,
-        NAMESPACE,
-        HEADER,
-    }
 
     protected final ProtoEncoderConverter<TNode> converter;
     private NodeEncoder<TNode> nodeEncoder;
@@ -29,12 +21,6 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected boolean lastGraphSet = false;
     protected TNode lastGraph = null;
-
-    protected SpoTerm currentTerm = SpoTerm.SUBJECT;
-    private SpoBase.Setters currentSpoBase = null;
-    protected GraphBase.Setters currentGraphBase = null;
-    protected NsBase.Setters currentNsBase = null;
-    protected HeaderBase.Setters currentHeaderBase = null;
 
     protected EncoderBase(ProtoEncoderConverter<TNode> converter) {
         this.converter = converter;
@@ -72,21 +58,18 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
     protected final RdfTriple tripleToProto(TNode subject, TNode predicate, TNode object) {
         final RdfTriple.Mutable triple = newTriple();
-        this.currentSpoBase = triple;
-        subjectNodeToProtoWrapped(subject);
-        predicateNodeToProtoWrapped(predicate);
-        objectNodeToProtoWrapped(object);
+        subjectNodeToProtoWrapped(triple, subject);
+        predicateNodeToProtoWrapped(triple, predicate);
+        objectNodeToProtoWrapped(triple, object);
         return triple;
     }
 
     protected final RdfQuad quadToProto(TNode subject, TNode predicate, TNode object, TNode graph) {
         final RdfQuad.Mutable quad = newQuad();
-        this.currentSpoBase = quad;
-        this.currentGraphBase = quad;
-        subjectNodeToProtoWrapped(subject);
-        predicateNodeToProtoWrapped(predicate);
-        objectNodeToProtoWrapped(object);
-        graphNodeToProtoWrapped(graph);
+        subjectNodeToProtoWrapped(quad, subject);
+        predicateNodeToProtoWrapped(quad, predicate);
+        objectNodeToProtoWrapped(quad, object);
+        graphNodeToProtoWrapped(quad, graph);
         return quad;
     }
 
@@ -97,10 +80,9 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
      */
     protected final RdfQuad tripleInQuadToProto(TNode subject, TNode predicate, TNode object) {
         final RdfQuad.Mutable quad = newQuad();
-        this.currentSpoBase = quad;
-        subjectNodeToProtoWrapped(subject);
-        predicateNodeToProtoWrapped(predicate);
-        objectNodeToProtoWrapped(object);
+        subjectNodeToProtoWrapped(quad, subject);
+        predicateNodeToProtoWrapped(quad, predicate);
+        objectNodeToProtoWrapped(quad, object);
         return quad;
     }
 
@@ -109,37 +91,41 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
      */
     protected final RdfGraphStart graphStartToProto(TNode graph) {
         final RdfGraphStart.Mutable graphStart = RdfGraphStart.newInstance();
-        this.currentGraphBase = graphStart;
-        currentTerm = SpoTerm.GRAPH;
-        converter.graphNodeToProto(getNodeEncoder(), graph);
+        final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
+            consumeGraphNode(graphStart, encoded, kind);
+        converter.graphNodeToProto(getNodeEncoder(), graph, consumer);
         return graphStart;
     }
 
-    private void subjectNodeToProtoWrapped(TNode node) {
+    private void subjectNodeToProtoWrapped(SpoBase.Setters target, TNode node) {
         if (!node.equals(lastSubject)) {
             lastSubject = node;
-            currentTerm = SpoTerm.SUBJECT;
-            converter.nodeToProto(getNodeEncoder(), node);
+            // Shortcut: for subject nodes, TERM_* constants align with field numbers.
+            final BiConsumer<Object, Byte> consumer = target::setSubject;
+            converter.nodeToProto(getNodeEncoder(), node, consumer);
         }
     }
 
-    private void predicateNodeToProtoWrapped(TNode node) {
+    private void predicateNodeToProtoWrapped(SpoBase.Setters target, TNode node) {
         if (!node.equals(lastPredicate)) {
             lastPredicate = node;
-            currentTerm = SpoTerm.PREDICATE;
-            converter.nodeToProto(getNodeEncoder(), node);
+            // Shortcut: for predicate nodes, TERM_* constants can be simply offset.
+            final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
+                target.setPredicate(encoded, (byte) (kind + RdfTriple.P_IRI - 1));
+            converter.nodeToProto(getNodeEncoder(), node, consumer);
         }
     }
 
-    private void objectNodeToProtoWrapped(TNode node) {
+    private void objectNodeToProtoWrapped(SpoBase.Setters target, TNode node) {
         if (!node.equals(lastObject)) {
             lastObject = node;
-            currentTerm = SpoTerm.OBJECT;
-            converter.nodeToProto(getNodeEncoder(), node);
+            final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
+                target.setObject(encoded, (byte) (kind + RdfTriple.O_IRI - 1));
+            converter.nodeToProto(getNodeEncoder(), node, consumer);
         }
     }
 
-    protected final void graphNodeToProtoWrapped(TNode node) {
+    protected final void graphNodeToProtoWrapped(GraphBase.Setters target, TNode node) {
         // Graph nodes may be null in Jena for example... so we need to handle that.
         if ((lastGraphSet && node == null && lastGraph == null) || (node != null && node.equals(lastGraph))) {
             return;
@@ -147,73 +133,33 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
         lastGraphSet = true;
         lastGraph = node;
-        currentTerm = SpoTerm.GRAPH;
-        converter.graphNodeToProto(getNodeEncoder(), node);
+        final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) -> 
+            consumeGraphNode(target, encoded, kind);
+        converter.graphNodeToProto(getNodeEncoder(), node, consumer);
     }
-
-    @Override
-    public void appendIri(RdfIri iri) {
-        switch (currentTerm) {
-            case SUBJECT -> currentSpoBase.setSIri(iri);
-            case PREDICATE -> currentSpoBase.setPIri(iri);
-            case OBJECT -> currentSpoBase.setOIri(iri);
-            case GRAPH -> currentGraphBase.setGIri(iri);
-            case NAMESPACE -> currentNsBase.setValue(iri);
-            case HEADER -> currentHeaderBase.setHIri(iri);
+    
+    protected final void consumeGraphNode(GraphBase.Setters target, Object encoded, Byte kind) {
+        switch (kind) {
+            case RdfBufferAppender.TERM_IRI -> target.setGIri((RdfIri) encoded);
+            case RdfBufferAppender.TERM_BNODE -> target.setGBnode((String) encoded);
+            case RdfBufferAppender.TERM_LITERAL -> target.setGLiteral((RdfLiteral) encoded);
+            case RdfBufferAppender.TERM_DEFAULT_GRAPH -> target.setGDefaultGraph((RdfDefaultGraph) encoded);
+            default -> throw new RdfProtoSerializationError("Unexpected graph node kind: " + kind);
         }
     }
 
     @Override
-    public void appendBlankNode(String label) {
-        switch (currentTerm) {
-            case SUBJECT -> currentSpoBase.setSBnode(label);
-            case PREDICATE -> currentSpoBase.setPBnode(label);
-            case OBJECT -> currentSpoBase.setOBnode(label);
-            case GRAPH -> currentGraphBase.setGBnode(label);
-            case HEADER -> currentHeaderBase.setHBnode(label);
-        }
-    }
-
-    @Override
-    public void appendLiteral(RdfLiteral literal) {
-        switch (currentTerm) {
-            case SUBJECT -> currentSpoBase.setSLiteral(literal);
-            case PREDICATE -> currentSpoBase.setPLiteral(literal);
-            case OBJECT -> currentSpoBase.setOLiteral(literal);
-            case GRAPH -> currentGraphBase.setGLiteral(literal);
-            case HEADER -> currentHeaderBase.setHLiteral(literal);
-        }
-    }
-
-    @Override
-    public void appendQuotedTriple(TNode subject, TNode predicate, TNode object) {
-        // Store the current state of the SpoBase and SpoTerm
-        final SpoBase.Setters parent = currentSpoBase;
-        final SpoTerm parentTerm = currentTerm;
+    public void appendQuotedTriple(TNode subject, TNode predicate, TNode object, BiConsumer<Object, Byte> consumer) {
         // Encode the quoted triple
         final RdfTriple.Mutable quotedTriple = RdfTriple.newInstance();
-        currentSpoBase = quotedTriple;
         final var nodeEncoder = getNodeEncoder();
-        currentTerm = SpoTerm.SUBJECT;
-        converter.nodeToProto(nodeEncoder, subject);
-        currentTerm = SpoTerm.PREDICATE;
-        converter.nodeToProto(nodeEncoder, predicate);
-        currentTerm = SpoTerm.OBJECT;
-        converter.nodeToProto(nodeEncoder, object);
-        // Restore the previous state and set the quoted triple
-        currentSpoBase = parent;
-        currentTerm = parentTerm;
-        switch (currentTerm) {
-            case SUBJECT -> currentSpoBase.setSTripleTerm(quotedTriple);
-            case PREDICATE -> currentSpoBase.setPTripleTerm(quotedTriple);
-            case OBJECT -> currentSpoBase.setOTripleTerm(quotedTriple);
-            case GRAPH -> throw new RdfProtoSerializationError("Cannot set a graph node to be a quoted triple.");
-            case HEADER -> currentHeaderBase.setHTripleTerm(quotedTriple);
-        }
-    }
-
-    @Override
-    public void appendDefaultGraph() {
-        currentGraphBase.setGDefaultGraph(RdfDefaultGraph.EMPTY);
+        converter.nodeToProto(nodeEncoder, subject, quotedTriple::setSubject);
+        converter.nodeToProto(nodeEncoder, predicate, (Object encoded, Byte kind) ->
+            quotedTriple.setPredicate(encoded, (byte) (kind + RdfTriple.P_IRI - 1))
+        );
+        converter.nodeToProto(nodeEncoder, object, (Object encoded, Byte kind) ->
+            quotedTriple.setObject(encoded, (byte) (kind + RdfTriple.O_IRI - 1))
+        );
+        consumer.accept(quotedTriple, RdfBufferAppender.TERM_TRIPLE);
     }
 }

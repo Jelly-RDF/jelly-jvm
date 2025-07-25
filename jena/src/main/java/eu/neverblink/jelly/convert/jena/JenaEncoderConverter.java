@@ -9,17 +9,19 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 
+import java.util.function.BiConsumer;
+
 public final class JenaEncoderConverter
     implements ProtoEncoderConverter<Node>, TripleExtractor<Node, Triple>, QuadExtractor<Node, Quad> {
 
     @Override
-    public void nodeToProto(NodeEncoder<Node> encoder, Node node) {
+    public void nodeToProto(NodeEncoder<Node> encoder, Node node, BiConsumer<Object, Byte> consumer) {
         // URI/IRI
         if (node.isURI()) {
-            encoder.makeIri(node.getURI());
+            encoder.makeIri(node.getURI(), consumer);
         } else if (node.isBlank()) {
             // Blank node
-            encoder.makeBlankNode(node.getBlankNodeLabel());
+            encoder.makeBlankNode(node.getBlankNodeLabel(), consumer);
         } else if (node.isLiteral()) {
             // Literal
             final var lang = node.getLiteralLanguage();
@@ -27,38 +29,38 @@ public final class JenaEncoderConverter
                 // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
                 // We compare by reference, because the datatype is a singleton.
                 if (node.getLiteralDatatype() == XSDDatatype.XSDstring) {
-                    encoder.makeSimpleLiteral(node.getLiteralLexicalForm());
+                    encoder.makeSimpleLiteral(node.getLiteralLexicalForm(), consumer);
                 } else {
-                    encoder.makeDtLiteral(node, node.getLiteralLexicalForm(), node.getLiteralDatatypeURI());
+                    encoder.makeDtLiteral(node, node.getLiteralLexicalForm(), node.getLiteralDatatypeURI(), consumer);
                 }
             } else {
-                encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
+                encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang, consumer);
             }
         } else if (node.isNodeTriple()) {
             // RDF-star node
             final var t = node.getTriple();
-            encoder.makeQuotedTriple(t.getSubject(), t.getPredicate(), t.getObject());
+            encoder.makeQuotedTriple(t.getSubject(), t.getPredicate(), t.getObject(), consumer);
         } else {
             throw new IllegalArgumentException("Cannot encode node: " + node);
         }
     }
 
     @Override
-    public void graphNodeToProto(NodeEncoder<Node> encoder, Node node) {
+    public void graphNodeToProto(NodeEncoder<Node> encoder, Node node, BiConsumer<Object, Byte> consumer) {
         // Default graph
         if (node == null) {
-            encoder.makeDefaultGraph();
+            encoder.makeDefaultGraph(consumer);
             return;
         } else if (node.isURI()) {
             // URI/IRI
             if (Quad.isDefaultGraph(node)) {
-                encoder.makeDefaultGraph();
+                encoder.makeDefaultGraph(consumer);
             } else {
-                encoder.makeIri(node.getURI());
+                encoder.makeIri(node.getURI(), consumer);
             }
         } else if (node.isBlank()) {
             // Blank node
-            encoder.makeBlankNode(node.getBlankNodeLabel());
+            encoder.makeBlankNode(node.getBlankNodeLabel(), consumer);
         } else if (node.isLiteral()) {
             // Literal
             final var lang = node.getLiteralLanguage();
@@ -66,12 +68,12 @@ public final class JenaEncoderConverter
                 // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
                 // We compare by reference, because the datatype is a singleton.
                 if (node.getLiteralDatatype() == XSDDatatype.XSDstring) {
-                    encoder.makeSimpleLiteral(node.getLiteralLexicalForm());
+                    encoder.makeSimpleLiteral(node.getLiteralLexicalForm(), consumer);
                 } else {
-                    encoder.makeDtLiteral(node, node.getLiteralLexicalForm(), node.getLiteralDatatypeURI());
+                    encoder.makeDtLiteral(node, node.getLiteralLexicalForm(), node.getLiteralDatatypeURI(), consumer);
                 }
             } else {
-                encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
+                encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang, consumer);
             }
         } else {
             throw new IllegalArgumentException("Cannot encode graph node: " + node);

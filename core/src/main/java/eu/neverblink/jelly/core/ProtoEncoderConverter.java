@@ -1,5 +1,7 @@
 package eu.neverblink.jelly.core;
 
+import java.util.function.BiConsumer;
+
 /**
  * Converter trait for translating between an RDF library's object representation and Jelly's proto objects.
  * <p>
@@ -8,6 +10,6 @@ package eu.neverblink.jelly.core;
  * @param <TNode> type of RDF nodes in the library
  */
 public interface ProtoEncoderConverter<TNode> {
-    void nodeToProto(NodeEncoder<TNode> encoder, TNode node);
-    void graphNodeToProto(NodeEncoder<TNode> encoder, TNode node);
+    void nodeToProto(NodeEncoder<TNode> encoder, TNode node, BiConsumer<Object, Byte> consumer);
+    void graphNodeToProto(NodeEncoder<TNode> encoder, TNode node, BiConsumer<Object, Byte> consumer);
 }
