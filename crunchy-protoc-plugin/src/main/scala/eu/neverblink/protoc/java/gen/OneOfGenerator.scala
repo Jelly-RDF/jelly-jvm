@@ -41,17 +41,20 @@ class OneOfGenerator(val info: OneOfInfo):
       .addModifiers(Modifier.PROTECTED)
     field.initializer("null")
     t.addField(field.build)
-    val numberField = FieldSpec.builder(TypeName.BYTE, info.numberFieldName)
-      .addModifiers(Modifier.PROTECTED)
-      .initializer("$L", 0)
-    t.addField(numberField.build)
+    // Class-based oneofs do not need a field for the number, we match by class
+    if !info.usesClassBasedOneof then
+      val numberField = FieldSpec.builder(TypeName.BYTE, info.numberFieldName)
+        .addModifiers(Modifier.PROTECTED)
+        .initializer("$L", 0)
+      t.addField(numberField.build)
 
   def generateMemberMethods(t: TypeSpec.Builder, tMutable: TypeSpec.Builder): Unit =
     // Checks if any has state is true
     val has = MethodSpec.methodBuilder(info.hazzerName)
       .addModifiers(Modifier.PUBLIC)
       .returns(classOf[Boolean])
-      .addStatement("return $N != 0", info.numberFieldName)
+    if info.usesClassBasedOneof then has.addStatement("return $N != null", info.fieldName)
+    else has.addStatement("return $N != 0", info.numberFieldName)
     t.addMethod(has.build)
     // Set the value -- general method
     val set = MethodSpec.methodBuilder(info.setterName)
@@ -62,10 +65,11 @@ class OneOfGenerator(val info: OneOfInfo):
       .addModifiers(Modifier.PUBLIC)
       .returns(info.parentTypeInfo.mutableTypeName)
       .addParameter(RuntimeClasses.ObjectType, info.fieldName)
-      .addParameter(TypeName.BYTE, "number")
       .addStatement("this.$N = $N", info.fieldName, info.fieldName)
-      .addStatement("this.$N = $L", info.numberFieldName, "number")
-      .addStatement("return this")
+    if !info.usesClassBasedOneof then
+      set.addParameter(TypeName.BYTE, "number")
+      set.addStatement("this.$N = $L", info.numberFieldName, "number")
+    set.addStatement("return this")
     tMutable.addMethod(set.build)
     // Get the value -- general method
     val get = MethodSpec.methodBuilder(info.getterName)
@@ -76,95 +80,162 @@ class OneOfGenerator(val info: OneOfInfo):
       .returns(RuntimeClasses.ObjectType)
       .addStatement("return $N", info.fieldName)
     t.addMethod(get.build)
-    // Get the value -- field number method
-    val getNumber = MethodSpec.methodBuilder(info.getNumberName)
-      .addJavadoc("Returns the set field number of the <code>$L</code> oneof field.",
-        info.descriptor.getName
-      )
-      .addModifiers(Modifier.PUBLIC)
-      .returns(TypeName.BYTE)
-      .addStatement("return $N", info.numberFieldName)
-    t.addMethod(getNumber.build)
-    // Specific per-field methods
-    for field <- fields do
-      // Set
-      val setField = MethodSpec.methodBuilder(field.setterName)
-        .addJavadoc("Sets the <code>$L</code> oneof field to $L.",
-          info.descriptor.getName, field.fieldName
-        )
-        .addModifiers(Modifier.PUBLIC)
-        .returns(info.parentTypeInfo.mutableTypeName)
-        .addParameter(field.getTypeName, field.fieldName)
-        .addStatement("this.$N = $N", info.fieldName, field.fieldName)
-        .addStatement("this.$N = $L", info.numberFieldName, field.descriptor.getNumber)
-        .addStatement("return this")
-      tMutable.addMethod(setField.build)
-      // Get
-      val getField = MethodSpec.methodBuilder(field.getterName)
-        .addJavadoc("Returns the <code>$L</code> oneof field.\n" +
-          "Use with care, as it will not check if the correct field number is actually set.",
+    if !info.usesClassBasedOneof then
+      // Get the value -- field number method
+      val getNumber = MethodSpec.methodBuilder(info.getNumberName)
+        .addJavadoc("Returns the set field number of the <code>$L</code> oneof field.",
           info.descriptor.getName
         )
         .addModifiers(Modifier.PUBLIC)
-        .returns(field.getTypeName)
-        .addStatement("return ($T) $N", field.getTypeName, info.fieldName)
-      t.addMethod(getField.build)
-      // Has
-      val hasField = MethodSpec.methodBuilder(field.hazzerName)
-        .addJavadoc("Checks if the <code>$L</code> oneof is set to $L.",
-          info.descriptor.getName, field.fieldName
-        )
-        .addModifiers(Modifier.PUBLIC)
-        .returns(classOf[Boolean])
-        .addStatement("return $N == $L", info.numberFieldName, field.descriptor.getNumber)
-      t.addMethod(hasField.build)
+        .returns(TypeName.BYTE)
+        .addStatement("return $N", info.numberFieldName)
+      t.addMethod(getNumber.build)
+      // Specific per-field methods
+      for field <- fields do
+        // Set
+        val setField = MethodSpec.methodBuilder(field.setterName)
+          .addJavadoc("Sets the <code>$L</code> oneof field to $L.",
+            info.descriptor.getName, field.fieldName
+          )
+          .addModifiers(Modifier.PUBLIC)
+          .returns(info.parentTypeInfo.mutableTypeName)
+          .addParameter(field.getTypeName, field.fieldName)
+          .addStatement("this.$N = $N", info.fieldName, field.fieldName)
+          .addStatement("this.$N = $L", info.numberFieldName, field.descriptor.getNumber)
+          .addStatement("return this")
+        tMutable.addMethod(setField.build)
+        // Get
+        val getField = MethodSpec.methodBuilder(field.getterName)
+          .addJavadoc("Returns the <code>$L</code> oneof field.\n" +
+            "Use with care, as it will not check if the correct field number is actually set.",
+            info.descriptor.getName
+          )
+          .addModifiers(Modifier.PUBLIC)
+          .returns(field.getTypeName)
+          .addStatement("return ($T) $N", field.getTypeName, info.fieldName)
+        t.addMethod(getField.build)
+        // Has
+        val hasField = MethodSpec.methodBuilder(field.hazzerName)
+          .addJavadoc("Checks if the <code>$L</code> oneof is set to $L.",
+            info.descriptor.getName, field.fieldName
+          )
+          .addModifiers(Modifier.PUBLIC)
+          .returns(classOf[Boolean])
+          .addStatement("return $N == $L", info.numberFieldName, field.descriptor.getNumber)
+        t.addMethod(hasField.build)
 
 
   def generateCopyFromCode(method: MethodSpec.Builder): Unit =
     method.addStatement("this.$N = other.$N", info.fieldName, info.fieldName)
-    method.addStatement("this.$N = other.$N", info.numberFieldName, info.numberFieldName)
+    if !info.usesClassBasedOneof then
+      method.addStatement("this.$N = other.$N", info.numberFieldName, info.numberFieldName)
 
   def generateMergeFromMessageCode(method: MethodSpec.Builder): Unit =
     // Not an actual merge, we just set the value
     generateCopyFromCode(method)
 
-  def generateEqualsStatement(method: MethodSpec.Builder): Unit =
-    method.addCode(
+  def generateEqualsStatement(method: MethodSpec.Builder): Unit = {
+    if info.usesClassBasedOneof then method.addCode(
+      "($N == null && other.$N == null || $N != null && $N.equals(other.$N))",
+      info.fieldName, info.fieldName, info.fieldName, info.fieldName, info.fieldName
+    ) else method.addCode(
       "$N == other.$N && ($N == 0 || $N.equals(other.$N))",
       info.numberFieldName, info.numberFieldName, info.numberFieldName, info.fieldName, info.fieldName
     )
+  }
 
   def generateClearCode(method: MethodSpec.Builder): Unit =
-    // This is not really needed, we can just set the field number to 0
-    // method.addStatement("this.$N = null", info.fieldName)
-    method.addStatement("this.$N = 0", info.numberFieldName)
+    if info.usesClassBasedOneof then
+      method.addStatement("this.$N = null", info.fieldName)
+    else method.addStatement("this.$N = 0", info.numberFieldName)
 
   def generateWriteToCode(method: MethodSpec.Builder): Unit =
-    method.beginControlFlow("switch ($N)", info.numberFieldName)
-    for f <- fieldGenerators do
-      method.beginControlFlow("case $L:", f.info.descriptor.getNumber)
-      if !f.info.isEmptyMessage then
-        method.addStatement("final var $N = $N()", f.info.fieldName, f.info.getterName)
-      f.generateSerializationCode(method)
-      method.addStatement("break")
+    if info.usesClassBasedOneof then
+      for (f, ix) <- fieldGenerators.zipWithIndex do
+        val extractor = "$N instanceof $T $N"
+        if ix == 0 then
+          method.beginControlFlow(f"if ($extractor)", info.fieldName, f.info.getTypeName, f.info.fieldName)
+        else
+          method.nextControlFlow(f"else if ($extractor)", info.fieldName, f.info.getTypeName, f.info.fieldName)
+        f.generateSerializationCode(method)
       method.endControlFlow
-    method.endControlFlow
+    else
+      method.beginControlFlow("switch ($N)", info.numberFieldName)
+      for f <- fieldGenerators do
+        method.beginControlFlow("case $L:", f.info.descriptor.getNumber)
+        if !f.info.isEmptyMessage then
+          method.addStatement("final var $N = $N()", f.info.fieldName, f.info.getterName)
+        f.generateSerializationCode(method)
+        method.addStatement("break")
+        method.endControlFlow
+      method.endControlFlow
 
   def generateComputeSerializedSizeCode(method: MethodSpec.Builder): Unit =
-    method.beginControlFlow("switch ($N)", info.numberFieldName)
-    for f <- fieldGenerators do
-      method.beginControlFlow("case $L:", f.info.descriptor.getNumber)
-      if !f.info.isEmptyMessage then
-        method.addStatement("final var $N = $N()", f.info.fieldName, f.info.getterName)
-      f.generateComputeSerializedSizeCode(method)
-      method.addStatement("break")
+    if info.usesClassBasedOneof then
+      for (f, ix) <- fieldGenerators.zipWithIndex do
+        val extractor = "$N instanceof $T $N"
+        if ix == 0 then
+          method.beginControlFlow(f"if ($extractor)", info.fieldName, f.info.getTypeName, f.info.fieldName)
+        else
+          method.nextControlFlow(f"else if ($extractor)", info.fieldName, f.info.getTypeName, f.info.fieldName)
+        f.generateComputeSerializedSizeCode(method)
       method.endControlFlow
-    method.endControlFlow
+    else
+      method.beginControlFlow("switch ($N)", info.numberFieldName)
+      for f <- fieldGenerators do
+        method.beginControlFlow("case $L:", f.info.descriptor.getNumber)
+        if !f.info.isEmptyMessage then
+          method.addStatement("final var $N = $N()", f.info.fieldName, f.info.getterName)
+        f.generateComputeSerializedSizeCode(method)
+        method.addStatement("break")
+        method.endControlFlow
+      method.endControlFlow
 
   /**
    * @return true if the tag needs to be read
    */
   def generateMergingCode(method: MethodSpec.Builder, field: FieldGenerator, fastOneof: Boolean): Boolean =
+    if info.usesClassBasedOneof then generateMergingCodeByClass(method, field)
+    else generateMergingCodeByNumber(method, field, fastOneof)
+
+  private def generateMergingCodeByClass(
+    method: MethodSpec.Builder, field: FieldGenerator
+  ): Boolean =
+    if field.info.isEmptyMessage then
+      // We simply set the value to the singleton instance
+      method
+        .addStatement("$N($T.EMPTY)", info.setterName, field.info.getTypeName)
+        .addStatement("input.skipField(tag)")
+    else if field.info.isMessage then
+      // If the field is already set to the same kind of message, we merge it.
+      // Otherwise, we create a new instance of the message and merge it.
+      method
+        .addStatement("final $T $N", field.info.getTypeName, field.info.fieldName)
+        .beginControlFlow(
+          "if ($N != null && $N instanceof $T __v)",
+          info.fieldName, info.fieldName, field.info.getTypeName
+        )
+        .addStatement("$N = __v", field.info.fieldName)
+        .nextControlFlow("else")
+        .addStatement("$N = $T.newInstance()", field.info.fieldName, field.info.getTypeName)
+        .addStatement("$N($N)", info.setterName, field.info.fieldName)
+        .endControlFlow
+        .addStatement("ProtoMessage.mergeDelimitedFrom($N, input, remainingDepth)", field.info.fieldName)
+    else if field.info.isString then
+      method.addStatement("$N(input.readStringRequireUtf8())", info.setterName)
+    else if field.info.isPrimitive then
+      method.addStatement(
+        "$N(input.read$L())",
+        info.setterName,
+        FieldUtil.getCapitalizedType(field.info.descriptor.getType)
+      )
+    else
+      throw new IllegalStateException("Unhandled field type: " + field.info.getTypeName)
+    true
+
+  private def generateMergingCodeByNumber(
+    method: MethodSpec.Builder, field: FieldGenerator, fastOneof: Boolean
+  ): Boolean =
     if field.info.isEmptyMessage then
       // We simply set the correct field number and the value to the singleton instance
       method
@@ -186,8 +257,7 @@ class OneOfGenerator(val info: OneOfInfo):
           .addStatement("final $T $N", field.info.getTypeName, field.info.fieldName)
           .beginControlFlow("if ($N == $L)", info.numberFieldName, field.info.descriptor.getNumber)
           .addStatement("$N = $N()", field.info.fieldName, field.info.getterName)
-          .endControlFlow
-          .beginControlFlow("else")
+          .nextControlFlow("else")
           .addStatement("$N = $T.newInstance()", field.info.fieldName, field.info.getTypeName)
           .addStatement("$N($N)", field.info.setterName, field.info.fieldName)
           .endControlFlow

@@ -51,33 +51,28 @@ public abstract class DecoderBase<TNode, TDatatype> {
 
     /**
      * Convert a GraphTerm message to a node.
-     * @param kind field number of the term, normalized to 0, 1, 2, 3
      * @param graph graph term to convert
      * @return converted node
      * @throws RdfProtoDeserializationError if the graph term can't be decoded
      */
-    protected final TNode convertGraphTerm(int kind, Object graph) {
+    protected final TNode convertGraphTerm(Object graph) {
         if (graph == null) {
             throw new RdfProtoDeserializationError("Empty graph term encountered in a GRAPHS stream.");
         }
 
         try {
-            switch (kind) {
-                case 0 -> {
-                    final var iri = (RdfIri) graph;
-                    return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
-                }
-                case 1 -> {
-                    final var bnode = (String) graph;
-                    return converter.makeBlankNode(bnode);
-                }
-                case 2 -> {
-                    return converter.makeDefaultGraphNode();
-                }
-                case 3 -> {
-                    return convertLiteral((RdfLiteral) graph);
-                }
-                default -> throw new RdfProtoDeserializationError("Unknown graph term type");
+            if (graph instanceof RdfIri iri) {
+                return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
+            } else if (graph instanceof String bnode) {
+                return converter.makeBlankNode(bnode);
+            } else if (graph instanceof RdfDefaultGraph) {
+                return converter.makeDefaultGraphNode();
+            } else if (graph instanceof RdfLiteral literal) {
+                return convertLiteral(literal);
+            } else {
+                throw new RdfProtoDeserializationError(
+                    "Unknown graph term type: %s".formatted(graph.getClass().getName())
+                );
             }
         } catch (Exception e) {
             throw new RdfProtoDeserializationError("Error while decoding graph term %s".formatted(e), e);
@@ -86,36 +81,28 @@ public abstract class DecoderBase<TNode, TDatatype> {
 
     /**
      * Convert a SpoTerm message to a node.
-     * @param kind field number of the term, normalized to 0, 1, 2, 3
      * @param term term to convert
      * @throws RdfProtoDeserializationError if the term can't be decoded
      */
-    protected final TNode convertTerm(int kind, Object term) {
+    protected final TNode convertTerm(Object term) {
         if (term == null) {
             throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
         }
         try {
-            switch (kind) {
-                case 0 -> {
-                    final var iri = (RdfIri) term;
-                    return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
-                }
-                case 1 -> {
-                    final var bnode = (String) term;
-                    return converter.makeBlankNode(bnode);
-                }
-                case 2 -> {
-                    return convertLiteral((RdfLiteral) term);
-                }
-                case 3 -> {
-                    final var triple = (RdfTriple) term;
-                    return converter.makeTripleNode(
-                        convertTerm(triple.getSubjectFieldNumber() - RdfTriple.S_IRI, triple.getSubject()),
-                        convertTerm(triple.getPredicateFieldNumber() - RdfTriple.P_IRI, triple.getPredicate()),
-                        convertTerm(triple.getObjectFieldNumber() - RdfTriple.O_IRI, triple.getObject())
-                    );
-                }
-                default -> throw new RdfProtoDeserializationError("Unknown term type");
+            if (term instanceof RdfIri iri) {
+                return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
+            } else if (term instanceof String bNode) {
+                return converter.makeBlankNode(bNode);
+            } else if (term instanceof RdfLiteral literal) {
+                return convertLiteral(literal);
+            } else if (term instanceof RdfTriple triple) {
+                return converter.makeTripleNode(
+                    convertTerm(triple.getSubject()),
+                    convertTerm(triple.getPredicate()),
+                    convertTerm(triple.getObject())
+                );
+            } else {
+                throw new RdfProtoDeserializationError("Unknown term type: %s".formatted(term.getClass().getName()));
             }
         } catch (Exception e) {
             throw new RdfProtoDeserializationError("Error while decoding term %s".formatted(e), e);
@@ -139,12 +126,11 @@ public abstract class DecoderBase<TNode, TDatatype> {
     /**
      * Convert the subject from an SPO-like message to a node, while respecting repeated terms.
      * <p>
-     * The logic here is repeated in the other SPO methods for permance reasons (avoiding additional reference passing).
+     * The logic here is repeated in the other SPO methods for performance reasons (avoiding additional reference passing).
      * @param spo SPO-like message to extract the subject from
      * @return converted node
      */
     protected final TNode convertSubjectTermWrapped(SpoBase spo) {
-        int kind = spo.getSubjectFieldNumber() - RdfTriple.S_IRI;
         final var term = spo.getSubject();
         if (term == null && lastSubject == null) {
             throw new RdfProtoDeserializationError("Empty subject term without previous term.");
@@ -154,7 +140,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
             return lastSubject;
         }
 
-        final var node = convertTerm(kind, term);
+        final var node = convertTerm(term);
         lastSubject = node;
         return node;
     }
@@ -167,7 +153,6 @@ public abstract class DecoderBase<TNode, TDatatype> {
      * @return converted node
      */
     protected final TNode convertPredicateTermWrapped(SpoBase spo) {
-        int kind = spo.getPredicateFieldNumber() - RdfTriple.P_IRI;
         final var term = spo.getPredicate();
         if (term == null && lastPredicate == null) {
             throw new RdfProtoDeserializationError("Empty subject term without previous term.");
@@ -177,7 +162,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
             return lastPredicate;
         }
 
-        final var node = convertTerm(kind, term);
+        final var node = convertTerm(term);
         lastPredicate = node;
         return node;
     }
@@ -190,7 +175,6 @@ public abstract class DecoderBase<TNode, TDatatype> {
      * @return converted node
      */
     protected final TNode convertObjectTermWrapped(SpoBase spo) {
-        int kind = spo.getObjectFieldNumber() - RdfTriple.O_IRI;
         final var term = spo.getObject();
         if (term == null && lastObject == null) {
             throw new RdfProtoDeserializationError("Empty subject term without previous term.");
@@ -200,18 +184,17 @@ public abstract class DecoderBase<TNode, TDatatype> {
             return lastObject;
         }
 
-        final var node = convertTerm(kind, term);
+        final var node = convertTerm(term);
         lastObject = node;
         return node;
     }
 
     /**
      * Convert a GraphTerm message to a node, while respecting repeated terms.
-     * @param kind field number of the term, normalized to 0, 1, 2, 3
      * @param graph GraphBase message to convert
      * @return converted node
      */
-    protected final TNode convertGraphTermWrapped(int kind, GraphBase graph) {
+    protected final TNode convertGraphTermWrapped(GraphBase graph) {
         if (graph.getGraph() == null && lastGraph == null) {
             // Special case: Jena and RDF4J allow null graph terms in the input,
             // so we do not treat them as errors.
@@ -222,7 +205,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
             return lastGraph;
         }
 
-        final var node = convertGraphTerm(kind, graph.getGraph());
+        final var node = convertGraphTerm(graph.getGraph());
         lastGraph = node;
         return node;
     }

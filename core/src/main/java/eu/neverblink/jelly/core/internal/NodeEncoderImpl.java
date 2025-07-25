@@ -150,7 +150,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @param iri The IRI to encode
      */
     @Override
-    public RdfBufferAppender.Encoded makeIri(String iri) {
+    public RdfIri makeIri(String iri) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
             final var nameEntry = nameLookup.getOrAddEntry(iri);
@@ -160,10 +160,10 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             int nameId = nameEntry.getId;
             if (lastIriNameId + 1 == nameId) {
                 lastIriNameId = nameId;
-                return new RdfBufferAppender.Encoded(zeroIri, RdfBufferAppender.TERM_IRI);
+                return zeroIri;
             } else {
                 lastIriNameId = nameId;
-                return new RdfBufferAppender.Encoded(nameOnlyIris[nameId], RdfBufferAppender.TERM_IRI);
+                return nameOnlyIris[nameId];
             }
         }
 
@@ -217,23 +217,19 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     }
 
     @Override
-    public RdfBufferAppender.Encoded makeBlankNode(String label) {
+    public String makeBlankNode(String label) {
         // Blank nodes are not cached, as they are just strings.
-        return new RdfBufferAppender.Encoded(label, RdfBufferAppender.TERM_BNODE);
+        return label;
     }
 
     @Override
-    public RdfBufferAppender.Encoded makeSimpleLiteral(String lex) {
-        final var lit = otherLiteralCache.computeIfAbsent(lex, k -> RdfLiteral.newInstance().setLex(lex));
-        return new RdfBufferAppender.Encoded(lit, RdfBufferAppender.TERM_LITERAL);
+    public RdfLiteral makeSimpleLiteral(String lex) {
+        return otherLiteralCache.computeIfAbsent(lex, k -> RdfLiteral.newInstance().setLex(lex));
     }
 
     @Override
-    public RdfBufferAppender.Encoded makeLangLiteral(TNode lit, String lex, String lang) {
-        final var encoded = otherLiteralCache.computeIfAbsent(lit, k ->
-            RdfLiteral.newInstance().setLex(lex).setLangtag(lang)
-        );
-        return new RdfBufferAppender.Encoded(encoded, RdfBufferAppender.TERM_LITERAL);
+    public RdfLiteral makeLangLiteral(TNode lit, String lex, String lang) {
+        return otherLiteralCache.computeIfAbsent(lit, k -> RdfLiteral.newInstance().setLex(lex).setLangtag(lang));
     }
 
     /**
@@ -243,7 +239,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @param datatypeName The name of the datatype
      */
     @Override
-    public RdfBufferAppender.Encoded makeDtLiteral(TNode key, String lex, String datatypeName) {
+    public RdfLiteral makeDtLiteral(TNode key, String lex, String datatypeName) {
         if (datatypeLookup.size == 0) {
             throw new RdfProtoSerializationError(
                 "Datatype literals cannot be " +
@@ -258,7 +254,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             cachedNode.lookupSerial1 == Objects.requireNonNull(datatypeLookup.serials)[cachedNode.lookupPointer1]
         ) {
             datatypeLookup.onAccess(cachedNode.lookupPointer1);
-            return new RdfBufferAppender.Encoded(cachedNode.encoded, RdfBufferAppender.TERM_LITERAL);
+            return cachedNode.encoded;
         }
 
         // The node is not encoded, but we may already have the datatype encoded
@@ -272,45 +268,42 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         cachedNode.lookupPointer1 = dtId;
         cachedNode.lookupSerial1 = Objects.requireNonNull(datatypeLookup.serials)[dtId];
         cachedNode.encoded = RdfLiteral.newInstance().setLex(lex).setDatatype(dtId);
-        return new RdfBufferAppender.Encoded(cachedNode.encoded, RdfBufferAppender.TERM_LITERAL);
+        return cachedNode.encoded;
     }
 
     @Override
-    public RdfBufferAppender.Encoded makeQuotedTriple(TNode s, TNode p, TNode o) {
+    public RdfTriple makeQuotedTriple(TNode s, TNode p, TNode o) {
         return bufferAppender.appendQuotedTriple(s, p, o);
     }
 
     @Override
-    public RdfBufferAppender.Encoded makeDefaultGraph() {
-        return new RdfBufferAppender.Encoded(RdfDefaultGraph.EMPTY, RdfBufferAppender.TERM_DEFAULT_GRAPH);
+    public RdfDefaultGraph makeDefaultGraph() {
+        return RdfDefaultGraph.EMPTY;
     }
 
     /**
      * Helper function to output an IRI from a cached node using same-prefix and next-name optimizations.
      * @param cachedNode The cached node
      */
-    private RdfBufferAppender.Encoded outputIri(DependentNode<RdfIri> cachedNode) {
+    private RdfIri outputIri(DependentNode<RdfIri> cachedNode) {
         int nameId = cachedNode.lookupPointer1;
         int prefixId = cachedNode.lookupPointer2;
         if (lastIriPrefixId == prefixId) {
             if (lastIriNameId + 1 == nameId) {
                 lastIriNameId = nameId;
-                return new RdfBufferAppender.Encoded(zeroIri, RdfBufferAppender.TERM_IRI);
+                return zeroIri;
             } else {
                 lastIriNameId = nameId;
-                return new RdfBufferAppender.Encoded(nameOnlyIris[nameId], RdfBufferAppender.TERM_IRI);
+                return nameOnlyIris[nameId];
             }
         } else {
             lastIriPrefixId = prefixId;
             if (lastIriNameId + 1 == nameId) {
                 lastIriNameId = nameId;
-                return new RdfBufferAppender.Encoded(
-                    RdfIri.newInstance().setPrefixId(prefixId),
-                    RdfBufferAppender.TERM_IRI
-                );
+                return RdfIri.newInstance().setPrefixId(prefixId);
             } else {
                 lastIriNameId = nameId;
-                return new RdfBufferAppender.Encoded(cachedNode.encoded, RdfBufferAppender.TERM_IRI);
+                return cachedNode.encoded;
             }
         }
     }

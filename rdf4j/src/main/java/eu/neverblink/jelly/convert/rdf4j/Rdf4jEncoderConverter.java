@@ -13,7 +13,7 @@ public class Rdf4jEncoderConverter
     implements ProtoEncoderConverter<Value>, TripleExtractor<Value, Statement>, QuadExtractor<Value, Statement> {
 
     @Override
-    public RdfBufferAppender.Encoded nodeToProto(NodeEncoder<Value> encoder, Value value) {
+    public Object nodeToProto(NodeEncoder<Value> encoder, Value value) {
         if (value instanceof IRI iri) {
             return encoder.makeIri(iri.stringValue());
         } else if (value instanceof BNode bNode) {
@@ -39,7 +39,7 @@ public class Rdf4jEncoderConverter
     }
 
     @Override
-    public RdfBufferAppender.Encoded graphNodeToProto(NodeEncoder<Value> encoder, Value value) {
+    public Object graphNodeToProto(NodeEncoder<Value> encoder, Value value) {
         if (value instanceof IRI iri) {
             return encoder.makeIri(iri.stringValue());
         } else if (value instanceof BNode bNode) {

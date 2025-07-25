@@ -130,7 +130,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         final var namespace = RdfPatchNamespace.newInstance().setName(name);
         if (iriValue != null) {
             final var encoded = converter.nodeToProto(getNodeEncoder(), iriValue);
-            namespace.setValue((RdfIri) encoded.node());
+            namespace.setValue((RdfIri) encoded);
         }
         if (graph != null) {
             this.graphNodeToProtoWrapped(namespace, graph);
@@ -143,8 +143,7 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         emitOptions();
         final var header = RdfPatchHeader.newInstance().setKey(key);
         final var encoded = converter.nodeToProto(getNodeEncoder(), value);
-        // Header's field numbers are aligned with TERM_* constants, with an offset of 1.
-        header.setValue(encoded.node(), (byte) (encoded.termType() + 1));
+        header.setValue(encoded);
         rowBuffer.appendMessage().setHeader(header).getSerializedSize();
     }
 

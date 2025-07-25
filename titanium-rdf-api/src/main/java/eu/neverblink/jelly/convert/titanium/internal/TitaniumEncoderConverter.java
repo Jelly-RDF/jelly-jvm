@@ -9,7 +9,7 @@ import eu.neverblink.jelly.core.*;
 public final class TitaniumEncoderConverter implements ProtoEncoderConverter<Object> {
 
     @Override
-    public RdfBufferAppender.Encoded nodeToProto(NodeEncoder<Object> encoder, Object titaniumNode) {
+    public Object nodeToProto(NodeEncoder<Object> encoder, Object titaniumNode) {
         try {
             return switch (TitaniumNode.typeOf(titaniumNode)) {
                 case IRI -> encoder.makeIri(TitaniumNode.iriLikeOf(titaniumNode));
@@ -34,7 +34,7 @@ public final class TitaniumEncoderConverter implements ProtoEncoderConverter<Obj
     }
 
     @Override
-    public RdfBufferAppender.Encoded graphNodeToProto(NodeEncoder<Object> encoder, Object titaniumNode) {
+    public Object graphNodeToProto(NodeEncoder<Object> encoder, Object titaniumNode) {
         try {
             if (titaniumNode == null) {
                 return encoder.makeDefaultGraph();

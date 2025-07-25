@@ -91,7 +91,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     protected final RdfGraphStart graphStartToProto(TNode graph) {
         final RdfGraphStart.Mutable graphStart = RdfGraphStart.newInstance();
         final var encoded = converter.graphNodeToProto(getNodeEncoder(), graph);
-        setGraphNode(graphStart, encoded);
+        graphStart.setGraph(encoded);
         return graphStart;
     }
 
@@ -99,8 +99,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         if (!node.equals(lastSubject)) {
             lastSubject = node;
             final var encoded = converter.nodeToProto(getNodeEncoder(), node);
-            // Shortcut: for subject nodes, TERM_* constants align with field numbers.
-            target.setSubject(encoded.node(), encoded.termType());
+            target.setSubject(encoded);
         }
     }
 
@@ -108,8 +107,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         if (!node.equals(lastPredicate)) {
             lastPredicate = node;
             final var encoded = converter.nodeToProto(getNodeEncoder(), node);
-            // Shortcut: for predicate nodes, TERM_* constants can be simply offset.
-            target.setPredicate(encoded.node(), (byte) (encoded.termType() + RdfTriple.P_IRI - 1));
+            target.setPredicate(encoded);
         }
     }
 
@@ -117,7 +115,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         if (!node.equals(lastObject)) {
             lastObject = node;
             final var encoded = converter.nodeToProto(getNodeEncoder(), node);
-            target.setObject(encoded.node(), (byte) (encoded.termType() + RdfTriple.O_IRI - 1));
+            target.setObject(encoded);
         }
     }
 
@@ -130,30 +128,20 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         lastGraphSet = true;
         lastGraph = node;
         final var encoded = converter.graphNodeToProto(getNodeEncoder(), node);
-        setGraphNode(target, encoded);
-    }
-
-    protected final void setGraphNode(GraphBase.Setters target, Encoded encoded) {
-        switch (encoded.termType()) {
-            case RdfBufferAppender.TERM_IRI -> target.setGIri((RdfIri) encoded.node());
-            case RdfBufferAppender.TERM_BNODE -> target.setGBnode((String) encoded.node());
-            case RdfBufferAppender.TERM_LITERAL -> target.setGLiteral((RdfLiteral) encoded.node());
-            case RdfBufferAppender.TERM_DEFAULT_GRAPH -> target.setGDefaultGraph((RdfDefaultGraph) encoded.node());
-            default -> throw new RdfProtoSerializationError("Unexpected graph node kind: " + encoded.termType());
-        }
+        target.setGraph(encoded);
     }
 
     @Override
-    public RdfBufferAppender.Encoded appendQuotedTriple(TNode subject, TNode predicate, TNode object) {
+    public RdfTriple appendQuotedTriple(TNode subject, TNode predicate, TNode object) {
         // Encode the quoted triple
         final RdfTriple.Mutable quotedTriple = RdfTriple.newInstance();
         final var nodeEncoder = getNodeEncoder();
         final var s = converter.nodeToProto(nodeEncoder, subject);
-        quotedTriple.setSubject(s.node(), s.termType());
+        quotedTriple.setSubject(s);
         final var p = converter.nodeToProto(nodeEncoder, predicate);
-        quotedTriple.setPredicate(p.node(), (byte) (p.termType() + RdfTriple.P_IRI - 1));
+        quotedTriple.setPredicate(p);
         final var o = converter.nodeToProto(nodeEncoder, object);
-        quotedTriple.setObject(o.node(), (byte) (o.termType() + RdfTriple.O_IRI - 1));
-        return new Encoded(quotedTriple, RdfBufferAppender.TERM_TRIPLE);
+        quotedTriple.setObject(o);
+        return quotedTriple;
     }
 }

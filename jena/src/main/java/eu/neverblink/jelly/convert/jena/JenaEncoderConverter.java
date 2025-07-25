@@ -14,7 +14,7 @@ public final class JenaEncoderConverter
     implements ProtoEncoderConverter<Node>, TripleExtractor<Node, Triple>, QuadExtractor<Node, Quad> {
 
     @Override
-    public RdfBufferAppender.Encoded nodeToProto(NodeEncoder<Node> encoder, Node node) {
+    public Object nodeToProto(NodeEncoder<Node> encoder, Node node) {
         // URI/IRI
         if (node.isURI()) {
             return encoder.makeIri(node.getURI());
@@ -45,7 +45,7 @@ public final class JenaEncoderConverter
     }
 
     @Override
-    public RdfBufferAppender.Encoded graphNodeToProto(NodeEncoder<Node> encoder, Node node) {
+    public Object graphNodeToProto(NodeEncoder<Node> encoder, Node node) {
         // Default graph
         if (node == null) {
             return encoder.makeDefaultGraph();

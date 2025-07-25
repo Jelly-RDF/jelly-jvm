@@ -8,30 +8,12 @@ import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 @InternalApi
 public interface SpoBase {
     interface Setters extends SpoBase {
-        SpoBase setSubject(Object subject, byte number);
-        SpoBase setSIri(RdfIri sIri);
-        SpoBase setSBnode(String sBnode);
-        SpoBase setSLiteral(RdfLiteral sLiteral);
-        SpoBase setSTripleTerm(RdfTriple sTripleTerm);
-
-        SpoBase setPredicate(Object predicate, byte number);
-        SpoBase setPIri(RdfIri pIri);
-        SpoBase setPBnode(String pBnode);
-        SpoBase setPLiteral(RdfLiteral pLiteral);
-        SpoBase setPTripleTerm(RdfTriple pTripleTerm);
-
-        SpoBase setObject(Object object, byte number);
-        SpoBase setOIri(RdfIri oIri);
-        SpoBase setOBnode(String oBnode);
-        SpoBase setOLiteral(RdfLiteral oLiteral);
-        SpoBase setOTripleTerm(RdfTriple oTripleTerm);
+        SpoBase setSubject(Object subject);
+        SpoBase setPredicate(Object predicate);
+        SpoBase setObject(Object object);
     }
 
     Object getSubject();
     Object getPredicate();
     Object getObject();
-
-    byte getSubjectFieldNumber();
-    byte getPredicateFieldNumber();
-    byte getObjectFieldNumber();
 }
