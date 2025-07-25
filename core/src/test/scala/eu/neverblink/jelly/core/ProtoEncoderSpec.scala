@@ -16,25 +16,31 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
   // Test body
   "a ProtoEncoder" should {
-    "encode triple statements" in {
-      val buffer = RowBuffer.newLazyImmutable()
-      val options = JellyOptions.SMALL_GENERALIZED.clone
-        .setPhysicalType(PhysicalStreamType.TRIPLES)
-        .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
+    val tripleBasicCases = Seq(
+      ("Triples1", Triples1),
+      ("Triples3LongStrings", Triples3LongStrings),
+    )
 
-      val encoder = MockConverterFactory.encoder(Pep(
-        options,
-        enableNamespaceDeclarations = false,
-        rowBuffer = buffer,
-        allocator = EncoderAllocator.newHeapAllocator(),
-      ))
+    for (name, testCase) <- tripleBasicCases do
+      s"encode triple statements ($name)" in {
+        val buffer = RowBuffer.newLazyImmutable()
+        val options = JellyOptions.SMALL_GENERALIZED.clone
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
+          .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
 
-      Triples1.mrl.foreach(triple => encoder.handleTriple(triple.s, triple.p, triple.o))
+        val encoder = MockConverterFactory.encoder(Pep(
+          options,
+          enableNamespaceDeclarations = false,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ))
 
-      val observed = buffer.getRows.asScala.toSeq
-      assertEncoded(observed, Triples1.encoded(options))
-      assertSizesPrecomputed(observed)
-    }
+        testCase.mrl.foreach(triple => encoder.handleTriple(triple.s, triple.p, triple.o))
+
+        val observed = buffer.getRows.asScala.toSeq
+        assertEncoded(observed, testCase.encoded(options))
+        assertSizesPrecomputed(observed)
+      }
 
     "encode triple statements with ns decls and an external buffer" in {
       val buffer = RowBuffer.newLazyImmutable()

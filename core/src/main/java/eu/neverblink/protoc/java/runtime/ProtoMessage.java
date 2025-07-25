@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Abstract interface implemented by Protocol Message objects.
@@ -25,6 +24,13 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      * This is used to prevent stack overflow errors when parsing deeply nested messages.
      */
     public static final int DEFAULT_MAX_RECURSION_DEPTH = 64;
+
+    /**
+     * Maximum size of the output buffer used when writing messages to an OutputStream.
+     * Set to 2x the default buffer size of CodedOutputStream to avoid allocating additional buffers
+     * for long strings that are common in RDF.
+     */
+    public static final int MAX_OUTPUT_STREAM_BUFFER_SIZE = 8096;
 
     protected ProtoMessage() {}
 
@@ -87,12 +93,8 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
 
     public final MessageType writeDelimitedTo(OutputStream output) throws IOException {
         // [X] Ensure that the serialized size is cached
-        int size = getSerializedSize();
-        int bufferSize = CodedOutputStream.computeUInt32SizeNoTag(size) + size;
-        if (bufferSize > CodedOutputStream.DEFAULT_BUFFER_SIZE) {
-            bufferSize = CodedOutputStream.DEFAULT_BUFFER_SIZE;
-        }
-        final var codedOutput = CodedOutputStream.newInstance(output, bufferSize);
+        final int size = getSerializedSize();
+        final var codedOutput = ProtobufUtil.createCodedOutputStream(output, size);
         codedOutput.writeUInt32NoTag(size);
         writeTo(codedOutput);
         codedOutput.flush();
@@ -100,8 +102,9 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     }
 
     public final MessageType writeTo(OutputStream output) throws IOException {
-        final var codedOutput = CodedOutputStream.newInstance(output);
-        getSerializedSize(); // [X] Ensure that the serialized size is cached
+        // [X] Ensure that the serialized size is cached
+        final int size = getSerializedSize();
+        final var codedOutput = ProtobufUtil.createCodedOutputStream(output, size);
         writeTo(codedOutput);
         codedOutput.flush();
         return getThis();
