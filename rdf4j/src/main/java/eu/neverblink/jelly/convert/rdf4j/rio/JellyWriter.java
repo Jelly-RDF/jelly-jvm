@@ -143,7 +143,6 @@ public final class JellyWriter extends AbstractRDFWriter {
         checkWritingStarted();
         if (!isDelimited) {
             // Non-delimited variant – whole stream in one frame
-            reusableFrame.resetCachedSize();
             try {
                 reusableFrame.writeTo(codedOutput);
             } catch (Exception e) {
@@ -159,7 +158,7 @@ public final class JellyWriter extends AbstractRDFWriter {
             codedOutput.flush();
             outputStream.flush();
         } catch (IOException e) {
-            throw new RDFHandlerException("Error writing flushing output", e);
+            throw new RDFHandlerException("Error flushing output", e);
         }
     }
 

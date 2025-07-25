@@ -10,11 +10,11 @@ import eu.neverblink.jelly.core.proto.v1.patch.PatchStreamType;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchFrame;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchRow;
+import eu.neverblink.protoc.java.runtime.ArrayListMessageCollection;
+import eu.neverblink.protoc.java.runtime.MessageCollection;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdfpatch.RDFChanges;
 
@@ -52,7 +52,10 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     private final CodedOutputStream codedOutput;
 
     private final RdfPatchOptions patchOptions;
-    private final Collection<RdfPatchRow> buffer = new ArrayList<>();
+    private final MessageCollection<RdfPatchRow, RdfPatchRow.Mutable> buffer = new ArrayListMessageCollection<>(
+        RdfPatchRow::newInstance
+    );
+    private final RdfPatchFrame reusableFrame = RdfPatchFrame.newInstance().setRows(buffer);
     private final EncoderAllocator allocator;
 
     private final RDFChanges delegate;
@@ -165,13 +168,12 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     public void finish() {
         if (!options.delimited) {
             // Non-delimited variant, whole stream in one frame
-            final var frame = RdfPatchFrame.newInstance();
-            frame.getRows().addAll(buffer);
             try {
-                frame.writeTo(codedOutput);
+                reusableFrame.writeTo(codedOutput);
             } catch (IOException e) {
                 throw new IllegalStateException("Failed to write frame to output stream", e);
             }
+            buffer.clear();
             allocator.releaseAll();
         } else if (!buffer.isEmpty()) {
             flushBuffer();
@@ -194,10 +196,9 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     }
 
     private void flushBuffer() {
-        final var frame = RdfPatchFrame.newInstance();
-        frame.getRows().addAll(buffer);
+        reusableFrame.resetCachedSize();
         try {
-            frame.writeDelimitedTo(codedOutput);
+            reusableFrame.writeDelimitedTo(codedOutput);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to write frame to output stream", e);
         } finally {

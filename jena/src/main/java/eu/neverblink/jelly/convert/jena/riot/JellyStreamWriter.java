@@ -100,7 +100,6 @@ public final class JellyStreamWriter implements StreamRDF {
         // Flush the buffer and finish the stream
         if (!formatVariant.isDelimited()) {
             // Non-delimited variant – whole stream in one frame
-            reusableFrame.resetCachedSize();
             try {
                 reusableFrame.writeTo(codedOutput);
             } catch (IOException e) {
