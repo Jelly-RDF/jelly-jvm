@@ -1,6 +1,6 @@
 package eu.neverblink.protoc.java.gen
 
-import com.palantir.javapoet.{FieldSpec, MethodSpec, TypeName, TypeSpec}
+import com.palantir.javapoet.{ClassName, FieldSpec, MethodSpec, TypeName, TypeSpec}
 import eu.neverblink.protoc.java.gen.RequestInfo.OneOfInfo
 
 import javax.lang.model.element.Modifier
@@ -152,11 +152,7 @@ class OneOfGenerator(val info: OneOfInfo):
   def generateWriteToCode(method: MethodSpec.Builder): Unit =
     if info.usesClassBasedOneof then
       for (f, ix) <- fieldGenerators.zipWithIndex do
-        val extractor = "$N instanceof $T $N"
-        if ix == 0 then
-          method.beginControlFlow(f"if ($extractor)", info.fieldName, f.info.getTypeName, f.info.fieldName)
-        else
-          method.nextControlFlow(f"else if ($extractor)", info.fieldName, f.info.getTypeName, f.info.fieldName)
+        serializationByClassBranch(method, f, ix)
         f.generateSerializationCode(method)
       method.endControlFlow
     else
@@ -173,11 +169,7 @@ class OneOfGenerator(val info: OneOfInfo):
   def generateComputeSerializedSizeCode(method: MethodSpec.Builder): Unit =
     if info.usesClassBasedOneof then
       for (f, ix) <- fieldGenerators.zipWithIndex do
-        val extractor = "$N instanceof $T $N"
-        if ix == 0 then
-          method.beginControlFlow(f"if ($extractor)", info.fieldName, f.info.getTypeName, f.info.fieldName)
-        else
-          method.nextControlFlow(f"else if ($extractor)", info.fieldName, f.info.getTypeName, f.info.fieldName)
+        serializationByClassBranch(method, f, ix)
         f.generateComputeSerializedSizeCode(method)
       method.endControlFlow
     else
@@ -190,6 +182,18 @@ class OneOfGenerator(val info: OneOfInfo):
         method.addStatement("break")
         method.endControlFlow
       method.endControlFlow
+
+  private def serializationByClassBranch(
+    method: MethodSpec.Builder, f: FieldGenerator, ix: Int
+  ): MethodSpec.Builder =
+    // Compare against final subclass type for better performance
+    val typeName = if f.info.isPrimitive || f.info.isString then f.info.getTypeName
+    else f.info.getTypeName.asInstanceOf[ClassName].nestedClass("Mutable")
+    val extractor = "$N instanceof $T $N"
+    if ix == 0 then
+      method.beginControlFlow(f"if ($extractor)", info.fieldName, typeName, f.info.fieldName)
+    else
+      method.nextControlFlow(f"else if ($extractor)", info.fieldName, typeName, f.info.fieldName)
 
   /**
    * @return true if the tag needs to be read
@@ -213,7 +217,8 @@ class OneOfGenerator(val info: OneOfInfo):
         .addStatement("final $T $N", field.info.getTypeName, field.info.fieldName)
         .beginControlFlow(
           "if ($N != null && $N instanceof $T __v)",
-          info.fieldName, info.fieldName, field.info.getTypeName
+          info.fieldName, info.fieldName,
+          field.info.getTypeName.asInstanceOf[ClassName].nestedClass("Mutable")
         )
         .addStatement("$N = __v", field.info.fieldName)
         .nextControlFlow("else")

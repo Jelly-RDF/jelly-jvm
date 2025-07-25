@@ -197,13 +197,13 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
     private Object handleSpoTerm(Object term) {
         if (term == null) {
             return null;
-        } else if (term instanceof RdfIri iri) {
+        } else if (term instanceof RdfIri.Mutable iri) {
             return handleIri(iri);
         } else if (term instanceof String blankNode) {
             return blankNode;
-        } else if (term instanceof RdfLiteral literal) {
+        } else if (term instanceof RdfLiteral.Mutable literal) {
             return handleLiteral(literal);
-        } else if (term instanceof RdfTriple triple) {
+        } else if (term instanceof RdfTriple.Mutable triple) {
             return handleTripleTerm(triple);
         } else {
             throw new RdfProtoTranscodingError("Unknown term type");
@@ -213,13 +213,13 @@ public class ProtoTranscoderImpl implements ProtoTranscoder {
     private Object handleGraphTerm(Object graph) {
         if (graph == null) {
             return null;
-        } else if (graph instanceof RdfIri iri) {
+        } else if (graph instanceof RdfIri.Mutable iri) {
             return handleIri(iri);
         } else if (graph instanceof String blankNode) {
             return blankNode; // blank node
-        } else if (graph instanceof RdfDefaultGraph) {
+        } else if (graph instanceof RdfDefaultGraph.Mutable) {
             return graph; // default graph
-        } else if (graph instanceof RdfLiteral literal) {
+        } else if (graph instanceof RdfLiteral.Mutable literal) {
             return handleLiteral(literal);
         } else {
             throw new RdfProtoTranscodingError("Unknown graph term type");

@@ -61,13 +61,13 @@ public abstract class DecoderBase<TNode, TDatatype> {
         }
 
         try {
-            if (graph instanceof RdfIri iri) {
+            if (graph instanceof RdfIri.Mutable iri) {
                 return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
             } else if (graph instanceof String bnode) {
                 return converter.makeBlankNode(bnode);
-            } else if (graph instanceof RdfDefaultGraph) {
+            } else if (graph instanceof RdfDefaultGraph.Mutable) {
                 return converter.makeDefaultGraphNode();
-            } else if (graph instanceof RdfLiteral literal) {
+            } else if (graph instanceof RdfLiteral.Mutable literal) {
                 return convertLiteral(literal);
             } else {
                 throw new RdfProtoDeserializationError(
@@ -89,13 +89,16 @@ public abstract class DecoderBase<TNode, TDatatype> {
             throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
         }
         try {
-            if (term instanceof RdfIri iri) {
+            // Optimization: check against the final class to lower overhead.
+            // This looks like a case that the JVM would optimize anyway, but OpenJDK 23 doesn't do it.
+            // Checking against the final class guarantees that the check is just 1 load + 1 compare.
+            if (term instanceof RdfIri.Mutable iri) {
                 return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
             } else if (term instanceof String bNode) {
                 return converter.makeBlankNode(bNode);
-            } else if (term instanceof RdfLiteral literal) {
+            } else if (term instanceof RdfLiteral.Mutable literal) {
                 return convertLiteral(literal);
-            } else if (term instanceof RdfTriple triple) {
+            } else if (term instanceof RdfTriple.Mutable triple) {
                 return converter.makeTripleNode(
                     convertTerm(triple.getSubject()),
                     convertTerm(triple.getPredicate()),
