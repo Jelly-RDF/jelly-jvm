@@ -2,6 +2,7 @@ package eu.neverblink.jelly.convert.rdf4j;
 
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
+import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.utils.QuadExtractor;
 import eu.neverblink.jelly.core.utils.TripleExtractor;
@@ -13,52 +14,52 @@ public class Rdf4jEncoderConverter
     implements ProtoEncoderConverter<Value>, TripleExtractor<Value, Statement>, QuadExtractor<Value, Statement> {
 
     @Override
-    public void nodeToProto(NodeEncoder<Value> encoder, Value value, BiConsumer<Object, Byte> consumer) {
+    public RdfBufferAppender.Encoded nodeToProto(NodeEncoder<Value> encoder, Value value) {
         if (value instanceof IRI iri) {
-            encoder.makeIri(iri.stringValue(), consumer);
+            return encoder.makeIri(iri.stringValue());
         } else if (value instanceof BNode bNode) {
-            encoder.makeBlankNode(bNode.getID(), consumer);
+            return encoder.makeBlankNode(bNode.getID());
         } else if (value instanceof Literal literal) {
             final var lex = literal.getLabel();
             final var lang = literal.getLanguage();
             if (lang.isPresent()) {
-                encoder.makeLangLiteral(literal, lex, lang.get(), consumer);
+                return encoder.makeLangLiteral(literal, lex, lang.get());
             } else {
                 final var dt = literal.getDatatype();
                 if (!dt.equals(XSD.STRING)) {
-                    encoder.makeDtLiteral(literal, lex, dt.stringValue(), consumer);
+                    return encoder.makeDtLiteral(literal, lex, dt.stringValue());
                 } else {
-                    encoder.makeSimpleLiteral(lex, consumer);
+                    return encoder.makeSimpleLiteral(lex);
                 }
             }
         } else if (value instanceof Triple triple) {
-            encoder.makeQuotedTriple(triple.getSubject(), triple.getPredicate(), triple.getObject(), consumer);
+            return encoder.makeQuotedTriple(triple.getSubject(), triple.getPredicate(), triple.getObject());
         } else {
             throw new RdfProtoSerializationError("Cannot encode node: %s".formatted(value));
         }
     }
 
     @Override
-    public void graphNodeToProto(NodeEncoder<Value> encoder, Value value, BiConsumer<Object, Byte> consumer) {
+    public RdfBufferAppender.Encoded graphNodeToProto(NodeEncoder<Value> encoder, Value value) {
         if (value instanceof IRI iri) {
-            encoder.makeIri(iri.stringValue(), consumer);
+            return encoder.makeIri(iri.stringValue());
         } else if (value instanceof BNode bNode) {
-            encoder.makeBlankNode(bNode.getID(), consumer);
+            return encoder.makeBlankNode(bNode.getID());
         } else if (value instanceof Literal literal) {
             final var lex = literal.getLabel();
             final var lang = literal.getLanguage();
             if (lang.isPresent()) {
-                encoder.makeLangLiteral(literal, lex, lang.get(), consumer);
+                return encoder.makeLangLiteral(literal, lex, lang.get());
             } else {
                 final var dt = literal.getDatatype();
                 if (!dt.equals(XSD.STRING)) {
-                    encoder.makeDtLiteral(literal, lex, dt.stringValue(), consumer);
+                    return encoder.makeDtLiteral(literal, lex, dt.stringValue());
                 } else {
-                    encoder.makeSimpleLiteral(lex, consumer);
+                    return encoder.makeSimpleLiteral(lex);
                 }
             }
         } else if (value == null) {
-            encoder.makeDefaultGraph(consumer);
+            return encoder.makeDefaultGraph();
         } else {
             throw new RdfProtoSerializationError("Cannot encode graph node: %s".formatted(value));
         }

@@ -15,6 +15,8 @@ public interface RdfBufferAppender<TNode> {
     byte TERM_LITERAL = 3;
     byte TERM_TRIPLE = 4;
     byte TERM_DEFAULT_GRAPH = 5;
+    
+    record Encoded(Object node, byte termType) { }
 
     // Lookup entries
     void appendNameEntry(RdfNameEntry nameEntry);
@@ -25,6 +27,6 @@ public interface RdfBufferAppender<TNode> {
     //    void appendIri(RdfIri iri);
     //    void appendBlankNode(String label);
     //    void appendLiteral(RdfLiteral literal);
-    void appendQuotedTriple(TNode subject, TNode predicate, TNode object, BiConsumer<Object, Byte> consumer);
+    Encoded appendQuotedTriple(TNode subject, TNode predicate, TNode object);
     //    void appendDefaultGraph();
 }

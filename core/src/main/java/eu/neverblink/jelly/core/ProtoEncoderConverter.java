@@ -10,6 +10,6 @@ import java.util.function.BiConsumer;
  * @param <TNode> type of RDF nodes in the library
  */
 public interface ProtoEncoderConverter<TNode> {
-    void nodeToProto(NodeEncoder<TNode> encoder, TNode node, BiConsumer<Object, Byte> consumer);
-    void graphNodeToProto(NodeEncoder<TNode> encoder, TNode node, BiConsumer<Object, Byte> consumer);
+    RdfBufferAppender.Encoded nodeToProto(NodeEncoder<TNode> encoder, TNode node);
+    RdfBufferAppender.Encoded graphNodeToProto(NodeEncoder<TNode> encoder, TNode node);
 }

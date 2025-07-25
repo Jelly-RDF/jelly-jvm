@@ -7,7 +7,6 @@ import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.neverblink.jelly.core.proto.v1.patch.*;
-
 import java.util.function.BiConsumer;
 
 /**
@@ -131,9 +130,8 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         emitOptions();
         final var namespace = RdfPatchNamespace.newInstance().setName(name);
         if (iriValue != null) {
-            final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
-                namespace.setValue((RdfIri) encoded);
-            converter.nodeToProto(getNodeEncoder(), iriValue, consumer);
+            final var encoded = converter.nodeToProto(getNodeEncoder(), iriValue);
+            namespace.setValue((RdfIri) encoded.node());
         }
         if (graph != null) {
             this.graphNodeToProtoWrapped(namespace, graph);
@@ -145,10 +143,9 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void header(String key, TNode value) {
         emitOptions();
         final var header = RdfPatchHeader.newInstance().setKey(key);
+        final var encoded = converter.nodeToProto(getNodeEncoder(), value);
         // Header's field numbers are aligned with TERM_* constants, with an offset of 1.
-        final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
-            header.setValue(encoded, (byte) (kind + 1));
-        converter.nodeToProto(getNodeEncoder(), value, consumer);
+        header.setValue(encoded.node(), (byte) (encoded.termType() + 1));
         rowBuffer.appendMessage().setHeader(header).getSerializedSize();
     }
 

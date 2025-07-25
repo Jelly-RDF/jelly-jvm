@@ -91,37 +91,34 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
      */
     protected final RdfGraphStart graphStartToProto(TNode graph) {
         final RdfGraphStart.Mutable graphStart = RdfGraphStart.newInstance();
-        final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
-            consumeGraphNode(graphStart, encoded, kind);
-        converter.graphNodeToProto(getNodeEncoder(), graph, consumer);
+        final var encoded = converter.graphNodeToProto(getNodeEncoder(), graph);
+        setGraphNode(graphStart, encoded);
         return graphStart;
     }
 
     private void subjectNodeToProtoWrapped(SpoBase.Setters target, TNode node) {
         if (!node.equals(lastSubject)) {
             lastSubject = node;
+            final var encoded = converter.nodeToProto(getNodeEncoder(), node);
             // Shortcut: for subject nodes, TERM_* constants align with field numbers.
-            final BiConsumer<Object, Byte> consumer = target::setSubject;
-            converter.nodeToProto(getNodeEncoder(), node, consumer);
+            target.setSubject(encoded.node(), encoded.termType());
         }
     }
 
     private void predicateNodeToProtoWrapped(SpoBase.Setters target, TNode node) {
         if (!node.equals(lastPredicate)) {
             lastPredicate = node;
+            final var encoded = converter.nodeToProto(getNodeEncoder(), node);
             // Shortcut: for predicate nodes, TERM_* constants can be simply offset.
-            final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
-                target.setPredicate(encoded, (byte) (kind + RdfTriple.P_IRI - 1));
-            converter.nodeToProto(getNodeEncoder(), node, consumer);
+            target.setPredicate(encoded.node(), (byte) (encoded.termType() + RdfTriple.P_IRI - 1));
         }
     }
 
     private void objectNodeToProtoWrapped(SpoBase.Setters target, TNode node) {
         if (!node.equals(lastObject)) {
             lastObject = node;
-            final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) ->
-                target.setObject(encoded, (byte) (kind + RdfTriple.O_IRI - 1));
-            converter.nodeToProto(getNodeEncoder(), node, consumer);
+            final var encoded = converter.nodeToProto(getNodeEncoder(), node);
+            target.setObject(encoded.node(), (byte) (encoded.termType() + RdfTriple.O_IRI - 1));
         }
     }
 
@@ -133,33 +130,31 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
         lastGraphSet = true;
         lastGraph = node;
-        final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) -> 
-            consumeGraphNode(target, encoded, kind);
-        converter.graphNodeToProto(getNodeEncoder(), node, consumer);
+        final var encoded = converter.graphNodeToProto(getNodeEncoder(), node);
+        setGraphNode(target, encoded);
     }
-    
-    protected final void consumeGraphNode(GraphBase.Setters target, Object encoded, Byte kind) {
-        switch (kind) {
-            case RdfBufferAppender.TERM_IRI -> target.setGIri((RdfIri) encoded);
-            case RdfBufferAppender.TERM_BNODE -> target.setGBnode((String) encoded);
-            case RdfBufferAppender.TERM_LITERAL -> target.setGLiteral((RdfLiteral) encoded);
-            case RdfBufferAppender.TERM_DEFAULT_GRAPH -> target.setGDefaultGraph((RdfDefaultGraph) encoded);
-            default -> throw new RdfProtoSerializationError("Unexpected graph node kind: " + kind);
+
+    protected final void setGraphNode(GraphBase.Setters target, Encoded encoded) {
+        switch (encoded.termType()) {
+            case RdfBufferAppender.TERM_IRI -> target.setGIri((RdfIri) encoded.node());
+            case RdfBufferAppender.TERM_BNODE -> target.setGBnode((String) encoded.node());
+            case RdfBufferAppender.TERM_LITERAL -> target.setGLiteral((RdfLiteral) encoded.node());
+            case RdfBufferAppender.TERM_DEFAULT_GRAPH -> target.setGDefaultGraph((RdfDefaultGraph) encoded.node());
+            default -> throw new RdfProtoSerializationError("Unexpected graph node kind: " + encoded.termType());
         }
     }
 
     @Override
-    public void appendQuotedTriple(TNode subject, TNode predicate, TNode object, BiConsumer<Object, Byte> consumer) {
+    public RdfBufferAppender.Encoded appendQuotedTriple(TNode subject, TNode predicate, TNode object) {
         // Encode the quoted triple
         final RdfTriple.Mutable quotedTriple = RdfTriple.newInstance();
         final var nodeEncoder = getNodeEncoder();
-        converter.nodeToProto(nodeEncoder, subject, quotedTriple::setSubject);
-        converter.nodeToProto(nodeEncoder, predicate, (Object encoded, Byte kind) ->
-            quotedTriple.setPredicate(encoded, (byte) (kind + RdfTriple.P_IRI - 1))
-        );
-        converter.nodeToProto(nodeEncoder, object, (Object encoded, Byte kind) ->
-            quotedTriple.setObject(encoded, (byte) (kind + RdfTriple.O_IRI - 1))
-        );
-        consumer.accept(quotedTriple, RdfBufferAppender.TERM_TRIPLE);
+        final var s = converter.nodeToProto(nodeEncoder, subject);
+        quotedTriple.setSubject(s.node(), s.termType());
+        final var p = converter.nodeToProto(nodeEncoder, predicate);
+        quotedTriple.setPredicate(p.node(), (byte) (p.termType() + RdfTriple.P_IRI - 1));
+        final var o = converter.nodeToProto(nodeEncoder, object);
+        quotedTriple.setObject(o.node(), (byte) (o.termType() + RdfTriple.O_IRI - 1));
+        return new Encoded(quotedTriple, RdfBufferAppender.TERM_TRIPLE);
     }
 }

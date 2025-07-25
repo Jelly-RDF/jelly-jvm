@@ -71,9 +71,8 @@ public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         emitOptions();
 
         final var ns = RdfNamespaceDeclaration.newInstance().setName(prefix);
-        final BiConsumer<Object, Byte> consumer = (Object encoded, Byte kind) -> 
-            ns.setValue((RdfIri) encoded);
-        converter.nodeToProto(getNodeEncoder(), namespace, consumer);
+        final var encoded = converter.nodeToProto(getNodeEncoder(), namespace);
+        ns.setValue((RdfIri) encoded.node());
         rowBuffer.appendMessage().setNamespace(ns).getSerializedSize();
     }
 

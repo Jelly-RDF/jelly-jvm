@@ -11,19 +11,19 @@ public interface NodeEncoder<TNode> {
      * Encode an IRI node.
      * @param iri The IRI to encode.
      */
-    void makeIri(String iri, BiConsumer<Object, Byte> consumer);
+    RdfBufferAppender.Encoded makeIri(String iri);
 
     /**
      * Encode a blank node.
      * @param label The label of the blank node.
      */
-    void makeBlankNode(String label, BiConsumer<Object, Byte> consumer);
+    RdfBufferAppender.Encoded makeBlankNode(String label);
 
     /**
      * Encode a simple literal (of type xsd:string).
      * @param lex The lexical form of the literal.
      */
-    void makeSimpleLiteral(String lex, BiConsumer<Object, Byte> consumer);
+    RdfBufferAppender.Encoded makeSimpleLiteral(String lex);
 
     /**
      * Encode a language-tagged literal.
@@ -31,7 +31,7 @@ public interface NodeEncoder<TNode> {
      * @param lex The lexical form of the literal.
      * @param lang The language tag.
      */
-    void makeLangLiteral(TNode lit, String lex, String lang, BiConsumer<Object, Byte> consumer);
+    RdfBufferAppender.Encoded makeLangLiteral(TNode lit, String lex, String lang);
 
     /**
      * Encode a datatype literal (not xsd:string and not language-tagged).
@@ -39,7 +39,7 @@ public interface NodeEncoder<TNode> {
      * @param lex The lexical form of the literal.
      * @param dt The datatype IRI.
      */
-    void makeDtLiteral(TNode lit, String lex, String dt, BiConsumer<Object, Byte> consumer);
+    RdfBufferAppender.Encoded makeDtLiteral(TNode lit, String lex, String dt);
 
     /**
      * Encode a quoted triple node (RDF-star).
@@ -48,10 +48,10 @@ public interface NodeEncoder<TNode> {
      * @param p The predicate of the triple.
      * @param o The object of the triple.
      */
-    void makeQuotedTriple(TNode s, TNode p, TNode o, BiConsumer<Object, Byte> consumer);
+    RdfBufferAppender.Encoded makeQuotedTriple(TNode s, TNode p, TNode o);
 
     /**
      * Encode a default graph node.
      */
-    void makeDefaultGraph(BiConsumer<Object, Byte> consumer);
+    RdfBufferAppender.Encoded makeDefaultGraph();
 }

@@ -2,6 +2,7 @@ package eu.neverblink.jelly.core.helpers
 
 import eu.neverblink.jelly.core.{NodeEncoder, ProtoEncoderConverter, RdfProtoSerializationError}
 import eu.neverblink.jelly.core.*
+import eu.neverblink.jelly.core.RdfBufferAppender.Encoded
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{QuadExtractor, TripleExtractor}
@@ -16,22 +17,22 @@ class MockProtoEncoderConverter extends ProtoEncoderConverter[Node], TripleExtra
   
   type C = BiConsumer[Object, java.lang.Byte]
 
-  override def nodeToProto(encoder: NodeEncoder[Node], node: Node, consumer: C): Unit = node match
-    case Iri(iri) => encoder.makeIri(iri, consumer)
-    case SimpleLiteral(lex) => encoder.makeSimpleLiteral(lex, consumer)
-    case LangLiteral(lex, lang) => encoder.makeLangLiteral(node, lex, lang, consumer)
-    case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt, consumer)
-    case BlankNode(label) => encoder.makeBlankNode(label, consumer)
-    case TripleNode(s, p, o) => encoder.makeQuotedTriple(s, p, o, consumer)
+  override def nodeToProto(encoder: NodeEncoder[Node], node: Node): Encoded = node match
+    case Iri(iri) => encoder.makeIri(iri)
+    case SimpleLiteral(lex) => encoder.makeSimpleLiteral(lex)
+    case LangLiteral(lex, lang) => encoder.makeLangLiteral(node, lex, lang)
+    case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt)
+    case BlankNode(label) => encoder.makeBlankNode(label)
+    case TripleNode(s, p, o) => encoder.makeQuotedTriple(s, p, o)
     case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")
 
-  override def graphNodeToProto(encoder: NodeEncoder[Node], node: Node, consumer: C): Unit = node match
-    case Iri(iri) => encoder.makeIri(iri, consumer)
-    case SimpleLiteral(lex) => encoder.makeSimpleLiteral(lex, consumer)
-    case LangLiteral(lex, lang) => encoder.makeLangLiteral(node, lex, lang, consumer)
-    case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt, consumer)
-    case BlankNode(label) => encoder.makeBlankNode(label, consumer)
-    case DefaultGraphNode() => encoder.makeDefaultGraph(consumer)
+  override def graphNodeToProto(encoder: NodeEncoder[Node], node: Node): Encoded = node match
+    case Iri(iri) => encoder.makeIri(iri)
+    case SimpleLiteral(lex) => encoder.makeSimpleLiteral(lex)
+    case LangLiteral(lex, lang) => encoder.makeLangLiteral(node, lex, lang)
+    case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt)
+    case BlankNode(label) => encoder.makeBlankNode(label)
+    case DefaultGraphNode() => encoder.makeDefaultGraph()
     case _ => throw RdfProtoSerializationError(s"Cannot encode graph node: $node")
 
   override def getQuadSubject(quad: Quad): Node = quad.s
