@@ -20,7 +20,7 @@ Test / logBuffered := false
 
 lazy val pekkoV = "1.1.5"
 lazy val pekkoGrpcV = "1.1.1"
-lazy val jenaV = "5.3.0"
+lazy val jenaV = "5.5.0"
 lazy val rdf4jV = "5.1.4"
 lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
