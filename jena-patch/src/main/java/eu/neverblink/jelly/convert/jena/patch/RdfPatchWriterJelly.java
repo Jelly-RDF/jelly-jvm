@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.convert.jena.patch;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
+import eu.neverblink.jelly.core.memory.EncoderAllocator;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
 import eu.neverblink.jelly.core.patch.PatchEncoder;
 import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
@@ -49,10 +50,8 @@ public final class RdfPatchWriterJelly implements RDFChanges {
 
     private final RdfPatchOptions patchOptions;
     private final Collection<RdfPatchRow> buffer = new ArrayList<>();
+    private final EncoderAllocator allocator;
 
-    // We don't set any options here – it is the responsibility of the caller to set
-    // a valid stream and statement type here.
-    private final PatchEncoder<Node> encoder;
     private final RDFChanges delegate;
 
     // For the FLAT and PUNCTUATED types, we will split the stream in frames by row count.
@@ -81,8 +80,15 @@ public final class RdfPatchWriterJelly implements RDFChanges {
                     : options.patchOptions().getStatementType()
             );
 
-        this.encoder = converterFactory.encoder(PatchEncoder.Params.of(this.patchOptions, this.buffer));
-        this.delegate = new JenaToJellyPatchHandler(this.encoder, this.patchOptions.getStatementType());
+        // Arena size depends on frame size (if PUNCTUATED) or is fixed at 1024 for other cases.
+        int arenaSize = this.patchOptions.getStreamType() == PatchStreamType.PUNCTUATED ? options.frameSize + 8 : 1024;
+        this.allocator = EncoderAllocator.newArenaAllocator(arenaSize);
+        // We don't set any options here – it is the responsibility of the caller to set
+        // a valid stream and statement type here.
+        final var encoder = converterFactory.encoder(
+            PatchEncoder.Params.of(this.patchOptions, this.buffer, this.allocator)
+        );
+        this.delegate = new JenaToJellyPatchHandler(encoder, this.patchOptions.getStatementType());
         this.shouldSplitByCount = this.patchOptions.getStreamType() != PatchStreamType.FRAME && options.delimited;
     }
 
@@ -162,6 +168,7 @@ public final class RdfPatchWriterJelly implements RDFChanges {
             } catch (IOException e) {
                 throw new IllegalStateException("Failed to write frame to output stream", e);
             }
+            allocator.releaseAll();
         } else if (!buffer.isEmpty()) {
             flushBuffer();
         }
@@ -174,7 +181,7 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     }
 
     private void afterWrite() {
-        if (shouldSplitByCount && buffer.size() >= options.frameSize()) {
+        if (shouldSplitByCount && buffer.size() >= options.frameSize) {
             flushBuffer();
         }
     }
@@ -188,6 +195,7 @@ public final class RdfPatchWriterJelly implements RDFChanges {
             throw new IllegalStateException("Failed to write frame to output stream", e);
         } finally {
             buffer.clear();
+            allocator.releaseAll();
         }
     }
 }
