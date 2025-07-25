@@ -1,7 +1,5 @@
 package eu.neverblink.jelly.core;
 
-import java.util.function.BiConsumer;
-
 /**
  * Converter trait for translating between an RDF library's object representation and Jelly's proto objects.
  * <p>

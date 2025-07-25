@@ -6,7 +6,6 @@ import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.utils.QuadExtractor;
 import eu.neverblink.jelly.core.utils.TripleExtractor;
-import java.util.function.BiConsumer;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 

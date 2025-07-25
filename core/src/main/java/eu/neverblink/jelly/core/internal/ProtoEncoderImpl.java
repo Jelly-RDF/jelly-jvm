@@ -6,8 +6,6 @@ import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.*;
 
-import java.util.function.BiConsumer;
-
 /**
  * Stateful encoder of a protobuf RDF stream.
  * <p>

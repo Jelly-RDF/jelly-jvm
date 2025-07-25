@@ -2,8 +2,6 @@ package eu.neverblink.jelly.core;
 
 import eu.neverblink.jelly.core.proto.v1.*;
 
-import java.util.function.BiConsumer;
-
 /**
  * Interface for appending lookup entries to the row buffer and RDF terms to statements.
  * <p>

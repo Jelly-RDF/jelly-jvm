@@ -7,7 +7,6 @@ import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.neverblink.jelly.core.proto.v1.patch.*;
-import java.util.function.BiConsumer;
 
 /**
  * Implementation of PatchEncoder.

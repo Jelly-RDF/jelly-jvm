@@ -1,7 +1,5 @@
 package eu.neverblink.jelly.core;
 
-import java.util.function.BiConsumer;
-
 /**
  * Interface exposed to RDF library interop modules for encoding RDF terms.
  * @param <TNode> The type of RDF nodes used by the RDF library.

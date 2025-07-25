@@ -9,7 +9,6 @@ import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.util.function.BiConsumer
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
@@ -21,7 +20,6 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
   )
 
   type RdfTerm = RdfIri | String | RdfLiteral | (Mrl.Node, Mrl.Node, Mrl.Node) | RdfDefaultGraph
-  type Consumer = BiConsumer[Object, java.lang.Byte]
 
   private def getEncoder(prefixTableSize: Int = 8): 
   (NodeEncoderImpl[Mrl.Node], ListBuffer[RdfStreamRow]) =

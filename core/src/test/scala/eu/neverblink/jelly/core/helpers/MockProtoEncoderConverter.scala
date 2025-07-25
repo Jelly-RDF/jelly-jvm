@@ -1,21 +1,14 @@
 package eu.neverblink.jelly.core.helpers
 
-import eu.neverblink.jelly.core.{NodeEncoder, ProtoEncoderConverter, RdfProtoSerializationError}
-import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.RdfBufferAppender.Encoded
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{QuadExtractor, TripleExtractor}
-
-import java.util.function.BiConsumer
-import scala.collection.mutable
+import eu.neverblink.jelly.core.*
 
 /**
  * Mock implementation of ProtoEncoderConverter
  */
 class MockProtoEncoderConverter extends ProtoEncoderConverter[Node], TripleExtractor[Node, Triple], QuadExtractor[Node, Quad]:
-  
-  type C = BiConsumer[Object, java.lang.Byte]
 
   override def nodeToProto(encoder: NodeEncoder[Node], node: Node): Encoded = node match
     case Iri(iri) => encoder.makeIri(iri)

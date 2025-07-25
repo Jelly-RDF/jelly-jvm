@@ -6,7 +6,6 @@ import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.proto.v1.*;
 import java.util.LinkedHashMap;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 
 /**
  * Encodes RDF nodes native to the used RDF library (e.g., Apache Jena, RDF4J) into Jelly's protobuf objects.

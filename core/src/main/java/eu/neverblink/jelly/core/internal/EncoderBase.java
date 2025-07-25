@@ -3,7 +3,6 @@ package eu.neverblink.jelly.core.internal;
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.internal.proto.*;
 import eu.neverblink.jelly.core.proto.v1.*;
-import java.util.function.BiConsumer;
 
 /**
  * Base interface for Jelly proto encoders. Only for internal use.

@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.convert.titanium.internal;
 
 import eu.neverblink.jelly.core.*;
-import java.util.function.BiConsumer;
 
 /**
  * Converter for translating between Titanium RDF API nodes/terms and Jelly proto objects.

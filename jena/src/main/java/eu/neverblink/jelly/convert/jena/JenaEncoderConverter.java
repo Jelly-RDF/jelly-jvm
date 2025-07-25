@@ -10,8 +10,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 
-import java.util.function.BiConsumer;
-
 public final class JenaEncoderConverter
     implements ProtoEncoderConverter<Node>, TripleExtractor<Node, Triple>, QuadExtractor<Node, Quad> {
 
