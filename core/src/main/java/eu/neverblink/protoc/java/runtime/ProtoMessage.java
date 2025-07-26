@@ -25,13 +25,6 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
      */
     public static final int DEFAULT_MAX_RECURSION_DEPTH = 64;
 
-    /**
-     * Maximum size of the output buffer used when writing messages to an OutputStream.
-     * Set to 2x the default buffer size of CodedOutputStream to avoid allocating additional buffers
-     * for long strings that are common in RDF.
-     */
-    public static final int MAX_OUTPUT_STREAM_BUFFER_SIZE = 8096;
-
     protected ProtoMessage() {}
 
     /**
