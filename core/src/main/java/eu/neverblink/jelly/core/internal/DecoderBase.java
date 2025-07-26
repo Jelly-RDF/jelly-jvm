@@ -89,7 +89,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
             throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
         }
         try {
-            // Optimization: check against the final class to lower overhead.
+            // Optimization: do instanceof check against the final class for better performance.
             // This looks like a case that the JVM would optimize anyway, but OpenJDK 23 doesn't do it.
             // Checking against the final class guarantees that the check is just 1 load + 1 compare.
             if (term instanceof RdfIri.Mutable iri) {
@@ -129,7 +129,8 @@ public abstract class DecoderBase<TNode, TDatatype> {
     /**
      * Convert the subject from an SPO-like message to a node, while respecting repeated terms.
      * <p>
-     * The logic here is repeated in the other SPO methods for performance reasons (avoiding additional reference passing).
+     * The logic here is repeated in the other SPO methods for performance reasons
+     * (avoiding additional reference passing).
      * @param spo SPO-like message to extract the subject from
      * @return converted node
      */
@@ -151,7 +152,8 @@ public abstract class DecoderBase<TNode, TDatatype> {
     /**
      * Convert the predicate from an SPO-like message to a node, while respecting repeated terms.
      * <p>
-     * The logic here is repeated in the other SPO methods for permance reasons (avoiding additional reference passing).
+     * The logic here is repeated in the other SPO methods for performance reasons
+     * (avoiding additional reference passing).
      * @param spo SPO-like message to extract the predicate from
      * @return converted node
      */
@@ -173,7 +175,8 @@ public abstract class DecoderBase<TNode, TDatatype> {
     /**
      * Convert the object from an SPO-like message to a node, while respecting repeated terms.
      * <p>
-     * The logic here is repeated in the other SPO methods for permance reasons (avoiding additional reference passing).
+     * The logic here is repeated in the other SPO methods for performance reasons
+     * (avoiding additional reference passing).
      * @param spo SPO-like message to extract the object from
      * @return converted node
      */
