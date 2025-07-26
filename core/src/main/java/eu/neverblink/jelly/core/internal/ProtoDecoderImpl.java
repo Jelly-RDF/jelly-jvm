@@ -220,7 +220,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
                 convertSubjectTermWrapped(quad),
                 convertPredicateTermWrapped(quad),
                 convertObjectTermWrapped(quad),
-                convertGraphTermWrapped(quad.getGraphFieldNumber() - RdfQuad.G_IRI, quad)
+                convertGraphTermWrapped(quad)
             );
         }
     }
@@ -260,10 +260,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         @Override
         protected void handleGraphStart(RdfGraphStart graphStart) {
             currentGraphStarted = true;
-            currentGraph = convertGraphTerm(
-                graphStart.getGraphFieldNumber() - RdfGraphStart.G_IRI,
-                graphStart.getGraph()
-            );
+            currentGraph = convertGraphTerm(graphStart.getGraph());
         }
 
         @Override
@@ -318,10 +315,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         protected void handleGraphStart(RdfGraphStart graphStart) {
-            currentGraph = convertGraphTerm(
-                graphStart.getGraphFieldNumber() - RdfGraphStart.G_IRI,
-                graphStart.getGraph()
-            );
+            currentGraph = convertGraphTerm(graphStart.getGraph());
             protoHandler.handleGraphStart(currentGraph);
         }
 

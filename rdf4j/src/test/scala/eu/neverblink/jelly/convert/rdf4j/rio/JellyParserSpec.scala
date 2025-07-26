@@ -27,9 +27,9 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     ))
     frame.addRows(RdfStreamRow.newInstance().setTriple(
       RdfTriple.newInstance()
-        .setSIri(RdfIri.newInstance())
-        .setPIri(RdfIri.newInstance().setNameId(1))
-        .setOLiteral(RdfLiteral.newInstance().setLex("test"))
+        .setSubject(RdfIri.newInstance())
+        .setPredicate(RdfIri.newInstance().setNameId(1))
+        .setObject(RdfLiteral.newInstance().setLex("test"))
     ))
     frame.toByteArrayDelimited
   }

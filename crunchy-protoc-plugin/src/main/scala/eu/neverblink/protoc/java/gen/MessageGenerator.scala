@@ -162,8 +162,8 @@ class MessageGenerator(val info: MessageInfo):
       .addParameter(classOf[AnyRef], "o")
     // Reference equality check
     equals.beginControlFlow("if (o == this)").addStatement("return true").endControlFlow
-    // Type check
-    equals.beginControlFlow("if (!(o instanceof $T))", info.typeName)
+    // Type check -- check against the final subclass for better performance
+    equals.beginControlFlow("if (!(o instanceof $T))", info.mutableTypeName)
       .addStatement("return false")
       .endControlFlow
     equals.addStatement("$1T other = ($1T) o", info.typeName)

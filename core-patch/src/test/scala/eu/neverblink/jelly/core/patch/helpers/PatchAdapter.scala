@@ -70,22 +70,22 @@ object PatchAdapter:
   def rdfPatchHeader(key: String, value: RdfIri): RdfPatchHeader =
     RdfPatchHeader.newInstance()
       .setKey(key)
-      .setHIri(value)
+      .setValue(value)
 
   def rdfPatchHeader(key: String, value: String): RdfPatchHeader =
     RdfPatchHeader.newInstance()
       .setKey(key)
-      .setHBnode(value)
+      .setValue(value)
 
   def rdfPatchHeader(key: String, value: RdfLiteral): RdfPatchHeader =
     RdfPatchHeader.newInstance()
       .setKey(key)
-      .setHLiteral(value)
+      .setValue(value)
 
   def rdfPatchHeader(key: String, value: RdfTriple): RdfPatchHeader =
     RdfPatchHeader.newInstance()
       .setKey(key)
-      .setHTripleTerm(value)
+      .setValue(value)
 
   // Set the graph yourself on the returned object
   def rdfPatchNamespace(name: String, value: RdfIri = null): RdfPatchNamespace.Mutable =

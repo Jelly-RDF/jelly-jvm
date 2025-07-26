@@ -1,5 +1,10 @@
 package eu.neverblink.jelly.core;
 
+import eu.neverblink.jelly.core.proto.v1.RdfDefaultGraph;
+import eu.neverblink.jelly.core.proto.v1.RdfIri;
+import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
+import eu.neverblink.jelly.core.proto.v1.RdfTriple;
+
 /**
  * Interface exposed to RDF library interop modules for encoding RDF terms.
  * @param <TNode> The type of RDF nodes used by the RDF library.
@@ -9,19 +14,19 @@ public interface NodeEncoder<TNode> {
      * Encode an IRI node.
      * @param iri The IRI to encode.
      */
-    void makeIri(String iri);
+    RdfIri makeIri(String iri);
 
     /**
      * Encode a blank node.
      * @param label The label of the blank node.
      */
-    void makeBlankNode(String label);
+    String makeBlankNode(String label);
 
     /**
      * Encode a simple literal (of type xsd:string).
      * @param lex The lexical form of the literal.
      */
-    void makeSimpleLiteral(String lex);
+    RdfLiteral makeSimpleLiteral(String lex);
 
     /**
      * Encode a language-tagged literal.
@@ -29,7 +34,7 @@ public interface NodeEncoder<TNode> {
      * @param lex The lexical form of the literal.
      * @param lang The language tag.
      */
-    void makeLangLiteral(TNode lit, String lex, String lang);
+    RdfLiteral makeLangLiteral(TNode lit, String lex, String lang);
 
     /**
      * Encode a datatype literal (not xsd:string and not language-tagged).
@@ -37,7 +42,7 @@ public interface NodeEncoder<TNode> {
      * @param lex The lexical form of the literal.
      * @param dt The datatype IRI.
      */
-    void makeDtLiteral(TNode lit, String lex, String dt);
+    RdfLiteral makeDtLiteral(TNode lit, String lex, String dt);
 
     /**
      * Encode a quoted triple node (RDF-star).
@@ -46,10 +51,10 @@ public interface NodeEncoder<TNode> {
      * @param p The predicate of the triple.
      * @param o The object of the triple.
      */
-    void makeQuotedTriple(TNode s, TNode p, TNode o);
+    RdfTriple makeQuotedTriple(TNode s, TNode p, TNode o);
 
     /**
      * Encode a default graph node.
      */
-    void makeDefaultGraph();
+    RdfDefaultGraph makeDefaultGraph();
 }
