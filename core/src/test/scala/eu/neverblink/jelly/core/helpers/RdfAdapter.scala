@@ -146,17 +146,8 @@ object RdfAdapter:
     | RdfLiteral
     | Null
 
-  def rdfGraphStart(graph: RdfGraphValue): RdfGraphStart = {
-    val graphStart = RdfGraphStart.newInstance()
-
-    graph match
-      case g: RdfIri => graphStart.setGIri(g)
-      case g: String => graphStart.setGBnode(g)
-      case g: RdfDefaultGraph => graphStart.setGDefaultGraph(g)
-      case g: RdfLiteral => graphStart.setGLiteral(g)
-
-    graphStart
-  }
+  def rdfGraphStart(graph: RdfGraphValue): RdfGraphStart =
+    RdfGraphStart.newInstance().setGraph(graph)
 
   def rdfGraphStart(): RdfGraphStart =
     RdfGraphStart.newInstance()
@@ -164,39 +155,12 @@ object RdfAdapter:
   def rdfGraphEnd(): RdfGraphEnd =
     RdfGraphEnd.EMPTY
 
-  def rdfQuad(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue, graph: RdfGraphValue = null): RdfQuad = {
-    var quad = RdfQuad.newInstance()
-
-    if subject != null then
-      subject match
-        case s: RdfIri => quad = quad.setSIri(s)
-        case s: String => quad = quad.setSBnode(s)
-        case s: RdfLiteral => quad = quad.setSLiteral(s)
-        case s: RdfTriple => quad = quad.setSTripleTerm(s)
-
-    if predicate != null then
-      predicate match
-        case p: RdfIri => quad = quad.setPIri(p)
-        case p: String => quad = quad.setPBnode(p)
-        case p: RdfLiteral => quad = quad.setPLiteral(p)
-        case p: RdfTriple => quad = quad.setPTripleTerm(p)
-
-    if `object` != null then
-      `object` match
-        case o: RdfIri => quad = quad.setOIri(o)
-        case o: String => quad = quad.setOBnode(o)
-        case o: RdfLiteral => quad = quad.setOLiteral(o)
-        case o: RdfTriple => quad = quad.setOTripleTerm(o)
-
-    if graph != null then
-      graph match
-        case g: RdfIri => quad = quad.setGIri(g)
-        case g: String => quad = quad.setGBnode(g)
-        case g: RdfDefaultGraph => quad = quad.setGDefaultGraph(g)
-        case g: RdfLiteral => quad = quad.setGLiteral(g)
-
-    quad
-  }
+  def rdfQuad(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue, graph: RdfGraphValue = null): RdfQuad =
+    RdfQuad.newInstance()
+      .setSubject(subject)
+      .setPredicate(predicate)
+      .setObject(`object`)
+      .setGraph(graph)
 
   type RdfSpoValue =
     RdfIri
@@ -205,32 +169,11 @@ object RdfAdapter:
     | RdfTriple
     | Null
 
-  def rdfTriple(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue): RdfTriple = {
-    var triple = RdfTriple.newInstance()
-
-    if subject != null then
-      subject match
-        case s: RdfIri => triple = triple.setSIri(s)
-        case s: String => triple = triple.setSBnode(s)
-        case s: RdfLiteral => triple = triple.setSLiteral(s)
-        case s: RdfTriple => triple = triple.setSTripleTerm(s)
-
-    if predicate != null then
-      predicate match
-        case p: RdfIri => triple = triple.setPIri(p)
-        case p: String => triple = triple.setPBnode(p)
-        case p: RdfLiteral => triple = triple.setPLiteral(p)
-        case p: RdfTriple => triple = triple.setPTripleTerm(p)
-
-    if `object` != null then
-      `object` match
-        case o: RdfIri => triple = triple.setOIri(o)
-        case o: String => triple = triple.setOBnode(o)
-        case o: RdfLiteral => triple = triple.setOLiteral(o)
-        case o: RdfTriple => triple = triple.setOTripleTerm(o)
-
-    triple
-  }
+  def rdfTriple(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue): RdfTriple =
+    RdfTriple.newInstance()
+      .setSubject(subject)
+      .setPredicate(predicate)
+      .setObject(`object`)
 
   def extractRdfStreamRow(row: RdfStreamRow): RdfStreamRowValue =
     if row.hasOptions then

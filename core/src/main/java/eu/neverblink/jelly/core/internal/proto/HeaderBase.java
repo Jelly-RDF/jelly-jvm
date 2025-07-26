@@ -8,9 +8,6 @@ import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 @InternalApi
 public interface HeaderBase {
     interface Setters extends HeaderBase {
-        HeaderBase setHIri(RdfIri hIri);
-        HeaderBase setHBnode(String hBnode);
-        HeaderBase setHLiteral(RdfLiteral hLiteral);
-        HeaderBase setHTripleTerm(RdfTriple hTripleTerm);
+        HeaderBase setValue(Object header);
     }
 }

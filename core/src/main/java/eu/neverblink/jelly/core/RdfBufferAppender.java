@@ -13,10 +13,6 @@ public interface RdfBufferAppender<TNode> {
     void appendPrefixEntry(RdfPrefixEntry prefixEntry);
     void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry);
 
-    // RDF terms
-    void appendIri(RdfIri iri);
-    void appendBlankNode(String label);
-    void appendLiteral(RdfLiteral literal);
-    void appendQuotedTriple(TNode subject, TNode predicate, TNode object);
-    void appendDefaultGraph();
+    // Recursive RDF terms
+    RdfTriple appendQuotedTriple(TNode subject, TNode predicate, TNode object);
 }

@@ -114,7 +114,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
             nsRow.getName(),
             // The value is required for the namespace add operation
             getNameDecoder().decode(valueIri.getPrefixId(), valueIri.getNameId()),
-            convertGraphTermWrapped(nsRow.getGraphFieldNumber() - RdfPatchNamespace.G_IRI, nsRow)
+            convertGraphTermWrapped(nsRow)
         );
     }
 
@@ -124,7 +124,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
             nsRow.getName(),
             // The value is not required for the namespace delete operation, null is fine
             decodeNsIri(valueIri),
-            convertGraphTermWrapped(nsRow.getGraphFieldNumber() - RdfPatchNamespace.G_IRI, nsRow)
+            convertGraphTermWrapped(nsRow)
         );
     }
 
@@ -154,10 +154,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
 
     private void handleHeader(RdfPatchHeader hRow) {
         // No support for repeated terms in the header
-        patchHandler.header(
-            hRow.getKey(),
-            convertTerm(hRow.getValueFieldNumber() - RdfPatchHeader.H_IRI, hRow.getValue())
-        );
+        patchHandler.header(hRow.getKey(), convertTerm(hRow.getValue()));
     }
 
     private void handlePunctuation() {
@@ -263,7 +260,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
                 convertSubjectTermWrapped(statement),
                 convertPredicateTermWrapped(statement),
                 convertObjectTermWrapped(statement),
-                convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement)
+                convertGraphTermWrapped(statement)
             );
         }
 
@@ -273,7 +270,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
                 convertSubjectTermWrapped(statement),
                 convertPredicateTermWrapped(statement),
                 convertObjectTermWrapped(statement),
-                convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement)
+                convertGraphTermWrapped(statement)
             );
         }
     }
@@ -323,7 +320,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
             switch (statementType) {
                 case TRIPLES -> patchHandler.addTriple(s, p, o);
                 case QUADS -> {
-                    final var g = convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement);
+                    final var g = convertGraphTermWrapped(statement);
                     patchHandler.addQuad(s, p, o, g);
                 }
             }
@@ -343,7 +340,7 @@ public abstract class PatchDecoderImpl<TNode, TDatatype> extends DecoderBase<TNo
             switch (statementType) {
                 case TRIPLES -> patchHandler.deleteTriple(s, p, o);
                 case QUADS -> {
-                    final var g = convertGraphTermWrapped(statement.getGraphFieldNumber() - RdfQuad.G_IRI, statement);
+                    final var g = convertGraphTermWrapped(statement);
                     patchHandler.deleteQuad(s, p, o, g);
                 }
             }

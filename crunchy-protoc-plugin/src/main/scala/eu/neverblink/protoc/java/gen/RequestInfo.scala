@@ -163,9 +163,10 @@ object RequestInfo:
     ).collect(Collectors.toList)
 
     private val oneOfCount: Int = descriptor.getOneofDeclCount
+    val usesClassBasedOneof: Boolean = options.classBasedOneof.contains(typeName.simpleName())
     val oneOfs: IndexedSeq[OneOfInfo] = for i <- 0 until oneOfCount yield
       new RequestInfo.OneOfInfo(
-        parentFile, this, typeName, descriptor.getOneofDecl(i), i
+        parentFile, this, typeName, descriptor.getOneofDecl(i), i, usesClassBasedOneof
       )
 
     val isEmptyMessage: Boolean = fieldCount == 0 && oneOfCount == 0
@@ -388,7 +389,8 @@ object RequestInfo:
     val parentTypeInfo: RequestInfo.MessageInfo, 
     val parentType: ClassName,
     val descriptor: DescriptorProtos.OneofDescriptorProto,
-    val oneOfIndex: Int
+    val oneOfIndex: Int,
+    val usesClassBasedOneof: Boolean,
   ) {
 
     val upperName: String = NamingUtil.toUpperCamel(descriptor.getName)
