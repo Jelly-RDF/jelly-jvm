@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core.utils;
 
 import com.google.protobuf.CodedOutputStream;
+
 import java.io.*;
 import java.util.function.Consumer;
 
@@ -82,11 +83,6 @@ public final class IoUtils {
         Consumer<TFrame> frameConsumer
     ) throws IOException {
         while (true) {
-            if (inputStream.available() == 0) {
-                // No more data available, break the loop
-                break;
-            }
-
             final var maybeFrame = frameProcessor.apply(inputStream);
             if (maybeFrame == null) {
                 // No more frames available, break the loop
