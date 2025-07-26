@@ -6,6 +6,13 @@ import java.io.OutputStream;
 public class ProtobufUtil {
 
     /**
+     * Maximum size of the output buffer used when writing messages to an OutputStream.
+     * Set to 2x the default buffer size of CodedOutputStream to avoid allocating additional buffers
+     * for long strings that are common in RDF.
+     */
+    public static final int MAX_OUTPUT_STREAM_BUFFER_SIZE = 8192;
+
+    /**
      * Creates a CodedOutputStream with a buffer size adjusted for the message to be serialized,
      * limited to the maximum buffer size. We size the buffer to include space for the
      * size of the delimiter.
@@ -17,7 +24,7 @@ public class ProtobufUtil {
     public static CodedOutputStream createCodedOutputStream(OutputStream outputStream, int messageSize) {
         final int bufferSize = Integer.min(
             CodedOutputStream.computeUInt32SizeNoTag(messageSize) + messageSize,
-            ProtoMessage.MAX_OUTPUT_STREAM_BUFFER_SIZE
+            MAX_OUTPUT_STREAM_BUFFER_SIZE
         );
         return CodedOutputStream.newInstance(outputStream, bufferSize);
     }
@@ -31,6 +38,6 @@ public class ProtobufUtil {
      * @return a new CodedOutputStream instance with the maximum buffer size
      */
     public static CodedOutputStream createCodedOutputStream(OutputStream outputStream) {
-        return CodedOutputStream.newInstance(outputStream, ProtoMessage.MAX_OUTPUT_STREAM_BUFFER_SIZE);
+        return CodedOutputStream.newInstance(outputStream, MAX_OUTPUT_STREAM_BUFFER_SIZE);
     }
 }
