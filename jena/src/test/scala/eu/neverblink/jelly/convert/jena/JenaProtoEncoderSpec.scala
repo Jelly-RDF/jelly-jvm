@@ -20,7 +20,7 @@ class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private val encodedDefaultGraph = RdfStreamRow.newInstance
     .setGraphStart(
-      RdfGraphStart.newInstance.setGDefaultGraph(RdfDefaultGraph.EMPTY)
+      RdfGraphStart.newInstance.setGraph(RdfDefaultGraph.EMPTY)
     )
   
   "JenaProtoEncoder" should {
@@ -67,7 +67,7 @@ class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
       )
       buffer.size should be (2) // 1 for the options, 1 for the triple
       val row = buffer.getRows.get(1)
-      row.getQuad.getOLiteral.getLiteralKind should be (null)
-      row.getQuad.getGLiteral.getLiteralKind should be (null)
+      row.getQuad.getObject.asInstanceOf[RdfLiteral].getLiteralKind should be (null)
+      row.getQuad.getGraph.asInstanceOf[RdfLiteral].getLiteralKind should be (null)
     }
   }

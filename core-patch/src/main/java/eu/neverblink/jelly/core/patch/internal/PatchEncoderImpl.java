@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.patch.internal;
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.patch.PatchEncoder;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
+import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.neverblink.jelly.core.proto.v1.patch.*;
@@ -127,15 +128,12 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     private RdfPatchNamespace encodeNamespace(String name, TNode iriValue, TNode graph) {
         emitOptions();
         final var namespace = RdfPatchNamespace.newInstance().setName(name);
-        this.currentNsBase = namespace;
         if (iriValue != null) {
-            this.currentTerm = SpoTerm.NAMESPACE;
-            converter.nodeToProto(getNodeEncoder(), iriValue);
+            final var encoded = converter.nodeToProto(getNodeEncoder(), iriValue);
+            namespace.setValue((RdfIri) encoded);
         }
         if (graph != null) {
-            this.currentGraphBase = namespace;
-            this.currentTerm = SpoTerm.GRAPH;
-            this.graphNodeToProtoWrapped(graph);
+            this.graphNodeToProtoWrapped(namespace, graph);
         }
         return namespace;
     }
@@ -144,9 +142,8 @@ public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void header(String key, TNode value) {
         emitOptions();
         final var header = RdfPatchHeader.newInstance().setKey(key);
-        this.currentHeaderBase = header;
-        this.currentTerm = SpoTerm.HEADER;
-        converter.nodeToProto(getNodeEncoder(), value);
+        final var encoded = converter.nodeToProto(getNodeEncoder(), value);
+        header.setValue(encoded);
         rowBuffer.appendMessage().setHeader(header).getSerializedSize();
     }
 

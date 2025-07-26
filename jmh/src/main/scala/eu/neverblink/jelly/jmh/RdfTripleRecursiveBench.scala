@@ -26,11 +26,11 @@ object RdfTripleRecursiveBench:
         triple
       else
         if random.nextBoolean() then
-          triple.setSTripleTerm(makeNestedTriple(depth - 1))
+          triple.setSubject(makeNestedTriple(depth - 1))
         if random.nextBoolean() then
-          triple.setPTripleTerm(makeNestedTriple(depth - 1))
+          triple.setPredicate(makeNestedTriple(depth - 1))
         if random.nextBoolean() then
-          triple.setOTripleTerm(makeNestedTriple(depth - 1))
+          triple.setObject(makeNestedTriple(depth - 1))
         triple
 
     @Setup(Level.Trial)

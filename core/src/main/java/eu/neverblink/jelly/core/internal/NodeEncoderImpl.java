@@ -150,7 +150,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @param iri The IRI to encode
      */
     @Override
-    public void makeIri(String iri) {
+    public RdfIri makeIri(String iri) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
             final var nameEntry = nameLookup.getOrAddEntry(iri);
@@ -160,12 +160,11 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             int nameId = nameEntry.getId;
             if (lastIriNameId + 1 == nameId) {
                 lastIriNameId = nameId;
-                bufferAppender.appendIri(zeroIri);
+                return zeroIri;
             } else {
                 lastIriNameId = nameId;
-                bufferAppender.appendIri(nameOnlyIris[nameId]);
+                return nameOnlyIris[nameId];
             }
-            return;
         }
 
         // Slow path, with splitting out the prefix
@@ -179,8 +178,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         ) {
             nameLookup.onAccess(cachedNode.lookupPointer1);
             prefixLookup.onAccess(cachedNode.lookupPointer2);
-            outputIri(cachedNode);
-            return;
+            return outputIri(cachedNode);
         }
 
         int i = iri.indexOf('#', 8);
@@ -215,27 +213,23 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         cachedNode.lookupPointer2 = prefixId;
         cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
         cachedNode.encoded = RdfIri.newInstance().setPrefixId(prefixId).setNameId(nameId);
-        outputIri(cachedNode);
+        return outputIri(cachedNode);
     }
 
     @Override
-    public void makeBlankNode(String label) {
+    public String makeBlankNode(String label) {
         // Blank nodes are not cached, as they are just strings.
-        bufferAppender.appendBlankNode(label);
+        return label;
     }
 
     @Override
-    public void makeSimpleLiteral(String lex) {
-        final var lit = otherLiteralCache.computeIfAbsent(lex, k -> RdfLiteral.newInstance().setLex(lex));
-        bufferAppender.appendLiteral(lit);
+    public RdfLiteral makeSimpleLiteral(String lex) {
+        return otherLiteralCache.computeIfAbsent(lex, k -> RdfLiteral.newInstance().setLex(lex));
     }
 
     @Override
-    public void makeLangLiteral(TNode lit, String lex, String lang) {
-        final var encoded = otherLiteralCache.computeIfAbsent(lit, k ->
-            RdfLiteral.newInstance().setLex(lex).setLangtag(lang)
-        );
-        bufferAppender.appendLiteral(encoded);
+    public RdfLiteral makeLangLiteral(TNode lit, String lex, String lang) {
+        return otherLiteralCache.computeIfAbsent(lit, k -> RdfLiteral.newInstance().setLex(lex).setLangtag(lang));
     }
 
     /**
@@ -245,7 +239,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @param datatypeName The name of the datatype
      */
     @Override
-    public void makeDtLiteral(TNode key, String lex, String datatypeName) {
+    public RdfLiteral makeDtLiteral(TNode key, String lex, String datatypeName) {
         if (datatypeLookup.size == 0) {
             throw new RdfProtoSerializationError(
                 "Datatype literals cannot be " +
@@ -260,7 +254,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             cachedNode.lookupSerial1 == Objects.requireNonNull(datatypeLookup.serials)[cachedNode.lookupPointer1]
         ) {
             datatypeLookup.onAccess(cachedNode.lookupPointer1);
-            bufferAppender.appendLiteral(cachedNode.encoded);
+            return cachedNode.encoded;
         }
 
         // The node is not encoded, but we may already have the datatype encoded
@@ -274,42 +268,42 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         cachedNode.lookupPointer1 = dtId;
         cachedNode.lookupSerial1 = Objects.requireNonNull(datatypeLookup.serials)[dtId];
         cachedNode.encoded = RdfLiteral.newInstance().setLex(lex).setDatatype(dtId);
-        bufferAppender.appendLiteral(cachedNode.encoded);
+        return cachedNode.encoded;
     }
 
     @Override
-    public void makeQuotedTriple(TNode s, TNode p, TNode o) {
-        bufferAppender.appendQuotedTriple(s, p, o);
+    public RdfTriple makeQuotedTriple(TNode s, TNode p, TNode o) {
+        return bufferAppender.appendQuotedTriple(s, p, o);
     }
 
     @Override
-    public void makeDefaultGraph() {
-        bufferAppender.appendDefaultGraph();
+    public RdfDefaultGraph makeDefaultGraph() {
+        return RdfDefaultGraph.EMPTY;
     }
 
     /**
      * Helper function to output an IRI from a cached node using same-prefix and next-name optimizations.
      * @param cachedNode The cached node
      */
-    private void outputIri(DependentNode<RdfIri> cachedNode) {
+    private RdfIri outputIri(DependentNode<RdfIri> cachedNode) {
         int nameId = cachedNode.lookupPointer1;
         int prefixId = cachedNode.lookupPointer2;
         if (lastIriPrefixId == prefixId) {
             if (lastIriNameId + 1 == nameId) {
                 lastIriNameId = nameId;
-                bufferAppender.appendIri(zeroIri);
+                return zeroIri;
             } else {
                 lastIriNameId = nameId;
-                bufferAppender.appendIri(nameOnlyIris[nameId]);
+                return nameOnlyIris[nameId];
             }
         } else {
             lastIriPrefixId = prefixId;
             if (lastIriNameId + 1 == nameId) {
                 lastIriNameId = nameId;
-                bufferAppender.appendIri(RdfIri.newInstance().setPrefixId(prefixId));
+                return RdfIri.newInstance().setPrefixId(prefixId);
             } else {
                 lastIriNameId = nameId;
-                bufferAppender.appendIri(cachedNode.encoded);
+                return cachedNode.encoded;
             }
         }
     }

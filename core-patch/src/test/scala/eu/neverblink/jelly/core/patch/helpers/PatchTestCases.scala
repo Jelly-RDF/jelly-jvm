@@ -241,8 +241,8 @@ object PatchTestCases:
       rdfPatchRow(rdfPatchTransactionStart()),
       rdfPatchRow(rdfPrefixEntry(0, "https://test.org/test/")),
       rdfPatchRow(rdfNameEntry(0, "")),
-      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(1, 0)).setGIri(rdfIri(0, 1))),
-      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(0, 1)).setGDefaultGraph(rdfDefaultGraph())),
+      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(1, 0)).setGraph(rdfIri(0, 1))),
+      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(0, 1)).setGraph(rdfDefaultGraph())),
       rdfPatchRowAdd(rdfPatchNamespace("test2", rdfIri(0, 1))),
       rdfPatchRow(rdfNameEntry(0, "subject")),
       rdfPatchRow(rdfNameEntry(0, "predicate")),
@@ -286,8 +286,8 @@ object PatchTestCases:
         null,
         rdfLiteral("test"),
       )),
-      rdfPatchRowDelete(rdfPatchNamespace("test", null).setGIri(rdfIri(1, 1))),
-      rdfPatchRowDelete(rdfPatchNamespace("test", null).setGDefaultGraph(rdfDefaultGraph())),
+      rdfPatchRowDelete(rdfPatchNamespace("test", null).setGraph(rdfIri(1, 1))),
+      rdfPatchRowDelete(rdfPatchNamespace("test", null).setGraph(rdfDefaultGraph())),
       rdfPatchRowDelete(rdfPatchNamespace("test2", null)),
       rdfPatchRow(rdfPatchTransactionAbort()),
     )
@@ -324,9 +324,9 @@ object PatchTestCases:
       rdfPatchRow(opt),
       rdfPatchRow(rdfPrefixEntry(0, "https://test.org/test/")),
       rdfPatchRow(rdfNameEntry(0, "")),
-      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(1, 0)).setGDefaultGraph(rdfDefaultGraph())),
-      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(0, 1)).setGIri(rdfIri(0, 1))),
-      rdfPatchRowAdd(rdfPatchNamespace("test2", rdfIri(0, 1)).setGBnode("b1")),
+      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(1, 0)).setGraph(rdfDefaultGraph())),
+      rdfPatchRowAdd(rdfPatchNamespace("test", rdfIri(0, 1)).setGraph(rdfIri(0, 1))),
+      rdfPatchRowAdd(rdfPatchNamespace("test2", rdfIri(0, 1)).setGraph("b1")),
       rdfPatchRowAdd(rdfQuad(
         rdfIri(0, 1),
         rdfIri(0, 1),
@@ -335,11 +335,11 @@ object PatchTestCases:
       )),
       rdfPatchRowDelete(rdfPatchNamespace("test2", rdfIri(0, 1))),
       rdfPatchRow(rdfPrefixEntry(0, "https://test.org/test7/")),
-      rdfPatchRowAdd(rdfPatchNamespace("test7", rdfIri(2, 1)).setGLiteral(rdfLiteral("test", "en-gb"))),
+      rdfPatchRowAdd(rdfPatchNamespace("test7", rdfIri(2, 1)).setGraph(rdfLiteral("test", "en-gb"))),
       rdfPatchRow(rdfDatatypeEntry(0, "https://test.org/test7/")),
       rdfPatchRowDelete(rdfPatchNamespace(
         "test7", rdfIri(0, 1)
-      ).setGLiteral(rdfLiteral("test", 1))),
+      ).setGraph(rdfLiteral("test", 1))),
       rdfPatchRowDelete(rdfPatchNamespace("test7", null)),
     )
 
