@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.core.utils;
 
 import com.google.protobuf.CodedOutputStream;
-
 import java.io.*;
 import java.util.function.Consumer;
 
