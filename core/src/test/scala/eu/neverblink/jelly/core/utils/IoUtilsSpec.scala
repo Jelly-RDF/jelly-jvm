@@ -2,7 +2,6 @@ package eu.neverblink.jelly.core.utils
 
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.protoc.java.runtime.ProtoMessage
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -143,12 +142,27 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
         var out: RdfStreamFrame = null
         IoUtils.readStream(
           in,
-          input => ProtoMessage.parseDelimitedFrom(input, RdfStreamFrame.getFactory),
+          RdfStreamFrame.getFactory,
           frame => out = frame
         )
 
         out should not be null
         out shouldBe frameLarge
+      }
+
+      "input stream is empty" in {
+        val in = new ByteArrayInputStream(Array.emptyByteArray)
+        var out: RdfStreamFrame = null
+        IoUtils.readStream(
+          in,
+          RdfStreamFrame.getFactory,
+          frame => {
+            frame should not be null
+            out = frame
+          }
+        )
+
+        out shouldBe null // No frames should be read from an empty stream
       }
     }
   }
