@@ -2,6 +2,7 @@ package eu.neverblink.jelly.core.utils
 
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.protoc.java.runtime.ProtoMessage
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -126,5 +127,28 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
       response.isDelimited shouldBe true
       RdfStreamFrame.newInstance()
       RdfStreamFrame.parseDelimitedFrom(response.newInput) shouldBe frameLarge
+    }
+
+    "readStream" when {
+      "input stream always reports available() = 0" in {
+        // available() only tells us how many bytes can be read without blocking,
+        // not how many bytes are in the stream. So, we must NOT rely on it to check if we
+        // have reached the end of the stream.
+        val os = ByteArrayOutputStream()
+        IoUtils.writeFrameAsDelimited(frameLarge.toByteArray, os)
+        val bytes = os.toByteArray
+        val in = new ByteArrayInputStream(bytes) {
+          override def available(): Int = 0 // Simulate a blocking read
+        }
+        var out: RdfStreamFrame = null
+        IoUtils.readStream(
+          in,
+          input => ProtoMessage.parseDelimitedFrom(input, RdfStreamFrame.getFactory),
+          frame => out = frame
+        )
+
+        out should not be null
+        out shouldBe frameLarge
+      }
     }
   }
