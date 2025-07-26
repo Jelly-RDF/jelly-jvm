@@ -69,11 +69,7 @@ public final class JellyReader implements ReaderRIOT {
             if (delimitingResponse.isDelimited()) {
                 // Delimited Jelly file
                 // In this case, we can read multiple frames
-                readStream(
-                    delimitingResponse.newInput(),
-                    inputStream -> ProtoMessage.parseDelimitedFrom(inputStream, getReusableFrame),
-                    frame -> buffer.clear()
-                );
+                readStream(delimitingResponse.newInput(), getReusableFrame, frame -> buffer.clear());
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame

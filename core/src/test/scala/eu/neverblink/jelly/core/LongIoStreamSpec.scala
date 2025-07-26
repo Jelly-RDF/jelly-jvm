@@ -2,18 +2,19 @@ package eu.neverblink.jelly.core
 
 import eu.neverblink.jelly.core.ProtoTestCases.Triples3LongStrings
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamFrame}
+import eu.neverblink.jelly.core.utils.IoUtils
 import eu.neverblink.protoc.java.runtime.ProtobufUtil
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.{ByteArrayOutputStream, OutputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream}
 
 /**
- * Tests to ensure that writing to a CodedOutputStream works correctly even for very long streams,
- * where we put more than Int.MaxValue bytes into the stream.
+ * Tests to ensure that writing to a Coded(Input|Output)Stream works correctly even for very long
+ * streams, where we put more than Int.MaxValue bytes into the stream.
  *
- * This is important for Jena, RDF4J and other integrations that allocate only one CodedOutputStream
- * per file and write all frames to it.
+ * This is important for Jena, RDF4J and other integrations that allocate only one
+ * Coded(Input|Output)Stream per file and process all frames through it.
  */
 class LongIoStreamSpec extends AnyWordSpec, Matchers {
   "CodedOutputStream" should {
@@ -73,6 +74,46 @@ class LongIoStreamSpec extends AnyWordSpec, Matchers {
       val data = byteArrayOutputStream.toByteArray
       val parsedFrame = RdfStreamFrame.parseFrom(data)
       parsedFrame should be (frame)
+    }
+  }
+
+  "IoUtils.readStream" should {
+    "read a very long (> Int.MaxValue) stream of RdfStreamFrames from InputStream" in {
+      val frame = Triples3LongStrings.encodedFull(
+        JellyOptions.SMALL_STRICT.clone().setPhysicalType(PhysicalStreamType.TRIPLES),
+        1000,
+      ).head
+
+      val bytes = frame.toByteArrayDelimited
+      val target = Int.MaxValue.toLong * 3L / 2L
+      val repeatedInput = new InputStream {
+        var pos = 0L
+
+        override def read(): Int =
+          if (pos >= target && pos % bytes.length.toLong == 0) return -1 // end of stream
+          val result = bytes((pos % bytes.length.toLong).toInt)
+          pos += 1
+          result & 0xFF // return as unsigned byte
+
+        override def read(b: Array[Byte], off: Int, len: Int): Int =
+          if (pos >= target && pos % bytes.length.toLong == 0) return -1 // end of stream
+          val bytesToRead = Math.min(len, bytes.length - (pos % bytes.length.toLong).toInt)
+          System.arraycopy(bytes, (pos % bytes.length.toLong).toInt, b, off, bytesToRead)
+          pos += bytesToRead
+          bytesToRead
+      }
+
+      // Read the stream back
+      var readFrames = 0L
+      var lastFrame: RdfStreamFrame = null
+      IoUtils.readStream(repeatedInput, RdfStreamFrame.getFactory,
+        (frame: RdfStreamFrame) => {
+          readFrames += 1
+          lastFrame = frame
+        }
+      )
+      readFrames should be ((target / bytes.length.toLong) + 1)
+      lastFrame should be (frame)
     }
   }
 }
