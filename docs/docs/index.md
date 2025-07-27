@@ -2,7 +2,7 @@
 
 **Jelly-JVM** is an implementation of the [Jelly serialization format and gRPC streaming protocol]({{ proto_link() }}) for the Java Virtual Machine (JVM). It supports [Apache Jena](user/jena.md), [Eclipse RDF4J](user/rdf4j.md), and the [Titanium RDF API](user/titanium.md).
 
-Jelly-JVM provides a **full stack** of utilities for fast and scalable RDF streaming with the [Jelly protocol]({{ proto_link( 'specification' ) }}). Oh, and [**it's *blazing-fast***]({{ proto_link('performance') }}), too!
+Jelly-JVM provides a **full stack** of utilities for fast and scalable RDF streaming with [Jelly]({{ proto_link( 'specification' ) }}). Oh, and [**it's *blazing-fast***]({{ proto_link('performance') }}), too!
 
 !!! tip "Getting started with plugins – no code required"
 
@@ -25,20 +25,31 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-core` – core generic code for serializing/deserializing Jelly data. You need an additional module (like `jelly-jena`) to integrate it with a specific RDF library.
     - {{ java_module_badges('core') }}
 
-- `jelly-jena` – interop code for the [Apache Jena](https://jena.apache.org/) library. **[:octicons-arrow-right-24: Learn more](user/jena.md)**
+- `jelly-jena` – integration with [Apache Jena](https://jena.apache.org/). **[:octicons-arrow-right-24: Learn more](user/jena.md)**
     - {{ java_module_badges('jena') }}
 
-- `jelly-rdf4j` – interop code for the [Eclipse RDF4J](https://rdf4j.org/) library. **[:octicons-arrow-right-24: Learn more](user/rdf4j.md)**
+- `jelly-rdf4j` – integration with [Eclipse RDF4J](https://rdf4j.org/). **[:octicons-arrow-right-24: Learn more](user/rdf4j.md)**
     - {{ java_module_badges('rdf4j') }}
 
 - `jelly-titanium-rdf-api` – integration with the [Titanium RDF API](https://github.com/filip26/titanium-rdf-api). **[:octicons-arrow-right-24: Learn more](user/titanium.md)**
     - {{ java_module_badges('titanium-rdf-api') }}
 
-- `jelly-pekko-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT... **[:octicons-arrow-right-24: Learn more](user/reactive.md)**
+- `jelly-pekko-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, or MQTT. **[:octicons-arrow-right-24: Learn more](user/reactive.md)**
     - {{ scala_module_badges('pekko-stream') }}
 
 - `jelly-pekko-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}). **[:octicons-arrow-right-24: Learn more](user/grpc.md)**
     - {{ scala_module_badges('pekko-grpc') }}
+
+### Jelly-Patch (experimental)
+
+[Jelly-Patch]({{ proto_link('specification/patch') }}) is an efficient format for recording changes to RDF datasets. Jelly-JVM has an experimental implementation of Jelly-Patch:
+
+- `jelly-core-patch` – core generic code for serializing/deserializing Jelly-Patch data. You need an additional module (like `jelly-jena-patch`) to integrate it with a specific RDF library.
+    - {{ java_module_badges('core-patch') }}
+- `jelly-jena-patch` – integration with [Apache Jena](https://jena.apache.org/).
+    - {{ java_module_badges('jena-patch') }}
+- `jelly-rdf4j-patch` – partial integration with [Eclipse RDF4J](https://rdf4j.org/). RDF4J does not support RDF Patch, so this module only provides low-level Jelly-Patch support.
+    - {{ java_module_badges('rdf4j-patch') }}
 
 ## Plugin JARs
 
