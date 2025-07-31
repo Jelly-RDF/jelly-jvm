@@ -23,6 +23,10 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
 
   val name = "Reactive writes (Apache Jena)"
 
+  override def supportsRdfStar: Boolean = false
+
+  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
+
   override def readTriplesW3C(is: InputStream): Model = JenaSerDes.readTriplesW3C(is)
 
   override def readQuadsW3C(is: InputStream): Dataset = JenaSerDes.readQuadsW3C(is)

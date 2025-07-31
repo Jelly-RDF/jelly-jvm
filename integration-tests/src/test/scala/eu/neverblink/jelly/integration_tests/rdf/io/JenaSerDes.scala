@@ -17,6 +17,8 @@ given Measure[Dataset] = (ds: Dataset) => ds.asDatasetGraph().find().asScala.siz
 object JenaSerDes extends NativeSerDes[Model, Dataset]:
   val name = "Jena"
 
+  override def supportsRdfStar: Boolean = false
+
   override def readTriplesW3C(is: InputStream): Model =
     val m = ModelFactory.createDefaultModel()
     RDFDataMgr.read(m, is, RDFLanguages.NT)
