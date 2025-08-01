@@ -15,3 +15,4 @@ trait NativeSerDes[TModel : Measure, TDataset : Measure]:
   def writeQuadsJelly(os: OutputStream, dataset: TDataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit
   def supportsRdfStar: Boolean = true
   def supportsGeneralizedStatements: Boolean = true
+  def supportsRdf12: Boolean = false

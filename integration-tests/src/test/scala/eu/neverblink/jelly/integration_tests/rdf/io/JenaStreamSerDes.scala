@@ -4,6 +4,7 @@ import eu.neverblink.jelly.convert.jena.riot.JellyLanguage
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.util.Measure
+import org.apache.jena.Jena
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.lang.LabelToNode
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
@@ -22,7 +23,14 @@ given mSeqQuads: Measure[Seq[Quad]] = (s: Seq[Quad]) => s.size
 object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSerDes[Node, Triple, Quad]:
   override def name: String = "Jena (StreamRDF)"
 
-  override def supportsRdfStar: Boolean = false
+  lazy val jenaVersion54OrHigher: Boolean = {
+    val split = Jena.VERSION.split('.')
+    split(0).toInt > 5 || split(1).toInt >= 4
+  }
+
+  override def supportsRdf12: Boolean = jenaVersion54OrHigher
+
+  override def supportsRdfStar: Boolean = !jenaVersion54OrHigher
 
   override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
 
