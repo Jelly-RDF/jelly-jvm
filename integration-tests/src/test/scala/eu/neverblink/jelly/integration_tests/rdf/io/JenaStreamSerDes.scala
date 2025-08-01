@@ -13,6 +13,8 @@ import org.apache.jena.sparql.core.Quad
 
 import java.io.{File, FileOutputStream, InputStream, OutputStream}
 
+import scala.annotation.nowarn
+
 // Separate givens to avoid name clashes and ambiguous implicits
 given mSeqTriples: Measure[Seq[Triple]] = (s: Seq[Triple]) => s.size
 given mSeqQuads: Measure[Seq[Quad]] = (s: Seq[Quad]) => s.size
@@ -173,6 +175,7 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
 
   override def getBlankNodeLabel(node: Node): String = node.getBlankNodeLabel
 
+  @nowarn
   override def isNodeTriple(node: Node): Boolean = node.isNodeTriple
 
   override def iterateTerms(node: Triple | Quad): Seq[Node] =
