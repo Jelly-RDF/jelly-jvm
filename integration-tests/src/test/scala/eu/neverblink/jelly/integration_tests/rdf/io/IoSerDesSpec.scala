@@ -98,6 +98,11 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     (if opt.isEmpty || opt.get.getRdfStar then impl.supportsRdfStar else true) &&
     (if opt.isEmpty || opt.get.getGeneralizedStatements then impl.supportsGeneralizedStatements else true)
 
+  private def checkSerDesTestCaseSupport(ser: NativeSerDes[?, ?], des: NativeSerDes[?, ?]) = (f: (String, Any)) =>
+    (ser.supportsRdfStar && des.supportsRdfStar || !f._1.contains("star")) &&
+    (ser.supportsRdf12 && des.supportsRdf12 || !f._1.contains("rdf12"))
+
+
   runTest(JenaSerDes, JenaSerDes)
   runTest(JenaSerDes, JenaStreamSerDes)
   runTest(JenaSerDes, Rdf4jSerDes)
@@ -148,7 +153,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
         p => checkImplOptSupport(ser, Some(p._1))
       ) do
         for (name, file) <- TestCases.triples.filter(
-          f => ser.supportsRdfStar && des.supportsRdfStar || !f._1.contains("star")
+          checkSerDesTestCaseSupport(ser, des)
         ) do
         s"not accept unsupported options (file $name, $presetName)" in {
           val model = ser.readTriplesW3C(FileInputStream(file))
@@ -171,7 +176,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
         p => checkImplOptSupport(ser, p._1) && checkImplOptSupport(des, p._1)
       ) do
         for (name, file) <- TestCases.triples.filter(
-          f => ser.supportsRdfStar && des.supportsRdfStar || !f._1.contains("star")
+          checkSerDesTestCaseSupport(ser, des)
         ) do
           s"ser/des file $name with preset $presetName, frame size $size" in {
             val model = ser.readTriplesW3C(FileInputStream(file))
@@ -202,7 +207,9 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
               deserializedSize should be >= originalSize - 1
           }
 
-        for (name, file) <- TestCases.quads do
+        for (name, file) <- TestCases.quads.filter(
+          checkSerDesTestCaseSupport(ser, des)
+        ) do
           s"ser/des file $name with preset $presetName, frame size $size" in {
             val ds = ser.readQuadsW3C(FileInputStream(file))
             val originalSize = summon[Measure[TDSer]].size(ds)

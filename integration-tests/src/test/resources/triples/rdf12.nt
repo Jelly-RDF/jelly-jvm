@@ -1,0 +1,10 @@
+<http://example/x> <http://example/p> <<( <http://example/s> <http://example/p> <http://example/o> )>> .
+
+_:rei-1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#reifies> <<( <http://example/s> <http://example/p> <http://example/o> )>> .
+_:rei-1 <http://example.org/action/heard> <http://example.org/person/A> .
+
+<http://example/s> <http://example/p> <http://example/o2> .
+_:rei-2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#reifies> <<( <http://example/s> <http://example/p> <http://example/o2> )>> .
+_:rei-2 <http://example.org/action/heard> <http://example.org/person/B> .
+
+<http://example.org/person/A> <http://example.org/action/said> <<( <http://example.org/person/H> <http://example.org/action/heard> <<( <http://example.org/person/I> <http://example.org/action/heard> <<( <http://example.org/person/J> <http://example.org/action/heard> <<( <http://example.org/person/K> <http://example.org/action/heard> <<( <http://example.org/person/L> <http://example.org/action/heard> <<( <http://example.org/person/M> <http://example.org/action/heard> <<( <http://example.org/person/N> <http://example.org/action/heard> <<( <http://example.org/person/O> <http://example.org/action/heard> <<( <http://example.org/person/P> <http://example.org/action/heard> <<( <http://example.org/person/R> <http://example.org/action/heard>  <http://example.org/object/rumor> )>> )>> )>> )>> )>> )>> )>> )>> )>> )>> .
