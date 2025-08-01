@@ -80,7 +80,9 @@ class CrossPatchSpec extends AnyWordSpec, Matchers:
     val c2 = summon[TestComparable[T2]]
     f"${impl1.name} serializer + ${impl2.name} deserializer" should {
       for
-        (name, files) <- TestCases.cases
+        (name, files) <- TestCases.cases.filter(
+          tc => impl1.supportsRdfStar && impl2.supportsRdfStar || !tc._2.exists(f => f.getName.contains("star"))
+        )
         (preset, size, presetName) <- presets
       do f"ser/des file $name with preset $presetName, frame size $size" when {
         for

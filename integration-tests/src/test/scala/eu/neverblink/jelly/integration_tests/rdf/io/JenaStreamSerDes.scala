@@ -2,8 +2,9 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 
 import eu.neverblink.jelly.convert.jena.riot.JellyLanguage
 import eu.neverblink.jelly.core.JellyOptions
-import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
+import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.util.Measure
+import org.apache.jena.Jena
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.lang.LabelToNode
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
@@ -11,6 +12,8 @@ import org.apache.jena.riot.{RDFLanguages, RDFParser, RIOT}
 import org.apache.jena.sparql.core.Quad
 
 import java.io.{File, FileOutputStream, InputStream, OutputStream}
+
+import scala.annotation.nowarn
 
 // Separate givens to avoid name clashes and ambiguous implicits
 given mSeqTriples: Measure[Seq[Triple]] = (s: Seq[Triple]) => s.size
@@ -21,6 +24,17 @@ given mSeqQuads: Measure[Seq[Quad]] = (s: Seq[Quad]) => s.size
  */
 object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSerDes[Node, Triple, Quad]:
   override def name: String = "Jena (StreamRDF)"
+
+  lazy val jenaVersion54OrHigher: Boolean = {
+    val split = Jena.VERSION.split('.')
+    split(0).toInt > 5 || split(1).toInt >= 4
+  }
+
+  override def supportsRdf12: Boolean = jenaVersion54OrHigher
+
+  override def supportsRdfStar: Boolean = !jenaVersion54OrHigher
+
+  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
 
   override def readTriplesW3C(is: InputStream): Seq[Triple] =
     val sink = SinkSeq[Triple]()
@@ -161,6 +175,7 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
 
   override def getBlankNodeLabel(node: Node): String = node.getBlankNodeLabel
 
+  @nowarn
   override def isNodeTriple(node: Node): Boolean = node.isNodeTriple
 
   override def iterateTerms(node: Triple | Quad): Seq[Node] =

@@ -13,6 +13,7 @@ import org.apache.jena.sparql.core.Quad;
 public final class JenaEncoderConverter
     implements ProtoEncoderConverter<Node>, TripleExtractor<Node, Triple>, QuadExtractor<Node, Quad> {
 
+    @SuppressWarnings("removal")
     @Override
     public Object nodeToProto(NodeEncoder<Node> encoder, Node node) {
         // URI/IRI
