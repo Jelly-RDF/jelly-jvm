@@ -4,10 +4,12 @@ import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.internal.EncoderBase;
+import eu.neverblink.jelly.core.memory.EncoderAllocator;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchRow;
+import eu.neverblink.protoc.java.runtime.MessageCollection;
 import java.util.Collection;
 
 /**
@@ -26,22 +28,33 @@ public abstract class PatchEncoder<TNode>
     /**
      * Parameters passed to the Jelly-Patch encoder.
      * @param options options for this patch stream
-     * @param appendableRowBuffer buffer for storing patch rows. The encoder will append the RdfPatchRows to
+     * @param rowBuffer buffer for storing patch rows. The encoder will append the RdfPatchRows to
      *                            this buffer. The caller is responsible for managing this buffer and grouping
      *                            the rows in RdfPatchFrames.
+     * @param allocator allocator for proto class instances. Obtain it from {@link EncoderAllocator}.
      */
-    public record Params(RdfPatchOptions options, Collection<RdfPatchRow> appendableRowBuffer) {
+    public record Params(
+        RdfPatchOptions options,
+        MessageCollection<RdfPatchRow, RdfPatchRow.Mutable> rowBuffer,
+        EncoderAllocator allocator
+    ) {
         /**
          * Creates a new Params instance.
          */
-        public static Params of(RdfPatchOptions options, Collection<RdfPatchRow> appendableRowBuffer) {
-            return new Params(options, appendableRowBuffer);
+        public static Params of(
+            RdfPatchOptions options,
+            MessageCollection<RdfPatchRow, RdfPatchRow.Mutable> rowBuffer,
+            EncoderAllocator allocator
+        ) {
+            return new Params(options, rowBuffer, allocator);
         }
     }
 
     protected final RdfPatchOptions options;
 
-    protected final Collection<RdfPatchRow> rowBuffer;
+    protected final MessageCollection<RdfPatchRow, RdfPatchRow.Mutable> rowBuffer;
+
+    protected final EncoderAllocator allocator;
 
     /**
      * Creates a new PatchEncoder instance.
@@ -54,7 +67,8 @@ public abstract class PatchEncoder<TNode>
             .clone()
             // Override the user's version setting with what is really supported by the encoder.
             .setVersion(JellyPatchConstants.PROTO_VERSION_1_0_X);
-        this.rowBuffer = params.appendableRowBuffer;
+        this.rowBuffer = params.rowBuffer;
+        this.allocator = params.allocator;
     }
 
     @Override
@@ -79,6 +93,6 @@ public abstract class PatchEncoder<TNode>
 
     @Override
     protected RdfQuad.Mutable newQuad() {
-        return RdfQuad.newInstance();
+        return allocator.newQuad();
     }
 }

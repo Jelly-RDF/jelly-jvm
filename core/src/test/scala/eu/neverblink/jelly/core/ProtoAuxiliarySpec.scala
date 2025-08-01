@@ -86,7 +86,7 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
       var triple = RdfTriple.newInstance()
       for (_ <- 1 to depth) {
         triple = RdfTriple.newInstance()
-          .setSTripleTerm(triple)
+          .setSubject(triple)
       }
       RdfStreamFrame.newInstance()
         .addRows(RdfStreamRow.newInstance().setTriple(triple))

@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.utils
 
+import com.google.protobuf.{CodedOutputStream, InvalidProtocolBufferException}
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
@@ -126,5 +127,94 @@ class IoUtilsSpec extends AnyWordSpec, Matchers:
       response.isDelimited shouldBe true
       RdfStreamFrame.newInstance()
       RdfStreamFrame.parseDelimitedFrom(response.newInput) shouldBe frameLarge
+    }
+
+    "readStream (deprecated version)" when {
+      "input stream always reports available() = 0" in {
+        // available() only tells us how many bytes can be read without blocking,
+        // not how many bytes are in the stream. So, we must NOT rely on it to check if we
+        // have reached the end of the stream.
+        val os = ByteArrayOutputStream()
+        IoUtils.writeFrameAsDelimited(frameLarge.toByteArray, os)
+        val bytes = os.toByteArray
+        val in = new ByteArrayInputStream(bytes) {
+          override def available(): Int = 0 // Simulate a blocking read
+        }
+        var out: RdfStreamFrame = null
+        IoUtils.readStream(
+          in,
+          RdfStreamFrame.getFactory,
+          frame => out = frame
+        )
+
+        out should not be null
+        out shouldBe frameLarge
+      }
+
+      "input stream is empty" in {
+        val in = new ByteArrayInputStream(Array.emptyByteArray)
+        var out: RdfStreamFrame = null
+        IoUtils.readStream(
+          in,
+          RdfStreamFrame.getFactory,
+          frame => {
+            frame should not be null
+            out = frame
+          }
+        )
+
+        out shouldBe null // No frames should be read from an empty stream
+      }
+    }
+
+    "readStream (with MessageFactory)" when {
+      "input stream always reports available() = 0" in {
+        // available() only tells us how many bytes can be read without blocking,
+        // not how many bytes are in the stream. So, we must NOT rely on it to check if we
+        // have reached the end of the stream.
+        val os = ByteArrayOutputStream()
+        IoUtils.writeFrameAsDelimited(frameLarge.toByteArray, os)
+        val bytes = os.toByteArray
+        val in = new ByteArrayInputStream(bytes) {
+          override def available(): Int = 0 // Simulate a blocking read
+        }
+        var out: RdfStreamFrame = null
+        IoUtils.readStream(
+          in,
+          RdfStreamFrame.getFactory,
+          frame => out = frame
+        )
+
+        out should not be null
+        out shouldBe frameLarge
+      }
+
+      "input stream is empty" in {
+        val in = new ByteArrayInputStream(Array.emptyByteArray)
+        var out: RdfStreamFrame = null
+        IoUtils.readStream(
+          in,
+          RdfStreamFrame.getFactory,
+          frame => {
+            frame should not be null
+            out = frame
+          }
+        )
+
+        out shouldBe null // No frames should be read from an empty stream
+      }
+
+      "frame has an invalid size" in {
+        val os = ByteArrayOutputStream()
+        val cos = CodedOutputStream.newInstance(os)
+        cos.writeUInt32NoTag(-13) // Invalid size, should be positive
+        cos.flush()
+        val bytes = os.toByteArray
+        val in = new ByteArrayInputStream(bytes)
+
+        an[InvalidProtocolBufferException] should be thrownBy {
+          IoUtils.readStream(in, RdfStreamFrame.getFactory, _ => ())
+        }
+      }
     }
   }

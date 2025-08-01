@@ -71,10 +71,6 @@ final class TitaniumJellyReaderImpl implements TitaniumJellyReader {
         }
 
         // May contain multiple frames
-        readStream(
-            delimitingResponse.newInput(),
-            is -> ProtoMessage.parseDelimitedFrom(is, getReusableFrame),
-            frame -> buffer.clear()
-        );
+        readStream(delimitingResponse.newInput(), getReusableFrame, frame -> buffer.clear());
     }
 }

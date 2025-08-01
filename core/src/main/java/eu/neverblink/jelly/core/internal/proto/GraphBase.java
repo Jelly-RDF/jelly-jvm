@@ -8,13 +8,8 @@ import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
 @InternalApi
 public interface GraphBase {
     interface Setters extends GraphBase {
-        GraphBase setGIri(RdfIri gIri);
-        GraphBase setGBnode(String gBnode);
-        GraphBase setGDefaultGraph(RdfDefaultGraph gDefaultGraph);
-        GraphBase setGLiteral(RdfLiteral gLiteral);
+        GraphBase setGraph(Object graph);
     }
 
     Object getGraph();
-
-    byte getGraphFieldNumber();
 }

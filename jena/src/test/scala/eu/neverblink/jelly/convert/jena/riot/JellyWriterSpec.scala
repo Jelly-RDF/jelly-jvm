@@ -75,6 +75,8 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
         bytes.size should be > 10
         val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
         response.isDelimited should be (false)
+        val parsed = RdfStreamFrame.parseFrom(bytes)
+        parsed.getRows.size should be (6) // 1 options + 1 prefix + 3 names + 1 triple
       }
 
       "split stream in multiple frames if it's delimited" in {

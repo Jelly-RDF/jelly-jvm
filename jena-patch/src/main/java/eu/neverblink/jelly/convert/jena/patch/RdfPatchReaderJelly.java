@@ -53,7 +53,7 @@ public final class RdfPatchReaderJelly implements PatchProcessor {
                 decoder.ingestFrame(RdfPatchFrame.parseFrom(delimitingResponse.newInput()));
             } else {
                 // Delimited Jelly-Patch file, we can read multiple frames
-                readStream(delimitingResponse.newInput(), RdfPatchFrame::parseDelimitedFrom, decoder::ingestFrame);
+                readStream(delimitingResponse.newInput(), RdfPatchFrame.getFactory(), decoder::ingestFrame);
             }
         } catch (IOException e) {
             throw new IllegalStateException(e);
