@@ -6,11 +6,13 @@ import eu.neverblink.jelly.core.helpers.TestIoUtil.withSilencedOutput
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
 import eu.neverblink.jelly.integration_tests.*
 import eu.neverblink.jelly.integration_tests.rdf.util.Comparisons
+import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
 import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, SizeLimiter, StreamRowCountLimiter}
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
 import org.apache.jena.sparql.core.DatasetGraph
 import org.apache.jena.sparql.util.IsoMatcher
+import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures
@@ -28,6 +30,9 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   given ExecutionContext = actorSystem.getDispatcher
   given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
 
+  JenaSystem.init()
+  TestRiot.initialize()
+
   private val implementations: Seq[(String, TestStream)] = Seq(
     ("Jena", JenaTestStream),
     ("RDF4J", Rdf4jTestStream),
@@ -36,13 +41,13 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   private object TripleTests:
     val files: Seq[(String, File)] = TestCases.triples
     val graphs: Map[String, Graph] = Map.from(
-      files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString)))
+      files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString, TestRiot.NT_ANY)))
     )
 
   private object QuadTests:
     val files: Seq[(String, File)] = TestCases.quads
     val datasets: Map[String, DatasetGraph] = Map.from(
-      files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString)))
+      files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString, TestRiot.NQ_ANY)))
     )
 
   private val jellyOptions: Seq[(String, RdfStreamOptions)] = Seq(
