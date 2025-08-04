@@ -1,14 +1,22 @@
 package eu.neverblink.jelly.integration_tests.rdf.util
 
+import org.apache.jena.graph.Graph
 import org.apache.jena.sparql.core.DatasetGraph
 import org.scalatest.matchers.should.Matchers
+import org.apache.jena.sparql.util.IsoMatcher
 
 import scala.jdk.CollectionConverters.*
 
 object Comparisons extends Matchers:
+  def isIso(g1: Graph, g2: Graph): Boolean = {
+    g1.isIsomorphicWith(g2) ||
+      // Slower fallback check, `isIsomorphicWith` apparently sometimes doesn't work with quoted triples
+      IsoMatcher.isomorphic(g1, g2)
+  }
+
   def compareDatasets(resultDataset: DatasetGraph, sourceDataset: DatasetGraph): Unit =
     resultDataset.size() should be(sourceDataset.size())
-    resultDataset.getDefaultGraph.isIsomorphicWith(sourceDataset.getDefaultGraph) should be(true)
+    isIso(sourceDataset.getDefaultGraph, resultDataset.getDefaultGraph) should be(true)
     // I have absolutely no idea why, but the .asScala extension method is not working here.
     // Made the conversion explicit and it's fine.
     for graphNode <- IteratorHasAsScala(sourceDataset.listGraphNodes).asScala do
@@ -25,6 +33,8 @@ object Comparisons extends Matchers:
         resultDataset.containsGraph(otherGraphNode) should be(true)
       }
       withClue(s"graph $graphNode should be isomorphic") {
-        sourceDataset.getGraph(graphNode)
-          .isIsomorphicWith(resultDataset.getGraph(otherGraphNode)) should be(true)
+        isIso(
+          sourceDataset.getGraph(graphNode),
+          resultDataset.getGraph(otherGraphNode),
+        ) should be(true)
       }

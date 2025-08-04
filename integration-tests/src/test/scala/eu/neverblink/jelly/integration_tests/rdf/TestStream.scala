@@ -23,3 +23,7 @@ trait TestStream:
   def quadSink(os: OutputStream)(using ExecutionContext): Sink[RdfStreamFrame, Future[Done]]
 
   def graphSink(os: OutputStream)(using ExecutionContext): Sink[RdfStreamFrame, Future[Done]]
+
+  def supportsRdfStar: Boolean = true
+  
+  def supportsRdf12: Boolean = false

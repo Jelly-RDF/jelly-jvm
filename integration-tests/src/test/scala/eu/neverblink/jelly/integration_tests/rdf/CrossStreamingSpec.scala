@@ -30,7 +30,6 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   given ExecutionContext = actorSystem.getDispatcher
   given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
 
-  JenaSystem.init()
   TestRiot.initialize()
 
   private val implementations: Seq[(String, TestStream)] = Seq(
@@ -72,6 +71,10 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
 
   private val encodedSizes: mutable.Map[CaseKey, Long] = mutable.Map()
 
+  private def checkTestCaseSupport(ser: TestStream, des: TestStream) = (f: (String, Any)) =>
+    (ser.supportsRdfStar && des.supportsRdfStar || !f._1.contains("star")) &&
+      (ser.supportsRdf12 && des.supportsRdf12 || !f._1.contains("rdf12"))
+
   for (encName, encFlow) <- implementations do
     s"$encName encoder" when {
       for (decName, decFlow) <- implementations do
@@ -79,7 +82,9 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       for (limiterName, limiter) <- sizeLimiters do
         s"streaming to a $decName decoder, $jOptName, $limiterName" should {
           // Triples
-          for (caseName, sourceFile) <- TripleTests.files do
+          for (caseName, sourceFile) <- TripleTests.files.filter(
+            checkTestCaseSupport(encFlow, decFlow)
+          ) do
             val sourceGraph = TripleTests.graphs(caseName)
             s"stream triples – file $caseName" in {
               val is = new FileInputStream(sourceFile)
@@ -94,19 +99,18 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
               val ck = CaseKey("triples", encName, jOptName, limiterName, caseName)
               encodedSizes(ck) = encSize
               val resultGraph = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
-                .lang(Lang.TURTLE)
+                .lang(TestRiot.NT_ANY)
                 .toGraph
 
               sourceGraph.size() should be (resultGraph.size())
-              if caseName == "rdf-star-blanks.nt" then
-                // For blank nodes in quoted triples, we need to use a slower isomorphism algorithm
-                IsoMatcher.isomorphic(sourceGraph, resultGraph) should be (true)
-              else
-                sourceGraph.isIsomorphicWith(resultGraph) should be (true)
+
+              Comparisons.isIso(sourceGraph, resultGraph) should be (true)
             }
 
           // Quads and graphs
-          for (caseName, sourceFile) <- QuadTests.files do
+          for (caseName, sourceFile) <- QuadTests.files.filter(
+            checkTestCaseSupport(encFlow, decFlow)
+          ) do
             val sourceDataset = QuadTests.datasets(caseName)
             s"stream quads – file $caseName" in {
               val is = new FileInputStream(sourceFile)
@@ -121,7 +125,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
               val ck = CaseKey("quads", encName, jOptName, limiterName, caseName)
               encodedSizes(ck) = encSize
               val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
-                .lang(Lang.NQ)
+                .lang(TestRiot.NQ_ANY)
                 .toDatasetGraph
               Comparisons.compareDatasets(resultDataset, sourceDataset)
             }
@@ -139,7 +143,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
               val ck = CaseKey("graphs", encName, jOptName, limiterName, caseName)
               encodedSizes(ck) = encSize
               val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
-                .lang(Lang.NQ)
+                .lang(TestRiot.NQ_ANY)
                 .toDatasetGraph
               Comparisons.compareDatasets(resultDataset, sourceDataset)
             }
