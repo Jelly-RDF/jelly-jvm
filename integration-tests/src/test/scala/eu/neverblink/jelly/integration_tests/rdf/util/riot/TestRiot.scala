@@ -10,11 +10,9 @@ import org.apache.jena.sys.JenaSystem
 
 import java.io.{InputStream, Reader}
 
-/** Registration utilities for jelly-cli's overrides of Apache Jena's Riot components (e.g.,
- * parsers).
- *
- * The initialize() method must be called before using any of the parsers, right after
- * JenaSystem.init().
+/** Registration utilities for alternative versions of Apache Jena's Riot parsers.
+ * Lifted from jelly-cli, these are lax parsers, with little to no validation.
+ * They can understand generalized NT/NQ, NT/NQ-star, NT/NQ-1.2, and a subset of TTL-star.
  */
 object TestRiot:
   private var initialized = false
