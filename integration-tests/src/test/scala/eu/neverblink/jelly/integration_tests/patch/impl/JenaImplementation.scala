@@ -4,10 +4,9 @@ import eu.neverblink.jelly.convert.jena.patch.*
 import eu.neverblink.jelly.core.patch.JellyPatchOptions
 import eu.neverblink.jelly.core.proto.v1.patch.{PatchStatementType, RdfPatchOptions}
 import eu.neverblink.jelly.integration_tests.patch.traits.*
-import eu.neverblink.jelly.integration_tests.util.TestComparable
+import eu.neverblink.jelly.integration_tests.util.{CompatibilityUtils, TestComparable}
 import org.apache.jena.rdfpatch.text.RDFPatchReaderText
 import org.scalatest.matchers.should.Matchers.*
-import org.apache.jena.Jena
 
 import java.io.{File, FileInputStream, InputStream, OutputStream}
 import scala.annotation.experimental
@@ -28,12 +27,8 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
 
   override def name: String = "Jena"
 
-  lazy val jenaVersion54OrHigher: Boolean = {
-    val split = Jena.VERSION.split('.')
-    split(0).toInt > 5 || split(1).toInt >= 4
-  }
 
-  override def supportsRdfStar: Boolean = !jenaVersion54OrHigher
+  override def supportsRdfStar: Boolean = !CompatibilityUtils.jenaVersion54OrHigher
 
   override def readRdf(in: InputStream, stType: PatchStatementType): JenaChangesCollector =
     val collector = JellyPatchOps.changesCollector(stType)

@@ -3,6 +3,7 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
+import eu.neverblink.jelly.integration_tests.util.CompatibilityUtils
 import eu.neverblink.jelly.pekko.stream.*
 import org.apache.jena.Jena
 import org.apache.jena.graph.{Node, Triple}
@@ -24,14 +25,9 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
 
   val name = "Reactive writes (Apache Jena)"
 
-  lazy val jenaVersion54OrHigher: Boolean = {
-    val split = Jena.VERSION.split('.')
-    split(0).toInt > 5 || split(1).toInt >= 4
-  }
+  override def supportsRdf12: Boolean = CompatibilityUtils.jenaVersion54OrHigher
 
-  override def supportsRdf12: Boolean = jenaVersion54OrHigher
-
-  override def supportsRdfStar: Boolean = !jenaVersion54OrHigher
+  override def supportsRdfStar: Boolean = !CompatibilityUtils.jenaVersion54OrHigher
 
   override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
 
