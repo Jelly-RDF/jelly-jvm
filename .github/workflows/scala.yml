@@ -20,14 +20,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        jena_version: ["", "5.3.0"]
         include:
           - os: ubuntu-latest
             java: 17
+            jena_version: ""
+          - os: ubuntu-latest
+            java: 17
+            jena_version: "5.3.0"
           - os: ubuntu-latest
             java: 21
+            jena_version: ""
           - os: ubuntu-latest
             java: 24
+            jena_version: ""
     runs-on: ${{ matrix.os }}
 
     steps:
