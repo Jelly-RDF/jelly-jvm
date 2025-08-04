@@ -3,6 +3,7 @@ package eu.neverblink.jelly.integration_tests.rdf
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamOptions}
 import eu.neverblink.jelly.core.utils.{QuadExtractor, QuadMaker, TripleExtractor, TripleMaker}
+import eu.neverblink.jelly.integration_tests.util.CompatibilityUtils
 import eu.neverblink.jelly.pekko.stream.{DecoderFlow, EncoderFlow, RdfSource, SizeLimiter}
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.system.AsyncParser
@@ -25,6 +26,10 @@ case object JenaTestStream extends TestStream:
 
   given JenaAdapters.DATASET_GRAPH_ADAPTER.type = JenaAdapters.DATASET_GRAPH_ADAPTER
   given JenaAdapters.MODEL_ADAPTER.type = JenaAdapters.MODEL_ADAPTER
+
+  override def supportsRdf12: Boolean = CompatibilityUtils.jenaVersion54OrHigher
+
+  override def supportsRdfStar: Boolean = !CompatibilityUtils.jenaVersion54OrHigher
 
   override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
     Source.fromIterator(() => AsyncParser.asyncParseTriples(is, Lang.NT, "").asScala)

@@ -6,7 +6,9 @@ import eu.neverblink.jelly.core.memory.RowBuffer
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.{JellyOptions, ProtoEncoder}
 import eu.neverblink.jelly.integration_tests.rdf.TestCases
+import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
 import eu.neverblink.jelly.integration_tests.util.Measure
+import org.apache.jena.riot.RDFDataMgr
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -33,8 +35,10 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
     (Rdf4jSerDes, "RDF4J Rio"),
   )
 
+  TestRiot.initialize()
+
   for (caseName, file) <- TestCases.triples do
-    val model = JenaSerDes.readTriplesW3C(new FileInputStream(file))
+    val model = RDFDataMgr.loadModel(file.toURI.toString, TestRiot.NT_ANY)
     val originalSize = model.size()
     for preset <- presets do
       val (options, presetName) = preset

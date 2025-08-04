@@ -3,7 +3,7 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 import eu.neverblink.jelly.convert.jena.riot.{JellyFormatVariant, JellyLanguage}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
-import eu.neverblink.jelly.integration_tests.util.Measure
+import eu.neverblink.jelly.integration_tests.util.{CompatibilityUtils, Measure}
 import org.apache.jena.query.{Dataset, DatasetFactory}
 import org.apache.jena.rdf.model.{Model, ModelFactory}
 import org.apache.jena.riot.*
@@ -16,6 +16,10 @@ given Measure[Dataset] = (ds: Dataset) => ds.asDatasetGraph().find().asScala.siz
 
 object JenaSerDes extends NativeSerDes[Model, Dataset]:
   val name = "Jena"
+
+  override def supportsRdf12: Boolean = CompatibilityUtils.jenaVersion54OrHigher
+
+  override def supportsRdfStar: Boolean = !CompatibilityUtils.jenaVersion54OrHigher
 
   override def readTriplesW3C(is: InputStream): Model =
     val m = ModelFactory.createDefaultModel()

@@ -4,6 +4,7 @@ import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory
 import eu.neverblink.jelly.core.*
 import eu.neverblink.jelly.core.RdfHandler.AnyStatementHandler
 import eu.neverblink.jelly.core.proto.v1.*
+import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
 import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, SizeLimiter, StreamRowCountLimiter}
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.RDFDataMgr
@@ -81,6 +82,10 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     else
       opt.clone().setPhysicalType(PhysicalStreamType.GRAPHS).setLogicalType(LogicalStreamType.NAMED_GRAPHS)
 
+  private def checkTestCaseSupport(ser: TestStream, f: String) =
+    (ser.supportsRdfStar || !f.contains("star")) &&
+      (ser.supportsRdf12 || !f.contains("rdf12"))
+
   // 1. Define the test data
 
   private val encoderImpls: Seq[(String, TestStream)] = Seq(
@@ -101,16 +106,18 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     ),
   )
 
+  TestRiot.initialize()
+
   private object TripleTests:
     val files: Seq[(String, File)] = TestCases.triples
     val graphs: Map[String, Graph] = Map.from(
-      files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString)))
+      files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString, TestRiot.NT_ANY)))
     )
 
   private object QuadTests:
     val files: Seq[(String, File)] = TestCases.quads
     val datasets: Map[String, DatasetGraph] = Map.from(
-      files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString)))
+      files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString, TestRiot.NQ_ANY)))
     )
 
   private val jellyOptions: Seq[(String, RdfStreamOptions)] = Seq(
@@ -144,6 +151,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
       (encName, encFlow) <- encoderImpls
       (jOptName, jOpt) <- jellyOptions
       (limiterName, limiter) <- sizeLimiters
+      if checkTestCaseSupport(encFlow, caseName)
     yield
       val sourceGraph = TripleTests.graphs(caseName)
       val is = new FileInputStream(sourceFile)
@@ -159,6 +167,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
       (encName, encFlow) <- encoderImpls
       (jOptName, jOpt) <- jellyOptions
       (limiterName, limiter) <- sizeLimiters
+      if checkTestCaseSupport(encFlow, caseName)
     yield
       val sourceDataset = QuadTests.datasets(caseName)
       val is = new FileInputStream(sourceFile)
@@ -174,6 +183,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
       (encName, encFlow) <- encoderImpls
       (jOptName, jOpt) <- jellyOptions
       (limiterName, limiter) <- sizeLimiters
+      if checkTestCaseSupport(encFlow, caseName)
     yield
       val sourceDataset = QuadTests.datasets(caseName)
       val is = new FileInputStream(sourceFile)

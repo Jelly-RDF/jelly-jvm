@@ -20,6 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        jena_version: ["", "5.3.0"]
         include:
           - os: ubuntu-latest
             java: 17
@@ -43,6 +44,18 @@ jobs:
 
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
+
+    # This is necessary, as Jena suddenly dropped support for RDF-star in 5.4.0 in favor of RDF1.2.
+    # We want to keep RDF-star support a possibility, so we test against Jena 5.3 as well as the latest version.
+    # See: https://github.com/Jelly-RDF/jelly-jvm/issues/368
+    - name: Switch Jena Version
+      shell: bash
+      run: |
+        if [ $JENA_VERSION ]; then
+          sed -i "s/lazy val jenaV = .*/lazy val jenaV = \"$JENA_VERSION\"/g" build.sbt
+        fi
+      env:
+        JENA_VERSION: ${{ matrix.jena_version }}
 
     - name: Build and test
       shell: bash
