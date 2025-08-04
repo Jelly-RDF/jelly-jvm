@@ -104,7 +104,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
 
               sourceGraph.size() should be (resultGraph.size())
 
-              Comparisons.isIso(sourceGraph, resultGraph) should be (true)
+              Comparisons.isIsomorphic(sourceGraph, resultGraph) should be (true)
             }
 
           // Quads and graphs

@@ -8,7 +8,7 @@ import org.apache.jena.sparql.util.IsoMatcher
 import scala.jdk.CollectionConverters.*
 
 object Comparisons extends Matchers:
-  def isIso(g1: Graph, g2: Graph): Boolean = {
+  def isIsomorphic(g1: Graph, g2: Graph): Boolean = {
     g1.isIsomorphicWith(g2) ||
       // Slower fallback check, `isIsomorphicWith` apparently sometimes doesn't work with quoted triples
       IsoMatcher.isomorphic(g1, g2)
@@ -16,7 +16,7 @@ object Comparisons extends Matchers:
 
   def compareDatasets(resultDataset: DatasetGraph, sourceDataset: DatasetGraph): Unit =
     resultDataset.size() should be(sourceDataset.size())
-    isIso(sourceDataset.getDefaultGraph, resultDataset.getDefaultGraph) should be(true)
+    isIsomorphic(sourceDataset.getDefaultGraph, resultDataset.getDefaultGraph) should be(true)
     // I have absolutely no idea why, but the .asScala extension method is not working here.
     // Made the conversion explicit and it's fine.
     for graphNode <- IteratorHasAsScala(sourceDataset.listGraphNodes).asScala do
@@ -33,7 +33,7 @@ object Comparisons extends Matchers:
         resultDataset.containsGraph(otherGraphNode) should be(true)
       }
       withClue(s"graph $graphNode should be isomorphic") {
-        isIso(
+        isIsomorphic(
           sourceDataset.getGraph(graphNode),
           resultDataset.getGraph(otherGraphNode),
         ) should be(true)
