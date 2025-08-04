@@ -6,6 +6,7 @@ import org.apache.jena.riot.lang.LangRIOT
 import org.apache.jena.riot.system.{ParserProfile, StreamRDF}
 import org.apache.jena.riot.tokens.{Tokenizer, TokenizerText}
 import org.apache.jena.sparql.util.Context
+import org.apache.jena.sys.JenaSystem
 
 import java.io.{InputStream, Reader}
 
@@ -23,6 +24,7 @@ object TestRiot:
 
   def initialize(): Unit = TestRiot.synchronized {
     if initialized then return
+    JenaSystem.init()
     val factoryNT: ReaderRIOTFactory = (_, parserProfile) => NTriplesReader(parserProfile)
     val factoryNQ: ReaderRIOTFactory = (_, parserProfile) => NQuadsReader(parserProfile)
     RDFParserRegistry.registerLangTriples(NT_ANY, factoryNT)
