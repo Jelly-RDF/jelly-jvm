@@ -175,7 +175,9 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
 
   override def getBlankNodeLabel(node: Node): String = node.getBlankNodeLabel
 
-  @nowarn
+  // Jena deprecated .isNodeTriple() in favor of .isTripleTerm() in version 5.4.
+  // To maintain compatibility with 5.0.x–5.3.x. we must continue using .isNodeTriple().
+  @nowarn("msg=deprecated")
   override def isNodeTriple(node: Node): Boolean = node.isNodeTriple
 
   override def iterateTerms(node: Triple | Quad): Seq[Node] =
