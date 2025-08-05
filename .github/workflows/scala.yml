@@ -175,8 +175,8 @@ jobs:
       run: |
         echo '_:b <http://ex.org/p> <http://ex.org/o> .' > test.nt
 
-        cp -f jena-plugin/target/jelly-jena-plugin.jar jena/lib
-        ./jena/bin/riot --stream=jelly test.nt > jena.jelly
+        cp -f jena-plugin/target/jelly-jena-plugin.jar jena-dir/lib
+        ./jena-dir/bin/riot --stream=jelly test.nt > jena.jelly
         [ -s jena.jelly ]
 
         cp -f rdf4j-plugin/target/jelly-rdf4j-plugin.jar rdf4j-dir/lib
