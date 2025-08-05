@@ -155,6 +155,13 @@ jobs:
         mkdir -p jena-dir
         tar -xzf jena.tar.gz -C jena-dir --strip-components=1
 
+    - name: Save Jena cache
+      if: steps.cache-jena.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: jena-dir
+        key: jena
+
     - name: Cache RDF4J SDK
       id: cache-rdf4j
       uses: actions/cache@v4
@@ -167,8 +174,15 @@ jobs:
       shell: bash
       run: |
         wget --progress=dot:mega -O rdf4j.zip https://mirrors.xmission.com/eclipse/rdf4j/eclipse-rdf4j-5.1.3-sdk.zip
-        unzip rdf4j.zip
+        unzip -q rdf4j.zip
         mv eclipse-rdf4j-5.1.3 rdf4j-dir
+        
+    - name: Save RDF4J cache
+      if: steps.cache-rdf4j.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: rdf4j-dir
+        key: rdf4j
 
     - name: Test plugins
       shell: bash
@@ -180,5 +194,5 @@ jobs:
         [ -s jena.jelly ]
 
         cp -f rdf4j-plugin/target/jelly-rdf4j-plugin.jar rdf4j-dir/lib
-        echo "convert ../../test.nt ../../rdf4j.jelly" | ./rdf4j-dir/bin/console.sh
+        echo "convert test.nt rdf4j.jelly" | ./rdf4j-dir/bin/console.sh
         [ -s rdf4j.jelly ]
