@@ -31,22 +31,22 @@ lazy val grpcV = "1.74.0"
 
 lazy val jellyCliV = "0.4.5"
 
+lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
+
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   ),
   scalacOptions ++= Seq(
-    "-Werror",
     "-feature",
     "-deprecation",
     "-unchecked",
-  ),
+  ) ++ wErrorIfCI,
   javacOptions ++= Seq(
     "-source", "17",
     "-target", "17",
-    "-Werror",
     // TODO: enable more warnings
-  ),
+  ) ++ wErrorIfCI,
   // Explicitly specify the options for javadoc, otherwise sbt will pass all javacOptions to it
   // which will cause an error.
   Compile / doc / javacOptions := Seq("-source", "17"),
