@@ -376,6 +376,13 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
       "org.apache.jena" % "jena-arq" % jenaV % "provided,test",
       "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
     ),
+    // Excludes protobuf-java from the jar, since it's already provided in jena-core.
+    // I couldn't figure out a cleaner way since it's also a dependency of jelly-core.
+    ThisBuild / assemblyMergeStrategy := {
+      case PathList("com", "google", "protobuf", _*) => MergeStrategy.discard
+      case PathList("google", "protobuf", _*) => MergeStrategy.discard
+      case x => (ThisBuild / assemblyMergeStrategy).value(x) // defer to old strategy
+    },
     // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
     publishArtifact := false,
     commonSettings,
