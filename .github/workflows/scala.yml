@@ -139,3 +139,16 @@ jobs:
     - name: Test building assemblies
       shell: bash
       run: sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly
+
+    - name: Test plugins
+      shell: bash
+      run: |
+        echo '_:b <http://ex.org/p> <http://ex.org/o> .' > test.nt
+        echo "::group::Jena"
+        wget --progress=dot:mega -O jena.tar.gz https://dlcdn.apache.org/jena/binaries/apache-jena-5.5.0.tar.gz
+        mkdir -p $RUNNER_TOOL_CACHE/jena
+        tar -xzf jena.tar.gz -C $RUNNER_TOOL_CACHE/jena --strip-components=1
+        cp jena-plugin/target/jelly-jena-plugin.jar $RUNNER_TOOL_CACHE/jena/lib
+        $RUNNER_TOOL_CACHE/jena/bin/riot --stream=jelly test.nt > jena.jelly
+        [ -s jena.jelly ]
+        echo "::endgroup::"
