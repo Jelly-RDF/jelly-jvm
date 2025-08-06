@@ -42,7 +42,7 @@ The {{ scaladoc_link_pretty('pekko-stream', 'DecoderFlow$') }} provides methods 
 
 ## Byte streams (delimited variant)
 
-In all of the examples above, we used the [non-delimited variant of Jelly]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}), which is appropriate for, e.g., sending Jelly data over [gRPC](grpc.md) or Kafka. If you want to write Jelly data to a file or a socket, you will need to use the delimited variant. `jelly-pekko-stream` provides a few methods for this in {{ scaladoc_link_pretty('pekko-stream', 'JellyIo') }}.
+In all of the examples above, we used the [non-delimited variant of Jelly]({{ proto_link('user-guide#delimited-vs-non-delimited-jelly') }}), which is appropriate for, e.g., sending Jelly data over [gRPC](grpc.md) or Kafka. If you want to write Jelly data to a file or a socket, you will need to use the delimited variant. `jelly-pekko-stream` provides a few methods for this in {{ scaladoc_link_pretty('pekko-stream', 'JellyIo$') }}.
 
 {{ code_example('PekkoStreamsWithIo.scala') }}
 

@@ -31,3 +31,17 @@ jobs:
         run: |
           export TAG='main'
           mkdocs build -s
+
+      - name: Check broken links
+        working-directory: ./docs
+        run: |
+          # Need to start a server because linkchecker doesn't recurse into local dirs
+          # And canonical links don't work correctly
+          TAG='main' mkdocs serve &
+          sleep 5
+          linkchecker \
+            --no-warning \
+            --check-extern \
+            --ignore "https://doi.org" \
+            http://localhost:8000
+          kill $!
