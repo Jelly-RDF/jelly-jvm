@@ -246,7 +246,7 @@ options.maxPrefixTableSize // returns 64
 options.maxDatatypeTableSize // returns 16 (the default)
 ```
 
-See [the source code of this class]({{ git_link('stream/src/main/scala/eu/neverblink/jelly/stream/JellyOptionsFromTypesafe.scala') }}) for more details.
+See [the source code of this class]({{ git_link('pekko-stream/src/main/scala/eu/neverblink/jelly/pekko/stream/JellyOptionsFromTypesafe.scala') }}) for more details.
 
 ## See also
 

@@ -2,7 +2,7 @@
 
 !!! warning
 
-    This page describes a low-level API that is a bit of a hassle to use directly. It's recommended to use the higher-level abstractions provided by the [`jelly-pekko-stream` module](reactive.md), or the integrations with [Apache Jena's RIOT](jena.md) or [RDF4J's Rio](rdf4j.md) libraries. If you really want to use this, it is highly recommended that you first get a [basic understanding of how Jelly works under the hood]({{ proto_link('user-guide') }}) and take a look at the [code in the `jelly-pekko-stream` module]({{ git_link('stream') }}) to see how it's done there.
+    This page describes a low-level API that is a bit of a hassle to use directly. It's recommended to use the higher-level abstractions provided by the [`jelly-pekko-stream` module](reactive.md), or the integrations with [Apache Jena's RIOT](jena.md) or [RDF4J's Rio](rdf4j.md) libraries. If you really want to use this, it is highly recommended that you first get a [basic understanding of how Jelly works under the hood]({{ proto_link('user-guide') }}) and take a look at the [code in the `jelly-pekko-stream` module]({{ git_link('pekko-stream') }}) to see how it's done there.
 
 !!! note
 

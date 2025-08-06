@@ -154,13 +154,13 @@ def define_env(env):
 
     @env.macro
     def code_example(file_name):
-        prefix = 'examples/src/main/scala/eu/neverblink/jelly/examples/'
         if file_name.endswith('.java'):
             dir_name = 'examples_java'
             lang = 'java'
         else: 
             dir_name = 'examples'
             lang = 'scala'
+        prefix = f'examples/src/main/{lang}/eu/neverblink/jelly/examples/'
         with open(f'docs/{dir_name}/{file_name}', 'r') as f:
             code = f.read()
         return f"""
