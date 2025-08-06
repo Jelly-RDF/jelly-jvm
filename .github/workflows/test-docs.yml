@@ -37,7 +37,8 @@ jobs:
         run: |
           # Need to start a server because linkchecker doesn't recurse into local dirs
           # And canonical links don't work correctly
-          TAG='main' mkdocs serve >/dev/null 2>&1 &
+          TAG='main' mkdocs serve &
+          sleep 5
           linkchecker \
             --no-warning \
             --check-extern \
