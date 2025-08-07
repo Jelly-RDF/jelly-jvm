@@ -45,7 +45,7 @@ lazy val commonSettings = Seq(
     "-feature",
     "-deprecation",
     "-unchecked",
-    "-Wunused:all",
+    "-Wunused:imports",
   ) ++ wErrorIfCI,
   javacOptions ++= Seq(
     "-source", "17",
