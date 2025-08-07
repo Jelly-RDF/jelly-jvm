@@ -816,6 +816,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#user-developer-chat" class="md-nav__link">
     <span class="md-ellipsis">
       User &amp; developer chat
@@ -937,6 +946,11 @@
 
 <h1 id="contributing-to-jelly-jvm">Contributing to Jelly-JVM</h1>
 <p>Jelly-JVM is an open project – <strong>you are welcome to submit issues, pull requests, or just ask questions</strong>!</p>
+<h2 id="quick-start">Quick start</h2>
+<p>Clone the project with submodules:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git clone --recursive git@github.com:Jelly-RDF/jelly-jvm.git
+</span></code></pre></div>
+<p>We use <code>sbt</code> as our build system. If you don't already have it installed, get it from <a href="https://www.scala-sbt.org/1.x/docs/Setup.html">scala-sbt.org</a>, or via <a href="https://get-coursier.io/">coursier</a>.</p>
 <h2 id="user-developer-chat">User &amp; developer chat</h2>
 <p>If you have any questions or want to discuss a feature, you can join the <strong><a href="https://discord.gg/A8sN5XwVa5">Jelly Discord chat</a></strong>.</p>
 <h2 id="code-of-conduct">Code of conduct</h2>
@@ -950,8 +964,8 @@
 <p>If you are working on a larger feature or a significant change, it is recommended to open an issue first to discuss the idea.</p>
 <h2 id="formatting-your-code">Formatting your code</h2>
 <p>We use prettier and JHipster's <a href="https://github.com/jhipster/prettier-java"><code>prettier-plugin-java</code></a> to format our Java code. You can run the formatter with the following command:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>npm<span class="w"> </span>install
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>npm<span class="w"> </span>run<span class="w"> </span>format:fix
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>npm<span class="w"> </span>install
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>npm<span class="w"> </span>run<span class="w"> </span>format:fix
 </span></code></pre></div>
 <p>The pull requests are expected to be formatted before being submitted. For IntellIJ users, you can set up the formatter to run automatically on save. To do this:</p>
 <ul>
@@ -968,10 +982,10 @@
 <p>Jelly-JVM uses the exact same documentation system as the main <a href="https://w3id.org/jelly/dev/">Jelly documentation</a>. Further information on editing the documentation can be found in the <a href="https://w3id.org/jelly/dev/contributing">Contributing to the Jelly documentation</a> guide.</p>
 <h2 id="tests">Tests</h2>
 <p>We expect all pull requests to include tests for new features or bug fixes – expected coverage is 90% or higher. Tests are written in Scala using <a href="https://www.scalatest.org/">ScalaTest</a>. You can run the tests with the following command:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sbt<span class="w"> </span><span class="nb">test</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sbt<span class="w"> </span><span class="nb">test</span>
 </span></code></pre></div>
 <p>Or, to test only one module (in this case, <code>core</code>):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sbt<span class="w"> </span>core/test
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sbt<span class="w"> </span>core/test
 </span></code></pre></div>
 <p>Some tests produce a lot of output on the console. You may want to silence it by setting the <code>JELLY_TEST_SILENCE_OUTPUT</code> environment variable to <code>true</code>. This is done for example in the CI pipeline.</p>
 <h2 id="releases">Releases</h2>
@@ -1002,7 +1016,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 20, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 7, 2025</span>
   </span>
 
     
