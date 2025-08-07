@@ -12,12 +12,11 @@ import org.apache.jena.sparql.core.DatasetGraphFactory
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.file.{Files, Path}
 
-/**
- * Utility to generate *.jelly files for later back-compat testing.
- * These live in resources/backcompat.
- *
- * Run this utility after increasing the protocol version in the Constants class.
- */
+/** Utility to generate *.jelly files for later back-compat testing. These live in
+  * resources/backcompat.
+  *
+  * Run this utility after increasing the protocol version in the Constants class.
+  */
 object MakeBackCompatTestCases:
 
   @main
@@ -28,7 +27,7 @@ object MakeBackCompatTestCases:
       RDFDataMgr.read(
         jenaDg,
         getClass.getResourceAsStream(s"/backcompat/$fileName.trig"),
-        Lang.TRIG
+        Lang.TRIG,
       )
       val v2Format = new RDFFormat(
         JellyLanguage.JELLY,
@@ -40,27 +39,36 @@ object MakeBackCompatTestCases:
       RDFDataMgr.write(
         bufferOs,
         jenaDg,
-        v2Format
+        v2Format,
       )
       // Parse it, add some metadata (not supported by RDF4J writer) and write it to a file
       // This was added in Jelly-RDF 1.1.1
-      val fileOs = Files.newOutputStream(Path.of(
-        s"integration-tests/src/test/resources/backcompat/${fileName}_v$version.jelly"
-      ))
+      val fileOs = Files.newOutputStream(
+        Path.of(
+          s"integration-tests/src/test/resources/backcompat/${fileName}_v$version.jelly",
+        ),
+      )
       val bufferIs = ByteArrayInputStream(bufferOs.toByteArray)
       Iterator
         .continually(RdfStreamFrame.parseDelimitedFrom(bufferIs))
         .takeWhile(_ != null)
-        .map(frame => frame.clone
-          .addMetadata(MetadataEntry.newInstance().setKey("keyString").setValue(
-            ByteString.copyFromUtf8("valueString")
-          ))
-          .addMetadata(MetadataEntry.newInstance().setKey("keyLowBytes").setValue(
-            ByteString.copyFrom(Array[Byte](1, 2, 3, 4, 5))
-          ))
-          .addMetadata(MetadataEntry.newInstance().setKey("keyZeroes").setValue(
-            ByteString.copyFrom(Array.ofDim[Byte](40))
-          ))
+        .map(frame =>
+          frame.clone
+            .addMetadata(
+              MetadataEntry.newInstance().setKey("keyString").setValue(
+                ByteString.copyFromUtf8("valueString"),
+              ),
+            )
+            .addMetadata(
+              MetadataEntry.newInstance().setKey("keyLowBytes").setValue(
+                ByteString.copyFrom(Array[Byte](1, 2, 3, 4, 5)),
+              ),
+            )
+            .addMetadata(
+              MetadataEntry.newInstance().setKey("keyZeroes").setValue(
+                ByteString.copyFrom(Array.ofDim[Byte](40)),
+              ),
+            ),
         )
         .foreach(frame => frame.writeDelimitedTo(fileOs))
       fileOs.close()

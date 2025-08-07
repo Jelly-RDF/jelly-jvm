@@ -19,10 +19,8 @@ final class ProtoCollector extends AnyRdfHandler[Node]:
     namespaces += ((prefix, namespace))
 
   override def handleTriple(subject: Node, predicate: Node, `object`: Node): Unit =
-    if currentGraph.isDefined then
-      currentGraphTripleBuffer += Triple(subject, predicate, `object`)
-    else
-      statements += Triple(subject, predicate, `object`)
+    if currentGraph.isDefined then currentGraphTripleBuffer += Triple(subject, predicate, `object`)
+    else statements += Triple(subject, predicate, `object`)
 
   override def handleQuad(subject: Node, predicate: Node, `object`: Node, graph: Node): Unit =
     statements += Quad(subject, predicate, `object`, graph)

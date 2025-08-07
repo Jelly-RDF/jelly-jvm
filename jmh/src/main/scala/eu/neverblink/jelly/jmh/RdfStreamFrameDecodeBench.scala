@@ -36,7 +36,8 @@ class RdfStreamFrameDecodeBench:
         blackhole.consume(`object`)
     }
     val decoder = JenaConverterFactory.getInstance().triplesDecoder(
-      handler, JellyOptions.DEFAULT_SUPPORTED_OPTIONS
+      handler,
+      JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
     )
     for i <- input.toDecode.indices do
       val frame = input.toDecode(i)

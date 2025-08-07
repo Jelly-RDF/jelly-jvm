@@ -40,13 +40,13 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   private object TripleTests:
     val files: Seq[(String, File)] = TestCases.triples
     val graphs: Map[String, Graph] = Map.from(
-      files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString, TestRiot.NT_ANY)))
+      files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString, TestRiot.NT_ANY))),
     )
 
   private object QuadTests:
     val files: Seq[(String, File)] = TestCases.quads
     val datasets: Map[String, DatasetGraph] = Map.from(
-      files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString, TestRiot.NQ_ANY)))
+      files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString, TestRiot.NQ_ANY))),
     )
 
   private val jellyOptions: Seq[(String, RdfStreamOptions)] = Seq(
@@ -54,7 +54,7 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     ("small, no prefix table", JellyOptions.SMALL_GENERALIZED.clone().setMaxPrefixTableSize(0)),
     (
       "tiny name table, no prefix table",
-      JellyOptions.SMALL_GENERALIZED.clone().setMaxPrefixTableSize(0).setMaxNameTableSize(16)
+      JellyOptions.SMALL_GENERALIZED.clone().setMaxPrefixTableSize(0).setMaxNameTableSize(16),
     ),
     ("big default", JellyOptions.BIG_GENERALIZED),
   )
@@ -67,7 +67,13 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     ("stream row count: 200", StreamRowCountLimiter(200)),
   )
 
-  final case class CaseKey(physicalType: String, encoder: String, jOpt: String, sOpt: String, caseName: String)
+  final case class CaseKey(
+      physicalType: String,
+      encoder: String,
+      jOpt: String,
+      sOpt: String,
+      caseName: String,
+  )
 
   private val encodedSizes: mutable.Map[CaseKey, Long] = mutable.Map()
 
@@ -78,83 +84,84 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   for (encName, encFlow) <- implementations do
     s"$encName encoder" when {
       for (decName, decFlow) <- implementations do
-      for (jOptName, jOpt) <- jellyOptions do
-      for (limiterName, limiter) <- sizeLimiters do
-        s"streaming to a $decName decoder, $jOptName, $limiterName" should {
-          // Triples
-          for (caseName, sourceFile) <- TripleTests.files.filter(
-            checkTestCaseSupport(encFlow, decFlow)
-          ) do
-            val sourceGraph = TripleTests.graphs(caseName)
-            s"stream triples – file $caseName" in {
-              val is = new FileInputStream(sourceFile)
-              val os = new ByteArrayOutputStream()
-              var encSize = 0
-              encFlow.tripleSource(is, limiter, jOpt)
-                .wireTap(f => encSize += f.getSerializedSize)
-                .toMat(decFlow.tripleSink(os))(Keep.right)
-                .run()
-                .futureValue
+        for (jOptName, jOpt) <- jellyOptions do
+          for (limiterName, limiter) <- sizeLimiters do
+            s"streaming to a $decName decoder, $jOptName, $limiterName" should {
+              // Triples
+              for (caseName, sourceFile) <- TripleTests.files.filter(
+                  checkTestCaseSupport(encFlow, decFlow),
+                )
+              do
+                val sourceGraph = TripleTests.graphs(caseName)
+                s"stream triples – file $caseName" in {
+                  val is = new FileInputStream(sourceFile)
+                  val os = new ByteArrayOutputStream()
+                  var encSize = 0
+                  encFlow.tripleSource(is, limiter, jOpt)
+                    .wireTap(f => encSize += f.getSerializedSize)
+                    .toMat(decFlow.tripleSink(os))(Keep.right)
+                    .run()
+                    .futureValue
 
-              val ck = CaseKey("triples", encName, jOptName, limiterName, caseName)
-              encodedSizes(ck) = encSize
-              val resultGraph = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
-                .lang(TestRiot.NT_ANY)
-                .toGraph
+                  val ck = CaseKey("triples", encName, jOptName, limiterName, caseName)
+                  encodedSizes(ck) = encSize
+                  val resultGraph = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
+                    .lang(TestRiot.NT_ANY)
+                    .toGraph
 
-              sourceGraph.size() should be (resultGraph.size())
+                  sourceGraph.size() should be(resultGraph.size())
 
-              Comparisons.isIsomorphic(sourceGraph, resultGraph) should be (true)
+                  Comparisons.isIsomorphic(sourceGraph, resultGraph) should be(true)
+                }
+
+              // Quads and graphs
+              for (caseName, sourceFile) <- QuadTests.files.filter(
+                  checkTestCaseSupport(encFlow, decFlow),
+                )
+              do
+                val sourceDataset = QuadTests.datasets(caseName)
+                s"stream quads – file $caseName" in {
+                  val is = new FileInputStream(sourceFile)
+                  val os = new ByteArrayOutputStream()
+                  var encSize = 0
+                  encFlow.quadSource(is, limiter, jOpt)
+                    .wireTap(f => encSize += f.getSerializedSize)
+                    .toMat(decFlow.quadSink(os))(Keep.right)
+                    .run()
+                    .futureValue
+
+                  val ck = CaseKey("quads", encName, jOptName, limiterName, caseName)
+                  encodedSizes(ck) = encSize
+                  val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
+                    .lang(TestRiot.NQ_ANY)
+                    .toDatasetGraph
+                  Comparisons.compareDatasets(resultDataset, sourceDataset)
+                }
+
+                s"stream graphs – file $caseName" in {
+                  val is = new FileInputStream(sourceFile)
+                  val os = new ByteArrayOutputStream()
+                  var encSize = 0
+                  encFlow.graphSource(is, limiter, jOpt)
+                    .wireTap(f => encSize += f.getSerializedSize)
+                    .toMat(decFlow.graphSink(os))(Keep.right)
+                    .run()
+                    .futureValue
+
+                  val ck = CaseKey("graphs", encName, jOptName, limiterName, caseName)
+                  encodedSizes(ck) = encSize
+                  val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
+                    .lang(TestRiot.NQ_ANY)
+                    .toDatasetGraph
+                  Comparisons.compareDatasets(resultDataset, sourceDataset)
+                }
             }
-
-          // Quads and graphs
-          for (caseName, sourceFile) <- QuadTests.files.filter(
-            checkTestCaseSupport(encFlow, decFlow)
-          ) do
-            val sourceDataset = QuadTests.datasets(caseName)
-            s"stream quads – file $caseName" in {
-              val is = new FileInputStream(sourceFile)
-              val os = new ByteArrayOutputStream()
-              var encSize = 0
-              encFlow.quadSource(is, limiter, jOpt)
-                .wireTap(f => encSize += f.getSerializedSize)
-                .toMat(decFlow.quadSink(os))(Keep.right)
-                .run()
-                .futureValue
-
-              val ck = CaseKey("quads", encName, jOptName, limiterName, caseName)
-              encodedSizes(ck) = encSize
-              val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
-                .lang(TestRiot.NQ_ANY)
-                .toDatasetGraph
-              Comparisons.compareDatasets(resultDataset, sourceDataset)
-            }
-
-            s"stream graphs – file $caseName" in {
-              val is = new FileInputStream(sourceFile)
-              val os = new ByteArrayOutputStream()
-              var encSize = 0
-              encFlow.graphSource(is, limiter, jOpt)
-                .wireTap(f => encSize += f.getSerializedSize)
-                .toMat(decFlow.graphSink(os))(Keep.right)
-                .run()
-                .futureValue
-
-              val ck = CaseKey("graphs", encName, jOptName, limiterName, caseName)
-              encodedSizes(ck) = encSize
-              val resultDataset = RDFParser.source(new ByteArrayInputStream(os.toByteArray))
-                .lang(TestRiot.NQ_ANY)
-                .toDatasetGraph
-              Comparisons.compareDatasets(resultDataset, sourceDataset)
-            }
-        }
     }
 
   "test suite" should {
     "print encoded RDF sizes" in {
       withSilencedOutput {
-        for (key, value) <- encodedSizes do
-          print(s"$key size: $value\n")
+        for (key, value) <- encodedSizes do print(s"$key size: $value\n")
       }
     }
   }

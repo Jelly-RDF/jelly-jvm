@@ -15,20 +15,16 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{ByteArrayInputStream, FileInputStream}
 import scala.jdk.CollectionConverters.*
 
-/**
- * Test checking if the delimited/non-delimited auto-detection works correctly.
- *
- * This test only contains non-delimited tests. For the delimited ones, see:
- * [[IoSerDesSpec]].
- * More fine-grained tests for delimited/non-delimited detection can be found in the jelly-core module.
- */
+/** Test checking if the delimited/non-delimited auto-detection works correctly.
+  *
+  * This test only contains non-delimited tests. For the delimited ones, see: [[IoSerDesSpec]]. More
+  * fine-grained tests for delimited/non-delimited detection can be found in the jelly-core module.
+  */
 class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
   val presets: Seq[(RdfStreamOptions, String)] = Seq(
     (JellyOptions.SMALL_GENERALIZED, "small generalized"),
     (JellyOptions.BIG_GENERALIZED, "big generalized"),
-  ).map(
-    (opt, name) => (opt.clone().setPhysicalType(PhysicalStreamType.TRIPLES), name)
-  )
+  ).map((opt, name) => (opt.clone().setPhysicalType(PhysicalStreamType.TRIPLES), name))
 
   val methods = Seq(
     (JenaSerDes, "Jena RIOT"),
@@ -44,11 +40,15 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
       val (options, presetName) = preset
       val buffer = RowBuffer.newLazyImmutable()
       val encoder = JenaConverterFactory.getInstance().encoder(
-        ProtoEncoder.Params.of(options, false, buffer)
+        ProtoEncoder.Params.of(options, false, buffer),
       )
-      model.getGraph.find().asScala.foreach(t => encoder.handleTriple(
-        t.getSubject, t.getPredicate, t.getObject
-      ))
+      model.getGraph.find().asScala.foreach(t =>
+        encoder.handleTriple(
+          t.getSubject,
+          t.getPredicate,
+          t.getObject,
+        ),
+      )
       val frame = RdfStreamFrame.newInstance
       frame.setRows(buffer)
       val bytes = frame.toByteArray

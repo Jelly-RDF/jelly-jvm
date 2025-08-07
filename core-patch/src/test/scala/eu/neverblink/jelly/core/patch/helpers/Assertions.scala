@@ -13,13 +13,13 @@ object Assertions extends AnyWordSpec, Matchers:
     for ix <- 0 until observed.size.min(expected.size) do
       val obsRow = observed.applyOrElse(ix, null)
       withClue(s"Row $ix:") {
-        obsRow should be (expected.applyOrElse(ix, null))
+        obsRow should be(expected.applyOrElse(ix, null))
       }
-    observed.size should be (expected.size)
+    observed.size should be(expected.size)
 
   def assertEncodedFrame(observed: RdfPatchFrame, expected: RdfPatchFrame): Unit = assertEncoded(
     observed.getRows.asScala.toSeq,
-    expected.getRows.asScala.toSeq
+    expected.getRows.asScala.toSeq,
   )
 
   def assertEncodedFrame(observed: Seq[RdfPatchFrame], expected: Seq[RdfPatchFrame]): Unit =
@@ -28,4 +28,4 @@ object Assertions extends AnyWordSpec, Matchers:
       withClue(s"Frame $ix:") {
         assertEncodedFrame(obsFrame, expected.applyOrElse(ix, null))
       }
-    observed.size should be (expected.size)
+    observed.size should be(expected.size)

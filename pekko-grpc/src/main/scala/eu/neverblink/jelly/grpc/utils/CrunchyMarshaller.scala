@@ -10,7 +10,7 @@ import java.io.{ByteArrayInputStream, InputStream}
 
 @InternalStableApi
 class CrunchyMarshaller[T <: ProtoMessage[T]](protobufSerializer: ProtobufSerializer[T])
-  extends BaseMarshaller[T](protobufSerializer) {
+    extends BaseMarshaller[T](protobufSerializer) {
   override def parse(stream: InputStream): T = super.parse(stream)
   override def stream(value: T): InputStream =
     new ByteArrayInputStream(value.toByteArray) with KnownLength

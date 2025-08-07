@@ -40,7 +40,6 @@ object RdfIriDecodeBench:
         })
         .toArray
 
-
 class RdfIriDecodeBench:
   import RdfIriDecodeBench.*
 
@@ -49,7 +48,9 @@ class RdfIriDecodeBench:
   @BenchmarkMode(Array(Mode.AverageTime))
   def currentImplementation(blackhole: Blackhole, input: BenchInput): Unit =
     val decoder = NameDecoderImpl[String](
-      input.prefixTableSize, input.nameTableSize, iri => iri
+      input.prefixTableSize,
+      input.nameTableSize,
+      iri => iri,
     )
     input.toDecode.foreach {
       case iri: RdfIri => blackhole.consume(decoder.decode(iri.getPrefixId, iri.getNameId))

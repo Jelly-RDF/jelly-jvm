@@ -9,4 +9,10 @@ import eu.neverblink.jelly.core.patch.JellyPatchConverterFactory
 import scala.annotation.experimental
 
 @experimental
-object MockPatchConverterFactory extends JellyPatchConverterFactory[Node, Datatype, MockProtoEncoderConverter, MockProtoDecoderConverter](MockConverterFactory)
+object MockPatchConverterFactory
+    extends JellyPatchConverterFactory[
+      Node,
+      Datatype,
+      MockProtoEncoderConverter,
+      MockProtoDecoderConverter,
+    ](MockConverterFactory)

@@ -15,14 +15,17 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.jdk.CollectionConverters.*
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 
-/**
- * Tests for the Jelly writer factories.
- *
- * Currently, this only checks if the options specified in the Context are correctly passed to the writer,
- * especially the preset.
- */
+/** Tests for the Jelly writer factories.
+  *
+  * Currently, this only checks if the options specified in the Context are correctly passed to the
+  * writer, especially the preset.
+  */
 class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
-  private val triple = Triple.create(NodeFactory.createBlankNode(), NodeFactory.createBlankNode(), NodeFactory.createBlankNode())
+  private val triple = Triple.create(
+    NodeFactory.createBlankNode(),
+    NodeFactory.createBlankNode(),
+    NodeFactory.createBlankNode(),
+  )
   private val factories: Seq[(String, String, (RDFFormat, Context, OutputStream) => Unit)] = Seq(
     (
       "JellyGraphWriterFactory",
@@ -32,7 +35,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
         val g = GraphFactory.createDefaultGraph()
         g.add(triple)
         w.write(out, g, null, null, ctx)
-      }
+      },
     ),
     (
       "JellyDatasetWriterFactory",
@@ -42,7 +45,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
         val ds = DatasetGraphFactory.create()
         ds.getDefaultGraph.add(triple)
         w.write(out, ds, null, null, ctx)
-      }
+      },
     ),
     (
       "JellyStreamWriterFactory",
@@ -51,7 +54,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
         val w = JellyStreamWriterFactory().create(out, f, ctx)
         w.triple(triple)
         w.finish()
-      }
+      },
     ),
     (
       "JellyStreamWriterFactory",
@@ -60,7 +63,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
         val w = JellyStreamWriterFactory().create(out, f, ctx)
         w.quad(Quad.create(null, triple))
         w.finish()
-      }
+      },
     ),
   )
 
@@ -99,8 +102,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
           options.getMaxDatatypeTableSize should be(expOpt.getMaxDatatypeTableSize)
           if enableNsDecls.isDefined && enableNsDecls.get then
             options.getVersion should be(JellyConstants.PROTO_VERSION)
-          else
-            options.getVersion should be (JellyConstants.PROTO_VERSION_1_0_X)
+          else options.getVersion should be(JellyConstants.PROTO_VERSION_1_0_X)
         }
 
       "apply the `delimited` parameter set to false" in {

@@ -21,26 +21,41 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
   val r = Random(42)
 
   val cases = Seq(
-    ("triples, frame size 1", Triples1.encodedFull(
-      JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.TRIPLES),
-      1,
-    )),
-    ("triples, frame size 20", Triples1.encodedFull(
-      JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.TRIPLES),
-      20,
-    )),
-    ("quads, frame size 6", Quads1.encodedFull(
-      JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.QUADS),
-      6,
-    )),
-    ("quads (2), frame size 2", Quads2RepeatDefault.encodedFull(
-      JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.QUADS),
-      2,
-    )),
-    ("graphs, frame size 3", Graphs1.encodedFull(
-      JellyOptions.BIG_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.GRAPHS),
-      3,
-    ))
+    (
+      "triples, frame size 1",
+      Triples1.encodedFull(
+        JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.TRIPLES),
+        1,
+      ),
+    ),
+    (
+      "triples, frame size 20",
+      Triples1.encodedFull(
+        JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.TRIPLES),
+        20,
+      ),
+    ),
+    (
+      "quads, frame size 6",
+      Quads1.encodedFull(
+        JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.QUADS),
+        6,
+      ),
+    ),
+    (
+      "quads (2), frame size 2",
+      Quads2RepeatDefault.encodedFull(
+        JellyOptions.SMALL_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.QUADS),
+        2,
+      ),
+    ),
+    (
+      "graphs, frame size 3",
+      Graphs1.encodedFull(
+        JellyOptions.BIG_GENERALIZED.clone().setPhysicalType(PhysicalStreamType.GRAPHS),
+        3,
+      ),
+    ),
   )
 
   "toBytes and fromBytes" should {
@@ -185,15 +200,19 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       val ex = resultFail.failed.futureValue
       ex shouldBe a[FramingException]
-      ex.getMessage should include ("Maximum allowed Protobuf message size is 999 but decoded " +
-        "delimiter reported size 1000")
+      ex.getMessage should include(
+        "Maximum allowed Protobuf message size is 999 but decoded " +
+          "delimiter reported size 1000",
+      )
     }
 
     "reject negative message size" in {
       val bytes = Array[Byte](
         143.toByte, // continuation bit set, 4 last bits set to 1
-        0xff.toByte, 0xff.toByte, 0xff.toByte, // 3x continuation bit set, 7 bits set to 1
-        127 // 7 bits set to 1, continuation bit not set
+        0xff.toByte,
+        0xff.toByte,
+        0xff.toByte, // 3x continuation bit set, 7 bits set to 1
+        127, // 7 bits set to 1, continuation bit not set
         // In total, this gives us 4 * 7 + 4 = 32 bits, which is -1 when interpreted as an Int
       )
       val input = ByteString(bytes)
@@ -204,7 +223,7 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       val ex = resultFail.failed.futureValue
       ex shouldBe a[FramingException]
-      ex.getMessage should include ("Decoded Protobuf delimiter reported negative size -1")
+      ex.getMessage should include("Decoded Protobuf delimiter reported negative size -1")
     }
 
     "accept delimiter length of up to 5 bytes" in {
@@ -241,7 +260,7 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       val ex = resultFail.failed.futureValue
       ex shouldBe a[FramingException]
-      ex.getMessage should include ("Delimiting varint too long (over 5 bytes)")
+      ex.getMessage should include("Delimiting varint too long (over 5 bytes)")
     }
   }
 
@@ -298,7 +317,9 @@ class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       val ex = resultFail.failed.futureValue
       ex shouldBe a[FramingException]
-      ex.getMessage should include ("Maximum allowed Protobuf message size is 999 but decoded " +
-        "delimiter reported size 1000")
+      ex.getMessage should include(
+        "Maximum allowed Protobuf message size is 999 but decoded " +
+          "delimiter reported size 1000",
+      )
     }
   }

@@ -16,21 +16,27 @@ import scala.jdk.CollectionConverters.*
 class JellyParserSpec extends AnyWordSpec, Matchers:
   private val inputData = {
     val frame = RdfStreamFrame.newInstance()
-    frame.addRows(RdfStreamRow.newInstance().setOptions(
-      JellyOptions.SMALL_STRICT.clone()
-        .setPhysicalType(PhysicalStreamType.TRIPLES)
-        .setMaxPrefixTableSize(0)
-        .setVersion(JellyConstants.PROTO_VERSION)
-    ))
-    frame.addRows(RdfStreamRow.newInstance().setName(
-      RdfNameEntry.newInstance().setValue("http://example.org/s")
-    ))
-    frame.addRows(RdfStreamRow.newInstance().setTriple(
-      RdfTriple.newInstance()
-        .setSubject(RdfIri.newInstance())
-        .setPredicate(RdfIri.newInstance().setNameId(1))
-        .setObject(RdfLiteral.newInstance().setLex("test"))
-    ))
+    frame.addRows(
+      RdfStreamRow.newInstance().setOptions(
+        JellyOptions.SMALL_STRICT.clone()
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
+          .setMaxPrefixTableSize(0)
+          .setVersion(JellyConstants.PROTO_VERSION),
+      ),
+    )
+    frame.addRows(
+      RdfStreamRow.newInstance().setName(
+        RdfNameEntry.newInstance().setValue("http://example.org/s"),
+      ),
+    )
+    frame.addRows(
+      RdfStreamRow.newInstance().setTriple(
+        RdfTriple.newInstance()
+          .setSubject(RdfIri.newInstance())
+          .setPredicate(RdfIri.newInstance().setNameId(1))
+          .setObject(RdfLiteral.newInstance().setLex("test")),
+      ),
+    )
     frame.toByteArrayDelimited
   }
 

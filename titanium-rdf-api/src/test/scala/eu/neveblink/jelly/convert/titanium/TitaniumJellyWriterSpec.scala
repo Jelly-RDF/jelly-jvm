@@ -6,23 +6,22 @@ import eu.neverblink.jelly.core.proto.v1.{LogicalStreamType, PhysicalStreamType}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-/**
- * Tests for the auxiliary methods of the TitaniumJellyWriter.
- * The main tests are done in the integration-tests module.
- */
+/** Tests for the auxiliary methods of the TitaniumJellyWriter. The main tests are done in the
+  * integration-tests module.
+  */
 class TitaniumJellyWriterSpec extends AnyWordSpec, Matchers:
   "TitaniumJellyWriter" should {
     "be created with default options" in {
       val os = new java.io.ByteArrayOutputStream()
       val writer = TitaniumJellyWriter.factory(os)
-      writer.getOptions should be (
+      writer.getOptions should be(
         JellyOptions.SMALL_STRICT.clone()
           .setPhysicalType(PhysicalStreamType.QUADS)
           .setLogicalType(LogicalStreamType.FLAT_QUADS)
-          .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
+          .setVersion(JellyConstants.PROTO_VERSION_1_0_X),
       )
-      writer.getOutputStream should be (os)
-      writer.getFrameSize should be (256)
+      writer.getOutputStream should be(os)
+      writer.getFrameSize should be(256)
     }
 
     "be created with custom options" in {
@@ -35,13 +34,13 @@ class TitaniumJellyWriterSpec extends AnyWordSpec, Matchers:
           .setLogicalType(LogicalStreamType.DATASETS),
         123,
       )
-      writer.getOptions should be (
+      writer.getOptions should be(
         JellyOptions.BIG_STRICT.clone()
           .setPhysicalType(PhysicalStreamType.QUADS)
           .setLogicalType(LogicalStreamType.DATASETS)
-          .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
+          .setVersion(JellyConstants.PROTO_VERSION_1_0_X),
       )
-      writer.getOutputStream should be (os)
-      writer.getFrameSize should be (123)
+      writer.getOutputStream should be(os)
+      writer.getFrameSize should be(123)
     }
   }

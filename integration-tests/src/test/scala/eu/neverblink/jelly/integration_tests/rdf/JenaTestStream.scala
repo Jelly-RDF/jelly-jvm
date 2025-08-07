@@ -51,7 +51,9 @@ case object JenaTestStream extends TestStream:
       .via(DecoderFlow.decodeTriples.asFlatTripleStream)
       // buffer the triples to avoid OOMs and keep some perf
       .grouped(32)
-      .toMat(Sink.foreach(triples => RDFDataMgr.writeTriples(os, triples.iterator.asJava)))(Keep.right)
+      .toMat(Sink.foreach(triples => RDFDataMgr.writeTriples(os, triples.iterator.asJava)))(
+        Keep.right,
+      )
 
   override def quadSink(os: OutputStream)(using ExecutionContext) =
     Flow[RdfStreamFrame]

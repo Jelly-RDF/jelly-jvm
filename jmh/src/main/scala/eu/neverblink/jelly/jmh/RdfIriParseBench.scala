@@ -30,20 +30,19 @@ object RdfIriParseBench:
 
     @Setup(Level.Trial)
     def setup(): Unit =
-      val (maxPrefixId, chancePrefixIsZero, maxNameId, chanceNameIsZero) = idDistribution.split(",").map(_.toDouble) match
-        case Array(a, b, c, d) => (a.toInt, b, c.toInt, d)
-        case _ => throw new IllegalArgumentException("Invalid idDistribution format")
+      val (maxPrefixId, chancePrefixIsZero, maxNameId, chanceNameIsZero) =
+        idDistribution.split(",").map(_.toDouble) match
+          case Array(a, b, c, d) => (a.toInt, b, c.toInt, d)
+          case _ => throw new IllegalArgumentException("Invalid idDistribution format")
 
       val os = new java.io.ByteArrayOutputStream()
       for i <- 0 until size do
         val iri = RdfIri.newInstance()
         if random.nextDouble() > chancePrefixIsZero then
           iri.setPrefixId(random.nextInt(maxPrefixId) + 1)
-        if random.nextDouble() > chanceNameIsZero then
-          iri.setNameId(random.nextInt(maxNameId) + 1)
+        if random.nextDouble() > chanceNameIsZero then iri.setNameId(random.nextInt(maxNameId) + 1)
         iri.writeDelimitedTo(os)
       toParse = os.toByteArray
-
 
 class RdfIriParseBench:
   import RdfIriParseBench.*

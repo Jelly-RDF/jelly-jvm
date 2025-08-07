@@ -14,7 +14,9 @@ import scala.jdk.CollectionConverters.*
 
 given mTitaniumDataset: Measure[RdfDataset] = (ds: RdfDataset) => ds.size
 
-object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerDes[RdfValue, RdfNQuad, RdfNQuad]:
+object TitaniumSerDes
+    extends NativeSerDes[RdfDataset, RdfDataset],
+      ProtocolSerDes[RdfValue, RdfNQuad, RdfNQuad]:
 
   override def name: String = "Titanium"
 
@@ -46,18 +48,29 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
 
   override def readQuadsW3C(files: Seq[File]): Seq[RdfNQuad] = readTriplesW3C(files)
 
-  override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): RdfDataset =
+  override def readTriplesJelly(
+      is: InputStream,
+      supportedOptions: Option[RdfStreamOptions],
+  ): RdfDataset =
     val reader = TitaniumJellyReader.factory(
-      supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
     )
     val ds = RdfDatasetSupplier(SinkRdfDataset())
     reader.parseAll(ds, is)
     ds.get()
 
-  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): RdfDataset =
+  override def readQuadsJelly(
+      is: InputStream,
+      supportedOptions: Option[RdfStreamOptions],
+  ): RdfDataset =
     readTriplesJelly(is, supportedOptions)
 
-  override def writeTriplesJelly(os: OutputStream, model: RdfDataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeTriplesJelly(
+      os: OutputStream,
+      model: RdfDataset,
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val writer = TitaniumJellyWriter.factory(
       os,
       opt.getOrElse(JellyOptions.SMALL_STRICT),
@@ -66,21 +79,37 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
     TitaniumDatasetEmitter.emitDatasetTo(model, writer)
     writer.close()
 
-  override def writeQuadsJelly(os: OutputStream, dataset: RdfDataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeQuadsJelly(
+      os: OutputStream,
+      dataset: RdfDataset,
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     writeTriplesJelly(os, dataset, opt, frameSize)
 
-  override def readTriplesJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[RdfNQuad] =
+  override def readTriplesJelly(
+      file: File,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Seq[RdfNQuad] =
     val reader = TitaniumJellyReader.factory(
-      supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
     )
     val ds = RdfDatasetSupplier(SinkRdfDataset())
     reader.parseAll(ds, FileInputStream(file))
     ds.get().toList.asScala.toSeq
 
-  override def readQuadsOrGraphsJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[RdfNQuad] =
+  override def readQuadsOrGraphsJelly(
+      file: File,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Seq[RdfNQuad] =
     readTriplesJelly(file, supportedOptions)
 
-  override def writeTriplesJelly(file: File, triples: Seq[RdfNQuad], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeTriplesJelly(
+      file: File,
+      triples: Seq[RdfNQuad],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val fileOs = FileOutputStream(file)
     val writer = TitaniumJellyWriter.factory(
       fileOs,
@@ -91,7 +120,12 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
     writer.close()
     fileOs.close()
 
-  override def writeQuadsJelly(file: File, quads: Seq[RdfNQuad], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeQuadsJelly(
+      file: File,
+      quads: Seq[RdfNQuad],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     writeTriplesJelly(file, quads, opt, frameSize)
 
   override def isBlank(node: RdfValue): Boolean = node.isBlankNode
@@ -104,9 +138,13 @@ object TitaniumSerDes extends NativeSerDes[RdfDataset, RdfDataset], ProtocolSerD
 
   override def iterateTerms(statement: RdfNQuad): Seq[RdfValue] =
     if statement.getGraphName.isPresent then
-      Seq(statement.getSubject, statement.getPredicate, statement.getObject, statement.getGraphName.get)
-    else
-      Seq(statement.getSubject, statement.getPredicate, statement.getObject)
+      Seq(
+        statement.getSubject,
+        statement.getPredicate,
+        statement.getObject,
+        statement.getGraphName.get,
+      )
+    else Seq(statement.getSubject, statement.getPredicate, statement.getObject)
 
   // Utility rdf dataset collector that does not discard duplicates
   class SinkRdfDataset extends RdfDataset:

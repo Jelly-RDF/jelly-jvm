@@ -17,7 +17,9 @@ import java.io.*
 import scala.concurrent.Await
 import scala.concurrent.duration.*
 
-class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model, Dataset], ProtocolSerDes[Node, Triple, Quad]:
+class JenaReactiveSerDes(implicit mat: Materializer)
+    extends NativeSerDes[Model, Dataset],
+      ProtocolSerDes[Node, Triple, Quad]:
   given JenaConverterFactory = JenaConverterFactory.getInstance()
 
   given JenaAdapters.DATASET_ADAPTER.type = JenaAdapters.DATASET_ADAPTER
@@ -35,75 +37,116 @@ class JenaReactiveSerDes(implicit mat: Materializer) extends NativeSerDes[Model,
 
   override def readQuadsW3C(is: InputStream): Dataset = JenaSerDes.readQuadsW3C(is)
 
-  override def readTriplesW3C(files: Seq[File]): Seq[Triple] = JenaStreamSerDes.readTriplesW3C(files)
+  override def readTriplesW3C(files: Seq[File]): Seq[Triple] =
+    JenaStreamSerDes.readTriplesW3C(files)
 
   override def readQuadsW3C(files: Seq[File]): Seq[Quad] = JenaStreamSerDes.readQuadsW3C(files)
 
-  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Dataset =
+  override def readQuadsJelly(
+      is: InputStream,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Dataset =
     JenaSerDes.readQuadsJelly(is, supportedOptions)
 
-  override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Model =
+  override def readTriplesJelly(
+      is: InputStream,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Model =
     JenaSerDes.readTriplesJelly(is, supportedOptions)
 
-  private def read(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Triple | Quad] =
+  private def read(
+      is: InputStream,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Seq[Triple | Quad] =
     val f = JellyIo.fromIoStream(is)
-      .via(DecoderFlow.decodeAny.asFlatStream(supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)))
+      .via(
+        DecoderFlow.decodeAny.asFlatStream(
+          supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
+        ),
+      )
       .runWith(Sink.seq)
     // Use Await.result to rethrow any exceptions that occur during the stream processing
     Await.result(f, 10.seconds)
 
-  override def readTriplesJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[Triple] =
+  override def readTriplesJelly(
+      file: File,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Seq[Triple] =
     val fileIs = new FileInputStream(file)
     try read(fileIs, supportedOptions).collect { case t: Triple => t }
     finally fileIs.close()
 
-  override def readQuadsOrGraphsJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[Quad] =
+  override def readQuadsOrGraphsJelly(
+      file: File,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Seq[Quad] =
     val fileIs = new FileInputStream(file)
     try read(fileIs, supportedOptions).collect { case q: Quad => q }
     finally fileIs.close()
 
-  override def writeQuadsJelly
-  (os: OutputStream, dataset: Dataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeQuadsJelly(
+      os: OutputStream,
+      dataset: Dataset,
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val f = RdfSource.builder().datasetAsQuads(dataset).source
-      .via(EncoderFlow.builder
-        .withLimiter(ByteSizeLimiter(32_000))
-        .flatQuads(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
-        .flow
+      .via(
+        EncoderFlow.builder
+          .withLimiter(ByteSizeLimiter(32_000))
+          .flatQuads(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
+          .flow,
       )
       .runWith(JellyIo.toIoStream(os))
     Await.result(f, 10.seconds)
 
-  override def writeTriplesJelly
-  (os: OutputStream, model: Model, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeTriplesJelly(
+      os: OutputStream,
+      model: Model,
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val f = RdfSource.builder().graphAsTriples(model).source
-      .via(EncoderFlow.builder
-        .withLimiter(ByteSizeLimiter(32_000))
-        .flatTriples(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
-        .flow
+      .via(
+        EncoderFlow.builder
+          .withLimiter(ByteSizeLimiter(32_000))
+          .flatTriples(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
+          .flow,
       )
       .runWith(JellyIo.toIoStream(os))
     Await.result(f, 10.seconds)
 
-
-  override def writeTriplesJelly(file: File, triples: Seq[Triple], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeTriplesJelly(
+      file: File,
+      triples: Seq[Triple],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val fileOs = new FileOutputStream(file)
     val f = Source.fromIterator(() => triples.iterator)
-      .via(EncoderFlow.builder
-        .withLimiter(ByteSizeLimiter(32_000))
-        .flatTriples(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
-        .flow
+      .via(
+        EncoderFlow.builder
+          .withLimiter(ByteSizeLimiter(32_000))
+          .flatTriples(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
+          .flow,
       )
       .runWith(JellyIo.toIoStream(fileOs))
     Await.result(f, 10.seconds)
     fileOs.close()
 
-  override def writeQuadsJelly(file: File, quads: Seq[Quad], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeQuadsJelly(
+      file: File,
+      quads: Seq[Quad],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val fileOs = new FileOutputStream(file)
     val f = Source.fromIterator(() => quads.iterator)
-      .via(EncoderFlow.builder
-        .withLimiter(ByteSizeLimiter(32_000))
-        .flatQuads(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
-        .flow
+      .via(
+        EncoderFlow.builder
+          .withLimiter(ByteSizeLimiter(32_000))
+          .flatQuads(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
+          .flow,
       )
       .runWith(JellyIo.toIoStream(fileOs))
     Await.result(f, 10.seconds)

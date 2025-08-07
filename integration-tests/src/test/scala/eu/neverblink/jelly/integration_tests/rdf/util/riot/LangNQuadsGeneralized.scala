@@ -7,10 +7,10 @@ import org.apache.jena.riot.{Lang, RDFLanguages}
 import org.apache.jena.sparql.core.Quad
 
 /** Parser for generalized N-Quads. Heavily inspired by the Jena Riot code:
- * https://github.com/apache/jena/blob/bd97ad4cf731ade857926787dd2df735644a354b/jena-arq/src/main/java/org/apache/jena/riot/lang/LangNQuads.java
- */
+  * https://github.com/apache/jena/blob/bd97ad4cf731ade857926787dd2df735644a354b/jena-arq/src/main/java/org/apache/jena/riot/lang/LangNQuads.java
+  */
 final class LangNQuadsGeneralized(tokens: Tokenizer, profile: ParserProfile, dest: StreamRDF)
-  extends LangNTupleGeneralized[Quad](tokens, profile, dest):
+    extends LangNTupleGeneralized[Quad](tokens, profile, dest):
 
   // Null for no graph.
   private var currentGraph: Node = null

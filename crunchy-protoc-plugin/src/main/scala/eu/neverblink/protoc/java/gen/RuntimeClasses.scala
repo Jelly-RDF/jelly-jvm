@@ -26,12 +26,13 @@ import com.palantir.javapoet.ClassName
  * #L%
  */
 
-/**
- * TypeNames of all API classes that can be referenced from generated code
- *
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** TypeNames of all API classes that can be referenced from generated code
+  *
+  * @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object RuntimeClasses:
   private val API_PACKAGE = "eu.neverblink.protoc.java.runtime"
   private val JAVA_UTIL_PACKAGE = "java.util"
@@ -48,13 +49,18 @@ object RuntimeClasses:
   val BytesType: ClassName = ClassName.get(GOOGLE_PACKAGE, "ByteString")
   val Exception: ClassName = ClassName.get(classOf[Exception])
   val RuntimeException: ClassName = ClassName.get(classOf[RuntimeException])
-  val InvalidProtocolBufferException: ClassName = ClassName.get(GOOGLE_PACKAGE, "InvalidProtocolBufferException")
-  val UninitializedMessageException: ClassName = ClassName.get(GOOGLE_PACKAGE, "UninitializedMessageException")
+  val InvalidProtocolBufferException: ClassName =
+    ClassName.get(GOOGLE_PACKAGE, "InvalidProtocolBufferException")
+  val UninitializedMessageException: ClassName =
+    ClassName.get(GOOGLE_PACKAGE, "UninitializedMessageException")
   val ProtoEnum: ClassName = ClassName.get(API_PACKAGE, "ProtoEnum")
   val EnumConverter: ClassName = ProtoEnum.nestedClass("EnumConverter")
-  val FileDescriptor: ClassName = ClassName.get(GOOGLE_PACKAGE, "Descriptors").nestedClass("FileDescriptor")
-  val FileDescriptorProto: ClassName = ClassName.get(GOOGLE_PACKAGE, "DescriptorProtos").nestedClass("FileDescriptorProto")
-  val MessageDescriptor: ClassName = ClassName.get(GOOGLE_PACKAGE, "Descriptors").nestedClass("Descriptor")
+  val FileDescriptor: ClassName =
+    ClassName.get(GOOGLE_PACKAGE, "Descriptors").nestedClass("FileDescriptor")
+  val FileDescriptorProto: ClassName =
+    ClassName.get(GOOGLE_PACKAGE, "DescriptorProtos").nestedClass("FileDescriptorProto")
+  val MessageDescriptor: ClassName =
+    ClassName.get(GOOGLE_PACKAGE, "Descriptors").nestedClass("Descriptor")
   private val RepeatedDouble = ClassName.get(API_PACKAGE, "RepeatedDouble")
   private val RepeatedFloat = ClassName.get(API_PACKAGE, "RepeatedFloat")
   private val RepeatedLong = ClassName.get(API_PACKAGE, "RepeatedLong")

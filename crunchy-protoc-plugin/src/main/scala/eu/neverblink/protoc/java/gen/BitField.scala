@@ -29,12 +29,13 @@ import scala.jdk.CollectionConverters.*
  * #L%
  */
 
-/**
- * Utilities for creating protobuf-like bit-sets to keep has state
- *
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** Utilities for creating protobuf-like bit-sets to keep has state
+  *
+  * @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object BitField:
   private val BITS_PER_FIELD = 32
 
@@ -71,10 +72,18 @@ object BitField:
     getFieldIndex(bitIndex) == fieldIndex
 
   def hasBit(hasBitIndex: Int): String =
-    String.format("(bitField%d_ & 0x%08x) != 0", getFieldIndex(hasBitIndex), 1 << getBitIndex(hasBitIndex))
+    String.format(
+      "(bitField%d_ & 0x%08x) != 0",
+      getFieldIndex(hasBitIndex),
+      1 << getBitIndex(hasBitIndex),
+    )
 
   def setBit(hasBitIndex: Int): String =
-    String.format("bitField%d_ |= 0x%08x", getFieldIndex(hasBitIndex), 1 << getBitIndex(hasBitIndex))
+    String.format(
+      "bitField%d_ |= 0x%08x",
+      getFieldIndex(hasBitIndex),
+      1 << getBitIndex(hasBitIndex),
+    )
 
   def clearBit(hasBitIndex: Int): String =
     val field = getFieldIndex(hasBitIndex)
@@ -92,14 +101,20 @@ object BitField:
     var usedFields = 0
     for (i <- bitset.indices) {
       if bitset(i) != 0 then
-        builder.append(if ( {
-          usedFields += 1; usedFields - 1
-        } == 0) "("
-        else " || ")
+        builder.append(
+          if (
+            {
+              usedFields += 1; usedFields - 1
+            } == 0
+          ) "("
+          else " || ",
+        )
         builder.append(String.format("((bitField%d_ & 0x%08x) != 0x%08x)", i, bitset(i), bitset(i)))
     }
-    builder.append(if (usedFields > 0) ")"
-    else "true")
+    builder.append(
+      if (usedFields > 0) ")"
+      else "true",
+    )
     builder.toString
 
   private def hasAnyBit(bitset: Array[Int]) =
@@ -107,10 +122,14 @@ object BitField:
     var usedFields = 0
     for (i <- bitset.indices) {
       if bitset(i) != 0 then
-        builder.append(if ( {
-          usedFields += 1; usedFields - 1
-        } == 0) "(("
-        else " | ")
+        builder.append(
+          if (
+            {
+              usedFields += 1; usedFields - 1
+            } == 0
+          ) "(("
+          else " | ",
+        )
         builder.append(String.format("(bitField%d_ & 0x%08x)", i, bitset(i)))
     }
     builder.append(if (usedFields > 0) ") != 0)" else "true")
@@ -129,4 +148,3 @@ object BitField:
   private def fieldName(intIndex: Int) = String.format("bitField%d_", intIndex)
   private def getFieldIndex(fieldIndex: Int) = fieldIndex / BITS_PER_FIELD
   private def getBitIndex(fieldIndex: Int) = fieldIndex % BITS_PER_FIELD
-

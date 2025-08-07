@@ -6,7 +6,6 @@ import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame.MetadataEntry
 
 import scala.jdk.CollectionConverters.*
 
-
 object RdfAdapter:
 
   def rdfNameEntry(id: Int, value: String): RdfNameEntry =
@@ -52,25 +51,22 @@ object RdfAdapter:
       .setNameId(nameId)
       .setPrefixId(prefixId)
 
-  def rdfStreamFrame(rows: Seq[RdfStreamRow], metadata: Map[String, ByteString] = Map.empty): RdfStreamFrame =
+  def rdfStreamFrame(
+      rows: Seq[RdfStreamRow],
+      metadata: Map[String, ByteString] = Map.empty,
+  ): RdfStreamFrame =
     val frame = RdfStreamFrame.newInstance()
     frame.getRows.addAll(rows.asJava)
-    metadata.foreach((key, value) => frame.getMetadata.add(
-      MetadataEntry.newInstance().setKey(key).setValue(value)
-    ))
+    metadata.foreach((key, value) =>
+      frame.getMetadata.add(
+        MetadataEntry.newInstance().setKey(key).setValue(value),
+      ),
+    )
     frame
 
   type RdfStreamRowValue =
-    RdfStreamOptions
-      | RdfTriple
-      | RdfQuad
-      | RdfGraphStart
-      | RdfGraphEnd
-      | RdfNamespaceDeclaration
-      | RdfNameEntry
-      | RdfPrefixEntry
-      | RdfDatatypeEntry
-      | Null
+    RdfStreamOptions | RdfTriple | RdfQuad | RdfGraphStart | RdfGraphEnd | RdfNamespaceDeclaration |
+      RdfNameEntry | RdfPrefixEntry | RdfDatatypeEntry | Null
 
   def rdfStreamRowFromValue(value: RdfStreamRowValue): RdfStreamRow =
     value match {
@@ -125,10 +121,10 @@ object RdfAdapter:
     RdfStreamRow.newInstance()
 
   def rdfStreamOptions(
-    streamName: String = "",
-    maxNameTableSize: Int = 1,
-    maxPrefixTableSize: Int = 1,
-    maxDatatypeTableSize: Int = 1,
+      streamName: String = "",
+      maxNameTableSize: Int = 1,
+      maxPrefixTableSize: Int = 1,
+      maxDatatypeTableSize: Int = 1,
   ): RdfStreamOptions =
     RdfStreamOptions.newInstance()
       .setStreamName(streamName)
@@ -140,11 +136,7 @@ object RdfAdapter:
     RdfDefaultGraph.EMPTY
 
   type RdfGraphValue =
-    RdfIri
-    | String
-    | RdfDefaultGraph
-    | RdfLiteral
-    | Null
+    RdfIri | String | RdfDefaultGraph | RdfLiteral | Null
 
   def rdfGraphStart(graph: RdfGraphValue): RdfGraphStart =
     RdfGraphStart.newInstance().setGraph(graph)
@@ -155,7 +147,12 @@ object RdfAdapter:
   def rdfGraphEnd(): RdfGraphEnd =
     RdfGraphEnd.EMPTY
 
-  def rdfQuad(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue, graph: RdfGraphValue = null): RdfQuad =
+  def rdfQuad(
+      subject: RdfSpoValue,
+      predicate: RdfSpoValue,
+      `object`: RdfSpoValue,
+      graph: RdfGraphValue = null,
+  ): RdfQuad =
     RdfQuad.newInstance()
       .setSubject(subject)
       .setPredicate(predicate)
@@ -163,11 +160,7 @@ object RdfAdapter:
       .setGraph(graph)
 
   type RdfSpoValue =
-    RdfIri
-    | String
-    | RdfLiteral
-    | RdfTriple
-    | Null
+    RdfIri | String | RdfLiteral | RdfTriple | Null
 
   def rdfTriple(subject: RdfSpoValue, predicate: RdfSpoValue, `object`: RdfSpoValue): RdfTriple =
     RdfTriple.newInstance()
@@ -176,22 +169,13 @@ object RdfAdapter:
       .setObject(`object`)
 
   def extractRdfStreamRow(row: RdfStreamRow): RdfStreamRowValue =
-    if row.hasOptions then
-      row.getOptions
-    else if row.hasName then
-      row.getName
-    else if row.hasPrefix then
-      row.getPrefix
-    else if row.hasTriple then
-      row.getTriple
-    else if row.hasQuad then
-      row.getQuad
-    else if row.hasGraphStart then
-      row.getGraphStart
-    else if row.hasGraphEnd then
-      row.getGraphEnd
-    else if row.hasNamespace then
-      row.getNamespace
-    else if row.hasDatatype then
-      row.getDatatype
+    if row.hasOptions then row.getOptions
+    else if row.hasName then row.getName
+    else if row.hasPrefix then row.getPrefix
+    else if row.hasTriple then row.getTriple
+    else if row.hasQuad then row.getQuad
+    else if row.hasGraphStart then row.getGraphStart
+    else if row.hasGraphEnd then row.getGraphEnd
+    else if row.hasNamespace then row.getNamespace
+    else if row.hasDatatype then row.getDatatype
     else null

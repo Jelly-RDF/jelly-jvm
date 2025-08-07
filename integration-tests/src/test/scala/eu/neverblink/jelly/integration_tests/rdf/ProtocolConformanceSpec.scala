@@ -34,7 +34,7 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
   runRdfFromJellyTests(TitaniumSerDes)
 
   private def runRdfToJellyTests[TNSer, TTSer, TQSer](
-    ser: ProtocolSerDes[TNSer, TTSer, TQSer]
+      ser: ProtocolSerDes[TNSer, TTSer, TQSer],
   ): Unit =
     s"Serializer ${ser.name}" when {
       for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
@@ -51,7 +51,8 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     }
 
   private def singleRdfToJellyTest[TNSer, TTSer, TQSer](
-    testEntry: Resource, ser: ProtocolSerDes[TNSer, TTSer, TQSer]
+      testEntry: Resource,
+      ser: ProtocolSerDes[TNSer, TTSer, TQSer],
   ): Unit = withSilencedOutput {
     val testActionFiles = testEntry.extractTestActions.map(TestCases.getProtocolTestActionFile)
     val testResultFiles = testEntry.extractTestResults.map(TestCases.getProtocolTestActionFile)
@@ -65,54 +66,56 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     if testEntry.hasPhysicalTypeTriplesRequirement then
       // Triples
       val actualTriplesFile = File.createTempFile(s"test-triples-$randomUUID", ".jelly")
-      val exception = try {
-        val actualTriples = ser.readTriplesW3C(serializationInputFiles)
-        ser.writeTriplesJelly(actualTriplesFile, actualTriples, streamOptions, frameSize)
-        None
-      } catch {
-        case exception: Exception => Some(exception)
-      }
+      val exception =
+        try {
+          val actualTriples = ser.readTriplesW3C(serializationInputFiles)
+          ser.writeTriplesJelly(actualTriplesFile, actualTriples, streamOptions, frameSize)
+          None
+        } catch {
+          case exception: Exception => Some(exception)
+        }
 
-      if testEntry.isTestNegative then
-        exception shouldNot be(None)
+      if testEntry.isTestNegative then exception shouldNot be(None)
 
       if testEntry.isTestPositive then
-        if exception.isDefined then
-          throw exception.get // Rethrow exception if test is positive
+        if exception.isDefined then throw exception.get // Rethrow exception if test is positive
         val outputFileExact = outputFile.getOrElse {
-          throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an output file")
+          throw RuntimeException(
+            s"Test entry ${testEntry.extractTestUri} does not have an output file",
+          )
         }
         JellyCli.rdfValidate(actualTriplesFile, outputFileExact, streamOptionsFile, None) shouldBe 0
-
-    else if testEntry.hasPhysicalTypeQuadsRequirement || testEntry.hasPhysicalTypeGraphsRequirement then
+    else if testEntry.hasPhysicalTypeQuadsRequirement || testEntry.hasPhysicalTypeGraphsRequirement
+    then
       // Quads
       val actualQuadsFile = File.createTempFile(s"test-quads-$randomUUID", ".jelly")
-      val exception = try {
-        val actualQuads = ser.readQuadsW3C(serializationInputFiles)
-        ser.writeQuadsJelly(actualQuadsFile, actualQuads, streamOptions, frameSize)
-        None
-      } catch {
-        case exception: Exception => Some(exception)
-      }
+      val exception =
+        try {
+          val actualQuads = ser.readQuadsW3C(serializationInputFiles)
+          ser.writeQuadsJelly(actualQuadsFile, actualQuads, streamOptions, frameSize)
+          None
+        } catch {
+          case exception: Exception => Some(exception)
+        }
 
-      if testEntry.isTestNegative then
-        exception shouldNot be(None)
+      if testEntry.isTestNegative then exception shouldNot be(None)
 
       if testEntry.isTestPositive then
-        if exception.isDefined then
-          throw exception.get // Rethrow exception if test is positive
+        if exception.isDefined then throw exception.get // Rethrow exception if test is positive
         val outputFileExact = outputFile.getOrElse {
-          throw RuntimeException(s"Test entry ${testEntry.extractTestUri} does not have an output file")
+          throw RuntimeException(
+            s"Test entry ${testEntry.extractTestUri} does not have an output file",
+          )
         }
         JellyCli.rdfValidate(actualQuadsFile, outputFileExact, streamOptionsFile, None) shouldBe 0
-
     else
-      throw new IllegalStateException(s"Test entry ${testEntry.extractTestUri} does not have a valid physical type requirement")
+      throw new IllegalStateException(
+        s"Test entry ${testEntry.extractTestUri} does not have a valid physical type requirement",
+      )
   }
 
-
   private def runRdfFromJellyTests[TNDes, TTDes, TQDes](
-    des: ProtocolSerDes[TNDes, TTDes, TQDes]
+      des: ProtocolSerDes[TNDes, TTDes, TQDes],
   ): Unit =
     s"Deserializer ${des.name}" when {
       for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
@@ -129,7 +132,8 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     }
 
   private def singleRdfFromJellyTest[TNDes, TTDes, TQDes](
-    testEntry: Resource, des: ProtocolSerDes[TNDes, TTDes, TQDes]
+      testEntry: Resource,
+      des: ProtocolSerDes[TNDes, TTDes, TQDes],
   ): Unit = withSilencedOutput {
     val testActionFiles = testEntry.extractTestActions.map(TestCases.getProtocolTestActionFile)
     val testResultFiles = testEntry.extractTestResults.map(TestCases.getProtocolTestActionFile)
@@ -141,43 +145,41 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
 
     if testEntry.hasPhysicalTypeTriplesRequirement then
       // Triples
-      val exception = try {
-        val actualTriples = des.readTriplesJelly(inFile, None)
-        val expectedTriples = des.readTriplesW3C(testResultFiles)
-        if testEntry.isTestPositive then
-          OrderedRdfCompare.compare(des, expectedTriples, actualTriples)
-        None
-      } catch {
-        case exception: Exception => Some(exception)
-      }
+      val exception =
+        try {
+          val actualTriples = des.readTriplesJelly(inFile, None)
+          val expectedTriples = des.readTriplesW3C(testResultFiles)
+          if testEntry.isTestPositive then
+            OrderedRdfCompare.compare(des, expectedTriples, actualTriples)
+          None
+        } catch {
+          case exception: Exception => Some(exception)
+        }
 
-      if exception.isDefined then
-        exception.get.printStackTrace(Console.err)
+      if exception.isDefined then exception.get.printStackTrace(Console.err)
 
-      if testEntry.isTestNegative then
-        exception shouldNot be(None)
+      if testEntry.isTestNegative then exception shouldNot be(None)
 
       if testEntry.isTestPositive && exception.isDefined then
         throw exception.get // Rethrow exception if test is positive
 
     if testEntry.hasPhysicalTypeQuadsRequirement || testEntry.hasPhysicalTypeGraphsRequirement then
       // Quads
-      val exception = try {
-        val actualQuads = des.readQuadsOrGraphsJelly(inFile, None)
-        val expectedQuads = des.readQuadsW3C(testResultFiles)
-        if testEntry.isTestPositive then
-          OrderedRdfCompare.compare(des, expectedQuads, actualQuads)
+      val exception =
+        try {
+          val actualQuads = des.readQuadsOrGraphsJelly(inFile, None)
+          val expectedQuads = des.readQuadsW3C(testResultFiles)
+          if testEntry.isTestPositive then
+            OrderedRdfCompare.compare(des, expectedQuads, actualQuads)
 
-        None
-      } catch {
-        case exception: Exception => Some(exception)
-      }
+          None
+        } catch {
+          case exception: Exception => Some(exception)
+        }
 
-      if exception.isDefined then
-        exception.get.printStackTrace(Console.err)
+      if exception.isDefined then exception.get.printStackTrace(Console.err)
 
-      if testEntry.isTestNegative then
-        exception shouldNot be(None)
+      if testEntry.isTestNegative then exception shouldNot be(None)
 
       if testEntry.isTestPositive && exception.isDefined then
         throw exception.get // Rethrow exception if test is positive
@@ -191,26 +193,44 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
   }
 
   extension (testEntries: Seq[Resource])
-    private def selectRelevantTestEntriesByFeatures[TN, TT, TQ](serDes: ProtocolSerDes[TN, TT, TQ]): Seq[Resource] =
+    private def selectRelevantTestEntriesByFeatures[TN, TT, TQ](
+        serDes: ProtocolSerDes[TN, TT, TQ],
+    ): Seq[Resource] =
       testEntries
         .filter(entry =>
           !entry.hasRdfStarRequirement
-            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeTriplesRequirement && serDes.supportsRdfStar(PhysicalStreamType.TRIPLES)
-            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeQuadsRequirement && serDes.supportsRdfStar(PhysicalStreamType.QUADS)
-            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeGraphsRequirement && serDes.supportsRdfStar(PhysicalStreamType.GRAPHS)
+            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeTriplesRequirement && serDes.supportsRdfStar(
+              PhysicalStreamType.TRIPLES,
+            )
+            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeQuadsRequirement && serDes.supportsRdfStar(
+              PhysicalStreamType.QUADS,
+            )
+            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeGraphsRequirement && serDes.supportsRdfStar(
+              PhysicalStreamType.GRAPHS,
+            ),
         )
-        .filter(entry => !entry.hasGeneralizedStatementsRequirement || entry.hasGeneralizedStatementsRequirement && serDes.supportsGeneralizedStatements)
-        .filter(entry => !entry.hasPhysicalTypeTriplesRequirement || entry.hasPhysicalTypeTriplesRequirement && serDes.supportsTriples)
-        .filter(entry => !entry.hasPhysicalTypeQuadsRequirement || entry.hasPhysicalTypeQuadsRequirement && serDes.supportsQuads)
-        .filter(entry => !entry.hasPhysicalTypeGraphsRequirement || entry.hasPhysicalTypeGraphsRequirement && serDes.supportsGraphs)
+        .filter(entry =>
+          !entry.hasGeneralizedStatementsRequirement || entry.hasGeneralizedStatementsRequirement && serDes.supportsGeneralizedStatements,
+        )
+        .filter(entry =>
+          !entry.hasPhysicalTypeTriplesRequirement || entry.hasPhysicalTypeTriplesRequirement && serDes.supportsTriples,
+        )
+        .filter(entry =>
+          !entry.hasPhysicalTypeQuadsRequirement || entry.hasPhysicalTypeQuadsRequirement && serDes.supportsQuads,
+        )
+        .filter(entry =>
+          !entry.hasPhysicalTypeGraphsRequirement || entry.hasPhysicalTypeGraphsRequirement && serDes.supportsGraphs,
+        )
         .filterNot(_.isTestRejected)
         .filterNot(isTestEntryBlocked)
 
   // TODO: This is our "todo" tests function
   private def isTestEntryBlocked(testEntry: Resource): Boolean =
     testEntry.hasGeneralizedStatementsRequirement // Generalized statements are disabled
-    || testEntry.hasPhysicalTypeGraphsRequirement // Graph physical type is not supported yet
-    || isTestEntryBlockedById(testEntry) // Blocked by reason of test failing in specific instances
+      || testEntry.hasPhysicalTypeGraphsRequirement // Graph physical type is not supported yet
+      || isTestEntryBlockedById(
+        testEntry,
+      ) // Blocked by reason of test failing in specific instances
 
   private def isTestEntryBlockedById(testEntry: Resource): Boolean =
     // java.lang.IllegalStateException: Expected 6 RDF elements, but got 0 elements.
@@ -219,5 +239,4 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_017")
     // Protocol message tag had invalid wire type.
     // com.google.protobuf.InvalidProtocolBufferException$InvalidWireTypeException: Protocol message tag had invalid wire type.
-    || testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_003")
-    
+      || testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_003")

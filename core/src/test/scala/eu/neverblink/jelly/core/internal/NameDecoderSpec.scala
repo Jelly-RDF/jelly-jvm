@@ -10,7 +10,7 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
   var smallOptions: RdfStreamOptions = RdfStreamOptions.newInstance()
     .setMaxNameTableSize(16)
     .setMaxPrefixTableSize(8)
-  
+
   def makeDecoder(opt: RdfStreamOptions) =
     NameDecoderImpl(opt.getMaxPrefixTableSize(), opt.getMaxNameTableSize(), identity)
 
@@ -28,7 +28,7 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         val error = intercept[RdfProtoDeserializationError] {
           dec.decode(0, 5)
         }
-        error.getMessage should include ("No prefix, Name ID: 5")
+        error.getMessage should include("No prefix, Name ID: 5")
       }
 
       "throw exception when trying to retrieve a name with empty LUT" in {
@@ -36,13 +36,13 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         val error = intercept[RdfProtoDeserializationError] {
           dec.decode(0, 0)
         }
-        error.getMessage should include ("No prefix, Name ID: 0")
+        error.getMessage should include("No prefix, Name ID: 0")
       }
 
       "return empty string for no prefix and empty name" in {
         val dec = makeDecoder(smallOptions)
         dec.updateNames(rdfNameEntry(0, ""))
-        dec.decode(0, 0) should be ("")
+        dec.decode(0, 0) should be("")
       }
 
       "accept new prefixes with default IDs" in {
@@ -70,13 +70,13 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         val dec = makeDecoder(smallOptions)
         dec.updatePrefixes(rdfPrefixEntry(3, "https://test.org/"))
         dec.updateNames(rdfNameEntry(0, ""))
-        dec.decode(3, 0) should be ("https://test.org/")
+        dec.decode(3, 0) should be("https://test.org/")
       }
 
       "accept a new name and return it (IRI with no prefix)" in {
         val dec = makeDecoder(smallOptions)
         dec.updateNames(rdfNameEntry(5, "Cake"))
-        dec.decode(0, 5) should be ("Cake")
+        dec.decode(0, 5) should be("Cake")
       }
 
       "override an earlier name entry and decode the IRI (IRI with no prefix)" in {
@@ -92,7 +92,7 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         // Test prefix & name on the edge of the lookup
         dec.updatePrefixes(rdfPrefixEntry(8, "https://test.org/"))
         dec.updateNames(rdfNameEntry(16, "Cake"))
-        dec.decode(8, 16) should be ("https://test.org/Cake")
+        dec.decode(8, 16) should be("https://test.org/Cake")
       }
 
       "override an earlier name entry and decode the IRI (with prefix)" in {

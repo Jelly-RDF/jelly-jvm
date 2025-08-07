@@ -15,9 +15,9 @@ class JellyWriterSpec extends AnyWordSpec, Matchers:
   val testStatement = vf.createStatement(
     vf.createIRI("http://example.com/s"),
     vf.createIRI("http://example.com/p"),
-    vf.createIRI("http://example.com/o")
+    vf.createIRI("http://example.com/o"),
   )
-  
+
   "JellyWriter" should {
     "write delimited frames by default" in {
       val os = new ByteArrayOutputStream()
@@ -51,8 +51,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers:
       val writer = JellyWriterFactory().getWriter(os)
       writer.set(JellyWriterSettings.FRAME_SIZE, 1)
       writer.startRDF()
-      for _ <- 1 to 100 do
-        writer.handleStatement(testStatement)
+      for _ <- 1 to 100 do writer.handleStatement(testStatement)
       writer.endRDF()
 
       val bytes = os.toByteArray
@@ -71,8 +70,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers:
       writer.set(JellyWriterSettings.FRAME_SIZE, 1)
       writer.set(JellyWriterSettings.DELIMITED_OUTPUT, false)
       writer.startRDF()
-      for _ <- 1 to 10_000 do
-        writer.handleStatement(testStatement)
+      for _ <- 1 to 10_000 do writer.handleStatement(testStatement)
       writer.endRDF()
 
       val bytes = os.toByteArray

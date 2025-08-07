@@ -29,7 +29,7 @@ class ProtobufUtilSpec extends AnyWordSpec, Matchers {
 
       os.writtenBuffers should have size 1
       // We expect a byte array of size equal to the default buffer size to be passed to the write method.
-      os.writtenBuffers.head should be (ProtobufUtil.MAX_OUTPUT_STREAM_BUFFER_SIZE)
+      os.writtenBuffers.head should be(ProtobufUtil.MAX_OUTPUT_STREAM_BUFFER_SIZE)
     }
 
     "create a CodedOutputStream with a reduced buffer size" in {
@@ -47,7 +47,8 @@ class ProtobufUtilSpec extends AnyWordSpec, Matchers {
     "clamp maximum CodedOutputStream buffer size" in {
       val os = new WriteTrackingOutputStream()
       val codedOutputStream = ProtobufUtil.createCodedOutputStream(
-        os, ProtobufUtil.MAX_OUTPUT_STREAM_BUFFER_SIZE * 2
+        os,
+        ProtobufUtil.MAX_OUTPUT_STREAM_BUFFER_SIZE * 2,
       )
       codedOutputStream should not be null
       codedOutputStream.writeInt32(7, 31241)
@@ -55,7 +56,7 @@ class ProtobufUtilSpec extends AnyWordSpec, Matchers {
 
       os.writtenBuffers should have size 1
       // We expect the maximum buffer size to be clamped to the maximum allowed value.
-      os.writtenBuffers.head should be (ProtobufUtil.MAX_OUTPUT_STREAM_BUFFER_SIZE)
+      os.writtenBuffers.head should be(ProtobufUtil.MAX_OUTPUT_STREAM_BUFFER_SIZE)
     }
   }
 }

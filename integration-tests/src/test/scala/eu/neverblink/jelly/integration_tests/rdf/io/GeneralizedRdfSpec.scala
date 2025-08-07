@@ -12,12 +12,11 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import scala.reflect.ClassTag
 
-/**
- * Separate tests for handling generalized RDF.
- *
- * Normally this would be included with the IoSerDesSpec, but RDF libraries have very patchy support
- * for generalized RDF.
- */
+/** Separate tests for handling generalized RDF.
+  *
+  * Normally this would be included with the IoSerDesSpec, but RDF libraries have very patchy
+  * support for generalized RDF.
+  */
 class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
   given ActorSystem = ActorSystem("test")
 
@@ -26,52 +25,69 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
     frame.writeDelimitedTo(os)
     os.toByteArray
 
-  private val frameTriples = rdfStreamFrame(rows = Seq(
-    rdfStreamRow(JellyOptions.SMALL_GENERALIZED
-      .clone
-      .setPhysicalType(PhysicalStreamType.TRIPLES)
+  private val frameTriples = rdfStreamFrame(rows =
+    Seq(
+      rdfStreamRow(
+        JellyOptions.SMALL_GENERALIZED
+          .clone
+          .setPhysicalType(PhysicalStreamType.TRIPLES),
+      ),
+      rdfStreamRow(
+        rdfTriple(
+          rdfLiteral("s"),
+          rdfLiteral("p"),
+          rdfLiteral("o"),
+        ),
+      ),
     ),
-    rdfStreamRow(rdfTriple(
-      rdfLiteral("s"),
-      rdfLiteral("p"),
-      rdfLiteral("o"),
-    ))
-  ))
+  )
   private val bytesTriples = frameAsDelimited(frameTriples)
 
-  private val frameQuads = rdfStreamFrame(rows = Seq(
-    rdfStreamRow(JellyOptions.SMALL_GENERALIZED
-      .clone
-      .setPhysicalType(PhysicalStreamType.QUADS)
+  private val frameQuads = rdfStreamFrame(rows =
+    Seq(
+      rdfStreamRow(
+        JellyOptions.SMALL_GENERALIZED
+          .clone
+          .setPhysicalType(PhysicalStreamType.QUADS),
+      ),
+      rdfStreamRow(
+        rdfQuad(
+          rdfLiteral("s"),
+          rdfLiteral("p"),
+          rdfLiteral("o"),
+          rdfLiteral("g"),
+        ),
+      ),
     ),
-    rdfStreamRow(rdfQuad(
-      rdfLiteral("s"),
-      rdfLiteral("p"),
-      rdfLiteral("o"),
-      rdfLiteral("g"),
-    ))
-  ))
+  )
   private val bytesQuads = frameAsDelimited(frameQuads)
 
-  private val frameGraphs = rdfStreamFrame(rows = Seq(
-    rdfStreamRow(JellyOptions.SMALL_GENERALIZED
-      .clone
-      .setPhysicalType(PhysicalStreamType.GRAPHS)
+  private val frameGraphs = rdfStreamFrame(rows =
+    Seq(
+      rdfStreamRow(
+        JellyOptions.SMALL_GENERALIZED
+          .clone
+          .setPhysicalType(PhysicalStreamType.GRAPHS),
+      ),
+      rdfStreamRow(
+        rdfGraphStart(
+          rdfLiteral("g"),
+        ),
+      ),
+      rdfStreamRow(
+        rdfTriple(
+          rdfLiteral("s"),
+          rdfLiteral("p"),
+          rdfLiteral("o"),
+        ),
+      ),
+      rdfStreamRow(RdfGraphEnd.EMPTY),
     ),
-    rdfStreamRow(rdfGraphStart(
-      rdfLiteral("g"),
-    )),
-    rdfStreamRow(rdfTriple(
-      rdfLiteral("s"),
-      rdfLiteral("p"),
-      rdfLiteral("o"),
-    )),
-    rdfStreamRow(RdfGraphEnd.EMPTY),
-  ))
+  )
   private val bytesGraphs = frameAsDelimited(frameGraphs)
 
-  def roundTripTests[TModel : Measure, TDataset : Measure](
-    impl: NativeSerDes[TModel, TDataset]
+  def roundTripTests[TModel: Measure, TDataset: Measure](
+      impl: NativeSerDes[TModel, TDataset],
   ): Unit =
     val mm = summon[Measure[TModel]]
     val md = summon[Measure[TDataset]]
@@ -106,11 +122,12 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
       md.size(graphs2) should be(1)
     }
 
-  /**
-   * Tests for parsing failures.
-   * @param impl the implementation to test
-   * @param boxed whether the exception is expected to be boxed in another exception
-   */
+  /** Tests for parsing failures.
+    * @param impl
+    *   the implementation to test
+    * @param boxed
+    *   whether the exception is expected to be boxed in another exception
+    */
   def parsingFailureTests(impl: NativeSerDes[?, ?], boxed: Boolean = false): Unit =
     def checkException(e: Throwable): Unit =
       val e1 = if boxed then e.getCause else e

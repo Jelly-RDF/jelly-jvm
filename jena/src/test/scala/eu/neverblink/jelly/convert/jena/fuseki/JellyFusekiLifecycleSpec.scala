@@ -17,7 +17,7 @@ class JellyFusekiLifecycleSpec extends AnyWordSpec, Matchers, JenaTest:
     }
 
     "use the correct content type for Jelly" in {
-      JellyFusekiLifecycle.JELLY_MEDIA_RANGE.getContentTypeStr should be ("application/x-jelly-rdf")
+      JellyFusekiLifecycle.JELLY_MEDIA_RANGE.getContentTypeStr should be("application/x-jelly-rdf")
     }
 
     "register the Jelly content type in the lists of accepted content types" in {
@@ -35,19 +35,19 @@ class JellyFusekiLifecycleSpec extends AnyWordSpec, Matchers, JenaTest:
 
       val lists = List(DEF.constructOffer, DEF.rdfOffer, DEF.quadsOffer)
       for (list, oldList) <- lists.zip(oldLists) do
-        list.entries().asScala should contain (JellyFusekiLifecycle.JELLY_MEDIA_RANGE)
-        list.entries().size() should be (oldList.entries().size() + 1)
+        list.entries().asScala should contain(JellyFusekiLifecycle.JELLY_MEDIA_RANGE)
+        list.entries().size() should be(oldList.entries().size() + 1)
     }
 
     "not register the Jelly content type if it's already registered" in {
       val module = JellyFusekiLifecycle()
       module.start()
-      DEF.rdfOffer.entries().asScala should contain (JellyFusekiLifecycle.JELLY_MEDIA_RANGE)
+      DEF.rdfOffer.entries().asScala should contain(JellyFusekiLifecycle.JELLY_MEDIA_RANGE)
       val size1 = DEF.rdfOffer.entries().size()
 
       module.start()
-      DEF.rdfOffer.entries().asScala should contain (JellyFusekiLifecycle.JELLY_MEDIA_RANGE)
+      DEF.rdfOffer.entries().asScala should contain(JellyFusekiLifecycle.JELLY_MEDIA_RANGE)
       val size2 = DEF.rdfOffer.entries().size()
-      size2 should be (size1)
+      size2 should be(size1)
     }
   }

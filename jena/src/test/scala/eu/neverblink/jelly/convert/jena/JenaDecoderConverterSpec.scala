@@ -10,6 +10,6 @@ class JenaDecoderConverterSpec extends AnyWordSpec, Matchers, JenaTest:
 
   "JenaDecoderConverter" should {
     "make a default graph node" in {
-      instance.makeDefaultGraphNode() should be (Quad.defaultGraphNodeGenerated)
+      instance.makeDefaultGraphNode() should be(Quad.defaultGraphNodeGenerated)
     }
   }

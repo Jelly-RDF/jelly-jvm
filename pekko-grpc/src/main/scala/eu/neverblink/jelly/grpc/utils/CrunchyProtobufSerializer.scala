@@ -8,7 +8,7 @@ import org.apache.pekko.util.ByteString
 import java.io.InputStream
 
 class CrunchyProtobufSerializer[T <: ProtoMessage[T]](factory: MessageFactory[T])
-  extends ProtobufSerializer[T] {
+    extends ProtobufSerializer[T] {
 
   override def serialize(t: T): ByteString =
     ByteString.fromArrayUnsafe(t.toByteArray)

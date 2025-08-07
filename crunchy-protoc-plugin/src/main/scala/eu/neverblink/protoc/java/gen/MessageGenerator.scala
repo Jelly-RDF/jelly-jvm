@@ -29,10 +29,11 @@ import javax.lang.model.element.Modifier
  * #L%
  */
 
-/**
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 class MessageGenerator(val info: MessageInfo):
   private final val allFields = info.fields
     .map(new FieldGenerator(_))
@@ -55,10 +56,10 @@ class MessageGenerator(val info: MessageInfo):
     val tMutable = TypeSpec.classBuilder(info.mutableTypeName)
       .addJavadoc(
         "Mutable subclass of the parent class.\n" +
-        "You can call setters on this class to set the values.\n" +
-        "When passing the constructed message to the serializer,\n" +
-        "you should use the parent class (using .asImmutable()) to\n" +
-        "ensure the message won't be modified by accident."
+          "You can call setters on this class to set the values.\n" +
+          "When passing the constructed message to the serializer,\n" +
+          "you should use the parent class (using .asImmutable()) to\n" +
+          "ensure the message won't be modified by accident.",
       )
       .superclass(info.typeName)
       .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
@@ -74,10 +75,11 @@ class MessageGenerator(val info: MessageInfo):
       // as constants in the nested classes. This causes Java warnings,
       // but is not fatal, so we suppress those warnings in the top-most
       // class declaration /javanano
-      t.addAnnotation(AnnotationSpec
-        .builder(classOf[SuppressWarnings])
-        .addMember("value", "$S", "hiding")
-        .build
+      t.addAnnotation(
+        AnnotationSpec
+          .builder(classOf[SuppressWarnings])
+          .addMember("value", "$S", "hiding")
+          .build,
       )
     }
     // Nested Enums
@@ -95,25 +97,28 @@ class MessageGenerator(val info: MessageInfo):
     if info.isEmptyMessage then
       newInstanceJavadoc.add(
         "This message is always empty, so there is no need to create a new instance.\n" +
-        "Use the static field {@code $T.EMPTY} instead.\n",
-        info.typeName
+          "Use the static field {@code $T.EMPTY} instead.\n",
+        info.typeName,
       )
-    t.addMethod(MethodSpec.methodBuilder("newInstance")
-      .addJavadoc(newInstanceJavadoc
-        .add("@return a new empty instance of {@code $T}", info.mutableTypeName)
-        .build
-      )
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-      .returns(info.mutableTypeName)
-      .addStatement("return new $T()", info.mutableTypeName)
-      .build
+    t.addMethod(
+      MethodSpec.methodBuilder("newInstance")
+        .addJavadoc(
+          newInstanceJavadoc
+            .add("@return a new empty instance of {@code $T}", info.mutableTypeName)
+            .build,
+        )
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(info.mutableTypeName)
+        .addStatement("return new $T()", info.mutableTypeName)
+        .build,
     )
     // EMPTY field
-    t.addField(FieldSpec.builder(info.typeName, "EMPTY")
-      .addJavadoc("An empty instance of this message type.")
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-      .initializer("newInstance()")
-      .build
+    t.addField(
+      FieldSpec.builder(info.typeName, "EMPTY")
+        .addJavadoc("An empty instance of this message type.")
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+        .initializer("newInstance()")
+        .build,
     )
     // Constructors
     // Private constructor for the parent abstract class to disallow subclassing
@@ -145,12 +150,13 @@ class MessageGenerator(val info: MessageInfo):
     t.build
 
   private def generateAsImmutable(t: TypeSpec.Builder): Unit =
-    t.addMethod(MethodSpec.methodBuilder("asImmutable")
-      .addJavadoc("Returns this message as an immutable message, without any copies.")
-      .addModifiers(Modifier.PUBLIC)
-      .returns(info.typeName)
-      .addStatement("return this")
-      .build
+    t.addMethod(
+      MethodSpec.methodBuilder("asImmutable")
+        .addJavadoc("Returns this message as an immutable message, without any copies.")
+        .addModifiers(Modifier.PUBLIC)
+        .returns(info.typeName)
+        .addStatement("return this")
+        .build,
     )
 
   private def generateEquals(t: TypeSpec.Builder): Unit =
@@ -180,8 +186,7 @@ class MessageGenerator(val info: MessageInfo):
         oneOf.generateEqualsStatement(equals)
         i += 1
       equals.addCode(";$<\n")
-    }
-    else equals.addCode("return true;\n")
+    } else equals.addCode("return true;\n")
     t.addMethod(equals.build)
 
   private def generateMergeFrom(t: TypeSpec.Builder): Unit =
@@ -207,14 +212,15 @@ class MessageGenerator(val info: MessageInfo):
     // all RdfIri messages.
     val sortedFields = fields.sortBy(_.info.number) ++
       oneOfGenerators.flatMap(oneOf => oneOf.fieldGenerators.zipWithIndex)
-      .sortBy(_._2)
-      .map(_._1)
+        .sortBy(_._2)
+        .map(_._1)
     if (enableFallthroughOptimization) {
       mergeFrom.addComment("Enabled Fall-Through Optimization")
-      mergeFrom.addAnnotation(AnnotationSpec
-        .builder(classOf[SuppressWarnings])
-        .addMember("value", "$S", "fallthrough")
-        .build
+      mergeFrom.addAnnotation(
+        AnnotationSpec
+          .builder(classOf[SuppressWarnings])
+          .addMember("value", "$S", "fallthrough")
+          .build,
       )
     }
     if !info.usesFastOneofMerge && !info.isEmptyMessage then
@@ -251,11 +257,10 @@ class MessageGenerator(val info: MessageInfo):
         mergeFrom.beginControlFlow("case $L:", field.info.packedTag)
         mergeFrom.addComment("$L [packed=true]", field.info.fieldName)
         readTag = field.generateMergingCodeFromPacked(mergeFrom)
-      }
-      else {
+      } else {
         mergeFrom.beginControlFlow(
           "case $L:",
-          if info.usesFastOneofMerge then field.info.number else field.info.tag
+          if info.usesFastOneofMerge then field.info.number else field.info.tag,
         )
         mergeFrom.addComment("$L", field.info.fieldName)
         readTag = maybeOneOf match
@@ -265,8 +270,9 @@ class MessageGenerator(val info: MessageInfo):
       if (readTag && !info.usesFastOneofMerge) mergeFrom.addCode(named("tag = input.readTag();\n"))
       if enableFallthroughOptimization then
         // try falling to 0 (exit) at last field
-        val nextCase = if (i == sortedFields.size - 1) 0
-        else getPackedTagOrTag(sortedFields(i + 1))
+        val nextCase =
+          if (i == sortedFields.size - 1) 0
+          else getPackedTagOrTag(sortedFields(i + 1))
         mergeFrom.beginControlFlow("if (tag != $L)", nextCase)
         mergeFrom.addStatement("break")
         mergeFrom.endControlFlow
@@ -280,8 +286,7 @@ class MessageGenerator(val info: MessageInfo):
       .beginControlFlow(ifSkipField)
       .addStatement("return tag")
       .endControlFlow
-    if enableFallthroughOptimization then
-      mergeFrom.addStatement(named("tag = input.readTag()"))
+    if enableFallthroughOptimization then mergeFrom.addStatement(named("tag = input.readTag()"))
     mergeFrom.addStatement("break").endControlFlow
     // Generate missing non-packed cases for packable fields for compatibility reasons
     for (field <- sortedFields) {
@@ -330,12 +335,13 @@ class MessageGenerator(val info: MessageInfo):
       .addAnnotation(classOf[Override])
       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .returns(classOf[Int])
-      .addCode(CodeBlock.builder()
-        .beginControlFlow("if (cachedSize < 0)")
-        .addStatement("cachedSize = computeSerializedSize()")
-        .endControlFlow
-        .addStatement("return cachedSize")
-        .build
+      .addCode(
+        CodeBlock.builder()
+          .beginControlFlow("if (cachedSize < 0)")
+          .addStatement("cachedSize = computeSerializedSize()")
+          .endControlFlow
+          .addStatement("return cachedSize")
+          .build,
       )
     t.addMethod(getSerializedSize.build)
     val computeSerializedSize = MethodSpec.methodBuilder("computeSerializedSize")
@@ -343,8 +349,7 @@ class MessageGenerator(val info: MessageInfo):
       .addAnnotation(classOf[Override])
       .addModifiers(Modifier.PROTECTED, Modifier.FINAL)
       .returns(classOf[Int])
-    if info.isEmptyMessage then
-      computeSerializedSize.addStatement("return 0")
+    if info.isEmptyMessage then computeSerializedSize.addStatement("return 0")
     else
       // Check all required fields at once
       computeSerializedSize.addStatement("int size = 0")
@@ -365,9 +370,10 @@ class MessageGenerator(val info: MessageInfo):
       .addStatement("return cachedSize")
     t.addMethod(getCached.build)
     val resetSize = MethodSpec.methodBuilder("resetCachedSize")
-      .addJavadoc("Resets the cached size of this message.\n" +
-        "Call this method if you modify the message after it was serialized.\n" +
-        "NOTE: this is a SHALLOW operation! It will not reset the size of nested messages."
+      .addJavadoc(
+        "Resets the cached size of this message.\n" +
+          "Call this method if you modify the message after it was serialized.\n" +
+          "NOTE: this is a SHALLOW operation! It will not reset the size of nested messages.",
       )
       .addAnnotation(classOf[Override])
       .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -419,63 +425,67 @@ class MessageGenerator(val info: MessageInfo):
 
   private def generateClone(t: TypeSpec.Builder): Unit =
     t.addSuperinterface(classOf[Cloneable])
-    t.addMethod(MethodSpec.methodBuilder("clone")
-      .addJavadoc(Javadoc.inherit)
-      .addAnnotation(classOf[Override])
-      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-      .returns(info.mutableTypeName)
-      .addStatement("return newInstance().copyFrom(this)")
-      .build
+    t.addMethod(
+      MethodSpec.methodBuilder("clone")
+        .addJavadoc(Javadoc.inherit)
+        .addAnnotation(classOf[Override])
+        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+        .returns(info.mutableTypeName)
+        .addStatement("return newInstance().copyFrom(this)")
+        .build,
     )
 
   private def generateParseFrom(t: TypeSpec.Builder): Unit =
-    t.addMethod(MethodSpec.methodBuilder("parseFrom")
-      .addJavadoc(
-        "Parse this message in NON-delimited form from a byte array.\n" +
-        "This assumes that the message spans the entire array."
-      )
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-      .addException(RuntimeClasses.InvalidProtocolBufferException)
-      .addParameter(classOf[Array[Byte]], "data", Modifier.FINAL)
-      .returns(info.typeName)
-      .addStatement("return $T.mergeFrom(newInstance(), data)", RuntimeClasses.AbstractMessage)
-      .build
+    t.addMethod(
+      MethodSpec.methodBuilder("parseFrom")
+        .addJavadoc(
+          "Parse this message in NON-delimited form from a byte array.\n" +
+            "This assumes that the message spans the entire array.",
+        )
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .addException(RuntimeClasses.InvalidProtocolBufferException)
+        .addParameter(classOf[Array[Byte]], "data", Modifier.FINAL)
+        .returns(info.typeName)
+        .addStatement("return $T.mergeFrom(newInstance(), data)", RuntimeClasses.AbstractMessage)
+        .build,
     )
-    t.addMethod(MethodSpec.methodBuilder("parseFrom")
-      .addJavadoc(
-        "Parse this message in NON-delimited form from a Java {@link $T}.\n" +
-        "This assumes that the message spans the entire input stream.",
-        classOf[java.io.InputStream]
-      )
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-      .addException(classOf[IOException])
-      .addParameter(classOf[java.io.InputStream], "input", Modifier.FINAL)
-      .returns(info.typeName)
-      .addStatement(
-        "return $T.parseFrom(input, $T.getFactory())",
-        RuntimeClasses.AbstractMessage,
-        info.typeName
-      )
-      .build
+    t.addMethod(
+      MethodSpec.methodBuilder("parseFrom")
+        .addJavadoc(
+          "Parse this message in NON-delimited form from a Java {@link $T}.\n" +
+            "This assumes that the message spans the entire input stream.",
+          classOf[java.io.InputStream],
+        )
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .addException(classOf[IOException])
+        .addParameter(classOf[java.io.InputStream], "input", Modifier.FINAL)
+        .returns(info.typeName)
+        .addStatement(
+          "return $T.parseFrom(input, $T.getFactory())",
+          RuntimeClasses.AbstractMessage,
+          info.typeName,
+        )
+        .build,
     )
-    t.addMethod(MethodSpec.methodBuilder("parseDelimitedFrom")
-      .addJavadoc(
-        "Parse this message in DELIMITED form from a Java {@link $T}.\n" +
-        "If there is no message to be read, null will be returned.\n" +
-        "To read all delimited messages in the stream, call this method\n" +
-        "repeatedly until null is returned.",
-        classOf[java.io.InputStream]
-      )
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-      .addException(classOf[IOException])
-      .addParameter(classOf[java.io.InputStream], "input", Modifier.FINAL)
-      .returns(info.typeName)
-      .addStatement(
-        "return $T.parseDelimitedFrom(input, $T.getFactory())",
-        RuntimeClasses.AbstractMessage,
-        info.typeName
-      )
-      .build
+    t.addMethod(
+      MethodSpec.methodBuilder("parseDelimitedFrom")
+        .addJavadoc(
+          "Parse this message in DELIMITED form from a Java {@link $T}.\n" +
+            "If there is no message to be read, null will be returned.\n" +
+            "To read all delimited messages in the stream, call this method\n" +
+            "repeatedly until null is returned.",
+          classOf[java.io.InputStream],
+        )
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .addException(classOf[IOException])
+        .addParameter(classOf[java.io.InputStream], "input", Modifier.FINAL)
+        .returns(info.typeName)
+        .addStatement(
+          "return $T.parseDelimitedFrom(input, $T.getFactory())",
+          RuntimeClasses.AbstractMessage,
+          info.typeName,
+        )
+        .build,
     )
 
   private def generateMessageFactory(t: TypeSpec.Builder): Unit =
@@ -495,23 +505,25 @@ class MessageGenerator(val info: MessageInfo):
       .addMethod(factoryMethod)
       .build
     t.addType(factoryEnum)
-    t.addMethod(MethodSpec.methodBuilder("getFactory")
-      .addJavadoc("@return factory for creating $T messages", info.typeName)
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-      .returns(factoryReturnType)
-      .addStatement("return $T.INSTANCE", factoryTypeName)
-      .build
+    t.addMethod(
+      MethodSpec.methodBuilder("getFactory")
+        .addJavadoc("@return factory for creating $T messages", info.typeName)
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(factoryReturnType)
+        .addStatement("return $T.INSTANCE", factoryTypeName)
+        .build,
     )
 
   private def generateDescriptors(t: TypeSpec.Builder): Unit =
     val descriptorClass = info.parentFile.outerClassName
     val fieldName = DescriptorGenerator.getDescriptorFieldName(info)
-    t.addMethod(MethodSpec.methodBuilder("getDescriptor")
-      .addJavadoc("@return this type's descriptor.")
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-      .returns(RuntimeClasses.MessageDescriptor)
-      .addStatement("return $T.$N", descriptorClass, fieldName)
-      .build
+    t.addMethod(
+      MethodSpec.methodBuilder("getDescriptor")
+        .addJavadoc("@return this type's descriptor.")
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(RuntimeClasses.MessageDescriptor)
+        .addStatement("return $T.$N", descriptorClass, fieldName)
+        .build,
     )
 
   private def named(format: String, args: AnyRef*) =

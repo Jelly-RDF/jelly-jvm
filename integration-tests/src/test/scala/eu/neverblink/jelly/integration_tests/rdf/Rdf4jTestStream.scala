@@ -43,7 +43,7 @@ case object Rdf4jTestStream extends TestStream:
     val graphs = collector.getStatements.asScala.toSeq
       .groupBy(_.getContext)
       .map(e => GraphHolder[Value, Statement](e._1, e._2.asJava))
-    
+
     Source.fromIterator(() => graphs.iterator)
       .via(EncoderFlow.builder.withLimiter(limiter).namedGraphs(jellyOpt).flow)
 
@@ -53,10 +53,12 @@ case object Rdf4jTestStream extends TestStream:
     Flow[RdfStreamFrame]
       .via(DecoderFlow.decodeTriples.asFlatTripleStream)
       .toMat(Sink.foreach(st => writer.handleStatement(st)))(Keep.right)
-      .mapMaterializedValue(f => f.map(_ => {
-        writer.endRDF()
-        Done
-      }))
+      .mapMaterializedValue(f =>
+        f.map(_ => {
+          writer.endRDF()
+          Done
+        }),
+      )
 
   override def quadSink(os: OutputStream)(using ExecutionContext) =
     val writer = Rio.createWriter(RDFFormat.NQUADS, os)
@@ -64,10 +66,12 @@ case object Rdf4jTestStream extends TestStream:
     Flow[RdfStreamFrame]
       .via(DecoderFlow.decodeQuads.asFlatQuadStream)
       .toMat(Sink.foreach(st => writer.handleStatement(st)))(Keep.right)
-      .mapMaterializedValue(f => f.map(_ => {
-        writer.endRDF()
-        Done
-      }))
+      .mapMaterializedValue(f =>
+        f.map(_ => {
+          writer.endRDF()
+          Done
+        }),
+      )
 
   override def graphSink(os: OutputStream)(using ExecutionContext) =
     val writer = Rio.createWriter(RDFFormat.NQUADS, os)
@@ -75,7 +79,9 @@ case object Rdf4jTestStream extends TestStream:
     Flow[RdfStreamFrame]
       .via(DecoderFlow.decodeGraphs.asFlatQuadStream)
       .toMat(Sink.foreach(st => writer.handleStatement(st)))(Keep.right)
-      .mapMaterializedValue(f => f.map(_ => {
-        writer.endRDF()
-        Done
-      }))
+      .mapMaterializedValue(f =>
+        f.map(_ => {
+          writer.endRDF()
+          Done
+        }),
+      )

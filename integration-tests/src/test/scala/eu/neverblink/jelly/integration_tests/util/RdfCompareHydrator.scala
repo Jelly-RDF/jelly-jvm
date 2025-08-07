@@ -2,7 +2,6 @@ package eu.neverblink.jelly.integration_tests.util
 
 import scala.reflect.ClassTag
 
-
 trait RdfCompareHydrator[TNode, TStatement]:
 
   def isBlank(node: TNode): Boolean

@@ -33,7 +33,10 @@ object JenaSerDes extends NativeSerDes[Model, Dataset]:
 
   def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Dataset =
     val context = RIOT.getContext.copy()
-      .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS))
+      .set(
+        JellyLanguage.SYMBOL_SUPPORTED_OPTIONS,
+        supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
+      )
     val ds = DatasetFactory.create()
     RDFParser.create()
       .source(is)
@@ -44,7 +47,10 @@ object JenaSerDes extends NativeSerDes[Model, Dataset]:
 
   def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Model =
     val context = RIOT.getContext.copy()
-      .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS))
+      .set(
+        JellyLanguage.SYMBOL_SUPPORTED_OPTIONS,
+        supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
+      )
     val m = ModelFactory.createDefaultModel()
     RDFParser.create()
       .source(is)
@@ -53,18 +59,24 @@ object JenaSerDes extends NativeSerDes[Model, Dataset]:
       .parse(m)
     m
 
-  def writeQuadsJelly
-  (os: OutputStream, dataset: Dataset, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  def writeQuadsJelly(
+      os: OutputStream,
+      dataset: Dataset,
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     var variant = JellyFormatVariant.builder.frameSize(frameSize).build()
-    if opt.isDefined then
-      variant = variant.withOptions(opt.get)
+    if opt.isDefined then variant = variant.withOptions(opt.get)
     val format = new RDFFormat(JellyLanguage.JELLY, variant)
     RDFDataMgr.write(os, dataset, format)
 
-  def writeTriplesJelly
-  (os: OutputStream, model: Model, opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  def writeTriplesJelly(
+      os: OutputStream,
+      model: Model,
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     var variant = JellyFormatVariant.builder().frameSize(frameSize).build()
-    if opt.isDefined then
-      variant = variant.withOptions(opt.get)
+    if opt.isDefined then variant = variant.withOptions(opt.get)
     val format = new RDFFormat(JellyLanguage.JELLY, variant)
     RDFDataMgr.write(os, model, format)
