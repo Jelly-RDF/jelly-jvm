@@ -33,6 +33,9 @@ lazy val jellyCliV = "0.4.5"
 
 lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
 
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.5")
+addCommandAlias("fixAll", "scalafixAll; scalafmtAll")
+
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.19" % Test,
