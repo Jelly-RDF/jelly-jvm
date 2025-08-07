@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.integration_tests.util
 
-
 trait RdfCompareHydrator[TNode, TStatement]:
 
   def isBlank(node: TNode): Boolean
