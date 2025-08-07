@@ -8,11 +8,12 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import scala.annotation.nowarn
+import org.eclipse.rdf4j.model.Statement
 
 @nowarn("msg=deprecated")
 class JellyWriterSpec extends AnyWordSpec, Matchers:
-  val vf = SimpleValueFactory.getInstance()
-  val testStatement = vf.createStatement(
+  val vf: SimpleValueFactory = SimpleValueFactory.getInstance()
+  val testStatement: Statement = vf.createStatement(
     vf.createIRI("http://example.com/s"),
     vf.createIRI("http://example.com/p"),
     vf.createIRI("http://example.com/o"),

@@ -34,7 +34,7 @@ object PatchTestCases:
         .toSeq
 
   object Triples1 extends PatchTestCase:
-    val mrl = Seq(
+    val mrl: Seq[PatchStatement] = Seq(
       Header("key", Iri("https://test.org/test/subject")),
       TxStart,
       Add(
@@ -155,7 +155,7 @@ object PatchTestCases:
     )
 
   object Triples2NsDecl extends PatchTestCase:
-    val mrl = Seq(
+    val mrl: Seq[PatchStatement] = Seq(
       Header("note", LangLiteral("chrząszcz", "pl")), // Polish is a beautiful language
       Header("id", BlankNode("b1")),
       TxStart,
@@ -223,7 +223,7 @@ object PatchTestCases:
     )
 
   object Quads1 extends PatchTestCase:
-    val mrl = Seq(
+    val mrl: Seq[PatchStatement] = Seq(
       TxStart,
       Add(NsDecl("test", Iri("https://test.org/test/"), Iri("https://test.org/test/"))),
       Add(NsDecl("test", Iri("https://test.org/test/"), DefaultGraphNode())),
@@ -355,7 +355,7 @@ object PatchTestCases:
   /** Tests for edge cases with namespace declarations in QUADS streams.
     */
   object Quads2NsDeclOnly extends PatchTestCase:
-    val mrl = Seq(
+    val mrl: Seq[PatchStatement] = Seq(
       Add(NsDecl("test", Iri("https://test.org/test/"), DefaultGraphNode())),
       Add(NsDecl("test", Iri("https://test.org/test/"), Iri("https://test.org/test/"))),
       Add(NsDecl("test2", Iri("https://test.org/test/"), BlankNode("b1"))),
@@ -420,7 +420,7 @@ object PatchTestCases:
     * The validity of transactions is not checked on this layer. Jelly only does the serialization.
     */
   object MalformedTransactions extends PatchTestCase:
-    val mrl = Seq(
+    val mrl: Seq[PatchStatement] = Seq(
       TxAbort,
       TxAbort,
       TxAbort,

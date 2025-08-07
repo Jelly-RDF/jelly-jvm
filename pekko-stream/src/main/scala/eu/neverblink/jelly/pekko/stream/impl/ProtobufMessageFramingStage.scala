@@ -129,7 +129,7 @@ private[stream] final class ProtobufMessageFramingStage(val maxMessageSize: Int)
         tryPushFrame()
       }
 
-      override def onPull() = tryPushFrame()
+      override def onPull(): Unit = tryPushFrame()
 
       override def onUpstreamFinish(): Unit = {
         if (buffer.isEmpty) {

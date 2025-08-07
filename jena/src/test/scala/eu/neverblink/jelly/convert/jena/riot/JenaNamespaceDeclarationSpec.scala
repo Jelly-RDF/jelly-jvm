@@ -12,12 +12,14 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.jdk.CollectionConverters.*
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import org.apache.jena.rdf.model.Model
+import org.apache.jena.sparql.core.DatasetGraph
 
 /** Round-trip tests for namespace declarations.
   */
 class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
   // Prepare data
-  val m = ModelFactory.createDefaultModel()
+  val m: Model = ModelFactory.createDefaultModel()
   m.add(
     m.createResource("http://example.com/s"),
     m.createProperty("http://example.com/p"),
@@ -26,7 +28,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
   m.setNsPrefix("ex", "http://example.com/")
   m.setNsPrefix("ex2", "http://example2.com/")
 
-  val ds = DatasetGraphFactory.create()
+  val ds: DatasetGraph = DatasetGraphFactory.create()
   ds.addGraph(
     NodeFactory.createURI("http://example2.com/g"),
     m.getGraph,

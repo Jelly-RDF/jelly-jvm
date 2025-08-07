@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.pekko.stream.impl
 
 import eu.neverblink.jelly.core.ProtoEncoder.Params
-import eu.neverblink.jelly.core.memory.{LazyImmutableRowBuffer, RowBuffer}
+import eu.neverblink.jelly.core.memory.RowBuffer
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{GraphHolder, QuadExtractor, TripleExtractor}
 import eu.neverblink.jelly.core.{
@@ -15,7 +15,6 @@ import eu.neverblink.jelly.pekko.stream.SizeLimiter
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.{Flow, Source}
 
-import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
 
 /** Base trait for building a flow that encodes RDF data into a stream of [[RdfStreamFrame]].

@@ -6,13 +6,11 @@ import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.memory.EncoderAllocator
 import eu.neverblink.jelly.core.patch.helpers.PatchAdapter.*
 import eu.neverblink.protoc.java.runtime.{ArrayListMessageCollection, MessageFactory}
 
 import scala.annotation.experimental
-import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
 
 @experimental
@@ -21,7 +19,8 @@ class PatchEncoderSpec extends AnyWordSpec, Matchers:
   import eu.neverblink.jelly.core.patch.helpers.PatchTestCases.*
   import PatchEncoder.Params as Pep
 
-  val streamTypes = Seq(PatchStreamType.FLAT, PatchStreamType.FRAME, PatchStreamType.PUNCTUATED)
+  val streamTypes: Seq[PatchStreamType] =
+    Seq(PatchStreamType.FLAT, PatchStreamType.FRAME, PatchStreamType.PUNCTUATED)
 
   private def getBuffer =
     ArrayListMessageCollection[RdfPatchRow, RdfPatchRow.Mutable](() => RdfPatchRow.newInstance())

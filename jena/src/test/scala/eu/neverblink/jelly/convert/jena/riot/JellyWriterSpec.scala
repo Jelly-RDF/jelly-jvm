@@ -16,9 +16,15 @@ import java.io.{ByteArrayInputStream, OutputStream}
   * integration-tests module.
   */
 class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
-  val converterFactory = JenaConverterFactory.getInstance()
+  val converterFactory: JenaConverterFactory = JenaConverterFactory.getInstance()
 
-  val streamWriters = Seq(
+  val streamWriters: Seq[
+    (
+        String,
+        ((JellyFormatVariant, OutputStream) => JellyStreamWriter) |
+          ((JellyFormatVariant, OutputStream) => JellyStreamWriterAutodetectType),
+    ),
+  ] = Seq(
     ("JellyStreamWriter", (opt, out) => JellyStreamWriter(converterFactory, opt, out)),
     (
       "JellyStreamWriterAutodetectType",
@@ -26,7 +32,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
     ),
   )
 
-  val testTriple = Triple.create(
+  val testTriple: Triple = Triple.create(
     NodeFactory.createURI("http://example.com/s"),
     NodeFactory.createURI("http://example.com/p"),
     NodeFactory.createURI("http://example.com/o"),

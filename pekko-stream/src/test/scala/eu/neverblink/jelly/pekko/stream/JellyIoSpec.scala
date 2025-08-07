@@ -18,9 +18,9 @@ import scala.util.Random
 class JellyIoSpec extends AnyWordSpec, Matchers, ScalaFutures:
   given ActorSystem = ActorSystem()
 
-  val r = Random(42)
+  val r: Random = Random(42)
 
-  val cases = Seq(
+  val cases: Seq[(String, Seq[RdfStreamFrame])] = Seq(
     (
       "triples, frame size 1",
       Triples1.encodedFull(

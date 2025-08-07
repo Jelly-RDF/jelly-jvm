@@ -13,7 +13,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 /** Integration tests for some Titanium-specific APIs.
   */
 class IntegrationSpec extends AnyWordSpec, Matchers:
-  val testFrame = rdfStreamFrame(rows =
+  val testFrame: RdfStreamFrame = rdfStreamFrame(rows =
     Seq(
       rdfStreamRow(
         JellyOptions.SMALL_STRICT
@@ -32,7 +32,7 @@ class IntegrationSpec extends AnyWordSpec, Matchers:
     ),
   )
 
-  val testFrame2 = rdfStreamFrame(rows =
+  val testFrame2: RdfStreamFrame = rdfStreamFrame(rows =
     Seq(
       rdfStreamRow(
         rdfQuad(
@@ -46,7 +46,7 @@ class IntegrationSpec extends AnyWordSpec, Matchers:
   )
 
   class CollectorConsumer extends RdfQuadConsumer:
-    var quads = Seq.empty[(String, String, String, String, String, String, String)]
+    var quads: Seq[(String, String, String, String, String, String, String)] = Nil
 
     override def quad(
         subject: String,

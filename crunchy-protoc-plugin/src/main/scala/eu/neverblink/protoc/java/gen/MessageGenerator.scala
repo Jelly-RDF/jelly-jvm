@@ -40,7 +40,7 @@ class MessageGenerator(val info: MessageInfo):
     .toSeq
 
   // Most of the time, we are only interested in non-oneof fields
-  final val fields = allFields
+  final val fields: Seq[FieldGenerator] = allFields
     .filterNot(_.info.descriptor.hasOneofIndex)
 
   final val m = new java.util.HashMap[String, AnyRef]

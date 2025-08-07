@@ -25,6 +25,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
+import org.apache.pekko.http.scaladsl.Http.ServerBinding
 
 class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   import ProtoTestCases.*
@@ -65,7 +66,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     override def subscribeRdf(in: RdfStreamSubscribe): Source[RdfStreamFrame, NotUsed] =
       Source(storedData(in.getTopic))
 
-  val data = Map(
+  val data: Map[String, Seq[RdfStreamFrame]] = Map(
     "triples" -> Triples1.encodedFull(
       JellyOptions.SMALL_GENERALIZED.clone()
         .setStreamName("triples")
@@ -92,7 +93,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     ),
   )
 
-  val servers = Seq(
+  val servers: Seq[(String, String, TestService, ServerBinding)] = Seq(
     ("no gzip", "jelly-no-gzip"),
     ("with gzip", "jelly-gzip"),
   ).map((name, confKey) => {

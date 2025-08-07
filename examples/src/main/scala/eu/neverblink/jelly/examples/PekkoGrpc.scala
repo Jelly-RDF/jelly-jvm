@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.examples
 
 import com.typesafe.config.ConfigFactory
-import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, given}
+import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.grpc.{RdfStreamServer, RdfStreamService, RdfStreamServiceClient}
@@ -23,6 +23,8 @@ import java.io.File
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import com.typesafe.config.Config
+import org.apache.jena.query.Dataset
 
 /** Example of using Jelly's gRPC client and server to send Jelly streams over the network. This
   * uses the Apache Pekko gRPC library. Its documentation can be found at:
@@ -48,7 +50,7 @@ object PekkoGrpc extends shared.ScalaExample:
   // We can use the same config for the client and the server, as we are communicating on localhost.
   // This would usually be loaded from a configuration file (e.g., application.conf).
   // More details: https://github.com/lightbend/config
-  val config = ConfigFactory.parseString(
+  val config: Config = ConfigFactory.parseString(
     """
         |pekko.http.server.preview.enable-http2 = on
         |pekko.grpc.client.jelly.host = 127.0.0.1
@@ -65,7 +67,7 @@ object PekkoGrpc extends shared.ScalaExample:
   val clientActorSystem: ActorSystem[_] = ActorSystem(Behaviors.empty, "ClientSystem", config)
 
   // Our mock dataset that we will send around in the streams
-  val dataset =
+  val dataset: Dataset =
     RDFDataMgr.loadDataset(File(getClass.getResource("/weather-graphs.trig").toURI).toURI.toString)
 
   /** Main method that starts the server and the client.
@@ -111,7 +113,7 @@ object PekkoGrpc extends shared.ScalaExample:
 
     println("[CLIENT] Publishing data to the server...")
     val publishFuture = client.publishRdf(frameSource) map { response =>
-      println(s"[CLIENT] Received acknowledgment")
+      println("[CLIENT] Received acknowledgment")
     } recover { case e =>
       println(s"[CLIENT] Failed to publish data: $e")
     }
@@ -221,7 +223,7 @@ object PekkoGrpc extends shared.ScalaExample:
           println(s"[SERVER] Requested physical stream type: ${options.getPhysicalType}.")
           options.getPhysicalType
         case None =>
-          println(s"[SERVER] No requested stream options.")
+          println("[SERVER] No requested stream options.")
           PhysicalStreamType.UNSPECIFIED
 
       // Get the stream options requested by the client or the default options if none were provided

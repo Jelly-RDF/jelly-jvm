@@ -154,7 +154,7 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
     // As a last example, we will stream a series of RDF graphs. In our case this will be just the default graph
     // repeated a few times. This type of stream is also pretty common in practical applications.
     // https://w3id.org/stax/ontology#graphStream
-    println(f"\n\nEncoding 5 RDF graphs as a graph stream")
+    println("\n\nEncoding 5 RDF graphs as a graph stream")
     val graphsFuture = Source
       .repeat(
         // We will collect the triples of the default graph and repeat this iterable continually

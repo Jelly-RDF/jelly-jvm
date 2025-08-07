@@ -284,7 +284,14 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
       })
   }
 
-  val anyCases = Seq(
+  val anyCases: Seq[
+    (
+        Triples1.type | Quads1.type | Graphs1.type,
+        Seq[Triple] | Seq[Quad],
+        PhysicalStreamType,
+        String,
+    ),
+  ] = Seq(
     (Triples1, Triples1.mrl, PhysicalStreamType.TRIPLES, "triples"),
     (Quads1, Quads1.mrl, PhysicalStreamType.QUADS, "quads"),
     (Graphs1, Graphs1.mrlQuads, PhysicalStreamType.GRAPHS, "graphs"),

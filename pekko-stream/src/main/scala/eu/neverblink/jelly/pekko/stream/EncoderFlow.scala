@@ -1,10 +1,7 @@
 package eu.neverblink.jelly.pekko.stream
 
 import eu.neverblink.jelly.core.JellyConverterFactory
-import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.pekko.stream.impl.EncoderFlowBuilderImpl
-import org.apache.pekko.NotUsed
-import org.apache.pekko.stream.scaladsl.Flow
 
 /** Factory of encoder flows for Jelly streams. When using these methods, you don't have to set the
   * physicalType and logicalType properties of [[RdfStreamOptions]]. They will be set automatically.

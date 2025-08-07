@@ -91,7 +91,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     )
 
     // If we tried that with the strict variant, we would get an exception:
-    println(f"\n\nDecoding quads as an RDF dataset stream with strict logical type handling...")
+    println("\n\nDecoding quads as an RDF dataset stream with strict logical type handling...")
     val future = Source(encodedQuads)
       .via(JellyIo.fromBytes)
       .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuadsStrict)
@@ -109,7 +109,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     // We can also pass entirely custom supported options to the decoder, instead of the defaults
     // (see [[JellyOptions.DEFAULT_SUPPORTED_OPTIONS]]). This is useful if we want to decode a stream with
     // for example very large lookup tables or we want to put stricter limits on the streams that we accept.
-    println(f"\n\nDecoding quads as an RDF dataset stream with custom supported options...")
+    println("\n\nDecoding quads as an RDF dataset stream with custom supported options...")
     val customSupportedOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone()
       .setMaxNameTableSize(50) // This is too small for the stream we are decoding
     val customSupportedOptionsFuture = Source(encodedQuads)
@@ -127,7 +127,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     )
 
     // Flat RDF triple stream
-    println(f"\n\nDecoding triples as a flat RDF triple stream...")
+    println("\n\nDecoding triples as a flat RDF triple stream...")
     val decodedTriplesFuture = Source(encodedTriples)
       .via(JellyIo.fromBytes)
       .via(DecoderFlow.decodeTriples.asFlatTripleStreamStrict)
@@ -139,7 +139,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     // We can interpret the GRAPHS stream in a few ways, see
     // [[eu.neverblink.jelly.stream.DecoderFlow.GraphsIngestFlowOps]] for more details.
     // Here we will treat it as an RDF named graph stream.
-    println(f"\n\nDecoding graphs as an RDF named graph stream...")
+    println("\n\nDecoding graphs as an RDF named graph stream...")
     val decodedGraphsFuture = Source(encodedGraphs)
       .via(JellyIo.fromBytes)
       // Non-strict because the original logical stream type is flat RDF quad stream.
@@ -151,7 +151,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
 
     // If we tried using a decoder for a physical stream type that does not match the type of the stream,
     // we would get an exception. Here let's try to decode a QUADS stream with a TRIPLES decoder.
-    println(f"\n\nDecoding quads as a flat RDF triple stream...")
+    println("\n\nDecoding quads as a flat RDF triple stream...")
     val future2 = Source(encodedQuads)
       .via(JellyIo.fromBytes)
       // Note the "decodeTriples" here
@@ -169,7 +169,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     // We can get around this by using the "decodeAny" method, which will pick the appropriate decoder
     // based on the stream options in the stream.
     // In this case we can only ask the decoder to output a flat or grouped RDF stream.
-    println(f"\n\nDecoding quads as a flat RDF stream using decodeAny...")
+    println("\n\nDecoding quads as a flat RDF stream using decodeAny...")
     val decodedAnyFuture = Source(encodedQuads)
       .via(JellyIo.fromBytes)
       // The is no strict variant at all for decodeAny, as we don't care about the stream type anyway.
@@ -183,7 +183,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     // and carry on with the decoding as normal.
     // In this case, we will reuse the first example (flat RDF quad stream) and snoop the stream options.
     println(
-      f"\n\nSnooping the stream options of the first frame while decoding a flat RDF quad stream...",
+      "\n\nSnooping the stream options of the first frame while decoding a flat RDF quad stream...",
     )
     val snoopFuture = Source(encodedQuads)
       .via(JellyIo.fromBytes)

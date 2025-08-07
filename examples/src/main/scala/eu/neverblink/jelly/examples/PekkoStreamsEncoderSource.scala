@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.examples
 
-import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory, given}
+import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.pekko.actor.ActorSystem
@@ -47,7 +47,7 @@ object PekkoStreamsEncoderSource extends ScalaExample:
     val model = RDFDataMgr.loadModel(File(getClass.getResource("/weather.nt").toURI).toURI.toString)
 
     println(s"Loaded model with ${model.size()} triples")
-    println(s"Streaming the model to memory...")
+    println("Streaming the model to memory...")
 
     // Create a Pekko Streams Source[Triple] from the Jena model
     val encodedModelFuture = RdfSource.builder().graphAsTriples(model).source
@@ -85,7 +85,7 @@ object PekkoStreamsEncoderSource extends ScalaExample:
       File(getClass.getResource("/weather-graphs.trig").toURI).toURI.toString,
     )
     println(s"Loaded dataset with ${dataset.asDatasetGraph.size} named graphs")
-    println(s"Streaming the dataset to memory...")
+    println("Streaming the dataset to memory...")
 
     // Here we stream this is as a GRAPHS stream (physical type)
     // You can also use .datasetAsQuads to stream as QUADS

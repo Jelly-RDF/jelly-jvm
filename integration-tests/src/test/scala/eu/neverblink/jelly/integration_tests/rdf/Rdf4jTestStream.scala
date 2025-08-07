@@ -14,10 +14,6 @@ import java.io.{InputStream, OutputStream}
 import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.*
 import org.apache.pekko.NotUsed
-import org.apache.pekko.NotUsed
-import org.apache.pekko.NotUsed
-import scala.concurrent.Future
-import scala.concurrent.Future
 import scala.concurrent.Future
 
 case object Rdf4jTestStream extends TestStream:

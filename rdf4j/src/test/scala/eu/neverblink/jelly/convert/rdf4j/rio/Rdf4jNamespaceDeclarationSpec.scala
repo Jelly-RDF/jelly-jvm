@@ -8,6 +8,7 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import scala.jdk.CollectionConverters.*
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import org.eclipse.rdf4j.model.Statement
 
 /** Round-trip tests for namespace declarations.
   */
@@ -38,8 +39,8 @@ class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
       nsDecls.size should be(0)
       namespaces should be(Map.empty)
 
-  val vf = SimpleValueFactory.getInstance()
-  val triple = vf.createStatement(
+  val vf: SimpleValueFactory = SimpleValueFactory.getInstance()
+  val triple: Statement = vf.createStatement(
     vf.createIRI("http://example2.com/s"),
     vf.createIRI("http://example.com/p"),
     vf.createIRI("http://example.com/o"),

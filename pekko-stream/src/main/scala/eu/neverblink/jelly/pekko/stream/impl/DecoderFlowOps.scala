@@ -3,7 +3,6 @@ package eu.neverblink.jelly.pekko.stream.impl
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{QuadMaker, TripleMaker}
 import eu.neverblink.jelly.core.{
-  JellyConstants,
   JellyConverterFactory,
   JellyOptions,
   ProtoDecoder,
