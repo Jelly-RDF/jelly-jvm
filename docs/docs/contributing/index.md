@@ -2,6 +2,16 @@
 
 Jelly-JVM is an open project – **you are welcome to submit issues, pull requests, or just ask questions**!
 
+## Quick start
+
+Clone the project with submodules:
+
+```
+git clone --recursive git@github.com:Jelly-RDF/jelly-jvm.git
+```
+
+We use `sbt` as our build system. If you don't already have it installed, get it from [scala-sbt.org](https://www.scala-sbt.org/1.x/docs/Setup.html), or via [coursier](https://get-coursier.io/).
+
 ## User & developer chat
 
 If you have any questions or want to discuss a feature, you can join the **[Jelly Discord chat](https://discord.gg/A8sN5XwVa5)**.
