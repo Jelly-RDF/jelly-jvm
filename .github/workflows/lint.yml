@@ -29,3 +29,32 @@ jobs:
 
       - name: Run prettier
         run: npm run format:check
+
+  scalafmt-lint:
+    name: Scalafmt lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: jrouly/scalafmt-native-action@v4
+
+  scalafix-lint:
+    name: Scalafix lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: sbt
+
+      - name: Setup SBT
+        uses: sbt/setup-sbt@v1
+
+      - run: sbt 'scalafixAll --check'
