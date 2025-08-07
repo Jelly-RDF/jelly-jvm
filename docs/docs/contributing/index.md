@@ -5,6 +5,7 @@ Jelly-JVM is an open project – **you are welcome to submit issues, pull reques
 ## Quick start
 
 Clone the project with submodules:
+
 ```
 git clone --recursive git@github.com:Jelly-RDF/jelly-jvm.git
 ```
