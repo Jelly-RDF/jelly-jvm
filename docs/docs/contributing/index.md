@@ -36,6 +36,8 @@ If you are working on a larger feature or a significant change, it is recommende
 
 ## Formatting your code
 
+### Java
+
 We use prettier and JHipster's [`prettier-plugin-java`](https://github.com/jhipster/prettier-java) to format our Java code. You can run the formatter with the following command:
 
 ```bash
@@ -51,6 +53,10 @@ The pull requests are expected to be formatted before being submitted. For Intel
     - Check `Run on 'Reformat Code' action`
     - Check `Run on save`
     - Replace `Run for files` glob pattern with `**/*.{java}`
+
+### Scala
+
+We use `scalafmt` and `scalafix` to format and lint Scala code. You can run both with `sbt fixAll`. Similarly to Java, pull requests are expected to pass the formatter and linter checks before being submitted. 
 
 ## Documentation
 
