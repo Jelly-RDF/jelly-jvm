@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 
 class ProtobufUtilSpec extends AnyWordSpec, Matchers {
   final class WriteTrackingOutputStream extends OutputStream {
-    val writtenBuffers = ListBuffer[Int]()
+    val writtenBuffers: ListBuffer[Int] = ListBuffer[Int]()
 
     override def write(b: Array[Byte], off: Int, len: Int): Unit = {
       // We measure the size of the actual buffer passed to the write method.

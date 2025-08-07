@@ -7,7 +7,7 @@ import eu.neverblink.protoc.java.runtime.ProtobufUtil
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream}
+import java.io.{ByteArrayOutputStream, InputStream, OutputStream}
 
 /** Tests to ensure that writing to a Coded(Input|Output)Stream works correctly even for very long
   * streams, where we put more than Int.MaxValue bytes into the stream.

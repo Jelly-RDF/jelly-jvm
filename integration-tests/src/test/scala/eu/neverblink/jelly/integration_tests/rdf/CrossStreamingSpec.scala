@@ -9,10 +9,8 @@ import eu.neverblink.jelly.integration_tests.rdf.util.Comparisons
 import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
 import eu.neverblink.jelly.pekko.stream.{ByteSizeLimiter, SizeLimiter, StreamRowCountLimiter}
 import org.apache.jena.graph.Graph
-import org.apache.jena.riot.{Lang, RDFDataMgr, RDFParser}
+import org.apache.jena.riot.{RDFDataMgr, RDFParser}
 import org.apache.jena.sparql.core.DatasetGraph
-import org.apache.jena.sparql.util.IsoMatcher
-import org.apache.jena.sys.JenaSystem
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures

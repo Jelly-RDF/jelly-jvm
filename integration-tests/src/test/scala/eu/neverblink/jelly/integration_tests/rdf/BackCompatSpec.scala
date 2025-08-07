@@ -15,13 +15,13 @@ import java.io.File
 import scala.jdk.CollectionConverters.*
 
 object BackCompatSpec:
-  val descriptions = Map(
+  val descriptions: Map[String, String] = Map(
     "riverbench_main" -> "RiverBench main metadata",
     "riverbench_nanopubs" -> "RiverBench nanopubs dataset metadata",
     "weather_quads" -> "weather data example (QUADS stream)",
   )
 
-  val versionToNumber = Map(
+  val versionToNumber: Map[String, Int] = Map(
     "v1_0_0" -> 1,
     "v1_1_0" -> 2,
     "v1_1_1" -> 2,
@@ -41,7 +41,7 @@ object BackCompatSpec:
 class BackCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   import BackCompatSpec.*
 
-  val currentVersion = "v" + JellyConstants.PROTO_SEMANTIC_VERSION.replace(".", "_")
+  val currentVersion: String = "v" + JellyConstants.PROTO_SEMANTIC_VERSION.replace(".", "_")
 
   for (fileName, description, versions) <- testCases do
     s"Backward compatibility with $description" should {

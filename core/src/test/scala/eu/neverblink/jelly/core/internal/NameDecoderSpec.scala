@@ -11,7 +11,7 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
     .setMaxNameTableSize(16)
     .setMaxPrefixTableSize(8)
 
-  def makeDecoder(opt: RdfStreamOptions) =
+  def makeDecoder(opt: RdfStreamOptions): NameDecoderImpl[String] =
     NameDecoderImpl(opt.getMaxPrefixTableSize(), opt.getMaxNameTableSize(), identity)
 
   "A NameDecoder" when {

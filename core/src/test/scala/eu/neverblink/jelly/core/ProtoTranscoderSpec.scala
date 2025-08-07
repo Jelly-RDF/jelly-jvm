@@ -2,13 +2,6 @@ package eu.neverblink.jelly.core
 
 import com.google.protobuf.ByteString
 import eu.neverblink.jelly.core.internal.ProtoTranscoderImpl
-import eu.neverblink.jelly.core.{
-  JellyConstants,
-  JellyOptions,
-  NamespaceDeclaration,
-  RdfProtoDeserializationError,
-  RdfProtoTranscodingError,
-}
 import eu.neverblink.jelly.core.ProtoTestCases.*
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.helpers.{MockConverterFactory, Mrl, ProtoCollector}
@@ -25,7 +18,7 @@ import scala.util.Random
   * [[eu.ostrzyciel.jelly.integration_tests.CrossTranscodingSpec]]
   */
 class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
-  def smallOptions(prefixTableSize: Int) = rdfStreamOptions(
+  def smallOptions(prefixTableSize: Int): RdfStreamOptions = rdfStreamOptions(
     maxNameTableSize = 4,
     maxPrefixTableSize = prefixTableSize,
     maxDatatypeTableSize = 8,

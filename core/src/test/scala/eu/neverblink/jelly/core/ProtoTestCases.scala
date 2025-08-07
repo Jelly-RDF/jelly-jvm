@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.core
 
 import com.google.protobuf.ByteString
-import eu.neverblink.jelly.core.{JellyConstants, NamespaceDeclaration}
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.proto.v1.*
@@ -35,7 +34,7 @@ object ProtoTestCases:
         .toSeq
 
   object Triples1 extends TestCase[Triple]:
-    val mrl = Seq(
+    val mrl: Seq[Triple] = Seq(
       Triple(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -58,7 +57,7 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: RdfStreamOptions) = wrapEncoded(
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow] = wrapEncoded(
       Seq(
         opt,
         rdfPrefixEntry(0, "https://test.org/test/"),
@@ -98,7 +97,7 @@ object ProtoTestCases:
     )
 
   object Triples2NsDecl extends TestCase[Triple | NamespaceDeclaration]:
-    val mrl = Seq(
+    val mrl: Seq[Triple | NamespaceDeclaration] = Seq(
       NamespaceDeclaration("test", "https://test.org/test/"),
       Triple(
         Iri("https://test.org/test/subject"),
@@ -113,7 +112,7 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: RdfStreamOptions) = wrapEncoded(
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow] = wrapEncoded(
       Seq(
         opt,
         rdfPrefixEntry(0, "https://test.org/test/"),
@@ -138,7 +137,7 @@ object ProtoTestCases:
     )
 
   object Triples3LongStrings extends TestCase[Triple]:
-    val mrl = Seq(
+    val mrl: Seq[Triple] = Seq(
       Triple(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -151,7 +150,7 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: RdfStreamOptions) = wrapEncoded(
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow] = wrapEncoded(
       Seq(
         opt,
         rdfPrefixEntry(0, "https://test.org/test/"),
@@ -171,7 +170,7 @@ object ProtoTestCases:
     )
 
   object Quads1 extends TestCase[Quad]:
-    val mrl = Seq(
+    val mrl: Seq[Quad] = Seq(
       Quad(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -199,7 +198,7 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: RdfStreamOptions) = wrapEncoded(
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow] = wrapEncoded(
       Seq(
         opt,
         rdfPrefixEntry(0, "https://test.org/test/"),
@@ -235,7 +234,7 @@ object ProtoTestCases:
     )
 
   object Quads2RepeatDefault extends TestCase[Quad]:
-    val mrl = Seq(
+    val mrl: Seq[Quad] = Seq(
       Quad(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -250,7 +249,7 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: RdfStreamOptions) = wrapEncoded(
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow] = wrapEncoded(
       Seq(
         opt,
         rdfPrefixEntry(0, "https://test.org/test/"),
@@ -272,7 +271,7 @@ object ProtoTestCases:
     )
 
   object Graphs1 extends TestCase[(Node, Iterable[Triple])]:
-    val mrl = Seq(
+    val mrl: Seq[(Node, Iterable[Triple])] = Seq(
       (
         DefaultGraphNode(),
         Seq(
@@ -300,7 +299,7 @@ object ProtoTestCases:
       ),
     )
 
-    val mrlQuads = Seq(
+    val mrlQuads: Seq[Quad] = Seq(
       Quad(
         Iri("https://test.org/test/subject"),
         Iri("https://test.org/test/predicate"),
@@ -321,7 +320,7 @@ object ProtoTestCases:
       ),
     )
 
-    def encoded(opt: RdfStreamOptions) = wrapEncoded(
+    def encoded(opt: RdfStreamOptions): Seq[RdfStreamRow] = wrapEncoded(
       Seq(
         opt,
         rdfGraphStart(

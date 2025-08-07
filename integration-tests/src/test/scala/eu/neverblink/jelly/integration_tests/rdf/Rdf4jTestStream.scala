@@ -13,11 +13,17 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import java.io.{InputStream, OutputStream}
 import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.*
+import org.apache.pekko.NotUsed
+import org.apache.pekko.NotUsed
+import org.apache.pekko.NotUsed
+import scala.concurrent.Future
+import scala.concurrent.Future
+import scala.concurrent.Future
 
 case object Rdf4jTestStream extends TestStream:
   given Rdf4jConverterFactory = Rdf4jConverterFactory.getInstance()
 
-  override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
+  override def tripleSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions): Source[RdfStreamFrame, NotUsed] =
     // This buffers everything in memory... but I'm too lazy to implement my own RDFHandler for this
     // RDF4J at the moment only has two formats with RDF-star support – Turtle and Trig.
     val parser = Rio.createParser(RDFFormat.TURTLESTAR)
@@ -27,7 +33,7 @@ case object Rdf4jTestStream extends TestStream:
     Source.fromIterator(() => collector.getStatements.asScala.iterator)
       .via(EncoderFlow.builder.withLimiter(limiter).flatTriples(jellyOpt).flow)
 
-  override def quadSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
+  override def quadSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions): Source[RdfStreamFrame, NotUsed] =
     val parser = Rio.createParser(RDFFormat.NQUADS)
     val collector = new StatementCollector()
     parser.setRDFHandler(collector)
@@ -35,7 +41,7 @@ case object Rdf4jTestStream extends TestStream:
     Source.fromIterator(() => collector.getStatements.asScala.iterator)
       .via(EncoderFlow.builder.withLimiter(limiter).flatQuads(jellyOpt).flow)
 
-  override def graphSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions) =
+  override def graphSource(is: InputStream, limiter: SizeLimiter, jellyOpt: RdfStreamOptions): Source[RdfStreamFrame, NotUsed] =
     val parser = Rio.createParser(RDFFormat.NQUADS)
     val collector = new StatementCollector()
     parser.setRDFHandler(collector)
@@ -47,7 +53,7 @@ case object Rdf4jTestStream extends TestStream:
     Source.fromIterator(() => graphs.iterator)
       .via(EncoderFlow.builder.withLimiter(limiter).namedGraphs(jellyOpt).flow)
 
-  override def tripleSink(os: OutputStream)(using ExecutionContext) =
+  override def tripleSink(os: OutputStream)(using ExecutionContext): Sink[RdfStreamFrame, Future[Done]] =
     val writer = Rio.createWriter(RDFFormat.TURTLESTAR, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
@@ -60,7 +66,7 @@ case object Rdf4jTestStream extends TestStream:
         }),
       )
 
-  override def quadSink(os: OutputStream)(using ExecutionContext) =
+  override def quadSink(os: OutputStream)(using ExecutionContext): Sink[RdfStreamFrame, Future[Done]] =
     val writer = Rio.createWriter(RDFFormat.NQUADS, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
@@ -73,7 +79,7 @@ case object Rdf4jTestStream extends TestStream:
         }),
       )
 
-  override def graphSink(os: OutputStream)(using ExecutionContext) =
+  override def graphSink(os: OutputStream)(using ExecutionContext): Sink[RdfStreamFrame, Future[Done]] =
     val writer = Rio.createWriter(RDFFormat.NQUADS, os)
     writer.startRDF()
     Flow[RdfStreamFrame]

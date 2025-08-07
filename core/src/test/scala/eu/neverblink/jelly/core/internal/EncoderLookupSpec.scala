@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.internal
 
-import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

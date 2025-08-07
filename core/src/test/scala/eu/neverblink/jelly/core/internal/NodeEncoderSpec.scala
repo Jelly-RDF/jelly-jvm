@@ -77,7 +77,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
         // "dt3" datatype should be reused
         val node = encoder.makeDtLiteral(
-          Mrl.DtLiteral(s"v1000", Mrl.Datatype(s"dt3")),
+          Mrl.DtLiteral("v1000", Mrl.Datatype("dt3")),
           "v1000",
           "dt3",
         )
@@ -206,8 +206,8 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         // Add more literals to evict the old ones
         for j <- 101 to 104 do
           val node = encoder.makeDtLiteral(
-            Mrl.DtLiteral(s"v100", Mrl.Datatype(s"dt${j - 100}")),
-            s"v100",
+            Mrl.DtLiteral("v100", Mrl.Datatype(s"dt${j - 100}")),
+            "v100",
             s"dt${j - 100}",
           )
           node.getLex should be("v100")
@@ -216,8 +216,8 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
         // These entries should have been evicted
         for j <- 1 to 4 do
           val node = encoder.makeDtLiteral(
-            Mrl.DtLiteral(s"v1", Mrl.Datatype(s"dt$j")),
-            s"v1",
+            Mrl.DtLiteral("v1", Mrl.Datatype(s"dt$j")),
+            "v1",
             s"dt$j",
           )
           node.getLex should be("v1")

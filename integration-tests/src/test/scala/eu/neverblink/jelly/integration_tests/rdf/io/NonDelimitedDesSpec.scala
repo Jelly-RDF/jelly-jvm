@@ -12,7 +12,7 @@ import org.apache.jena.riot.RDFDataMgr
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.{ByteArrayInputStream, FileInputStream}
+import java.io.ByteArrayInputStream
 import scala.jdk.CollectionConverters.*
 
 /** Test checking if the delimited/non-delimited auto-detection works correctly.
@@ -26,7 +26,7 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
     (JellyOptions.BIG_GENERALIZED, "big generalized"),
   ).map((opt, name) => (opt.clone().setPhysicalType(PhysicalStreamType.TRIPLES), name))
 
-  val methods = Seq(
+  val methods: Seq[(JenaSerDes.type | Rdf4jSerDes.type, String)] = Seq(
     (JenaSerDes, "Jena RIOT"),
     (Rdf4jSerDes, "RDF4J Rio"),
   )

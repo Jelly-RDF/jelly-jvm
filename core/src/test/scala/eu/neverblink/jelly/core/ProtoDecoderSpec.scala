@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core
 
-import eu.neverblink.jelly.core.{JellyConstants, JellyOptions, RdfProtoDeserializationError}
 import eu.neverblink.jelly.core.helpers.Assertions.*
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.helpers.{MockConverterFactory, ProtoCollector}
@@ -11,7 +10,6 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   import ProtoTestCases.*
-  import eu.neverblink.jelly.core.internal.ProtoDecoderImpl.*
 
   private val defaultOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
 

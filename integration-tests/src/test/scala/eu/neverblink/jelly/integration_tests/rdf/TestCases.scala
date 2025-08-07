@@ -31,7 +31,7 @@ object TestCases:
     ),
   )
 
-  val protocolVocabulary = File(getClass.getResource("/protocol/vocabulary.ttl").toURI)
+  val protocolVocabulary: File = File(getClass.getResource("/protocol/vocabulary.ttl").toURI)
 
   val protocolCollections: Seq[(String, File)] = Seq(
     "rdf/from_jelly",

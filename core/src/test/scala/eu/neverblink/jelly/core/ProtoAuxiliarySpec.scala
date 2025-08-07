@@ -33,7 +33,7 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
     ),
     ("Graphs1", Graphs1, Map.empty),
   )
-  val testCases = testCasesRaw
+  val testCases: Seq[(String, RdfStreamFrame)] = testCasesRaw
     .map((name, tc, metadata) =>
       (
         name,

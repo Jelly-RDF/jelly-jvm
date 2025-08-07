@@ -5,7 +5,6 @@ import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.util.CompatibilityUtils
 import eu.neverblink.jelly.pekko.stream.*
-import org.apache.jena.Jena
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.query.Dataset
 import org.apache.jena.rdf.model.Model
