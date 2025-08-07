@@ -15,6 +15,8 @@ ThisBuild / developers := List(
     url("https://github.com/Ostrzyciel"),
   ),
 )
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 // Allow scalatest to control the logging output
 Test / logBuffered := false
 
@@ -33,7 +35,6 @@ lazy val jellyCliV = "0.4.5"
 
 lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
 
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.5")
 addCommandAlias("fixAll", "scalafixAll; scalafmtAll")
 
 lazy val commonSettings = Seq(
@@ -44,6 +45,7 @@ lazy val commonSettings = Seq(
     "-feature",
     "-deprecation",
     "-unchecked",
+    "-Wunused:all",
   ) ++ wErrorIfCI,
   javacOptions ++= Seq(
     "-source", "17",
