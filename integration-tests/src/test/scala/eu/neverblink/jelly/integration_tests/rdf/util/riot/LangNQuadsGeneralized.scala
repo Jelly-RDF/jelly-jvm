@@ -45,7 +45,7 @@ final class LangNQuadsGeneralized(tokens: Tokenizer, profile: ParserProfile, des
     }
     // Check end of quad
     if (xToken.getType ne TokenType.DOT) exception(xToken, "Quad not terminated by DOT: %s", xToken)
-    profile.createQuad(c, s, p, o, sToken.getLine, sToken.getColumn)
+    profile.getFactorRDF.createQuad(c, s, p, o)
 
   override protected def tokenAsNode(token: Token): Node =
     profile.create(currentGraph, token)
