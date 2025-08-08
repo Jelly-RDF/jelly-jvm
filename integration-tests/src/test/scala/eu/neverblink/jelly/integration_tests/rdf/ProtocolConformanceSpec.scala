@@ -226,5 +226,4 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
 
   // TODO: This is our "todo" tests function
   private def isTestEntryBlocked(testEntry: Resource): Boolean =
-    testEntry.hasGeneralizedStatementsRequirement // Generalized statements are disabled
-      || testEntry.hasPhysicalTypeGraphsRequirement // Graph physical type is not supported yet
+    testEntry.hasPhysicalTypeGraphsRequirement // Graph physical type is not supported yet
