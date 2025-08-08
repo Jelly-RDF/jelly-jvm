@@ -26,7 +26,7 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
     // If we start receiving prefix() calls before the first triple/quad, we need to store them
     private final Collection<NamespaceDeclaration> prefixBacklog = new ArrayList<>();
 
-    private JellyStreamWriter delegatedWriter;
+    private StreamRDF delegatedWriter;
 
     public JellyStreamWriterAutodetectType(
         JenaConverterFactory converterFactory,
@@ -72,14 +72,23 @@ public class JellyStreamWriterAutodetectType implements StreamRDF {
                 formatVariant
                     .getOptions()
                     .clone()
-                    .setPhysicalType(PhysicalStreamType.QUADS)
+                    .setPhysicalType(
+                        formatVariant.getOptions().getPhysicalType() == PhysicalStreamType.UNSPECIFIED
+                            ? PhysicalStreamType.QUADS
+                            : formatVariant.getOptions().getPhysicalType()
+                    )
                     .setLogicalType(
                         formatVariant.getOptions().getLogicalType() == LogicalStreamType.UNSPECIFIED
                             ? LogicalStreamType.FLAT_QUADS
                             : formatVariant.getOptions().getLogicalType()
                     )
             );
-            delegatedWriter = new JellyStreamWriter(converterFactory, quadsFormatVariant, outputStream);
+            var writer = new JellyStreamWriter(converterFactory, quadsFormatVariant, outputStream);
+            if (quadsFormatVariant.getOptions().getPhysicalType() == PhysicalStreamType.GRAPHS) {
+                delegatedWriter = new JellyStreamPhysicalGraphAdapter(writer);
+            } else {
+                delegatedWriter = writer;
+            }
             delegatedWriter.start();
             clearPrefixBacklog();
         }

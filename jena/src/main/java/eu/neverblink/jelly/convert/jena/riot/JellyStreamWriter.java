@@ -57,6 +57,20 @@ public final class JellyStreamWriter implements StreamRDF {
         );
     }
 
+    public void graphStart(Node graphNode) {
+        encoder.handleGraphStart(graphNode);
+        if (formatVariant.isDelimited() && buffer.size() >= formatVariant.getFrameSize()) {
+            flushBuffer();
+        }
+    }
+
+    public void graphEnd() {
+        encoder.handleGraphEnd();
+        if (formatVariant.isDelimited() && buffer.size() >= formatVariant.getFrameSize()) {
+            flushBuffer();
+        }
+    }
+
     @Override
     public void start() {
         // No-op
