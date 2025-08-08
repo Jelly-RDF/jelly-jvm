@@ -3,11 +3,12 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 import eu.neverblink.jelly.convert.jena.riot.JellyLanguage
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
+import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
 import eu.neverblink.jelly.integration_tests.util.{CompatibilityUtils, Measure}
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.lang.LabelToNode
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
-import org.apache.jena.riot.{RDFLanguages, RDFParser, RIOT}
+import org.apache.jena.riot.{RDFParser, RIOT}
 import org.apache.jena.sparql.core.Quad
 
 import java.io.{File, FileOutputStream, InputStream, OutputStream}
@@ -22,6 +23,8 @@ given mSeqQuads: Measure[Seq[Quad]] = (s: Seq[Quad]) => s.size
 object JenaStreamSerDes
     extends NativeSerDes[Seq[Triple], Seq[Quad]],
       ProtocolSerDes[Node, Triple, Quad]:
+  TestRiot.initialize()
+
   override def name: String = "Jena (StreamRDF)"
 
   override def supportsRdf12: Boolean = CompatibilityUtils.jenaVersion54OrHigher
@@ -33,7 +36,7 @@ object JenaStreamSerDes
   override def readTriplesW3C(is: InputStream): Seq[Triple] =
     val sink = SinkSeq[Triple]()
     RDFParser.source(is)
-      .lang(RDFLanguages.NT)
+      .lang(TestRiot.NT_ANY)
       .parse(StreamRDFLib.sinkTriples(sink))
     sink.result
 
@@ -41,7 +44,7 @@ object JenaStreamSerDes
     val sink = SinkSeq[Triple]()
     for file <- files do
       RDFParser.source(file.getPath)
-        .lang(RDFLanguages.NT)
+        .lang(TestRiot.NT_ANY)
         // Preserve original blank node labels to match blank nodes IDs across different files
         .labelToNode(LabelToNode.createUseLabelAsGiven())
         .parse(StreamRDFLib.sinkTriples(sink))
@@ -50,7 +53,7 @@ object JenaStreamSerDes
   override def readQuadsW3C(is: InputStream): Seq[Quad] =
     val sink = SinkSeq[Quad]()
     RDFParser.source(is)
-      .lang(RDFLanguages.NQ)
+      .lang(TestRiot.NQ_ANY)
       .parse(StreamRDFLib.sinkQuads(sink))
     sink.result
 
@@ -58,7 +61,7 @@ object JenaStreamSerDes
     val sink = SinkSeq[Quad]()
     for file <- files do
       RDFParser.source(file.getPath)
-        .lang(RDFLanguages.NQ)
+        .lang(TestRiot.NQ_ANY)
         // Preserve original blank node labels to match blank nodes IDs across different files
         .labelToNode(LabelToNode.createUseLabelAsGiven())
         .parse(StreamRDFLib.sinkQuads(sink))
