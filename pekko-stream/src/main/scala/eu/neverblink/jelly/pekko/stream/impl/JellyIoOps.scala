@@ -136,7 +136,8 @@ object JellyIoOps:
         .named("protobufFraming")
 
   trait FrameSource:
-    /** Read a stream of Jelly frames from an input stream. Multiple delimited frames and a single non-delimited frames are both accepted.
+    /** Read a stream of Jelly frames from an input stream. Multiple delimited frames and a single
+      * non-delimited frames are both accepted.
       *
       * You can safely use this method to read from a file or socket.
       *
