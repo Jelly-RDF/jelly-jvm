@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.pekko.stream.impl
 
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
+import eu.neverblink.jelly.core.utils.IoUtils
 import eu.neverblink.jelly.pekko.stream.PekkoUtil
 import org.apache.pekko.stream.scaladsl.*
 import org.apache.pekko.util.ByteString
@@ -145,12 +146,15 @@ object JellyIoOps:
       *   Pekko Source
       */
     final def fromIoStream(is: java.io.InputStream): Source[RdfStreamFrame, NotUsed] =
-      Source
-        .fromIterator(() =>
-          Iterator
-            .continually(RdfStreamFrame.parseDelimitedFrom(is))
-            .takeWhile(_.ne(null)),
-        )
+      val response = IoUtils.autodetectDelimiting(is)
+      if response.isDelimited then
+        Source
+          .fromIterator(() =>
+            Iterator
+              .continually(RdfStreamFrame.parseDelimitedFrom(response.newInput()))
+              .takeWhile(_.ne(null)),
+          )
+      else Source.fromIterator(() => Iterator.single(RdfStreamFrame.parseFrom(response.newInput())))
 
   trait FrameSink:
     /** Write a stream of Jelly frames to an output stream. The frames will be delimited.

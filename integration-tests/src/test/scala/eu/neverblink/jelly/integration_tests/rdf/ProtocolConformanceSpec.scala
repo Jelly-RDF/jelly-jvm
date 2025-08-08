@@ -228,15 +228,3 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
   private def isTestEntryBlocked(testEntry: Resource): Boolean =
     testEntry.hasGeneralizedStatementsRequirement // Generalized statements are disabled
       || testEntry.hasPhysicalTypeGraphsRequirement // Graph physical type is not supported yet
-      || isTestEntryBlockedById(
-        testEntry,
-      ) // Blocked by reason of test failing in specific instances
-
-  private def isTestEntryBlockedById(testEntry: Resource): Boolean =
-    // java.lang.IllegalStateException: Expected 6 RDF elements, but got 0 elements.
-    //    at eu.neverblink.jelly.integration_tests.util.OrderedRdfCompare$.compare(OrderedRdfCompare.scala:23)
-    //    at eu.neverblink.jelly.integration_tests.rdf.ProtocolSpec.f$proxy2$1(ProtocolSpec.scala:125)
-    testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_017")
-    // Protocol message tag had invalid wire type.
-    // com.google.protobuf.InvalidProtocolBufferException$InvalidWireTypeException: Protocol message tag had invalid wire type.
-      || testEntry.extractTestUri.contains("from_jelly/triples_rdf_1_1/pos_003")
