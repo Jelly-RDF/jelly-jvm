@@ -50,6 +50,10 @@ public final class JellyWriter extends AbstractRDFWriter {
     private boolean enableNamespaceDeclarations = true;
     private boolean isDelimited = false;
 
+    // Used for GRAPHS physical type
+    private boolean graphStarted = false;
+    private Value currentGraph = null;
+
     /**
      * Constructor.
      * @param converterFactory the converter factory
@@ -129,8 +133,10 @@ public final class JellyWriter extends AbstractRDFWriter {
         checkWritingStarted();
         if (options.getPhysicalType() == PhysicalStreamType.TRIPLES) {
             encoder.handleTriple(st.getSubject(), st.getPredicate(), st.getObject());
-        } else {
+        } else if (options.getPhysicalType() == PhysicalStreamType.QUADS) {
             encoder.handleQuad(st.getSubject(), st.getPredicate(), st.getObject(), st.getContext());
+        } else {
+            consumeStatementGraph(st);
         }
 
         if (isDelimited && buffer.size() >= frameSize) {
@@ -189,5 +195,24 @@ public final class JellyWriter extends AbstractRDFWriter {
             buffer.clear();
             allocator.releaseAll();
         }
+    }
+
+    private void consumeStatementGraph(Statement st) {
+        if (!graphStarted) {
+            encoder.handleGraphStart(st.getContext());
+            graphStarted = true;
+        }
+        if (currentGraph == null && st.getContext() == null) {
+            encoder.handleTriple(st.getSubject(), st.getPredicate(), st.getObject());
+            return;
+        }
+        if (currentGraph != null && currentGraph.equals(st.getContext())) {
+            encoder.handleTriple(st.getSubject(), st.getPredicate(), st.getObject());
+            return;
+        }
+        encoder.handleGraphEnd();
+        currentGraph = st.getContext();
+        encoder.handleGraphStart(currentGraph);
+        encoder.handleTriple(st.getSubject(), st.getPredicate(), st.getObject());
     }
 }
