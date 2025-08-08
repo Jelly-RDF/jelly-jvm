@@ -25,13 +25,13 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
+import org.apache.pekko.http.scaladsl.Http.ServerBinding
 
 class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
   import ProtoTestCases.*
 
   given PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 50.millis)
-  val conf: Config = ConfigFactory.parseString(
-    """
+  val conf: Config = ConfigFactory.parseString("""
       |pekko.http.server.preview.enable-http2 = on
       |pekko.grpc.client.jelly-no-gzip.host = 127.0.0.1
       |pekko.grpc.client.jelly-no-gzip.port = 8080
@@ -66,41 +66,41 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     override def subscribeRdf(in: RdfStreamSubscribe): Source[RdfStreamFrame, NotUsed] =
       Source(storedData(in.getTopic))
 
-  val data = Map(
+  val data: Map[String, Seq[RdfStreamFrame]] = Map(
     "triples" -> Triples1.encodedFull(
       JellyOptions.SMALL_GENERALIZED.clone()
         .setStreamName("triples")
         .setPhysicalType(PhysicalStreamType.TRIPLES),
-      1
+      1,
     ),
     "quads" -> Quads1.encodedFull(
       JellyOptions.SMALL_GENERALIZED.clone()
         .setStreamName("quads")
         .setPhysicalType(PhysicalStreamType.QUADS),
-      3
+      3,
     ),
     "quads_2" -> Quads2RepeatDefault.encodedFull(
       JellyOptions.SMALL_GENERALIZED.clone()
         .setStreamName("quads_2")
         .setPhysicalType(PhysicalStreamType.QUADS),
-      10
+      10,
     ),
     "graphs" -> Graphs1.encodedFull(
       JellyOptions.SMALL_GENERALIZED.clone()
         .setStreamName("graphs")
         .setPhysicalType(PhysicalStreamType.GRAPHS),
-      1
+      1,
     ),
   )
 
-  val servers = Seq(
+  val servers: Seq[(String, String, TestService, ServerBinding)] = Seq(
     ("no gzip", "jelly-no-gzip"),
     ("with gzip", "jelly-gzip"),
   ).map((name, confKey) => {
     val service = new TestService(data)
     val bound = new RdfStreamServer(
       RdfStreamServer.Options.fromConfig(conf.getConfig(s"pekko.grpc.client.$confKey")),
-      service
+      service,
     )(using serverSystem).run().futureValue
     (name, confKey, service, bound)
   })
@@ -123,7 +123,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
               .run()
               .futureValue
 
-            received should be (toStream)
+            received should be(toStream)
           }
       }
 
@@ -133,8 +133,8 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
             val received = client.publishRdf(Source(toStream))
               .futureValue
 
-            received should be (RdfStreamReceived.EMPTY)
-            serverService.receivedData(caseName) should be (toStream)
+            received should be(RdfStreamReceived.EMPTY)
+            serverService.receivedData(caseName) should be(toStream)
           }
       }
 

@@ -30,10 +30,11 @@ import scala.jdk.CollectionConverters.*
  * #L%
  */
 
-/**
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object DescriptorGenerator {
   private def getDescriptorBytesFieldName = "descriptorData"
 
@@ -44,29 +45,31 @@ object DescriptorGenerator {
     // but without the "internal_static_" prefix.
     info.fullName.replaceAll("\\.", "_") + "_descriptor"
 
-  /**
-   * The Protobuf-Java descriptor does some symbol stripping (e.g. jsonName only appears if it was specified),
-   * so serializing the raw descriptor does not produce binary compatibility. I don't know whether it's worth
-   * implementing it, so for now we leave it empty. See
-   * https://github.com/protocolbuffers/protobuf/blob/209accaf6fb91aa26e6086e73626e1884ddfb737/src/google/protobuf/compiler/retention.cc#L105-L116
-   * Note that this would also need to be stripped from Message descriptors to work with offsets.
-   */
-  private def stripSerializedDescriptor(descriptor: DescriptorProtos.FileDescriptorProto) = descriptor
+  /** The Protobuf-Java descriptor does some symbol stripping (e.g. jsonName only appears if it was
+    * specified), so serializing the raw descriptor does not produce binary compatibility. I don't
+    * know whether it's worth implementing it, so for now we leave it empty. See
+    * https://github.com/protocolbuffers/protobuf/blob/209accaf6fb91aa26e6086e73626e1884ddfb737/src/google/protobuf/compiler/retention.cc#L105-L116
+    * Note that this would also need to be stripped from Message descriptors to work with offsets.
+    */
+  private def stripSerializedDescriptor(descriptor: DescriptorProtos.FileDescriptorProto) =
+    descriptor
 }
 
 class DescriptorGenerator(val info: RequestInfo.FileInfo):
   final val m = new util.HashMap[String, AnyRef]
   m.put("abstractMessage", RuntimeClasses.AbstractMessage)
   m.put("protoUtil", RuntimeClasses.ProtoUtil)
-  private val fileDescriptorBytes: Array[Byte] = DescriptorGenerator.stripSerializedDescriptor(info.descriptor).toByteArray
+  private val fileDescriptorBytes: Array[Byte] =
+    DescriptorGenerator.stripSerializedDescriptor(info.descriptor).toByteArray
 
   def generate(t: TypeSpec.Builder): Unit =
     // bytes shared by everything
-    t.addField(FieldSpec
-      .builder(Helpers.TYPE_BYTE_ARRAY, DescriptorGenerator.getDescriptorBytesFieldName)
-      .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-      .initializer(generateEmbeddedByteBlock(fileDescriptorBytes))
-      .build
+    t.addField(
+      FieldSpec
+        .builder(Helpers.TYPE_BYTE_ARRAY, DescriptorGenerator.getDescriptorBytesFieldName)
+        .addModifiers(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+        .initializer(generateEmbeddedByteBlock(fileDescriptorBytes))
+        .build,
     )
     // field for the main file descriptor
     val initBlock = CodeBlock.builder
@@ -81,7 +84,10 @@ class DescriptorGenerator(val info: RequestInfo.FileInfo):
     if (info.descriptor.getDependencyCount > 0) {
       for ((fileName, i) <- info.descriptor.getDependencyList.asScala.zipWithIndex) {
         if i > 0 then initBlock.add(", ")
-        initBlock.add("$T.getDescriptor()", info.parentRequest.getInfoForFile(fileName).outerClassName)
+        initBlock.add(
+          "$T.getDescriptor()",
+          info.parentRequest.getInfoForFile(fileName).outerClassName,
+        )
       }
     }
     initBlock.add(" })")
@@ -92,60 +98,67 @@ class DescriptorGenerator(val info: RequestInfo.FileInfo):
     t.addField(fileDescriptor)
 
     // Add a static method
-    t.addMethod(MethodSpec.methodBuilder("getDescriptor")
-      .addJavadoc("@return this proto file's descriptor.")
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-      .returns(RuntimeClasses.FileDescriptor)
-      .addStatement("return $N", DescriptorGenerator.getFileDescriptorFieldName)
-      .build
+    t.addMethod(
+      MethodSpec.methodBuilder("getDescriptor")
+        .addJavadoc("@return this proto file's descriptor.")
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(RuntimeClasses.FileDescriptor)
+        .addStatement("return $N", DescriptorGenerator.getFileDescriptorFieldName)
+        .build,
     )
     // Descriptor field for each nested type
     val staticBlock = CodeBlock.builder
-    val getBase = CodeBlock.of("$N.getMessageTypes()", DescriptorGenerator.getFileDescriptorFieldName)
+    val getBase =
+      CodeBlock.of("$N.getMessageTypes()", DescriptorGenerator.getFileDescriptorFieldName)
     for (message, ix) <- info.messageTypes.asScala.zipWithIndex do
       addMessageDescriptor(
         t,
         staticBlock,
         getBase,
         message,
-        ix
+        ix,
       )
-    
-    t.addStaticBlock(CodeBlock.builder
-      .beginControlFlow("try")
-      .addStatement("descriptor = $L", initBlock.build)
-      .add(staticBlock.build)
-      .nextControlFlow("catch ($T e)", RuntimeClasses.Exception)
-      .addStatement("throw new $T(e)", RuntimeClasses.RuntimeException)
-      .endControlFlow
-      .build
+
+    t.addStaticBlock(
+      CodeBlock.builder
+        .beginControlFlow("try")
+        .addStatement("descriptor = $L", initBlock.build)
+        .add(staticBlock.build)
+        .nextControlFlow("catch ($T e)", RuntimeClasses.Exception)
+        .addStatement("throw new $T(e)", RuntimeClasses.RuntimeException)
+        .endControlFlow
+        .build,
     )
 
   private def addMessageDescriptor(
-    t: TypeSpec.Builder,
-    staticBlock: CodeBlock.Builder,
-    getBase: CodeBlock,
-    message: RequestInfo.MessageInfo,
-    index: Int,
+      t: TypeSpec.Builder,
+      staticBlock: CodeBlock.Builder,
+      getBase: CodeBlock,
+      message: RequestInfo.MessageInfo,
+      index: Int,
   ): Unit =
     val msgDesc = message.descriptor
     val descriptorBytes = message.descriptor.toByteArray
-    t.addField(FieldSpec
-      .builder(RuntimeClasses.MessageDescriptor, DescriptorGenerator.getDescriptorFieldName(message))
-      .addModifiers(Modifier.STATIC, Modifier.FINAL)
-      .build
+    t.addField(
+      FieldSpec
+        .builder(
+          RuntimeClasses.MessageDescriptor,
+          DescriptorGenerator.getDescriptorFieldName(message),
+        )
+        .addModifiers(Modifier.STATIC, Modifier.FINAL)
+        .build,
     )
     staticBlock.addStatement(
       "$N = " + getBase + ".get($L)",
       DescriptorGenerator.getDescriptorFieldName(message),
-      index
+      index,
     )
     // Recursively add nested messages
-    val nestedGetBase = CodeBlock.of("$N.getNestedTypes()", DescriptorGenerator.getDescriptorFieldName(message))
+    val nestedGetBase =
+      CodeBlock.of("$N.getNestedTypes()", DescriptorGenerator.getDescriptorFieldName(message))
     for ((nestedType, j) <- message.nestedTypes.asScala.zipWithIndex) {
       addMessageDescriptor(t, staticBlock, nestedGetBase, nestedType, j)
     }
-    
 
   private def generateEmbeddedByteBlock(descriptor: Array[Byte]) =
     // Inspired by Protoc's SharedCodeGenerator::GenerateDescriptors:
@@ -168,7 +181,7 @@ class DescriptorGenerator(val info: RequestInfo.FileInfo):
       .add("$T.getDecoder().decode(", RuntimeClasses.Base64)
       .add("$>")
     val block = Base64.getEncoder.encodeToString(descriptor)
-    //var line = block.substring(0, Math.min(charsPerLine, block.length))
+    // var line = block.substring(0, Math.min(charsPerLine, block.length))
     var blockIx = 0
     while (blockIx < block.length) {
       val line = block.substring(blockIx, Math.min(blockIx + charsPerLine, block.length))
@@ -178,4 +191,3 @@ class DescriptorGenerator(val info: RequestInfo.FileInfo):
     }
     initBlock.add(")$<")
     initBlock.build
-

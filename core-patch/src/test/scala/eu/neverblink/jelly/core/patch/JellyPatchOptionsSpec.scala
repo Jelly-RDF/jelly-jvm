@@ -25,12 +25,12 @@ class JellyPatchOptionsSpec extends AnyWordSpec, Matchers:
 
     for ((opt, jellyOpt), i) <- optionCases.zipWithIndex do
       f"have corresponding options to JellyOptions, case $i" in {
-        opt.getGeneralizedStatements should be (jellyOpt.getGeneralizedStatements)
-        opt.getRdfStar should be (jellyOpt.getRdfStar)
-        opt.getMaxNameTableSize should be (jellyOpt.getMaxNameTableSize)
-        opt.getMaxPrefixTableSize should be (jellyOpt.getMaxPrefixTableSize)
-        opt.getMaxDatatypeTableSize should be (jellyOpt.getMaxDatatypeTableSize)
-        opt.getVersion should be (1)
+        opt.getGeneralizedStatements should be(jellyOpt.getGeneralizedStatements)
+        opt.getRdfStar should be(jellyOpt.getRdfStar)
+        opt.getMaxNameTableSize should be(jellyOpt.getMaxNameTableSize)
+        opt.getMaxPrefixTableSize should be(jellyOpt.getMaxPrefixTableSize)
+        opt.getMaxDatatypeTableSize should be(jellyOpt.getMaxDatatypeTableSize)
+        opt.getVersion should be(1)
       }
 
     val physicalTypeCases = Seq(
@@ -44,8 +44,8 @@ class JellyPatchOptionsSpec extends AnyWordSpec, Matchers:
       f"convert PhysicalStreamType to StatementType, case $jellyType" in {
         val opt = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone()
           .setPhysicalType(jellyType)
-        
+
         val patchOpt = JellyPatchOptions.fromJellyOptions(opt)
-        patchOpt.getStatementType should be (patchType)
+        patchOpt.getStatementType should be(patchType)
       }
   }

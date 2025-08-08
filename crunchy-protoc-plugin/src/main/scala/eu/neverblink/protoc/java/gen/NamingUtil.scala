@@ -28,12 +28,13 @@ import scala.jdk.CollectionConverters.*
  * #L%
  */
 
-/**
- * Utilities for dealing with names
- *
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** Utilities for dealing with names
+  *
+  * @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object NamingUtil:
   def getJavaPackage(descriptor: DescriptorProtos.FileDescriptorProto): String =
     if (descriptor.getOptions.hasJavaPackage) return descriptor.getOptions.getJavaPackage
@@ -44,7 +45,8 @@ object NamingUtil:
     DEFAULT_PACKAGE
 
   def getJavaOuterClassname(descriptor: DescriptorProtos.FileDescriptorProto): String =
-    if (descriptor.getOptions.hasJavaOuterClassname) return descriptor.getOptions.getJavaOuterClassname
+    if (descriptor.getOptions.hasJavaOuterClassname)
+      return descriptor.getOptions.getJavaOuterClassname
     val nameWithoutPath = new File(descriptor.getName).getName // removes slashes etc.
 
     val defaultOuterClassName = toUpperCamel(stripSuffixString(nameWithoutPath))
@@ -53,19 +55,21 @@ object NamingUtil:
     defaultOuterClassName + OUTER_CLASS_SUFFIX
 
   private def hasConflictingClassName(
-    descriptor: DescriptorProtos.FileDescriptorProto, outerClassName: String
+      descriptor: DescriptorProtos.FileDescriptorProto,
+      outerClassName: String,
   ): Boolean =
     descriptor.getMessageTypeList.asScala
       .map(m => toUpperCamel(m.getName))
       .contains(outerClassName) ||
-    descriptor.getEnumTypeList.asScala
-      .map(e => toUpperCamel(e.getName))
-      .contains(outerClassName)
+      descriptor.getEnumTypeList.asScala
+        .map(e => toUpperCamel(e.getName))
+        .contains(outerClassName)
     false
 
   private def stripSuffixString(fileName: String): String =
     if (fileName.endsWith(".proto")) return fileName.substring(0, fileName.length - ".proto".length)
-    if (fileName.endsWith(".protodevel")) return fileName.substring(0, fileName.length - ".protodevel".length)
+    if (fileName.endsWith(".protodevel"))
+      return fileName.substring(0, fileName.length - ".protodevel".length)
     fileName
 
   private val DEFAULT_PACKAGE = ""
@@ -73,14 +77,16 @@ object NamingUtil:
 
   def toUpperCamel(name: String): String = underscoresToCamelCaseImpl(name, true)
 
-  /**
-   * Port of JavaNano's "UnderscoresToCamelCaseImpl". Guava's CaseFormat doesn't
-   * write upper case after numbers, so the names wouldn't be consistent.
-   *
-   * @param input          original name with lower_underscore case
-   * @param capFirstLetter true if the first letter should be capitalized
-   * @return camelCase
-   */
+  /** Port of JavaNano's "UnderscoresToCamelCaseImpl". Guava's CaseFormat doesn't write upper case
+    * after numbers, so the names wouldn't be consistent.
+    *
+    * @param input
+    *   original name with lower_underscore case
+    * @param capFirstLetter
+    *   true if the first letter should be capitalized
+    * @return
+    *   camelCase
+    */
   private def underscoresToCamelCaseImpl(input: CharSequence, capFirstLetter: Boolean) =
     val result = new StringBuilder(input.length)
     var cap_next_letter = capFirstLetter
@@ -90,27 +96,23 @@ object NamingUtil:
         if (cap_next_letter) result.append(Character.toUpperCase(c))
         else result.append(c)
         cap_next_letter = false
-      }
-      else if ('A' <= c && c <= 'Z') {
+      } else if ('A' <= c && c <= 'Z') {
         if (i == 0 && !cap_next_letter) {
           // Force first letter to lower-case unless explicitly told to
           // capitalize it.
           result.append(Character.toLowerCase(c))
-        }
-        else {
+        } else {
           // Capital letters after the first are left as-is.
           result.append(c)
         }
         cap_next_letter = false
-      }
-      else if ('0' <= c && c <= '9') {
+      } else if ('0' <= c && c <= '9') {
         result.append(c)
         cap_next_letter = true
-      }
-      else cap_next_letter = true
+      } else cap_next_letter = true
     }
     result.toString
-    
+
   def getConstantName(camelCase: String): String =
     // convert camelCase to UPPER_UNDERSCORE
     val result = new StringBuilder(camelCase.length)
@@ -120,40 +122,97 @@ object NamingUtil:
       else if ('A' <= c && c <= 'Z') {
         if (i > 0) result.append('_')
         result.append(c)
-      }
-      else if ('0' <= c && c <= '9') result.append(c)
+      } else if ('0' <= c && c <= '9') result.append(c)
       else result.append('_')
     }
     result.toString
 
-  def filterKeyword(name: String): String = 
+  def filterKeyword(name: String): String =
     if (keywordSet.contains(name)) name + "_" else name
 
-  def isCollidingFieldName(field: String): Boolean = 
+  def isCollidingFieldName(field: String): Boolean =
     collidingFieldSet.contains(field)
 
-  private val keywordSet = new util.HashSet[String](util.Arrays.asList( 
-    // Reserved Java Keywords
-    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", 
-    "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", 
-    "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", 
-    "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp", 
-    "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", 
-    "volatile", "while", 
-    // Reserved Keywords for Literals
-    "false", "null", "true", 
-    // Reserved names for internal variables
-    "value", "values", "input", "output", "tag", "other", "o", "size", "unknownBytes", "cachedSize", 
-    "bitfield0_", "unknownBytesFieldName"
-  ))
-  
+  private val keywordSet = new util.HashSet[String](
+    util.Arrays.asList(
+      // Reserved Java Keywords
+      "abstract",
+      "assert",
+      "boolean",
+      "break",
+      "byte",
+      "case",
+      "catch",
+      "char",
+      "class",
+      "const",
+      "continue",
+      "default",
+      "do",
+      "double",
+      "else",
+      "enum",
+      "extends",
+      "final",
+      "finally",
+      "float",
+      "for",
+      "goto",
+      "if",
+      "implements",
+      "import",
+      "instanceof",
+      "int",
+      "interface",
+      "long",
+      "native",
+      "new",
+      "package",
+      "private",
+      "protected",
+      "public",
+      "return",
+      "short",
+      "static",
+      "strictfp",
+      "super",
+      "switch",
+      "synchronized",
+      "this",
+      "throw",
+      "throws",
+      "transient",
+      "try",
+      "void",
+      "volatile",
+      "while",
+      // Reserved Keywords for Literals
+      "false",
+      "null",
+      "true",
+      // Reserved names for internal variables
+      "value",
+      "values",
+      "input",
+      "output",
+      "tag",
+      "other",
+      "o",
+      "size",
+      "unknownBytes",
+      "cachedSize",
+      "bitfield0_",
+      "unknownBytesFieldName",
+    ),
+  )
+
   private val collidingFieldSet = withCamelCaseNames(
     "class", // Object::getClass
     "missing_fields", // getMissingFields
     "unknown_bytes", // getUnknownFields
     "serialized_size", // getSerializedSize
     "cached_size", // getSerializedSize
-    "descriptor" // getDescriptor
+    "descriptor", // getDescriptor
   )
 
   private def withCamelCaseNames(fieldNames: String*) =
@@ -163,4 +222,3 @@ object NamingUtil:
       set.add(underscoresToCamelCaseImpl(fieldName, false))
     }
     set
-

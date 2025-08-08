@@ -52,11 +52,17 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
         }
 
       s"return false for $streamType and an undefined type" in {
-        LogicalStreamTypeUtils.isEqualOrSubtypeOf(streamType, LogicalStreamType.UNSPECIFIED) shouldBe false
+        LogicalStreamTypeUtils.isEqualOrSubtypeOf(
+          streamType,
+          LogicalStreamType.UNSPECIFIED,
+        ) shouldBe false
       }
 
       s"return false for an undefined type and $streamType" in {
-        LogicalStreamTypeUtils.isEqualOrSubtypeOf(LogicalStreamType.UNSPECIFIED, streamType) shouldBe false
+        LogicalStreamTypeUtils.isEqualOrSubtypeOf(
+          LogicalStreamType.UNSPECIFIED,
+          streamType,
+        ) shouldBe false
       }
   }
 
@@ -65,17 +71,17 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
       s"return RDF STaX type for $streamType" in {
         val t = LogicalStreamTypeUtils.getRdfStaxType(streamType)
         t should not be None
-        t should startWith ("https://w3id.org/stax/ontology#")
+        t should startWith("https://w3id.org/stax/ontology#")
       }
 
       s"return a type that can be parsed by LogicalStreamTypeFactory for $streamType" in {
         val t = LogicalStreamTypeUtils.getRdfStaxType(streamType)
         val newType = LogicalStreamTypeUtils.fromOntologyIri(t)
-        newType should be (streamType)
+        newType should be(streamType)
       }
 
     "not return RDF STaX type for UNSPECIFIED" in {
-      LogicalStreamTypeUtils.getRdfStaxType(LogicalStreamType.UNSPECIFIED) should be (null)
+      LogicalStreamTypeUtils.getRdfStaxType(LogicalStreamType.UNSPECIFIED) should be(null)
     }
   }
 
@@ -96,36 +102,36 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
           decoder,
           { (s, p, o) => Triple(s, p, o) },
           streamType,
-          subjectNode
+          subjectNode,
         )
-        a.size should be (3)
+        a.size should be(3)
 
         val a0Triple = a.get(0)
 
-        a0Triple.s should be (subjectNode)
-        a0Triple.p should be (Iri("https://w3id.org/stax/ontology#hasStreamTypeUsage"))
+        a0Triple.s should be(subjectNode)
+        a0Triple.p should be(Iri("https://w3id.org/stax/ontology#hasStreamTypeUsage"))
 
         val a2Triple = a.get(2)
 
-        a2Triple.o should be (Iri(LogicalStreamTypeUtils.getRdfStaxType(streamType)))
+        a2Triple.o should be(Iri(LogicalStreamTypeUtils.getRdfStaxType(streamType)))
       }
 
       s"return RDF STaX annotation for $streamType and $subjectNode using factory" in {
         val a = LogicalStreamTypeUtils.getRdfStaxAnnotation(
           MockConverterFactory,
           streamType,
-          subjectNode
+          subjectNode,
         )
-        a.size should be (3)
+        a.size should be(3)
 
         val a0Triple = a.get(0)
 
-        a0Triple.s should be (subjectNode)
-        a0Triple.p should be (Iri("https://w3id.org/stax/ontology#hasStreamTypeUsage"))
+        a0Triple.s should be(subjectNode)
+        a0Triple.p should be(Iri("https://w3id.org/stax/ontology#hasStreamTypeUsage"))
 
         val a2Triple = a.get(2)
 
-        a2Triple.o should be (Iri(LogicalStreamTypeUtils.getRdfStaxType(streamType)))
+        a2Triple.o should be(Iri(LogicalStreamTypeUtils.getRdfStaxType(streamType)))
       }
 
     for subjectNode <- subjectNodes do
@@ -136,20 +142,22 @@ class LogicalStreamTypeUtilsSpec extends AnyWordSpec, Matchers:
             decoder,
             { (s, p, o) => Triple(s, p, o) },
             LogicalStreamType.UNSPECIFIED,
-            subjectNode
+            subjectNode,
           )
         }
-        error.getMessage should include ("Unsupported logical stream type")
-        error.getMessage should include ("UNSPECIFIED")
+        error.getMessage should include("Unsupported logical stream type")
+        error.getMessage should include("UNSPECIFIED")
       }
   }
 
   "LogicalStreamTypeFactory.fromOntologyIri" should {
     "return None for a non-STaX IRI" in {
-      LogicalStreamTypeUtils.fromOntologyIri("https://example.org/stream") should be (null)
+      LogicalStreamTypeUtils.fromOntologyIri("https://example.org/stream") should be(null)
     }
 
     "return None for an invalid STaX IRI" in {
-      LogicalStreamTypeUtils.fromOntologyIri("https://w3id.org/stax/ontology#doesNotExist") should be (null)
+      LogicalStreamTypeUtils.fromOntologyIri(
+        "https://w3id.org/stax/ontology#doesNotExist",
+      ) should be(null)
     }
   }

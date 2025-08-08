@@ -26,14 +26,14 @@ import java.util
  * #L%
  */
 
-/**
- * The field and type comments are hidden inside the source info,
- * but the paths are somewhat difficult to parse. This class
- * contains utilities to match elements to their source location.
- *
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** The field and type comments are hidden inside the source info, but the paths are somewhat
+  * difficult to parse. This class contains utilities to match elements to their source location.
+  *
+  * @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object SourceLocations:
   def createElementMap(descriptor: FileDescriptorProto): util.Map[String, SourceCodeInfo.Location] =
     val map = new util.TreeMap[String, SourceCodeInfo.Location]
@@ -45,9 +45,9 @@ object SourceLocations:
     map
 
   private def getLocationIdentifier(
-    location: SourceCodeInfo.Location,
-    desc: FileDescriptorProto,
-    builder: StringBuilder
+      location: SourceCodeInfo.Location,
+      desc: FileDescriptorProto,
+      builder: StringBuilder,
   ): StringBuilder =
     builder.setLength(0)
     val pkg = NamingUtil.getProtoPackage(desc)
@@ -72,10 +72,10 @@ object SourceLocations:
     builder
 
   private def appendPathId(
-    location: SourceCodeInfo.Location,
-    desc: DescriptorProto,
-    ix: Int,
-    builder: StringBuilder
+      location: SourceCodeInfo.Location,
+      desc: DescriptorProto,
+      ix: Int,
+      builder: StringBuilder,
   ): StringBuilder =
     builder.append(".").append(desc.getName)
     if (location.getPathCount > ix) location.getPath(ix) match {
@@ -98,10 +98,10 @@ object SourceLocations:
     builder
 
   private def appendPathId(
-    location: SourceCodeInfo.Location, 
-    desc: FieldDescriptorProto, 
-    ix: Int, 
-    builder: StringBuilder
+      location: SourceCodeInfo.Location,
+      desc: FieldDescriptorProto,
+      ix: Int,
+      builder: StringBuilder,
   ): StringBuilder =
     builder.append(".").append(desc.getName)
     if (location.getPathCount > ix) location.getPath(ix) match
@@ -120,10 +120,10 @@ object SourceLocations:
     builder
 
   private def appendPathId(
-    location: SourceCodeInfo.Location, 
-    desc: EnumDescriptorProto, 
-    ix: Int, 
-    builder: StringBuilder
+      location: SourceCodeInfo.Location,
+      desc: EnumDescriptorProto,
+      ix: Int,
+      builder: StringBuilder,
   ): StringBuilder =
     builder.append(".").append(desc.getName)
     if (location.getPathCount > ix) location.getPath(ix) match
@@ -138,10 +138,10 @@ object SourceLocations:
     builder
 
   private def appendPathId(
-    location: SourceCodeInfo.Location,
-    desc: EnumValueDescriptorProto, 
-    ix: Int, 
-    builder: StringBuilder
+      location: SourceCodeInfo.Location,
+      desc: EnumValueDescriptorProto,
+      ix: Int,
+      builder: StringBuilder,
   ): StringBuilder =
     builder.append(".").append(desc.getName)
     if (location.getPathCount > ix) location.getPath(ix) match
@@ -153,9 +153,9 @@ object SourceLocations:
     builder
 
   private def addUnsupported(
-    location: SourceCodeInfo.Location, 
-    ix: Int, 
-    builder: StringBuilder
+      location: SourceCodeInfo.Location,
+      ix: Int,
+      builder: StringBuilder,
   ) =
     builder.append(".{")
     for (i <- ix until location.getPathCount) {

@@ -17,10 +17,11 @@ import scala.annotation.nowarn
 given mSeqTriples: Measure[Seq[Triple]] = (s: Seq[Triple]) => s.size
 given mSeqQuads: Measure[Seq[Quad]] = (s: Seq[Quad]) => s.size
 
-/**
- * Jena ser/des implementation using RIOT's streaming API (StreamRDF).
- */
-object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSerDes[Node, Triple, Quad]:
+/** Jena ser/des implementation using RIOT's streaming API (StreamRDF).
+  */
+object JenaStreamSerDes
+    extends NativeSerDes[Seq[Triple], Seq[Quad]],
+      ProtocolSerDes[Node, Triple, Quad]:
   override def name: String = "Jena (StreamRDF)"
 
   override def supportsRdf12: Boolean = CompatibilityUtils.jenaVersion54OrHigher
@@ -63,9 +64,15 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
         .parse(StreamRDFLib.sinkQuads(sink))
     sink.result
 
-  override def readTriplesJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Triple] =
+  override def readTriplesJelly(
+      is: InputStream,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Seq[Triple] =
     val context = RIOT.getContext.copy()
-      .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS))
+      .set(
+        JellyLanguage.SYMBOL_SUPPORTED_OPTIONS,
+        supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
+      )
     val sink = SinkSeq[Triple]()
     RDFParser.source(is)
       .lang(JellyLanguage.JELLY)
@@ -73,9 +80,15 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
       .parse(StreamRDFLib.sinkTriples(sink))
     sink.result
 
-  override def readTriplesJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[Triple] =
+  override def readTriplesJelly(
+      file: File,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Seq[Triple] =
     val context = RIOT.getContext.copy()
-      .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS))
+      .set(
+        JellyLanguage.SYMBOL_SUPPORTED_OPTIONS,
+        supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
+      )
     val sink = SinkSeq[Triple]()
     RDFParser.source(file.getPath)
       .lang(JellyLanguage.JELLY)
@@ -83,9 +96,15 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
       .parse(StreamRDFLib.sinkTriples(sink))
     sink.result
 
-  override def readQuadsJelly(is: InputStream, supportedOptions: Option[RdfStreamOptions]): Seq[Quad] =
+  override def readQuadsJelly(
+      is: InputStream,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Seq[Quad] =
     val context = RIOT.getContext.copy()
-      .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS))
+      .set(
+        JellyLanguage.SYMBOL_SUPPORTED_OPTIONS,
+        supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
+      )
     val sink = SinkSeq[Quad]()
     RDFParser.source(is)
       .lang(JellyLanguage.JELLY)
@@ -93,9 +112,15 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
       .parse(StreamRDFLib.sinkQuads(sink))
     sink.result
 
-  override def readQuadsOrGraphsJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[Quad] =
+  override def readQuadsOrGraphsJelly(
+      file: File,
+      supportedOptions: Option[RdfStreamOptions],
+  ): Seq[Quad] =
     val context = RIOT.getContext.copy()
-      .set(JellyLanguage.SYMBOL_SUPPORTED_OPTIONS, supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS))
+      .set(
+        JellyLanguage.SYMBOL_SUPPORTED_OPTIONS,
+        supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
+      )
     val sink = SinkSeq[Quad]()
     RDFParser.source(file.getPath)
       .lang(JellyLanguage.JELLY)
@@ -103,7 +128,12 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
       .parse(StreamRDFLib.sinkQuads(sink))
     sink.result
 
-  override def writeTriplesJelly(os: OutputStream, model: Seq[Triple], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeTriplesJelly(
+      os: OutputStream,
+      model: Seq[Triple],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val context = RIOT.getContext.copy()
       .set(JellyLanguage.SYMBOL_FRAME_SIZE, frameSize)
     if opt.isDefined then
@@ -116,38 +146,52 @@ object JenaStreamSerDes extends NativeSerDes[Seq[Triple], Seq[Quad]], ProtocolSe
     model.foreach(writerStream.triple)
     writerStream.finish()
 
-  override def writeTriplesJelly(file: File, triples: Seq[Triple], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeTriplesJelly(
+      file: File,
+      triples: Seq[Triple],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val context = RIOT.getContext.copy()
       .set(JellyLanguage.SYMBOL_FRAME_SIZE, frameSize)
-    if opt.isDefined then
-      context.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.get)
+    if opt.isDefined then context.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.get)
 
     val fileOutputStream = FileOutputStream(file)
-    val writerStream = StreamRDFWriter.getWriterStream(fileOutputStream, JellyLanguage.JELLY, context)
+    val writerStream =
+      StreamRDFWriter.getWriterStream(fileOutputStream, JellyLanguage.JELLY, context)
     writerStream.start()
     triples.foreach(writerStream.triple)
     writerStream.finish()
     fileOutputStream.close()
 
-  override def writeQuadsJelly(os: OutputStream, dataset: Seq[Quad], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeQuadsJelly(
+      os: OutputStream,
+      dataset: Seq[Quad],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val context = RIOT.getContext.copy()
       .set(JellyLanguage.SYMBOL_FRAME_SIZE, frameSize)
-    if opt.isDefined then
-      context.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.get)
+    if opt.isDefined then context.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.get)
 
     val writerStream = StreamRDFWriter.getWriterStream(os, JellyLanguage.JELLY, context)
     writerStream.start()
     dataset.foreach(writerStream.quad)
     writerStream.finish()
 
-  override def writeQuadsJelly(file: File, quads: Seq[Quad], opt: Option[RdfStreamOptions], frameSize: Int): Unit =
+  override def writeQuadsJelly(
+      file: File,
+      quads: Seq[Quad],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit =
     val context = RIOT.getContext.copy()
       .set(JellyLanguage.SYMBOL_FRAME_SIZE, frameSize)
-    if opt.isDefined then
-      context.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.get)
+    if opt.isDefined then context.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, opt.get)
 
     val fileOutputStream = FileOutputStream(file)
-    val writerStream = StreamRDFWriter.getWriterStream(fileOutputStream, JellyLanguage.JELLY, context)
+    val writerStream =
+      StreamRDFWriter.getWriterStream(fileOutputStream, JellyLanguage.JELLY, context)
     writerStream.start()
     quads.foreach(writerStream.quad)
     writerStream.finish()

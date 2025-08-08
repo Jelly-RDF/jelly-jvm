@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core
 
-import eu.neverblink.jelly.core.{JellyConstants, JellyOptions, RdfProtoDeserializationError}
 import eu.neverblink.jelly.core.helpers.Assertions.*
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.helpers.{MockConverterFactory, ProtoCollector}
@@ -11,7 +10,6 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class ProtoDecoderSpec extends AnyWordSpec, Matchers:
   import ProtoTestCases.*
-  import eu.neverblink.jelly.core.internal.ProtoDecoderImpl.*
 
   private val defaultOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
 
@@ -19,24 +17,27 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     val decoderFactories = Seq(
       ("TriplesDecoder", (MockConverterFactory.triplesDecoder, PhysicalStreamType.TRIPLES)),
       ("QuadsDecoder", (MockConverterFactory.quadsDecoder, PhysicalStreamType.QUADS)),
-      ("GraphsAsQuadsDecoder", (MockConverterFactory.graphsAsQuadsDecoder, PhysicalStreamType.GRAPHS)),
+      (
+        "GraphsAsQuadsDecoder",
+        (MockConverterFactory.graphsAsQuadsDecoder, PhysicalStreamType.GRAPHS),
+      ),
       ("GraphsDecoder", (MockConverterFactory.graphsDecoder, PhysicalStreamType.GRAPHS)),
     ).toMap
     val logicalStreamTypeSets = Seq(
       (
         Seq(LogicalStreamType.FLAT_TRIPLES),
-        Seq("TriplesDecoder")
+        Seq("TriplesDecoder"),
       ),
       (
         Seq(LogicalStreamType.FLAT_QUADS),
-        Seq("QuadsDecoder", "GraphsAsQuadsDecoder")
+        Seq("QuadsDecoder", "GraphsAsQuadsDecoder"),
       ),
       (
         Seq(
           LogicalStreamType.GRAPHS,
           LogicalStreamType.SUBJECT_GRAPHS,
         ),
-        Seq("TriplesDecoder")
+        Seq("TriplesDecoder"),
       ),
       (
         Seq(
@@ -44,15 +45,15 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           LogicalStreamType.NAMED_GRAPHS,
           LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS,
         ),
-        Seq("QuadsDecoder", "GraphsDecoder", "GraphsAsQuadsDecoder")
+        Seq("QuadsDecoder", "GraphsDecoder", "GraphsAsQuadsDecoder"),
       ),
       (
         Seq(
           LogicalStreamType.NAMED_GRAPHS,
           LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS,
         ),
-        Seq("GraphsDecoder")
-      )
+        Seq("GraphsDecoder"),
+      ),
     )
 
     for
@@ -66,14 +67,16 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         val collector = ProtoCollector()
         val decoder = decoderF(
           collector,
-          defaultOptions.clone.setLogicalType(lst)
+          defaultOptions.clone.setLogicalType(lst),
         )
 
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED.clone
-            .setPhysicalType(pst)
-            .setLogicalType(LogicalStreamType.UNSPECIFIED)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED.clone
+              .setPhysicalType(pst)
+              .setLogicalType(LogicalStreamType.UNSPECIFIED),
+          ),
+        )
 
         val error = intercept[RdfProtoDeserializationError] {
           decoder.ingestRow(data.head)
@@ -87,34 +90,40 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           val collector = ProtoCollector()
           val decoder = decoderF(
             collector,
-            defaultOptions.clone.setLogicalType(lst)
+            defaultOptions.clone.setLogicalType(lst),
           )
 
-          val data = wrapEncoded(Seq(
-            JellyOptions.SMALL_GENERALIZED.clone
-              .setPhysicalType(pst)
-              .setLogicalType(lstOfStream)
-          ))
+          val data = wrapEncoded(
+            Seq(
+              JellyOptions.SMALL_GENERALIZED.clone
+                .setPhysicalType(pst)
+                .setLogicalType(lstOfStream),
+            ),
+          )
 
           decoder.ingestRow(data.head)
-          decoder.getStreamOptions.getLogicalType should be (lstOfStream)
+          decoder.getStreamOptions.getLogicalType should be(lstOfStream)
         }
 
     for
       (pst, decs) <- decoderFactories.groupBy(_._2._2)
       (decoderName, (decoderF, _)) <- decs
-      (lstSet, _) <- logicalStreamTypeSets.take(4).filterNot(x => x._2.exists(y => decs.exists(z => z._1 == y)))
+      (lstSet, _) <- logicalStreamTypeSets.take(4).filterNot(x =>
+        x._2.exists(y => decs.exists(z => z._1 == y)),
+      )
       lstOfStream <- lstSet
     do
       f"throw exception that a stream with logical type $lstOfStream is incompatible with $pst, with $decoderName" in {
         val collector = ProtoCollector()
         val decoder = decoderF(collector, defaultOptions)
 
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED.clone
-            .setPhysicalType(pst)
-            .setLogicalType(lstOfStream)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED.clone
+              .setPhysicalType(pst)
+              .setLogicalType(lstOfStream),
+          ),
+        )
 
         val error = intercept[RdfProtoDeserializationError] {
           decoder.ingestRow(data.head)
@@ -131,7 +140,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.triplesDecoder(
         collector,
         defaultOptions.clone
-          .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .setLogicalType(LogicalStreamType.FLAT_TRIPLES),
       )
 
       Triples1
@@ -139,7 +148,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           JellyOptions.SMALL_GENERALIZED
             .clone
             .setPhysicalType(PhysicalStreamType.TRIPLES)
-            .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+            .setLogicalType(LogicalStreamType.FLAT_TRIPLES),
         )
         .foreach(row => decoder.ingestRow(row))
 
@@ -148,12 +157,13 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
 
     "decode triple statements with unset expected logical stream type" in {
       val collector = ProtoCollector()
-      val decoder = MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
       Triples1
         .encoded(
           JellyOptions.SMALL_GENERALIZED
             .clone
-            .setPhysicalType(PhysicalStreamType.TRIPLES)
+            .setPhysicalType(PhysicalStreamType.TRIPLES),
         )
         .foreach(row => decoder.ingestRow(row))
 
@@ -165,7 +175,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.triplesDecoder(
         collector,
         defaultOptions.clone
-          .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .setLogicalType(LogicalStreamType.FLAT_TRIPLES),
       )
 
       Triples2NsDecl
@@ -173,15 +183,20 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           JellyOptions.SMALL_GENERALIZED
             .clone
             .setPhysicalType(PhysicalStreamType.TRIPLES)
-            .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+            .setLogicalType(LogicalStreamType.FLAT_TRIPLES),
         )
         .foreach(row => decoder.ingestRow(row))
 
-      assertDecoded(collector.statements.toSeq, Triples2NsDecl.mrl.filter(_.isInstanceOf[Triple]).asInstanceOf[Seq[Triple]])
-      collector.namespaces.toSeq should be (Seq(
-        ("test", Iri("https://test.org/test/")),
-        ("ns2", Iri("https://test.org/ns2/")),
-      ))
+      assertDecoded(
+        collector.statements.toSeq,
+        Triples2NsDecl.mrl.filter(_.isInstanceOf[Triple]).asInstanceOf[Seq[Triple]],
+      )
+      collector.namespaces.toSeq should be(
+        Seq(
+          ("test", Iri("https://test.org/test/")),
+          ("ns2", Iri("https://test.org/ns2/")),
+        ),
+      )
     }
 
     "ignore namespace declarations by default" in {
@@ -190,7 +205,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.triplesDecoder(
         collector,
         defaultOptions.clone
-          .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .setLogicalType(LogicalStreamType.FLAT_TRIPLES),
       )
 
       Triples2NsDecl
@@ -198,11 +213,14 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           JellyOptions.SMALL_GENERALIZED
             .clone
             .setPhysicalType(PhysicalStreamType.TRIPLES)
-            .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+            .setLogicalType(LogicalStreamType.FLAT_TRIPLES),
         )
         .foreach(row => decoder.ingestRow(row))
 
-      assertDecoded(collector.statements.toSeq, Triples2NsDecl.mrl.filter(_.isInstanceOf[Triple]).asInstanceOf[Seq[Triple]])
+      assertDecoded(
+        collector.statements.toSeq,
+        Triples2NsDecl.mrl.filter(_.isInstanceOf[Triple]).asInstanceOf[Seq[Triple]],
+      )
     }
 
     "throw exception on unset logical stream type" in {
@@ -211,33 +229,38 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       val decoder = MockConverterFactory.triplesDecoder(
         collector,
         defaultOptions.clone
-          .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .setLogicalType(LogicalStreamType.FLAT_TRIPLES),
       )
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED
-          .clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES)
-          .setLogicalType(LogicalStreamType.UNSPECIFIED)
-      ))
-      
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED
+            .clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES)
+            .setLogicalType(LogicalStreamType.UNSPECIFIED),
+        ),
+      )
+
       val error = intercept[RdfProtoDeserializationError] {
         decoder.ingestRow(data.head)
       }
-      
-      error.getMessage should include ("Expected logical stream type")
+
+      error.getMessage should include("Expected logical stream type")
     }
 
     "throw exception on a quad in a TRIPLES stream" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
-      
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES),
-        rdfQuad("1", "2", "3", "4"),
-      ))
+      val decoder =
+        MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES),
+          rdfQuad("1", "2", "3", "4"),
+        ),
+      )
 
       decoder.ingestRow(data.head)
 
@@ -245,7 +268,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
 
-      error.getMessage should include ("Unexpected quad row in stream")
+      error.getMessage should include("Unexpected quad row in stream")
     }
 
     // The following cases are for the [[ProtoDecoder]] base class – but tested on the child.
@@ -254,52 +277,61 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "ignore duplicate stream options" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES),
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES)
-          .setRdfStar(true),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES),
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES)
+            .setRdfStar(true),
+        ),
+      )
 
       decoder.ingestRow(data.head)
       decoder.ingestRow(data(1))
       decoder.getStreamOptions should not be null
-      decoder.getStreamOptions.getRdfStar should be (false)
+      decoder.getStreamOptions.getRdfStar should be(false)
     }
 
     "throw exception on unset term without preceding value" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
-      
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES),
-        rdfTriple(null, null, null),
-      ))
-      
+      val decoder =
+        MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES),
+          rdfTriple(null, null, null),
+        ),
+      )
+
       decoder.ingestRow(data.head)
-      
+
       val error = intercept[RdfProtoDeserializationError] {
         decoder.ingestRow(data(1))
       }
-      
-      error.getMessage should include ("Empty subject term without previous term")
+
+      error.getMessage should include("Empty subject term without previous term")
     }
 
     "throw exception on an empty term in a quoted triple" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES),
-        rdfTriple("1", "2", rdfTriple(null, null, null))
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES),
+          rdfTriple("1", "2", rdfTriple(null, null, null)),
+        ),
+      )
 
       decoder.ingestRow(data.head)
 
@@ -307,37 +339,41 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
 
-      error.getMessage should include ("Term value is not set inside a quoted triple")
+      error.getMessage should include("Term value is not set inside a quoted triple")
     }
 
     "throw exception on unset row kind" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
       val error = intercept[RdfProtoDeserializationError] {
         decoder.ingestRow(rdfStreamRow())
       }
 
-      error.getMessage should include ("Row kind is not set")
+      error.getMessage should include("Row kind is not set")
     }
 
     "interpret unset literal kind as a simple literal" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES),
-        rdfTriple("1", "2", rdfLiteral("test")),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES),
+          rdfTriple("1", "2", rdfLiteral("test")),
+        ),
+      )
 
       decoder.ingestRow(data.head)
       decoder.ingestRow(data(1))
 
       val r = collector.statements.head.asInstanceOf[Triple]
-      r.o should be (a[SimpleLiteral])
+      r.o should be(a[SimpleLiteral])
     }
 
     // The tests for this logic are in internal.NameDecoderSpec
@@ -345,15 +381,18 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on an invalid IRI term" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.triplesDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES),
-        rdfPrefixEntry(0, "a"),
-        rdfNameEntry(0, "b"),
-        rdfTriple("1", "2", rdfIri(2, 2)),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES),
+          rdfPrefixEntry(0, "a"),
+          rdfNameEntry(0, "b"),
+          rdfTriple("1", "2", rdfIri(2, 2)),
+        ),
+      )
 
       decoder.ingestRow(data.head)
 
@@ -363,8 +402,8 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(3))
       }
 
-      error.getMessage should include ("Error while decoding term")
-      error.getCause shouldBe a [NullPointerException]
+      error.getMessage should include("Error while decoding term")
+      error.getCause shouldBe a[NullPointerException]
     }
   }
 
@@ -372,7 +411,8 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "decode quad statements" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
       Quads1
         .encoded(
@@ -387,7 +427,8 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "decode quad statements (repeated default graph)" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
       Quads2RepeatDefault
         .encoded(
@@ -402,13 +443,16 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a triple in a QUADS stream" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.QUADS),
-        rdfTriple("1", "2", "3"),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.QUADS),
+          rdfTriple("1", "2", "3"),
+        ),
+      )
 
       decoder.ingestRow(data.head)
 
@@ -416,19 +460,22 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
 
-      error.getMessage should include ("Unexpected triple row in stream")
+      error.getMessage should include("Unexpected triple row in stream")
     }
 
     "throw exception on a graph start in a QUADS stream" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.QUADS),
-        rdfGraphStart(rdfDefaultGraph()),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.QUADS),
+          rdfGraphStart(rdfDefaultGraph()),
+        ),
+      )
 
       decoder.ingestRow(data.head)
 
@@ -436,19 +483,22 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
 
-      error.getMessage should include ("Unexpected start of graph in stream")
+      error.getMessage should include("Unexpected start of graph in stream")
     }
 
     "throw exception on a graph end in a QUADS stream" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.quadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.QUADS),
-        rdfGraphEnd(),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.QUADS),
+          rdfGraphEnd(),
+        ),
+      )
 
       decoder.ingestRow(data.head)
 
@@ -456,7 +506,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
 
-      error.getMessage should include ("Unexpected end of graph in stream")
+      error.getMessage should include("Unexpected end of graph in stream")
     }
   }
 
@@ -464,7 +514,8 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "decode graphs" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.graphsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.graphsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
       Graphs1
         .encoded(
@@ -482,7 +533,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           expRow should not be null
 
           val obsRowGraph = obsRow.asInstanceOf[Graph]
-          obsRowGraph.graph should be (expRow._1)
+          obsRowGraph.graph should be(expRow._1)
           assertDecoded(obsRowGraph.triples.toSeq, expRow._2.toSeq)
         }
     }
@@ -490,13 +541,16 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a quad in a GRAPHS stream" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.graphsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.graphsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.GRAPHS),
-        rdfQuad("1", "2", "3", "4"),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.GRAPHS),
+          rdfQuad("1", "2", "3", "4"),
+        ),
+      )
 
       decoder.ingestRow(data.head)
 
@@ -504,20 +558,23 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
 
-      error.getMessage should include ("Unexpected quad row in stream")
+      error.getMessage should include("Unexpected quad row in stream")
     }
 
     "throw exception on a graph end before a graph start" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.graphsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.graphsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.GRAPHS),
-        rdfTriple("1", "2", "3"),
-        rdfGraphEnd(),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.GRAPHS),
+          rdfTriple("1", "2", "3"),
+          rdfGraphEnd(),
+        ),
+      )
 
       decoder.ingestRow(data.head)
       decoder.ingestRow(data(1))
@@ -526,20 +583,23 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(2))
       }
 
-      error.getMessage should include ("End of graph encountered before a start")
+      error.getMessage should include("End of graph encountered before a start")
     }
 
     // The following cases are for the [[ProtoDecoder]] base class – but tested on the child.
     "throw exception on unset graph term in a GRAPHS stream" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.graphsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.graphsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.GRAPHS),
-        rdfGraphStart(),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.GRAPHS),
+          rdfGraphStart(),
+        ),
+      )
 
       decoder.ingestRow(data.head)
 
@@ -547,7 +607,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
 
-      error.getMessage should include ("Empty graph term encountered")
+      error.getMessage should include("Empty graph term encountered")
     }
   }
 
@@ -555,7 +615,8 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "decode graphs as quads" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.graphsAsQuadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.graphsAsQuadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
       Graphs1
         .encoded(
@@ -570,13 +631,16 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
     "throw exception on a triple before a graph start" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.graphsAsQuadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.graphsAsQuadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.GRAPHS),
-        rdfTriple("1", "2", "3"),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.GRAPHS),
+          rdfTriple("1", "2", "3"),
+        ),
+      )
 
       decoder.ingestRow(data.head)
 
@@ -584,23 +648,26 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
 
-      error.getMessage should include ("Triple in stream without preceding graph start")
+      error.getMessage should include("Triple in stream without preceding graph start")
     }
 
     // The tests for this logic are in internal.NameDecoderSpec
     // Here we are just testing if the exceptions are rethrown correctly.
     "throw exception on an invalid IRI term" in {
       val collector = ProtoCollector()
-      val decoder = MockConverterFactory.graphsAsQuadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.graphsAsQuadsDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.GRAPHS),
-        rdfPrefixEntry(0, "a"),
-        rdfNameEntry(0, "b"),
-        rdfGraphStart(rdfDefaultGraph()),
-        rdfTriple("1", "2", rdfIri(2, 2)),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.GRAPHS),
+          rdfPrefixEntry(0, "a"),
+          rdfNameEntry(0, "b"),
+          rdfGraphStart(rdfDefaultGraph()),
+          rdfTriple("1", "2", rdfIri(2, 2)),
+        ),
+      )
 
       decoder.ingestRow(data.head)
       decoder.ingestRow(data(1))
@@ -630,104 +697,119 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           .setPhysicalType(streamType)
           .setVersion(JellyConstants.PROTO_VERSION)
 
-        val decoder = MockConverterFactory.anyStatementDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+        val decoder = MockConverterFactory.anyStatementDecoder(
+          collector,
+          JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
+        )
 
         testCase
           .encoded(opts)
           .foreach(row => decoder.ingestRow(row))
 
         assertDecoded(collector.statements.toSeq, expected)
-        decoder.getStreamOptions should be (opts)
+        decoder.getStreamOptions should be(opts)
       }
 
     "should return None when retrieving stream options on an empty stream" in {
       val collector = ProtoCollector()
-      val decoder = MockConverterFactory.anyStatementDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
-      decoder.getStreamOptions should be (null)
+      val decoder =
+        MockConverterFactory.anyStatementDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      decoder.getStreamOptions should be(null)
     }
 
     "should throw when decoding a row without preceding options" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.anyStatementDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.anyStatementDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        rdfTriple("1", "2", "3"),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          rdfTriple("1", "2", "3"),
+        ),
+      )
 
       val error = intercept[RdfProtoDeserializationError] {
         decoder.ingestRow(data.head)
       }
 
-      error.getMessage should include ("Stream options are not set")
+      error.getMessage should include("Stream options are not set")
     }
 
     "should ignore multiple stream options" in {
       val collector = ProtoCollector()
 
-      val decoder = MockConverterFactory.anyStatementDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val decoder =
+        MockConverterFactory.anyStatementDecoder(collector, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      val data = wrapEncoded(Seq(
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES),
-        JellyOptions.SMALL_GENERALIZED.clone
-          .setPhysicalType(PhysicalStreamType.TRIPLES),
-        rdfTriple("1", "2", "3"),
-      ))
+      val data = wrapEncoded(
+        Seq(
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES),
+          JellyOptions.SMALL_GENERALIZED.clone
+            .setPhysicalType(PhysicalStreamType.TRIPLES),
+          rdfTriple("1", "2", "3"),
+        ),
+      )
 
       decoder.ingestRow(data.head)
       decoder.ingestRow(data(1))
       decoder.ingestRow(data(2))
 
-      collector.statements.head should be (a[Triple])
+      collector.statements.head should be(a[Triple])
     }
   }
 
   private val streamTypeCases = Seq(
     (
-      (o: Option[RdfStreamOptions]) => MockConverterFactory.triplesDecoder(
-        ProtoCollector(),
-        o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get
-      ),
+      (o: Option[RdfStreamOptions]) =>
+        MockConverterFactory.triplesDecoder(
+          ProtoCollector(),
+          o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get,
+        ),
       "Triples",
       PhysicalStreamType.TRIPLES,
-      PhysicalStreamType.QUADS
+      PhysicalStreamType.QUADS,
     ),
     (
-      (o: Option[RdfStreamOptions]) => MockConverterFactory.quadsDecoder(
-        ProtoCollector(),
-        o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get
-      ),
+      (o: Option[RdfStreamOptions]) =>
+        MockConverterFactory.quadsDecoder(
+          ProtoCollector(),
+          o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get,
+        ),
       "Quads",
       PhysicalStreamType.QUADS,
-      PhysicalStreamType.GRAPHS
+      PhysicalStreamType.GRAPHS,
     ),
     (
-      (o: Option[RdfStreamOptions]) => MockConverterFactory.graphsDecoder(
-        ProtoCollector(),
-        o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get
-      ),
+      (o: Option[RdfStreamOptions]) =>
+        MockConverterFactory.graphsDecoder(
+          ProtoCollector(),
+          o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get,
+        ),
       "Graphs",
       PhysicalStreamType.GRAPHS,
-      PhysicalStreamType.QUADS
+      PhysicalStreamType.QUADS,
     ),
     (
-      (o: Option[RdfStreamOptions]) => MockConverterFactory.graphsAsQuadsDecoder(
-        ProtoCollector(),
-        o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get
-      ),
+      (o: Option[RdfStreamOptions]) =>
+        MockConverterFactory.graphsAsQuadsDecoder(
+          ProtoCollector(),
+          o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get,
+        ),
       "GraphsAsQuads",
       PhysicalStreamType.GRAPHS,
-      PhysicalStreamType.TRIPLES
+      PhysicalStreamType.TRIPLES,
     ),
     (
-      (o: Option[RdfStreamOptions]) => MockConverterFactory.anyStatementDecoder(
-        ProtoCollector(),
-        o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get
-      ),
+      (o: Option[RdfStreamOptions]) =>
+        MockConverterFactory.anyStatementDecoder(
+          ProtoCollector(),
+          o.orElse(Some(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)).get,
+        ),
       "AnyStatement",
       PhysicalStreamType.TRIPLES,
-      PhysicalStreamType.UNSPECIFIED
+      PhysicalStreamType.UNSPECIFIED,
     ),
   )
 
@@ -740,30 +822,34 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
           decoderFactory(None).ingestRow(data.head)
         }
 
-        error.getMessage should include ("stream type is not")
+        error.getMessage should include("stream type is not")
       }
 
       "throw exception on an invalid stream type" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED
-            .clone
-            .setPhysicalType(invalidStreamType)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED
+              .clone
+              .setPhysicalType(invalidStreamType),
+          ),
+        )
 
         val error = intercept[RdfProtoDeserializationError] {
           decoderFactory(None).ingestRow(data.head)
         }
 
-        error.getMessage should include ("stream type is not")
+        error.getMessage should include("stream type is not")
       }
 
       "throw exception on an unsupported proto version" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED
-            .clone
-            .setPhysicalType(streamType)
-            .setVersion(JellyConstants.PROTO_VERSION + 1)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED
+              .clone
+              .setPhysicalType(streamType)
+              .setVersion(JellyConstants.PROTO_VERSION + 1),
+          ),
+        )
 
         val error = intercept[RdfProtoDeserializationError] {
           decoderFactory(None).ingestRow(data.head)
@@ -773,11 +859,13 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       "throw exception on a proto version higher than marked by the user as supported" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED.clone
-            .setPhysicalType(streamType)
-            .setVersion(JellyConstants.PROTO_VERSION)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED.clone
+              .setPhysicalType(streamType)
+              .setVersion(JellyConstants.PROTO_VERSION),
+          ),
+        )
 
         val opt = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone
           .setVersion(JellyConstants.PROTO_VERSION - 1)
@@ -790,10 +878,12 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       "throw exception on a stream with generalized statements if marked as unsupported" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED.clone
-            .setPhysicalType(streamType)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED.clone
+              .setPhysicalType(streamType),
+          ),
+        )
 
         val opt = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone
           .setGeneralizedStatements(false)
@@ -806,14 +896,16 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       "throw exception on a stream with RDF-star if marked as unsupported" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_RDF_STAR.clone
-            .setPhysicalType(streamType)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_RDF_STAR.clone
+              .setPhysicalType(streamType),
+          ),
+        )
 
         val opt = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone
           .setRdfStar(false)
-        
+
         val error = intercept[RdfProtoDeserializationError] {
           decoderFactory(Some(opt)).ingestRow(data.head)
         }
@@ -822,11 +914,13 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       "throw exception on a stream with a name table size larger than supported" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED.clone
-            .setPhysicalType(streamType)
-            .setMaxNameTableSize(100)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED.clone
+              .setPhysicalType(streamType)
+              .setMaxNameTableSize(100),
+          ),
+        )
 
         val opt = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone
           .setMaxNameTableSize(80)
@@ -840,11 +934,13 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       "throw exception on a stream with a prefix table size larger than supported" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED.clone
-            .setPhysicalType(streamType)
-            .setMaxPrefixTableSize(100)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED.clone
+              .setPhysicalType(streamType)
+              .setMaxPrefixTableSize(100),
+          ),
+        )
         val opt = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone
           .setMaxPrefixTableSize(80)
 
@@ -857,11 +953,13 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       "throw exception on a stream with a datatype table size larger than supported" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED.clone
-            .setPhysicalType(streamType)
-            .setMaxDatatypeTableSize(100)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED.clone
+              .setPhysicalType(streamType)
+              .setMaxDatatypeTableSize(100),
+          ),
+        )
 
         val opt = JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone
           .setMaxDatatypeTableSize(80)
@@ -875,11 +973,13 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       "throw exception on a stream with a name table size smaller than supported" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED.clone
-            .setPhysicalType(streamType)
-            .setMaxNameTableSize(2) // 8 is the minimum
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED.clone
+              .setPhysicalType(streamType)
+              .setMaxNameTableSize(2), // 8 is the minimum
+          ),
+        )
 
         val error = intercept[RdfProtoDeserializationError] {
           decoderFactory(None).ingestRow(data.head)
@@ -890,11 +990,13 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       "accept a datatype table size = 0" in {
-        val data = wrapEncoded(Seq(
-          JellyOptions.SMALL_GENERALIZED.clone
-            .setPhysicalType(streamType)
-            .setMaxDatatypeTableSize(0)
-        ))
+        val data = wrapEncoded(
+          Seq(
+            JellyOptions.SMALL_GENERALIZED.clone
+              .setPhysicalType(streamType)
+              .setMaxDatatypeTableSize(0),
+          ),
+        )
 
         decoderFactory(None).ingestRow(data.head) // should not throw
       }

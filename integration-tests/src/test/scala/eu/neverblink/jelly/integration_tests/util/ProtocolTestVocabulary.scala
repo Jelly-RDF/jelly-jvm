@@ -14,29 +14,40 @@ object ProtocolTestVocabulary:
   val manifestEntriesProperty: Property = ResourceFactory.createProperty(manifestPrefix, "entries")
   val manifestTypeProperty: Property = ResourceFactory.createProperty(manifestPrefix, "Manifest")
 
-  val testEntryTestPositiveProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "TestPositive")
-  val testEntryTestNegativeProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "TestNegative")
-  
-  val testEntryTestRdfToJellyProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "TestRdfToJelly")
-  val testEntryTestRdfFromJellyProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "TestRdfFromJelly")
-  
+  val testEntryTestPositiveProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "TestPositive")
+  val testEntryTestNegativeProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "TestNegative")
+
+  val testEntryTestRdfToJellyProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "TestRdfToJelly")
+  val testEntryTestRdfFromJellyProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "TestRdfFromJelly")
+
   val testEntryNameProperty: Property = ResourceFactory.createProperty(manifestPrefix, "name")
   val testEntryCommentProperty: Property = ResourceFactory.createProperty(RDFS.uri, "comment")
-  
-  val testEntryRequiresProperty: Property = ResourceFactory.createProperty(manifestPrefix, "requires")
-  
-  val testEntryRequirementPhysicalTypeTriplesProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementPhysicalTypeTriples")
-  val testEntryRequirementPhysicalTypeQuadsProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementPhysicalTypeQuads")
-  val testEntryRequirementPhysicalTypeGraphsProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementPhysicalTypeGraphs")
-  val testEntryRequirementRdfStarProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementRdfStar")
-  val testEntryRequirementGeneralizedStatementsProperty: Property = ResourceFactory.createProperty(testEntryPrefix, "requirementGeneralizedRdf")
-  
+
+  val testEntryRequiresProperty: Property =
+    ResourceFactory.createProperty(manifestPrefix, "requires")
+
+  val testEntryRequirementPhysicalTypeTriplesProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "requirementPhysicalTypeTriples")
+  val testEntryRequirementPhysicalTypeQuadsProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "requirementPhysicalTypeQuads")
+  val testEntryRequirementPhysicalTypeGraphsProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "requirementPhysicalTypeGraphs")
+  val testEntryRequirementRdfStarProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "requirementRdfStar")
+  val testEntryRequirementGeneralizedStatementsProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "requirementGeneralizedRdf")
+
   val testEntryActionProperty: Property = ResourceFactory.createProperty(manifestPrefix, "action")
   val testEntryResultProperty: Property = ResourceFactory.createProperty(manifestPrefix, "result")
 
   val testEntryApprovalProperty: Property = ResourceFactory.createProperty(rdftPrefix, "approval")
 
-  val testEntryApprovalRejectedProperty: Property = ResourceFactory.createProperty(rdftPrefix, "Rejected")
+  val testEntryApprovalRejectedProperty: Property =
+    ResourceFactory.createProperty(rdftPrefix, "Rejected")
 
   extension (model: Model)
     def extractTestEntries: List[Resource] =
@@ -74,19 +85,28 @@ object ProtocolTestVocabulary:
       resource.hasProperty(RDF.`type`, testEntryTestRdfFromJellyProperty)
 
     def hasPhysicalTypeTriplesRequirement: Boolean =
-      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementPhysicalTypeTriplesProperty)
+      resource.hasProperty(
+        testEntryRequiresProperty,
+        testEntryRequirementPhysicalTypeTriplesProperty,
+      )
 
     def hasPhysicalTypeQuadsRequirement: Boolean =
       resource.hasProperty(testEntryRequiresProperty, testEntryRequirementPhysicalTypeQuadsProperty)
 
     def hasPhysicalTypeGraphsRequirement: Boolean =
-      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementPhysicalTypeGraphsProperty)
+      resource.hasProperty(
+        testEntryRequiresProperty,
+        testEntryRequirementPhysicalTypeGraphsProperty,
+      )
 
     def hasRdfStarRequirement: Boolean =
       resource.hasProperty(testEntryRequiresProperty, testEntryRequirementRdfStarProperty)
 
     def hasGeneralizedStatementsRequirement: Boolean =
-      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementGeneralizedStatementsProperty)
+      resource.hasProperty(
+        testEntryRequiresProperty,
+        testEntryRequirementGeneralizedStatementsProperty,
+      )
 
     def extractTestRequirements: Set[Resource] =
       resource
@@ -113,8 +133,7 @@ object ProtocolTestVocabulary:
 
     def extractTestResults: List[String] = {
       val resultProperty = resource.getProperty(testEntryResultProperty)
-      if resultProperty == null then
-        return Nil
+      if resultProperty == null then return Nil
 
       if resultProperty.getResource.isURIResource then
         // Single result, not a list
@@ -131,4 +150,3 @@ object ProtocolTestVocabulary:
 
     def isTestRejected: Boolean =
       resource.hasProperty(testEntryApprovalProperty, testEntryApprovalRejectedProperty)
-  

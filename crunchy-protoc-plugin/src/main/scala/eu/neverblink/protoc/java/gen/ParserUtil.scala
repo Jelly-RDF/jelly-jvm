@@ -29,24 +29,25 @@ import java.util.Collections
  * #L%
  */
 
-/**
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object ParserUtil {
   def getGeneratorParameters(request: CodeGeneratorRequest): util.Map[String, String] =
     if (!request.hasParameter) return Collections.emptyMap
     parseGeneratorParameters(request.getParameter)
 
-  /**
-   * Returns a map of input arguments added before the proto path, e.g.,
-   * <p>
-   * PROTOC INPUT: "--GEN_out=option1=value1,option2=value2,optionFlag3:./my-output-directory"
-   * PARAMETER STRING: "option1=value1,option2=value2,optionFlag3"
-   *
-   * @param parameter parameter string input into protoc
-   * @return map
-   */
+  /** Returns a map of input arguments added before the proto path, e.g., <p> PROTOC INPUT:
+    * "--GEN_out=option1=value1,option2=value2,optionFlag3:./my-output-directory" PARAMETER STRING:
+    * "option1=value1,option2=value2,optionFlag3"
+    *
+    * @param parameter
+    *   parameter string input into protoc
+    * @return
+    *   map
+    */
   private def parseGeneratorParameters(parameter: String): util.Map[String, String] =
     if (parameter == null || parameter.isEmpty) return Collections.emptyMap
     val map = new util.HashMap[String, String]
@@ -74,6 +75,6 @@ object ParserUtil {
     val errorWithStackTrace = new String(baos.toByteArray, StandardCharsets.UTF_8)
     CodeGeneratorResponse.newBuilder.setError(errorWithStackTrace).build
 
-  def asError(errorMessage: String): CodeGeneratorResponse = 
+  def asError(errorMessage: String): CodeGeneratorResponse =
     CodeGeneratorResponse.newBuilder.setError(errorMessage).build
 }

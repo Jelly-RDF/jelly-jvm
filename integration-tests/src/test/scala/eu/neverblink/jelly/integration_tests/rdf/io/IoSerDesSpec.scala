@@ -13,9 +13,9 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream}
 import scala.jdk.CollectionConverters.*
 
-/**
- * Tests for IO ser/des (Jena RIOT, Jena RIOT streaming, RDF4J Rio, and semi-reactive IO over Pekko Streams).
- */
+/** Tests for IO ser/des (Jena RIOT, Jena RIOT streaming, RDF4J Rio, and semi-reactive IO over Pekko
+  * Streams).
+  */
 class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   given ActorSystem = ActorSystem("test")
 
@@ -35,73 +35,78 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     (
       JellyOptions.SMALL_GENERALIZED,
       JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setGeneralizedStatements(false),
-      "generalized statements unsupported"
+      "generalized statements unsupported",
     ),
     (
       JellyOptions.SMALL_RDF_STAR,
       JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setRdfStar(false),
-      "RDF-star unsupported"
+      "RDF-star unsupported",
     ),
     (
       JellyOptions.SMALL_STRICT,
       JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setMaxNameTableSize(
-        JellyOptions.SMALL_STRICT.getMaxNameTableSize - 5
+        JellyOptions.SMALL_STRICT.getMaxNameTableSize - 5,
       ),
-      "supported name table size too small"
+      "supported name table size too small",
     ),
     (
       JellyOptions.SMALL_STRICT,
       JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setMaxPrefixTableSize(
-        JellyOptions.SMALL_STRICT.getMaxPrefixTableSize - 5
+        JellyOptions.SMALL_STRICT.getMaxPrefixTableSize - 5,
       ),
-      "supported prefix table size too small"
+      "supported prefix table size too small",
     ),
     (
       JellyOptions.SMALL_STRICT,
       JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setMaxDatatypeTableSize(
-        JellyOptions.SMALL_STRICT.getMaxDatatypeTableSize - 5
+        JellyOptions.SMALL_STRICT.getMaxDatatypeTableSize - 5,
       ),
-      "supported datatype table size too small"
+      "supported datatype table size too small",
     ),
     (
       JellyOptions.SMALL_STRICT,
       JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setVersion(
-        JellyOptions.SMALL_STRICT.getVersion - 1
+        JellyOptions.SMALL_STRICT.getVersion - 1,
       ),
-      "unsupported version"
-    )
+      "unsupported version",
+    ),
   )
 
-  private def checkStreamOptions(bytes: Array[Byte], expectedType: String, expectedOpt: Option[RdfStreamOptions]) =
+  private def checkStreamOptions(
+      bytes: Array[Byte],
+      expectedType: String,
+      expectedOpt: Option[RdfStreamOptions],
+  ) =
     val expOpt = expectedOpt.getOrElse(JellyOptions.SMALL_ALL_FEATURES)
     val frame = RdfStreamFrame.parseDelimitedFrom(new ByteArrayInputStream(bytes))
     frame.getRows.asScala.size should be > 0
-    frame.getRows.asScala.head.hasOptions should be (true)
+    frame.getRows.asScala.head.hasOptions should be(true)
     val options = frame.getRows.asScala.head.getOptions
     if expectedType == "triples" then
-      options.getPhysicalType should be (PhysicalStreamType.TRIPLES)
-      options.getLogicalType should be (LogicalStreamType.FLAT_TRIPLES)
+      options.getPhysicalType should be(PhysicalStreamType.TRIPLES)
+      options.getLogicalType should be(LogicalStreamType.FLAT_TRIPLES)
     else if expectedType == "quads" then
-      options.getPhysicalType should be (PhysicalStreamType.QUADS)
-      options.getLogicalType should be (LogicalStreamType.FLAT_QUADS)
-    options.getGeneralizedStatements should be (expOpt.getGeneralizedStatements)
-    options.getRdfStar should be (expOpt.getRdfStar)
-    options.getMaxNameTableSize should be (expOpt.getMaxNameTableSize)
-    options.getMaxPrefixTableSize should be (expOpt.getMaxPrefixTableSize)
-    options.getMaxDatatypeTableSize should be (expOpt.getMaxDatatypeTableSize)
-    options.getVersion should be (JellyConstants.PROTO_VERSION_1_0_X)
+      options.getPhysicalType should be(PhysicalStreamType.QUADS)
+      options.getLogicalType should be(LogicalStreamType.FLAT_QUADS)
+    options.getGeneralizedStatements should be(expOpt.getGeneralizedStatements)
+    options.getRdfStar should be(expOpt.getRdfStar)
+    options.getMaxNameTableSize should be(expOpt.getMaxNameTableSize)
+    options.getMaxPrefixTableSize should be(expOpt.getMaxPrefixTableSize)
+    options.getMaxDatatypeTableSize should be(expOpt.getMaxDatatypeTableSize)
+    options.getVersion should be(JellyConstants.PROTO_VERSION_1_0_X)
 
-  /**
-   * Check if a given Jelly implementation supports the given options (RDF-star and gen. statements).
-   */
+  /** Check if a given Jelly implementation supports the given options (RDF-star and gen.
+    * statements).
+    */
   private def checkImplOptSupport(impl: NativeSerDes[?, ?], opt: Option[RdfStreamOptions]) =
     (if opt.isEmpty || opt.get.getRdfStar then impl.supportsRdfStar else true) &&
-    (if opt.isEmpty || opt.get.getGeneralizedStatements then impl.supportsGeneralizedStatements else true)
+      (if opt.isEmpty || opt.get.getGeneralizedStatements then impl.supportsGeneralizedStatements
+       else true)
 
-  private def checkSerDesTestCaseSupport(ser: NativeSerDes[?, ?], des: NativeSerDes[?, ?]) = (f: (String, Any)) =>
-    (ser.supportsRdfStar && des.supportsRdfStar || !f._1.contains("star")) &&
-    (ser.supportsRdf12 && des.supportsRdf12 || !f._1.contains("rdf12"))
-
+  private def checkSerDesTestCaseSupport(ser: NativeSerDes[?, ?], des: NativeSerDes[?, ?]) =
+    (f: (String, Any)) =>
+      (ser.supportsRdfStar && des.supportsRdfStar || !f._1.contains("star")) &&
+        (ser.supportsRdf12 && des.supportsRdf12 || !f._1.contains("rdf12"))
 
   runTest(JenaSerDes, JenaSerDes)
   runTest(JenaSerDes, JenaStreamSerDes)
@@ -144,40 +149,44 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   runTest(Rdf4jReactiveSerDes(), TitaniumSerDes)
   runTest(JenaReactiveSerDes(), TitaniumSerDes)
 
-  private def runTest[TMSer : Measure, TDSer : Measure, TMDes : Measure, TDDes : Measure](
-    ser: NativeSerDes[TMSer, TDSer],
-    des: NativeSerDes[TMDes, TDDes],
+  private def runTest[TMSer: Measure, TDSer: Measure, TMDes: Measure, TDDes: Measure](
+      ser: NativeSerDes[TMSer, TDSer],
+      des: NativeSerDes[TMDes, TDDes],
   ) =
     f"${ser.name} serializer + ${des.name} deserializer" should {
-      for (encOptions, decOptions, presetName) <- presetsUnsupported.filter(
-        p => checkImplOptSupport(ser, Some(p._1))
-      ) do
+      for (encOptions, decOptions, presetName) <- presetsUnsupported.filter(p =>
+          checkImplOptSupport(ser, Some(p._1)),
+        )
+      do
         for (name, file) <- TestCases.triples.filter(
-          checkSerDesTestCaseSupport(ser, des)
-        ) do
-        s"not accept unsupported options (file $name, $presetName)" in {
-          val model = ser.readTriplesW3C(FileInputStream(file))
-          val originalSize = summon[Measure[TMSer]].size(model)
-          originalSize should be > 0L
+            checkSerDesTestCaseSupport(ser, des),
+          )
+        do
+          s"not accept unsupported options (file $name, $presetName)" in {
+            val model = ser.readTriplesW3C(FileInputStream(file))
+            val originalSize = summon[Measure[TMSer]].size(model)
+            originalSize should be > 0L
 
-          val os = ByteArrayOutputStream()
-          ser.writeTriplesJelly(os, model, Some(encOptions), 100)
-          os.flush()
-          os.close()
-          val data = os.toByteArray
-          data.size should be > 0
+            val os = ByteArrayOutputStream()
+            ser.writeTriplesJelly(os, model, Some(encOptions), 100)
+            os.flush()
+            os.close()
+            val data = os.toByteArray
+            data.size should be > 0
 
-          intercept[java.util.concurrent.ExecutionException | RdfProtoDeserializationError] {
-            des.readTriplesJelly(ByteArrayInputStream(data), Some(decOptions))
+            intercept[java.util.concurrent.ExecutionException | RdfProtoDeserializationError] {
+              des.readTriplesJelly(ByteArrayInputStream(data), Some(decOptions))
+            }
           }
-        }
 
-      for (preset, size, presetName) <- presets.filter(
-        p => checkImplOptSupport(ser, p._1) && checkImplOptSupport(des, p._1)
-      ) do
+      for (preset, size, presetName) <- presets.filter(p =>
+          checkImplOptSupport(ser, p._1) && checkImplOptSupport(des, p._1),
+        )
+      do
         for (name, file) <- TestCases.triples.filter(
-          checkSerDesTestCaseSupport(ser, des)
-        ) do
+            checkSerDesTestCaseSupport(ser, des),
+          )
+        do
           s"ser/des file $name with preset $presetName, frame size $size" in {
             val model = ser.readTriplesW3C(FileInputStream(file))
             val originalSize = summon[Measure[TMSer]].size(model)
@@ -208,8 +217,9 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
           }
 
         for (name, file) <- TestCases.quads.filter(
-          checkSerDesTestCaseSupport(ser, des)
-        ) do
+            checkSerDesTestCaseSupport(ser, des),
+          )
+        do
           s"ser/des file $name with preset $presetName, frame size $size" in {
             val ds = ser.readQuadsW3C(FileInputStream(file))
             val originalSize = summon[Measure[TDSer]].size(ds)

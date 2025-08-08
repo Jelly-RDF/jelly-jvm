@@ -28,12 +28,14 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
           .setPhysicalType(PhysicalStreamType.TRIPLES)
           .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
 
-        val encoder = MockConverterFactory.encoder(Pep(
-          options,
-          enableNamespaceDeclarations = false,
-          rowBuffer = buffer,
-          allocator = EncoderAllocator.newHeapAllocator(),
-        ))
+        val encoder = MockConverterFactory.encoder(
+          Pep(
+            options,
+            enableNamespaceDeclarations = false,
+            rowBuffer = buffer,
+            allocator = EncoderAllocator.newHeapAllocator(),
+          ),
+        )
 
         testCase.mrl.foreach(triple => encoder.handleTriple(triple.s, triple.p, triple.o))
 
@@ -48,12 +50,14 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         .setPhysicalType(PhysicalStreamType.TRIPLES)
         .setVersion(JellyConstants.PROTO_VERSION)
 
-      val encoder = MockConverterFactory.encoder(Pep(
-        options,
-        enableNamespaceDeclarations = true,
-        rowBuffer = buffer,
-        allocator = EncoderAllocator.newHeapAllocator(),
-      ))
+      val encoder = MockConverterFactory.encoder(
+        Pep(
+          options,
+          enableNamespaceDeclarations = true,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ),
+      )
 
       for triple <- Triples2NsDecl.mrl do
         triple match
@@ -71,12 +75,14 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         .setPhysicalType(PhysicalStreamType.QUADS)
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
 
-      val encoder = MockConverterFactory.encoder(Pep(
-        options,
-        enableNamespaceDeclarations = false,
-        rowBuffer = buffer,
-        allocator = EncoderAllocator.newHeapAllocator(),
-      ))
+      val encoder = MockConverterFactory.encoder(
+        Pep(
+          options,
+          enableNamespaceDeclarations = false,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ),
+      )
 
       Quads1.mrl.foreach(quad => encoder.handleQuad(quad.s, quad.p, quad.o, quad.g))
 
@@ -91,15 +97,16 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         .setPhysicalType(PhysicalStreamType.QUADS)
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
 
-      val encoder = MockConverterFactory.encoder(Pep(
-        options,
-        enableNamespaceDeclarations = false,
-        rowBuffer = buffer,
-        allocator = EncoderAllocator.newHeapAllocator(),
-      ))
+      val encoder = MockConverterFactory.encoder(
+        Pep(
+          options,
+          enableNamespaceDeclarations = false,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ),
+      )
 
-      for quad <- Quads1.mrl do
-        encoder.handleQuad(quad.s, quad.p, quad.o, quad.g)
+      for quad <- Quads1.mrl do encoder.handleQuad(quad.s, quad.p, quad.o, quad.g)
 
       val observed = buffer.getRows.asScala.toSeq
       assertEncoded(observed, Quads1.encoded(options))
@@ -112,12 +119,14 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         .setPhysicalType(PhysicalStreamType.QUADS)
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
 
-      val encoder = MockConverterFactory.encoder(Pep(
-        options,
-        enableNamespaceDeclarations = false,
-        rowBuffer = buffer,
-        allocator = EncoderAllocator.newHeapAllocator(),
-      ))
+      val encoder = MockConverterFactory.encoder(
+        Pep(
+          options,
+          enableNamespaceDeclarations = false,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ),
+      )
 
       Quads2RepeatDefault.mrl.foreach(quad => encoder.handleQuad(quad.s, quad.p, quad.o, quad.g))
 
@@ -132,17 +141,18 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
         .setPhysicalType(PhysicalStreamType.GRAPHS)
         .setVersion(JellyConstants.PROTO_VERSION_1_0_X)
 
-      val encoder = MockConverterFactory.encoder(Pep(
-        options,
-        enableNamespaceDeclarations = false,
-        rowBuffer = buffer,
-        allocator = EncoderAllocator.newHeapAllocator(),
-      ))
+      val encoder = MockConverterFactory.encoder(
+        Pep(
+          options,
+          enableNamespaceDeclarations = false,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ),
+      )
 
       for (graphName, triples) <- Graphs1.mrl do
         encoder.handleGraphStart(graphName)
-        for triple <- triples do
-          encoder.handleTriple(triple.s, triple.p, triple.o)
+        for triple <- triples do encoder.handleTriple(triple.s, triple.p, triple.o)
         encoder.handleGraphEnd()
 
       val observed = buffer.getRows.asScala.toSeq
@@ -155,18 +165,20 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       val options = JellyOptions.SMALL_GENERALIZED.clone
         .setPhysicalType(PhysicalStreamType.QUADS)
 
-      val encoder = MockConverterFactory.encoder(Pep(
-        options,
-        enableNamespaceDeclarations = false,
-        rowBuffer = buffer,
-        allocator = EncoderAllocator.newHeapAllocator(),
-      ))
+      val encoder = MockConverterFactory.encoder(
+        Pep(
+          options,
+          enableNamespaceDeclarations = false,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ),
+      )
 
       val error = intercept[RdfProtoSerializationError] {
         encoder.handleGraphEnd()
       }
 
-      error.getMessage should include ("Cannot end a delimited graph before starting one")
+      error.getMessage should include("Cannot end a delimited graph before starting one")
     }
 
     "not allow to use quoted triples as the graph name" in {
@@ -174,18 +186,20 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       val options = JellyOptions.SMALL_GENERALIZED.clone
         .setPhysicalType(PhysicalStreamType.GRAPHS)
 
-      val encoder = MockConverterFactory.encoder(Pep(
-        options,
-        enableNamespaceDeclarations = false,
-        rowBuffer = buffer,
-        allocator = EncoderAllocator.newHeapAllocator(),
-      ))
+      val encoder = MockConverterFactory.encoder(
+        Pep(
+          options,
+          enableNamespaceDeclarations = false,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ),
+      )
 
       val error = intercept[RdfProtoSerializationError] {
         encoder.handleGraphStart(TripleNode(BlankNode("S"), BlankNode("P"), BlankNode("O")))
       }
 
-      error.getMessage should include ("Cannot encode graph node")
+      error.getMessage should include("Cannot encode graph node")
     }
 
     "not allow to use namespace declarations if they are not enabled" in {
@@ -193,17 +207,19 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       val options = JellyOptions.SMALL_GENERALIZED.clone
         .setPhysicalType(PhysicalStreamType.TRIPLES)
 
-      val encoder = MockConverterFactory.encoder(Pep(
-        options,
-        enableNamespaceDeclarations = false,
-        rowBuffer = buffer,
-        allocator = EncoderAllocator.newHeapAllocator(),
-      ))
+      val encoder = MockConverterFactory.encoder(
+        Pep(
+          options,
+          enableNamespaceDeclarations = false,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ),
+      )
 
       val error = intercept[RdfProtoSerializationError] {
         encoder.handleNamespace("test", Iri("http://example.org/test"))
       }
 
-      error.getMessage should include ("Namespace declarations are not enabled in this stream")
+      error.getMessage should include("Namespace declarations are not enabled in this stream")
     }
   }

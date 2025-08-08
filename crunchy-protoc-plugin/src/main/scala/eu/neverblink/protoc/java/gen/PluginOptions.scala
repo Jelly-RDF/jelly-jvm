@@ -32,11 +32,11 @@ import scala.jdk.CollectionConverters.*
 
 object PluginOptions:
   private def parseIndentString(indent: String): String = indent match
-      case "8" => "        "
-      case "4" => "    "
-      case "2" => "  "
-      case "tab" => "\t"
-      case _ => throw new Exception("Expected 2,4,8,tab. Found: " + indent)
+    case "8" => "        "
+    case "4" => "    "
+    case "2" => "  "
+    case "tab" => "\t"
+    case _ => throw new Exception("Expected 2,4,8,tab. Found: " + indent)
 
   private def parseImplements(map: util.Map[String, String]): Map[String, Seq[String]] =
     map.asScala
@@ -58,9 +58,11 @@ class PluginOptions(request: PluginProtos.CodeGeneratorRequest):
     if (replaceOption == null) return str => str
     // parse "pattern=replacement"
     val parts = replaceOption.split("=")
-    if (parts.length != 2) throw new Exception("'replace_package' expects 'pattern=replacement'. Found: '" + replaceOption + "'")
+    if (parts.length != 2)
+      throw new Exception(
+        "'replace_package' expects 'pattern=replacement'. Found: '" + replaceOption + "'",
+      )
     // regex replace
     val pattern = Pattern.compile(parts(0))
     val replacement = parts(1)
     input => pattern.matcher(input).replaceAll(replacement)
-

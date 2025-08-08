@@ -37,19 +37,18 @@ object TypeRegistry:
   enum RequiredType:
     case Required, Optional, Processing
 
-
 class TypeRegistry:
   private final val typeMap = new java.util.HashMap[String, ClassName]
   private final val messageMap = new java.util.HashMap[TypeName, MessageInfo]
   private final val hasRequiredMap = new java.util.HashMap[TypeName, RequiredType]
-  
+
   def resolveMessageInfoFromProto(descriptor: FieldDescriptorProto): MessageInfo =
     val typeId = descriptor.getTypeName
     val typeName = checkNotNull(typeMap.get(typeId), "Unable to resolve type id: " + typeId)
     val messageInfo = messageMap.get(typeName)
     checkNotNull(messageInfo, "Unable to resolve message info for: " + typeName)
     messageInfo
-  
+
   def resolveJavaTypeFromProto(descriptor: FieldDescriptorProto): TypeName =
     descriptor.getType match
       case TYPE_DOUBLE => TypeName.DOUBLE
@@ -82,7 +81,7 @@ class TypeRegistry:
     }
 
   private def registerType(typeInfo: TypeInfo): Unit =
-    if (typeMap.containsValue(typeInfo.typeName)) 
+    if (typeMap.containsValue(typeInfo.typeName))
       throw new Exception("Duplicate class name: " + typeInfo.typeName)
     if (typeMap.put(typeInfo.typeId, typeInfo.typeName) != null)
       throw new Exception("Duplicate type id: " + typeInfo.typeId)
@@ -93,13 +92,13 @@ class TypeRegistry:
         messageMap.put(typeInfo.typeName, msgInfo)
       case _ =>
 
-  /**
-   * Checks message types for any required fields in their hierarchy. Many
-   * cases don't have any or very few required fields, so we don't need to
-   * check the messages that will always return true anyways.
-   */
+  /** Checks message types for any required fields in their hierarchy. Many cases don't have any or
+    * very few required fields, so we don't need to check the messages that will always return true
+    * anyways.
+    */
   def hasRequiredFieldsInHierarchy(t: TypeName): Boolean =
-    if (!messageMap.containsKey(t)) throw new IllegalStateException("Not a message or group type: " + t)
+    if (!messageMap.containsKey(t))
+      throw new IllegalStateException("Not a message or group type: " + t)
     // Lazily compute for each message
     if (!hasRequiredMap.containsKey(t)) {
       hasRequiredMap.put(t, TypeRegistry.RequiredType.Processing)
@@ -108,26 +107,31 @@ class TypeRegistry:
       for (field <- info.fields) {
         if (isRequiredFieldOrNeedsToBeChecked(t, field)) hasRequired = true
       }
-      hasRequiredMap.put(t, if (hasRequired) TypeRegistry.RequiredType.Required
-      else TypeRegistry.RequiredType.Optional)
+      hasRequiredMap.put(
+        t,
+        if (hasRequired) TypeRegistry.RequiredType.Required
+        else TypeRegistry.RequiredType.Optional,
+      )
       return hasRequired
     }
     // Return cached result
     val result = hasRequiredMap.get(t)
     checkState(
-      result ne TypeRegistry.RequiredType.Processing, 
-      "Processing required fields did not finish"
+      result ne TypeRegistry.RequiredType.Processing,
+      "Processing required fields did not finish",
     )
     result eq TypeRegistry.RequiredType.Required
 
-  private def isRequiredFieldOrNeedsToBeChecked(t: TypeName, field: RequestInfo.FieldInfo): Boolean =
+  private def isRequiredFieldOrNeedsToBeChecked(
+      t: TypeName,
+      field: RequestInfo.FieldInfo,
+  ): Boolean =
     // Always check message types for recursion to avoid surprises at runtime
     if (field.isMessageOrGroup) {
       val result = hasRequiredMap.get(field.getTypeName)
       if (result eq TypeRegistry.RequiredType.Processing) {
         ()
-      }
-      else if ((result eq TypeRegistry.RequiredType.Required) || field.isRequired) return true
+      } else if ((result eq TypeRegistry.RequiredType.Required) || field.isRequired) return true
       else if (result == null) return hasRequiredFieldsInHierarchy(field.getTypeName)
     }
     field.isRequired

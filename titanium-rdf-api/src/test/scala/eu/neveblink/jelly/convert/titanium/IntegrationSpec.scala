@@ -10,44 +10,52 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
-/**
- * Integration tests for some Titanium-specific APIs.
- */
+/** Integration tests for some Titanium-specific APIs.
+  */
 class IntegrationSpec extends AnyWordSpec, Matchers:
-  val testFrame = rdfStreamFrame(rows = Seq(
-    rdfStreamRow(
-      JellyOptions.SMALL_STRICT
-        .clone()
-        .setPhysicalType(PhysicalStreamType.QUADS)
+  val testFrame: RdfStreamFrame = rdfStreamFrame(rows =
+    Seq(
+      rdfStreamRow(
+        JellyOptions.SMALL_STRICT
+          .clone()
+          .setPhysicalType(PhysicalStreamType.QUADS),
+      ),
+      rdfStreamRow(rdfNameEntry(value = "http://example.org/iri")),
+      rdfStreamRow(
+        rdfQuad(
+          rdfIri(0, 1),
+          rdfIri(0, 1),
+          rdfIri(0, 1),
+          rdfIri(0, 1),
+        ),
+      ),
     ),
-    rdfStreamRow(rdfNameEntry(value = "http://example.org/iri")),
-    rdfStreamRow(
-      rdfQuad(
-        rdfIri(0, 1),
-        rdfIri(0, 1),
-        rdfIri(0, 1),
-        rdfIri(0, 1),
-      )
-    )
-  ))
+  )
 
-  val testFrame2 = rdfStreamFrame(rows = Seq(
-    rdfStreamRow(
-      rdfQuad(
-        rdfIri(0, 1),
-        rdfIri(0, 1),
-        rdfIri(0, 1),
-        rdfIri(0, 1),
-      )
-    )
-  ))
+  val testFrame2: RdfStreamFrame = rdfStreamFrame(rows =
+    Seq(
+      rdfStreamRow(
+        rdfQuad(
+          rdfIri(0, 1),
+          rdfIri(0, 1),
+          rdfIri(0, 1),
+          rdfIri(0, 1),
+        ),
+      ),
+    ),
+  )
 
   class CollectorConsumer extends RdfQuadConsumer:
-    var quads = Seq.empty[(String, String, String, String, String, String, String)]
+    var quads: Seq[(String, String, String, String, String, String, String)] = Nil
 
     override def quad(
-      subject: String, predicate: String, `object`: String,
-      datatype: String, language: String, direction: String, graph: String
+        subject: String,
+        predicate: String,
+        `object`: String,
+        datatype: String,
+        language: String,
+        direction: String,
+        graph: String,
     ): RdfQuadConsumer =
       quads = quads :+ (subject, predicate, `object`, datatype, language, direction, graph)
       this

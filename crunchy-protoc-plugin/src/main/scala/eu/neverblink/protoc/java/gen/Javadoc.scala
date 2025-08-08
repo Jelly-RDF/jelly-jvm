@@ -29,13 +29,14 @@ import java.util.Locale
  * #L%
  */
 
-/**
- * Utilities for creating Javadoc comments on methods and fields.
- * For the most part similar to Protobuf-Java.
- *
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** Utilities for creating Javadoc comments on methods and fields. For the most part similar to
+  * Protobuf-Java.
+  *
+  * @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object Javadoc:
   private val cachedFields = new java.util.HashMap[DescriptorProtos.FieldDescriptorProto, CodeBlock]
 
@@ -82,8 +83,9 @@ object Javadoc:
   private def forType(name: String, info: RequestInfo.TypeInfo) =
     withComments(info.sourceLocation)
       .add("Protobuf $L {@code $T}", name, info.typeName)
-      .add("\nDo not inherit from this class!\n" +
-        "It's not <code>final</code> only to facilitate the Mutable nested subclass."
+      .add(
+        "\nDo not inherit from this class!\n" +
+          "It's not <code>final</code> only to facilitate the Mutable nested subclass.",
       )
       .build
 
@@ -92,13 +94,14 @@ object Javadoc:
     val label = descriptor.getLabel.toString.substring("LABEL_".length).toLowerCase(Locale.US)
     var t = descriptor.getTypeName
     if (t.isEmpty) t = descriptor.getType.toString.substring("TYPE_".length).toLowerCase(Locale.US)
-    val definition = String.format("%s %s %s = %d", label, t, descriptor.getName, descriptor.getNumber)
+    val definition =
+      String.format("%s %s %s = %d", label, t, descriptor.getName, descriptor.getNumber)
     var options = ""
     if (descriptor.hasDefaultValue) {
       val defaultValue = escapeCommentClose(descriptor.getDefaultValue)
       options = " [default = " + defaultValue + "]"
-    }
-    else if (descriptor.getOptions.hasPacked) options = " [packed = " + descriptor.getOptions.getPacked + "]"
+    } else if (descriptor.getOptions.hasPacked)
+      options = " [packed = " + descriptor.getOptions.getPacked + "]"
     val line = definition + options + ";"
     if (!descriptor.hasExtendee) line
     else "extend {\n  " + line + "\n}"

@@ -15,6 +15,8 @@ ThisBuild / developers := List(
     url("https://github.com/Ostrzyciel"),
   ),
 )
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 // Allow scalatest to control the logging output
 Test / logBuffered := false
 
@@ -33,6 +35,8 @@ lazy val jellyCliV = "0.4.5"
 
 lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
 
+addCommandAlias("fixAll", "scalafixAll; scalafmtAll")
+
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.19" % Test,
@@ -41,10 +45,13 @@ lazy val commonSettings = Seq(
     "-feature",
     "-deprecation",
     "-unchecked",
+    "-Wunused:imports",
   ) ++ wErrorIfCI,
   javacOptions ++= Seq(
-    "-source", "17",
-    "-target", "17",
+    "-source",
+    "17",
+    "-target",
+    "17",
     // TODO: enable more warnings
   ) ++ wErrorIfCI,
   // Explicitly specify the options for javadoc, otherwise sbt will pass all javacOptions to it
@@ -57,13 +64,13 @@ lazy val commonSettings = Seq(
   },
   crossVersion := CrossVersion.binary,
   jacocoAggregateReportSettings := JacocoReportSettings(
-    formats = Seq(JacocoReportFormats.XML)
+    formats = Seq(JacocoReportFormats.XML),
   ),
   Test / javaOptions ++= Seq(
     // Disable Jacoco instrumentation by default, to make test execution faster and to make it pass
     // on JDK 22+ where Jacoco instrumentation is not supported.
-    "-Djacoco.skip=true"
-  )
+    "-Djacoco.skip=true",
+  ),
 )
 
 // Shared settings for all Java-only modules
@@ -79,16 +86,15 @@ lazy val commonJavaSettings = Seq(
 )
 
 lazy val prepareGoogleProtos = taskKey[Seq[File]](
-  "Copies and modifies proto files before Google protoc-java compilation"
+  "Copies and modifies proto files before Google protoc-java compilation",
 )
-lazy val generatePluginRunScript = taskKey[Seq[File]]("Generate the run script for the protoc plugin")
+lazy val generatePluginRunScript =
+  taskKey[Seq[File]]("Generate the run script for the protoc plugin")
 lazy val downloadJellyCli = taskKey[File]("Downloads Jelly CLI binary file")
 
-/**
- * Used for core*ProtosGoogle modules.
- * Copies the proto files from the protobuf submodule to the protoc input directory,
- * while applying some options to the proto files.
- */
+/** Used for core*ProtosGoogle modules. Copies the proto files from the protobuf submodule to the
+  * protoc input directory, while applying some options to the proto files.
+  */
 def doPrepareGoogleProtos(baseDir: File): Seq[File] = {
   val inputDir = (baseDir / ".." / "submodules" / "protobuf" / "proto").getAbsoluteFile
   val outputDir = (baseDir / "src" / "main" / "protobuf").getAbsoluteFile
@@ -153,11 +159,11 @@ lazy val crunchyProtocPlugin = (project in file("crunchy-protoc-plugin"))
   )
 
 def runProtoc(
-  pluginArgsFilePath: File,
-  pluginPath: File,
-  originalRunner: Seq[String] => Int
-): Seq[String] => Int = {
-  (args: Seq[String]) => {
+    pluginArgsFilePath: File,
+    pluginPath: File,
+    originalRunner: Seq[String] => Int,
+): Seq[String] => Int = { (args: Seq[String]) =>
+  {
     val pluginOptions = IO.read(pluginArgsFilePath).replaceAll("\\s", "")
     val javaPluginArg = args.indexWhere(_.startsWith("--java_out="))
     val newArgs = args.slice(0, javaPluginArg) ++
@@ -179,7 +185,9 @@ def doDownloadJellyCli(targetDir: File): File = {
   // Very dumb check for if the file exists and its size is not 0,
   // helps on trains with unstable coverage and high speeds.
   if (targetFile.exists() && targetFile.length() > 0) {
-    println(s"Will not attempt to download Jelly CLI (located ${targetFile.getAbsolutePath}) as it exists. If tests fail, try cleaning the project files.")
+    println(
+      s"Will not attempt to download Jelly CLI (located ${targetFile.getAbsolutePath}) as it exists. If tests fail, try cleaning the project files.",
+    )
     targetFile.setExecutable(true)
     return targetFile
   }
@@ -189,22 +197,26 @@ def doDownloadJellyCli(targetDir: File): File = {
   val architecture = System.getProperty("os.arch") match {
     case "aarch64" | "arm64" => "arm64"
     case "x86_64" | "amd64" => "x86_64"
-    case _ => throw new RuntimeException(s"Unsupported architecture: ${System.getProperty("os.arch")}")
+    case _ =>
+      throw new RuntimeException(s"Unsupported architecture: ${System.getProperty("os.arch")}")
   }
 
   val os = System.getProperty("os.name").toLowerCase match {
     case os if os.contains("windows") => "windows"
     case os if os.contains("mac") => "mac"
     case os if os.contains("linux") => "linux"
-    case _ => throw new RuntimeException(s"Unsupported operating system: ${System.getProperty("os.name")}")
+    case _ =>
+      throw new RuntimeException(s"Unsupported operating system: ${System.getProperty("os.name")}")
   }
 
-  url(s"https://github.com/Jelly-RDF/cli/releases/download/v$jellyCliV/jelly-cli-$os-$architecture") #> targetFile !
+  url(
+    s"https://github.com/Jelly-RDF/cli/releases/download/v$jellyCliV/jelly-cli-$os-$architecture",
+  ) #> targetFile !
 
   if (!targetFile.exists()) {
     throw new RuntimeException(
       s"Failed to download Jelly CLI to ${targetFile.getAbsolutePath}. " +
-        "Please check your internet connection and try again."
+        "Please check your internet connection and try again.",
     )
   }
 
@@ -283,8 +295,12 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
     prepareGoogleProtos := { doPrepareGoogleProtos(baseDirectory.value) },
     Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
-    ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
-    ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
+    ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(
+      prepareGoogleProtos,
+    ).value,
+    ProtobufConfig / protobufIncludeFilters := Seq(
+      Glob(baseDirectory.value.toPath) / "**" / "rdf.proto",
+    ),
     // Don't throw errors, because Google's protoc generates code with a lot of warnings
     javacOptions := javacOptions.value.filterNot(_ == "-Werror"),
     commonSettings,
@@ -330,8 +346,12 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
     prepareGoogleProtos := { doPrepareGoogleProtos(baseDirectory.value) },
     Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
-    ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(prepareGoogleProtos).value,
-    ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "patch.proto"),
+    ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(
+      prepareGoogleProtos,
+    ).value,
+    ProtobufConfig / protobufIncludeFilters := Seq(
+      Glob(baseDirectory.value.toPath) / "**" / "patch.proto",
+    ),
     commonSettings,
     commonJavaSettings,
   ).dependsOn(coreProtosGoogle)
@@ -469,7 +489,9 @@ lazy val integrationTests = (project in file("integration-tests"))
     ),
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
     Compile / compile := (Compile / compile).dependsOn(ProtobufConfig / protobufRunProtoc).value,
-    ProtobufConfig / protobufIncludeFilters := Seq(Glob(baseDirectory.value.toPath) / "**" / "rdf.proto"),
+    ProtobufConfig / protobufIncludeFilters := Seq(
+      Glob(baseDirectory.value.toPath) / "**" / "rdf.proto",
+    ),
     downloadJellyCli := { doDownloadJellyCli((Test / resourceManaged).value) },
     Test / resourceGenerators += Def.task {
       val cliBinary = downloadJellyCli.value
@@ -484,7 +506,7 @@ lazy val integrationTests = (project in file("integration-tests"))
     rdf4j,
     rdf4jPatch,
     titaniumRdfApi,
-    stream
+    stream,
   )
 
 lazy val examples = (project in file("examples"))
@@ -504,7 +526,7 @@ lazy val examples = (project in file("examples"))
     jena % "compile->compile;test->test",
     rdf4j,
     titaniumRdfApi,
-    grpc
+    grpc,
   )
 
 lazy val jmh = (project in file("jmh"))
@@ -520,7 +542,6 @@ lazy val jmh = (project in file("jmh"))
     commonSettings,
   )
   .dependsOn(core, jena)
-
 
 lazy val grpc = (project in file("pekko-grpc"))
   .settings(

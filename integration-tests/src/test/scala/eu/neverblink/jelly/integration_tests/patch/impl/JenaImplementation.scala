@@ -14,19 +14,17 @@ import scala.jdk.CollectionConverters.*
 
 given TestComparable[JenaChangesCollector] = new TestComparable[JenaChangesCollector]:
   override def compare(a: JenaChangesCollector, e: JenaChangesCollector): Unit =
-    a.size should be (e.size)
+    a.size should be(e.size)
     for ((ar, er), i) <- a.getChanges.asScala.zip(e.getChanges.asScala).zipWithIndex do
       withClue(f"at index $i") {
-        ar should be (er)
+        ar should be(er)
       }
   override def size(a: JenaChangesCollector): Long = a.size
-
 
 @experimental
 object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
 
   override def name: String = "Jena"
-
 
   override def supportsRdfStar: Boolean = !CompatibilityUtils.jenaVersion54OrHigher
 
@@ -35,7 +33,11 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
     RDFPatchReaderText(in).apply(collector)
     collector
 
-  override def readRdf(files: Seq[File], stType: PatchStatementType, flat: Boolean): JenaChangesCollector =
+  override def readRdf(
+      files: Seq[File],
+      stType: PatchStatementType,
+      flat: Boolean,
+  ): JenaChangesCollector =
     val collector = JellyPatchOps.changesCollector(stType)
     for filename <- files do
       val in = new FileInputStream(filename)
@@ -44,23 +46,35 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
       if !flat then collector.segment()
     collector
 
-  override def readJelly(in: InputStream, supportedOptions: Option[RdfPatchOptions]): JenaChangesCollector =
+  override def readJelly(
+      in: InputStream,
+      supportedOptions: Option[RdfPatchOptions],
+  ): JenaChangesCollector =
     val collector = JellyPatchOps.changesCollector(PatchStatementType.UNSPECIFIED)
     RdfPatchReaderJelly(
-      RdfPatchReaderJelly.Options(supportedOptions.getOrElse(JellyPatchOptions.DEFAULT_SUPPORTED_OPTIONS)),
+      RdfPatchReaderJelly.Options(
+        supportedOptions.getOrElse(JellyPatchOptions.DEFAULT_SUPPORTED_OPTIONS),
+      ),
       JenaPatchConverterFactory.getInstance(),
-      in
+      in,
     ).apply(collector)
 
     collector
 
   override def writeJelly(
-    out: OutputStream, patch: JenaChangesCollector, options: Option[RdfPatchOptions], frameSize: Int
+      out: OutputStream,
+      patch: JenaChangesCollector,
+      options: Option[RdfPatchOptions],
+      frameSize: Int,
   ): Unit =
     val w = RdfPatchWriterJelly(
-      RdfPatchWriterJelly.Options(options.getOrElse(RdfPatchWriterJelly.Options().patchOptions), frameSize, true),
+      RdfPatchWriterJelly.Options(
+        options.getOrElse(RdfPatchWriterJelly.Options().patchOptions),
+        frameSize,
+        true,
+      ),
       JenaPatchConverterFactory.getInstance(),
-      out
+      out,
     )
     patch.replay(w, true)
 

@@ -8,8 +8,8 @@ class EncoderAllocatorSpec extends AnyWordSpec, Matchers:
   "EncoderAllocator -- heap" should {
     "return new messages" in {
       val allocator = EncoderAllocator.newHeapAllocator()
-      allocator.newTriple() should be (a[RdfTriple.Mutable])
-      allocator.newQuad() should be (a[RdfQuad.Mutable])
+      allocator.newTriple() should be(a[RdfTriple.Mutable])
+      allocator.newQuad() should be(a[RdfQuad.Mutable])
     }
 
     "not reuse messages after releaseAll()" in {
@@ -17,8 +17,8 @@ class EncoderAllocatorSpec extends AnyWordSpec, Matchers:
       val t1 = allocator.newTriple()
       val q1 = allocator.newQuad()
       allocator.releaseAll()
-      allocator.newTriple() should not be theSameInstanceAs (t1)
-      allocator.newQuad() should not be theSameInstanceAs (q1)
+      allocator.newTriple() should not be theSameInstanceAs(t1)
+      allocator.newQuad() should not be theSameInstanceAs(q1)
     }
   }
 
@@ -51,8 +51,8 @@ class EncoderAllocatorSpec extends AnyWordSpec, Matchers:
       // Messages outside the range of the arena should be allocated on the heap, so they
       // will not be the same instance.
       for (i <- 16 until 40) {
-        triples1(i) should not be theSameInstanceAs (triples2(i))
-        quads1(i) should not be theSameInstanceAs (quads2(i))
+        triples1(i) should not be theSameInstanceAs(triples2(i))
+        quads1(i) should not be theSameInstanceAs(quads2(i))
       }
     }
 
@@ -73,9 +73,8 @@ class EncoderAllocatorSpec extends AnyWordSpec, Matchers:
 
       // Messages outside the range of the arena should be allocated on the heap
       for (i <- 2048 until 3000) {
-        triples1(i) should not be theSameInstanceAs (triples2(i))
-        quads1(i) should not be theSameInstanceAs (quads2(i))
+        triples1(i) should not be theSameInstanceAs(triples2(i))
+        quads1(i) should not be theSameInstanceAs(quads2(i))
       }
     }
   }
-

@@ -4,9 +4,8 @@ import eu.neverblink.jelly.core.RdfProtoTranscodingError
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-/**
- * Unit tests for the TranscoderLookup class.
- */
+/** Unit tests for the TranscoderLookup class.
+  */
 class TranscoderLookupSpec extends AnyWordSpec, Matchers:
 
   "TranscoderLookup" should {
@@ -15,7 +14,9 @@ class TranscoderLookupSpec extends AnyWordSpec, Matchers:
       val ex = intercept[RdfProtoTranscodingError] {
         tl.newInputStream(120)
       }
-      ex.getMessage should include ("Input lookup size cannot be greater than the output lookup size")
+      ex.getMessage should include(
+        "Input lookup size cannot be greater than the output lookup size",
+      )
     }
 
     "remap IDs" when {
@@ -78,10 +79,8 @@ class TranscoderLookupSpec extends AnyWordSpec, Matchers:
           val getId = tl.addEntry((i % 5) + 1, s"s$i").getId
           if i < 5 then getId shouldBe i + 1
           else getId shouldBe (i % 5) + 6
-          if (i % 5) != 0 || i < 10 then
-            tl.remap((i % 5) + 1) shouldBe 0
-          else
-            tl.remap((i % 5) + 1) shouldBe (i % 5) + 6
+          if (i % 5) != 0 || i < 10 then tl.remap((i % 5) + 1) shouldBe 0
+          else tl.remap((i % 5) + 1) shouldBe (i % 5) + 6
       }
     }
 
@@ -208,13 +207,12 @@ class TranscoderLookupSpec extends AnyWordSpec, Matchers:
       tl.addEntry(0, "s3_1")
 
       tl.newInputStream(3)
-      tl.addEntry(0, "s1_1").newEntry should be (false)
+      tl.addEntry(0, "s1_1").newEntry should be(false)
 
       // Even though this entry was just used, we are evicting it because our input stream does that
       val e = tl.addEntry(1, "something else")
-      e.newEntry should be (true)
-      e.setId should be (1)
-      e.getId should be (1)
+      e.newEntry should be(true)
+      e.setId should be(1)
+      e.getId should be(1)
     }
   }
-

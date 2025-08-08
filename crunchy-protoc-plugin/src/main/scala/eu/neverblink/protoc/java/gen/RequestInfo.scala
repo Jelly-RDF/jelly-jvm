@@ -46,18 +46,20 @@ class RequestInfo(val descriptor: CodeGeneratorRequest):
   def getInfoForFile(fileName: String): RequestInfo.FileInfo =
     files.asScala
       .find(_.fileName == fileName)
-      .getOrElse(throw new IllegalArgumentException("File was not found in this request: " + fileName))
+      .getOrElse(
+        throw new IllegalArgumentException("File was not found in this request: " + fileName),
+      )
 
   def shouldEnumUseArrayLookup(lowestNumber: Int, highestNumber: Int): Boolean =
     lowestNumber >= 0 && highestNumber < 50 // parameter?
 
-
-/**
- * Meta info that wraps the information in descriptors in a format that is easier to work with
- *
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** Meta info that wraps the information in descriptors in a format that is easier to work with
+  *
+  * @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object RequestInfo:
   def withoutTypeMap(request: CodeGeneratorRequest) = new RequestInfo(request)
 
@@ -67,41 +69,49 @@ object RequestInfo:
     info
 
   class FileInfo(
-    val parentRequest: RequestInfo, 
-    val descriptor: DescriptorProtos.FileDescriptorProto
+      val parentRequest: RequestInfo,
+      val descriptor: DescriptorProtos.FileDescriptorProto,
   ) {
-    private val sourceMap: util.Map[String, SourceCodeInfo.Location] = SourceLocations.createElementMap(descriptor)
+    private val sourceMap: util.Map[String, SourceCodeInfo.Location] =
+      SourceLocations.createElementMap(descriptor)
     val fileName: String = descriptor.getName
     private val protoPackage: String = NamingUtil.getProtoPackage(descriptor)
-    val javaPackage: String = parentRequest.pluginOptions.replacePackageFunction.apply(NamingUtil.getJavaPackage(descriptor))
-    val outerClassName: ClassName = ClassName.get(javaPackage, NamingUtil.getJavaOuterClassname(descriptor))
-    val outputDirectory: String = if (javaPackage.isEmpty) "" else javaPackage.replaceAll("\\.", "/") + "/"
+    val javaPackage: String = parentRequest.pluginOptions.replacePackageFunction.apply(
+      NamingUtil.getJavaPackage(descriptor),
+    )
+    val outerClassName: ClassName =
+      ClassName.get(javaPackage, NamingUtil.getJavaOuterClassname(descriptor))
+    val outputDirectory: String =
+      if (javaPackage.isEmpty) "" else javaPackage.replaceAll("\\.", "/") + "/"
     val options: DescriptorProtos.FileOptions = descriptor.getOptions
-    val generateMultipleFiles: Boolean = !options.hasJavaMultipleFiles || options.getJavaMultipleFiles
+    val generateMultipleFiles: Boolean =
+      !options.hasJavaMultipleFiles || options.getJavaMultipleFiles
     val generateDescriptors: Boolean = parentRequest.pluginOptions.generateDescriptors
     val deprecated: Boolean = options.hasDeprecated && options.getDeprecated
     // The first message appends a '.', so we omit it to not have two '.' in the default package
     private val baseTypeId: String = if (protoPackage.isEmpty) "" else "." + protoPackage
-    val messageTypes: util.List[RequestInfo.MessageInfo] = descriptor.getMessageTypeList.stream.map(
-      (desc: DescriptorProtos.DescriptorProto) =>
-        new RequestInfo.MessageInfo(this, baseTypeId, outerClassName, !generateMultipleFiles, desc)
-    ).collect(Collectors.toList)
-    val enumTypes: util.List[RequestInfo.EnumInfo] = descriptor.getEnumTypeList.stream.map(
-      (desc: DescriptorProtos.EnumDescriptorProto) =>
-        new RequestInfo.EnumInfo(this, baseTypeId, outerClassName, !generateMultipleFiles, desc)
-    ).collect(Collectors.toList)
+    val messageTypes: util.List[RequestInfo.MessageInfo] =
+      descriptor.getMessageTypeList.stream.map((desc: DescriptorProtos.DescriptorProto) =>
+        new RequestInfo.MessageInfo(this, baseTypeId, outerClassName, !generateMultipleFiles, desc),
+      ).collect(Collectors.toList)
+    val enumTypes: util.List[RequestInfo.EnumInfo] =
+      descriptor.getEnumTypeList.stream.map((desc: DescriptorProtos.EnumDescriptorProto) =>
+        new RequestInfo.EnumInfo(this, baseTypeId, outerClassName, !generateMultipleFiles, desc),
+      ).collect(Collectors.toList)
 
-    def getSourceLocation(identifier: String): SourceCodeInfo.Location = sourceMap.getOrDefault(identifier, SourceCodeInfo.Location.getDefaultInstance)
+    def getSourceLocation(identifier: String): SourceCodeInfo.Location =
+      sourceMap.getOrDefault(identifier, SourceCodeInfo.Location.getDefaultInstance)
   }
 
   abstract class TypeInfo(
-    val parentFile: RequestInfo.FileInfo,
-    parentTypeId: String,
-    parentType: ClassName,
-    val isNested: Boolean,
-    name: String
+      val parentFile: RequestInfo.FileInfo,
+      parentTypeId: String,
+      parentType: ClassName,
+      val isNested: Boolean,
+      name: String,
   ) {
-    val typeName: ClassName = if (isNested) parentType.nestedClass(name) else parentType.peerClass(name)
+    val typeName: ClassName =
+      if (isNested) parentType.nestedClass(name) else parentType.peerClass(name)
     val fieldNamesClass: ClassName = this.typeName.nestedClass("FieldNames")
     val typeId: String = parentTypeId + "." + name
     val fullName: String = if (typeId.startsWith(".")) typeId.substring(1) else typeId
@@ -109,26 +119,31 @@ object RequestInfo:
   }
 
   class MessageInfo(
-    parentFile: RequestInfo.FileInfo,
-    parentTypeId: String,
-    parentType: ClassName,
-    isNested: Boolean,
-    val descriptor: DescriptorProtos.DescriptorProto
+      parentFile: RequestInfo.FileInfo,
+      parentTypeId: String,
+      parentType: ClassName,
+      isNested: Boolean,
+      val descriptor: DescriptorProtos.DescriptorProto,
   ) extends RequestInfo.TypeInfo(
-    parentFile, parentTypeId, parentType, isNested, descriptor.getName
-  ) {
+        parentFile,
+        parentTypeId,
+        parentType,
+        isNested,
+        descriptor.getName,
+      ) {
     val mutableTypeName: ClassName = typeName.nestedClass("Mutable")
     val fieldCount: Int = descriptor.getFieldCount
     val options: PluginOptions = parentFile.parentRequest.pluginOptions
     // Extensions in embedded mode: treat extension fields the same as normal
     // fields and embed them directly into the message.
-    private var fieldList: java.util.List[DescriptorProtos.FieldDescriptorProto] = descriptor.getFieldList
+    private var fieldList: java.util.List[DescriptorProtos.FieldDescriptorProto] =
+      descriptor.getFieldList
     private val nameCollisions = new java.util.HashSet[String]
     val nameCollisionCheck: Any => Boolean = nameCollisions.contains
     val request: RequestInfo = parentFile.parentRequest
     // Sort fields by serialization order such that they are accessed in a
     // sequential access pattern.
-    val sortedFields: java.util.List[DescriptorProtos.FieldDescriptorProto] = 
+    val sortedFields: java.util.List[DescriptorProtos.FieldDescriptorProto] =
       fieldList.stream
         .sorted(FieldUtil.MemoryLayoutSorter)
         .collect(Collectors.toList)
@@ -139,13 +154,16 @@ object RequestInfo:
     var bitIndex = 0
     private val bitIndices = new java.util.HashMap[DescriptorProtos.FieldDescriptorProto, Integer]
 
-    for (desc <- sortedFields.stream
-      .sorted(FieldUtil.GroupOneOfAndRequiredBits)
-      .collect(Collectors.toList).asScala
+    for (
+      desc <- sortedFields.stream
+        .sorted(FieldUtil.GroupOneOfAndRequiredBits)
+        .collect(Collectors.toList).asScala
     ) {
-      bitIndices.put(desc, {
-        bitIndex += 1; bitIndex - 1
-      })
+      bitIndices.put(
+        desc, {
+          bitIndex += 1; bitIndex - 1
+        },
+      )
     }
 
     val implements: Seq[String] = parentFile.parentRequest.pluginOptions.implements
@@ -153,20 +171,29 @@ object RequestInfo:
     val implementsMutable: Seq[String] = parentFile.parentRequest.pluginOptions.implements
       .getOrElse(typeName.simpleName() + ".Mutable", Seq())
     // Build map
-    val fields: mutable.Buffer[FieldInfo] = for desc <- sortedFields.asScala yield
-      new RequestInfo.FieldInfo(parentFile, this, typeName, desc, bitIndices.get(desc))
-    val nestedTypes: util.List[RequestInfo.MessageInfo] = descriptor.getNestedTypeList.stream.map(
-      (desc: DescriptorProtos.DescriptorProto) => new RequestInfo.MessageInfo(parentFile, typeId, typeName, true, desc)
-    ).collect(Collectors.toList)
-    val nestedEnums: util.List[RequestInfo.EnumInfo] = descriptor.getEnumTypeList.stream.map(
-      (desc: DescriptorProtos.EnumDescriptorProto) => new RequestInfo.EnumInfo(parentFile, typeId, typeName, true, desc)
-    ).collect(Collectors.toList)
+    val fields: mutable.Buffer[FieldInfo] =
+      for desc <- sortedFields.asScala
+      yield new RequestInfo.FieldInfo(parentFile, this, typeName, desc, bitIndices.get(desc))
+    val nestedTypes: util.List[RequestInfo.MessageInfo] =
+      descriptor.getNestedTypeList.stream.map((desc: DescriptorProtos.DescriptorProto) =>
+        new RequestInfo.MessageInfo(parentFile, typeId, typeName, true, desc),
+      ).collect(Collectors.toList)
+    val nestedEnums: util.List[RequestInfo.EnumInfo] =
+      descriptor.getEnumTypeList.stream.map((desc: DescriptorProtos.EnumDescriptorProto) =>
+        new RequestInfo.EnumInfo(parentFile, typeId, typeName, true, desc),
+      ).collect(Collectors.toList)
 
     private val oneOfCount: Int = descriptor.getOneofDeclCount
     val usesClassBasedOneof: Boolean = options.classBasedOneof.contains(typeName.simpleName())
-    val oneOfs: IndexedSeq[OneOfInfo] = for i <- 0 until oneOfCount yield
-      new RequestInfo.OneOfInfo(
-        parentFile, this, typeName, descriptor.getOneofDecl(i), i, usesClassBasedOneof
+    val oneOfs: IndexedSeq[OneOfInfo] =
+      for i <- 0 until oneOfCount
+      yield new RequestInfo.OneOfInfo(
+        parentFile,
+        this,
+        typeName,
+        descriptor.getOneofDecl(i),
+        i,
+        usesClassBasedOneof,
       )
 
     val isEmptyMessage: Boolean = fieldCount == 0 && oneOfCount == 0
@@ -174,11 +201,11 @@ object RequestInfo:
   }
 
   class FieldInfo(
-    val parentFile: RequestInfo.FileInfo,
-    val parentTypeInfo: RequestInfo.MessageInfo,
-    val parentType: ClassName,
-    val descriptor: DescriptorProtos.FieldDescriptorProto,
-    val bitIndex: Int
+      val parentFile: RequestInfo.FileInfo,
+      val parentTypeInfo: RequestInfo.MessageInfo,
+      val parentType: ClassName,
+      val descriptor: DescriptorProtos.FieldDescriptorProto,
+      val bitIndex: Int,
   ) {
     val fieldId: String = parentTypeInfo.typeId + "." + descriptor.getName
     val sourceLocation: SourceCodeInfo.Location = parentFile.getSourceLocation(fieldId)
@@ -187,16 +214,17 @@ object RequestInfo:
       // name is all lowercase, so convert the type name instead (e.g. ".package.OptionalGroup")
       val name = descriptor.getTypeName
       val packageEndIndex = name.lastIndexOf('.')
-      upperCaseName = if (packageEndIndex > 0) name.substring(packageEndIndex + 1)
-      else name
-    }
-    else upperCaseName = NamingUtil.toUpperCamel(descriptor.getName)
+      upperCaseName =
+        if (packageEndIndex > 0) name.substring(packageEndIndex + 1)
+        else name
+    } else upperCaseName = NamingUtil.toUpperCamel(descriptor.getName)
     if (
       NamingUtil.isCollidingFieldName(descriptor.getName) ||
-        (descriptor.hasExtendee && parentTypeInfo.nameCollisionCheck.apply(descriptor.getName))
+      (descriptor.hasExtendee && parentTypeInfo.nameCollisionCheck.apply(descriptor.getName))
     ) upperCaseName += descriptor.getNumber
     val upperName: String = upperCaseName
-    private val lowerName: String = Character.toLowerCase(upperName.charAt(0)).toString + upperName.substring(1)
+    private val lowerName: String =
+      Character.toLowerCase(upperName.charAt(0)).toString + upperName.substring(1)
     val setterName: String = "set" + upperName
     val getterName: String = "get" + upperName
     val hazzerName: String = "has" + upperName
@@ -205,24 +233,31 @@ object RequestInfo:
     val lazyInitName: String = "init" + upperName
     val isPrimitive: Boolean = FieldUtil.isPrimitive(descriptor.getType)
     val tag: Int = FieldUtil.makeTag(descriptor)
-    val bytesPerTag: Int = FieldUtil.computeRawVarint32Size(tag) + (if (!isGroup) 0 else FieldUtil.computeRawVarint32Size(getEndGroupTag))
+    val bytesPerTag: Int = FieldUtil.computeRawVarint32Size(
+      tag,
+    ) + (if (!isGroup) 0 else FieldUtil.computeRawVarint32Size(getEndGroupTag))
     val packedTag: Int = FieldUtil.makePackedTag(descriptor)
     val number: Int = descriptor.getNumber
     val fieldName: String = NamingUtil.filterKeyword(lowerName)
     private val defValue: String = FieldUtil.getEmptyDefaultValue(descriptor.getType)
     val defaultValue: String = if (isEnum) NamingUtil.filterKeyword(defValue) else defValue
-    private val repeatedStoreType: ClassName = RuntimeClasses.getRepeatedStoreType(descriptor.getType)
-    val methodAnnotations: util.List[AnnotationSpec] = if (isDeprecated)
-      Collections.singletonList(AnnotationSpec.builder(classOf[Deprecated]).build)
-    else Collections.emptyList
+    private val repeatedStoreType: ClassName =
+      RuntimeClasses.getRepeatedStoreType(descriptor.getType)
+    val methodAnnotations: util.List[AnnotationSpec] =
+      if (isDeprecated)
+        Collections.singletonList(AnnotationSpec.builder(classOf[Deprecated]).build)
+      else Collections.emptyList
 
     // Original field name (under_score).
     val protoFieldName: String = descriptor.getName
 
     private def getRepeatedStoreType: TypeName =
-      if (isGroup || isMessage) ParameterizedTypeName.get(
-        repeatedStoreType, getTypeName, getTypeName.asInstanceOf[ClassName].nestedClass("Mutable")
-      )
+      if (isGroup || isMessage)
+        ParameterizedTypeName.get(
+          repeatedStoreType,
+          getTypeName,
+          getTypeName.asInstanceOf[ClassName].nestedClass("Mutable"),
+        )
       else if (isEnum) ParameterizedTypeName.get(repeatedStoreType, getTypeName)
       else repeatedStoreType
 
@@ -277,7 +312,8 @@ object RequestInfo:
 
     private def isSingular: Boolean = !isRepeated
 
-    def isPacked: Boolean = isPackable && descriptor.getOptions.hasPacked && descriptor.getOptions.getPacked
+    def isPacked: Boolean =
+      isPackable && descriptor.getOptions.hasPacked && descriptor.getOptions.getPacked
 
     def isSingularPrimitiveOrEnum: Boolean = isSingular && (isPrimitive || isEnum)
 
@@ -290,7 +326,8 @@ object RequestInfo:
         case FieldDescriptorProto.Type.TYPE_BYTES => false
         case _ => true
 
-    private def isDeprecated: Boolean = descriptor.getOptions.hasDeprecated && descriptor.getOptions.getDeprecated
+    private def isDeprecated: Boolean =
+      descriptor.getOptions.hasDeprecated && descriptor.getOptions.getDeprecated
 
     def getTypeName: TypeName =
       // Lazy because type registry is not constructed at creation time
@@ -298,7 +335,9 @@ object RequestInfo:
 
     def isMessageOrGroupWithRequiredFieldsInHierarchy: Boolean =
       // Lazy because type registry is not constructed at creation time
-      isMessageOrGroup && parentFile.parentRequest.typeRegistry.hasRequiredFieldsInHierarchy(getTypeName)
+      isMessageOrGroup && parentFile.parentRequest.typeRegistry.hasRequiredFieldsInHierarchy(
+        getTypeName,
+      )
 
     def getStoreType: TypeName =
       if (isRepeated) return getRepeatedStoreType
@@ -308,9 +347,10 @@ object RequestInfo:
 
     // Used for the return type in the method, e.g., Optional<String>
     private def getOptionalReturnType: TypeName =
-      if (isRepeated) return ParameterizedTypeName.get(ClassName.get(classOf[Optional[_]]), getRepeatedStoreType)
+      if (isRepeated)
+        return ParameterizedTypeName.get(ClassName.get(classOf[Optional[_]]), getRepeatedStoreType)
       val typeName = getTypeName
-      if (!isPrimitive || (typeName eq TypeName.BOOLEAN)) 
+      if (!isPrimitive || (typeName eq TypeName.BOOLEAN))
         return ParameterizedTypeName.get(ClassName.get(classOf[Optional[_]]), typeName.box)
       if (typeName eq TypeName.INT) return TypeName.get(classOf[OptionalInt])
       if (typeName eq TypeName.LONG) return TypeName.get(classOf[OptionalLong])
@@ -333,14 +373,18 @@ object RequestInfo:
   }
 
   class EnumInfo(
-    parentFile: RequestInfo.FileInfo, 
-    parentTypeId: String, 
-    parentType: ClassName,
-    isNested: Boolean, 
-    val descriptor: DescriptorProtos.EnumDescriptorProto
+      parentFile: RequestInfo.FileInfo,
+      parentTypeId: String,
+      parentType: ClassName,
+      isNested: Boolean,
+      val descriptor: DescriptorProtos.EnumDescriptorProto,
   ) extends RequestInfo.TypeInfo(
-    parentFile, parentTypeId, parentType, isNested, descriptor.getName
-  ) {
+        parentFile,
+        parentTypeId,
+        parentType,
+        isNested,
+        descriptor.getName,
+      ) {
     private var low = 0
     private var high = 0
     val usedFields = new java.util.HashSet[Integer]
@@ -358,12 +402,12 @@ object RequestInfo:
         values.add(new RequestInfo.EnumValueInfo(this, value))
         low = Math.min(low, value.getNumber)
         high = Math.max(high, value.getNumber)
-      }
-      else aliases.add(new RequestInfo.EnumValueInfo(this, value))
+      } else aliases.add(new RequestInfo.EnumValueInfo(this, value))
     }
     private val lowestNumber: Int = low
     val highestNumber: Int = high
-    val usingArrayLookup: Boolean = parentFile.parentRequest.shouldEnumUseArrayLookup(lowestNumber, highestNumber)
+    val usingArrayLookup: Boolean =
+      parentFile.parentRequest.shouldEnumUseArrayLookup(lowestNumber, highestNumber)
 
     def findAliasedValue(alias: RequestInfo.EnumValueInfo): RequestInfo.EnumValueInfo =
       values.asScala
@@ -372,8 +416,8 @@ object RequestInfo:
   }
 
   class EnumValueInfo(
-    var parentType: RequestInfo.EnumInfo, 
-    var descriptor: DescriptorProtos.EnumValueDescriptorProto,
+      var parentType: RequestInfo.EnumInfo,
+      var descriptor: DescriptorProtos.EnumValueDescriptorProto,
   ) {
     private val valueId: String = parentType.typeId + "." + descriptor.getName
     val sourceLocation: SourceCodeInfo.Location = parentType.parentFile.getSourceLocation(valueId)
@@ -385,12 +429,12 @@ object RequestInfo:
   }
 
   class OneOfInfo(
-    val parentFile: RequestInfo.FileInfo, 
-    val parentTypeInfo: RequestInfo.MessageInfo, 
-    val parentType: ClassName,
-    val descriptor: DescriptorProtos.OneofDescriptorProto,
-    val oneOfIndex: Int,
-    val usesClassBasedOneof: Boolean,
+      val parentFile: RequestInfo.FileInfo,
+      val parentTypeInfo: RequestInfo.MessageInfo,
+      val parentType: ClassName,
+      val descriptor: DescriptorProtos.OneofDescriptorProto,
+      val oneOfIndex: Int,
+      val usesClassBasedOneof: Boolean,
   ) {
 
     val upperName: String = NamingUtil.toUpperCamel(descriptor.getName)
@@ -410,4 +454,3 @@ object RequestInfo:
       .filter(field => field.descriptor.getOneofIndex eq oneOfIndex)
       .toSeq
   }
-

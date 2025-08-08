@@ -33,28 +33,29 @@ import scala.jdk.CollectionConverters.*
  * #L%
  */
 
-/**
- * Protoc plugin that gets called by the protoc executable. The communication happens
- * via protobuf messages on System.in / System.out
- *
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** Protoc plugin that gets called by the protoc executable. The communication happens via protobuf
+  * messages on System.in / System.out
+  *
+  * @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object CrunchyProtocPlugin:
-  /**
-   * The protoc-gen-plugin communicates via proto messages on System.in and System.out
-   *
-   * @param args
-   * @throws IOException
-   */
+  /** The protoc-gen-plugin communicates via proto messages on System.in and System.out
+    *
+    * @param args
+    * @throws IOException
+    */
   @throws[IOException]
   def main(args: Array[String]): Unit = {
     if (args.length > 0) {
-      System.out.println("This protobuf plugin should be called by protoc. Example:\n\n" +
-        "    1) protoc --plugin=protoc-gen-crunchy=${executable} --crunchy_out=store_unknown_fields=true:. type.proto\n" +
-        "    2) protoc --crunchy_out=store_unknown_fields=true:. type.proto\n\n" +
-        "Note that if you are calling this plugin from the PATH (2), the executable\n" +
-        "file or wrapper script needs to be called \"protoc-gen-crunchy\"."
+      System.out.println(
+        "This protobuf plugin should be called by protoc. Example:\n\n" +
+          "    1) protoc --plugin=protoc-gen-crunchy=${executable} --crunchy_out=store_unknown_fields=true:. type.proto\n" +
+          "    2) protoc --crunchy_out=store_unknown_fields=true:. type.proto\n\n" +
+          "Note that if you are calling this plugin from the PATH (2), the executable\n" +
+          "file or wrapper script needs to be called \"protoc-gen-crunchy\".",
       )
       return
     }
@@ -79,9 +80,11 @@ object CrunchyProtocPlugin:
     ) {
       // Generate type specifications
       val topLevelTypes = new ListBuffer[TypeSpec]
-      val outerClassSpec = TypeSpec.classBuilder(file.outerClassName).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-      val list: TypeSpec => Unit = if (file.generateMultipleFiles) topLevelTypes.addOne
-      else outerClassSpec.addType
+      val outerClassSpec =
+        TypeSpec.classBuilder(file.outerClassName).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+      val list: TypeSpec => Unit =
+        if (file.generateMultipleFiles) topLevelTypes.addOne
+        else outerClassSpec.addType
       for (t <- file.enumTypes.asScala) {
         list(new EnumGenerator(t).generate)
       }
@@ -104,12 +107,12 @@ object CrunchyProtocPlugin:
           case e: IOException =>
             throw new AssertionError("Could not write to StringBuilder?")
         }
-        response.addFile(CodeGeneratorResponse.File.newBuilder
-          .setName(file.outputDirectory + typeSpec.name + ".java")
-          .setContent(content.toString)
-          .build
+        response.addFile(
+          CodeGeneratorResponse.File.newBuilder
+            .setName(file.outputDirectory + typeSpec.name + ".java")
+            .setContent(content.toString)
+            .build,
         )
       }
     }
     response.build
-

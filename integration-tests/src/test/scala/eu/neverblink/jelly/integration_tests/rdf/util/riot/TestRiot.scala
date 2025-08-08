@@ -10,10 +10,10 @@ import org.apache.jena.sys.JenaSystem
 
 import java.io.{InputStream, Reader}
 
-/** Registration utilities for alternative versions of Apache Jena's Riot parsers.
- * Lifted from jelly-cli, these are lax parsers, with little to no validation.
- * They can understand generalized NT/NQ, NT/NQ-star, NT/NQ-1.2, and a subset of TTL-star.
- */
+/** Registration utilities for alternative versions of Apache Jena's Riot parsers. Lifted from
+  * jelly-cli, these are lax parsers, with little to no validation. They can understand generalized
+  * NT/NQ, NT/NQ-star, NT/NQ-1.2, and a subset of TTL-star.
+  */
 object TestRiot:
   private var initialized = false
 
@@ -31,20 +31,20 @@ object TestRiot:
   }
 
   /** Base reader for parsing N-Triples and N-Quads. Heavily inspired by the Jena Riot code:
-   * https://github.com/apache/jena/blob/bd97ad4cf731ade857926787dd2df735644a354b/jena-arq/src/main/java/org/apache/jena/riot/lang/RiotParsers.java
-   * @param parserProfile
-   *   parser profile
-   */
+    * https://github.com/apache/jena/blob/bd97ad4cf731ade857926787dd2df735644a354b/jena-arq/src/main/java/org/apache/jena/riot/lang/RiotParsers.java
+    * @param parserProfile
+    *   parser profile
+    */
   private abstract class BaseReader(parserProfile: ParserProfile) extends ReaderRIOT:
     def create(tokenizer: Tokenizer, output: StreamRDF, context: Context): LangRIOT
 
     final def read(
-                    in: InputStream,
-                    baseURI: String,
-                    ct: ContentType,
-                    output: StreamRDF,
-                    context: Context,
-                  ): Unit =
+        in: InputStream,
+        baseURI: String,
+        ct: ContentType,
+        output: StreamRDF,
+        context: Context,
+    ): Unit =
       val tok = TokenizerText.create()
         .source(in)
         .errorHandler(parserProfile.getErrorHandler)
@@ -52,12 +52,12 @@ object TestRiot:
       create(tok, output, context).parse()
 
     final def read(
-                    reader: Reader,
-                    baseURI: String,
-                    ct: ContentType,
-                    output: StreamRDF,
-                    context: Context,
-                  ): Unit =
+        reader: Reader,
+        baseURI: String,
+        ct: ContentType,
+        output: StreamRDF,
+        context: Context,
+    ): Unit =
       val tok = TokenizerText.create()
         .source(reader)
         .errorHandler(parserProfile.getErrorHandler)
@@ -65,16 +65,16 @@ object TestRiot:
       create(tok, output, context).parse()
 
   private final class NTriplesReader(parserProfile: ParserProfile)
-    extends BaseReader(parserProfile):
+      extends BaseReader(parserProfile):
     override def create(
-                         tokenizer: Tokenizer,
-                         output: StreamRDF,
-                         context: Context,
-                       ): LangRIOT = new LangNTriplesGeneralized(tokenizer, parserProfile, output)
+        tokenizer: Tokenizer,
+        output: StreamRDF,
+        context: Context,
+    ): LangRIOT = new LangNTriplesGeneralized(tokenizer, parserProfile, output)
 
   private final class NQuadsReader(parserProfile: ParserProfile) extends BaseReader(parserProfile):
     override def create(
-                         tokenizer: Tokenizer,
-                         output: StreamRDF,
-                         context: Context,
-                       ): LangRIOT = new LangNQuadsGeneralized(tokenizer, parserProfile, output)
+        tokenizer: Tokenizer,
+        output: StreamRDF,
+        context: Context,
+    ): LangRIOT = new LangNQuadsGeneralized(tokenizer, parserProfile, output)

@@ -9,13 +9,13 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
   "JellyOptionsFromTypesafe" should {
     "produce defaults for empty input" in {
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(ConfigFactory.empty())
-      opt.getPhysicalType should be (PhysicalStreamType.UNSPECIFIED)
-      opt.getLogicalType should be (LogicalStreamType.UNSPECIFIED)
-      opt.getGeneralizedStatements should be (false)
-      opt.getRdfStar should be (false)
-      opt.getMaxNameTableSize should be (128)
-      opt.getMaxPrefixTableSize should be (16)
-      opt.getMaxDatatypeTableSize should be (16)
+      opt.getPhysicalType should be(PhysicalStreamType.UNSPECIFIED)
+      opt.getLogicalType should be(LogicalStreamType.UNSPECIFIED)
+      opt.getGeneralizedStatements should be(false)
+      opt.getRdfStar should be(false)
+      opt.getMaxNameTableSize should be(128)
+      opt.getMaxPrefixTableSize should be(16)
+      opt.getMaxDatatypeTableSize should be(16)
     }
 
     "override all defaults with a different config" in {
@@ -29,13 +29,13 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
         |jelly.datatype-table-size = 8
         |""".stripMargin)
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
-      opt.getPhysicalType should be (PhysicalStreamType.GRAPHS)
-      opt.getLogicalType should be (LogicalStreamType.FLAT_QUADS)
-      opt.getGeneralizedStatements should be (true)
-      opt.getRdfStar should be (true)
-      opt.getMaxNameTableSize should be (1024)
-      opt.getMaxPrefixTableSize should be (64)
-      opt.getMaxDatatypeTableSize should be (8)
+      opt.getPhysicalType should be(PhysicalStreamType.GRAPHS)
+      opt.getLogicalType should be(LogicalStreamType.FLAT_QUADS)
+      opt.getGeneralizedStatements should be(true)
+      opt.getRdfStar should be(true)
+      opt.getMaxNameTableSize should be(1024)
+      opt.getMaxPrefixTableSize should be(64)
+      opt.getMaxDatatypeTableSize should be(8)
     }
 
     "override defaults partially" in {
@@ -45,13 +45,13 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
         |jelly.prefix-table-size = 64
         |""".stripMargin)
       val opt = JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
-      opt.getPhysicalType should be (PhysicalStreamType.QUADS)
-      opt.getLogicalType should be (LogicalStreamType.UNSPECIFIED)
-      opt.getGeneralizedStatements should be (false)
-      opt.getRdfStar should be (false)
-      opt.getMaxNameTableSize should be (1024)
-      opt.getMaxPrefixTableSize should be (64)
-      opt.getMaxDatatypeTableSize should be (16)
+      opt.getPhysicalType should be(PhysicalStreamType.QUADS)
+      opt.getLogicalType should be(LogicalStreamType.UNSPECIFIED)
+      opt.getGeneralizedStatements should be(false)
+      opt.getRdfStar should be(false)
+      opt.getMaxNameTableSize should be(1024)
+      opt.getMaxPrefixTableSize should be(64)
+      opt.getMaxDatatypeTableSize should be(16)
     }
 
     "throw exception on unknown physical stream type" in {
@@ -61,7 +61,7 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
       val error = intercept[IllegalArgumentException] {
         JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
       }
-      error.getMessage should be ("Unknown physical type: UNKNOWN")
+      error.getMessage should be("Unknown physical type: UNKNOWN")
     }
 
     "throw exception on unknown logical stream type" in {
@@ -71,6 +71,6 @@ class JellyOptionsFromTypesafeSpec extends AnyWordSpec, Matchers:
       val error = intercept[IllegalArgumentException] {
         JellyOptionsFromTypesafe.fromTypesafeConfig(conf.getConfig("jelly"))
       }
-      error.getMessage should be ("Unknown logical type: UNKNOWN")
+      error.getMessage should be("Unknown logical type: UNKNOWN")
     }
   }

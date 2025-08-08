@@ -14,9 +14,9 @@ object OrderedRdfCompare:
   )
 
   def compare[TNode, TStatement](
-    hydrator: RdfCompareHydrator[TNode, TStatement],
-    expected: Seq[TStatement],
-    actual: Seq[TStatement],
+      hydrator: RdfCompareHydrator[TNode, TStatement],
+      expected: Seq[TStatement],
+      actual: Seq[TStatement],
   ): Unit =
     if expected.size != actual.size then
       throw new IllegalStateException(

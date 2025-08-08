@@ -29,10 +29,11 @@ import java.util.Comparator
  * #L%
  */
 
-/**
- * @author Florian Enner
- * @author Piotr Sowiński
- */
+/** @author
+  *   Florian Enner
+  * @author
+  *   Piotr Sowiński
+  */
 object FieldUtil:
   private val WIRETYPE_VARINT = 0
   private val WIRETYPE_FIXED64 = 1
@@ -53,11 +54,9 @@ object FieldUtil:
     val fieldId = startTag >>> TAG_TYPE_BITS
     fieldId << TAG_TYPE_BITS | WIRETYPE_END_GROUP
 
-  /**
-   * Compute the number of bytes that would be needed to encode a varint.
-   * <pre>value</pre> is treated as unsigned, so it won't be sign-extended if
-   * negative.
-   */
+  /** Compute the number of bytes that would be needed to encode a varint. <pre>value</pre> is
+    * treated as unsigned, so it won't be sign-extended if negative.
+    */
   def computeRawVarint32Size(value: Int): Int =
     if ((value & (0xffffffff << 7)) == 0) return 1
     if ((value & (0xffffffff << 14)) == 0) return 2
@@ -65,53 +64,50 @@ object FieldUtil:
     if ((value & (0xffffffff << 28)) == 0) return 4
     5
 
-  /**
-   * OneOf bits and required bits should be close together so that it is more likely for them to be checked in
-   * a single bit comparison. This sorter groups all required fields, followed by OneOf groups, followed by
-   * everything else.
-   */
-  val GroupOneOfAndRequiredBits: Comparator[FieldDescriptorProto] = new Comparator[FieldDescriptorProto]:
-    override def compare(o1: FieldDescriptorProto, o2: FieldDescriptorProto): Int =
-      val n1 = if (o1.hasOneofIndex) o1.getOneofIndex
-      else if (o1.getLabel eq Label.LABEL_REQUIRED) Integer.MAX_VALUE
-      else -1
-      val n2 = if (o2.hasOneofIndex) o2.getOneofIndex
-      else if (o2.getLabel eq Label.LABEL_REQUIRED) Integer.MAX_VALUE
-      else -1
-      n2 - n1
+  /** OneOf bits and required bits should be close together so that it is more likely for them to be
+    * checked in a single bit comparison. This sorter groups all required fields, followed by OneOf
+    * groups, followed by everything else.
+    */
+  val GroupOneOfAndRequiredBits: Comparator[FieldDescriptorProto] =
+    new Comparator[FieldDescriptorProto]:
+      override def compare(o1: FieldDescriptorProto, o2: FieldDescriptorProto): Int =
+        val n1 =
+          if (o1.hasOneofIndex) o1.getOneofIndex
+          else if (o1.getLabel eq Label.LABEL_REQUIRED) Integer.MAX_VALUE
+          else -1
+        val n2 =
+          if (o2.hasOneofIndex) o2.getOneofIndex
+          else if (o2.getLabel eq Label.LABEL_REQUIRED) Integer.MAX_VALUE
+          else -1
+        n2 - n1
 
-  /**
-   * Sort fields according to their specified field number. This is used as the serialization order
-   * by Google's protobuf bindings.
-   */
-  val AscendingNumberSorter: Comparator[FieldGenerator] = Comparator.comparingInt((field: FieldGenerator) => field.info.number)
+  /** Sort fields according to their specified field number. This is used as the serialization order
+    * by Google's protobuf bindings.
+    */
+  val AscendingNumberSorter: Comparator[FieldGenerator] =
+    Comparator.comparingInt((field: FieldGenerator) => field.info.number)
 
-  /**
-   * Sort the fields according to their layout in memory.
-   * <p>
-   * Summary:
-   * - Objects are 8 bytes aligned in memory (address A is K aligned if A % K == 0)
-   * - All fields are type aligned (long/double is 8 aligned, integer/float 4, short/char 2)
-   * - Fields are packed in the order of their size, except for references which are last
-   * - Classes fields are never mixed, so if B extends A, A's fields will be laid out first
-   * - Sub class fields start at a 4 byte alignment
-   * - If the first field of a class is long/double and the class starting point (after header, or after super) is not 8 aligned then a smaller field may be swapped to fill in the 4 bytes gap.
-   * <p>
-   * For more info, see
-   * http://psy-lob-saw.blogspot.com/2013/05/know-thy-java-object-memory-layout.html
-   */
+  /** Sort the fields according to their layout in memory. <p> Summary:
+    *   - Objects are 8 bytes aligned in memory (address A is K aligned if A % K == 0)
+    *   - All fields are type aligned (long/double is 8 aligned, integer/float 4, short/char 2)
+    *   - Fields are packed in the order of their size, except for references which are last
+    *   - Classes fields are never mixed, so if B extends A, A's fields will be laid out first
+    *   - Sub class fields start at a 4 byte alignment
+    *   - If the first field of a class is long/double and the class starting point (after header,
+    *     or after super) is not 8 aligned then a smaller field may be swapped to fill in the 4
+    *     bytes gap. <p> For more info, see
+    *     http://psy-lob-saw.blogspot.com/2013/05/know-thy-java-object-memory-layout.html
+    */
   val MemoryLayoutSorter: Comparator[FieldDescriptorProto] = new Comparator[FieldDescriptorProto]:
     override def compare(objA: FieldDescriptorProto, objB: FieldDescriptorProto): Int =
       // The higher the number, the closer to the beginning
       val weightA = getSortingWeight(objA) + (if (objA.getLabel eq Label.LABEL_REPEATED) -50
-      else 0)
+                                              else 0)
       val weightB = getSortingWeight(objB) + (if (objB.getLabel eq Label.LABEL_REPEATED) -50
-      else 0)
+                                              else 0)
       // Higher field number -> lower ranking
-      if weightA == weightB then
-        objA.getNumber - objB.getNumber
+      if weightA == weightB then objA.getNumber - objB.getNumber
       else weightB - weightA
-
 
   private def getSortingWeight(descriptor: FieldDescriptorProto): Int =
     // Start with largest width and get smaller. References come at the end.
@@ -141,12 +137,11 @@ object FieldUtil:
     case TYPE_FIXED32 => WIRETYPE_FIXED32
     case TYPE_FLOAT => WIRETYPE_FIXED32
 
-  /**
-   * Used for e.g. writeUInt64() methods
-   *
-   * @param t
-   * @return
-   */
+  /** Used for e.g. writeUInt64() methods
+    *
+    * @param t
+    * @return
+    */
   def getCapitalizedType(t: FieldDescriptorProto.Type): String = t match
     case TYPE_DOUBLE => "Double"
     case TYPE_FLOAT => "Float"
@@ -223,9 +218,7 @@ object FieldUtil:
     case TYPE_MESSAGE => "null"
     case TYPE_BYTES => "???" // huh?
 
-  /**
-   * Hash code for JSON field name lookup. Any changes need to be
-   * synchronized between FieldUtil::hash32 and ProtoUtil::hash32.
-   */
+  /** Hash code for JSON field name lookup. Any changes need to be synchronized between
+    * FieldUtil::hash32 and ProtoUtil::hash32.
+    */
   def hash32(value: String): Int = value.hashCode
-

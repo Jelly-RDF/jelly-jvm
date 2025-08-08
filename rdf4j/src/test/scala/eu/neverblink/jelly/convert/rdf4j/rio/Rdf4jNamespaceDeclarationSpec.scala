@@ -8,16 +8,17 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import scala.jdk.CollectionConverters.*
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import org.eclipse.rdf4j.model.Statement
 
-/**
- * Round-trip tests for namespace declarations.
- */
+/** Round-trip tests for namespace declarations.
+  */
 class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
   private def checkDeclarations(out: ByteArrayOutputStream, shouldBeThere: Boolean) =
-    val rows: Seq[RdfStreamRow] = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray))
-      .getRows
-      .asScala
-      .toSeq
+    val rows: Seq[RdfStreamRow] =
+      RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray))
+        .getRows
+        .asScala
+        .toSeq
 
     val nsDecls = rows.filter(_.hasNamespace).map(_.getNamespace)
 
@@ -29,20 +30,20 @@ class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
       }
     })
     parser.parse(new ByteArrayInputStream(out.toByteArray), "")
-    
+
     if shouldBeThere then
       nsDecls.size should be(2)
-      nsDecls.map(_.getName) should contain allOf("ex", "ex2")
-      namespaces should be (Map("ex" -> "http://example.com/", "ex2" -> "http://example2.com/"))
+      nsDecls.map(_.getName) should contain allOf ("ex", "ex2")
+      namespaces should be(Map("ex" -> "http://example.com/", "ex2" -> "http://example2.com/"))
     else
       nsDecls.size should be(0)
-      namespaces should be (Map.empty)
+      namespaces should be(Map.empty)
 
-  val vf = SimpleValueFactory.getInstance()
-  val triple = vf.createStatement(
+  val vf: SimpleValueFactory = SimpleValueFactory.getInstance()
+  val triple: Statement = vf.createStatement(
     vf.createIRI("http://example2.com/s"),
     vf.createIRI("http://example.com/p"),
-    vf.createIRI("http://example.com/o")
+    vf.createIRI("http://example.com/o"),
   )
 
   "JellyWriter and JellyReader" should {
@@ -74,7 +75,7 @@ class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
 
       checkDeclarations(out, shouldBeThere = true)
     }
-    
+
     "not preserve namespace declarations if disabled" in {
       val out = new ByteArrayOutputStream()
       val writer = JellyWriterFactory().getWriter(out)

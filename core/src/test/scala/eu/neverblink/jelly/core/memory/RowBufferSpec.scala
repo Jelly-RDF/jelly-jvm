@@ -149,8 +149,7 @@ class RowBufferSpec extends AnyWordSpec, Matchers:
           buffer.iterator().hasNext should be(true)
           buffer.iterator().next().getName.getId should be(i)
           consumerBuffer.size should be(i)
-          if i > 0 then
-            consumerBuffer.last.getName.getId should be(i - 1)
+          if i > 0 then consumerBuffer.last.getName.getId should be(i - 1)
         }
         buffer.clear()
         buffer.size should be(0)

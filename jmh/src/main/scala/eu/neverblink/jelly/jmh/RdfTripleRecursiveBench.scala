@@ -22,15 +22,11 @@ object RdfTripleRecursiveBench:
 
     private def makeNestedTriple(depth: Int): RdfTriple =
       val triple = RdfTriple.newInstance()
-      if depth <= 0 then
-        triple
+      if depth <= 0 then triple
       else
-        if random.nextBoolean() then
-          triple.setSubject(makeNestedTriple(depth - 1))
-        if random.nextBoolean() then
-          triple.setPredicate(makeNestedTriple(depth - 1))
-        if random.nextBoolean() then
-          triple.setObject(makeNestedTriple(depth - 1))
+        if random.nextBoolean() then triple.setSubject(makeNestedTriple(depth - 1))
+        if random.nextBoolean() then triple.setPredicate(makeNestedTriple(depth - 1))
+        if random.nextBoolean() then triple.setObject(makeNestedTriple(depth - 1))
         triple
 
     @Setup(Level.Trial)

@@ -12,40 +12,41 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.jdk.CollectionConverters.*
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import org.apache.jena.rdf.model.Model
+import org.apache.jena.sparql.core.DatasetGraph
 
-/**
- * Round-trip tests for namespace declarations.
- */
+/** Round-trip tests for namespace declarations.
+  */
 class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
   // Prepare data
-  val m = ModelFactory.createDefaultModel()
+  val m: Model = ModelFactory.createDefaultModel()
   m.add(
     m.createResource("http://example.com/s"),
     m.createProperty("http://example.com/p"),
-    m.createResource("http://example.com/o")
+    m.createResource("http://example.com/o"),
   )
   m.setNsPrefix("ex", "http://example.com/")
   m.setNsPrefix("ex2", "http://example2.com/")
 
-  val ds = DatasetGraphFactory.create()
+  val ds: DatasetGraph = DatasetGraphFactory.create()
   ds.addGraph(
     NodeFactory.createURI("http://example2.com/g"),
-    m.getGraph
+    m.getGraph,
   )
   ds.prefixes().putAll(m.getNsPrefixMap)
 
   private def checkDeclarations(out: ByteArrayOutputStream, shouldBeThere: Boolean) =
-    val rows: Seq[RdfStreamRow] = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray))
-      .getRows
-      .asScala
-      .toSeq
-    
+    val rows: Seq[RdfStreamRow] =
+      RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray))
+        .getRows
+        .asScala
+        .toSeq
+
     val nsDecls = rows.filter(_.hasNamespace).map(_.getNamespace)
     if shouldBeThere then
-      nsDecls.size should be (2)
+      nsDecls.size should be(2)
       nsDecls.map(_.getName) should contain allOf ("ex", "ex2")
-    else
-      nsDecls.size should be (0)
+    else nsDecls.size should be(0)
 
   "JellyGraphWriter" should {
     "preserve namespace declarations" in {
@@ -59,7 +60,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       checkDeclarations(out, true)
       val m2 = ModelFactory.createDefaultModel()
       RDFDataMgr.read(m2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY)
-      m2.getNsPrefixMap should be (m.getNsPrefixMap)
+      m2.getNsPrefixMap should be(m.getNsPrefixMap)
     }
 
     "not preserve namespace declarations if disabled" in {
@@ -74,7 +75,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       checkDeclarations(out, false)
       val m2 = ModelFactory.createDefaultModel()
       RDFDataMgr.read(m2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY)
-      m2.getNsPrefixMap should be (java.util.Map.of())
+      m2.getNsPrefixMap should be(java.util.Map.of())
     }
   }
 
@@ -90,7 +91,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       checkDeclarations(out, true)
       val ds2 = DatasetGraphFactory.create()
       RDFDataMgr.read(ds2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY)
-      ds2.prefixes().getMapping should be (ds.prefixes().getMapping)
+      ds2.prefixes().getMapping should be(ds.prefixes().getMapping)
     }
 
     "not preserve namespace declarations if disabled" in {
@@ -105,7 +106,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       checkDeclarations(out, false)
       val ds2 = DatasetGraphFactory.create()
       RDFDataMgr.read(ds2, ByteArrayInputStream(out.toByteArray), JellyLanguage.JELLY)
-      ds2.prefixes().getMapping should be (java.util.Map.of())
+      ds2.prefixes().getMapping should be(java.util.Map.of())
     }
   }
 
@@ -115,7 +116,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       val writer = StreamRDFWriter.getWriterStream(
         out,
         JellyLanguage.JELLY,
-        RIOT.getContext.copy().set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, true)
+        RIOT.getContext.copy().set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, true),
       )
       writer.start()
       writer.prefix("ex", "http://example.com")
@@ -131,7 +132,7 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
       val writer = StreamRDFWriter.getWriterStream(
         out,
         JellyLanguage.JELLY,
-        RIOT.getContext.copy().set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, true)
+        RIOT.getContext.copy().set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, true),
       )
       writer.start()
       writer.triple(m.getGraph.find().next())
@@ -141,14 +142,14 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
 
       checkDeclarations(out, true)
     }
-    
+
     "not preserve namespace declarations if disabled" in {
       val out = new ByteArrayOutputStream()
       val writer = StreamRDFWriter.getWriterStream(
         out,
         JellyLanguage.JELLY,
         // default is false
-        RIOT.getContext.copy() // .set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, false)
+        RIOT.getContext.copy(), // .set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, false)
       )
       writer.start()
       writer.prefix("ex", "http://example.com")

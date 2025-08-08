@@ -15,8 +15,18 @@ trait ProtocolSerDes[TNode, TTriple, TQuad] extends RdfCompareHydrator[TNode, TT
   def readTriplesJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[TTriple]
   def readQuadsOrGraphsJelly(file: File, supportedOptions: Option[RdfStreamOptions]): Seq[TQuad]
 
-  def writeTriplesJelly(file: File, triples: Seq[TTriple], opt: Option[RdfStreamOptions], frameSize: Int): Unit
-  def writeQuadsJelly(file: File, quads: Seq[TQuad], opt: Option[RdfStreamOptions], frameSize: Int): Unit
+  def writeTriplesJelly(
+      file: File,
+      triples: Seq[TTriple],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit
+  def writeQuadsJelly(
+      file: File,
+      quads: Seq[TQuad],
+      opt: Option[RdfStreamOptions],
+      frameSize: Int,
+  ): Unit
 
   def supportsTriples: Boolean = true
   def supportsQuads: Boolean = true

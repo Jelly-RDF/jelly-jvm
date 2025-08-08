@@ -20,11 +20,11 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
   given MockConverterFactory.type = MockConverterFactory
 
   private def runStrictNonStrict[T](
-    name: String,
-    encodedTypeStrict: LogicalStreamType,
-    encodedTypeNonStrict: LogicalStreamType,
-    strictFlow: Flow[RdfStreamFrame, T, NotUsed],
-    nonStrictFlow: Flow[RdfStreamFrame, T, NotUsed],
+      name: String,
+      encodedTypeStrict: LogicalStreamType,
+      encodedTypeNonStrict: LogicalStreamType,
+      strictFlow: Flow[RdfStreamFrame, T, NotUsed],
+      nonStrictFlow: Flow[RdfStreamFrame, T, NotUsed],
   )(body: (LogicalStreamType, Flow[RdfStreamFrame, T, NotUsed]) => Unit): Unit =
     s"$name (strict)" in {
       body(encodedTypeStrict, strictFlow)
@@ -89,10 +89,10 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
       assertDecoded(decodedF.futureValue, Triples1.mrl)
       val options = optionsF.futureValue
-      options.isDefined should be (true)
-      options.get.getRdfStar should be (true)
-      options.get.getLogicalType should be (LogicalStreamType.FLAT_TRIPLES)
-      options.get.getPhysicalType should be (PhysicalStreamType.TRIPLES)
+      options.isDefined should be(true)
+      options.get.getRdfStar should be(true)
+      options.get.getLogicalType should be(LogicalStreamType.FLAT_TRIPLES)
+      options.get.getPhysicalType should be(PhysicalStreamType.TRIPLES)
 
       // Basic tests on logical stream type extensions
       LogicalStreamTypeUtils.getRdfStaxType(options.get.getLogicalType) should not be null
@@ -100,8 +100,8 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         MockConverterFactory.decoderConverter,
         MockConverterFactory.decoderConverter,
         options.get.getLogicalType,
-        null
-      ).size should be (3)
+        null,
+      ).size should be(3)
     }
   }
 
@@ -127,7 +127,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .run().futureValue
 
         assertDecoded(decoded.flatten, Triples1.mrl)
-        decoded.size should be (encoded.size)
+        decoded.size should be(encoded.size)
       })
   }
 
@@ -177,7 +177,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .run().futureValue
 
         assertDecoded(decoded.flatten, Quads1.mrl)
-        decoded.size should be (encoded.size)
+        decoded.size should be(encoded.size)
       })
   }
 
@@ -227,7 +227,7 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .run().futureValue
 
         assertDecoded(decoded.flatten, Graphs1.mrlQuads)
-        decoded.size should be (encoded.size)
+        decoded.size should be(encoded.size)
       })
   }
 
@@ -252,9 +252,9 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .run().futureValue
 
         assertDecoded(decoded.flatMap(_._2), Graphs1.mrl.flatMap(_._2))
-        decoded.size should be (2) // 2 graphs in the input
-        decoded.head._2.size should be (2)
-        decoded(1)._2.size should be (1)
+        decoded.size should be(2) // 2 graphs in the input
+        decoded.head._2.size should be(2)
+        decoded(1)._2.size should be(1)
       })
   }
 
@@ -280,11 +280,18 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .run().futureValue
 
         assertDecoded(decoded.flatten.flatMap(_._2), Graphs1.mrl.flatMap(_._2))
-        decoded.size should be (encoded.size)
+        decoded.size should be(encoded.size)
       })
   }
 
-  val anyCases = Seq(
+  val anyCases: Seq[
+    (
+        Triples1.type | Quads1.type | Graphs1.type,
+        Seq[Triple] | Seq[Quad],
+        PhysicalStreamType,
+        String,
+    ),
+  ] = Seq(
     (Triples1, Triples1.mrl, PhysicalStreamType.TRIPLES, "triples"),
     (Quads1, Quads1.mrl, PhysicalStreamType.QUADS, "quads"),
     (Graphs1, Graphs1.mrlQuads, PhysicalStreamType.GRAPHS, "graphs"),
@@ -322,6 +329,6 @@ class DecoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
             .run().futureValue
 
           assertDecoded(decoded.flatten, mrl)
-          decoded.size should be (encoded.size)
+          decoded.size should be(encoded.size)
         }
   }

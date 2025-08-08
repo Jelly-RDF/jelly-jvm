@@ -23,14 +23,13 @@ import scala.concurrent.duration.*
 import scala.util.Random
 import scala.jdk.CollectionConverters.*
 
-/**
- * Integration tests for ProtoTranscoder.
- * We check it here against a number of different encoders, stream option sets, and test cases.
- * This is meant to catch rare or obscure bugs in the transcoder.
- *
- * More detailed test cases, testing specific behaviors are in the core module: ProtoTranscoderSpec and
- * TranscoderLookupSpec.
- */
+/** Integration tests for ProtoTranscoder. We check it here against a number of different encoders,
+  * stream option sets, and test cases. This is meant to catch rare or obscure bugs in the
+  * transcoder.
+  *
+  * More detailed test cases, testing specific behaviors are in the core module: ProtoTranscoderSpec
+  * and TranscoderLookupSpec.
+  */
 class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
   given actorSystem: ActorSystem = ActorSystem()
   given ExecutionContext = actorSystem.getDispatcher
@@ -60,12 +59,20 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
         buffer += quadsOrTriplesEncoder.makeTriple(subject, predicate, `object`)
       }
 
-      override def handleQuad(subject: Value, predicate: Value, `object`: Value, graph: Value): Unit = {
+      override def handleQuad(
+          subject: Value,
+          predicate: Value,
+          `object`: Value,
+          graph: Value,
+      ): Unit = {
         buffer += quadsOrTriplesEncoder.makeQuad(subject, predicate, `object`, graph)
       }
     }
 
-    val decoder = Rdf4jConverterFactory.getInstance().anyStatementDecoder(handler, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+    val decoder = Rdf4jConverterFactory.getInstance().anyStatementDecoder(
+      handler,
+      JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
+    )
     (frame: RdfStreamFrame) => {
       frame.getRows.asScala.foreach(decoder.ingestRow)
       val result = buffer.toList
@@ -76,11 +83,17 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   def addStreamTypeToOptions(opt: RdfStreamOptions, t: String): RdfStreamOptions =
     if t == "triples" then
-      opt.clone().setPhysicalType(PhysicalStreamType.TRIPLES).setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+      opt.clone().setPhysicalType(PhysicalStreamType.TRIPLES).setLogicalType(
+        LogicalStreamType.FLAT_TRIPLES,
+      )
     else if t == "quads" then
-      opt.clone().setPhysicalType(PhysicalStreamType.QUADS).setLogicalType(LogicalStreamType.FLAT_QUADS)
+      opt.clone().setPhysicalType(PhysicalStreamType.QUADS).setLogicalType(
+        LogicalStreamType.FLAT_QUADS,
+      )
     else
-      opt.clone().setPhysicalType(PhysicalStreamType.GRAPHS).setLogicalType(LogicalStreamType.NAMED_GRAPHS)
+      opt.clone().setPhysicalType(PhysicalStreamType.GRAPHS).setLogicalType(
+        LogicalStreamType.NAMED_GRAPHS,
+      )
 
   private def checkTestCaseSupport(ser: TestStream, f: String) =
     (ser.supportsRdfStar || !f.contains("star")) &&
@@ -93,16 +106,17 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     ("RDF4J", Rdf4jTestStream),
   )
 
-  private val transcoderImpls: Seq[(String, (Option[RdfStreamOptions], RdfStreamOptions) => ProtoTranscoder)] = Seq(
+  private val transcoderImpls
+      : Seq[(String, (Option[RdfStreamOptions], RdfStreamOptions) => ProtoTranscoder)] = Seq(
     (
       "fastMergingTranscoder",
       (suppInput: Option[RdfStreamOptions], output: RdfStreamOptions) =>
-        JellyTranscoderFactory.fastMergingTranscoder(suppInput.get, output)
+        JellyTranscoderFactory.fastMergingTranscoder(suppInput.get, output),
     ),
     (
       "fastMergingTranscoderUnsafe",
       (suppInput: Option[RdfStreamOptions], output: RdfStreamOptions) =>
-        JellyTranscoderFactory.fastMergingTranscoderUnsafe(output)
+        JellyTranscoderFactory.fastMergingTranscoderUnsafe(output),
     ),
   )
 
@@ -111,13 +125,13 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
   private object TripleTests:
     val files: Seq[(String, File)] = TestCases.triples
     val graphs: Map[String, Graph] = Map.from(
-      files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString, TestRiot.NT_ANY)))
+      files.map((name, f) => (name, RDFDataMgr.loadGraph(f.toURI.toString, TestRiot.NT_ANY))),
     )
 
   private object QuadTests:
     val files: Seq[(String, File)] = TestCases.quads
     val datasets: Map[String, DatasetGraph] = Map.from(
-      files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString, TestRiot.NQ_ANY)))
+      files.map((name, f) => (name, RDFDataMgr.loadDatasetGraph(f.toURI.toString, TestRiot.NQ_ANY))),
     )
 
   private val jellyOptions: Seq[(String, RdfStreamOptions)] = Seq(
@@ -125,7 +139,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     ("small, no prefix table", JellyOptions.SMALL_ALL_FEATURES.clone().setMaxPrefixTableSize(0)),
     (
       "tiny name table, tiny prefix table",
-      JellyOptions.SMALL_ALL_FEATURES.clone().setMaxPrefixTableSize(8).setMaxNameTableSize(16)
+      JellyOptions.SMALL_ALL_FEATURES.clone().setMaxPrefixTableSize(8).setMaxNameTableSize(16),
     ),
     ("big default", JellyOptions.BIG_ALL_FEATURES),
   )
@@ -140,8 +154,14 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
   // 2. Construct the test cases
 
   final case class TestCase(
-    physicalType: String, encoder: String, jOpt: String, limiter: String, caseName: String,
-    options: RdfStreamOptions, frames: Seq[RdfStreamFrame], statements: Seq[Statement]
+      physicalType: String,
+      encoder: String,
+      jOpt: String,
+      limiter: String,
+      caseName: String,
+      options: RdfStreamOptions,
+      frames: Seq[RdfStreamFrame],
+      statements: Seq[Statement],
   ):
     override def toString: String = s"[$physicalType, $encoder, $jOpt, $limiter, $caseName]"
 
@@ -202,75 +222,80 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
       for
         (outputOptName, outputOpt) <- jellyOptions
         (sInputOptName, sInputOpt) <- jellyOptions
-          .filter((_, o) => o == outputOpt || (checkCompat(o, outputOpt) && !transName.contains("Unsafe")))
-      do s"demanded output is $outputOptName, supported input is $sInputOptName" should {
-        val compatibleCases = testCases.filter(tc => checkCompat(tc.options, sInputOpt))
-        val sInputOpt2 = sInputOpt.clone().setVersion(JellyConstants.PROTO_VERSION)
+          .filter((_, o) =>
+            o == outputOpt || (checkCompat(o, outputOpt) && !transName.contains("Unsafe")),
+          )
+      do
+        s"demanded output is $outputOptName, supported input is $sInputOptName" should {
+          val compatibleCases = testCases.filter(tc => checkCompat(tc.options, sInputOpt))
+          val sInputOpt2 = sInputOpt.clone().setVersion(JellyConstants.PROTO_VERSION)
 
-        "transcode an empty stream" in {
-          val transcoder = transFactory(Some(sInputOpt2), outputOpt)
-          val emptyFrame = RdfStreamFrame.EMPTY
-          val emptyResult = transcoder.ingestFrame(emptyFrame)
-          emptyResult.getRows.asScala should be (emptyFrame.getRows.asScala)
-        }
+          "transcode an empty stream" in {
+            val transcoder = transFactory(Some(sInputOpt2), outputOpt)
+            val emptyFrame = RdfStreamFrame.EMPTY
+            val emptyResult = transcoder.ingestFrame(emptyFrame)
+            emptyResult.getRows.asScala should be(emptyFrame.getRows.asScala)
+          }
 
-        for tc <- compatibleCases do s"frame-transcode a single input stream $tc" in {
-          val outputOpt2 = addStreamTypeToOptions(outputOpt, tc.physicalType)
-          val transcoder = transFactory(Some(sInputOpt2), outputOpt2)
-          val result: Seq[RdfStreamFrame] = tc.frames.map(transcoder.ingestFrame)
-          if tc.options == outputOpt then
-            for
-              (frame, frameI) <- result.zipWithIndex
-              (r, i) <- frame.getRows.asScala.zipWithIndex
-            do
-              withClue(s"at frame $frameI row $i ") {
-                r should be (tc.frames(frameI).getRows.asScala.toSeq(i))
-              }
-          val decoded = decodeToStatements(result)
-          decoded.size should be (tc.statements.size)
-          for (s, i) <- tc.statements.zip(decoded).zipWithIndex do
-            val (expected, observed) = s
-            withClue("at index " + i) {
-              observed should be (expected)
+          for tc <- compatibleCases do
+            s"frame-transcode a single input stream $tc" in {
+              val outputOpt2 = addStreamTypeToOptions(outputOpt, tc.physicalType)
+              val transcoder = transFactory(Some(sInputOpt2), outputOpt2)
+              val result: Seq[RdfStreamFrame] = tc.frames.map(transcoder.ingestFrame)
+              if tc.options == outputOpt then
+                for
+                  (frame, frameI) <- result.zipWithIndex
+                  (r, i) <- frame.getRows.asScala.zipWithIndex
+                do
+                  withClue(s"at frame $frameI row $i ") {
+                    r should be(tc.frames(frameI).getRows.asScala.toSeq(i))
+                  }
+              val decoded = decodeToStatements(result)
+              decoded.size should be(tc.statements.size)
+              for (s, i) <- tc.statements.zip(decoded).zipWithIndex do
+                val (expected, observed) = s
+                withClue("at index " + i) {
+                  observed should be(expected)
+                }
+            }
+
+          for tc <- compatibleCases do
+            s"frame-transcode a single input repeated many times $tc" in {
+              val outputOpt2 = addStreamTypeToOptions(outputOpt, tc.physicalType)
+              val transcoder = transFactory(Some(sInputOpt2), outputOpt2)
+              val decoder = getFrameDecoder
+              for inputIx <- 1 to 20 do
+                val result: Seq[RdfStreamFrame] = tc.frames.map(transcoder.ingestFrame)
+                val decoded = result.flatMap(decoder)
+                decoded.size should be(tc.statements.size)
+                for (s, i) <- tc.statements.zip(decoded).zipWithIndex do
+                  val (expected, observed) = s
+                  withClue(s"at input stream $inputIx index $i") {
+                    observed should be(expected)
+                  }
+            }
+
+          def makeTc(physicalType: String) =
+            val pool = compatibleCases.filter(_.physicalType == physicalType)
+            for j <- 1 to Random.nextInt(20) + 20 yield pool(Random.nextInt(pool.size))
+
+          val mixedTcs = (for i <- 1 to 4 yield makeTc("triples")) ++
+            (for i <- 1 to 4 yield makeTc("quads")) ++ (for i <- 1 to 4 yield makeTc("graphs"))
+
+          for (mixedTc, i) <- mixedTcs.zipWithIndex do
+            s"frame-transcode a mixed concatenated input stream ($i)" in {
+              val outputOpt2 = addStreamTypeToOptions(outputOpt, mixedTc.head.physicalType)
+              val transcoder = transFactory(Some(sInputOpt2), outputOpt2)
+              val decoder = getFrameDecoder
+              for (tc, inputIx) <- mixedTc.zipWithIndex do
+                val result: Seq[RdfStreamFrame] = tc.frames.map(transcoder.ingestFrame)
+                val decoded = result.flatMap(decoder)
+                decoded.size should be(tc.statements.size)
+                for (s, i) <- tc.statements.zip(decoded).zipWithIndex do
+                  val (expected, observed) = s
+                  withClue(s"at input stream $inputIx $tc index $i") {
+                    observed should be(expected)
+                  }
             }
         }
-
-        for tc <- compatibleCases do s"frame-transcode a single input repeated many times $tc" in {
-          val outputOpt2 = addStreamTypeToOptions(outputOpt, tc.physicalType)
-          val transcoder = transFactory(Some(sInputOpt2), outputOpt2)
-          val decoder = getFrameDecoder
-          for inputIx <- 1 to 20 do
-            val result: Seq[RdfStreamFrame] = tc.frames.map(transcoder.ingestFrame)
-            val decoded = result.flatMap(decoder)
-            decoded.size should be(tc.statements.size)
-            for (s, i) <- tc.statements.zip(decoded).zipWithIndex do
-              val (expected, observed) = s
-              withClue(s"at input stream $inputIx index $i") {
-                observed should be(expected)
-              }
-        }
-
-        def makeTc(physicalType: String) =
-          val pool = compatibleCases.filter(_.physicalType == physicalType)
-          for j <- 1 to Random.nextInt(20) + 20 yield
-            pool(Random.nextInt(pool.size))
-
-        val mixedTcs = (for i <- 1 to 4 yield makeTc("triples")) ++
-          (for i <- 1 to 4 yield makeTc("quads")) ++ (for i <- 1 to 4 yield makeTc("graphs"))
-
-        for (mixedTc, i) <- mixedTcs.zipWithIndex do s"frame-transcode a mixed concatenated input stream ($i)" in {
-          val outputOpt2 = addStreamTypeToOptions(outputOpt, mixedTc.head.physicalType)
-          val transcoder = transFactory(Some(sInputOpt2), outputOpt2)
-          val decoder = getFrameDecoder
-          for (tc, inputIx) <- mixedTc.zipWithIndex do
-            val result: Seq[RdfStreamFrame] = tc.frames.map(transcoder.ingestFrame)
-            val decoded = result.flatMap(decoder)
-            decoded.size should be(tc.statements.size)
-            for (s, i) <- tc.statements.zip(decoded).zipWithIndex do
-              val (expected, observed) = s
-              withClue(s"at input stream $inputIx $tc index $i") {
-                observed should be(expected)
-              }
-        }
-      }
     }
