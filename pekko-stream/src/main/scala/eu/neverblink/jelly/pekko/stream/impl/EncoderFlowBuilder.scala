@@ -358,6 +358,28 @@ final class EncoderFlowBuilderImpl[TNode](using
     ): FlowableBuilder[TQuad, Nothing] =
       new FlatQuadsBuilder(limiter, opt)
 
+    /** Convert a flat stream of quad statements into a stream of [[RdfStreamFrame]]s. Physical
+      * stream type: GRAPHS. Logical stream type (RDF-STaX): flat RDF quad stream (FLAT_QUADS).
+      *
+      * This flow will wait for enough items to fill the whole gRPC message, which increases
+      * latency.
+      *
+      * @param opt
+      *   Options for the RDF stream.
+      * @param converterFactory
+      *   Converter factory to use for creating encoders.
+      * @tparam TQuad
+      *   Type of the quads in the input stream.
+      * @return
+      *   FlowableBuilder that can be materialized into a flow or further modified.
+      */
+    def flatGraphs[TQuad](opt: RdfStreamOptions)(using
+        converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[
+          TNode,
+        ] & QuadExtractor[TNode, TQuad], ?],
+    ): FlowableBuilder[TQuad, Nothing] =
+      new FlatGraphBuilder[TQuad](limiter, opt)
+
   end LimiterBuilder
 
   /** Builder stage that applies some transformation to the input stream.
@@ -510,6 +532,37 @@ final class EncoderFlowBuilderImpl[TNode](using
 
     override protected def paramMutator(p: Params): Params =
       p.withOptions(makeOptions(opt, PhysicalStreamType.QUADS, lst))
+
+  // Graphs flat
+  private final class FlatGraphBuilder[TQuad](limiter: SizeLimiter, opt: RdfStreamOptions)(using
+      converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[
+        TNode,
+      ] & QuadExtractor[TNode, TQuad], ?],
+  ) extends EncoderBuilder[TQuad](opt):
+
+    private val quadExtractor = converterFactory.encoderConverter()
+    private var lastGraph: Option[TNode] = None
+    private var graphStarted: Boolean = false
+
+    override protected[EncoderFlowBuilderImpl] def flowInternal(
+        encoder: TEncoder,
+    ): Flow[TQuad, RdfStreamFrame, NotUsed] =
+      flatFlow(
+        e => {
+          encoder.handleGraphStart(quadExtractor.getQuadGraph(e))
+          encoder.handleTriple(
+            quadExtractor.getQuadSubject(e),
+            quadExtractor.getQuadPredicate(e),
+            quadExtractor.getQuadObject(e),
+          )
+          encoder.handleGraphEnd()
+        },
+        limiter,
+        encoder,
+      )
+
+    override protected def paramMutator(p: Params): Params =
+      p.withOptions(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.FLAT_QUADS))
 
   // Named graphs
   private final class NamedGraphsBuilder[TTriple](

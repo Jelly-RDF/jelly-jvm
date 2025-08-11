@@ -1,12 +1,14 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
-import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory
+import eu.neverblink.jelly.convert.rdf4j.{Rdf4jAdapters, Rdf4jConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
-import eu.neverblink.jelly.pekko.stream.{DecoderFlow, EncoderFlow, JellyIo, StreamRowCountLimiter}
+import eu.neverblink.jelly.core.utils.DatasetAdapter
+import eu.neverblink.jelly.pekko.stream.*
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.*
-import org.eclipse.rdf4j.model.{Statement, Value}
+import org.eclipse.rdf4j.model.util.ModelCollector
+import org.eclipse.rdf4j.model.{Model, Statement, Value}
 
 import java.io.*
 import scala.concurrent.Await
@@ -111,17 +113,28 @@ class Rdf4jReactiveSerDes(using Materializer)
   override def writeQuadsJelly(
       os: OutputStream,
       dataset: Seq[Statement],
-      opt: Option[RdfStreamOptions],
+      maybeOptions: Option[RdfStreamOptions],
       frameSize: Int,
   ): Unit =
-    val f = Source.fromIterator(() => dataset.iterator)
-      .via(
-        EncoderFlow.builder
-          .withLimiter(StreamRowCountLimiter(frameSize))
-          .flatQuads(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
-          .flow,
-      )
-      .runWith(JellyIo.toIoStream(os))
+    val options = maybeOptions.getOrElse(JellyOptions.SMALL_ALL_FEATURES)
+    given DatasetAdapter[Value, Statement, Statement, Model] = Rdf4jAdapters.DATASET_ADAPTER
+    val f = if options.getPhysicalType == PhysicalStreamType.QUADS then {
+      Source.fromIterator(() => dataset.iterator)
+        .via(
+          EncoderFlow.builder
+            .withLimiter(StreamRowCountLimiter(frameSize))
+            .flatQuads(options).flow,
+        )
+        .runWith(JellyIo.toIoStream(os))
+    } else {
+      Source.fromIterator(() => dataset.iterator)
+        .via(
+          EncoderFlow.builder
+            .withLimiter(StreamRowCountLimiter(frameSize))
+            .flatGraphs(options).flow,
+        )
+        .runWith(JellyIo.toIoStream(os))
+    }
     Await.result(f, 10.seconds)
 
   override def writeQuadsJelly(
@@ -131,15 +144,7 @@ class Rdf4jReactiveSerDes(using Materializer)
       frameSize: Int,
   ): Unit =
     val fileOs = new FileOutputStream(file)
-    val f = Source.fromIterator(() => quads.iterator)
-      .via(
-        EncoderFlow.builder
-          .withLimiter(StreamRowCountLimiter(frameSize))
-          .flatQuads(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
-          .flow,
-      )
-      .runWith(JellyIo.toIoStream(fileOs))
-    Await.result(f, 10.seconds)
+    writeQuadsJelly(fileOs, quads, opt, frameSize)
     fileOs.close()
 
   override def isBlank(node: Value): Boolean = Rdf4jSerDes.isBlank(node)

@@ -136,18 +136,30 @@ class JenaReactiveSerDes(implicit mat: Materializer)
   override def writeQuadsJelly(
       file: File,
       quads: Seq[Quad],
-      opt: Option[RdfStreamOptions],
+      maybeOpt: Option[RdfStreamOptions],
       frameSize: Int,
   ): Unit =
     val fileOs = new FileOutputStream(file)
-    val f = Source.fromIterator(() => quads.iterator)
-      .via(
-        EncoderFlow.builder
-          .withLimiter(ByteSizeLimiter(32_000))
-          .flatQuads(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
-          .flow,
-      )
-      .runWith(JellyIo.toIoStream(fileOs))
+    val opt = maybeOpt.getOrElse(JellyOptions.SMALL_ALL_FEATURES)
+    val f =
+      if opt.getPhysicalType == PhysicalStreamType.QUADS then
+        Source.fromIterator(() => quads.iterator)
+          .via(
+            EncoderFlow.builder
+              .withLimiter(ByteSizeLimiter(32_000))
+              .flatQuads(opt)
+              .flow,
+          )
+          .runWith(JellyIo.toIoStream(fileOs))
+      else
+        Source.fromIterator(() => quads.iterator)
+          .via(
+            EncoderFlow.builder
+              .withLimiter(ByteSizeLimiter(32_000))
+              .flatGraphs(opt)
+              .flow,
+          )
+          .runWith(JellyIo.toIoStream(fileOs))
     Await.result(f, 10.seconds)
     fileOs.close()
 
