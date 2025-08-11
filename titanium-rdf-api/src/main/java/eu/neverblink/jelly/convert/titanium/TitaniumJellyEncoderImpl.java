@@ -24,10 +24,13 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
     private final RowBuffer buffer;
 
     public TitaniumJellyEncoderImpl(RdfStreamOptions options, int frameSize) {
-        // We set the stream type to QUADS, as this is the only type supported by Titanium.
         final var supportedOptions = options
             .clone()
-            .setPhysicalType(PhysicalStreamType.QUADS)
+            .setPhysicalType(
+                options.getPhysicalType() == PhysicalStreamType.UNSPECIFIED
+                ? PhysicalStreamType.QUADS
+                : options.getPhysicalType()
+            )
             .setLogicalType(
                 options.getLogicalType() == LogicalStreamType.UNSPECIFIED
                     ? LogicalStreamType.FLAT_QUADS
@@ -95,6 +98,59 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
             } else {
                 encoder.handleQuad(subject, predicate, object, graph);
             }
+        } catch (RdfProtoSerializationError e) {
+            throw new RdfConsumerException(e.getMessage(), e);
+        }
+
+        return this;
+    }
+    
+    public RdfQuadConsumer triple(
+        String subject,
+        String predicate,
+        String object,
+        String datatype,
+        String language,
+        String direction,
+        String graph
+    ) throws RdfConsumerException {
+        // IRIs and bnodes don't need further processing. For literals, we must allocate
+        // intermediate objects.
+        try {
+            if (RdfQuadConsumer.isLiteral(datatype, language, direction)) {
+                final TitaniumLiteral literal;
+                if (RdfQuadConsumer.isLangString(datatype, language, direction)) {
+                    literal = new TitaniumLiteral.LangLiteral(object, language);
+                } else if (datatype.equals(DT_STRING)) {
+                    literal = new TitaniumLiteral.SimpleLiteral(object);
+                } else {
+                    literal = new TitaniumLiteral.DtLiteral(object, datatype);
+                }
+
+                encoder.handleTriple(subject, predicate, literal);
+            } else {
+                encoder.handleTriple(subject, predicate, object);
+            }
+        } catch (RdfProtoSerializationError e) {
+            throw new RdfConsumerException(e.getMessage(), e);
+        }
+
+        return this;
+    }
+
+    public RdfQuadConsumer startGraph(String graph) throws RdfConsumerException {
+        try {
+            encoder.handleGraphStart(graph);
+        } catch (RdfProtoSerializationError e) {
+            throw new RdfConsumerException(e.getMessage(), e);
+        }
+
+        return this;
+    }
+
+    public RdfQuadConsumer finishGraph() throws RdfConsumerException {
+        try {
+            encoder.handleGraphEnd();
         } catch (RdfProtoSerializationError e) {
             throw new RdfConsumerException(e.getMessage(), e);
         }

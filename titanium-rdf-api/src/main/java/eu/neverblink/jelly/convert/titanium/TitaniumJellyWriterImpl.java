@@ -4,6 +4,7 @@ import com.apicatalog.rdf.api.RdfConsumerException;
 import com.apicatalog.rdf.api.RdfQuadConsumer;
 import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.InternalApi;
+import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
@@ -17,14 +18,20 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
     private final OutputStream outputStream;
     private final CodedOutputStream codedOutput;
     private final int frameSize;
+    private final RdfStreamOptions options;
 
-    private final TitaniumJellyEncoder encoder;
+    private final TitaniumJellyEncoderImpl encoder;
     private final RdfStreamFrame.Mutable reusableFrame;
+    
+    // Used for GRAPHS physical type
+    private boolean graphStarted = false;
+    private String currentGraph = null;
 
     TitaniumJellyWriterImpl(OutputStream outputStream, RdfStreamOptions options, int frameSize) {
         this.outputStream = outputStream;
         this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
         this.frameSize = frameSize;
+        this.options = options;
 
         this.encoder = new TitaniumJellyEncoderImpl(options, frameSize);
         this.reusableFrame = RdfStreamFrame.newInstance();
@@ -55,7 +62,12 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
         String direction,
         String graph
     ) throws RdfConsumerException {
-        encoder.quad(subject, predicate, object, datatype, language, direction, graph);
+        if (options.getPhysicalType() == PhysicalStreamType.GRAPHS) {
+            graph(subject, predicate, object, datatype, language, direction, graph);
+        }
+        else {
+            encoder.quad(subject, predicate, object, datatype, language, direction, graph);
+        }
         if (encoder.getRowCount() >= frameSize) {
             reusableFrame.resetCachedSize();
             reusableFrame.setRows(encoder.getRows());
@@ -73,6 +85,15 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
 
     @Override
     public void close() throws IOException {
+        if (options.getPhysicalType() == PhysicalStreamType.GRAPHS && graphStarted) {
+            try {
+                encoder.finishGraph();
+            }
+            catch (RdfConsumerException e) {
+                throw new IOException(e.getMessage(), e);
+            }
+        }
+        
         if (encoder.getRowCount() > 0) {
             reusableFrame.resetCachedSize();
             reusableFrame.setRows(encoder.getRows());
@@ -88,5 +109,30 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
             outputStream.flush();
             outputStream.close();
         }
+    }
+    
+    private void graph(        String subject,
+                               String predicate,
+                               String object,
+                               String datatype,
+                               String language,
+                               String direction,
+                               String graph) throws RdfConsumerException {
+        if (!graphStarted) {
+            encoder.startGraph(graph);
+            graphStarted = true;
+        }
+        if (currentGraph == null && graph == null) {
+            encoder.triple(subject, predicate, object, datatype, language, direction, graph);
+            return;
+        }
+        if (currentGraph != null && currentGraph.equals(graph)) {
+            encoder.triple(subject, predicate, object, datatype, language, direction, graph);
+            return;
+        }
+        encoder.finishGraph();
+        currentGraph = graph;
+        encoder.startGraph(currentGraph);
+        encoder.triple(subject, predicate, object, datatype, language, direction, graph);
     }
 }
