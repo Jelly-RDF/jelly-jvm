@@ -2,8 +2,9 @@ package eu.neverblink.jelly.convert.jena.riot
 
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
+import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.utils.IoUtils
-import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
+import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamFrame, RdfStreamOptions}
 import org.apache.commons.io.output.{ByteArrayOutputStream, NullWriter}
 import org.apache.jena.graph.{NodeFactory, Triple}
 import org.apache.jena.riot.RiotException
@@ -138,6 +139,31 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
       val writer =
         JellyStreamWriterAutodetectType(converterFactory, JellyFormatVariant.getDefault, out)
       writer.finish()
+    }
+
+    "adsas" in {
+      val out = new ByteArrayOutputStream()
+      val opts = JellyOptions.SMALL_STRICT.clone().setPhysicalType(PhysicalStreamType.GRAPHS)
+      val writer = JellyStreamWriterAutodetectType(
+        converterFactory,
+        JellyFormatVariant.builder
+          .isDelimited(true)
+          .enableNamespaceDeclarations(false)
+          .options(opts)
+          .frameSize(1)
+          .build(),
+        out,
+      )
+      writer.start()
+      for _ <- 1 to 100 do writer.triple(testTriple)
+      writer.finish()
+      val bytes = out.toByteArray
+      val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
+      response.isDelimited should be(true)
+      for i <- 0 until 100 do
+        val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
+        f should not be null
+        f.getRows.size should be > 2
     }
   }
 
