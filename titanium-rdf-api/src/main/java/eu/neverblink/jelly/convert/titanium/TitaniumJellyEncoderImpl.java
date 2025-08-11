@@ -28,8 +28,8 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
             .clone()
             .setPhysicalType(
                 options.getPhysicalType() == PhysicalStreamType.UNSPECIFIED
-                ? PhysicalStreamType.QUADS
-                : options.getPhysicalType()
+                    ? PhysicalStreamType.QUADS
+                    : options.getPhysicalType()
             )
             .setLogicalType(
                 options.getLogicalType() == LogicalStreamType.UNSPECIFIED
@@ -104,7 +104,7 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
 
         return this;
     }
-    
+
     public RdfQuadConsumer triple(
         String subject,
         String predicate,

@@ -22,7 +22,7 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
 
     private final TitaniumJellyEncoderImpl encoder;
     private final RdfStreamFrame.Mutable reusableFrame;
-    
+
     // Used for GRAPHS physical type
     private boolean graphStarted = false;
     private String currentGraph = null;
@@ -64,8 +64,7 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
     ) throws RdfConsumerException {
         if (options.getPhysicalType() == PhysicalStreamType.GRAPHS) {
             graph(subject, predicate, object, datatype, language, direction, graph);
-        }
-        else {
+        } else {
             encoder.quad(subject, predicate, object, datatype, language, direction, graph);
         }
         if (encoder.getRowCount() >= frameSize) {
@@ -88,12 +87,11 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
         if (options.getPhysicalType() == PhysicalStreamType.GRAPHS && graphStarted) {
             try {
                 encoder.finishGraph();
-            }
-            catch (RdfConsumerException e) {
+            } catch (RdfConsumerException e) {
                 throw new IOException(e.getMessage(), e);
             }
         }
-        
+
         if (encoder.getRowCount() > 0) {
             reusableFrame.resetCachedSize();
             reusableFrame.setRows(encoder.getRows());
@@ -110,14 +108,16 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
             outputStream.close();
         }
     }
-    
-    private void graph(        String subject,
-                               String predicate,
-                               String object,
-                               String datatype,
-                               String language,
-                               String direction,
-                               String graph) throws RdfConsumerException {
+
+    private void graph(
+        String subject,
+        String predicate,
+        String object,
+        String datatype,
+        String language,
+        String direction,
+        String graph
+    ) throws RdfConsumerException {
         if (!graphStarted) {
             encoder.startGraph(graph);
             graphStarted = true;

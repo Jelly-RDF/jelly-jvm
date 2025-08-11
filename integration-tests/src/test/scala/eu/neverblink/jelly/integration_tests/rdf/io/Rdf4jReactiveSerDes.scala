@@ -1,14 +1,12 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
-import eu.neverblink.jelly.convert.rdf4j.{Rdf4jAdapters, Rdf4jConverterFactory}
+import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
-import eu.neverblink.jelly.core.utils.DatasetAdapter
 import eu.neverblink.jelly.pekko.stream.*
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.*
-import org.eclipse.rdf4j.model.util.ModelCollector
-import org.eclipse.rdf4j.model.{Model, Statement, Value}
+import org.eclipse.rdf4j.model.{Statement, Value}
 
 import java.io.*
 import scala.concurrent.Await
@@ -117,7 +115,6 @@ class Rdf4jReactiveSerDes(using Materializer)
       frameSize: Int,
   ): Unit =
     val options = maybeOptions.getOrElse(JellyOptions.SMALL_ALL_FEATURES)
-    given DatasetAdapter[Value, Statement, Statement, Model] = Rdf4jAdapters.DATASET_ADAPTER
     val f = if options.getPhysicalType == PhysicalStreamType.QUADS then {
       Source.fromIterator(() => dataset.iterator)
         .via(
