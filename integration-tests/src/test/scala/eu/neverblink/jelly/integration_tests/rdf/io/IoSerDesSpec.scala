@@ -86,8 +86,8 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       options.getPhysicalType should be(PhysicalStreamType.TRIPLES)
       options.getLogicalType should be(LogicalStreamType.FLAT_TRIPLES)
     else if expectedType == "quads" then
-      options.getPhysicalType == PhysicalStreamType.QUADS || 
-        options.getPhysicalType == PhysicalStreamType.GRAPHS shouldBe true
+      options.getPhysicalType == PhysicalStreamType.QUADS ||
+      options.getPhysicalType == PhysicalStreamType.GRAPHS shouldBe true
       options.getLogicalType should be(LogicalStreamType.FLAT_QUADS)
     options.getGeneralizedStatements should be(expOpt.getGeneralizedStatements)
     options.getRdfStar should be(expOpt.getRdfStar)
