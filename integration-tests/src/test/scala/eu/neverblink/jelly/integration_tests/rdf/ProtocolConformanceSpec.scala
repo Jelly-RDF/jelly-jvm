@@ -222,8 +222,3 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
           !entry.hasPhysicalTypeGraphsRequirement || entry.hasPhysicalTypeGraphsRequirement && serDes.supportsGraphs,
         )
         .filterNot(_.isTestRejected)
-        .filterNot(isTestEntryBlocked)
-
-  // TODO: This is our "todo" tests function
-  private def isTestEntryBlocked(testEntry: Resource): Boolean =
-    !testEntry.hasPhysicalTypeGraphsRequirement // Graph physical type is not supported yet
