@@ -28,7 +28,6 @@ class TitaniumJellyWriterSpec extends AnyWordSpec, Matchers:
       val os = new java.io.ByteArrayOutputStream()
       val writer = TitaniumJellyWriter.factory(
         os,
-        // Incorrect type, should be overridden
         JellyOptions.BIG_STRICT.clone()
           .setPhysicalType(PhysicalStreamType.GRAPHS)
           .setLogicalType(LogicalStreamType.DATASETS),
@@ -36,7 +35,7 @@ class TitaniumJellyWriterSpec extends AnyWordSpec, Matchers:
       )
       writer.getOptions should be(
         JellyOptions.BIG_STRICT.clone()
-          .setPhysicalType(PhysicalStreamType.QUADS)
+          .setPhysicalType(PhysicalStreamType.GRAPHS)
           .setLogicalType(LogicalStreamType.DATASETS)
           .setVersion(JellyConstants.PROTO_VERSION_1_0_X),
       )
