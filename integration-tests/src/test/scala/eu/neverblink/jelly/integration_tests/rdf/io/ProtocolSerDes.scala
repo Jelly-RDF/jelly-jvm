@@ -30,6 +30,7 @@ trait ProtocolSerDes[TNode, TTriple, TQuad] extends RdfCompareHydrator[TNode, TT
 
   def supportsTriples: Boolean = true
   def supportsQuads: Boolean = true
-  def supportsGraphs: Boolean = true
+  def supportsReadingGraphs: Boolean = true
+  def supportsWritingGraphs: Boolean = false
   def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = true
   def supportsGeneralizedStatements: Boolean
