@@ -218,12 +218,14 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
         .filter(entry =>
           !entry.hasPhysicalTypeQuadsRequirement || entry.hasPhysicalTypeQuadsRequirement && serDes.supportsQuads,
         )
-        .filter(entry =>
-          !entry.hasPhysicalTypeGraphsRequirement || entry.hasPhysicalTypeGraphsRequirement && serDes.supportsGraphs,
-        )
+        .filter(entry => {
+          val readingGraphsRequirement =
+            entry.hasPhysicalTypeGraphsRequirement && entry.isTestRdfFromJelly
+          !readingGraphsRequirement || readingGraphsRequirement && serDes.supportsReadingGraphs
+        })
+        .filter(entry => {
+          val writingGraphsRequirement =
+            entry.hasPhysicalTypeGraphsRequirement && entry.isTestRdfToJelly
+          !writingGraphsRequirement || writingGraphsRequirement && serDes.supportsWritingGraphs
+        })
         .filterNot(_.isTestRejected)
-        .filterNot(isTestEntryBlocked)
-
-  // TODO: This is our "todo" tests function
-  private def isTestEntryBlocked(testEntry: Resource): Boolean =
-    testEntry.hasPhysicalTypeGraphsRequirement // Graph physical type is not supported yet
