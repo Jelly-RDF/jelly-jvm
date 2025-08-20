@@ -98,7 +98,7 @@ trait DecoderFlowOps:
   private def groupedStream[TOut](
       buffer: util.Collection[TOut],
       decoder: ProtoDecoder[?, ?],
-  ): Flow[RdfStreamFrame, IterableOnce[TOut], NotUsed] =
+  ): Flow[RdfStreamFrame, Seq[TOut], NotUsed] =
     Flow[RdfStreamFrame]
       .map(frame => {
         frame.getRows.asScala.foreach(row => {
@@ -156,7 +156,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed] = {
+      ): Flow[RdfStreamFrame, Seq[TTriple], NotUsed] = {
         val tripleMaker = converterFactory.decoderConverter()
 
         val buffer = ListBuffer[TTriple]().asJava
@@ -215,7 +215,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] = {
+      ): Flow[RdfStreamFrame, Seq[TQuad], NotUsed] = {
         val quadsMaker = converterFactory.decoderConverter()
 
         val buffer = ListBuffer[TQuad]().asJava
@@ -280,7 +280,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] = {
+      ): Flow[RdfStreamFrame, Seq[TQuad], NotUsed] = {
         val quadsMaker = converterFactory.decoderConverter()
 
         val buffer = ListBuffer[TQuad]().asJava
@@ -307,7 +307,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] = {
+      ): Flow[RdfStreamFrame, Seq[(TNode, Iterable[TTriple])], NotUsed] = {
         val triplesMaker = converterFactory.decoderConverter()
 
         val buffer = ListBuffer[(TNode, Iterable[TTriple])]().asJava
@@ -408,7 +408,7 @@ trait DecoderFlowOps:
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple] &
               QuadMaker[TNode, TQuad],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed] = {
+      ): Flow[RdfStreamFrame, Seq[TTriple | TQuad], NotUsed] = {
         val buffer = ListBuffer[TTriple | TQuad]().asJava
         val handler = new RdfHandler.AnyStatementHandler[TNode] {
           private val maker = converterFactory.decoderConverter()
@@ -651,7 +651,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed] =
+      ): Flow[RdfStreamFrame, Seq[TTriple], NotUsed] =
         asGraphStream(
           JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setLogicalType(LogicalStreamType.GRAPHS),
         )
@@ -680,7 +680,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed] =
+      ): Flow[RdfStreamFrame, Seq[TTriple], NotUsed] =
         asGraphStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
       /** Interpret the incoming stream as an RDF graph stream from RDF-STaX. Each iterable (graph)
@@ -707,7 +707,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TTriple], NotUsed]
+      ): Flow[RdfStreamFrame, Seq[TTriple], NotUsed]
 
     trait DatasetStreamOfQuads:
       /** Interpret the incoming stream as an RDF dataset stream from RDF-STaX. Each iterable
@@ -735,7 +735,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
+      ): Flow[RdfStreamFrame, Seq[TQuad], NotUsed] =
         asDatasetStreamOfQuads(
           JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setLogicalType(LogicalStreamType.DATASETS),
         )
@@ -765,7 +765,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed] =
+      ): Flow[RdfStreamFrame, Seq[TQuad], NotUsed] =
         asDatasetStreamOfQuads(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
       /** Interpret the incoming stream as an RDF dataset stream from RDF-STaX. Each iterable
@@ -793,7 +793,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & QuadMaker[TNode, TQuad],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TQuad], NotUsed]
+      ): Flow[RdfStreamFrame, Seq[TQuad], NotUsed]
 
     trait DatasetStream:
       /** Interpret the incoming stream as an RDF dataset stream from RDF-STaX. Each iterable
@@ -821,7 +821,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] =
+      ): Flow[RdfStreamFrame, Seq[(TNode, Iterable[TTriple])], NotUsed] =
         asDatasetStream(
           JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setLogicalType(LogicalStreamType.DATASETS),
         )
@@ -851,7 +851,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed] =
+      ): Flow[RdfStreamFrame, Seq[(TNode, Iterable[TTriple])], NotUsed] =
         asDatasetStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
       /** Interpret the incoming stream as an RDF dataset stream from RDF-STaX. Each iterable
@@ -879,7 +879,7 @@ trait DecoderFlowOps:
             ?,
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[(TNode, Iterable[TTriple])], NotUsed]
+      ): Flow[RdfStreamFrame, Seq[(TNode, Iterable[TTriple])], NotUsed]
 
       /** Interpret the incoming stream as an RDF dataset stream from RDF-STaX and then flatten it.
         * The borders between stream frames are ignored and the triples are grouped by the graph
@@ -996,7 +996,7 @@ trait DecoderFlowOps:
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple] &
               QuadMaker[TNode, TQuad],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed] =
+      ): Flow[RdfStreamFrame, Seq[TTriple | TQuad], NotUsed] =
         asGroupedStream(JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
 
       /** Interpret the incoming stream as any grouped RDF stream from RDF-STaX. The type of RDF
@@ -1029,7 +1029,7 @@ trait DecoderFlowOps:
             ? <: ProtoDecoderConverter[TNode, TDatatype] & TripleMaker[TNode, TTriple] &
               QuadMaker[TNode, TQuad],
           ],
-      ): Flow[RdfStreamFrame, IterableOnce[TTriple | TQuad], NotUsed]
+      ): Flow[RdfStreamFrame, Seq[TTriple | TQuad], NotUsed]
 
       /** Interpret the incoming stream as any flat RDF stream from RDF-STaX. The type of RDF
         * statements is determined by the physical stream type specified in the stream options

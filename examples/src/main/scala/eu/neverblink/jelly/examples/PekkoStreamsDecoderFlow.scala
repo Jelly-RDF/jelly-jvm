@@ -3,13 +3,7 @@ package eu.neverblink.jelly.examples
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.examples.shared.ScalaExample
-import eu.neverblink.jelly.pekko.stream.{
-  ByteSizeLimiter,
-  DecoderFlow,
-  EncoderFlow,
-  JellyIo,
-  RdfSource,
-}
+import eu.neverblink.jelly.pekko.stream.*
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.query.Dataset
 import org.apache.jena.riot.RDFDataMgr
@@ -84,7 +78,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
       .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuads)
       .runWith(Sink.seq)
 
-    val decodedDatasets: Seq[IterableOnce[Quad]] = Await.result(decodedDatasetFuture, 10.seconds)
+    val decodedDatasets: Seq[Seq[Quad]] = Await.result(decodedDatasetFuture, 10.seconds)
     println(
       s"Decoded ${decodedDatasets.size} datasets with" +
         s" ${decodedDatasets.map(_.iterator.size).sum} quads in total.",
