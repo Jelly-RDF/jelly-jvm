@@ -7,6 +7,7 @@ import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.AbstractRioSetting;
 import org.eclipse.rdf4j.rio.helpers.BooleanRioSetting;
 import org.eclipse.rdf4j.rio.helpers.ClassRioSetting;
+import org.eclipse.rdf4j.rio.helpers.IntegerRioSetting;
 import org.eclipse.rdf4j.rio.helpers.StringRioSetting;
 
 public final class JellyWriterSettings extends WriterConfig {
