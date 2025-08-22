@@ -29,7 +29,7 @@ lazy val titaniumNqV = "1.0.2"
 lazy val protobufV = "4.32.0"
 lazy val javapoetV = "0.7.0"
 lazy val jmhV = "1.37"
-lazy val grpcV = "1.74.0"
+lazy val grpcV = "1.75.0"
 
 lazy val jellyCliV = "0.4.5"
 
