@@ -4,9 +4,9 @@ import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.AbstractRioSetting;
 import org.eclipse.rdf4j.rio.helpers.BooleanRioSetting;
 import org.eclipse.rdf4j.rio.helpers.ClassRioSetting;
-import org.eclipse.rdf4j.rio.helpers.IntegerRioSetting;
 import org.eclipse.rdf4j.rio.helpers.StringRioSetting;
 
 public final class JellyWriterSettings extends WriterConfig {
@@ -43,7 +43,7 @@ public final class JellyWriterSettings extends WriterConfig {
         return this;
     }
 
-    public static final IntegerRioSetting FRAME_SIZE = new IntegerRioSetting(
+    public static final AbstractRioSetting<Integer> FRAME_SIZE = new JellyIntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.frameSize",
         "Target RDF stream frame size. Frame size may be slightly larger than this value, " +
         "to fit the entire statement and its lookup entries in one frame.",
@@ -93,19 +93,19 @@ public final class JellyWriterSettings extends WriterConfig {
         true
     );
 
-    public static final IntegerRioSetting MAX_NAME_TABLE_SIZE = new IntegerRioSetting(
+    public static final AbstractRioSetting<Integer> MAX_NAME_TABLE_SIZE = new JellyIntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.maxNameTableSize",
         "Maximum size of the name table",
         128
     );
 
-    public static final IntegerRioSetting MAX_PREFIX_TABLE_SIZE = new IntegerRioSetting(
+    public static final AbstractRioSetting<Integer> MAX_PREFIX_TABLE_SIZE = new JellyIntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.maxPrefixTableSize",
         "Maximum size of the prefix table",
         16
     );
 
-    public static final IntegerRioSetting MAX_DATATYPE_TABLE_SIZE = new IntegerRioSetting(
+    public static final AbstractRioSetting<Integer> MAX_DATATYPE_TABLE_SIZE = new JellyIntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.maxDatatypeTableSize",
         "Maximum size of the datatype table",
         16

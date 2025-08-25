@@ -24,15 +24,22 @@ jobs:
           - os: ubuntu-latest
             java: 17
             jena_version: ""
+            rdf4j_version: ""
           - os: ubuntu-latest
             java: 17
+            # Jena 5.3.0 is the last version supporting RDF-star.
+            # 5.4.0 dropped it in favor of RDF1.2.
             jena_version: "5.3.0"
+            # Test the last RDF4J 4.x version.
+            rdf4j_version: "4.3.16"
           - os: ubuntu-latest
             java: 21
             jena_version: ""
+            rdf4j_version: ""
           - os: ubuntu-latest
             java: 24
             jena_version: ""
+            rdf4j_version: ""
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -53,14 +60,21 @@ jobs:
     # This is necessary, as Jena suddenly dropped support for RDF-star in 5.4.0 in favor of RDF1.2.
     # We want to keep RDF-star support a possibility, so we test against Jena 5.3 as well as the latest version.
     # See: https://github.com/Jelly-RDF/jelly-jvm/issues/368
-    - name: Switch Jena Version
+    - name: Switch Jena and RDF4J versions
       shell: bash
       run: |
+        set -e
         if [ $JENA_VERSION ]; then
           sed -i "s/lazy val jenaV = .*/lazy val jenaV = \"$JENA_VERSION\"/g" build.sbt
+          grep 'lazy val jenaV' build.sbt
+        fi
+        if [ $RDF4J_VERSION ]; then
+          sed -i "s/lazy val rdf4jV = .*/lazy val rdf4jV = \"$RDF4J_VERSION\"/g" build.sbt
+          grep 'lazy val rdf4jV' build.sbt
         fi
       env:
         JENA_VERSION: ${{ matrix.jena_version }}
+        RDF4J_VERSION: ${{ matrix.rdf4j_version }}
 
     - name: Build and test
       shell: bash
