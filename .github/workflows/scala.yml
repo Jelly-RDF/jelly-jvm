@@ -63,6 +63,7 @@ jobs:
     - name: Switch Jena and RDF4J versions
       shell: bash
       run: |
+        set -e
         if [ $JENA_VERSION ]; then
           sed -i "s/lazy val jenaV = .*/lazy val jenaV = \"$JENA_VERSION\"/g" build.sbt
           grep 'lazy val jenaV' build.sbt
