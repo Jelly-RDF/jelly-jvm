@@ -65,9 +65,11 @@ jobs:
       run: |
         if [ $JENA_VERSION ]; then
           sed -i "s/lazy val jenaV = .*/lazy val jenaV = \"$JENA_VERSION\"/g" build.sbt
+          grep 'lazy val jenaV' build.sbt
         fi
         if [ $RDF4J_VERSION ]; then
           sed -i "s/lazy val rdf4jV = .*/lazy val rdf4jV = \"$RDF4J_VERSION\"/g" build.sbt
+          grep 'lazy val rdf4jV' build.sbt
         fi
       env:
         JENA_VERSION: ${{ matrix.jena_version }}
