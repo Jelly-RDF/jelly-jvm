@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.convert.rdf4j.rio;
 
+import eu.neverblink.jelly.core.InternalApi;
 import org.eclipse.rdf4j.rio.helpers.AbstractRioSetting;
 import org.eclipse.rdf4j.rio.helpers.RioConfigurationException;
 
@@ -20,9 +21,11 @@ import org.eclipse.rdf4j.rio.helpers.RioConfigurationException;
  * <p>
  * SPDX-License-Identifier: BSD-3-Clause
  */
-public class JellyIntegerRioSetting extends AbstractRioSetting<Integer> {
-
-    public JellyIntegerRioSetting(String key, String description, Integer defaultValue) {
+@InternalApi
+class JellyIntegerRioSetting extends AbstractRioSetting<Integer> {
+    
+    // TODO: remove this class when we drop support for RDF4J 4.x
+    JellyIntegerRioSetting(String key, String description, Integer defaultValue) {
         super(key, description, defaultValue);
     }
 
