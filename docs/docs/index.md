@@ -61,11 +61,12 @@ Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 24 are tested i
 
 The following table shows the compatibility of the Jelly-JVM implementation with other libraries:
 
-| Jelly-JVM                                                                                                                                         | Java |           Scala           | RDF4J | Apache Jena | Apache Pekko |
-|---------------------------------------------------------------------------------------------------------------------------------------------------|:----:|:-------------------------:| :---: | :---------: | :----------: |
-| [3.0.x](https://w3id.org/jelly/jelly-jvm/3.0.x) – [**{{ jvm_package_version() }}**](https://w3id.org/jelly/jelly-jvm/{{ jvm_package_version() }}) | 17+  |      3.3.x (LTS)[^2]      | 5.x.x | 5.x.x       | 1.1.x        |
-| [2.0.x](https://w3id.org/jelly/jelly-jvm/2.0.x) – [2.10.x](https://w3id.org/jelly/jelly-jvm/2.10.x)                                               | 17+  |        3.3.x (LTS)        | 5.x.x | 5.x.x       | 1.1.x        |
-| [1.0.x](https://w3id.org/jelly/jelly-jvm/1.0.x)                                                                                                                                      | 11+  | 3.3.x (LTS)<br>2.13.x[^1] | 4.x.x | 4.x.x       | 1.0.x        |
+| Jelly-JVM                                                                                                                                         | Java |           Scala           |    RDF4J    | Apache Jena | Apache Pekko |
+|---------------------------------------------------------------------------------------------------------------------------------------------------|:----:|:-------------------------:|:-----------:|:-----------:|:------------:|
+| [3.5.x](https://w3id.org/jelly/jelly-jvm/3.5.x) – [**{{ jvm_package_version() }}**](https://w3id.org/jelly/jelly-jvm/{{ jvm_package_version() }}) | 17+  |      3.3.x (LTS)[^2]      | 4.3.x–5.x.x |    5.x.x    |    1.1.x     |
+| [3.0.x](https://w3id.org/jelly/jelly-jvm/3.0.x) – [3.4.x](https://w3id.org/jelly/jelly-jvm/3.4.x)                                                 | 17+  |      3.3.x (LTS)[^2]      |    5.x.x    |    5.x.x    |    1.1.x     |
+| [2.0.x](https://w3id.org/jelly/jelly-jvm/2.0.x) – [2.10.x](https://w3id.org/jelly/jelly-jvm/2.10.x)                                               | 17+  |        3.3.x (LTS)        |    5.x.x    |    5.x.x    |    1.1.x     |
+| [1.0.x](https://w3id.org/jelly/jelly-jvm/1.0.x)                                                                                                   | 11+  | 3.3.x (LTS)<br>2.13.x[^1] |    4.x.x    |    4.x.x    |    1.0.x     |
 
 See the **[compatibility policy](user/compatibility.md)** for more details and the **[release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)**.
 
