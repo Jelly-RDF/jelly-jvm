@@ -481,7 +481,7 @@ lazy val neo4jPlugin = (project in file("neo4j-plugin"))
     commonSettings,
     commonJavaSettings,
   )
-  .dependsOn(core, rdf4j)
+  .dependsOn(core, rdf4jPlugin)
 
 lazy val stream = (project in file("pekko-stream"))
   .settings(
