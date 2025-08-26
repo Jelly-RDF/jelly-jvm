@@ -64,7 +64,7 @@ class JellyBase64Spec extends AnyWordSpec, Matchers {
   }
 
   "JellyBase64Reader" should {
-    "factor have correct RDF format" in {
+    "factory have correct RDF format" in {
       JellyBase64ParserFactory().getRDFFormat shouldBe JellyBase64Format.JELLY_BASE64
     }
 

@@ -2,7 +2,6 @@ package eu.neverblink.jelly.convert.neo4j.rio;
 
 import static eu.neverblink.jelly.convert.neo4j.rio.JellyBase64Format.JELLY_BASE64;
 
-import eu.neverblink.jelly.convert.neo4j.JellyPlugin;
 import eu.neverblink.jelly.convert.rdf4j.rio.JellyWriterFactory;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,10 +13,6 @@ import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.RDFWriterFactory;
 
 public class JellyBase64WriterFactory implements RDFWriterFactory {
-    static {
-        // Leech off of RDF4J's registration mechanism and register our plugin in Neo4j.
-        JellyPlugin.getInstance().initialize();
-    }
 
     private final JellyWriterFactory innerFactory = new JellyWriterFactory();
 
