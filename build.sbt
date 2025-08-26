@@ -26,6 +26,7 @@ lazy val jenaV = "5.5.0"
 lazy val rdf4jV = "5.1.4"
 lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
+lazy val neo4jV = "5.20.0"
 lazy val protobufV = "4.32.0"
 lazy val javapoetV = "0.7.0"
 lazy val jmhV = "1.37"
@@ -403,6 +404,8 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
       case PathList("google", "protobuf", _*) => MergeStrategy.discard
       case x => assemblyMergeStrategy.value(x) // defer to old strategy
     },
+    // Don't run tests for the plugin project
+    Test / skip := true,
     // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
     publishArtifact := false,
     commonSettings,
@@ -442,6 +445,8 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
     ),
     // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
     publishArtifact := false,
+    // Don't run tests for the plugin project
+    Test / skip := true,
     commonSettings,
     commonJavaSettings,
   )
@@ -462,6 +467,21 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
     commonJavaSettings,
   )
   .dependsOn(core % "compile->compile;test->test")
+
+lazy val neo4jPlugin = (project in file("neo4j-plugin"))
+  .settings(
+    name := "jelly-neo4j-plugin",
+    description := "Integration of Jelly with Neo4j via the Neosemantics plugin.",
+    libraryDependencies ++= Seq(
+      "org.neo4j" % "neo4j" % neo4jV % "provided,test",
+      "org.neo4j" % "neosemantics" % neo4jV % "provided,test",
+      "org.neo4j.test" % "neo4j-harness" % neo4jV % Test,
+      "org.neo4j.driver" % "neo4j-java-driver" % "5.28.9" % Test,
+    ),
+    commonSettings,
+    commonJavaSettings,
+  )
+  .dependsOn(core, rdf4jPlugin)
 
 lazy val stream = (project in file("pekko-stream"))
   .settings(

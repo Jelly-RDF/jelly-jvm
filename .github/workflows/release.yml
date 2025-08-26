@@ -47,7 +47,7 @@ jobs:
 
       - name: 'Build plugins'
         run: |
-          sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly
+          sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly +neo4jPlugin/assembly
           LATEST_SCALA_VERSION=`ls -1 jena-plugin/target | grep scala- | sort -V | tail -n1`
           echo "LATEST_SCALA_VERSION=$LATEST_SCALA_VERSION" >> $GITHUB_ENV
 
@@ -65,6 +65,7 @@ jobs:
           artifacts: >-
             jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
             rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
+            neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
           generateReleaseNotes: true
 
       - name: 'Publish plugins (tagged release)'
@@ -79,6 +80,7 @@ jobs:
           artifacts: >-
             jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
             rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
+            neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
           generateReleaseNotes: true
 
   publish-docs:
