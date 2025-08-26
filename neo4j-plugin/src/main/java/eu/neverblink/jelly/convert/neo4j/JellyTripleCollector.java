@@ -6,6 +6,10 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.UserAggregationFunction;
 
 public class JellyTripleCollector {
+    static {
+        // Call the initializer of the plugin to ensure any setup is done
+        JellyPlugin.getInstance().initialize();
+    }
 
     @UserAggregationFunction(name = "n10s.rdf.collect.jelly_base64")
     @Description(
