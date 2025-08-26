@@ -85,7 +85,6 @@ class JellyPluginSpec extends Neo4jSpec:
     }
   }
 
-  /// TODO queries
   "n10s.rdf.export.cypher" should {
     "export RDF data via Cypher" in {
       withSession { session =>
