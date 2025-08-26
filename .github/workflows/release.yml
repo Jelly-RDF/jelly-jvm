@@ -64,7 +64,7 @@ jobs:
           name: "Development build"
           artifacts: >-
             jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
-            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
+            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
             neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
           generateReleaseNotes: true
 
@@ -79,7 +79,7 @@ jobs:
           name: "${{ github.ref_name }}"
           artifacts: >-
             jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
-            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
+            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
             neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
           generateReleaseNotes: true
 
