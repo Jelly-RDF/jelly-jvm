@@ -468,12 +468,15 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   )
   .dependsOn(core % "compile->compile;test->test")
 
-lazy val neo4j = (project in file("neo4j"))
+lazy val neo4jPlugin = (project in file("neo4j-plugin"))
   .settings(
-    name := "jelly-neo4j",
+    name := "jelly-neo4j-plugin",
     description := "Integration of Jelly with Neo4j via the Neosemantics plugin.",
     libraryDependencies ++= Seq(
-      "org.neo4j" % "neosemantics" % neo4jV,
+      "org.neo4j" % "neo4j" % neo4jV % "provided,test",
+      "org.neo4j" % "neosemantics" % neo4jV % "provided,test",
+      "org.neo4j.test" % "neo4j-harness" % neo4jV % Test,
+      "org.neo4j.driver" % "neo4j-java-driver" % "5.28.9" % Test,
     ),
     commonSettings,
     commonJavaSettings,

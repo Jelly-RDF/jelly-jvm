@@ -152,7 +152,7 @@ jobs:
 
     - name: Test building assemblies
       shell: bash
-      run: sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly
+      run: sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly +neo4jPlugin/assembly
 
     - name: Cache Jena
       id: cache-jena
