@@ -1,12 +1,12 @@
 # Jelly-JVM
 
-**Jelly-JVM** is an implementation of the [Jelly serialization format and gRPC streaming protocol]({{ proto_link() }}) for the Java Virtual Machine (JVM). It supports [Apache Jena](user/jena.md), [Eclipse RDF4J](user/rdf4j.md), and the [Titanium RDF API](user/titanium.md).
+**Jelly-JVM** is an implementation of the [Jelly serialization format and gRPC streaming protocol]({{ proto_link() }}) for the Java Virtual Machine (JVM). It supports [Apache Jena](user/jena.md), [Eclipse RDF4J](user/rdf4j.md), the [Titanium RDF API](user/titanium.md), and [Neo4j](getting-started-neo4j.md).
 
 Jelly-JVM provides a **full stack** of utilities for fast and scalable RDF streaming with [Jelly]({{ proto_link( 'specification' ) }}). Oh, and [**it's *blazing-fast***]({{ proto_link('performance') }}), too!
 
 !!! tip "Getting started with plugins – no code required"
 
-    **[See how to use plugins](getting-started-plugins.md)** to quickly add Jelly support to your Apache Jena or RDF4J app without writing any code.
+    Use our plugins for **[Neo4j](getting-started-neo4j.md)**, **[Apache Jena](getting-started-plugins.md)**, and **[RDF4J](getting-started-plugins.md)** to quickly add Jelly support to your applications without writing any code.
 
 !!! tip "Getting started for application developers"
 
@@ -34,6 +34,9 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-titanium-rdf-api` – integration with the [Titanium RDF API](https://github.com/filip26/titanium-rdf-api). **[:octicons-arrow-right-24: Learn more](user/titanium.md)**
     - {{ java_module_badges('titanium-rdf-api') }}
 
+- `jelly-neo4j-plugin` – integration with the [Neo4j](https://neo4j.com/) graph database via the [neosemantics](https://neo4j.com/labs/neosemantics/) plugin. **[:octicons-arrow-right-24: Learn more](getting-started-neo4j.md)**
+    - {{ java_module_badges('neo4j-plugin') }}
+
 - `jelly-pekko-stream` – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, or MQTT. **[:octicons-arrow-right-24: Learn more](user/reactive.md)**
     - {{ scala_module_badges('pekko-stream') }}
 
@@ -53,20 +56,21 @@ The implementation is split into a few modules that can be used separately:
 
 ## Plugin JARs
 
-We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](https://jena.apache.org/) and [RDF4J](https://rdf4j.org/) just by dropping the JARs into the classpath. **[Find out more about using the plugins](getting-started-plugins.md)**.
+We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](getting-started-plugins.md), [RDF4J](getting-started-plugins.md), and [Neo4j](getting-started-neo4j.md) just by dropping the JARs into the classpath.
 
 ## Compatibility
 
 Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 24 are tested in CI and are guaranteed to work. The modules integrating with Pekko Streams use Scala and are built with [Scala 3 LTS releases](https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html).
 
 The following table shows the compatibility of the Jelly-JVM implementation with other libraries:
+{: .jelly-table-tight }
 
-| Jelly-JVM                                                                                                                                         | Java |           Scala           |    RDF4J    | Apache Jena | Apache Pekko |
-|---------------------------------------------------------------------------------------------------------------------------------------------------|:----:|:-------------------------:|:-----------:|:-----------:|:------------:|
-| [3.5.x](https://w3id.org/jelly/jelly-jvm/3.5.x) – [**{{ jvm_package_version() }}**](https://w3id.org/jelly/jelly-jvm/{{ jvm_package_version() }}) | 17+  |      3.3.x (LTS)[^2]      | 4.3.x–5.x.x |    5.x.x    |    1.1.x     |
-| [3.0.x](https://w3id.org/jelly/jelly-jvm/3.0.x) – [3.4.x](https://w3id.org/jelly/jelly-jvm/3.4.x)                                                 | 17+  |      3.3.x (LTS)[^2]      |    5.x.x    |    5.x.x    |    1.1.x     |
-| [2.0.x](https://w3id.org/jelly/jelly-jvm/2.0.x) – [2.10.x](https://w3id.org/jelly/jelly-jvm/2.10.x)                                               | 17+  |        3.3.x (LTS)        |    5.x.x    |    5.x.x    |    1.1.x     |
-| [1.0.x](https://w3id.org/jelly/jelly-jvm/1.0.x)                                                                                                   | 11+  | 3.3.x (LTS)<br>2.13.x[^1] |    4.x.x    |    4.x.x    |    1.0.x     |
+| Jelly-JVM                                                                                                                                         | Java | <abbr title="Scala is used only in tests and jelly-pekko-* modules. Other modules are 100% in Java">Scala</abbr> | <abbr title="Eclipse RDF4J">RDF4J</abbr> | <abbr title="Apache Jena">Jena</abbr> | <abbr title="Apache Pekko, used in jelly-pekko-* modules.">Pekko</abbr> | Neo4j |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------:|:----:|:-------------------------:|:-----------:|:-----------:|:------------:|:-----:|
+| [3.5.x](https://w3id.org/jelly/jelly-jvm/3.5.x)–[**{{ jvm_package_version() }}**](https://w3id.org/jelly/jelly-jvm/{{ jvm_package_version() }}) | 17+  |      3.3.x (LTS)[^2]      | 4.3.x–5.x.x |    5.x.x    |    1.1.x     | {{ neo4j_version('min') }}–{{ neo4j_version('max') }} |
+| [3.0.x](https://w3id.org/jelly/jelly-jvm/3.0.x)–[3.4.x](https://w3id.org/jelly/jelly-jvm/3.4.x)                                                 | 17+  |      3.3.x (LTS)[^2]      |    5.x.x    |    5.x.x    |    1.1.x     | – |
+| [2.0.x](https://w3id.org/jelly/jelly-jvm/2.0.x)–[2.10.x](https://w3id.org/jelly/jelly-jvm/2.10.x)                                               | 17+  |        3.3.x (LTS)        |    5.x.x    |    5.x.x    |    1.1.x     | – |
+| [1.0.x](https://w3id.org/jelly/jelly-jvm/1.0.x)                                                                                                   | 11+  | 3.3.x (LTS)<br>2.13.x[^1] |    4.x.x    |    4.x.x    |    1.0.x     | – |
 
 See the **[compatibility policy](user/compatibility.md)** for more details and the **[release notes on GitHub](https://github.com/Jelly-RDF/jelly-jvm/releases)**.
 
@@ -74,8 +78,10 @@ See the **[compatibility policy](user/compatibility.md)** for more details and t
 
 Below is a list of all documentation pages about Jelly-JVM. You can also browse the Javadoc using the badges in the module list above. The documentation uses examples written in Scala, but the libraries can be used from Java as well.
 
-- [Getting started with Jena/RDF4J plugins](getting-started-plugins.md) – how to use Jelly-JVM as a plugin for Apache Jena or RDF4J, without writing any code.
-- [Getting started for application developers](getting-started-devs.md) – how to use Jelly-JVM in code.
+- Getting started
+    - [Jena/RDF4J plugins](getting-started-plugins.md) – how to use Jelly-JVM as a plugin for Apache Jena or RDF4J, without writing any code.
+    - [Neo4j plugin](getting-started-neo4j.md) – how to use the Jelly plugin with Neo4j and neosemantics.
+    - [Application developers](getting-started-devs.md) – how to use Jelly-JVM in code.
 - User guide
     - [Apache Jena integration](user/jena.md)
     - [RDF4J integration](user/rdf4j.md)
@@ -104,4 +110,4 @@ The development of the Jelly protocol, its implementations, and supporting tooli
 ![European Funds for Smart Economy, Republic of Poland, Co-funded by the European Union](assets/featured/feng_rp_eu.png)
 
 [^1]: Scala 2.13-compatible builds of Jelly-JVM are available for Jelly-JVM 1.0.x. Scala 2 support was removed in subsequent versions. [See more details](https://w3id.org/jelly/jelly-jvm/1.0.x/user/scala2).
-[^2]: Scala version applies **only** to the `jelly-pekko-stream` module. The other modules **do not depend** on Scala and are compatible with any version of Java 17+.
+[^2]: Scala version applies **only** to the `jelly-pekko-*` modules. The other modules **do not depend** on Scala and are compatible with any version of Java 17+.

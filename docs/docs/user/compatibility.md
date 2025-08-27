@@ -16,6 +16,10 @@ Major-version upgrades of RDF4J and Apache Jena (e.g., updating from 4.0.x to 5.
 
 If you do encounter any compatibility issues, please report them on the [issue tracker](https://github.com/Jelly-RDF/jelly-jvm/issues).
 
+## Neo4j
+
+Jelly-JVM provides a plugin for integrating with the [Neo4j](https://neo4j.com/) graph database via the [neosemantics](https://neo4j.com/labs/neosemantics/) plugin. You must use the same version of neosemantics as your Neo4j installation – note that the releases of neosemantics are usually delayed in relation to Neo4j itself.
+
 ## Internal vs external APIs
 
 Generally, all public classes and methods in Jelly-JVM are considered part of the public API. However, there are some exceptions.

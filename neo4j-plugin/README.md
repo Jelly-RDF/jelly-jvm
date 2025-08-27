@@ -1,5 +1,4 @@
 # Jelly plugin for Neo4j
 
-TODO: link to documentation here
-
-TODO: https://github.com/Jelly-RDF/jelly-jvm/issues/507
+See the documentation for installation and usage instructions:
+https://w3id.org/jelly/jelly-jvm/getting-started-neo4j/
