@@ -33,6 +33,9 @@ But, this library also gives you the full stack of utilities for scalable RDF st
 - [`jelly-titanium-rdf-api`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/titanium-rdf-api/src) – integration with the minimalistic [Titanium RDF API](https://github.com/filip26/titanium-rdf-api).
   - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-titanium-rdf-api)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-titanium-rdf-api) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-titanium-rdf-api/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-titanium-rdf-api)
 
+- [`jelly-neo4j-plugin`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/neo4j-plugin/src) – integration with the [Neo4j](https://neo4j.com/) graph database via the [neosemantics](https://neo4j.com/labs/neosemantics/) plugin.
+  - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-neo4j-plugin)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-neo4j-plugin) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-neo4j-plugin/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-neo4j-plugin)
+
 - [`jelly-pekko-stream`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/pekko-stream/src) – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT...
   - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-pekko-stream_3)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-pekko-stream_3) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-pekko-stream_3/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-pekko-stream_3)
 
