@@ -100,6 +100,14 @@ CALL n10s.rdf.delete.fetch(
 )
 ```
 
+### Checking the version of the plugin
+
+To check the version of the Jelly-Neo4j plugin, call:
+
+```cypher
+RETURN jelly.version()
+```
+
 ### More...
 
 All features of neosemantics are supported. See the [neosemantics documentation](https://neo4j.com/labs/neosemantics/) for more details.
