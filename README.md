@@ -12,8 +12,8 @@ But, this library also gives you the full stack of utilities for scalable RDF st
 
 ## Quick start
 
-* **[📃 How to use Jelly-JVM in code](https://w3id.org/jelly/jelly-jvm/dev/getting-started-devs/)**
-* **[🛠️ How to use Jelly-JVM as a Jena or RDF4J plugin (zero coding!)](https://w3id.org/jelly/jelly-jvm/dev/getting-started-plugins/)**
+- **[📃 How to use Jelly-JVM in code](https://w3id.org/jelly/jelly-jvm/dev/getting-started-devs/)**
+- **[🛠️ How to use Jelly-JVM as a Jena or RDF4J plugin (zero coding!)](https://w3id.org/jelly/jelly-jvm/dev/getting-started-plugins/)**
 - **[🛠️ How to use Jelly-JVM with Neo4j via the neosemantics plugin](https://w3id.org/jelly/jelly-jvm/dev/getting-started-neo4j/)**
 
 ## Modules
