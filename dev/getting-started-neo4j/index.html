@@ -10,28 +10,28 @@
       
       
       
-        <link rel="canonical" href="https://jelly-rdf.github.io/jelly-jvm/dev/user/compatibility/">
+        <link rel="canonical" href="https://jelly-rdf.github.io/jelly-jvm/dev/getting-started-neo4j/">
       
       
-        <link rel="prev" href="../low-level/">
+        <link rel="prev" href="../getting-started-plugins/">
       
       
-        <link rel="next" href="../implementing/">
+        <link rel="next" href="../getting-started-devs/">
       
       
-      <link rel="icon" href="../../assets/jelly_color.png">
+      <link rel="icon" href="../assets/jelly_color.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
-        <title>Compatibility policy - Jelly-JVM</title>
+        <title>Neo4j plugin - Jelly-JVM</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e37652d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -50,9 +50,9 @@
       
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -64,7 +64,7 @@
         
     
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Jelly-JVM – Compatibility policy" />
+    <meta property="og:title" content="Jelly-JVM – Neo4j plugin" />
     <meta property="og:description" content="Jelly-JVM is a JVM (Scala) implementation of the Jelly RDF streaming protocol." />
     <meta property="og:image" content="https://w3id.org/jelly/jelly-jvm/dev/assets/social.png" />
     <meta property="og:image:type" content="image/jpeg" />
@@ -91,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#compatibility-policy" class="md-skip">
+        <a href="#getting-started-with-neo4j" class="md-skip">
           Skip to content
         </a>
       
@@ -111,9 +111,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Jelly-JVM" class="md-header__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
+    <a href=".." title="Jelly-JVM" class="md-header__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
       
-  <img src="../../assets/jelly_white.png" alt="logo">
+  <img src="../assets/jelly_white.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -130,7 +130,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Compatibility policy
+              Neo4j plugin
             
           </span>
         </div>
@@ -248,9 +248,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Jelly-JVM" class="md-nav__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
+    <a href=".." title="Jelly-JVM" class="md-nav__button md-logo" aria-label="Jelly-JVM" data-md-component="logo">
       
-  <img src="../../assets/jelly_white.png" alt="logo">
+  <img src="../assets/jelly_white.png" alt="logo">
 
     </a>
     Jelly-JVM
@@ -277,7 +277,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -296,148 +296,12 @@
       
   
   
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Getting started
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2">
-            <span class="md-nav__icon md-icon"></span>
-            Getting started
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started-plugins/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Jena/RDF4J plugin
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started-neo4j/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Neo4j plugin
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../getting-started-devs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Application developers
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
   
     
     
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
       
         
       
@@ -453,15 +317,15 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
   <span class="md-ellipsis">
-    User guide
+    Getting started
     
   </span>
   
@@ -469,10 +333,10 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            User guide
+            Getting started
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -483,173 +347,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../jena/" class="md-nav__link">
+      <a href="../getting-started-plugins/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Apache Jena integration
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../jena-cli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Apache Jena CLI tools
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../rdf4j/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    RDF4J integration
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../titanium/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Titanium RDF API integration
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reactive/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Reactive streaming
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../grpc/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    gRPC
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../utilities/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Useful utilities
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../low-level/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Low-level usage
+    Jena/RDF4J plugin
     
   </span>
   
@@ -681,7 +384,7 @@
   
   
   <span class="md-ellipsis">
-    Compatibility policy
+    Neo4j plugin
     
   </span>
   
@@ -694,7 +397,7 @@
   
   
   <span class="md-ellipsis">
-    Compatibility policy
+    Neo4j plugin
     
   </span>
   
@@ -717,47 +420,80 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#jvm-and-scala" class="md-nav__link">
+  <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
-      JVM and Scala
+      Installation
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#rdf-libraries" class="md-nav__link">
+  <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
-      RDF libraries
+      Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setup
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#neo4j" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#importing-data" class="md-nav__link">
     <span class="md-ellipsis">
-      Neo4j
+      Importing data
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#internal-vs-external-apis" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#cypher-aggregations" class="md-nav__link">
     <span class="md-ellipsis">
-      Internal vs external APIs
+      Cypher aggregations
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#backward-and-forward-protocol-compatibility" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#exporting-data-via-http" class="md-nav__link">
     <span class="md-ellipsis">
-      Backward and forward protocol compatibility
+      Exporting data via HTTP
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deleting data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#more" class="md-nav__link">
+    <span class="md-ellipsis">
+      More...
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -786,7 +522,304 @@
   
   
     <li class="md-nav__item">
-      <a href="../implementing/" class="md-nav__link">
+      <a href="../getting-started-devs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Application developers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/jena/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Apache Jena integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/jena-cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Apache Jena CLI tools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/rdf4j/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RDF4J integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/titanium/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Titanium RDF API integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/reactive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reactive streaming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/grpc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    gRPC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Useful utilities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/low-level/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Low-level usage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Compatibility policy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user/implementing/" class="md-nav__link">
         
   
   
@@ -838,7 +871,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../contributing/" class="md-nav__link ">
+            <a href="../contributing/" class="md-nav__link ">
               
   
   
@@ -873,7 +906,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/releases/" class="md-nav__link">
+      <a href="../contributing/releases/" class="md-nav__link">
         
   
   
@@ -896,7 +929,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/code_of_conduct/" class="md-nav__link">
+      <a href="../contributing/code_of_conduct/" class="md-nav__link">
         
   
   
@@ -926,7 +959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../licensing/" class="md-nav__link">
+      <a href="../licensing/" class="md-nav__link">
         
   
   
@@ -990,47 +1023,80 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#jvm-and-scala" class="md-nav__link">
+  <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
-      JVM and Scala
+      Installation
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#rdf-libraries" class="md-nav__link">
+  <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
-      RDF libraries
+      Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setup
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#neo4j" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#importing-data" class="md-nav__link">
     <span class="md-ellipsis">
-      Neo4j
+      Importing data
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#internal-vs-external-apis" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#cypher-aggregations" class="md-nav__link">
     <span class="md-ellipsis">
-      Internal vs external APIs
+      Cypher aggregations
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#backward-and-forward-protocol-compatibility" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#exporting-data-via-http" class="md-nav__link">
     <span class="md-ellipsis">
-      Backward and forward protocol compatibility
+      Exporting data via HTTP
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deleting data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#more" class="md-nav__link">
+    <span class="md-ellipsis">
+      More...
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1059,7 +1125,7 @@
 
 
   
-    <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/docs/user/compatibility.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/Jelly-RDF/jelly-jvm/edit/main/docs/docs/getting-started-neo4j.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1067,29 +1133,98 @@
   
 
 
-<h1 id="compatibility-policy">Compatibility policy</h1>
-<p>Jelly-JVM follows <a href="https://semver.org/">Semantic Versioning 2.0.0</a>, with MAJOR.MINOR.PATCH releases. Please see the compatibility table on the <a href="../../">main page</a> for the current compatibility information. The documentation is versioned to match each Jelly-JVM MAJOR.MINOR version.</p>
-<h2 id="jvm-and-scala">JVM and Scala</h2>
-<p>The current version of Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 24 are tested in CI and are guaranteed to work. We recommend using a recent release of <a href="https://www.graalvm.org/">GraalVM</a> to get the best performance. If you need Java 11 support, you should use <a href="https://w3id.org/jelly/jelly-jvm/1.0.x">Jelly-JVM 1.0.x</a>.</p>
-<p>The current version of Jelly-JVM has some modules (currently <code>jelly-pekko-stream</code>) built with <a href="https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html">Scala 3 LTS releases</a> and support only Scala 3. </p>
-<p>Jelly-JVM 2.x.x was written entirely in Scala 3, using <a href="https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html">Scala LTS releases</a>.</p>
-<h2 id="rdf-libraries">RDF libraries</h2>
-<p>Major-version upgrades of RDF4J and Apache Jena (e.g., updating from 4.0.x to 5.0.x) are done in Jelly-JVM MINOR releases. Jelly-JVM generally does not use any complex features of these libraries, so it should work with multiple versions without any problems.</p>
-<p>If you do encounter any compatibility issues, please report them on the <a href="https://github.com/Jelly-RDF/jelly-jvm/issues">issue tracker</a>.</p>
-<h2 id="neo4j">Neo4j</h2>
-<p>Jelly-JVM provides a plugin for integrating with the <a href="https://neo4j.com/">Neo4j</a> graph database via the <a href="https://neo4j.com/labs/neosemantics/">neosemantics</a> plugin. You must use the same version of neosemantics as your Neo4j installation – note that the releases of neosemantics are usually delayed in relation to Neo4j itself.</p>
-<h2 id="internal-vs-external-apis">Internal vs external APIs</h2>
-<p>Generally, all public classes and methods in Jelly-JVM are considered part of the public API. However, there are some exceptions.</p>
-<p>Auto-generated classes in the <code>jelly-core</code> module, <code>eu.neverblink.jelly.core.proto.v1</code> package are not considered part of the public API, although we will avoid any incompatibilities where possible. These classes may change between MINOR releases.</p>
-<h2 id="backward-and-forward-protocol-compatibility">Backward and forward protocol compatibility</h2>
-<p>Jelly-JVM follows <a href="https://w3id.org/jelly/dev/specification/serialization#versioning">the Jelly protocol's backward compatibility policy</a>. This means that Jelly-JVM can read data serialized with older versions of Jelly. Backward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/integration-tests/src/test/scala/eu/neverblink/jelly/integration_tests/rdf/BackCompatSpec.scala">BackCompatSpec.scala</a>.</p>
-<p>Forward compatibility is provided only in a very limited manner in Jelly-JVM. The parser is guaranteed to only parse the stream options header and reject the rest of the stream, if the used protocol version is not supported. You may choose to disable this check and try to parse the rest of the data anyway, but this is most certainly <strong>NOT</strong> recommended and may lead to unexpected results. In general, Jelly-JVM will ignore any unknown fields in the stream, but any other changes in the protocol may lead to really "funny" errors. Forward compatibility is tested in CI – the code is in <a href="https://github.com/Jelly-RDF/jelly-jvm/blob/main/integration-tests/src/test/scala/eu/neverblink/jelly/integration_tests/rdf/ForwardCompatSpec.scala">ForwardCompatSpec.scala</a>.</p>
+<h1 id="getting-started-with-neo4j">Getting started with Neo4j</h1>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>This integration with Neo4j requires the use of the <a href="https://neo4j.com/labs/neosemantics/">neosemantics</a> plugin that only works with Neo4j Desktop and self-hosted instances (Neo4j Community/Enterprise). <strong>It does not work with AuraDB.</strong> For AuraDB, you can alternatively use the <strong><a href="https://w3id.org/jelly/pyjelly/dev/rdflib-neo4j-integration/">Python integration that connects to Neo4j over Bolt</a></strong> via <a href="https://neo4j.com/labs/rdflib-neo4j/">rdflib-neo4j</a>.</p>
+</div>
+<h2 id="installation">Installation</h2>
+<p>The <strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.4.3/jelly-neo4j-plugin.jar">latest version (3.4.3) of the Jelly-Neo4j plugin</a></strong> is compatible with Neo4j versions 5.1.0–5.20.0<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. Jelly-Neo4j depends on the <a href="https://neo4j.com/labs/neosemantics/">neosemantics</a> plugin, which must also be installed. Neosemantics must have the same version as the Neo4j database.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Neo4j Desktop</label><label for="__tabbed_1_2">Self-hosted server (Community and Enterprise editions)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<ol>
+<li>Install <a href="https://neo4j.com/download/">Neo4j Desktop</a> if you haven't already.</li>
+<li>Create a new local instance. Select Neo4j version 5.20.0.</li>
+<li>In the list of instances, click on the <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 18H4V8h16m0-2h-8l-2-2H4c-1.11 0-2 .89-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"/></svg></span> button next to "<strong>Path:</strong>" to open the instance folder.</li>
+<li>Open the <code>plugins</code> subfolder.</li>
+<li>Download the neosemantics plugin <code>.jar</code> file from the <a href="https://github.com/neo4j-labs/neosemantics/releases">neosemantics releases page</a> and place it in the <code>plugins</code> folder.</li>
+<li>Download the <a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.4.3/jelly-neo4j-plugin.jar">Jelly-Neo4j plugin <code>.jar</code> file</a> and place it in the <code>plugins</code> folder.</li>
+<li>Go back to the Neo4j Desktop application and restart your instance.</li>
+</ol>
+</div>
+<div class="tabbed-block">
+<ol>
+<li>Install <a href="https://neo4j.com/docs/operations-manual/current/installation/">Neo4j Community or Enterprise Edition</a> if you haven't already. The supported Neo4j versions are currently 5.1.0–5.20.0.</li>
+<li>Open the Neo4j installation folder (<code>$NEO4J_HOME</code>).</li>
+<li>Open the <code>plugins</code> subfolder.</li>
+<li>Download the neosemantics plugin <code>.jar</code> file from the <a href="https://github.com/neo4j-labs/neosemantics/releases">neosemantics releases page</a> and place it in the <code>plugins</code> folder. The plugin's version must be the same as Neo4j's.</li>
+<li>Download the <a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.4.3/jelly-neo4j-plugin.jar">Jelly-Neo4j plugin <code>.jar</code> file</a> and place it in the <code>plugins</code> folder.</li>
+<li>Start the Neo4j server.</li>
+</ol>
+</div>
+</div>
+</div>
+<p>At the end, your <code>plugins</code> folder should look like this:</p>
+<div class="language-shell highlight"><span class="filename">$ ls</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>jelly-neo4j-plugin.jar<span class="w">  </span>neosemantics-5.20.0.jar<span class="w">  </span>README.txt
+</span></code></pre></div>
+<p>See also the <a href="https://neo4j.com/labs/neosemantics/installation/">installation instructions for neosemantics</a>.</p>
+<h2 id="usage">Usage</h2>
+<p>The Jelly-Neo4j plugin adds support for Jelly to all functionalities of neosemantics. Two formats are supported:</p>
+<ul>
+<li><code>Jelly</code> – native binary format. Supported in all places except aggregations due to Neo4j limitations.</li>
+<li><code>Jelly-base64</code> – base64-encoded version of Jelly. Supported in all places.</li>
+</ul>
+<h3 id="setup">Setup</h3>
+<p>To get started with using the neosemantics plugin, changes must be made to database's constraints and graph config. <strong><a href="https://neo4j.com/labs/neosemantics/tutorial/">See the instructions in the neosemantics documentation</a></strong>.</p>
+<h3 id="importing-data">Importing data</h3>
+<p>To import a Jelly file (either local or via HTTP), use the <code>n10s.rdf.import.fetch</code> procedure, with first argument set to the file URL or path, and the second set to <code>Jelly</code>. For example, to import RiverBench's metadata, call:</p>
+<div class="language-cypher highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CALL</span><span class="w"> </span><span class="n">n10s</span><span class="p">.</span><span class="n">rdf</span><span class="p">.</span><span class="n">import</span><span class="p">.</span><span class="n">fetch</span><span class="p">(</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="s">&#39;https://w3id.org/riverbench/dumps-with-results/dev.jelly.gz&#39;</span><span class="p">,</span><span class="w"> </span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="s">&#39;Jelly&#39;</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="cypher-aggregations">Cypher aggregations</h3>
+<p>Results from Cypher queries can be aggregated into RDF data using the <code>n10s.rdf.export.cypher</code> procedure and <code>n10s.rdf.collect.jelly_base64</code> aggregation:</p>
+<div class="language-cypher highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">CALL</span><span class="w"> </span><span class="n">n10s</span><span class="p">.</span><span class="n">rdf</span><span class="p">.</span><span class="n">export</span><span class="p">.</span><span class="n">cypher</span><span class="p">(</span><span class="s">&quot;MATCH (p) RETURN p LIMIT 10&quot;</span><span class="p">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">yield</span><span class="w"> </span><span class="n">subject</span><span class="p">,</span><span class="w"> </span><span class="n">predicate</span><span class="p">,</span><span class="w"> </span><span class="n">object</span><span class="p">,</span><span class="w"> </span><span class="n">isLiteral</span><span class="p">,</span><span class="w"> </span><span class="n">literalType</span><span class="p">,</span><span class="w"> </span><span class="n">literalLang</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">return</span><span class="w"> </span><span class="n">n10s</span><span class="p">.</span><span class="n">rdf</span><span class="p">.</span><span class="k">collect</span><span class="p">.</span><span class="n">jelly_base64</span><span class="p">(</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="n">subject</span><span class="p">,</span><span class="w"> </span><span class="n">predicate</span><span class="p">,</span><span class="w"> </span><span class="n">object</span><span class="p">,</span><span class="w"> </span><span class="n">isLiteral</span><span class="p">,</span><span class="w"> </span><span class="n">literalType</span><span class="p">,</span><span class="w"> </span><span class="n">literalLang</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">rdf</span>
+</span></code></pre></div>
+<p>Note that the output here will be base64-encoded, due to Neo4j's limitations when working with binary data. To parse this, you will either need to use the <code>Jelly-base64</code> format in Neo4j, or decode it first from base64.</p>
+<h3 id="exporting-data-via-http">Exporting data via HTTP</h3>
+<p>HTTP endpoints for bulk RDF export can be enabled in neosemantics by adding the following configuration to the <code>neo4j.conf</code> file:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>server.unmanaged_extension_classes=n10s.endpoint=/rdf
+</span></code></pre></div>
+<p>Then, you can for example call the following endpoint to export the results of Cypher queries or describe individual nodes – simply append the <code>?format=Jelly</code> query parameter. For example, to describe the <code>https://w3id.org/riverbench/datasets/osm2rdf-denmark/dev</code> node, call:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>GET /rdf/neo4j/describe/https%3A%2F%2Fw3id.org%2Friverbench%2Fdatasets%2Fosm2rdf-denmark%2Fdev?format=Jelly
+</span></code></pre></div>
+<p>The identifier was urlencoded. The result will be a Jelly file containing a description of the node.</p>
+<p>See <a href="https://neo4j.com/labs/neosemantics/">the neosemantics documentation</a> for more details and examples.</p>
+<h3 id="deleting-data">Deleting data</h3>
+<p>In much the same way as importing, you can delete data with the <code>n10s.rdf.delete.fetch</code> procedure. For example, to delete all triples and quads from a Jelly file, call:</p>
+<div class="language-cypher highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">CALL</span><span class="w"> </span><span class="n">n10s</span><span class="p">.</span><span class="n">rdf</span><span class="p">.</span><span class="k">delete</span><span class="p">.</span><span class="n">fetch</span><span class="p">(</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="s">&#39;https://w3id.org/riverbench/dumps-with-results/dev.jelly.gz&#39;</span><span class="p">,</span><span class="w"> </span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="s">&#39;Jelly&#39;</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="more">More...</h3>
+<p>All features of neosemantics are supported. See the <a href="https://neo4j.com/labs/neosemantics/">neosemantics documentation</a> for more details.</p>
 <h2 id="see-also">See also</h2>
 <ul>
-<li><a href="https://github.com/Jelly-RDF/jelly-jvm/releases">Release notes on GitHub</a></li>
-<li><a href="../../contributing/releases/">Making Jelly-JVM releases</a></li>
-<li><a href="../../contributing/">Contributing to Jelly-JVM</a></li>
+<li><a href="https://w3id.org/jelly/pyjelly/dev/rdflib-neo4j-integration/">Alternative integration with Python and RDFLib</a></li>
+<li><a href="https://neo4j.com/labs/neosemantics/">neosemantics documentation</a></li>
+<li><a href="../getting-started-plugins/">Getting started with Jena and RDF4J plugins</a></li>
 </ul>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>The limiting factor for compatibility is the neosemantics plugin, which must have the same version as the Neo4j database. Unfortunately, neosemantics is often much behind the latest Neo4j releases.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 
 
 
@@ -1122,7 +1257,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 23, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 27, 2025</span>
   </span>
 
     
@@ -1198,10 +1333,10 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.tabs.link"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>
