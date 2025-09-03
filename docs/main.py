@@ -17,7 +17,7 @@ JELLY_MODULE_TO_PACKAGE_BASE = {
 
 NEO4J_VERSIONS = {
     'min': '5.1.0',
-    'max': '5.20.0',
+    'max': '5.26.0',
 }
 
 
