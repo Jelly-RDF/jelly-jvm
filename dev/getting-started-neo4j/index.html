@@ -1157,13 +1157,13 @@
 <p>This integration with Neo4j requires the use of the <a href="https://neo4j.com/labs/neosemantics/">neosemantics</a> plugin that only works with Neo4j Desktop and self-hosted instances (Neo4j Community/Enterprise). <strong>It does not work with AuraDB.</strong> For AuraDB, you can alternatively use the <strong><a href="https://w3id.org/jelly/pyjelly/dev/rdflib-neo4j-integration/">Python integration that connects to Neo4j over Bolt</a></strong> via <a href="https://neo4j.com/labs/rdflib-neo4j/">rdflib-neo4j</a>.</p>
 </div>
 <h2 id="installation">Installation</h2>
-<p>The <strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.5.0/jelly-neo4j-plugin.jar">latest version (3.5.0) of the Jelly-Neo4j plugin</a></strong> is compatible with Neo4j versions 5.1.0–5.20.0<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. Jelly-Neo4j depends on the <a href="https://neo4j.com/labs/neosemantics/">neosemantics</a> plugin, which must also be installed. Neosemantics must have the same version as the Neo4j database.</p>
+<p>The <strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.5.0/jelly-neo4j-plugin.jar">latest version (3.5.0) of the Jelly-Neo4j plugin</a></strong> is compatible with Neo4j versions 5.1.0–5.26.0<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. Jelly-Neo4j depends on the <a href="https://neo4j.com/labs/neosemantics/">neosemantics</a> plugin, which must also be installed. Neosemantics must have the same version as the Neo4j database.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Neo4j Desktop</label><label for="__tabbed_1_2">Self-hosted server (Community and Enterprise editions)</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <ol>
 <li>Install <a href="https://neo4j.com/download/">Neo4j Desktop</a> if you haven't already.</li>
-<li>Create a new local instance. Select Neo4j version 5.20.0.</li>
+<li>Create a new local instance. Select Neo4j version 5.26.0.</li>
 <li>In the list of instances, click on the <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 18H4V8h16m0-2h-8l-2-2H4c-1.11 0-2 .89-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"/></svg></span> button next to "<strong>Path:</strong>" to open the instance folder.</li>
 <li>Open the <code>plugins</code> subfolder.</li>
 <li>Download the neosemantics plugin <code>.jar</code> file from the <a href="https://github.com/neo4j-labs/neosemantics/releases">neosemantics releases page</a> and place it in the <code>plugins</code> folder.</li>
@@ -1173,7 +1173,7 @@
 </div>
 <div class="tabbed-block">
 <ol>
-<li>Install <a href="https://neo4j.com/docs/operations-manual/current/installation/">Neo4j Community or Enterprise Edition</a> if you haven't already. The supported Neo4j versions are currently 5.1.0–5.20.0.</li>
+<li>Install <a href="https://neo4j.com/docs/operations-manual/current/installation/">Neo4j Community or Enterprise Edition</a> if you haven't already. The supported Neo4j versions are currently 5.1.0–5.26.0.</li>
 <li>Open the Neo4j installation folder (<code>$NEO4J_HOME</code>).</li>
 <li>Open the <code>plugins</code> subfolder.</li>
 <li>Download the neosemantics plugin <code>.jar</code> file from the <a href="https://github.com/neo4j-labs/neosemantics/releases">neosemantics releases page</a> and place it in the <code>plugins</code> folder. The plugin's version must be the same as Neo4j's.</li>
@@ -1184,7 +1184,7 @@
 </div>
 </div>
 <p>At the end, your <code>plugins</code> folder should look like this:</p>
-<div class="language-shell highlight"><span class="filename">$ ls</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>jelly-neo4j-plugin.jar<span class="w">  </span>neosemantics-5.20.0.jar<span class="w">  </span>README.txt
+<div class="language-shell highlight"><span class="filename">$ ls</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>jelly-neo4j-plugin.jar<span class="w">  </span>neosemantics-5.26.0.jar<span class="w">  </span>README.txt
 </span></code></pre></div>
 <p>See also the <a href="https://neo4j.com/labs/neosemantics/installation/">installation instructions for neosemantics</a>.</p>
 <h2 id="usage">Usage</h2>
