@@ -2,74 +2,74 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/getting-started-devs/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/getting-started-neo4j/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/getting-started-plugins/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/licensing/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/contributing/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/contributing/code_of_conduct/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/contributing/releases/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/compatibility/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/grpc/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/implementing/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/jena-cli/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/jena/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/low-level/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/rdf4j/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/reactive/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/titanium/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
     <url>
          <loc>https://jelly-rdf.github.io/jelly-jvm/3.5.x/user/utilities/</loc>
-         <lastmod>2025-08-27</lastmod>
+         <lastmod>2025-09-06</lastmod>
     </url>
 </urlset>
