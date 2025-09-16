@@ -49,8 +49,8 @@ public final class Rdf4jDecoderConverter
 
     @Override
     public Rdf4jDatatype makeDatatype(String dt) {
-        final var iri = vf.createIRI(dt);
-        return new Rdf4jDatatype(iri, CoreDatatype.from(iri));
+        final var coreDatatype = CoreDatatype.from(vf.createIRI(dt));
+        return new Rdf4jDatatype(coreDatatype.getIri(), coreDatatype);
     }
 
     @Override
