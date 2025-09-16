@@ -32,7 +32,7 @@ lazy val javapoetV = "0.7.0"
 lazy val jmhV = "1.37"
 lazy val grpcV = "1.75.0"
 
-lazy val jellyCliV = "0.4.5"
+lazy val jellyCliV = "0.8.0"
 
 lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
 
@@ -187,7 +187,8 @@ def doDownloadJellyCli(targetDir: File): File = {
   // helps on trains with unstable coverage and high speeds.
   if (targetFile.exists() && targetFile.length() > 0) {
     println(
-      s"Will not attempt to download Jelly CLI (located ${targetFile.getAbsolutePath}) as it exists. If tests fail, try cleaning the project files.",
+      s"Will not attempt to download Jelly CLI (located ${targetFile.getAbsolutePath}) as it exists. " +
+        s"If tests fail, try cleaning the project files.",
     )
     targetFile.setExecutable(true)
     return targetFile
