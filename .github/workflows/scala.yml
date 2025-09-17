@@ -37,7 +37,7 @@ jobs:
             jena_version: ""
             rdf4j_version: ""
           - os: ubuntu-latest
-            java: 24
+            java: 25
             jena_version: ""
             rdf4j_version: ""
     runs-on: ${{ matrix.os }}

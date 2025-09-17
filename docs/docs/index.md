@@ -60,7 +60,7 @@ We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](
 
 ## Compatibility
 
-Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 24 are tested in CI and are guaranteed to work. The modules integrating with Pekko Streams use Scala and are built with [Scala 3 LTS releases](https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html).
+Jelly-JVM is compatible with Java 17 and newer. Java 17, 21, and 25 are tested in CI and are guaranteed to work. The modules integrating with Pekko Streams use Scala and are built with [Scala 3 LTS releases](https://www.scala-lang.org/blog/2022/08/17/long-term-compatibility-plans.html).
 
 The following table shows the compatibility of the Jelly-JVM implementation with other libraries:
 {: .jelly-table-tight }
