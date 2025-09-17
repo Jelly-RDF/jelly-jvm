@@ -569,7 +569,7 @@ lazy val grpc = (project in file("pekko-grpc"))
     name := "jelly-pekko-grpc",
     description := "Implementation of a gRPC client and server for the Jelly gRPC streaming protocol.",
     libraryDependencies ++= Seq(
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
       "org.apache.pekko" %% "pekko-discovery" % pekkoV,
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
