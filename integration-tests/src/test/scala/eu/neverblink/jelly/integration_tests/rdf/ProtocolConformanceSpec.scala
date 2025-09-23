@@ -42,10 +42,13 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
         manifestModel.read(manifestFile.toURI.toString)
         val testEntries = manifestModel.extractTestEntries
           .filter(_.isTestRdfToJelly)
-          .selectRelevantTestEntriesByFeatures(ser)
 
         for testEntry <- testEntries do
           s"Protocol test ${testEntry.extractTestUri} – ${testEntry.extractTestName}" in {
+            assume(
+              isTestEntryRelevantByFeatures(testEntry, ser),
+              "Test entry not relevant to implementation",
+            )
             singleRdfToJellyTest(testEntry, ser)
           }
     }
@@ -123,10 +126,13 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
         manifestModel.read(manifestFile.toURI.toString)
         val testEntries = manifestModel.extractTestEntries
           .filter(_.isTestRdfFromJelly)
-          .selectRelevantTestEntriesByFeatures(des)
 
         for testEntry <- testEntries do
           s"Protocol test ${testEntry.extractTestUri} – ${testEntry.extractTestName}" in {
+            assume(
+              isTestEntryRelevantByFeatures(testEntry, des),
+              "Test entry not relevant to implementation",
+            )
             singleRdfFromJellyTest(testEntry, des)
           }
     }
@@ -192,40 +198,62 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     frame.getRows.iterator.next.getOptions
   }
 
+  def isTestEntryRelevantByFeatures[TN, TT, TQ](
+      entry: Resource,
+      serDes: ProtocolSerDes[TN, TT, TQ],
+  ): Boolean = {
+    val rdfStarCompatible = !entry.hasRdfStarRequirement
+      || entry.hasRdfStarRequirement && entry.hasPhysicalTypeTriplesRequirement && serDes.supportsRdfStar(
+        PhysicalStreamType.TRIPLES,
+      )
+      || entry.hasRdfStarRequirement && entry.hasPhysicalTypeQuadsRequirement && serDes.supportsRdfStar(
+        PhysicalStreamType.QUADS,
+      )
+      || entry.hasRdfStarRequirement && entry.hasPhysicalTypeGraphsRequirement && serDes.supportsRdfStar(
+        PhysicalStreamType.GRAPHS,
+      )
+
+    val generalizedRdfCompatible =
+      !entry.hasGeneralizedStatementsRequirement
+        || entry.hasGeneralizedStatementsRequirement
+        && serDes.supportsGeneralizedStatements
+
+    val physicalTriplesCompatible =
+      !entry.hasPhysicalTypeTriplesRequirement
+        || entry.hasPhysicalTypeTriplesRequirement
+        && serDes.supportsTriples
+
+    val physicalQuadsCompatible =
+      !entry.hasPhysicalTypeQuadsRequirement
+        || entry.hasPhysicalTypeQuadsRequirement
+        && serDes.supportsQuads
+
+    val readingGraphsCompatible = {
+      val readingGraphsRequirement =
+        entry.hasPhysicalTypeGraphsRequirement && entry.isTestRdfFromJelly
+      !readingGraphsRequirement || readingGraphsRequirement && serDes.supportsReadingGraphs
+    }
+
+    val writingGraphsCompatible = {
+      val writingGraphsRequirement =
+        entry.hasPhysicalTypeGraphsRequirement && entry.isTestRdfToJelly
+      !writingGraphsRequirement || writingGraphsRequirement && serDes.supportsWritingGraphs
+    }
+
+    val testNotRejected = !entry.isTestRejected
+
+    rdfStarCompatible
+    && generalizedRdfCompatible
+    && physicalTriplesCompatible
+    && physicalQuadsCompatible
+    && readingGraphsCompatible
+    && writingGraphsCompatible
+    && testNotRejected
+  }
+
   extension (testEntries: Seq[Resource])
     private def selectRelevantTestEntriesByFeatures[TN, TT, TQ](
         serDes: ProtocolSerDes[TN, TT, TQ],
     ): Seq[Resource] =
       testEntries
-        .filter(entry =>
-          !entry.hasRdfStarRequirement
-            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeTriplesRequirement && serDes.supportsRdfStar(
-              PhysicalStreamType.TRIPLES,
-            )
-            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeQuadsRequirement && serDes.supportsRdfStar(
-              PhysicalStreamType.QUADS,
-            )
-            || entry.hasRdfStarRequirement && entry.hasPhysicalTypeGraphsRequirement && serDes.supportsRdfStar(
-              PhysicalStreamType.GRAPHS,
-            ),
-        )
-        .filter(entry =>
-          !entry.hasGeneralizedStatementsRequirement || entry.hasGeneralizedStatementsRequirement && serDes.supportsGeneralizedStatements,
-        )
-        .filter(entry =>
-          !entry.hasPhysicalTypeTriplesRequirement || entry.hasPhysicalTypeTriplesRequirement && serDes.supportsTriples,
-        )
-        .filter(entry =>
-          !entry.hasPhysicalTypeQuadsRequirement || entry.hasPhysicalTypeQuadsRequirement && serDes.supportsQuads,
-        )
-        .filter(entry => {
-          val readingGraphsRequirement =
-            entry.hasPhysicalTypeGraphsRequirement && entry.isTestRdfFromJelly
-          !readingGraphsRequirement || readingGraphsRequirement && serDes.supportsReadingGraphs
-        })
-        .filter(entry => {
-          val writingGraphsRequirement =
-            entry.hasPhysicalTypeGraphsRequirement && entry.isTestRdfToJelly
-          !writingGraphsRequirement || writingGraphsRequirement && serDes.supportsWritingGraphs
-        })
-        .filterNot(_.isTestRejected)
+        .filter(entry => isTestEntryRelevantByFeatures(entry, serDes))
