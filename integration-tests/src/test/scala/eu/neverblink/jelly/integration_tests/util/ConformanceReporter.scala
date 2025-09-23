@@ -1,66 +1,73 @@
 package eu.neverblink.jelly.integration_tests.util
 
+import eu.neverblink.jelly.integration_tests.rdf.io.*
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.rdf.model.{AnonId, Model, ModelFactory, Property}
+import org.apache.pekko.actor.ActorSystem
 import org.scalatest.Reporter
 import org.scalatest.events.{Event, SuiteCompleted, TestCanceled, TestFailed, TestSucceeded}
 
 import java.nio.file.{Files, Paths}
 import java.time.{Instant, ZoneOffset}
-import java.time.format.DateTimeFormatter
 import scala.util.matching.Regex
+import scala.collection.mutable
 
 class ConformanceReporter extends Reporter {
-  val model: Model = ModelFactory.createDefaultModel()
-  model.setNsPrefix("earl", "http://www.w3.org/ns/earl#")
-  model.setNsPrefix("doap", "http://usefulinc.com/ns/doap#")
-  model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/")
-  model.setNsPrefix("dc", "http://purl.org/dc/terms/")
-  model.setNsPrefix("xsd", "http://www.w3.org/2001/XMLSchema#")
-  model.setNsPrefix("jgh", "https://github.com/Jelly-RDF/jelly-protobuf/tree/main/test/")
+  lazy val jellyV = Option(System.getenv("JELLY_VERSION")).getOrElse("dev")
+  lazy val jellyDate = Option(System.getenv("JELLY_DATE")).getOrElse(
+    Instant.now().atZone(ZoneOffset.UTC).toLocalDate.toString,
+  )
 
-  val a: Property = model.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+  lazy val results: Map[String, mutable.StringBuilder] = Map(
+    JenaSerDes.name -> initStringBuilder(JenaSerDes.name),
+    Rdf4jSerDes.name -> initStringBuilder(Rdf4jSerDes.name),
+    "Reactive (RDF4J)" -> initStringBuilder("Reactive (RDF4J)"),
+    "Reactive writes (Apache Jena)" -> initStringBuilder("Reactive writes (Apache Jena)"),
+    TitaniumSerDes.name -> initStringBuilder(TitaniumSerDes.name),
+  )
 
-  object earl:
-    val assertedBy: Property = model.createProperty(model.expandPrefix("earl:assertedBy"))
-    val subject: Property = model.createProperty(model.expandPrefix("earl:subject"))
-    val test: Property = model.createProperty(model.expandPrefix("earl:test"))
-    val mode: Property = model.createProperty(model.expandPrefix("earl:mode"))
-    val result: Property = model.createProperty(model.expandPrefix("earl:result"))
-    val outcome: Property = model.createProperty(model.expandPrefix("earl:outcome"))
-    val passed: Property = model.createProperty(model.expandPrefix("earl:passed"))
-    val inapplicable: Property = model.createProperty(model.expandPrefix("earl:inapplicable"))
-    val failed: Property = model.createProperty(model.expandPrefix("earl:failed"))
-    val automatic: Property = model.createProperty(model.expandPrefix("earl:automatic"))
-    val TestResult: Property = model.createProperty(model.expandPrefix("earl:TestResult"))
-    val Assertion: Property = model.createProperty(model.expandPrefix("earl:Assertion"))
-
-  val date: Property = model.createProperty(model.expandPrefix("dc:date"))
-
-  val assertor: Property = model.createProperty("#assertor")
-  val impl: Property = model.createProperty("#impl")
-
-  def addAssertion(
-      softNameString: String,
-      testNameString: String,
-      timeStamp: Long,
-      outcome: Property,
-  ): Unit = {
-    val name = model.createProperty(s"${softNameString.replace(' ', '_')}/$testNameString")
-    model.add(name, a, earl.Assertion)
-    model.add(name, earl.assertedBy, assertor)
-    model.add(name, earl.subject, impl)
-    model.add(name, earl.test, model.createProperty(model.expandPrefix(s"jgh:$testNameString")))
-    model.add(name, earl.mode, earl.automatic)
-    val bnode = model.createResource(AnonId())
-    val dt = Instant.ofEpochMilli(timeStamp).atZone(ZoneOffset.UTC).toLocalDateTime.toString
-    model.add(name, earl.result, bnode)
-    model.add(bnode, a, earl.TestResult)
-    model.add(bnode, date, model.createTypedLiteral(dt, XSDDatatype.XSDdateTime))
-    model.add(bnode, earl.outcome, outcome)
+  def renameIntegrations(name: String) = name match {
+    case "Reactive (RDF4J)" => "Pekko Streams (RDF4J)"
+    case "Reactive writes (Apache Jena)" => "Pekko Streams (Jena)"
+    case s => s
   }
 
-  val buffer: StringBuilder = new StringBuilder()
+  val model: Model = ModelFactory.createDefaultModel()
+  val prefixes: String =
+    """PREFIX earl: <http://www.w3.org/ns/earl#>
+      |PREFIX doap: <http://usefulinc.com/ns/doap#>
+      |PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+      |PREFIX dc:   <http://purl.org/dc/terms/>
+      |PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+      |""".stripMargin
+
+  val assertor: String =
+    """<#assertor> a earl:Software, earl:Assertor ;
+      |  doap:name "Jelly-JVM integration test suite" ;
+      |  doap:homepage <https://github.com/Jelly-RDF/jelly-jvm/tree/main/integration-tests> .
+      |""".stripMargin
+
+  def formatTestSubject(name: String): String =
+    s"""<#impl> a doap:Project, earl:TestSubject, earl:Software ;
+       |  doap:name "Jelly-JVM ($name)" ;
+       |  doap:homepage <https://w3id.org/jelly/jelly-jvm/dev/> ;
+       |  doap:description "Jelly-JVM integration with $name"@en ;
+       |  doap:programming-language "Java" ;
+       |  doap:developer <#assertor> ;
+       |  doap:release [
+       |    doap:name "Jelly-JVM $jellyV" ;
+       |    doap:revision "$jellyV" ;
+       |    dc:created "$jellyDate"^^xsd:date
+       |  ] .
+       |""".stripMargin
+
+  def initStringBuilder(name: String): mutable.StringBuilder = {
+    val sb = mutable.StringBuilder()
+    sb.append(prefixes)
+    sb.append(assertor)
+    sb.append(formatTestSubject(renameIntegrations(name)))
+    sb
+  }
 
   val testPattern: Regex = "^.*?erializer (.*?) when Protocol test (.*?) ".r
 
@@ -68,17 +75,21 @@ class ConformanceReporter extends Reporter {
     event match {
       case s: TestSucceeded => {
         val x = testPattern.findFirstMatchIn(s.testName).get
-        addAssertion(x.group(1), x.group(2), s.timeStamp, earl.passed)
+        results(x.group(1)).append("yay")
       }
       case s: TestCanceled => {
         val x = testPattern.findFirstMatchIn(s.testName).get
-        addAssertion(x.group(1), x.group(2), s.timeStamp, earl.inapplicable)
+        results(x.group(1)).append("nay")
       }
       case s: TestFailed => {
         val x = testPattern.findFirstMatchIn(s.testName).get
-        addAssertion(x.group(1), x.group(2), s.timeStamp, earl.failed)
+        results(x.group(1)).append("naaay")
       }
-      case _: SuiteCompleted => model.write(Files.newOutputStream(Paths.get("blep.ttl")), "ttl")
+      case _: SuiteCompleted =>
+        results.foreach((name, sb) => {
+          println(name)
+          println(sb.toString())
+        })
       case _ =>
     }
   }
