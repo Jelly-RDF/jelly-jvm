@@ -16,6 +16,14 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{File, FileInputStream}
 import java.util.UUID.randomUUID
 
+/** Test the implementation with protocol test cases.
+  *
+  * To generate conformance reports, use the following command, which will limit the test scope to
+  * this file only and use a special reporter:
+  * `sbt "integrationTests/testOnly *ProtocolConformanceSpec -- -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"`
+  * This will generate reports for every integration in the `integration-tests/target/reports`
+  * directory.
+  */
 class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   given ActorSystem = ActorSystem("test")
 
