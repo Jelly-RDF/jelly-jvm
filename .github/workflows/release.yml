@@ -51,6 +51,23 @@ jobs:
           LATEST_SCALA_VERSION=`ls -1 jena-plugin/target | grep scala- | sort -V | tail -n1`
           echo "LATEST_SCALA_VERSION=$LATEST_SCALA_VERSION" >> $GITHUB_ENV
 
+      - name: 'Build conformance reports'
+        run: |
+          JELLY_DATE=$(date -I)
+          if [ $JELLY_VERSION = "refs/heads/main" ]; then
+            JELLY_VERSION="dev"
+          fi
+          # For Jena 5.5.0
+          sbt "integrationTests/testOnly *ProtocolConformanceSpec -- -z Jena -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"
+          # Jena 5.3.0 and the rest
+          sed -i "s/lazy val jenaV = .*/lazy val jenaV = \"5.3.0\"/g" build.sbt
+          sbt "integrationTests/testOnly *ProtocolConformanceSpec -- -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"
+          cd integration-tests/target
+          tar -czf conformance_reports.tar.gz reports/
+          cd ../..
+        env:
+          JELLY_VERSION: ${{ github.ref }}
+
       - name: 'Publish plugins (pre-release)'
         if: github.ref == 'refs/heads/main'
         uses: ncipollo/release-action@v1.18.0
@@ -65,7 +82,8 @@ jobs:
           artifacts: >-
             jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
             rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
-            neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
+            neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            integration-tests/target/conformance_reports.tar.gz
           generateReleaseNotes: true
 
       - name: 'Publish plugins (tagged release)'
@@ -80,7 +98,8 @@ jobs:
           artifacts: >-
             jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
             rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
-            neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar
+            neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            integration-tests/target/conformance_reports.tar.gz
           generateReleaseNotes: true
 
   publish-docs:
