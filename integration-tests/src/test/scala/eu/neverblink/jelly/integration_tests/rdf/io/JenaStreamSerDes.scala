@@ -31,7 +31,8 @@ object JenaStreamSerDes
 
   override def supportsRdfStar: Boolean = !CompatibilityUtils.jenaVersion54OrHigher
 
-  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
+  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean =
+    !CompatibilityUtils.jenaVersion54OrHigher
 
   override def readTriplesW3C(is: InputStream): Seq[Triple] =
     val sink = SinkSeq[Triple]()
