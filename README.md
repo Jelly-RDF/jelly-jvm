@@ -2,7 +2,7 @@
 
 # Jelly-JVM
 
-Implementation of [Jelly](https://w3id.org/jelly), a super-fast RDF serialization format and streaming protocol, for Apache Jena, Eclipse RDF4J, and the [Titanium RDF API](https://github.com/filip26/titanium-rdf-api).
+Implementation of [Jelly](https://w3id.org/jelly), a super-fast RDF serialization format and streaming protocol, for Apache Jena, Eclipse RDF4J, Titanium RDF API, and Neo4j.
 
 You can use Jelly-JVM simply as a "plain old" RDF file serializer/parser, just a very fast one.
 
@@ -12,8 +12,9 @@ But, this library also gives you the full stack of utilities for scalable RDF st
 
 ## Quick start
 
-* **[📃 How to use Jelly-JVM in code](https://w3id.org/jelly/jelly-jvm/dev/getting-started-devs/)**
-* **[🛠️ How to use Jelly-JVM as a plugin (zero coding!)](https://w3id.org/jelly/jelly-jvm/dev/getting-started-plugins/)**
+- **[📃 How to use Jelly-JVM in code](https://w3id.org/jelly/jelly-jvm/dev/getting-started-devs/)**
+- **[🛠️ How to use Jelly-JVM as a Jena or RDF4J plugin (zero coding!)](https://w3id.org/jelly/jelly-jvm/dev/getting-started-plugins/)**
+- **[🛠️ How to use Jelly-JVM with Neo4j via the neosemantics plugin](https://w3id.org/jelly/jelly-jvm/dev/getting-started-neo4j/)**
 
 ## Modules
 
@@ -33,6 +34,9 @@ But, this library also gives you the full stack of utilities for scalable RDF st
 - [`jelly-titanium-rdf-api`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/titanium-rdf-api/src) – integration with the minimalistic [Titanium RDF API](https://github.com/filip26/titanium-rdf-api).
   - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-titanium-rdf-api)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-titanium-rdf-api) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-titanium-rdf-api/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-titanium-rdf-api)
 
+- [`jelly-neo4j-plugin`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/neo4j-plugin/src) – integration with the [Neo4j](https://neo4j.com/) graph database via the [neosemantics](https://neo4j.com/labs/neosemantics/) plugin.
+  - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-neo4j-plugin)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-neo4j-plugin) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-neo4j-plugin/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-neo4j-plugin)
+
 - [`jelly-pekko-stream`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/pekko-stream/src) – utilities for building [Reactive Streams](https://www.reactive-streams.org/) of RDF data, based on Pekko Streams. Useful for integrating with for example gRPC, Kafka, MQTT...
   - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-pekko-stream_3)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-pekko-stream_3) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-pekko-stream_3/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-pekko-stream_3)
 
@@ -46,7 +50,7 @@ But, this library also gives you the full stack of utilities for scalable RDF st
 
 ### Plugin JARs
 
-We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](https://jena.apache.org/) and [RDF4J](https://rdf4j.org/) just by dropping the JARs into the classpath. You can find the JARs on the [releases page](https://github.com/Jelly-RDF/jelly-jvm/releases). **[More information about using the plugins](https://w3id.org/jelly/jelly-jvm/dev/getting-started-plugins/)**.
+We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](https://jena.apache.org/), [RDF4J](https://rdf4j.org/), and Neo4j just by dropping the JARs into the classpath. You can find the JARs on the [releases page](https://github.com/Jelly-RDF/jelly-jvm/releases). More information about using the plugins with **[Jena and RDF4J](https://w3id.org/jelly/jelly-jvm/dev/getting-started-plugins/)** and with **[Neo4j](https://w3id.org/jelly/jelly-jvm/dev/getting-started-neo4j/)**.
 
 ## Contributing and support
 

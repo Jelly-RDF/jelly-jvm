@@ -1,4 +1,4 @@
-# Jelly-JVM – getting started with Jena/RDF4J plugins
+# Getting started with Jena/RDF4J plugins
 
 This guide explains how to use Jelly-JVM with Apache Jena or RDF4J as a plugin, **without writing a single line of code**. We provide plugin JARs that you can simply drop in the appropriate directory to get Jelly format support in your application.
 
@@ -54,5 +54,6 @@ The Jelly format is registered under the name `jelly` in the RDF libraries, so y
 
 ## See also
 
+- **[Getting started with the Neo4j plugin](getting-started-neo4j.md)**
 - **[Getting started for developers](getting-started-devs.md)** – if you want to get your hands dirty with code and get more features out of Jelly.
 - **[`jelly-cli` command-line tool](https://github.com/Jelly-RDF/cli)** – useful for converting things to or from Jelly.

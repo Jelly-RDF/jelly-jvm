@@ -10,8 +10,14 @@ JELLY_MODULE_TO_PACKAGE_BASE = {
     'jena': 'convert.jena',
     'rdf4j': 'convert.rdf4j',
     'titanium-rdf-api': 'convert.titanium',
+    'neo4j-plugin': 'convert.neo4j',
     'pekko-stream': 'pekko.stream',
     'pekko-grpc': 'pekko.grpc',
+}
+
+NEO4J_VERSIONS = {
+    'min': '5.1.0',
+    'max': '5.26.0',
 }
 
 
@@ -238,6 +244,13 @@ def define_env(env):
     def scaladoc_package_link_pretty(module: str, package_name: str):
         name = f'{get_package_base_by_module(module)}.{package_name}'
         return f"[`{name}` :material-api:]({_javadoc_link_package(module, package_name, is_scala=True)})"
+
+    @env.macro
+    def neo4j_version(which: str = 'max'):
+        """
+        Get the supported Neo4j versions. 'which' can be 'min' or 'max'.
+        """
+        return NEO4J_VERSIONS[which]
 
     env.conf['nav'] = [
         transform_nav_item(item)

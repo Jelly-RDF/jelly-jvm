@@ -20,19 +20,19 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 // Allow scalatest to control the logging output
 Test / logBuffered := false
 
-lazy val pekkoV = "1.1.5"
+lazy val pekkoV = "1.2.0"
 lazy val pekkoGrpcV = "1.1.1"
 lazy val jenaV = "5.5.0"
-lazy val rdf4jV = "5.1.4"
+lazy val rdf4jV = "5.1.5"
 lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
-lazy val neo4jV = "5.20.0"
-lazy val protobufV = "4.32.0"
+lazy val neo4jV = "5.26.0"
+lazy val protobufV = "4.32.1"
 lazy val javapoetV = "0.7.0"
 lazy val jmhV = "1.37"
 lazy val grpcV = "1.75.0"
 
-lazy val jellyCliV = "0.4.5"
+lazy val jellyCliV = "0.8.0"
 
 lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
 
@@ -187,7 +187,8 @@ def doDownloadJellyCli(targetDir: File): File = {
   // helps on trains with unstable coverage and high speeds.
   if (targetFile.exists() && targetFile.length() > 0) {
     println(
-      s"Will not attempt to download Jelly CLI (located ${targetFile.getAbsolutePath}) as it exists. If tests fail, try cleaning the project files.",
+      s"Will not attempt to download Jelly CLI (located ${targetFile.getAbsolutePath}) as it exists. " +
+        s"If tests fail, try cleaning the project files.",
     )
     targetFile.setExecutable(true)
     return targetFile
@@ -568,7 +569,7 @@ lazy val grpc = (project in file("pekko-grpc"))
     name := "jelly-pekko-grpc",
     description := "Implementation of a gRPC client and server for the Jelly gRPC streaming protocol.",
     libraryDependencies ++= Seq(
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoV,
       "org.apache.pekko" %% "pekko-discovery" % pekkoV,
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
