@@ -250,10 +250,3 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     && writingGraphsCompatible
     && testNotRejected
   }
-
-  extension (testEntries: Seq[Resource])
-    private def selectRelevantTestEntriesByFeatures[TN, TT, TQ](
-        serDes: ProtocolSerDes[TN, TT, TQ],
-    ): Seq[Resource] =
-      testEntries
-        .filter(entry => isTestEntryRelevantByFeatures(entry, serDes))
