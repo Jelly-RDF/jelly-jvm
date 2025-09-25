@@ -46,21 +46,25 @@ class ConformanceReporter extends Reporter {
        |   foaf:maker <#assertor> .
        |""".stripMargin
 
-  val assertor: String =
+  val assertorAndDeveloper: String =
     """
+      |<#developer> a foaf:Group ;
+      |  foaf:name "Jelly-JVM contributors" ;
+      |  foaf:homepage <https://w3id.org/jelly/jelly-jvm> .
+      |
       |<#assertor> a earl:Software, earl:Assertor ;
-      |  doap:name "Jelly-JVM integration test suite" ;
-      |  doap:homepage <https://github.com/Jelly-RDF/jelly-jvm/tree/main/integration-tests> .
+      |  foaf:name "Jelly-JVM integration test suite" ;
+      |  foaf:homepage <https://github.com/Jelly-RDF/jelly-jvm/tree/main/integration-tests> .
       |""".stripMargin
 
   def formatTestSubject(name: String): String =
     s"""
        |<#impl> a doap:Project, earl:TestSubject, earl:Software ;
        |  doap:name "Jelly-JVM ($name)" ;
-       |  doap:homepage <https://w3id.org/jelly/jelly-jvm/dev/> ;
+       |  doap:homepage <https://w3id.org/jelly/jelly-jvm> ;
        |  doap:description "Jelly-JVM integration with $name"@en ;
        |  doap:programming-language "Java" ;
-       |  doap:developer <#assertor> ;
+       |  doap:developer <#developer> ;
        |  doap:release [
        |    doap:name "Jelly-JVM $jellyV" ;
        |    doap:revision "$jellyV" ;
@@ -88,7 +92,7 @@ class ConformanceReporter extends Reporter {
 
   def initStringBuilder(name: String): mutable.StringBuilder = {
     val sb = mutable.StringBuilder()
-    sb.append(assertor)
+    sb.append(assertorAndDeveloper)
     sb.append(formatTestSubject(renameIntegrations(name)))
     sb
   }
