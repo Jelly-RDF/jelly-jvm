@@ -3,13 +3,17 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 import eu.neverblink.jelly.convert.rdf4j.rio
 import eu.neverblink.jelly.convert.rdf4j.rio.{JellyFormat, JellyParserSettings, JellyWriterSettings}
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
+import eu.neverblink.jelly.integration_tests.rdf.util.JenaToRdf4jAdapter
+import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
 import eu.neverblink.jelly.integration_tests.util.Measure
+import org.apache.jena.riot.RDFParser
+import org.apache.jena.riot.lang.LabelToNode
 import org.eclipse.rdf4j.model.impl.{SimpleTriple, SimpleValueFactory}
 import org.eclipse.rdf4j.model.{Statement, Value}
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 
-import java.io.{File, FileInputStream, FileOutputStream, InputStream, OutputStream}
+import java.io.*
 import scala.jdk.CollectionConverters.*
 
 given seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
@@ -17,14 +21,13 @@ given seqMeasure[T]: Measure[Seq[T]] = (seq: Seq[T]) => seq.size
 object Rdf4jSerDes
     extends NativeSerDes[Seq[Statement], Seq[Statement]],
       ProtocolSerDes[Value, Statement, Statement]:
+  TestRiot.initialize()
+
   val name = "RDF4J"
 
   override def supportsGeneralizedStatements: Boolean = false
 
-  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean =
-    physicalStreamType match
-      case PhysicalStreamType.TRIPLES => true
-      case _ => false
+  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = true
 
   private def read(
       streams: Seq[InputStream],
@@ -49,13 +52,24 @@ object Rdf4jSerDes
     fileIss.foreach(_.close())
     result
 
-  override def readQuadsW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.NQUADS)
+  override def readQuadsW3C(is: InputStream): Seq[Statement] = {
+    val collector = new StatementCollector()
+    val adapter = JenaToRdf4jAdapter(collector)
+
+    RDFParser.source(is)
+      .lang(TestRiot.NQ_ANY)
+      // Preserve original blank node labels to match blank nodes IDs across different files
+      .labelToNode(LabelToNode.createUseLabelAsGiven())
+      .parse(adapter)
+
+    collector.getStatements.asScala.toSeq
+  }
 
   override def readQuadsW3C(files: Seq[File]): Seq[Statement] =
     val fileIss = files.map(FileInputStream(_))
-    val result = read(fileIss, RDFFormat.NQUADS)
+    val result = for is <- fileIss yield readQuadsW3C(is)
     fileIss.foreach(_.close())
-    result
+    result.flatten
 
   override def readTriplesJelly(
       is: InputStream,
