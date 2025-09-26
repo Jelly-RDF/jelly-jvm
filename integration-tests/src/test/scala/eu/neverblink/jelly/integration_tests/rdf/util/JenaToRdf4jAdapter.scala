@@ -7,6 +7,8 @@ import org.eclipse.rdf4j.model.{IRI, Resource, Value}
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.rio.RDFHandler
 
+import scala.annotation.nowarn
+
 class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
   val vf: SimpleValueFactory = SimpleValueFactory.getInstance()
 
@@ -15,6 +17,8 @@ class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
     else throw RuntimeException(s"Illegal position for term $n")
   }
 
+  // TODO: switch once we drop Jena 5.3.0 support
+  @nowarn("msg=deprecated")
   def makeResource(n: Node): Resource = {
     if n.isBlank then vf.createBNode(n.getBlankNodeLabel)
     else if n.isNodeTriple then {
