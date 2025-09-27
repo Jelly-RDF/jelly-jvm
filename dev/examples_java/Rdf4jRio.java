@@ -12,10 +12,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParser;
-import org.eclipse.rdf4j.rio.RDFWriter;
-import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.*;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
 /**
@@ -76,7 +73,7 @@ public class Rdf4jRio implements Example {
         try {
             // This operation should fail because the Jelly file uses a prefix table larger than 10
             Collection<Statement> customTriples = readRdf4j(jellyFile, JellyFormat.JELLY, Optional.of(customOptions));
-        } catch (RdfProtoDeserializationError e) {
+        } catch (RDFParseException e) {
             // The stream uses a prefix table size of 16, which is larger than the maximum supported size of 10.
             // To read this stream, set maxPrefixTableSize to at least 16 in the supportedOptions for this decoder.
             System.out.printf("Failed to read the Jelly file with custom options: %s%n", e.getMessage());
