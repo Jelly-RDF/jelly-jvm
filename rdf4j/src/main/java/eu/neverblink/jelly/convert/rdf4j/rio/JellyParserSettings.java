@@ -24,7 +24,8 @@ public final class JellyParserSettings {
     public static final AbstractRioSetting<Boolean> CHECKING = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.checking",
         "Use RDF4J's checking stack (validating IRIs, language tags, and datatypes). " +
-        "True by default, setting this to false will make the parser slightly faster.",
+        "True by default for correctness and consistency with other RDF4J parsers. " +
+        "If you can, set this to false to make the parser much faster.",
         true
     );
 
