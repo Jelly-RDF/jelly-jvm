@@ -50,8 +50,9 @@ class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
     "preserve namespace declarations (prefixes before triples)" in {
       val out = new ByteArrayOutputStream()
       val writer = JellyWriterFactory().getWriter(out)
-      writer.set(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS, true)
-//      writer.set(JellyWriterSettings.PHYSICAL_TYPE, PhysicalStreamType.TRIPLES)
+      // Default is true
+      // writer.set(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS, true)
+      // writer.set(JellyWriterSettings.PHYSICAL_TYPE, PhysicalStreamType.TRIPLES)
 
       writer.startRDF()
       writer.handleNamespace("ex", "http://example.com/")
@@ -65,7 +66,8 @@ class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
     "preserve namespace declarations (triples before prefixes)" in {
       val out = new ByteArrayOutputStream()
       val writer = JellyWriterFactory().getWriter(out)
-      writer.set(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS, true)
+      // Default is true
+      // writer.set(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS, true)
 
       writer.startRDF()
       writer.handleStatement(triple)
@@ -79,8 +81,8 @@ class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
     "not preserve namespace declarations if disabled" in {
       val out = new ByteArrayOutputStream()
       val writer = JellyWriterFactory().getWriter(out)
-      // Default is false
-      // writer.set(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS, false)
+      // Default is true
+      writer.set(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS, false)
 
       writer.startRDF()
       writer.handleNamespace("ex", "http://example.com/")
