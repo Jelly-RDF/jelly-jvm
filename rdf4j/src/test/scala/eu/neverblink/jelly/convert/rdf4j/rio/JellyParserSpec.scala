@@ -6,7 +6,7 @@ import eu.neverblink.jelly.core.{JellyConstants, JellyOptions}
 import org.eclipse.rdf4j.model.Literal
 import org.eclipse.rdf4j.model.base.{AbstractValueFactory, CoreDatatype}
 import org.eclipse.rdf4j.model.impl.SimpleLiteral
-import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.{RDFFormat, RDFParseException}
 import org.eclipse.rdf4j.rio.helpers.{AbstractRDFParser, BasicParserSettings, StatementCollector}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -15,27 +15,41 @@ import java.io.{ByteArrayInputStream, InputStream, Reader}
 import scala.jdk.CollectionConverters.*
 
 class JellyParserSpec extends AnyWordSpec, Matchers:
-  private val inputData = {
+  private val row1 = RdfStreamRow.newInstance().setOptions(
+    JellyOptions.SMALL_STRICT.clone()
+      .setPhysicalType(PhysicalStreamType.TRIPLES)
+      .setMaxPrefixTableSize(0)
+      .setVersion(JellyConstants.PROTO_VERSION),
+  )
+  private val row2 = RdfStreamRow.newInstance().setName(
+    RdfNameEntry.newInstance().setValue("http://example.org/s"),
+  )
+
+  private val validData = {
     val frame = RdfStreamFrame.newInstance()
-    frame.addRows(
-      RdfStreamRow.newInstance().setOptions(
-        JellyOptions.SMALL_STRICT.clone()
-          .setPhysicalType(PhysicalStreamType.TRIPLES)
-          .setMaxPrefixTableSize(0)
-          .setVersion(JellyConstants.PROTO_VERSION),
-      ),
-    )
-    frame.addRows(
-      RdfStreamRow.newInstance().setName(
-        RdfNameEntry.newInstance().setValue("http://example.org/s"),
-      ),
-    )
+    frame.addRows(row1)
+    frame.addRows(row2)
     frame.addRows(
       RdfStreamRow.newInstance().setTriple(
         RdfTriple.newInstance()
           .setSubject("b1234")
           .setPredicate(RdfIri.newInstance().setNameId(1))
           .setObject(RdfLiteral.newInstance().setLex("test")),
+      ),
+    )
+    frame.toByteArrayDelimited
+  }
+
+  private val invalidLanguage = {
+    val frame = RdfStreamFrame.newInstance()
+    frame.addRows(row1)
+    frame.addRows(row2)
+    frame.addRows(
+      RdfStreamRow.newInstance().setTriple(
+        RdfTriple.newInstance()
+          .setSubject("b1234")
+          .setPredicate(RdfIri.newInstance().setNameId(1))
+          .setObject(RdfLiteral.newInstance().setLex("test").setLangtag("invalid lang tag!")),
       ),
     )
     frame.toByteArrayDelimited
@@ -55,7 +69,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       val parser = JellyParserFactory().getParser(Rdf4jConverterFactory.getInstance())
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
-      parser.parse(ByteArrayInputStream(inputData), "")
+      parser.parse(ByteArrayInputStream(validData), "")
       collector.getStatements.size should be(1)
       val st = collector.getStatements.asScala.head
       st.getObject shouldBe a[SimpleLiteral]
@@ -66,7 +80,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
       parser.setValueFactory(customFactory)
-      parser.parse(ByteArrayInputStream(inputData), "")
+      parser.parse(ByteArrayInputStream(validData), "")
       collector.getStatements.size should be(1)
       val st = collector.getStatements.asScala.head
       st.getObject.asInstanceOf[Literal].getLabel shouldEqual "TEST LITERAL IMPLEMENTATION"
@@ -77,7 +91,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       val parser = JellyParserFactory().getParser(converter)
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
-      parser.parse(ByteArrayInputStream(inputData), "")
+      parser.parse(ByteArrayInputStream(validData), "")
       collector.getStatements.size should be(1)
       val st = collector.getStatements.asScala.head
       st.getObject.asInstanceOf[Literal].getLabel shouldEqual "TEST LITERAL IMPLEMENTATION"
@@ -88,7 +102,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
-      parser.parse(ByteArrayInputStream(inputData), "")
+      parser.parse(ByteArrayInputStream(validData), "")
       collector.getStatements.size should be(1)
       val st = collector.getStatements.asScala.head
       st.getSubject.isBNode shouldBe true
@@ -101,7 +115,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
-      parser.parse(ByteArrayInputStream(inputData), "")
+      parser.parse(ByteArrayInputStream(validData), "")
       collector.getStatements.size should be(1)
       val st = collector.getStatements.asScala.head
       st.getSubject.isIRI shouldBe true
@@ -118,7 +132,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
-      parser.parse(ByteArrayInputStream(inputData), "")
+      parser.parse(ByteArrayInputStream(validData), "")
       collector.getStatements.size should be(1)
       val st = collector.getStatements.asScala.head
       st.getSubject.isIRI shouldBe true
@@ -133,7 +147,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       parser.setValueFactory(customFactory)
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
-      parser.parse(ByteArrayInputStream(inputData), "")
+      parser.parse(ByteArrayInputStream(validData), "")
       collector.getStatements.size should be(1)
       val st = collector.getStatements.asScala.head
       st.getObject.asInstanceOf[Literal].getLabel shouldEqual "TEST LITERAL IMPLEMENTATION"
@@ -147,7 +161,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
-      parser.parse(ByteArrayInputStream(inputData), "")
+      parser.parse(ByteArrayInputStream(validData), "")
       collector.getStatements.size should be(1)
       val st = collector.getStatements.asScala.head
       st.getSubject.isBNode shouldBe true
@@ -176,5 +190,38 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       )
 
       keys should contain theSameElementsAs (expectedBase ++ expectedJelly)
+    }
+
+    "unwrap RdfProtoDeserializationError containing RDFParseException" in {
+      val parser = new JellyParser()
+      parser.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true)
+      val collector = new StatementCollector()
+      parser.setRDFHandler(collector)
+
+      // The inner exception should be unwrapped and rethrown
+      val e = intercept[RDFParseException] {
+        parser.parse(ByteArrayInputStream(invalidLanguage), "")
+      }
+      e.getMessage should include("was not recognised as a language literal")
+    }
+
+    "rewrap generic RdfProtoDeserializationError" in {
+      val parser = new JellyParser()
+      val collector = new StatementCollector()
+      parser.setRDFHandler(collector)
+
+      // Create a frame with an unsupported proto version
+      val frame = RdfStreamFrame.newInstance()
+      frame.addRows(
+        RdfStreamRow.newInstance().setOptions(
+          JellyOptions.SMALL_STRICT.clone().setVersion(999999),
+        ),
+      )
+
+      // The exception should be rethrown as RDFParseException
+      val e = intercept[RDFParseException] {
+        parser.parse(ByteArrayInputStream(frame.toByteArray), "")
+      }
+      e.getMessage should include("Unsupported proto version")
     }
   }

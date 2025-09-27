@@ -2,7 +2,7 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
-import eu.neverblink.jelly.core.{JellyOptions, RdfProtoDeserializationError}
+import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.integration_tests.util.Measure
 import org.apache.pekko.actor.ActorSystem
@@ -131,7 +131,6 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
   def parsingFailureTests(impl: NativeSerDes[?, ?], boxed: Boolean = false): Unit =
     def checkException(e: Throwable): Unit =
       val e1 = if boxed then e.getCause else e
-      e1 shouldBe a[RdfProtoDeserializationError]
       e1.getMessage should include("generalized")
       e1.getCause shouldBe a[ClassCastException]
 
