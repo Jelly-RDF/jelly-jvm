@@ -4,9 +4,8 @@ import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
 import eu.neverblink.jelly.convert.rdf4j.*;
-import eu.neverblink.jelly.core.JellyConverterFactory;
-import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfHandler;
+import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.internal.ProtoDecoderImpl;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
@@ -171,6 +170,15 @@ public final class JellyParser extends AbstractRDFParser {
                 // In this case, we can only read one frame
                 ProtoMessage.parseFrom(delimitingResponse.newInput(), getReusableFrame);
                 buffer.clear();
+            }
+        } catch (RdfProtoDeserializationError e) {
+            // Rewrap exceptions
+            if (e.getCause() != null && e.getCause() instanceof RDFParseException) {
+                // If the inner exception is from RDF4J, rethrow it directly
+                throw (RDFParseException) e.getCause();
+            } else {
+                // Otherwise, move the message and cause into a new RDFParseException
+                throw new RDFParseException(e.getMessage(), e);
             }
         } finally {
             rdfHandler.endRDF();
