@@ -53,10 +53,11 @@ public final class JellyWriterSettings extends WriterConfig {
     public static final BooleanRioSetting ENABLE_NAMESPACE_DECLARATIONS = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.enableNamespaceDeclarations",
         "Enable namespace declarations in the output (equivalent to PREFIX directives in Turtle syntax). " +
-        "This option is disabled by default and is not recommended when your only concern is performance. " +
+        "Enabled by default since Jelly-JVM 3.6.0, to ensure consistent behavior with RDF4J's writers. " +
+        "When your only concern is performance, it's recommended to disable this option. " +
         "It is only useful when you want to preserve the namespace declarations in the output. " +
         "Enabling this causes the stream to be written in protocol version 2 (Jelly 1.1.0) instead of 1.",
-        false
+        true
     );
 
     public static final BooleanRioSetting DELIMITED_OUTPUT = new BooleanRioSetting(

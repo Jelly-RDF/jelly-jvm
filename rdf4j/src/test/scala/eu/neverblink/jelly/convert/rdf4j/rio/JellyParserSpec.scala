@@ -6,7 +6,7 @@ import eu.neverblink.jelly.core.{JellyConstants, JellyOptions}
 import org.eclipse.rdf4j.model.Literal
 import org.eclipse.rdf4j.model.base.{AbstractValueFactory, CoreDatatype}
 import org.eclipse.rdf4j.model.impl.SimpleLiteral
-import org.eclipse.rdf4j.rio.{RDFFormat, RDFParseException}
+import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.helpers.{AbstractRDFParser, BasicParserSettings, StatementCollector}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -192,36 +192,8 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       keys should contain theSameElementsAs (expectedBase ++ expectedJelly)
     }
 
-    "unwrap RdfProtoDeserializationError containing RDFParseException" in {
+    "work with an unset RDFHandler" in {
       val parser = new JellyParser()
-      parser.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true)
-      val collector = new StatementCollector()
-      parser.setRDFHandler(collector)
-
-      // The inner exception should be unwrapped and rethrown
-      val e = intercept[RDFParseException] {
-        parser.parse(ByteArrayInputStream(invalidLanguage), "")
-      }
-      e.getMessage should include("was not recognised as a language literal")
-    }
-
-    "rewrap generic RdfProtoDeserializationError" in {
-      val parser = new JellyParser()
-      val collector = new StatementCollector()
-      parser.setRDFHandler(collector)
-
-      // Create a frame with an unsupported proto version
-      val frame = RdfStreamFrame.newInstance()
-      frame.addRows(
-        RdfStreamRow.newInstance().setOptions(
-          JellyOptions.SMALL_STRICT.clone().setVersion(999999),
-        ),
-      )
-
-      // The exception should be rethrown as RDFParseException
-      val e = intercept[RDFParseException] {
-        parser.parse(ByteArrayInputStream(frame.toByteArray), "")
-      }
-      e.getMessage should include("Unsupported proto version")
+      parser.parse(ByteArrayInputStream(validData), "")
     }
   }

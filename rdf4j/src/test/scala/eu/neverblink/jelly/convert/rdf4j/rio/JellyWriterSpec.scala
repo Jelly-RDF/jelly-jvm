@@ -1,14 +1,17 @@
 package eu.neverblink.jelly.convert.rdf4j.rio
 
 import eu.neverblink.jelly.core.utils.IoUtils
-import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, LogicalStreamType}
+import eu.neverblink.jelly.core.proto.v1.{LogicalStreamType, RdfStreamFrame}
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import scala.annotation.nowarn
+import scala.jdk.CollectionConverters.*
 import org.eclipse.rdf4j.model.Statement
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter
 
 @nowarn("msg=deprecated")
 class JellyWriterSpec extends AnyWordSpec, Matchers:
@@ -95,5 +98,30 @@ class JellyWriterSpec extends AnyWordSpec, Matchers:
       val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
       f should not be null
       f.getRows.iterator.next.getOptions.getLogicalType should be(LogicalStreamType.GRAPHS)
+    }
+
+    "return list of supported settings" in {
+      val writer = JellyWriterFactory().getWriter(new ByteArrayOutputStream())
+      val settings = writer.getSupportedSettings().asScala.toSet
+
+      val expectedBase = new AbstractRDFWriter {
+        def getRDFFormat: RDFFormat = ???
+        def endRDF(): Unit = ???
+        def handleComment(comment: String): Unit = ???
+      }.getSupportedSettings.asScala.toSet
+
+      val expectedJelly = Set(
+        JellyWriterSettings.STREAM_NAME,
+        JellyWriterSettings.PHYSICAL_TYPE,
+        JellyWriterSettings.ALLOW_RDF_STAR,
+        JellyWriterSettings.MAX_NAME_TABLE_SIZE,
+        JellyWriterSettings.MAX_PREFIX_TABLE_SIZE,
+        JellyWriterSettings.MAX_DATATYPE_TABLE_SIZE,
+        JellyWriterSettings.FRAME_SIZE,
+        JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS,
+        JellyWriterSettings.DELIMITED_OUTPUT,
+      )
+
+      settings should contain theSameElementsAs (expectedBase ++ expectedJelly)
     }
   }
