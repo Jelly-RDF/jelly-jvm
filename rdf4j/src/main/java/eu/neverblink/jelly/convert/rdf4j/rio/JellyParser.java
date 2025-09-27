@@ -3,8 +3,11 @@ package eu.neverblink.jelly.convert.rdf4j.rio;
 import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
-import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
+import eu.neverblink.jelly.convert.rdf4j.*;
+import eu.neverblink.jelly.core.JellyConverterFactory;
+import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfHandler;
+import eu.neverblink.jelly.core.internal.ProtoDecoderImpl;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
@@ -15,8 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Collection;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
@@ -25,10 +27,40 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFParser;
 
 public final class JellyParser extends AbstractRDFParser {
 
-    private Rdf4jConverterFactory converterFactory;
+    private BaseRdf4jDecoderConverter decoderConverter;
 
+    /**
+     * Whether the currently-set decoderConverter uses the full RDF4J checking stack.
+     */
+    private boolean checking;
+
+    /**
+     * Parameterless constructor that uses RDF4J's full parsing stack, including literal, datatype,
+     * IRI, and language tag validation.
+     * <p>
+     * If you want to use a slightly faster non-checking parser, use the constructor that takes a
+     * {@link Rdf4jConverterFactory} and pass in {@link Rdf4jConverterFactory#getInstance()}.
+     */
+    public JellyParser() {
+        this.decoderConverter = new Rdf4jRioDecoderConverter();
+        this.checking = true;
+    }
+
+    /**
+     * Creates a new JellyParser instance with the specified converter factory. This parser will NOT
+     * respect BasicParserSettings, as it does not use RDF4J's parsing stack. It will never validate
+     * IRIs, language tags, or datatypes.
+     * <p>
+     * If you want to use RDF4J's full parsing stack, use the parameterless constructor.
+     *
+     * @param converterFactory
+     *   The converter factory to use for creating RDF4J values.
+     */
     public JellyParser(Rdf4jConverterFactory converterFactory) {
-        this.converterFactory = converterFactory;
+        this.decoderConverter = converterFactory.decoderConverter();
+        this.valueFactory = this.decoderConverter.getValueFactory();
+        this.checking = false;
+        this.set(JellyParserSettings.CHECKING, false);
     }
 
     @Override
@@ -39,6 +71,7 @@ public final class JellyParser extends AbstractRDFParser {
     @Override
     public Collection<RioSetting<?>> getSupportedSettings() {
         final Collection<RioSetting<?>> settings = super.getSupportedSettings();
+        settings.add(JellyParserSettings.CHECKING);
         settings.add(JellyParserSettings.PROTO_VERSION);
         settings.add(JellyParserSettings.ALLOW_GENERALIZED_STATEMENTS);
         settings.add(JellyParserSettings.ALLOW_RDF_STAR);
@@ -51,7 +84,7 @@ public final class JellyParser extends AbstractRDFParser {
     /**
      * Set the value factory that the parser should use.
      * <p>
-     * NOTE: this will wholly override the ConverterFactory provided in the constructor.
+     * NOTE: if a ConverterFactory was provided in the constructor, it will be overridden by this method.
      *
      * @param valueFactory The value factory that the parser should use.
      * @return this JellyParser instance, for method chaining
@@ -59,8 +92,27 @@ public final class JellyParser extends AbstractRDFParser {
     @Override
     public JellyParser setValueFactory(ValueFactory valueFactory) {
         super.setValueFactory(valueFactory);
-        this.converterFactory = Rdf4jConverterFactory.getInstance(valueFactory);
+        if (this.checking) {
+            this.decoderConverter = new Rdf4jRioDecoderConverter();
+        } else {
+            this.decoderConverter = new Rdf4jDecoderConverter(valueFactory);
+        }
         return this;
+    }
+
+    /**
+     * Reads the CHECKING setting and updates the decoderConverter if it has changed.
+     */
+    private void readCheckingSetting() {
+        final boolean newChecking = getParserConfig().get(JellyParserSettings.CHECKING);
+        if (newChecking != this.checking) {
+            this.checking = newChecking;
+            if (this.checking) {
+                this.decoderConverter = new Rdf4jRioDecoderConverter();
+            } else {
+                this.decoderConverter = new Rdf4jDecoderConverter(this.valueFactory);
+            }
+        }
     }
 
     /**
@@ -82,6 +134,8 @@ public final class JellyParser extends AbstractRDFParser {
             .setMaxDatatypeTableSize(config.get(JellyParserSettings.MAX_DATATYPE_TABLE_SIZE))
             .setVersion(config.get(JellyParserSettings.PROTO_VERSION));
 
+        readCheckingSetting();
+
         final var handler = new RdfHandler.AnyStatementHandler<Value>() {
             @Override
             public void handleNamespace(String prefix, Value namespace) {
@@ -90,18 +144,16 @@ public final class JellyParser extends AbstractRDFParser {
 
             @Override
             public void handleQuad(Value subject, Value predicate, Value object, Value graph) {
-                rdfHandler.handleStatement(
-                    converterFactory.decoderConverter().makeQuad(subject, predicate, object, graph)
-                );
+                rdfHandler.handleStatement(decoderConverter.makeQuad(subject, predicate, object, graph));
             }
 
             @Override
             public void handleTriple(Value subject, Value predicate, Value object) {
-                rdfHandler.handleStatement(converterFactory.decoderConverter().makeTriple(subject, predicate, object));
+                rdfHandler.handleStatement(decoderConverter.makeTriple(subject, predicate, object));
             }
         };
 
-        final var decoder = converterFactory.anyStatementDecoder(handler, options);
+        final var decoder = new ProtoDecoderImpl.AnyStatementDecoder<>(decoderConverter, handler, options);
         // Single row buffer -- rows are passed to the decoder immediately after being read
         final RowBuffer buffer = RowBuffer.newSingle(decoder::ingestRow);
         final RdfStreamFrame.Mutable reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
@@ -128,5 +180,49 @@ public final class JellyParser extends AbstractRDFParser {
     @Override
     public void parse(Reader reader, String baseURI) throws IOException, RDFParseException, RDFHandlerException {
         throw new UnsupportedOperationException("Parsing from Reader is not supported.");
+    }
+
+    private class Rdf4jRioDecoderConverter extends BaseRdf4jDecoderConverter {
+
+        public Rdf4jRioDecoderConverter() {
+            super(JellyParser.this.valueFactory);
+        }
+
+        @Override
+        public Value makeSimpleLiteral(String lex) {
+            return JellyParser.this.createLiteral(lex, null, null);
+        }
+
+        @Override
+        public Value makeLangLiteral(String lex, String lang) {
+            return JellyParser.this.createLiteral(lex, lang, null);
+        }
+
+        @Override
+        public Value makeDtLiteral(String lex, Rdf4jDatatype dt) {
+            return JellyParser.this.createLiteral(lex, null, dt.dt(), -1, -1);
+        }
+
+        @Override
+        public Rdf4jDatatype makeDatatype(String dt) {
+            final var iri = JellyParser.this.createURI(dt);
+            // CoreDatatype is not used in this implementation
+            return new Rdf4jDatatype(iri, null);
+        }
+
+        @Override
+        public Value makeBlankNode(String label) {
+            return JellyParser.this.createNode(label);
+        }
+
+        @Override
+        public Value makeIriNode(String iri) {
+            return JellyParser.this.createURI(iri);
+        }
+
+        @Override
+        public Value makeDefaultGraphNode() {
+            return null;
+        }
     }
 }
