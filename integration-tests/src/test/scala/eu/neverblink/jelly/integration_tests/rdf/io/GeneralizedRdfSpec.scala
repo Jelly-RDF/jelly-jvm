@@ -2,7 +2,7 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
-import eu.neverblink.jelly.core.{JellyOptions, RdfProtoDeserializationError}
+import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.integration_tests.util.Measure
 import org.apache.pekko.actor.ActorSystem
