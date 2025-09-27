@@ -131,7 +131,6 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
   def parsingFailureTests(impl: NativeSerDes[?, ?], boxed: Boolean = false): Unit =
     def checkException(e: Throwable): Unit =
       val e1 = if boxed then e.getCause else e
-      e1 shouldBe a[RdfProtoDeserializationError]
       e1.getMessage should include("generalized")
       e1.getCause shouldBe a[ClassCastException]
 

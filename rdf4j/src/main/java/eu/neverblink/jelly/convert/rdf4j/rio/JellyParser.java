@@ -178,7 +178,7 @@ public final class JellyParser extends AbstractRDFParser {
                 throw (RDFParseException) e.getCause();
             } else {
                 // Otherwise, move the message and cause into a new RDFParseException
-                throw new RDFParseException(e.getMessage(), e);
+                throw new RDFParseException(e.getMessage(), e.getCause());
             }
         } finally {
             rdfHandler.endRDF();
