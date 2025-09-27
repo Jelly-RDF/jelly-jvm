@@ -21,6 +21,13 @@ public final class JellyParserSettings {
         return config;
     }
 
+    public static final AbstractRioSetting<Boolean> CHECKING = new BooleanRioSetting(
+        "eu.neverblink.jelly.convert.rdf4j.rio.checking",
+        "Use RDF4J's checking stack (validating IRIs, language tags, and datatypes). " +
+        "True by default, setting this to false will make the parser slightly faster.",
+        true
+    );
+
     public static final AbstractRioSetting<Integer> PROTO_VERSION = new JellyIntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.protoVersion",
         "Maximum supported Jelly protocol version",
