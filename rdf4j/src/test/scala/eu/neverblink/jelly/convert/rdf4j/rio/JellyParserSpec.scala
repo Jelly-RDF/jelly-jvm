@@ -224,4 +224,9 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       }
       e.getMessage should include("Unsupported proto version")
     }
+
+    "work with an unset RDFHandler" in {
+      val parser = new JellyParser()
+      parser.parse(ByteArrayInputStream(validData), "")
+    }
   }

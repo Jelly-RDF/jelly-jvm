@@ -22,6 +22,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RioSetting;
+import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFParser;
 
 public final class JellyParser extends AbstractRDFParser {
@@ -123,6 +124,11 @@ public final class JellyParser extends AbstractRDFParser {
         if (in == null) {
             throw new IllegalArgumentException("Input stream must not be null");
         }
+        clear();
+        if (rdfHandler == null) {
+            // No-op handler to avoid null checks later
+            rdfHandler = new AbstractRDFHandler() {};
+        }
 
         final var config = getParserConfig();
         final var options = RdfStreamOptions.newInstance()
@@ -182,6 +188,7 @@ public final class JellyParser extends AbstractRDFParser {
             }
         } finally {
             rdfHandler.endRDF();
+            clear();
         }
     }
 

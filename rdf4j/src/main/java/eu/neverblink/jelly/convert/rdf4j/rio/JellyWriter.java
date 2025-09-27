@@ -16,6 +16,7 @@ import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.HashSet;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -66,7 +67,7 @@ public final class JellyWriter extends AbstractRDFWriter {
 
     @Override
     public Collection<RioSetting<?>> getSupportedSettings() {
-        final var settings = super.getSupportedSettings();
+        final var settings = new HashSet<>(super.getSupportedSettings());
         settings.add(JellyWriterSettings.STREAM_NAME);
         settings.add(JellyWriterSettings.PHYSICAL_TYPE);
         settings.add(JellyWriterSettings.ALLOW_RDF_STAR);

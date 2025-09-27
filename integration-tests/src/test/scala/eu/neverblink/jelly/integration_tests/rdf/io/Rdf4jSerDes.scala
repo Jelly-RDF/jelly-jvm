@@ -96,6 +96,7 @@ object Rdf4jSerDes
           .setFrameSize(frameSize)
           .setJellyOptions(opt.get)
       else JellyWriterSettings.empty.setFrameSize(frameSize)
+    conf.setEnableNamespaceDeclarations(false)
     val writer = Rio.createWriter(JellyFormat.JELLY, os)
     writer.setWriterConfig(conf)
     writer.startRDF()
