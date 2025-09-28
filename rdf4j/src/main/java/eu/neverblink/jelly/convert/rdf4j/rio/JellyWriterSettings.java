@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.convert.rdf4j.rio;
 
+import eu.neverblink.jelly.core.internal.BaseJellyOptions;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
@@ -97,18 +98,18 @@ public final class JellyWriterSettings extends WriterConfig {
     public static final AbstractRioSetting<Integer> MAX_NAME_TABLE_SIZE = new JellyIntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.maxNameTableSize",
         "Maximum size of the name table",
-        128
+        BaseJellyOptions.BIG_NAME_TABLE_SIZE
     );
 
     public static final AbstractRioSetting<Integer> MAX_PREFIX_TABLE_SIZE = new JellyIntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.maxPrefixTableSize",
         "Maximum size of the prefix table",
-        16
+        BaseJellyOptions.BIG_PREFIX_TABLE_SIZE
     );
 
     public static final AbstractRioSetting<Integer> MAX_DATATYPE_TABLE_SIZE = new JellyIntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.maxDatatypeTableSize",
         "Maximum size of the datatype table",
-        16
+        BaseJellyOptions.BIG_DT_TABLE_SIZE
     );
 }

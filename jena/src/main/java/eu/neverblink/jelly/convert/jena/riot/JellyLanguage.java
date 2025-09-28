@@ -32,7 +32,7 @@ public final class JellyLanguage {
     /**
      * The Jelly language constant for use in Apache Jena RIOT.
      * <p>
-     * This uses by default JellyFormat.JELLY_SMALL_ALL_FEATURES for serialization, assuming pessimistically
+     * This uses by default JellyFormat.JELLY_BIG_ALL_FEATURES for serialization, assuming pessimistically
      * that the user may want to use all features of the protocol.
      * <p>
      * If you are not intending to use generalized RDF or RDF-star, you may want to use
@@ -146,10 +146,10 @@ public final class JellyLanguage {
         RDFLanguages.register(JELLY);
 
         // Default serialization format
-        RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_ALL_FEATURES);
+        RDFWriterRegistry.register(JELLY, JELLY_BIG_ALL_FEATURES);
 
         // Register also the streaming writer
-        StreamRDFWriter.register(JELLY, JellyFormat.JELLY_SMALL_ALL_FEATURES);
+        StreamRDFWriter.register(JELLY, JELLY_BIG_ALL_FEATURES);
 
         // Register the writers
         final var allFormats = List.of(

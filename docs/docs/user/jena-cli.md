@@ -14,9 +14,9 @@ You can use Jelly as an output format for Jena's CLI utilities by specifying the
     ./riot --stream=jelly data.ttl > data.jelly
     ```
 
-By default Jena will use the "small, all features" Jelly preset (name table: 128 entries, prefix table: 16, datatype table: 16, RDF-star enabled, generalized RDF enabled). There are a few reasons why you might want to change these serialization options:
+By default Jena will use the "big, all features" Jelly preset (name table: 4000 entries, prefix table: 128, datatype table: 32, RDF-star enabled, generalized RDF enabled). There are a few reasons why you might want to change these serialization options:
 
-- **Performance** – for larger files, the small preset does not offer the best performance or compression ratio. It's better to use larger lookup tables.
+- **Performance** – you may want to tweak the settings to better fit your data.
 - **Compatibility** – if your data does not include RDF-star or generalized RDF, you can mark these features as disabled. Later, parsers will know accurately what to expect in your data.
 
 The following presets are available:
@@ -25,12 +25,12 @@ The following presets are available:
     - `SMALL_STRICT` – RDF-star and generalized RDF disabled
     - `SMALL_GENERALIZED` – RDF-star disabled, generalized RDF enabled
     - `SMALL_RDF_STAR` – RDF-star enabled, generalized RDF disabled
-    - `SMALL_ALL_FEATURES` – RDF-star and generalized RDF enabled **(default)**
+    - `SMALL_ALL_FEATURES` – RDF-star and generalized RDF enabled
 - Big: 4000 name table entries, 150 prefix table entries, 32 datatype table entries **(recommended for larger files)**
     - `BIG_STRICT`
     - `BIG_GENERALIZED`
     - `BIG_RDF_STAR`
-    - `BIG_ALL_FEATURES`
+    - `BIG_ALL_FEATURES` **(default)**
 
 To use one of these presets, use the `--set` CLI option with the `https://neverblink.eu/jelly/riot/symbols#preset` symbol:
 

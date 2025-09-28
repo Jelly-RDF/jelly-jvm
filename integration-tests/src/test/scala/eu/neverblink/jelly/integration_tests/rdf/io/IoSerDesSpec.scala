@@ -77,7 +77,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       expectedType: String,
       expectedOpt: Option[RdfStreamOptions],
   ) =
-    val expOpt = expectedOpt.getOrElse(JellyOptions.SMALL_ALL_FEATURES)
+    val expOpt = expectedOpt.getOrElse(JellyOptions.BIG_ALL_FEATURES)
     val frame = RdfStreamFrame.parseDelimitedFrom(new ByteArrayInputStream(bytes))
     frame.getRows.asScala.size should be > 0
     frame.getRows.asScala.head.hasOptions should be(true)

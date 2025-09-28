@@ -14,7 +14,7 @@ import org.apache.jena.sparql.util.Context;
  */
 public final class JellyFormatVariant extends RDFFormatVariant {
 
-    public static final RdfStreamOptions DEFAULT_OPTIONS = JellyOptions.SMALL_ALL_FEATURES;
+    public static final RdfStreamOptions DEFAULT_OPTIONS = JellyOptions.BIG_ALL_FEATURES;
     public static final int DEFAULT_FRAME_SIZE = 256;
     public static final boolean DEFAULT_ENABLE_NAMESPACE_DECLARATIONS = false;
     public static final boolean DEFAULT_DELIMITED = true;
