@@ -16,7 +16,7 @@ class TitaniumJellyEncoderSpec extends AnyWordSpec, Matchers:
     "be created with default options" in {
       val encoder = TitaniumJellyEncoder.factory()
       encoder.getOptions should be(
-        JellyOptions.SMALL_STRICT.clone()
+        JellyOptions.BIG_STRICT.clone()
           .setPhysicalType(PhysicalStreamType.QUADS)
           .setLogicalType(LogicalStreamType.FLAT_QUADS)
           .setVersion(JellyConstants.PROTO_VERSION_1_0_X),
@@ -26,12 +26,12 @@ class TitaniumJellyEncoderSpec extends AnyWordSpec, Matchers:
 
     "be created with custom options" in {
       val encoder = TitaniumJellyEncoder.factory(
-        JellyOptions.BIG_STRICT
+        JellyOptions.SMALL_STRICT
           .clone
           .setLogicalType(LogicalStreamType.DATASETS),
       )
       encoder.getOptions should be(
-        JellyOptions.BIG_STRICT.clone()
+        JellyOptions.SMALL_STRICT.clone()
           .setPhysicalType(PhysicalStreamType.QUADS)
           .setLogicalType(LogicalStreamType.DATASETS)
           .setVersion(JellyConstants.PROTO_VERSION_1_0_X),
@@ -42,9 +42,9 @@ class TitaniumJellyEncoderSpec extends AnyWordSpec, Matchers:
     }
 
     "ignore enabling RDF-star and generalized statements" in {
-      val encoder = TitaniumJellyEncoder.factory(JellyOptions.BIG_ALL_FEATURES)
+      val encoder = TitaniumJellyEncoder.factory(JellyOptions.SMALL_ALL_FEATURES)
       encoder.getOptions should be(
-        JellyOptions.BIG_STRICT.clone()
+        JellyOptions.SMALL_STRICT.clone()
           .setPhysicalType(PhysicalStreamType.QUADS)
           .setLogicalType(LogicalStreamType.FLAT_QUADS)
           .setVersion(JellyConstants.PROTO_VERSION_1_0_X),
