@@ -27,12 +27,12 @@ public interface TitaniumJellyWriter extends RdfQuadConsumer, AutoCloseable {
 
     /**
      * Factory method to create a new TitaniumJellyWriter instance.
-     * This method uses the default options (small preset) and a frame size of 256.
+     * This method uses the default options (big preset) and a frame size of 256.
      * @param outputStream The output stream to write to.
      * @return TitaniumJellyWriter
      */
     static TitaniumJellyWriter factory(OutputStream outputStream) {
-        return factory(outputStream, JellyOptions.SMALL_STRICT, 256);
+        return factory(outputStream, JellyOptions.BIG_STRICT, 256);
     }
 
     /**

@@ -28,7 +28,7 @@ public interface TitaniumJellyEncoder extends RdfQuadConsumer {
      * @return TitaniumJellyEncoder
      */
     static TitaniumJellyEncoder factory() {
-        return factory(JellyOptions.SMALL_STRICT);
+        return factory(JellyOptions.BIG_STRICT);
     }
 
     /**
