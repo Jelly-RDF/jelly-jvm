@@ -1019,9 +1019,9 @@
 <div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./riot<span class="w"> </span>--stream<span class="o">=</span>jelly<span class="w"> </span>data.ttl<span class="w"> </span>&gt;<span class="w"> </span>data.jelly
 </span></code></pre></div>
 </div>
-<p>By default Jena will use the "small, all features" Jelly preset (name table: 128 entries, prefix table: 16, datatype table: 16, RDF-star enabled, generalized RDF enabled). There are a few reasons why you might want to change these serialization options:</p>
+<p>By default Jena will use the "big, all features" Jelly preset (name table: 4000 entries, prefix table: 128, datatype table: 32, RDF-star enabled, generalized RDF enabled). There are a few reasons why you might want to change these serialization options:</p>
 <ul>
-<li><strong>Performance</strong> – for larger files, the small preset does not offer the best performance or compression ratio. It's better to use larger lookup tables.</li>
+<li><strong>Performance</strong> – you may want to tweak the settings to better fit your data.</li>
 <li><strong>Compatibility</strong> – if your data does not include RDF-star or generalized RDF, you can mark these features as disabled. Later, parsers will know accurately what to expect in your data.</li>
 </ul>
 <p>The following presets are available:</p>
@@ -1030,14 +1030,14 @@
 <li><code>SMALL_STRICT</code> – RDF-star and generalized RDF disabled</li>
 <li><code>SMALL_GENERALIZED</code> – RDF-star disabled, generalized RDF enabled</li>
 <li><code>SMALL_RDF_STAR</code> – RDF-star enabled, generalized RDF disabled</li>
-<li><code>SMALL_ALL_FEATURES</code> – RDF-star and generalized RDF enabled <strong>(default)</strong></li>
+<li><code>SMALL_ALL_FEATURES</code> – RDF-star and generalized RDF enabled</li>
 </ul>
 </li>
 <li>Big: 4000 name table entries, 150 prefix table entries, 32 datatype table entries <strong>(recommended for larger files)</strong><ul>
 <li><code>BIG_STRICT</code></li>
 <li><code>BIG_GENERALIZED</code></li>
 <li><code>BIG_RDF_STAR</code></li>
-<li><code>BIG_ALL_FEATURES</code></li>
+<li><code>BIG_ALL_FEATURES</code> <strong>(default)</strong></li>
 </ul>
 </li>
 </ul>
@@ -1083,7 +1083,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">May 17, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">September 28, 2025</span>
   </span>
 
     
