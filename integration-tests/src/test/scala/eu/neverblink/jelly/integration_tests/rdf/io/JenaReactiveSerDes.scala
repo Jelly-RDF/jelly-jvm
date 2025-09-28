@@ -94,7 +94,7 @@ class JenaReactiveSerDes(implicit mat: Materializer)
       .via(
         EncoderFlow.builder
           .withLimiter(ByteSizeLimiter(32_000))
-          .flatQuads(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
+          .flatQuads(opt.getOrElse(JellyOptions.BIG_ALL_FEATURES))
           .flow,
       )
       .runWith(JellyIo.toIoStream(os))
@@ -110,7 +110,7 @@ class JenaReactiveSerDes(implicit mat: Materializer)
       .via(
         EncoderFlow.builder
           .withLimiter(ByteSizeLimiter(32_000))
-          .flatTriples(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
+          .flatTriples(opt.getOrElse(JellyOptions.BIG_ALL_FEATURES))
           .flow,
       )
       .runWith(JellyIo.toIoStream(os))
@@ -127,7 +127,7 @@ class JenaReactiveSerDes(implicit mat: Materializer)
       .via(
         EncoderFlow.builder
           .withLimiter(ByteSizeLimiter(32_000))
-          .flatTriples(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
+          .flatTriples(opt.getOrElse(JellyOptions.BIG_ALL_FEATURES))
           .flow,
       )
       .runWith(JellyIo.toIoStream(fileOs))
@@ -145,7 +145,7 @@ class JenaReactiveSerDes(implicit mat: Materializer)
       .via(
         EncoderFlow.builder
           .withLimiter(ByteSizeLimiter(32_000))
-          .flatQuads(opt.getOrElse(JellyOptions.SMALL_ALL_FEATURES))
+          .flatQuads(opt.getOrElse(JellyOptions.BIG_ALL_FEATURES))
           .flow,
       )
       .runWith(JellyIo.toIoStream(fileOs))

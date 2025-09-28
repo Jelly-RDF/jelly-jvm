@@ -32,7 +32,7 @@ public final class JellyLanguage {
     /**
      * The Jelly language constant for use in Apache Jena RIOT.
      * <p>
-     * This uses by default JellyFormat.JELLY_SMALL_ALL_FEATURES for serialization, assuming pessimistically
+     * This uses by default JellyFormat.JELLY_BIG_ALL_FEATURES for serialization, assuming pessimistically
      * that the user may want to use all features of the protocol.
      * <p>
      * If you are not intending to use generalized RDF or RDF-star, you may want to use
