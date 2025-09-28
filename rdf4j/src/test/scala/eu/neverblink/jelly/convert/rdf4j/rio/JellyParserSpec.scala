@@ -66,7 +66,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
 
   "JellyParser (non-checking)" should {
     "use SimpleValueFactory by default" in {
-      val parser = JellyParserFactory().getParser(Rdf4jConverterFactory.getInstance())
+      val parser = JellyParserFactory().getParser()
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
       parser.parse(ByteArrayInputStream(validData), "")
@@ -76,7 +76,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     }
 
     "allow overriding the value factory through .setValueFactory" in {
-      val parser = JellyParserFactory().getParser(Rdf4jConverterFactory.getInstance())
+      val parser = JellyParserFactory().getParser()
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
       parser.setValueFactory(customFactory)
@@ -98,7 +98,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     }
 
     "not respect the SKOLEMIZE_ORIGIN setting" in {
-      val parser = JellyParserFactory().getParser(Rdf4jConverterFactory.getInstance())
+      val parser = JellyParserFactory().getParser()
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
@@ -110,7 +110,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     }
 
     "switch to checking mode when CHECKING=true" in {
-      val parser = JellyParserFactory().getParser(Rdf4jConverterFactory.getInstance())
+      val parser = JellyParserFactory().getParser()
       parser.set(JellyParserSettings.CHECKING, true)
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       val collector = new StatementCollector()
@@ -128,7 +128,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
   "JellyParser (checking)" should {
     // Check if the AbstractRDFParser machinery is being used
     "respect the SKOLEMIZE_ORIGIN setting" in {
-      val parser = new JellyParser()
+      val parser = JellyParserFactory().setChecking(true).getParser()
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
@@ -142,7 +142,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     }
 
     "allow overriding the value factory through .setValueFactory" in {
-      val parser = new JellyParser()
+      val parser = JellyParserFactory().setChecking(true).getParser()
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       parser.setValueFactory(customFactory)
       val collector = new StatementCollector()
@@ -156,7 +156,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     }
 
     "switch to non-checking mode when CHECKING=false" in {
-      val parser = new JellyParser()
+      val parser = JellyParserFactory().setChecking(true).getParser()
       parser.set(JellyParserSettings.CHECKING, false)
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       val collector = new StatementCollector()
@@ -169,7 +169,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     }
 
     "report supported settings" in {
-      val parser = new JellyParser()
+      val parser = JellyParserFactory().setChecking(true).getParser()
       val keys = parser.getSupportedSettings.asScala.toSet
 
       val expectedBase = new AbstractRDFParser() {
@@ -193,7 +193,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     }
 
     "unwrap RdfProtoDeserializationError containing RDFParseException" in {
-      val parser = new JellyParser()
+      val parser = JellyParserFactory().setChecking(true).getParser()
       parser.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true)
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
@@ -206,7 +206,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     }
 
     "rewrap generic RdfProtoDeserializationError" in {
-      val parser = new JellyParser()
+      val parser = JellyParserFactory().setChecking(true).getParser()
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
 
@@ -226,7 +226,24 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     }
 
     "work with an unset RDFHandler" in {
-      val parser = new JellyParser()
+      val parser = JellyParserFactory().setChecking(true).getParser()
       parser.parse(ByteArrayInputStream(validData), "")
+    }
+  }
+
+  "JellyParserFactory" should {
+    "update the checking parameter" in {
+      val f = JellyParserFactory()
+      f.isChecking shouldBe false
+      f.setChecking(true) should be theSameInstanceAs f
+      f.isChecking shouldBe true
+      f.setChecking(false) should be theSameInstanceAs f
+      f.isChecking shouldBe false
+      f.setChecking(true) should be theSameInstanceAs f
+      f.isChecking shouldBe true
+    }
+
+    "return the JellyFormat" in {
+      JellyParserFactory().getRDFFormat shouldBe JellyFormat.JELLY
     }
   }
