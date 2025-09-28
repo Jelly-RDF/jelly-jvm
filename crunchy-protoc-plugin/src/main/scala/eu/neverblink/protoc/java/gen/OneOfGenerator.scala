@@ -304,7 +304,10 @@ class OneOfGenerator(val info: OneOfInfo):
     else throw new IllegalStateException("Unhandled field type: " + field.info.getTypeName)
     true
 
-  private def generateMergeDelimitedFromCall(method: MethodSpec.Builder, field: FieldGenerator): Unit =
+  private def generateMergeDelimitedFromCall(
+      method: MethodSpec.Builder,
+      field: FieldGenerator,
+  ): Unit =
     val typeName = field.info.getTypeName.asInstanceOf[ClassName].simpleName()
     if info.parentTypeInfo.request.pluginOptions.isRecursive(typeName) then
       method
