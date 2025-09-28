@@ -252,8 +252,7 @@ class OneOfGenerator(val info: OneOfInfo):
           "ProtoMessage.mergeDelimitedFrom($N, input, remainingDepth)",
           field.info.fieldName,
         )
-    else if field.info.isString then
-      method.addStatement("$N(input.readString())", info.setterName)
+    else if field.info.isString then method.addStatement("$N(input.readString())", info.setterName)
     else if field.info.isPrimitive then
       method.addStatement(
         "$N(input.read$L())",
