@@ -52,6 +52,13 @@ class PluginOptions(request: PluginProtos.CodeGeneratorRequest):
   val implements: Map[String, Seq[String]] = parseImplements(map)
   val fastOneofMerge: Set[String] = map.getOrDefault("fast_oneof_merge", "").split(";").toSet
   val classBasedOneof: Set[String] = map.getOrDefault("class_based_oneof", "").split(";").toSet
+  val recursiveMessages: Set[String] = map.getOrDefault("recursive_messages", "").split(";").toSet
+
+  def isRecursive(messageName: String): Boolean =
+    // If empty (default), all messages are considered recursive for security reasons.
+    // Setting this option to a non-empty value restricts the recursion depth check
+    // to only the listed messages, while all other messages are considered non-recursive.
+    recursiveMessages.isEmpty || recursiveMessages.contains(messageName)
 
   private def parseReplacePackage(replaceOption: String): String => String =
     // leave as is

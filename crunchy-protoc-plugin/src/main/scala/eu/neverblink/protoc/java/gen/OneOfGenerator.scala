@@ -248,10 +248,7 @@ class OneOfGenerator(val info: OneOfInfo):
         .addStatement("$N = $T.newInstance()", field.info.fieldName, field.info.getTypeName)
         .addStatement("$N($N)", info.setterName, field.info.fieldName)
         .endControlFlow
-        .addStatement(
-          "ProtoMessage.mergeDelimitedFrom($N, input, remainingDepth)",
-          field.info.fieldName,
-        )
+      generateMergeDelimitedFromCall(method, field)
     else if field.info.isString then
       method.addStatement("$N(input.readStringRequireUtf8())", info.setterName)
     else if field.info.isPrimitive then
@@ -283,10 +280,7 @@ class OneOfGenerator(val info: OneOfInfo):
             field.info.getTypeName,
           )
           .addStatement("$N($N)", field.info.setterName, field.info.fieldName)
-          .addStatement(
-            "ProtoMessage.mergeDelimitedFrom($N, input, remainingDepth)",
-            field.info.fieldName,
-          )
+        generateMergeDelimitedFromCall(method, field)
       else
         // If the field is already set to the same kind of message, we merge it.
         // Otherwise, we create a new instance of the message and merge it.
@@ -298,10 +292,7 @@ class OneOfGenerator(val info: OneOfInfo):
           .addStatement("$N = $T.newInstance()", field.info.fieldName, field.info.getTypeName)
           .addStatement("$N($N)", field.info.setterName, field.info.fieldName)
           .endControlFlow
-          .addStatement(
-            "ProtoMessage.mergeDelimitedFrom($N, input, remainingDepth)",
-            field.info.fieldName,
-          )
+        generateMergeDelimitedFromCall(method, field)
     else if field.info.isString then
       method.addStatement("$N(input.readStringRequireUtf8())", field.info.setterName)
     else if field.info.isPrimitive then
@@ -312,6 +303,18 @@ class OneOfGenerator(val info: OneOfInfo):
       )
     else throw new IllegalStateException("Unhandled field type: " + field.info.getTypeName)
     true
+
+  private def generateMergeDelimitedFromCall(method: MethodSpec.Builder, field: FieldGenerator): Unit =
+    val typeName = field.info.getTypeName.asInstanceOf[ClassName].simpleName()
+    if info.parentTypeInfo.request.pluginOptions.isRecursive(typeName) then
+      method
+        .beginControlFlow("if (remainingDepth < 0)")
+        .addStatement("throw new RuntimeException(\"Maximum recursion depth exceeded\")")
+        .endControlFlow
+    method.addStatement(
+      "ProtoMessage.mergeDelimitedFrom($N, input, remainingDepth)",
+      field.info.fieldName,
+    )
 
   def generateConstants(t: TypeSpec.Builder): Unit =
     for field <- fields do
