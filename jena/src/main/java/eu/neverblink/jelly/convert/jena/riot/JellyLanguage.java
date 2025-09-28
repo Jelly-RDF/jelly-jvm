@@ -146,10 +146,10 @@ public final class JellyLanguage {
         RDFLanguages.register(JELLY);
 
         // Default serialization format
-        RDFWriterRegistry.register(JELLY, JellyFormat.JELLY_SMALL_ALL_FEATURES);
+        RDFWriterRegistry.register(JELLY, JELLY_BIG_ALL_FEATURES);
 
         // Register also the streaming writer
-        StreamRDFWriter.register(JELLY, JellyFormat.JELLY_SMALL_ALL_FEATURES);
+        StreamRDFWriter.register(JELLY, JELLY_BIG_ALL_FEATURES);
 
         // Register the writers
         final var allFormats = List.of(
