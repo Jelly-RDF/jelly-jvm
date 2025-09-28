@@ -160,7 +160,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
     protected final TNode convertPredicateTermWrapped(SpoBase spo) {
         final var term = spo.getPredicate();
         if (term == null && lastPredicate == null) {
-            throw new RdfProtoDeserializationError("Empty subject term without previous term.");
+            throw new RdfProtoDeserializationError("Empty predicate term without previous term.");
         }
 
         if (term == null) {
@@ -183,7 +183,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
     protected final TNode convertObjectTermWrapped(SpoBase spo) {
         final var term = spo.getObject();
         if (term == null && lastObject == null) {
-            throw new RdfProtoDeserializationError("Empty subject term without previous term.");
+            throw new RdfProtoDeserializationError("Empty object term without previous term.");
         }
 
         if (term == null) {
