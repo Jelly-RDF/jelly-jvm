@@ -253,7 +253,7 @@ class OneOfGenerator(val info: OneOfInfo):
           field.info.fieldName,
         )
     else if field.info.isString then
-      method.addStatement("$N(input.readStringRequireUtf8())", info.setterName)
+      method.addStatement("$N(input.readString())", info.setterName)
     else if field.info.isPrimitive then
       method.addStatement(
         "$N(input.read$L())",
@@ -303,7 +303,7 @@ class OneOfGenerator(val info: OneOfInfo):
             field.info.fieldName,
           )
     else if field.info.isString then
-      method.addStatement("$N(input.readStringRequireUtf8())", field.info.setterName)
+      method.addStatement("$N(input.readString())", field.info.setterName)
     else if field.info.isPrimitive then
       method.addStatement(
         "$N(input.read$L())",
