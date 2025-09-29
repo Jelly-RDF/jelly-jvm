@@ -2,7 +2,6 @@ package eu.neverblink.jelly.convert.rdf4j;
 
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
-import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.utils.QuadExtractor;
 import eu.neverblink.jelly.core.utils.TripleExtractor;

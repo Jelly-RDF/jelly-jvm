@@ -23,7 +23,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfTriple;
  * @see DecoderBase for common methods shared by all decoders.
  */
 @InternalApi
-public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNode, TDatatype> {
+public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNode, TDatatype> {
 
     protected final RdfHandler<TNode> protoHandler;
     protected final RdfStreamOptions supportedOptions;
@@ -100,8 +100,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         this.currentOptions = options;
     }
 
-    @Override
-    public void ingestRow(RdfStreamRow row) {
+    /**
+     * Internal implementation of ingestRow that does not allow overriding.
+     * @param row the row to ingest
+     */
+    protected final void ingestRowInternal(RdfStreamRow row) {
         if (row == null) {
             throw new RdfProtoDeserializationError("Row kind is not set.");
         }
@@ -170,6 +173,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         }
 
         @Override
+        public void ingestRow(RdfStreamRow row) {
+            ingestRowInternal(row);
+        }
+
+        @Override
         protected void handleOptions(RdfStreamOptions opts) {
             if (!opts.getPhysicalType().equals(PhysicalStreamType.TRIPLES)) {
                 throw new RdfProtoDeserializationError("Incoming stream type is not TRIPLES.");
@@ -204,6 +212,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         ) {
             super(converter, protoHandler, supportedOptions);
             this.protoHandler = protoHandler;
+        }
+
+        @Override
+        public void ingestRow(RdfStreamRow row) {
+            ingestRowInternal(row);
         }
 
         @Override
@@ -247,6 +260,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         ) {
             super(converter, protoHandler, supportedOptions);
             this.protoHandler = protoHandler;
+        }
+
+        @Override
+        public void ingestRow(RdfStreamRow row) {
+            ingestRowInternal(row);
         }
 
         @Override
@@ -306,6 +324,11 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
         }
 
         @Override
+        public void ingestRow(RdfStreamRow row) {
+            ingestRowInternal(row);
+        }
+
+        @Override
         protected void handleOptions(RdfStreamOptions opts) {
             if (!opts.getPhysicalType().equals(PhysicalStreamType.GRAPHS)) {
                 throw new RdfProtoDeserializationError("Incoming stream type is not GRAPHS.");
@@ -351,7 +374,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
     public static final class AnyStatementDecoder<TNode, TDatatype> extends ProtoDecoderImpl<TNode, TDatatype> {
 
         private final RdfHandler.AnyStatementHandler<TNode> protoHandler;
-        private ProtoDecoderImpl<TNode, TDatatype> delegateDecoder = null;
+        private ProtoDecoderImpl<TNode, TDatatype> delegateDecoder = this;
 
         public AnyStatementDecoder(
             ProtoDecoderConverter<TNode, TDatatype> converter,
@@ -364,7 +387,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         public RdfStreamOptions getStreamOptions() {
-            if (delegateDecoder != null) {
+            if (delegateDecoder != this) {
                 return delegateDecoder.getStreamOptions();
             }
 
@@ -373,17 +396,10 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
 
         @Override
         public void ingestRow(RdfStreamRow row) {
-            if (row.hasOptions()) {
-                handleOptions(row.getOptions());
-                delegateDecoder.ingestRow(row);
-                return;
-            }
-
-            if (delegateDecoder == null) {
-                throw new RdfProtoDeserializationError("Stream options are not set.");
-            }
-
-            delegateDecoder.ingestRow(row);
+            // Initially this will direct calls to this decoder. Once we have the options row, we will
+            // switch to the appropriate delegate decoder.
+            // This is faster than checking the options every time.
+            delegateDecoder.ingestRowInternal(row);
         }
 
         @Override
@@ -392,7 +408,7 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
             final var newSupportedOptions = supportedOptions.clone().setLogicalType(LogicalStreamType.UNSPECIFIED);
 
             checkCompatibility(options, newSupportedOptions);
-            if (delegateDecoder != null) {
+            if (delegateDecoder != this) {
                 return;
             }
 
@@ -402,16 +418,18 @@ public sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDecoder<TNod
                 case GRAPHS -> delegateDecoder = new GraphsAsQuadsDecoder<>(converter, protoHandler, options);
                 default -> throw new RdfProtoDeserializationError("Incoming physical stream type is not recognized.");
             }
+            // Replay the options row to the new decoder
+            delegateDecoder.ingestRowInternal(RdfStreamRow.newInstance().setOptions(options));
         }
 
         @Override
         protected void handleTriple(RdfTriple triple) {
-            delegateDecoder.handleTriple(triple);
+            throw new RdfProtoDeserializationError("Stream options are not set.");
         }
 
         @Override
         protected void handleQuad(RdfQuad quad) {
-            delegateDecoder.handleQuad(quad);
+            throw new RdfProtoDeserializationError("Stream options are not set.");
         }
     }
 }
