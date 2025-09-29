@@ -2,7 +2,7 @@ package eu.neverblink.jelly.jmh
 
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.core.JellyOptions
-import eu.neverblink.jelly.core.RdfHandler.TripleHandler
+import eu.neverblink.jelly.core.RdfHandler.{AnyStatementHandler, TripleHandler}
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
 import org.apache.jena.graph.Node
 import org.openjdk.jmh.annotations.*
@@ -28,7 +28,7 @@ class RdfStreamFrameDecodeBench:
   @Benchmark
   @OutputTimeUnit(java.util.concurrent.TimeUnit.MICROSECONDS)
   @BenchmarkMode(Array(Mode.AverageTime))
-  def currentImplementation(blackhole: Blackhole, input: BenchInput): Unit =
+  def triplesDecoder(blackhole: Blackhole, input: BenchInput): Unit =
     val handler = new TripleHandler[Node] {
       override def handleTriple(subject: Node, predicate: Node, `object`: Node): Unit =
         blackhole.consume(subject)
@@ -36,6 +36,30 @@ class RdfStreamFrameDecodeBench:
         blackhole.consume(`object`)
     }
     val decoder = JenaConverterFactory.getInstance().triplesDecoder(
+      handler,
+      JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
+    )
+    for i <- input.toDecode.indices do
+      val frame = input.toDecode(i)
+      frame.getRows.forEach(decoder.ingestRow(_))
+
+  @Benchmark
+  @OutputTimeUnit(java.util.concurrent.TimeUnit.MICROSECONDS)
+  @BenchmarkMode(Array(Mode.AverageTime))
+  def anyStatementsDecoder(blackhole: Blackhole, input: BenchInput): Unit =
+    val handler = new AnyStatementHandler[Node] {
+      override def handleTriple(subject: Node, predicate: Node, `object`: Node): Unit =
+        blackhole.consume(subject)
+        blackhole.consume(predicate)
+        blackhole.consume(`object`)
+
+      def handleQuad(subject: Node, predicate: Node, `object`: Node, graph: Node): Unit =
+        blackhole.consume(subject)
+        blackhole.consume(predicate)
+        blackhole.consume(`object`)
+        blackhole.consume(graph)
+    }
+    val decoder = JenaConverterFactory.getInstance().anyStatementDecoder(
       handler,
       JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
     )
