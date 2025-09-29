@@ -53,6 +53,8 @@ object Rdf4jSerDes
     result
 
   override def readQuadsW3C(is: InputStream): Seq[Statement] = {
+    // Read the *.nq files using the test NQ_ANY Jena parser and then translate the results to RDF4J
+    // This is needed because RDF4J doesn't have a NQ-star compatible parser
     val collector = new StatementCollector()
     val adapter = JenaToRdf4jAdapter(collector)
 

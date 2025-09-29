@@ -23,17 +23,11 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
     private final EncoderAllocator allocator;
     private final RowBuffer buffer;
 
-    private final RdfStreamOptions supportedOptions;
-
     public TitaniumJellyEncoderImpl(RdfStreamOptions options, int frameSize) {
         // We set the stream type to QUADS, as this is the only type supported by Titanium.
-        supportedOptions = options
+        final var supportedOptions = options
             .clone()
-            .setPhysicalType(
-                options.getPhysicalType() == PhysicalStreamType.UNSPECIFIED
-                    ? PhysicalStreamType.QUADS
-                    : options.getPhysicalType()
-            )
+            .setPhysicalType(PhysicalStreamType.QUADS)
             .setLogicalType(
                 options.getLogicalType() == LogicalStreamType.UNSPECIFIED
                     ? LogicalStreamType.FLAT_QUADS
@@ -97,17 +91,9 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
                     literal = new TitaniumLiteral.DtLiteral(object, datatype);
                 }
 
-                if (supportedOptions.getPhysicalType() == PhysicalStreamType.TRIPLES) {
-                    encoder.handleTriple(subject, predicate, literal);
-                } else {
-                    encoder.handleQuad(subject, predicate, literal, graph);
-                }
+                encoder.handleQuad(subject, predicate, literal, graph);
             } else {
-                if (supportedOptions.getPhysicalType() == PhysicalStreamType.TRIPLES) {
-                    encoder.handleTriple(subject, predicate, object);
-                } else {
-                    encoder.handleQuad(subject, predicate, object, graph);
-                }
+                encoder.handleQuad(subject, predicate, object, graph);
             }
         } catch (RdfProtoSerializationError e) {
             throw new RdfConsumerException(e.getMessage(), e);

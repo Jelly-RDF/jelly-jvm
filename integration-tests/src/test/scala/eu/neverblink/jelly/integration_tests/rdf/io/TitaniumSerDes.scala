@@ -20,7 +20,7 @@ object TitaniumSerDes
 
   override def name: String = "Titanium"
 
-  override def supportsTriples: Boolean = true
+  override def supportsWritingTriples: Boolean = false
 
   override def supportsRdfStar: Boolean = false
 
