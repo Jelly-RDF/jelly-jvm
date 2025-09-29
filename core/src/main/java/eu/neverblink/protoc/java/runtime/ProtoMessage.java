@@ -279,9 +279,6 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         CodedInputStream input,
         int remainingDepth
     ) throws IOException {
-        if (remainingDepth < 0) {
-            throw new RuntimeException("Maximum recursion depth exceeded");
-        }
         final int length = input.readRawVarint32();
         final int oldLimit = input.pushLimit(length);
         if (msg.mergeFrom(input, remainingDepth - 1) != 0) {

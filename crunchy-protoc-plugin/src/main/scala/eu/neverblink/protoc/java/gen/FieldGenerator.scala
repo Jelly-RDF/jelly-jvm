@@ -211,7 +211,7 @@ class FieldGenerator(val info: FieldInfo):
       method.addNamedCode("tag = input.readRepeated$capitalizedType:L($field:N, tag);\n", m)
       return false // tag is already read, so don't read again
     } else if (info.isString)
-      method.addStatement(named("$field:N = input.readStringRequireUtf8()"))
+      method.addStatement(named("$field:N = input.readString()"))
     else if (info.isMessageOrGroup)
       method.addStatement(
         "$T.mergeDelimitedFrom($N, input, remainingDepth)",

@@ -226,10 +226,17 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
         || entry.hasGeneralizedStatementsRequirement
         && serDes.supportsGeneralizedStatements
 
-    val physicalTriplesCompatible =
-      !entry.hasPhysicalTypeTriplesRequirement
-        || entry.hasPhysicalTypeTriplesRequirement
-        && serDes.supportsTriples
+    val readingTriplesCompatible = {
+      val readingTriplesRequirement =
+        entry.hasPhysicalTypeTriplesRequirement && entry.isTestRdfFromJelly
+      !readingTriplesRequirement || readingTriplesRequirement && serDes.supportsReadingTriples
+    }
+
+    val writingTriplesCompatible = {
+      val writingTriplesRequirement =
+        entry.hasPhysicalTypeTriplesRequirement && entry.isTestRdfToJelly
+      !writingTriplesRequirement || writingTriplesRequirement && serDes.supportsWritingTriples
+    }
 
     val physicalQuadsCompatible =
       !entry.hasPhysicalTypeQuadsRequirement
@@ -252,7 +259,8 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
 
     rdfStarCompatible
     && generalizedRdfCompatible
-    && physicalTriplesCompatible
+    && readingTriplesCompatible
+    && writingTriplesCompatible
     && physicalQuadsCompatible
     && readingGraphsCompatible
     && writingGraphsCompatible
