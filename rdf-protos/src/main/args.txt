@@ -18,4 +18,5 @@ implements_RdfPatchHeader.Mutable=eu.neverblink.jelly.core.internal.proto.Header
 implements_RdfPatchOptions=eu.neverblink.jelly.core.internal.proto.OptionsBase,
 fast_oneof_merge=RdfStreamRow,
 class_based_oneof=RdfTriple;RdfQuad;RdfGraphStart;RdfPatchNamespace;RdfPatchHeader,
+recursive_messages=RdfTriple,
 replace_package=eu.ostrzyciel=eu.neverblink
