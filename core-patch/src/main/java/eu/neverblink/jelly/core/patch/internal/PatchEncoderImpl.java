@@ -15,7 +15,7 @@ import eu.neverblink.jelly.core.proto.v1.patch.*;
  */
 @ExperimentalApi
 @InternalApi
-public class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
+public final class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;
 

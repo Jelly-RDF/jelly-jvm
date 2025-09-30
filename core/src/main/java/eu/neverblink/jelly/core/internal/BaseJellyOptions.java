@@ -14,7 +14,7 @@ import eu.neverblink.jelly.core.internal.proto.OptionsBase;
  * with supported options and the maximum supported proto version.
  */
 @InternalApi
-public class BaseJellyOptions {
+public final class BaseJellyOptions {
 
     private BaseJellyOptions() {}
 

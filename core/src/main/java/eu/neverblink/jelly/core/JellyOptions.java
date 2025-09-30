@@ -10,7 +10,7 @@ import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils;
  * A collection of convenient streaming option presets.
  * None of the presets specifies the stream type – do that with the .clone().setPhysicalType() method.
  */
-public class JellyOptions {
+public final class JellyOptions {
 
     private JellyOptions() {}
 

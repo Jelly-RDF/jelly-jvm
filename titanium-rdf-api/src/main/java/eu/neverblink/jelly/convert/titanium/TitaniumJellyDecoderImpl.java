@@ -10,7 +10,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
 
 @InternalApi
-class TitaniumJellyDecoderImpl implements TitaniumJellyDecoder {
+final class TitaniumJellyDecoderImpl implements TitaniumJellyDecoder {
 
     private final RdfStreamOptions supportedOptions;
 

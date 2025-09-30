@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
-public class JellyPlugin {
+public final class JellyPlugin {
 
     private static final JellyPlugin INSTANCE = new JellyPlugin();
 

@@ -5,7 +5,7 @@ import n10s.rdf.aggregate.CollectTriples;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.UserAggregationFunction;
 
-public class JellyTripleCollector {
+public final class JellyTripleCollector {
     static {
         // Call the initializer of the plugin to ensure any setup is done
         JellyPlugin.getInstance().initialize();

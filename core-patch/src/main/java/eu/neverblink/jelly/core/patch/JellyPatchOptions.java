@@ -15,7 +15,7 @@ import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
  * Utilities for working with RdfPatchOptions.
  */
 @ExperimentalApi
-public class JellyPatchOptions {
+public final class JellyPatchOptions {
 
     private JellyPatchOptions() {}
 

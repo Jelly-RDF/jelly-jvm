@@ -17,7 +17,7 @@ import org.apache.jena.sparql.core.Quad;
  * <p>
  * This is used when initializing the stream writer with the RIOT APIs, where the stream type is not known.
  */
-public class JellyStreamWriterAutodetectType implements StreamRDF {
+public final class JellyStreamWriterAutodetectType implements StreamRDF {
 
     private final JenaConverterFactory converterFactory;
     private final JellyFormatVariant formatVariant;

@@ -9,7 +9,7 @@ import eu.neverblink.jelly.core.JellyConverterFactory;
  * This class is a singleton and should be accessed via the {@link #getInstance()} method.
  */
 @InternalApi
-public class TitaniumConverterFactory
+public final class TitaniumConverterFactory
     extends JellyConverterFactory<Object, String, TitaniumEncoderConverter, TitaniumDecoderConverter> {
 
     private static final TitaniumConverterFactory INSTANCE = new TitaniumConverterFactory();

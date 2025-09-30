@@ -12,7 +12,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.RDFWriterFactory;
 
-public class JellyBase64WriterFactory implements RDFWriterFactory {
+public final class JellyBase64WriterFactory implements RDFWriterFactory {
 
     private final JellyWriterFactory innerFactory = new JellyWriterFactory();
 

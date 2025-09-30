@@ -12,7 +12,7 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter;
 /**
  * Wrapper around JellyWriter to declare support for the Jelly-base64 format.
  */
-public class JellyBase64Writer extends AbstractRDFWriter {
+public final class JellyBase64Writer extends AbstractRDFWriter {
 
     private final RDFWriter delegate;
     private final Base64OutputStream output;

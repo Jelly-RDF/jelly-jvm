@@ -22,7 +22,7 @@ import org.eclipse.rdf4j.rio.helpers.RioConfigurationException;
  * SPDX-License-Identifier: BSD-3-Clause
  */
 @InternalApi
-class JellyIntegerRioSetting extends AbstractRioSetting<Integer> {
+final class JellyIntegerRioSetting extends AbstractRioSetting<Integer> {
 
     // TODO: remove this class when we drop support for RDF4J 4.x
     JellyIntegerRioSetting(String key, String description, Integer defaultValue) {

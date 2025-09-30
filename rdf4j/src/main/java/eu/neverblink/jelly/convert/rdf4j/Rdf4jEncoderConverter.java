@@ -8,7 +8,7 @@ import eu.neverblink.jelly.core.utils.TripleExtractor;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
-public class Rdf4jEncoderConverter
+public final class Rdf4jEncoderConverter
     implements ProtoEncoderConverter<Value>, TripleExtractor<Value, Statement>, QuadExtractor<Value, Statement> {
 
     @Override
