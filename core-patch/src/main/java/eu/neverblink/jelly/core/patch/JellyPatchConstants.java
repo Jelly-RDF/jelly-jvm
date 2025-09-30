@@ -3,7 +3,7 @@ package eu.neverblink.jelly.core.patch;
 import eu.neverblink.jelly.core.ExperimentalApi;
 
 @ExperimentalApi
-public class JellyPatchConstants {
+public final class JellyPatchConstants {
 
     private JellyPatchConstants() {}
 

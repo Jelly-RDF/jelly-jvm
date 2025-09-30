@@ -3,7 +3,7 @@ package eu.neverblink.protoc.java.runtime;
 import com.google.protobuf.CodedOutputStream;
 import java.io.OutputStream;
 
-public class ProtobufUtil {
+public final class ProtobufUtil {
 
     /**
      * Maximum size of the output buffer used when writing messages to an OutputStream.

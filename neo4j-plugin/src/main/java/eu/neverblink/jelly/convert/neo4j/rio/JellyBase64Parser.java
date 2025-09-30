@@ -13,7 +13,7 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFParser;
 /**
  * Wrapper around JellyParser to declare support for the Jelly-base64 format.
  */
-public class JellyBase64Parser extends AbstractRDFParser {
+public final class JellyBase64Parser extends AbstractRDFParser {
 
     private final RDFParser delegate;
 

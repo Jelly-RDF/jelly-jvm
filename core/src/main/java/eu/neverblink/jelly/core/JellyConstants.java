@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core;
 
-public class JellyConstants {
+public final class JellyConstants {
 
     private JellyConstants() {}
 

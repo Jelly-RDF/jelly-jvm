@@ -3,7 +3,7 @@ package eu.neverblink.jelly.convert.neo4j;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.UserFunction;
 
-public class JellyVersion {
+public final class JellyVersion {
     static {
         // Call the initializer of the plugin to ensure any setup is done
         JellyPlugin.getInstance().initialize();

@@ -7,7 +7,7 @@ import eu.neverblink.jelly.core.InternalApi;
  * @param <T> type of the value
  */
 @InternalApi
-public class DecoderLookup<T> {
+public final class DecoderLookup<T> {
 
     private int lastSetId = -1;
     private final T[] lookup;

@@ -20,12 +20,12 @@ public abstract class BaseRdf4jDecoderConverter
         this.vf = vf;
     }
 
-    public ValueFactory getValueFactory() {
+    public final ValueFactory getValueFactory() {
         return vf;
     }
 
     @Override
-    public Value makeTripleNode(Value s, Value p, Value o) {
+    public final Value makeTripleNode(Value s, Value p, Value o) {
         try {
             // RDF4J doesn't accept generalized statements (unlike Jena) which is why we need to do a type cast here.
             return vf.createTriple((Resource) s, (IRI) p, o);
@@ -38,7 +38,7 @@ public abstract class BaseRdf4jDecoderConverter
     }
 
     @Override
-    public Statement makeQuad(Value subject, Value predicate, Value object, Value graph) {
+    public final Statement makeQuad(Value subject, Value predicate, Value object, Value graph) {
         try {
             return vf.createStatement((Resource) subject, (IRI) predicate, object, (Resource) graph);
         } catch (ClassCastException e) {
@@ -50,7 +50,7 @@ public abstract class BaseRdf4jDecoderConverter
     }
 
     @Override
-    public Statement makeTriple(Value subject, Value predicate, Value object) {
+    public final Statement makeTriple(Value subject, Value predicate, Value object) {
         try {
             return vf.createStatement((Resource) subject, (IRI) predicate, object);
         } catch (ClassCastException e) {

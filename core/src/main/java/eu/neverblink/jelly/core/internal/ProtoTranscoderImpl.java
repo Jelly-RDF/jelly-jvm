@@ -12,7 +12,7 @@ import java.util.List;
  * good enough for the vast majority of cases.
  */
 @InternalApi
-public class ProtoTranscoderImpl implements ProtoTranscoder {
+public final class ProtoTranscoderImpl implements ProtoTranscoder {
 
     private final RdfStreamOptions supportedInputOptions;
     private final RdfStreamOptions outputOptions;

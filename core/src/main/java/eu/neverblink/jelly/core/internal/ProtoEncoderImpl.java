@@ -14,7 +14,7 @@ import eu.neverblink.jelly.core.proto.v1.*;
  * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
  */
 @InternalApi
-public class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
+public final class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;
 
