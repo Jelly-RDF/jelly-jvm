@@ -477,7 +477,7 @@ lazy val neo4jPlugin = (project in file("neo4j-plugin"))
       "org.neo4j" % "neo4j" % neo4jV % "provided,test",
       "org.neo4j" % "neosemantics" % neo4jV % "provided,test",
       "org.neo4j.test" % "neo4j-harness" % neo4jV % Test,
-      "org.neo4j.driver" % "neo4j-java-driver" % "6.0.0" % Test,
+      "org.neo4j.driver" % "neo4j-java-driver" % "6.0.1" % Test,
     ),
     commonSettings,
     commonJavaSettings,
