@@ -1,22 +1,22 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
+import com.apicatalog.rdf.model.{RdfQuad, RdfQuadSet, RdfTerm}
 import com.apicatalog.rdf.nquads.NQuadsReader
-import com.apicatalog.rdf.*
+import com.apicatalog.rdf.primitive.flow.{QuadAcceptor, QuadEmitter}
 import eu.neverblink.jelly.convert.titanium.{TitaniumJellyReader, TitaniumJellyWriter}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
-import eu.neverblink.jelly.integration_tests.rdf.helpers.TitaniumDatasetEmitter
 import eu.neverblink.jelly.integration_tests.util.Measure
 
 import java.io.*
 import java.util
 import scala.jdk.CollectionConverters.*
 
-given mTitaniumDataset: Measure[RdfDataset] = (ds: RdfDataset) => ds.size
+given mTitaniumDataset: Measure[RdfQuadSet] = (ds: RdfQuadSet) => ds.stream.count
 
 object TitaniumSerDes
-    extends NativeSerDes[RdfDataset, RdfDataset],
-      ProtocolSerDes[RdfValue, RdfNQuad, RdfNQuad]:
+    extends NativeSerDes[RdfQuadSet, RdfQuadSet],
+      ProtocolSerDes[RdfTerm, RdfQuad, RdfQuad]:
 
   override def name: String = "Titanium"
 
@@ -28,46 +28,48 @@ object TitaniumSerDes
 
   override def supportsGeneralizedStatements: Boolean = false
 
-  override def readTriplesW3C(is: InputStream): RdfDataset =
+  override def readTriplesW3C(is: InputStream): RdfQuadSet =
     val reader = NQuadsReader(InputStreamReader(is))
-    val ds = RdfDatasetSupplier(SinkRdfDataset())
-    reader.provide(ds)
-    ds.get()
+    val ds = SinkRdfQuadSet()
+    val sink = QuadAcceptor(ds)
+    reader.provide(sink)
+    ds
 
-  override def readTriplesW3C(streams: Seq[File]): Seq[RdfNQuad] =
-    val ds = RdfDatasetSupplier(SinkRdfDataset())
+  override def readTriplesW3C(streams: Seq[File]): Seq[RdfQuad] =
+    val ds = SinkRdfQuadSet()
+    val sink = QuadAcceptor(ds)
     for stream <- streams do
       val is = FileInputStream(stream)
       val reader = NQuadsReader(InputStreamReader(is))
-      reader.provide(ds)
+      reader.provide(sink)
       is.close()
+    ds.toSeq
 
-    ds.get().toList.asScala.toSeq
+  override def readQuadsW3C(is: InputStream): RdfQuadSet = readTriplesW3C(is)
 
-  override def readQuadsW3C(is: InputStream): RdfDataset = readTriplesW3C(is)
-
-  override def readQuadsW3C(files: Seq[File]): Seq[RdfNQuad] = readTriplesW3C(files)
+  override def readQuadsW3C(files: Seq[File]): Seq[RdfQuad] = readTriplesW3C(files)
 
   override def readTriplesJelly(
       is: InputStream,
       supportedOptions: Option[RdfStreamOptions],
-  ): RdfDataset =
+  ): RdfQuadSet =
     val reader = TitaniumJellyReader.factory(
       supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
     )
-    val ds = RdfDatasetSupplier(SinkRdfDataset())
-    reader.parseAll(ds, is)
-    ds.get()
+    val ds = SinkRdfQuadSet()
+    val sink = QuadAcceptor(ds)
+    reader.parseAll(sink, is)
+    ds
 
   override def readQuadsJelly(
       is: InputStream,
       supportedOptions: Option[RdfStreamOptions],
-  ): RdfDataset =
+  ): RdfQuadSet =
     readTriplesJelly(is, supportedOptions)
 
   override def writeTriplesJelly(
       os: OutputStream,
-      model: RdfDataset,
+      model: RdfQuadSet,
       opt: Option[RdfStreamOptions],
       frameSize: Int,
   ): Unit =
@@ -76,12 +78,12 @@ object TitaniumSerDes
       opt.getOrElse(JellyOptions.SMALL_STRICT),
       frameSize,
     )
-    TitaniumDatasetEmitter.emitDatasetTo(model, writer)
+    QuadEmitter.create(writer).emit(model)
     writer.close()
 
   override def writeQuadsJelly(
       os: OutputStream,
-      dataset: RdfDataset,
+      dataset: RdfQuadSet,
       opt: Option[RdfStreamOptions],
       frameSize: Int,
   ): Unit =
@@ -90,23 +92,24 @@ object TitaniumSerDes
   override def readTriplesJelly(
       file: File,
       supportedOptions: Option[RdfStreamOptions],
-  ): Seq[RdfNQuad] =
+  ): Seq[RdfQuad] =
     val reader = TitaniumJellyReader.factory(
       supportedOptions.getOrElse(JellyOptions.DEFAULT_SUPPORTED_OPTIONS),
     )
-    val ds = RdfDatasetSupplier(SinkRdfDataset())
-    reader.parseAll(ds, FileInputStream(file))
-    ds.get().toList.asScala.toSeq
+    val ds = SinkRdfQuadSet()
+    val sink = QuadAcceptor(ds)
+    reader.parseAll(sink, FileInputStream(file))
+    ds.toSeq
 
   override def readQuadsOrGraphsJelly(
       file: File,
       supportedOptions: Option[RdfStreamOptions],
-  ): Seq[RdfNQuad] =
+  ): Seq[RdfQuad] =
     readTriplesJelly(file, supportedOptions)
 
   override def writeTriplesJelly(
       file: File,
-      triples: Seq[RdfNQuad],
+      triples: Seq[RdfQuad],
       opt: Option[RdfStreamOptions],
       frameSize: Int,
   ): Unit =
@@ -116,58 +119,51 @@ object TitaniumSerDes
       opt.getOrElse(JellyOptions.SMALL_STRICT),
       frameSize,
     )
-    TitaniumDatasetEmitter.emitDatasetTo(triples, writer)
+    val model = SinkRdfQuadSet(triples)
+    QuadEmitter.create(writer).emit(model)
     writer.close()
     fileOs.close()
 
   override def writeQuadsJelly(
       file: File,
-      quads: Seq[RdfNQuad],
+      quads: Seq[RdfQuad],
       opt: Option[RdfStreamOptions],
       frameSize: Int,
   ): Unit =
     writeTriplesJelly(file, quads, opt, frameSize)
 
-  override def isBlank(node: RdfValue): Boolean = node.isBlankNode
+  override def isBlank(node: RdfTerm): Boolean = node.isResource && node.asResource.isBlank
 
-  override def getBlankNodeLabel(node: RdfValue): String = node.getValue
+  override def getBlankNodeLabel(node: RdfTerm): String = node.asResource.value
 
-  override def isNodeTriple(node: RdfValue): Boolean = node.isInstanceOf[RdfNQuad]
+  override def isNodeTriple(node: RdfTerm): Boolean = node.isInstanceOf[RdfQuad]
 
-  override def asNodeTriple(node: RdfValue): RdfNQuad = node.asInstanceOf[RdfNQuad]
+  override def asNodeTriple(node: RdfTerm): RdfQuad = node.asInstanceOf[RdfQuad]
 
-  override def iterateTerms(statement: RdfNQuad): Seq[RdfValue] =
-    if statement.getGraphName.isPresent then
+  override def iterateTerms(statement: RdfQuad): Seq[RdfTerm] =
+    if statement.graphName.isPresent then
       Seq(
-        statement.getSubject,
-        statement.getPredicate,
-        statement.getObject,
-        statement.getGraphName.get,
+        statement.subject,
+        statement.predicate,
+        statement.`object`,
+        statement.graphName.get,
       )
-    else Seq(statement.getSubject, statement.getPredicate, statement.getObject)
+    else Seq(statement.subject, statement.predicate, statement.`object`)
 
   // Utility rdf dataset collector that does not discard duplicates
-  class SinkRdfDataset extends RdfDataset:
-    private val nquads = new util.ArrayList[RdfNQuad]()
+  final class SinkRdfQuadSet(initial: Seq[RdfQuad] = Seq()) extends RdfQuadSet:
+    private val nquads = new util.ArrayList[RdfQuad]()
+    nquads.addAll(initial.asJava)
 
-    override def getDefaultGraph: RdfGraph =
-      throw new UnsupportedOperationException("Default graph is not supported in this dataset")
-
-    override def add(nquad: RdfNQuad): RdfDataset =
+    override def add(nquad: RdfQuad): Boolean =
       nquads.add(nquad)
-      this
+      true
 
-    override def add(triple: RdfTriple): RdfDataset =
-      throw new UnsupportedOperationException("Triples are not supported in this dataset")
+    def toSeq: Seq[RdfQuad] =
+      nquads.asScala.toSeq
 
-    override def toList: util.List[RdfNQuad] =
-      nquads
+    override def contains(quad: RdfQuad): Boolean =
+      nquads.contains(quad)
 
-    override def getGraphNames: util.Set[RdfResource] =
-      throw new UnsupportedOperationException("Graph names are not supported in this dataset")
-
-    override def getGraph(graphName: RdfResource): util.Optional[RdfGraph] =
-      throw new UnsupportedOperationException("Graph retrieval is not supported in this dataset")
-
-    override def size(): Int =
-      nquads.size()
+    override def stream(): util.stream.Stream[RdfQuad] =
+      nquads.stream()
