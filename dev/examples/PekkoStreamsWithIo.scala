@@ -11,7 +11,6 @@ import org.apache.pekko.util.ByteString
 
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.zip.GZIPInputStream
-import scala.collection.immutable
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.Using
