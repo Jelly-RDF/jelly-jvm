@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
-import eu.neverblink.jelly.convert.rdf4j.rio
 import eu.neverblink.jelly.convert.rdf4j.rio.{JellyFormat, JellyParserSettings, JellyWriterSettings}
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.rdf.util.JenaToRdf4jAdapter

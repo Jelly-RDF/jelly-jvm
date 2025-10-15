@@ -21,7 +21,6 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStre
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
-import scala.jdk.CollectionConverters.*
 
 class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   given actorSystem: ActorSystem = ActorSystem()
