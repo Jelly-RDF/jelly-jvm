@@ -12,7 +12,6 @@ import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 
 import java.io.File
-import scala.collection.immutable
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext}
 

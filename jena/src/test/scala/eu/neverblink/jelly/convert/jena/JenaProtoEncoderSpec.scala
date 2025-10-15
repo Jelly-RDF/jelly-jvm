@@ -10,8 +10,6 @@ import org.apache.jena.sparql.core.Quad
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.jdk.CollectionConverters.*
-
 /** Test the handling of the many ways to represent the default graph in Jena.
   */
 class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:

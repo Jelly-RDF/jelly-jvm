@@ -4,7 +4,6 @@ import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.patch.helpers.PatchAdapter.*
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.patch.helpers.Mpl.*
-import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.proto.v1.patch.*
 
 import scala.annotation.experimental

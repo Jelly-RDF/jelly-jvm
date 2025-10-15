@@ -2,7 +2,7 @@ package eu.neverblink.jelly.pekko.stream
 
 import eu.neverblink.jelly.core.ProtoTestCases.*
 import eu.neverblink.jelly.core.helpers.MockConverterFactory
-import eu.neverblink.jelly.core.{JellyOptions, ProtoTestCases}
+import eu.neverblink.jelly.core.JellyOptions
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 import org.scalatest.concurrent.ScalaFutures

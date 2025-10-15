@@ -8,7 +8,6 @@ import eu.neverblink.jelly.core.proto.v1.{
   RdfStreamSubscribe,
 }
 import eu.neverblink.jelly.grpc.utils.{CrunchyMarshaller, CrunchyProtobufSerializer}
-import org.apache.pekko
 import org.apache.pekko.NotUsed
 import org.apache.pekko.grpc.ServiceDescription
 import org.apache.pekko.stream.scaladsl.Source

@@ -10,7 +10,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, FileInputStream}
 import scala.jdk.CollectionConverters.*
 
 /** Tests for IO ser/des (Jena RIOT, Jena RIOT streaming, RDF4J Rio, and semi-reactive IO over Pekko
