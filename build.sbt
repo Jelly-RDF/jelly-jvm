@@ -1,7 +1,7 @@
 import scala.language.postfixOps
 import scala.sys.process.*
 
-ThisBuild / scalaVersion := "3.3.6"
+ThisBuild / scalaVersion := "3.3.7"
 ThisBuild / organization := "eu.neverblink.jelly"
 ThisBuild / homepage := Some(url("https://w3id.org/jelly/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
