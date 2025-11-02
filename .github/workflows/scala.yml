@@ -165,7 +165,7 @@ jobs:
       if: steps.cache-jena.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        wget --progress=dot:mega -O jena.tar.gz https://dlcdn.apache.org/jena/binaries/apache-jena-5.5.0.tar.gz
+        wget --progress=dot:mega -O jena.tar.gz https://archive.apache.org/dist/jena/binaries/apache-jena-5.5.0.tar.gz
         mkdir -p jena-dir
         tar -xzf jena.tar.gz -C jena-dir --strip-components=1
 
