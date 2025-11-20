@@ -20,7 +20,7 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 // Allow scalatest to control the logging output
 Test / logBuffered := false
 
-lazy val pekkoV = "1.2.1"
+lazy val pekkoV = "1.3.0"
 lazy val pekkoGrpcV = "1.2.0"
 lazy val jenaV = "5.6.0"
 lazy val rdf4jV = "5.2.0"
