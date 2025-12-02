@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+title: Jelly-JVM
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - name: NeverBlink
+    website: 'https://neverblink.eu'
+    email: contact@neverblink.eu
+  - name: Jelly contributors
+    website: >-
+      https://github.com/Jelly-RDF/jelly-jvm/graphs/contributors
+repository-code: 'https://github.com/Jelly-RDF/jelly-jvm'
+url: 'https://w3id.org/jelly'
+abstract: >-
+  Jelly-JVM is a high-performance implementation of the
+  Jelly-RDF binary serialization format for Java.
+license: Apache-2.0
+preferred-citation:
+  type: conference-paper
+  authors:
+  - family-names: "Sowiński"
+    given-names: "Piotr"
+  - family-names: "Bogacka"
+    given-names: "Karolina"
+  - family-names: "Danilenka"
+    given-names: "Anastasiya"
+  - family-names: "Kozlov"
+    given-names: "Nikita"
+  collection-title: "Joint Proceedings of Posters, Demos, Workshops, and Tutorials of the 21st International Conference on Semantic Systems co-located with 21st International Conference on Semantic Systems (SEMANTiCS 2025), Vienna, Austria, September 3-5, 2025"
+  collection-type: proceedings
+  publisher:
+    name: "CEUR-WS.org"
+  url: "https://ceur-ws.org/Vol-4064/SEMDEV-paper3.pdf"
+  volume: "4064"
+  title: "Jelly: a fast and convenient RDF serialization format"
+  year: 2025
