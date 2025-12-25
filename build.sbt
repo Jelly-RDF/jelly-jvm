@@ -30,7 +30,7 @@ lazy val neo4jV = "5.26.0"
 lazy val protobufV = "4.33.2"
 lazy val javapoetV = "0.9.0"
 lazy val jmhV = "1.37"
-lazy val grpcV = "1.77.0"
+lazy val grpcV = "1.78.0"
 
 lazy val jellyCliV = "0.8.0"
 
