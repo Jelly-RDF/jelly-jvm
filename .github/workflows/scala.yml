@@ -156,7 +156,7 @@ jobs:
 
     - name: Cache Jena
       id: cache-jena
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: jena-dir
         key: jena
@@ -171,14 +171,14 @@ jobs:
 
     - name: Save Jena cache
       if: steps.cache-jena.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         path: jena-dir
         key: jena
 
     - name: Cache RDF4J SDK
       id: cache-rdf4j
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: rdf4j-dir
         key: rdf4j
@@ -193,7 +193,7 @@ jobs:
         
     - name: Save RDF4J cache
       if: steps.cache-rdf4j.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         path: rdf4j-dir
         key: rdf4j
