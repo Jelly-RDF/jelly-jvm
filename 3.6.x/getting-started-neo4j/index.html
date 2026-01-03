@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/jelly_color.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1322,7 +1322,7 @@
 <p>This integration with Neo4j requires the use of the <a href="https://neo4j.com/labs/neosemantics/">neosemantics</a> plugin that only works with Neo4j Desktop and self-hosted instances (Neo4j Community/Enterprise). <strong>It does not work with AuraDB.</strong> For AuraDB, you can alternatively use the <strong><a href="https://w3id.org/jelly/pyjelly/dev/rdflib-neo4j-integration/">Python integration that connects to Neo4j over Bolt</a></strong> via <a href="https://neo4j.com/labs/rdflib-neo4j/">rdflib-neo4j</a>.</p>
 </div>
 <h2 id="installation">Installation</h2>
-<p>The <strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.6.2/jelly-neo4j-plugin.jar">latest version (3.6.2) of the Jelly-Neo4j plugin</a></strong> is compatible with Neo4j versions 5.1.0–5.26.0<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. Jelly-Neo4j depends on the <a href="https://neo4j.com/labs/neosemantics/">neosemantics</a> plugin, which must also be installed. Neosemantics must have the same version as the Neo4j database.</p>
+<p>The <strong><a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.6.3/jelly-neo4j-plugin.jar">latest version (3.6.3) of the Jelly-Neo4j plugin</a></strong> is compatible with Neo4j versions 5.1.0–5.26.0<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. Jelly-Neo4j depends on the <a href="https://neo4j.com/labs/neosemantics/">neosemantics</a> plugin, which must also be installed. Neosemantics must have the same version as the Neo4j database.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Neo4j Desktop</label><label for="__tabbed_1_2">Self-hosted server (Community and Enterprise editions)</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -1332,7 +1332,7 @@
 <li>In the list of instances, click on the <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 18H4V8h16m0-2h-8l-2-2H4c-1.11 0-2 .89-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"/></svg></span> button next to "<strong>Path:</strong>" to open the instance folder.</li>
 <li>Open the <code>plugins</code> subfolder.</li>
 <li>Download the neosemantics plugin <code>.jar</code> file from the <a href="https://github.com/neo4j-labs/neosemantics/releases">neosemantics releases page</a> and place it in the <code>plugins</code> folder.</li>
-<li>Download the <a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.6.2/jelly-neo4j-plugin.jar">Jelly-Neo4j plugin <code>.jar</code> file</a> and place it in the <code>plugins</code> folder.</li>
+<li>Download the <a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.6.3/jelly-neo4j-plugin.jar">Jelly-Neo4j plugin <code>.jar</code> file</a> and place it in the <code>plugins</code> folder.</li>
 <li>Go back to the Neo4j Desktop application and restart your instance.</li>
 </ol>
 </div>
@@ -1342,7 +1342,7 @@
 <li>Open the Neo4j installation folder (<code>$NEO4J_HOME</code>).</li>
 <li>Open the <code>plugins</code> subfolder.</li>
 <li>Download the neosemantics plugin <code>.jar</code> file from the <a href="https://github.com/neo4j-labs/neosemantics/releases">neosemantics releases page</a> and place it in the <code>plugins</code> folder. The plugin's version must be the same as Neo4j's.</li>
-<li>Download the <a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.6.2/jelly-neo4j-plugin.jar">Jelly-Neo4j plugin <code>.jar</code> file</a> and place it in the <code>plugins</code> folder.</li>
+<li>Download the <a href="https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.6.3/jelly-neo4j-plugin.jar">Jelly-Neo4j plugin <code>.jar</code> file</a> and place it in the <code>plugins</code> folder.</li>
 <li>Start the Neo4j server.</li>
 </ol>
 </div>
@@ -1521,10 +1521,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.tabs.link"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
