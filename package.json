@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "prettier-plugin-java": "^2.6.7",
+    "prettier-plugin-java": "^2.7.0",
     "prettier": "^3.4.2"
   },
   "scripts": {
