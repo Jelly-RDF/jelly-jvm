@@ -23,7 +23,8 @@ import java.util.Collection;
 @ExperimentalApi
 public abstract class PatchEncoder<TNode>
     extends EncoderBase<TNode>
-    implements PatchHandler.AnyPatchHandler<TNode>, RdfBufferAppender<TNode> {
+    implements PatchHandler.AnyPatchHandler<TNode>, RdfBufferAppender<TNode>
+{
 
     /**
      * Parameters passed to the Jelly-Patch encoder.

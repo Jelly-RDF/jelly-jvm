@@ -270,9 +270,9 @@ public final class ProtoTranscoderImpl implements ProtoTranscoder {
             if (outputOptions.getPhysicalType() != options.getPhysicalType()) {
                 throw new RdfProtoTranscodingError(
                     "Input stream has a different physical type than the output. Input: %s output: %s".formatted(
-                            options.getPhysicalType(),
-                            outputOptions.getPhysicalType()
-                        )
+                        options.getPhysicalType(),
+                        outputOptions.getPhysicalType()
+                    )
                 );
             }
             JellyOptions.checkCompatibility(options, supportedInputOptions);
@@ -298,9 +298,10 @@ public final class ProtoTranscoderImpl implements ProtoTranscoder {
         }
 
         hasEmittedOptions = true;
-        var version = inputOptions.getVersion() == JellyConstants.PROTO_VERSION_1_0_X
-            ? JellyConstants.PROTO_VERSION_1_0_X
-            : JellyConstants.PROTO_VERSION;
+        var version =
+            inputOptions.getVersion() == JellyConstants.PROTO_VERSION_1_0_X
+                ? JellyConstants.PROTO_VERSION_1_0_X
+                : JellyConstants.PROTO_VERSION;
 
         var newOptions = outputOptions.clone().setVersion(version);
         rowBuffer.add(RdfStreamRow.newInstance().setOptions(newOptions));

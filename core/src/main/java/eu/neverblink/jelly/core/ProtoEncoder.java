@@ -13,7 +13,8 @@ import eu.neverblink.jelly.core.proto.v1.RdfTriple;
  */
 public abstract class ProtoEncoder<TNode>
     extends EncoderBase<TNode>
-    implements RdfBufferAppender<TNode>, RdfHandler.AnyRdfHandler<TNode> {
+    implements RdfBufferAppender<TNode>, RdfHandler.AnyRdfHandler<TNode>
+{
 
     /**
      * Parameters passed to the Jelly encoder.

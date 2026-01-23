@@ -10,7 +10,8 @@ import org.apache.jena.graph.Node;
  * This class is a singleton and should be accessed via the {@link #getInstance()} method.
  */
 public final class JenaConverterFactory
-    extends JellyConverterFactory<Node, RDFDatatype, JenaEncoderConverter, JenaDecoderConverter> {
+    extends JellyConverterFactory<Node, RDFDatatype, JenaEncoderConverter, JenaDecoderConverter>
+{
 
     private static final JenaConverterFactory INSTANCE = new JenaConverterFactory();
 

@@ -47,26 +47,26 @@ public final class JellyWriterSettings extends WriterConfig {
     public static final AbstractRioSetting<Integer> FRAME_SIZE = new JellyIntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.frameSize",
         "Target RDF stream frame size. Frame size may be slightly larger than this value, " +
-        "to fit the entire statement and its lookup entries in one frame.",
+            "to fit the entire statement and its lookup entries in one frame.",
         256
     );
 
     public static final BooleanRioSetting ENABLE_NAMESPACE_DECLARATIONS = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.enableNamespaceDeclarations",
         "Enable namespace declarations in the output (equivalent to PREFIX directives in Turtle syntax). " +
-        "Enabled by default since Jelly-JVM 3.6.0, to ensure consistent behavior with RDF4J's writers. " +
-        "When your only concern is performance, it's recommended to disable this option. " +
-        "It is only useful when you want to preserve the namespace declarations in the output. " +
-        "Enabling this causes the stream to be written in protocol version 2 (Jelly 1.1.0) instead of 1.",
+            "Enabled by default since Jelly-JVM 3.6.0, to ensure consistent behavior with RDF4J's writers. " +
+            "When your only concern is performance, it's recommended to disable this option. " +
+            "It is only useful when you want to preserve the namespace declarations in the output. " +
+            "Enabling this causes the stream to be written in protocol version 2 (Jelly 1.1.0) instead of 1.",
         true
     );
 
     public static final BooleanRioSetting DELIMITED_OUTPUT = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.delimitedOutput",
         "Write the output as delimited frames. Note: files saved to disk are recommended to be delimited, " +
-        "for better interoperability with other implementations. In a non-delimited file you can have ONLY ONE FRAME. " +
-        "If the input data is large, this will lead to an out-of-memory error. So, this makes sense only for small data. " +
-        "**Disable this only if you know what you are doing.**",
+            "for better interoperability with other implementations. In a non-delimited file you can have ONLY ONE FRAME. " +
+            "If the input data is large, this will lead to an out-of-memory error. So, this makes sense only for small data. " +
+            "**Disable this only if you know what you are doing.**",
         true
     );
 
@@ -91,7 +91,7 @@ public final class JellyWriterSettings extends WriterConfig {
     public static final BooleanRioSetting ALLOW_RDF_STAR = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.allowRdfStar",
         "Allow RDF-star statements. Enabled by default, because we cannot know this in advance. " +
-        "If your data does not contain RDF-star statements, it is recommended that you set this to false.",
+            "If your data does not contain RDF-star statements, it is recommended that you set this to false.",
         true
     );
 

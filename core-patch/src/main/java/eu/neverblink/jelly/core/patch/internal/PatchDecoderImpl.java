@@ -15,7 +15,8 @@ import eu.neverblink.jelly.core.proto.v1.patch.*;
 @InternalApi
 public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
     extends DecoderBase<TNode, TDatatype>
-    implements PatchDecoder {
+    implements PatchDecoder
+{
 
     protected final PatchHandler<TNode> patchHandler;
     protected final RdfPatchOptions supportedOptions;
@@ -31,9 +32,8 @@ public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
     ) {
         super(converter);
         this.patchHandler = patchHandler;
-        this.supportedOptions = supportedOptions != null
-            ? supportedOptions
-            : JellyPatchOptions.DEFAULT_SUPPORTED_OPTIONS;
+        this.supportedOptions =
+            supportedOptions != null ? supportedOptions : JellyPatchOptions.DEFAULT_SUPPORTED_OPTIONS;
     }
 
     @Override
@@ -204,8 +204,8 @@ public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
             if (opt.getStatementType() != PatchStatementType.TRIPLES) {
                 throw new RdfProtoDeserializationError(
                     "Incoming stream with statement type %s cannot be decoded by this decoder. Only TRIPLES streams are accepted.".formatted(
-                            opt.getStatementType()
-                        )
+                        opt.getStatementType()
+                    )
                 );
             }
             super.handleOptions(opt);
@@ -249,8 +249,8 @@ public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
             if (opt.getStatementType() != PatchStatementType.QUADS) {
                 throw new RdfProtoDeserializationError(
                     "Incoming stream with statement type %s cannot be decoded by this decoder. Only QUADS streams are accepted.".formatted(
-                            opt.getStatementType()
-                        )
+                        opt.getStatementType()
+                    )
                 );
             }
             super.handleOptions(opt);
@@ -300,7 +300,7 @@ public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
             if (opt.getStatementType() == null) {
                 throw new RdfProtoDeserializationError(
                     "Incoming stream has an unrecognized statement type cannot be decoded by this decoder. " +
-                    "Only TRIPLES and QUADS streams are accepted."
+                        "Only TRIPLES and QUADS streams are accepted."
                 );
             }
 

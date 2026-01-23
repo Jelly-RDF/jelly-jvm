@@ -55,10 +55,10 @@ public class JenaRiot implements Example {
         Dataset dataset = RDFDataMgr.loadDataset(trigFileUri.toString());
         System.out.println(
             "Loaded an RDF dataset from a Trig file with " +
-            dataset.asDatasetGraph().size() +
-            " named graphs and " +
-            dataset.asDatasetGraph().stream().count() +
-            " quads"
+                dataset.asDatasetGraph().size() +
+                " named graphs and " +
+                dataset.asDatasetGraph().stream().count() +
+                " quads"
         );
 
         try (FileOutputStream out = new FileOutputStream("weather-quads.jelly")) {
@@ -72,10 +72,10 @@ public class JenaRiot implements Example {
         Dataset dataset2 = RDFDataMgr.loadDataset("weather-quads.jelly", JellyLanguage.JELLY);
         System.out.println(
             "Loaded an RDF dataset from Jelly with " +
-            dataset2.asDatasetGraph().size() +
-            " named graphs and " +
-            dataset2.asDatasetGraph().stream().count() +
-            " quads"
+                dataset2.asDatasetGraph().size() +
+                " named graphs and " +
+                dataset2.asDatasetGraph().stream().count() +
+                " quads"
         );
 
         // ---------------------------------
@@ -109,10 +109,10 @@ public class JenaRiot implements Example {
         Dataset dataset3 = RDFDataMgr.loadDataset("weather-quads-custom.jelly", JellyLanguage.JELLY);
         System.out.println(
             "Loaded an RDF dataset from Jelly with custom settings with " +
-            dataset3.asDatasetGraph().size() +
-            " named graphs and " +
-            dataset3.asDatasetGraph().stream().count() +
-            " quads"
+                dataset3.asDatasetGraph().size() +
+                " named graphs and " +
+                dataset3.asDatasetGraph().stream().count() +
+                " quads"
         );
 
         // ---------------------------------

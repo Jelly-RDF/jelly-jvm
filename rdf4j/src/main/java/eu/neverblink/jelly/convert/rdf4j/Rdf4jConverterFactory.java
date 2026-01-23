@@ -11,7 +11,8 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
  * This class is a singleton and should be accessed via the {@link #getInstance()} method.
  */
 public final class Rdf4jConverterFactory
-    extends JellyConverterFactory<Value, Rdf4jDatatype, Rdf4jEncoderConverter, Rdf4jDecoderConverter> {
+    extends JellyConverterFactory<Value, Rdf4jDatatype, Rdf4jEncoderConverter, Rdf4jDecoderConverter>
+{
 
     private static final Rdf4jConverterFactory INSTANCE = new Rdf4jConverterFactory();
 

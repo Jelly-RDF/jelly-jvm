@@ -39,8 +39,9 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
 
         this.buffer = RowBuffer.newReusableForEncoder(frameSize + 8);
         this.allocator = EncoderAllocator.newArenaAllocator(frameSize + 8);
-        this.encoder = TitaniumConverterFactory.getInstance()
-            .encoder(ProtoEncoder.Params.of(supportedOptions, false, this.buffer, this.allocator));
+        this.encoder = TitaniumConverterFactory.getInstance().encoder(
+            ProtoEncoder.Params.of(supportedOptions, false, this.buffer, this.allocator)
+        );
     }
 
     public TitaniumJellyEncoderImpl(RdfStreamOptions options) {

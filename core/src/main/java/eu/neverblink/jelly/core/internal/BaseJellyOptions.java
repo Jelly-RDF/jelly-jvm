@@ -52,22 +52,22 @@ public final class BaseJellyOptions {
         ) {
             throw new RdfProtoDeserializationError(
                 "Unsupported proto version: %s. Was expecting at most version %s. This library version supports up to version %s.".formatted(
-                        requestedOptions.getVersion(),
-                        supportedOptions.getVersion(),
-                        maximalSupportedProtoVersion
-                    )
+                    requestedOptions.getVersion(),
+                    supportedOptions.getVersion(),
+                    maximalSupportedProtoVersion
+                )
             );
         }
         if (requestedOptions.getGeneralizedStatements() && !supportedOptions.getGeneralizedStatements()) {
             throw new RdfProtoDeserializationError(
                 "The stream uses generalized statements, which are not supported. " +
-                "Either disable generalized statements or enable them in the supportedOptions."
+                    "Either disable generalized statements or enable them in the supportedOptions."
             );
         }
         if (requestedOptions.getRdfStar() && !supportedOptions.getRdfStar()) {
             throw new RdfProtoDeserializationError(
                 "The stream uses RDF-star, which is not supported. " +
-                "Either disable RDF-star or enable it in the supportedOptions."
+                    "Either disable RDF-star or enable it in the supportedOptions."
             );
         }
 
@@ -99,19 +99,19 @@ public final class BaseJellyOptions {
         if (size > supportedSize) {
             throw new RdfProtoDeserializationError(
                 "The stream uses a %s table size of %s, which is larger than the maximum supported size of %s.".formatted(
-                        name.toLowerCase(),
-                        size,
-                        supportedSize
-                    )
+                    name.toLowerCase(),
+                    size,
+                    supportedSize
+                )
             );
         }
         if (size < minSize) {
             throw new RdfProtoDeserializationError(
                 "The stream uses a %s table size of %s, which is smaller than the minimum supported size of %s.".formatted(
-                        name.toLowerCase(),
-                        size,
-                        minSize
-                    )
+                    name.toLowerCase(),
+                    size,
+                    minSize
+                )
             );
         }
     }

@@ -20,14 +20,18 @@ public final class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     private boolean hasEmittedOptions = false;
 
     // These rows are always identical, so we can use singletons
-    private static final RdfPatchRow ROW_PUNCTUATION = RdfPatchRow.newInstance()
-        .setPunctuation(RdfPatchPunctuation.EMPTY);
-    private static final RdfPatchRow ROW_TX_START = RdfPatchRow.newInstance()
-        .setTransactionStart(RdfPatchTransactionStart.EMPTY);
-    private static final RdfPatchRow ROW_TX_COMMIT = RdfPatchRow.newInstance()
-        .setTransactionCommit(RdfPatchTransactionCommit.EMPTY);
-    private static final RdfPatchRow ROW_TX_ABORT = RdfPatchRow.newInstance()
-        .setTransactionAbort(RdfPatchTransactionAbort.EMPTY);
+    private static final RdfPatchRow ROW_PUNCTUATION = RdfPatchRow.newInstance().setPunctuation(
+        RdfPatchPunctuation.EMPTY
+    );
+    private static final RdfPatchRow ROW_TX_START = RdfPatchRow.newInstance().setTransactionStart(
+        RdfPatchTransactionStart.EMPTY
+    );
+    private static final RdfPatchRow ROW_TX_COMMIT = RdfPatchRow.newInstance().setTransactionCommit(
+        RdfPatchTransactionCommit.EMPTY
+    );
+    private static final RdfPatchRow ROW_TX_ABORT = RdfPatchRow.newInstance().setTransactionAbort(
+        RdfPatchTransactionAbort.EMPTY
+    );
 
     static {
         // Pre-calculate the serialized sizes of the static rows to avoid repeated calculations

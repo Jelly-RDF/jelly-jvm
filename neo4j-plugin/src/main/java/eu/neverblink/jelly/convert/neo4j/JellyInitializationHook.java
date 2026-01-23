@@ -10,6 +10,7 @@ import org.neo4j.configuration.SettingsDeclaration;
  * This is a bit of a hack, but Neo4j does not provide a better way to hook into its startup process.
  */
 public final class JellyInitializationHook implements SettingsDeclaration {
+
     static {
         // Call the initializer of the plugin to ensure any setup is done
         JellyPlugin.getInstance().initialize();

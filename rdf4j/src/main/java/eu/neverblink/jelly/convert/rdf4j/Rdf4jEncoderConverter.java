@@ -9,7 +9,8 @@ import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 
 public final class Rdf4jEncoderConverter
-    implements ProtoEncoderConverter<Value>, TripleExtractor<Value, Statement>, QuadExtractor<Value, Statement> {
+    implements ProtoEncoderConverter<Value>, TripleExtractor<Value, Statement>, QuadExtractor<Value, Statement>
+{
 
     @Override
     public Object nodeToProto(NodeEncoder<Value> encoder, Value value) {

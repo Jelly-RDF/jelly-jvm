@@ -12,7 +12,8 @@ import org.eclipse.rdf4j.model.*;
  */
 @InternalApi
 public abstract class BaseRdf4jDecoderConverter
-    implements ProtoDecoderConverter<Value, Rdf4jDatatype>, TripleMaker<Value, Statement>, QuadMaker<Value, Statement> {
+    implements ProtoDecoderConverter<Value, Rdf4jDatatype>, TripleMaker<Value, Statement>, QuadMaker<Value, Statement>
+{
 
     protected final ValueFactory vf;
 

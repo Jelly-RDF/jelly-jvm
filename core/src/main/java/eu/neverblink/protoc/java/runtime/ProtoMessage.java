@@ -274,11 +274,8 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     }
 
     @InternalApi
-    public static <T extends ProtoMessage<T>> void mergeDelimitedFrom(
-        T msg,
-        CodedInputStream input,
-        int remainingDepth
-    ) throws IOException {
+    public static <T extends ProtoMessage<T>> void mergeDelimitedFrom(T msg, CodedInputStream input, int remainingDepth)
+        throws IOException {
         final int length = input.readRawVarint32();
         final int oldLimit = input.pushLimit(length);
         if (msg.mergeFrom(input, remainingDepth - 1) != 0) {
