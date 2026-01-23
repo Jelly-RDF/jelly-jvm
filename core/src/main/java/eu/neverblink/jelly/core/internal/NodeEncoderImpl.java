@@ -105,9 +105,9 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         if (nameTableSize < MIN_NAME_TABLE_SIZE) {
             throw new RdfProtoSerializationError(
                 "Requested name table size of %d is too small. The minimum is %d.".formatted(
-                        nameTableSize,
-                        MIN_NAME_TABLE_SIZE
-                    )
+                    nameTableSize,
+                    MIN_NAME_TABLE_SIZE
+                )
             );
         }
         nameOnlyIris = new RdfIri[nameTableSize + 1];
@@ -243,8 +243,8 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         if (datatypeLookup.size == 0) {
             throw new RdfProtoSerializationError(
                 "Datatype literals cannot be " +
-                "encoded when the datatype table is disabled. Set the datatype table size " +
-                "to a positive value."
+                    "encoded when the datatype table is disabled. Set the datatype table size " +
+                    "to a positive value."
             );
         }
         final var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode<>());

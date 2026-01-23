@@ -16,7 +16,8 @@ import org.eclipse.rdf4j.model.Value;
  */
 @ExperimentalApi
 public final class Rdf4jPatchConverterFactory
-    extends JellyPatchConverterFactory<Value, Rdf4jDatatype, Rdf4jEncoderConverter, Rdf4jDecoderConverter> {
+    extends JellyPatchConverterFactory<Value, Rdf4jDatatype, Rdf4jEncoderConverter, Rdf4jDecoderConverter>
+{
 
     private static final Rdf4jPatchConverterFactory INSTANCE = new Rdf4jPatchConverterFactory(
         Rdf4jConverterFactory.getInstance()

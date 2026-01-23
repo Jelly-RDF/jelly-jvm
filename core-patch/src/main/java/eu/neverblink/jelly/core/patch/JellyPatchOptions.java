@@ -80,7 +80,7 @@ public final class JellyPatchOptions {
         if (requestedOptions.getStreamType() == PatchStreamType.UNSPECIFIED) {
             throw new RdfProtoDeserializationError(
                 "The patch stream type is unspecified. " +
-                "The stream_type field is required and must be set to a valid value."
+                    "The stream_type field is required and must be set to a valid value."
             );
         }
         if (

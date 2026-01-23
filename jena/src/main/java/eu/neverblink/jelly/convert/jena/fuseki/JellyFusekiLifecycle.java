@@ -37,8 +37,8 @@ public final class JellyFusekiLifecycle implements JenaSubsystemLifecycle {
         } catch (IllegalAccessError e) {
             Fuseki.serverLog.warn(
                 "Jelly: Cannot register the {} content type, because you are running an " +
-                "Apache Jena Fuseki version that doesn't support content type registration. " +
-                "Update to Fuseki 5.2.0 or newer for this to work.",
+                    "Apache Jena Fuseki version that doesn't support content type registration. " +
+                    "Update to Fuseki 5.2.0 or newer for this to work.",
                 JELLY_CONTENT_TYPE
             );
         }

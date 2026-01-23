@@ -4,6 +4,7 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.UserFunction;
 
 public final class JellyVersion {
+
     static {
         // Call the initializer of the plugin to ensure any setup is done
         JellyPlugin.getInstance().initialize();

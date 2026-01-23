@@ -131,8 +131,10 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             nameEntry = nameLookup[lastNameIdReference];
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new RdfProtoDeserializationError(
-                ("Encountered an invalid name table reference (out of bounds). " +
-                    "Name ID: %d, Prefix ID: %d").formatted(nameId, prefixId)
+                (
+                    "Encountered an invalid name table reference (out of bounds). " +
+                    "Name ID: %d, Prefix ID: %d"
+                ).formatted(nameId, prefixId)
             );
         }
 
@@ -149,8 +151,10 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                 prefixEntry = prefixLookup[prefixId];
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new RdfProtoDeserializationError(
-                    ("Encountered an invalid prefix table reference (out of bounds). " +
-                        "Prefix ID: %d, Name ID: %d").formatted(prefixId, nameId)
+                    (
+                        "Encountered an invalid prefix table reference (out of bounds). " +
+                        "Prefix ID: %d, Name ID: %d"
+                    ).formatted(prefixId, nameId)
                 );
             }
             if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
@@ -164,9 +168,9 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             if (nameEntry.lastIri == null) {
                 throw new RdfProtoDeserializationError(
                     "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(
-                            originalPrefixId,
-                            nameId
-                        )
+                        originalPrefixId,
+                        nameId
+                    )
                 );
             }
         } else if (nameEntry.lastIri == null) {

@@ -10,7 +10,8 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 
 public final class JenaDecoderConverter
-    implements ProtoDecoderConverter<Node, RDFDatatype>, TripleMaker<Node, Triple>, QuadMaker<Node, Quad> {
+    implements ProtoDecoderConverter<Node, RDFDatatype>, TripleMaker<Node, Triple>, QuadMaker<Node, Quad>
+{
 
     @Override
     public Node makeSimpleLiteral(String lex) {

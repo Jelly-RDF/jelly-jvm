@@ -16,7 +16,8 @@ import org.apache.jena.graph.Node;
  */
 @ExperimentalApi
 public final class JenaPatchConverterFactory
-    extends JellyPatchConverterFactory<Node, RDFDatatype, JenaEncoderConverter, JenaDecoderConverter> {
+    extends JellyPatchConverterFactory<Node, RDFDatatype, JenaEncoderConverter, JenaDecoderConverter>
+{
 
     private static final JenaPatchConverterFactory INSTANCE = new JenaPatchConverterFactory(
         JenaConverterFactory.getInstance()

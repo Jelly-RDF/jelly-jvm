@@ -4,7 +4,8 @@ import java.util.ArrayList;
 
 public final class ArrayListMessageCollection<T extends ProtoMessage<?>, TMutable extends T>
     extends ArrayList<T>
-    implements MessageCollection<T, TMutable> {
+    implements MessageCollection<T, TMutable>
+{
 
     private final MessageFactory<TMutable> factory;
 

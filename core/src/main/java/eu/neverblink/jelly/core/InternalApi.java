@@ -21,5 +21,4 @@ import java.lang.annotation.*;
     }
 )
 @Documented
-public @interface InternalApi {
-}
+public @interface InternalApi {}

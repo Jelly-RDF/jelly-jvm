@@ -10,7 +10,8 @@ import eu.neverblink.jelly.core.JellyConverterFactory;
  */
 @InternalApi
 public final class TitaniumConverterFactory
-    extends JellyConverterFactory<Object, String, TitaniumEncoderConverter, TitaniumDecoderConverter> {
+    extends JellyConverterFactory<Object, String, TitaniumEncoderConverter, TitaniumDecoderConverter>
+{
 
     private static final TitaniumConverterFactory INSTANCE = new TitaniumConverterFactory();
 

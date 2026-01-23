@@ -173,25 +173,24 @@ public final class JellyOptions {
 
         final var baseLogicalType = LogicalStreamTypeUtils.toBaseType(requestedLogicalType);
 
-        final var conflict =
-            switch (baseLogicalType) {
-                case FLAT_TRIPLES, GRAPHS -> switch (requestedPhysicalType) {
-                    case QUADS, GRAPHS -> true;
-                    default -> false;
-                };
-                case FLAT_QUADS, DATASETS -> switch (requestedPhysicalType) {
-                    case TRIPLES -> true;
-                    default -> false;
-                };
+        final var conflict = switch (baseLogicalType) {
+            case FLAT_TRIPLES, GRAPHS -> switch (requestedPhysicalType) {
+                case QUADS, GRAPHS -> true;
                 default -> false;
             };
+            case FLAT_QUADS, DATASETS -> switch (requestedPhysicalType) {
+                case TRIPLES -> true;
+                default -> false;
+            };
+            default -> false;
+        };
 
         if (conflict) {
             throw new RdfProtoDeserializationError(
                 "Logical stream type %s is incompatible with physical stream type %s.".formatted(
-                        requestedLogicalType,
-                        requestedPhysicalType
-                    )
+                    requestedLogicalType,
+                    requestedPhysicalType
+                )
             );
         }
 
@@ -202,11 +201,11 @@ public final class JellyOptions {
         if (!LogicalStreamTypeUtils.isEqualOrSubtypeOf(requestedLogicalType, expectedLogicalType)) {
             throw new RdfProtoDeserializationError(
                 "Expected logical stream type %s, got %s. %s is not a subtype of %s.".formatted(
-                        expectedLogicalType,
-                        requestedLogicalType,
-                        requestedLogicalType,
-                        expectedLogicalType
-                    )
+                    expectedLogicalType,
+                    requestedLogicalType,
+                    requestedLogicalType,
+                    expectedLogicalType
+                )
             );
         }
     }

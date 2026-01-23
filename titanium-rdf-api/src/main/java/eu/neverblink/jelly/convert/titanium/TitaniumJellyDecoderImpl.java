@@ -23,8 +23,10 @@ final class TitaniumJellyDecoderImpl implements TitaniumJellyDecoder {
         RdfHandler.AnyStatementHandler<Object> anyStatementHandler
     ) {
         this.supportedOptions = supportedOptions;
-        this.decoder = TitaniumConverterFactory.getInstance()
-            .anyStatementDecoder(anyStatementHandler, supportedOptions);
+        this.decoder = TitaniumConverterFactory.getInstance().anyStatementDecoder(
+            anyStatementHandler,
+            supportedOptions
+        );
     }
 
     @Override

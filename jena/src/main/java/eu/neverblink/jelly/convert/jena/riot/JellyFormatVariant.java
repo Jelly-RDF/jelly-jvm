@@ -147,9 +147,9 @@ public final class JellyFormatVariant extends RDFFormatVariant {
             if (preset == null) {
                 throw new RiotException(
                     "Unknown Jelly preset: %s. Available presets: %s".formatted(
-                            presetName,
-                            String.join(", ", JellyLanguage.PRESETS.keySet())
-                        )
+                        presetName,
+                        String.join(", ", JellyLanguage.PRESETS.keySet())
+                    )
                 );
             }
         } else {
