@@ -100,7 +100,11 @@ jobs:
 
     - name: Build and test with coverage
       shell: bash
-      run: sbt -v coverage +test coverageReport coverageAggregate jacocoAggregate
+      run: |
+        sbt -v coverage testAggregate/test \
+          testAggregate/coverageReport \
+          coverageAggregate \
+          jacocoAggregate
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5

@@ -601,3 +601,24 @@ lazy val grpc = (project in file("pekko-grpc"))
   )
   .dependsOn(stream)
   .dependsOn(core % "compile->compile;test->test")
+
+// Aggregated project for generating correct test coverage reports, including
+// cross-module tests.
+lazy val testAggregate = (project in file("."))
+  .aggregate(
+    core,
+    corePatch,
+    jena,
+    jenaPatch,
+    rdf4j,
+    rdf4jPatch,
+    titaniumRdfApi,
+    stream,
+    integrationTests,
+    examples,
+    grpc,
+  )
+  .settings(
+    name := "jelly-jvm",
+    publishArtifact := false,
+  )
