@@ -6,6 +6,7 @@ import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.utils.QuadExtractor;
 import eu.neverblink.jelly.core.utils.TripleExtractor;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.JenaCompatHelper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
@@ -14,9 +15,6 @@ public final class JenaEncoderConverter
     implements ProtoEncoderConverter<Node>, TripleExtractor<Node, Triple>, QuadExtractor<Node, Quad>
 {
 
-    // Jena deprecated .isNodeTriple() in favor of .isTripleTerm() in version 5.4.
-    // To maintain compatibility with 5.0.x–5.3.x. we must continue using .isNodeTriple().
-    @SuppressWarnings("removal")
     @Override
     public Object nodeToProto(NodeEncoder<Node> encoder, Node node) {
         // URI/IRI
@@ -39,7 +37,7 @@ public final class JenaEncoderConverter
             } else {
                 return encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
             }
-        } else if (node.isNodeTriple()) {
+        } else if (JenaCompatHelper.isNodeTriple(node)) {
             // RDF-star node
             final var t = node.getTriple();
             return encoder.makeQuotedTriple(t.getSubject(), t.getPredicate(), t.getObject());

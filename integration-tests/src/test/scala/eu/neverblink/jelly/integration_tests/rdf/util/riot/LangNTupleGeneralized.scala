@@ -1,11 +1,9 @@
 package eu.neverblink.jelly.integration_tests.rdf.util.riot
 
-import org.apache.jena.graph.{Node, NodeFactory, Triple}
+import org.apache.jena.graph.{JenaCompatHelper, Node, Triple}
 import org.apache.jena.riot.lang.LangNTuple
 import org.apache.jena.riot.system.{ParserProfile, StreamRDF}
 import org.apache.jena.riot.tokens.{StringType, Token, TokenType, Tokenizer}
-
-import scala.annotation.nowarn
 
 /** Base class for parsing N-Triples and N-Quads. Heavily inspired by the Jena Riot code:
   * https://github.com/apache/jena/blob/bd97ad4cf731ade857926787dd2df735644a354b/jena-arq/src/main/java/org/apache/jena/riot/lang/LangNTuple.java
@@ -66,10 +64,9 @@ abstract class LangNTupleGeneralized[T](tokens: Tokenizer, profile: ParserProfil
     val o = parseNode(nextToken)
     profile.getFactorRDF.createTriple(s, p, o)
 
-  @nowarn
   protected final def parseTripleTermGeneralized: Node =
     val t = parseTripleGeneralized
     val x = nextToken
     if ((x.getType ne TokenType.GT2) && (x.getType ne TokenType.R_TRIPLE))
       exception(x, "Triple term not terminated by >>: %s", x)
-    NodeFactory.createTripleNode(t)
+    JenaCompatHelper.createTripleNode(t)
