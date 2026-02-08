@@ -22,7 +22,11 @@ Test / logBuffered := false
 
 lazy val pekkoV = "1.4.0"
 lazy val pekkoGrpcV = "1.2.0"
-lazy val jenaV = "5.6.0"
+// Need to separate Jena's compile-time and runtime versions to maintain compat
+// with both Jena 5 and Jena 6.
+// See: https://github.com/Jelly-RDF/jelly-jvm/issues/622
+lazy val jenaV = "6.0.0" // runtime version, update it
+lazy val jenaCompileV = "5.6.0" // compile-time version, pinned
 lazy val rdf4jV = "5.2.2"
 lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
@@ -363,8 +367,11 @@ lazy val jena = (project in file("jena"))
     name := "jelly-jena",
     description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
     libraryDependencies ++= Seq(
-      "org.apache.jena" % "jena-core" % jenaV,
-      "org.apache.jena" % "jena-arq" % jenaV,
+      "org.apache.jena" % "jena-core" % jenaV % "runtime",
+      "org.apache.jena" % "jena-arq" % jenaV % "runtime",
+      // Compile-time dependencies pinned to 5.6.0
+      "org.apache.jena" % "jena-core" % jenaCompileV % "compile",
+      "org.apache.jena" % "jena-arq" % jenaCompileV % "compile",
       // Integration with Fuseki is optional, so include this dep as "provided"
       "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
     ),
@@ -378,7 +385,9 @@ lazy val jenaPatch = (project in file("jena-patch"))
     name := "jelly-jena-patch",
     description := "Jelly-Patch integration for Apache Jena.",
     libraryDependencies ++= Seq(
-      "org.apache.jena" % "jena-rdfpatch" % jenaV,
+      "org.apache.jena" % "jena-rdfpatch" % jenaV % "runtime",
+      // Compile-time dependency pinned to 5.6.0
+      "org.apache.jena" % "jena-rdfpatch" % jenaCompileV % "compile",
     ),
     commonSettings,
     commonJavaSettings,
