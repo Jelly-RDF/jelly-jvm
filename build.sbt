@@ -368,7 +368,7 @@ lazy val jena = (project in file("jena"))
       "org.apache.jena" % "jena-core" % jenaV,
       "org.apache.jena" % "jena-arq" % jenaV,
       // Integration with Fuseki is optional, so include this dep as "provided"
-      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided",
+      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
     ),
     commonSettings,
     commonJavaSettings,
