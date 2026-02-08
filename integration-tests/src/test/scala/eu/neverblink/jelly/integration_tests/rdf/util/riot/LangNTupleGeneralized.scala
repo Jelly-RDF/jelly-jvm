@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.integration_tests.rdf.util.riot
 
-import eu.neverblink.jelly.convert.jena.JenaCompatHelper
-import org.apache.jena.graph.{Node, Triple}
+import org.apache.jena.graph.{JenaCompatHelper, Node, Triple}
 import org.apache.jena.riot.lang.LangNTuple
 import org.apache.jena.riot.system.{ParserProfile, StreamRDF}
 import org.apache.jena.riot.tokens.{StringType, Token, TokenType, Tokenizer}
@@ -70,4 +69,4 @@ abstract class LangNTupleGeneralized[T](tokens: Tokenizer, profile: ParserProfil
     val x = nextToken
     if ((x.getType ne TokenType.GT2) && (x.getType ne TokenType.R_TRIPLE))
       exception(x, "Triple term not terminated by >>: %s", x)
-    JenaCompatHelper.getInstance().createTripleNode(t.getSubject, t.getPredicate, t.getObject)
+    JenaCompatHelper.createTripleNode(t)

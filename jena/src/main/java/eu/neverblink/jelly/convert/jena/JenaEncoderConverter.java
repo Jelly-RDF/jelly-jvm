@@ -6,6 +6,7 @@ import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.utils.QuadExtractor;
 import eu.neverblink.jelly.core.utils.TripleExtractor;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.JenaCompatHelper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
@@ -36,7 +37,7 @@ public final class JenaEncoderConverter
             } else {
                 return encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
             }
-        } else if (JenaCompatHelper.getInstance().isNodeTriple(node)) {
+        } else if (JenaCompatHelper.isNodeTriple(node)) {
             // RDF-star node
             final var t = node.getTriple();
             return encoder.makeQuotedTriple(t.getSubject(), t.getPredicate(), t.getObject());

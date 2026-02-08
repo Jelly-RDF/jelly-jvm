@@ -1,12 +1,11 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
-import eu.neverblink.jelly.convert.jena.JenaCompatHelper
 import eu.neverblink.jelly.convert.jena.riot.JellyLanguage
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
 import eu.neverblink.jelly.integration_tests.util.{CompatibilityUtils, Measure}
-import org.apache.jena.graph.{Node, Triple}
+import org.apache.jena.graph.{JenaCompatHelper, Node, Triple}
 import org.apache.jena.riot.lang.LabelToNode
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
 import org.apache.jena.riot.{RDFParser, RIOT}
@@ -216,7 +215,7 @@ object JenaStreamSerDes
 
   override def getBlankNodeLabel(node: Node): String = node.getBlankNodeLabel
 
-  override def isNodeTriple(node: Node): Boolean = JenaCompatHelper.getInstance().isNodeTriple(node)
+  override def isNodeTriple(node: Node): Boolean = JenaCompatHelper.isNodeTriple(node)
 
   override def iterateTerms(node: Triple | Quad): Seq[Node] =
     node match {
