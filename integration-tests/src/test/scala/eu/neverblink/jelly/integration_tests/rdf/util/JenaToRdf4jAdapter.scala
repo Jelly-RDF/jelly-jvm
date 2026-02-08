@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.integration_tests.rdf.util
 
+import eu.neverblink.jelly.convert.jena.JenaCompatHelper
 import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.system.StreamRDF
 import org.apache.jena.sparql.core.Quad
@@ -17,7 +18,7 @@ class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
 
   def makeResource(n: Node): Resource = {
     if n.isBlank then vf.createBNode(n.getBlankNodeLabel)
-    else if n.isTripleTerm then {
+    else if JenaCompatHelper.getInstance().isNodeTriple(n) then {
       val t = n.getTriple
       vf.createTriple(
         makeResource(t.getSubject),

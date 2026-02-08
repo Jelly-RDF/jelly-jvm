@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.convert.jena;
 
+import eu.neverblink.jelly.core.InternalApi;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 
@@ -13,7 +14,8 @@ import org.apache.jena.graph.NodeFactory;
  * Remove this when we drop support for Jena 5:
  * <a href="https://github.com/Jelly-RDF/jelly-jvm/issues/622">issue</a>
  */
-abstract class JenaCompatHelper {
+@InternalApi
+public abstract class JenaCompatHelper {
 
     public abstract boolean isNodeTriple(Node node);
 

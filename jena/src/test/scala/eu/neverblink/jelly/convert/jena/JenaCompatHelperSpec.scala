@@ -43,10 +43,10 @@ class JenaCompatHelperSpec extends AnyWordSpec, Matchers, JenaTest:
       helper.isJena54OrLater should be(false)
     }
 
-    "return Jena 5 compat helper for Jena 5.6.x" in {
+    "return Jena 6 compat helper for Jena 5.6.x" in {
       assume(jenaVersionFromClass.startsWith("5.6."))
       val helper = JenaCompatHelper.getInstance()
-      helper.isJena54OrLater should be(false)
+      helper.isJena54OrLater should be(true)
     }
 
     "return Jena 6 compat helper for Jena 6" in {
