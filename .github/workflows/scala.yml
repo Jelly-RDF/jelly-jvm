@@ -108,6 +108,8 @@ jobs:
     - name: Build and test with coverage
       shell: bash
       run: sbt -v coverage +test coverageReport coverageAggregate jacocoAggregate
+      env:
+        JENA_VERSION: ""
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5

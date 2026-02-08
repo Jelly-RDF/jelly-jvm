@@ -3,7 +3,7 @@ package org.apache.jena.graph;
 import eu.neverblink.jelly.core.InternalApi;
 
 /**
- * Hack to avoid very complex dependency & method binding workarounds needed to support
+ * Hack to avoid very complex dependency and method binding workarounds needed to support
  * Jena 5.3, 5.4, and 6.0 at the same time.
  * This class should be removed as soon as Jena 5.3 support is dropped.
  * See: <a href="https://github.com/Jelly-RDF/jelly-jvm/issues/622">issue</a>
