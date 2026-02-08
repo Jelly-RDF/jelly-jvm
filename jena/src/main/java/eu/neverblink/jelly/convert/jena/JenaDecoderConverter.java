@@ -45,7 +45,7 @@ public final class JenaDecoderConverter
 
     @Override
     public Node makeTripleNode(Node s, Node p, Node o) {
-        return NodeFactory.createTripleNode(s, p, o);
+        return JenaCompatHelper.getInstance().createTripleNode(s, p, o);
     }
 
     @Override

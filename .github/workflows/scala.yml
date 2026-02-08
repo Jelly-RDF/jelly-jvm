@@ -21,10 +21,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            java: 17
-            jena_version: ""
-            rdf4j_version: ""
+          # Jena dependency is on 5.6.x to allow for building a plugin compatible with
+          # both Jena 5 and 6.
+          # See: https://github.com/Jelly-RDF/jelly-jvm/issues/622
           - os: ubuntu-latest
             java: 17
             # Jena 5.3.0 is the last version supporting RDF-star.
@@ -33,8 +32,13 @@ jobs:
             # Test the last RDF4J 4.x version.
             rdf4j_version: "4.3.16"
           - os: ubuntu-latest
-            java: 21
+            java: 17
             jena_version: ""
+            rdf4j_version: ""
+          # Jena 6 requires Java 21.
+          - os: ubuntu-latest
+            java: 21
+            jena_version: "6.0.0"
             rdf4j_version: ""
           - os: ubuntu-latest
             java: 25

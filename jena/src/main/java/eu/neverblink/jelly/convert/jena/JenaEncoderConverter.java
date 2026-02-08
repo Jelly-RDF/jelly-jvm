@@ -14,9 +14,6 @@ public final class JenaEncoderConverter
     implements ProtoEncoderConverter<Node>, TripleExtractor<Node, Triple>, QuadExtractor<Node, Quad>
 {
 
-    // Jena deprecated .isNodeTriple() in favor of .isTripleTerm() in version 5.4.
-    // To maintain compatibility with 5.0.x–5.3.x. we must continue using .isNodeTriple().
-    @SuppressWarnings("removal")
     @Override
     public Object nodeToProto(NodeEncoder<Node> encoder, Node node) {
         // URI/IRI
@@ -39,7 +36,7 @@ public final class JenaEncoderConverter
             } else {
                 return encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
             }
-        } else if (node.isNodeTriple()) {
+        } else if (JenaCompatHelper.getInstance().isNodeTriple(node)) {
             // RDF-star node
             final var t = node.getTriple();
             return encoder.makeQuotedTriple(t.getSubject(), t.getPredicate(), t.getObject());
