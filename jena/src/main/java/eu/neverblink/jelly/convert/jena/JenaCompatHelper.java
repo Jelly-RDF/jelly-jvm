@@ -19,6 +19,8 @@ abstract class JenaCompatHelper {
 
     public abstract Node createTripleNode(Node s, Node p, Node o);
 
+    public abstract boolean isJena54OrLater();
+
     private static final JenaCompatHelper instance;
 
     public static JenaCompatHelper getInstance() {
@@ -27,14 +29,14 @@ abstract class JenaCompatHelper {
 
     static {
         final var testNode = NodeFactory.createBlankNode();
-        boolean jena6;
+        boolean jena54orLater;
         try {
             testNode.isTripleTerm();
-            jena6 = true;
+            jena54orLater = true;
         } catch (NoSuchMethodError e) {
-            jena6 = false;
+            jena54orLater = false;
         }
-        if (jena6) {
+        if (jena54orLater) {
             instance = new Jena6CompatHelper();
         } else {
             instance = new Jena5CompatHelper();
@@ -42,6 +44,11 @@ abstract class JenaCompatHelper {
     }
 
     private static final class Jena5CompatHelper extends JenaCompatHelper {
+
+        @Override
+        public boolean isJena54OrLater() {
+            return false;
+        }
 
         // Jena deprecated .isNodeTriple() in favor of .isTripleTerm() in version 5.4.
         // To maintain compatibility with 5.0.x–5.3.x. we must continue using .isNodeTriple().
@@ -58,6 +65,11 @@ abstract class JenaCompatHelper {
     }
 
     private static final class Jena6CompatHelper extends JenaCompatHelper {
+
+        @Override
+        public boolean isJena54OrLater() {
+            return true;
+        }
 
         @Override
         public boolean isNodeTriple(Node node) {

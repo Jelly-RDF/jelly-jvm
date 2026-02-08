@@ -12,7 +12,6 @@ import org.apache.jena.riot.{RDFParser, RIOT}
 import org.apache.jena.sparql.core.Quad
 
 import java.io.{File, FileOutputStream, InputStream, OutputStream}
-import scala.annotation.nowarn
 
 // Separate givens to avoid name clashes and ambiguous implicits
 given mSeqTriples: Measure[Seq[Triple]] = (s: Seq[Triple]) => s.size
@@ -216,10 +215,7 @@ object JenaStreamSerDes
 
   override def getBlankNodeLabel(node: Node): String = node.getBlankNodeLabel
 
-  // Jena deprecated .isNodeTriple() in favor of .isTripleTerm() in version 5.4.
-  // To maintain compatibility with 5.0.x–5.3.x. we must continue using .isNodeTriple().
-  @nowarn("msg=deprecated")
-  override def isNodeTriple(node: Node): Boolean = node.isNodeTriple
+  override def isNodeTriple(node: Node): Boolean = node.isTripleTerm
 
   override def iterateTerms(node: Triple | Quad): Seq[Node] =
     node match {

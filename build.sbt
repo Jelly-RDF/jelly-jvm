@@ -373,7 +373,9 @@ lazy val jena = (project in file("jena"))
       "org.apache.jena" % "jena-core" % jenaCompileV % "compile",
       "org.apache.jena" % "jena-arq" % jenaCompileV % "compile",
       // Integration with Fuseki is optional, so include this dep as "provided"
-      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
+      "org.apache.jena" % "jena-fuseki-main" % jenaCompileV % "provided",
+      // Use consistent Jena versions for testing
+      "org.apache.jena" % "jena-fuseki-main" % jenaV % "test",
     ),
     commonSettings,
     commonJavaSettings,
@@ -403,12 +405,9 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
     name := "jelly-jena-plugin",
     libraryDependencies ++= Seq(
       // Use the "provided" scope to not include the Jena dependencies in the plugin JAR
-      "org.apache.jena" % "jena-core" % jenaV % "provided,test",
-      "org.apache.jena" % "jena-arq" % jenaV % "provided,test",
-      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
-      // Compile-time dependencies pinned to 5.6.0
-      "org.apache.jena" % "jena-core" % jenaCompileV % "compile",
-      "org.apache.jena" % "jena-arq" % jenaCompileV % "compile",
+      "org.apache.jena" % "jena-core" % jenaCompileV % "provided,test",
+      "org.apache.jena" % "jena-arq" % jenaCompileV % "provided,test",
+      "org.apache.jena" % "jena-fuseki-main" % jenaCompileV % "provided,test",
     ),
     // Excludes protobuf-java from the jar, since it's already provided in jena-core.
     // I couldn't figure out a cleaner way since it's also a dependency of jelly-core.

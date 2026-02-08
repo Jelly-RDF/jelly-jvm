@@ -84,6 +84,9 @@ jobs:
     - name: Build and test
       shell: bash
       run: sbt -v +test
+      env:
+        JENA_VERSION: ${{ matrix.jena_version }}
+        RDF4J_VERSION: ${{ matrix.rdf4j_version }}
 
   test-coverage:
     runs-on: ubuntu-latest
