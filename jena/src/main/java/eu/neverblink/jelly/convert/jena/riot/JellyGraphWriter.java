@@ -48,7 +48,7 @@ public final class JellyGraphWriter extends WriterGraphRIOTBase {
                 .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
         );
 
-        var inner = new JellyStreamWriter(converterFactory, variant, out);
+        var inner = JellyStreamWriter.create(converterFactory, variant, out);
 
         if (variant.isEnableNamespaceDeclarations() && prefixMap != null) {
             for (var entry : prefixMap.getMapping().entrySet()) {
