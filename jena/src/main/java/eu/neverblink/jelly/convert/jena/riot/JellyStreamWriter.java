@@ -6,6 +6,7 @@ import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.memory.EncoderAllocator;
 import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
 import eu.neverblink.jelly.core.memory.RowBuffer;
+import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
@@ -24,17 +25,37 @@ import org.apache.jena.sparql.core.Quad;
  * <p>
  * It will output the statements as in a TRIPLES/QUADS stream.
  */
-public final class JellyStreamWriter implements StreamRDF {
+public sealed class JellyStreamWriter implements StreamRDF {
 
-    private final JellyFormatVariant formatVariant;
-    private final OutputStream outputStream;
-    private final CodedOutputStream codedOutput;
+    protected final JellyFormatVariant formatVariant;
+    protected final OutputStream outputStream;
+    protected final CodedOutputStream codedOutput;
 
-    private final ReusableRowBuffer buffer;
-    private final EncoderAllocator allocator;
-    private final ProtoEncoder<Node> encoder;
-    private final RdfStreamFrame.Mutable reusableFrame;
+    protected final ReusableRowBuffer buffer;
+    protected final EncoderAllocator allocator;
+    protected final ProtoEncoder<Node> encoder;
+    protected final RdfStreamFrame.Mutable reusableFrame;
 
+    public static JellyStreamWriter create(
+        JenaConverterFactory converterFactory,
+        JellyFormatVariant formatVariant,
+        OutputStream outputStream
+    ) {
+        if (formatVariant.getOptions().getPhysicalType() == PhysicalStreamType.TRIPLES) {
+            return new TriplesWriter(converterFactory, formatVariant, outputStream);
+        } else {
+            return new QuadsWriter(converterFactory, formatVariant, outputStream);
+        }
+    }
+
+    /**
+     * Deprecated for public use. Use instead the
+     * {@link #create(JenaConverterFactory, JellyFormatVariant, OutputStream)} factory method,
+     * which will return the correct writer type based on the format variant.
+     * <p>
+     * After removal, make this class abstract and remove the virtual method overrides in the subclasses.
+     */
+    @Deprecated(since = "3.7.1", forRemoval = true)
     public JellyStreamWriter(
         JenaConverterFactory converterFactory,
         JellyFormatVariant formatVariant,
@@ -55,6 +76,47 @@ public final class JellyStreamWriter implements StreamRDF {
                 allocator
             )
         );
+    }
+
+    private static final class TriplesWriter extends JellyStreamWriter {
+
+        TriplesWriter(
+            JenaConverterFactory converterFactory,
+            JellyFormatVariant formatVariant,
+            OutputStream outputStream
+        ) {
+            super(converterFactory, formatVariant, outputStream);
+        }
+
+        @Override
+        public void quad(Quad quad) {
+            // Emitting a quad to a triples stream would result in an invalid file.
+            throw new RiotException(
+                "Cannot write quads to a Jelly TRIPLES stream. If you " +
+                    "are using auto-detection (e.g., in the riot CLI command), either use only " +
+                    "quad-based input formats, or make sure to start the stream with a quad."
+            );
+        }
+    }
+
+    private static final class QuadsWriter extends JellyStreamWriter {
+
+        QuadsWriter(
+            JenaConverterFactory converterFactory,
+            JellyFormatVariant formatVariant,
+            OutputStream outputStream
+        ) {
+            super(converterFactory, formatVariant, outputStream);
+        }
+
+        @Override
+        public void triple(Triple triple) {
+            // Coerce triple to quad with default graph
+            encoder.handleQuad(triple.getSubject(), triple.getPredicate(), triple.getObject(), null);
+            if (formatVariant.isDelimited() && buffer.size() >= formatVariant.getFrameSize()) {
+                flushBuffer();
+            }
+        }
     }
 
     @Override
@@ -121,7 +183,7 @@ public final class JellyStreamWriter implements StreamRDF {
         }
     }
 
-    private void flushBuffer() {
+    protected void flushBuffer() {
         reusableFrame.resetCachedSize();
         try {
             reusableFrame.writeDelimitedTo(codedOutput);

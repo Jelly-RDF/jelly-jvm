@@ -48,7 +48,7 @@ public final class JellyDatasetWriter extends WriterDatasetRIOTBase {
                 .setLogicalType(LogicalStreamType.FLAT_QUADS)
         );
 
-        var inner = new JellyStreamWriter(converterFactory, variant, out);
+        var inner = JellyStreamWriter.create(converterFactory, variant, out);
 
         if (variant.isEnableNamespaceDeclarations() && prefixMap != null) {
             for (var entry : prefixMap.getMapping().entrySet()) {

@@ -3,10 +3,11 @@ package eu.neverblink.jelly.convert.jena.riot
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.utils.IoUtils
-import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
+import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamRow}
 import org.apache.commons.io.output.{ByteArrayOutputStream, NullWriter}
 import org.apache.jena.graph.{NodeFactory, Triple}
 import org.apache.jena.riot.RiotException
+import org.apache.jena.sparql.core.Quad
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -25,7 +26,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
           ((JellyFormatVariant, OutputStream) => JellyStreamWriterAutodetectType),
     ),
   ] = Seq(
-    ("JellyStreamWriter", (opt, out) => JellyStreamWriter(converterFactory, opt, out)),
+    ("JellyStreamWriter", (opt, out) => JellyStreamWriter.create(converterFactory, opt, out)),
     (
       "JellyStreamWriterAutodetectType",
       (opt, out) => JellyStreamWriterAutodetectType(converterFactory, opt, out),
@@ -138,6 +139,53 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
       val writer =
         JellyStreamWriterAutodetectType(converterFactory, JellyFormatVariant.getDefault, out)
       writer.finish()
+    }
+
+    "allow writing first quads, then triples" in {
+      val out = new ByteArrayOutputStream()
+      val writer =
+        JellyStreamWriterAutodetectType(converterFactory, JellyFormatVariant.getDefault, out)
+      writer.start()
+      writer.quad(Quad.create(null, testTriple))
+      writer.triple(testTriple)
+      writer.finish()
+      val bytes = out.toByteArray
+      val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
+      response.isDelimited should be(true)
+      val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
+      f should not be null
+      f.getRows.size should be(7)
+      val rows = f.getRows.toArray
+      rows(5).asInstanceOf[RdfStreamRow].hasQuad should be(true)
+      rows(6).asInstanceOf[RdfStreamRow].hasQuad should be(true)
+    }
+
+    "allow writing triples" in {
+      val out = new ByteArrayOutputStream()
+      val writer =
+        JellyStreamWriterAutodetectType(converterFactory, JellyFormatVariant.getDefault, out)
+      writer.start()
+      writer.triple(testTriple)
+      writer.finish()
+      val bytes = out.toByteArray
+      val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
+      response.isDelimited should be(true)
+      val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
+      f should not be null
+      f.getRows.size should be(6)
+      val rows = f.getRows.toArray
+      rows(5).asInstanceOf[RdfStreamRow].hasTriple should be(true)
+    }
+
+    "disallow first writing triples, then quads" in {
+      val out = new ByteArrayOutputStream()
+      val writer =
+        JellyStreamWriterAutodetectType(converterFactory, JellyFormatVariant.getDefault, out)
+      writer.start()
+      writer.triple(testTriple)
+      intercept[RiotException] {
+        writer.quad(Quad.create(null, testTriple))
+      }.getMessage should include("Cannot write quads to a Jelly TRIPLES stream")
     }
   }
 

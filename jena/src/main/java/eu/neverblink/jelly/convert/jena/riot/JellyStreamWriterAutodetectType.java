@@ -57,7 +57,7 @@ public final class JellyStreamWriterAutodetectType implements StreamRDF {
                             : formatVariant.getOptions().getLogicalType()
                     )
             );
-            delegatedWriter = new JellyStreamWriter(converterFactory, triplesFormatVariant, outputStream);
+            delegatedWriter = JellyStreamWriter.create(converterFactory, triplesFormatVariant, outputStream);
             delegatedWriter.start();
             clearPrefixBacklog();
         }
@@ -79,7 +79,7 @@ public final class JellyStreamWriterAutodetectType implements StreamRDF {
                             : formatVariant.getOptions().getLogicalType()
                     )
             );
-            delegatedWriter = new JellyStreamWriter(converterFactory, quadsFormatVariant, outputStream);
+            delegatedWriter = JellyStreamWriter.create(converterFactory, quadsFormatVariant, outputStream);
             delegatedWriter.start();
             clearPrefixBacklog();
         }
