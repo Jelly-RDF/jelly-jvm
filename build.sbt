@@ -40,7 +40,7 @@ addCommandAlias("fixAll", "scalafixAll; scalafmtAll")
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.2.19" % Test,
+    "org.scalatest" %% "scalatest" % "3.2.20" % Test,
   ),
   scalacOptions ++= Seq(
     "-feature",
