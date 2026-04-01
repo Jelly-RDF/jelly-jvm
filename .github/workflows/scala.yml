@@ -112,7 +112,7 @@ jobs:
         JENA_VERSION: ""
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         fail_ci_if_error: true # This is an independent check, so it's okay to fail
         slug: Jelly-RDF/jelly-jvm
