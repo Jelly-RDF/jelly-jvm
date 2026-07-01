@@ -335,6 +335,14 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
         prepareGoogleProtos,
       ).value,
     ),
+    // The .proto files under src/main/protobuf are produced by prepareGoogleProtos at build time
+    // (only .gitkeep is committed). protobufSources scans that directory to decide what to compile,
+    // but sbt-protobuf does not order that scan after prepareGoogleProtos — only protobufRunProtoc.
+    // On a clean checkout the scan therefore runs against an empty directory and nothing is
+    // generated (0 classes). Make the scan depend on prepareGoogleProtos so the protos exist first.
+    ProtobufConfig / protobufSources := Def.uncached(
+      (ProtobufConfig / protobufSources).dependsOn(prepareGoogleProtos).value,
+    ),
     ProtobufConfig / protobufIncludeFilters := Seq(
       Glob(baseDirectory.value.toPath) / "**" / "rdf.proto",
     ),
@@ -386,6 +394,14 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
       (ProtobufConfig / protobufRunProtoc).dependsOn(
         prepareGoogleProtos,
       ).value,
+    ),
+    // The .proto files under src/main/protobuf are produced by prepareGoogleProtos at build time
+    // (only .gitkeep is committed). protobufSources scans that directory to decide what to compile,
+    // but sbt-protobuf does not order that scan after prepareGoogleProtos — only protobufRunProtoc.
+    // On a clean checkout the scan therefore runs against an empty directory and nothing is
+    // generated (0 classes). Make the scan depend on prepareGoogleProtos so the protos exist first.
+    ProtobufConfig / protobufSources := Def.uncached(
+      (ProtobufConfig / protobufSources).dependsOn(prepareGoogleProtos).value,
     ),
     ProtobufConfig / protobufIncludeFilters := Seq(
       Glob(baseDirectory.value.toPath) / "**" / "patch.proto",
