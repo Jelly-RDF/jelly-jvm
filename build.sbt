@@ -1,4 +1,5 @@
 import scala.language.postfixOps
+import scala.language.implicitConversions
 import scala.sys.process.*
 
 ThisBuild / scalaVersion := "3.3.8"
@@ -17,6 +18,11 @@ ThisBuild / developers := List(
 )
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+// sbt 2.x sets exportJars := true by default, which puts compiled classes and resources on the
+// classpath inside JARs. That makes getClass.getResource(...).toURI return non-hierarchical jar:
+// URIs, breaking the many File(getResource(...).toURI) usages in tests and examples. Keep classpath
+// entries as plain directories instead.
+ThisBuild / exportJars := false
 // Allow scalatest to control the logging output
 Test / logBuffered := false
 
@@ -105,7 +111,7 @@ def doPrepareGoogleProtos(baseDir: File): Seq[File] = {
   IO.createDirectory(outputDir)
   // Clean the output directory
   IO.delete(IO.listFiles(outputDir).filterNot(_.getName == ".gitkeep"))
-  val protoFiles = (inputDir ** "*.proto").get
+  val protoFiles = (inputDir ** "*.proto").get()
   protoFiles
     .map { file =>
       // Copy the file to the output directory
@@ -142,12 +148,13 @@ lazy val crunchyProtocPlugin = (project in file("crunchy-protoc-plugin"))
       "com.google.protobuf" % "protobuf-java" % protobufV,
       "com.palantir.javapoet" % "javapoet" % javapoetV,
     ),
-    generatePluginRunScript := Def.task {
-      val targetDir = (Compile / assembly / assemblyOutputPath).value.getParentFile.getParentFile
+    generatePluginRunScript := Def.uncached(Def.task {
+      val targetDir = (Compile / assembly / assemblyOutputPath).value.getParentFile
       val script = targetDir / "crunchy-protoc-plugin"
-      println(s"Generating script for protoc plugin at ${script.getAbsolutePath}")
+      println(s"Generating script for protoc plugin at ${script.getAbsolutePath()}")
+      val conv = fileConverter.value
       val cp = (Runtime / fullClasspath).value
-        .map(_.data.getAbsolutePath)
+        .map(ref => conv.toPath(ref.data).toAbsolutePath.toString)
         .mkString(":")
       val content =
         s"""#!/bin/bash
@@ -156,7 +163,7 @@ lazy val crunchyProtocPlugin = (project in file("crunchy-protoc-plugin"))
       IO.write(script, content)
       script.setExecutable(true)
       Seq(script)
-    }.dependsOn(Compile / compile).value,
+    }.dependsOn(Compile / compile).value),
     publishArtifact := false,
     commonSettings,
   )
@@ -213,9 +220,9 @@ def doDownloadJellyCli(targetDir: File): File = {
       throw new RuntimeException(s"Unsupported operating system: ${System.getProperty("os.name")}")
   }
 
-  url(
+  java.net.URI.create(
     s"https://github.com/Jelly-RDF/cli/releases/download/v$jellyCliV/jelly-cli-$os-$architecture",
-  ) #> targetFile !
+  ).toURL #> targetFile !
 
   if (!targetFile.exists()) {
     throw new RuntimeException(
@@ -227,6 +234,27 @@ def doDownloadJellyCli(targetDir: File): File = {
   targetFile.setExecutable(true)
   targetFile
 }
+
+// sbt 2.x's `Test / definedTestDigests` hashes every entry on the test classpath. sbt-jacoco puts
+// its instrumented-classes directory on that classpath, but only creates the directory when the
+// project actually has classes to instrument. For class-less projects (the proto-only project and
+// the aggregate root) the directory is missing and the hash fails the build. Create it while
+// producing Compile / products (which sbt-jacoco reads before instrumenting, and does not delete)
+// so the directory exists on the instrumented classpath that the digest hashes. This is a bare
+// setting, so under sbt 2.x it applies to every project, including the aggregate root.
+Compile / products := {
+  val ps = (Compile / products).value
+  IO.createDirectory(jacocoInstrumentedDirectory.value)
+  ps
+}
+
+// Keep the assembly JAR at a stable, sbt-version-independent path (<project>/target/<name>.jar) so
+// the release and assembly CI scripts can locate it. Under sbt 2.x the default output path is
+// nested under target/out/jvm/..., which the scripts don't know about.
+lazy val stableAssemblyOutput =
+  assembly / assemblyOutputPath := Def.uncached(
+    baseDirectory.value / "target" / s"${name.value}.jar",
+  )
 
 val grpcJavaSourceFiles = Seq("Grpc.java", "RdfStreamSubscribe.java", "RdfStreamReceived.java")
 
@@ -243,14 +271,14 @@ lazy val rdfProtos = (project in file("rdf-protos"))
     // Exclusions to make sure IntelliJ doesn't try to compile the intermediate project
     Compile / sourceDirectories := Nil,
     Compile / managedSourceDirectories := Nil,
-    ProtobufConfig / protobufRunProtoc := Def.task {
+    ProtobufConfig / protobufRunProtoc := Def.uncached(Def.task {
       runProtoc(
         (Compile / sourceDirectory).value / "args.txt",
         (crunchyProtocPlugin / Compile / assembly / assemblyOutputPath).value
-          .getParentFile.getParentFile / "crunchy-protoc-plugin",
+          .getParentFile / "crunchy-protoc-plugin",
         (ProtobufConfig / protobufRunProtoc).value,
       )
-    }.dependsOn(crunchyProtocPlugin / generatePluginRunScript).value,
+    }.dependsOn(crunchyProtocPlugin / generatePluginRunScript).value),
     publishArtifact := false,
   )
 
@@ -263,14 +291,13 @@ lazy val core = (project in file("core"))
     ),
     Compile / sourceGenerators += Def.task {
       // Copy from the managed source directory to the output directory
-      val inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) /
-        "src_managed" / "main" / "compiled_protobuf" /
+      val inputDir = (rdfProtos / ProtobufConfig / javaSource).value /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
 
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
 
-      val javaFiles = (inputDir * "*.java").get
+      val javaFiles = (inputDir * "*.java").get()
       javaFiles
         .filterNot { file => grpcJavaSourceFiles.contains(file.getName) }
         .map { file =>
@@ -297,11 +324,13 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
       "that is only available with the more heavyweight, Google-style proto classes, like " +
       "support for the Protobuf Text Format.",
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
-    prepareGoogleProtos := { doPrepareGoogleProtos(baseDirectory.value) },
-    Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
-    ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(
-      prepareGoogleProtos,
-    ).value,
+    prepareGoogleProtos := Def.uncached { doPrepareGoogleProtos(baseDirectory.value) },
+    Compile / compile := Def.uncached((Compile / compile).dependsOn(prepareGoogleProtos).value),
+    ProtobufConfig / protobufRunProtoc := Def.uncached(
+      (ProtobufConfig / protobufRunProtoc).dependsOn(
+        prepareGoogleProtos,
+      ).value,
+    ),
     ProtobufConfig / protobufIncludeFilters := Seq(
       Glob(baseDirectory.value.toPath) / "**" / "rdf.proto",
     ),
@@ -317,12 +346,11 @@ lazy val corePatch = (project in file("core-patch"))
     description := "Core code for the RDF Patch Jelly extension.",
     Compile / sourceGenerators += Def.task {
       // Copy from the managed source directory to the output directory
-      val inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) /
-        "src_managed" / "main" / "compiled_protobuf" /
+      val inputDir = (rdfProtos / ProtobufConfig / javaSource).value /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "patch"
-      val javaFiles = (inputDir * "*.java").get
+      val javaFiles = (inputDir * "*.java").get()
       javaFiles.map { file =>
         val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
         IO.copyFile(file, outputFile)
@@ -348,11 +376,13 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
       "that is only available with the more heavyweight, Google-style proto classes, like " +
       "support for the Protobuf Text Format.",
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
-    prepareGoogleProtos := { doPrepareGoogleProtos(baseDirectory.value) },
-    Compile / compile := (Compile / compile).dependsOn(prepareGoogleProtos).value,
-    ProtobufConfig / protobufRunProtoc := (ProtobufConfig / protobufRunProtoc).dependsOn(
-      prepareGoogleProtos,
-    ).value,
+    prepareGoogleProtos := Def.uncached { doPrepareGoogleProtos(baseDirectory.value) },
+    Compile / compile := Def.uncached((Compile / compile).dependsOn(prepareGoogleProtos).value),
+    ProtobufConfig / protobufRunProtoc := Def.uncached(
+      (ProtobufConfig / protobufRunProtoc).dependsOn(
+        prepareGoogleProtos,
+      ).value,
+    ),
     ProtobufConfig / protobufIncludeFilters := Seq(
       Glob(baseDirectory.value.toPath) / "**" / "patch.proto",
     ),
@@ -407,6 +437,7 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
       case PathList("google", "protobuf", _*) => MergeStrategy.discard
       case x => assemblyMergeStrategy.value(x) // defer to old strategy
     },
+    stableAssemblyOutput,
     // Don't run tests for the plugin project
     Test / skip := true,
     // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
@@ -446,6 +477,7 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV % "provided,test",
       "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV % "provided,test",
     ),
+    stableAssemblyOutput,
     // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
     publishArtifact := false,
     // Don't run tests for the plugin project
@@ -481,6 +513,7 @@ lazy val neo4jPlugin = (project in file("neo4j-plugin"))
       "org.neo4j.test" % "neo4j-harness" % neo4jV % Test,
       "org.neo4j.driver" % "neo4j-java-driver" % "6.2.0" % Test,
     ),
+    stableAssemblyOutput,
     commonSettings,
     commonJavaSettings,
   )
@@ -512,11 +545,13 @@ lazy val integrationTests = (project in file("integration-tests"))
       "com.apicatalog" % "titanium-rdf-primitives" % "1.0.3" % Test,
     ),
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
-    Compile / compile := (Compile / compile).dependsOn(ProtobufConfig / protobufRunProtoc).value,
+    Compile / compile := Def.uncached(
+      (Compile / compile).dependsOn(ProtobufConfig / protobufRunProtoc).value,
+    ),
     ProtobufConfig / protobufIncludeFilters := Seq(
       Glob(baseDirectory.value.toPath) / "**" / "rdf.proto",
     ),
-    downloadJellyCli := { doDownloadJellyCli((Test / resourceManaged).value) },
+    downloadJellyCli := Def.uncached { doDownloadJellyCli((Test / resourceManaged).value) },
     Test / resourceGenerators += Def.task {
       val cliBinary = downloadJellyCli.value
       Seq(cliBinary)
@@ -582,14 +617,13 @@ lazy val grpc = (project in file("pekko-grpc"))
     ),
     Compile / sourceGenerators += Def.task {
       // Copy from the managed source directory to the output directory
-      val inputDir = (rdfProtos / target).value / ("scala-" + scalaVersion.value) /
-        "src_managed" / "main" / "compiled_protobuf" /
+      val inputDir = (rdfProtos / ProtobufConfig / javaSource).value /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
 
       val outputDir = sourceManaged.value / "main" /
         "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1"
 
-      val javaFiles = (inputDir * "*.java").get
+      val javaFiles = (inputDir * "*.java").get()
       javaFiles
         .filter { file => grpcJavaSourceFiles.contains(file.getName) }
         .map { file =>
