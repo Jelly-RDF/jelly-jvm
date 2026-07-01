@@ -47,9 +47,7 @@ jobs:
 
       - name: 'Build plugins'
         run: |
-          sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly +neo4jPlugin/assembly
-          LATEST_SCALA_VERSION=`ls -1 jena-plugin/target | grep scala- | sort -V | tail -n1`
-          echo "LATEST_SCALA_VERSION=$LATEST_SCALA_VERSION" >> $GITHUB_ENV
+          sbt -v "+jenaPlugin/assembly; +rdf4jPlugin/assembly; +neo4jPlugin/assembly"
 
       - name: 'Build conformance reports'
         run: |
@@ -80,9 +78,9 @@ jobs:
           tag: dev
           name: "Development build"
           artifacts: >-
-            jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
-            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
-            neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            jena-plugin/target/*-plugin.jar,
+            rdf4j-plugin/target/*-plugin.jar,
+            neo4j-plugin/target/*-plugin.jar,
             integration-tests/target/conformance_reports.tar.gz
           generateReleaseNotes: true
 
@@ -96,9 +94,9 @@ jobs:
           tag: "${{ github.ref_name }}"
           name: "${{ github.ref_name }}"
           artifacts: >-
-            jena-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
-            rdf4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
-            neo4j-plugin/target/${{ env.LATEST_SCALA_VERSION }}/*-plugin.jar,
+            jena-plugin/target/*-plugin.jar,
+            rdf4j-plugin/target/*-plugin.jar,
+            neo4j-plugin/target/*-plugin.jar,
             integration-tests/target/conformance_reports.tar.gz
           generateReleaseNotes: true
 
