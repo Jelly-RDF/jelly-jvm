@@ -240,9 +240,12 @@ def doDownloadJellyCli(targetDir: File): File = {
 // project actually has classes to instrument. For class-less projects (the proto-only project and
 // the aggregate root) the directory is missing and the hash fails the build. Create it while
 // producing Compile / products (which sbt-jacoco reads before instrumenting, and does not delete)
-// so the directory exists on the instrumented classpath that the digest hashes. This is a bare
-// setting, so under sbt 2.x it applies to every project, including the aggregate root.
-Compile / products := {
+// so the directory exists on the instrumented classpath that the digest hashes.
+//
+// This MUST stay per-project (applied only to projects that no other project depends on for its
+// compile classpath). Applying it globally as a bare setting overrides Compile / products for every
+// project and breaks inter-project compile ordering.
+lazy val ensureJacocoDir = Compile / products := {
   val ps = (Compile / products).value
   IO.createDirectory(jacocoInstrumentedDirectory.value)
   ps
@@ -280,6 +283,7 @@ lazy val rdfProtos = (project in file("rdf-protos"))
       )
     }.dependsOn(crunchyProtocPlugin / generatePluginRunScript).value),
     publishArtifact := false,
+    ensureJacocoDir,
   )
 
 lazy val core = (project in file("core"))
@@ -637,3 +641,36 @@ lazy val grpc = (project in file("pekko-grpc"))
   )
   .dependsOn(stream)
   .dependsOn(core % "compile->compile;test->test")
+
+// Explicit aggregate root. Defined explicitly (rather than relying on sbt's implicit root) so we can
+// attach ensureJacocoDir to it — the root has no classes of its own, so it hits the same sbt-jacoco
+// / definedTestDigests problem as the proto-only project. It publishes nothing itself; the CI
+// release flow publishes the individual modules.
+lazy val root = (project in file("."))
+  .aggregate(
+    crunchyProtocPlugin,
+    rdfProtos,
+    core,
+    coreProtosGoogle,
+    corePatch,
+    corePatchProtosGoogle,
+    jena,
+    jenaPatch,
+    jenaPlugin,
+    rdf4j,
+    rdf4jPatch,
+    rdf4jPlugin,
+    titaniumRdfApi,
+    neo4jPlugin,
+    stream,
+    integrationTests,
+    examples,
+    jmh,
+    grpc,
+  )
+  .settings(
+    name := "jelly-jvm-root",
+    publish / skip := true,
+    publishArtifact := false,
+    ensureJacocoDir,
+  )
