@@ -47,7 +47,7 @@ jobs:
 
       - name: 'Build plugins'
         run: |
-          sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly +neo4jPlugin/assembly
+          sbt -v "+jenaPlugin/assembly; +rdf4jPlugin/assembly; +neo4jPlugin/assembly"
 
       - name: 'Build conformance reports'
         run: |

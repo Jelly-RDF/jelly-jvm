@@ -107,7 +107,7 @@ jobs:
 
     - name: Build and test with coverage
       shell: bash
-      run: sbt -v coverage +test coverageReport coverageAggregate jacocoAggregate
+      run: sbt -v "coverage; +test; coverageReport; coverageAggregate; jacocoAggregate"
       env:
         JENA_VERSION: ""
 
@@ -161,7 +161,8 @@ jobs:
 
     - name: Test building assemblies
       shell: bash
-      run: sbt -v +jenaPlugin/assembly +rdf4jPlugin/assembly +neo4jPlugin/assembly
+      # sbt 2.x's sbtn client joins CLI args into one command line; separate commands with `;`.
+      run: sbt -v "+jenaPlugin/assembly; +rdf4jPlugin/assembly; +neo4jPlugin/assembly"
 
     - name: Cache Jena
       id: cache-jena
