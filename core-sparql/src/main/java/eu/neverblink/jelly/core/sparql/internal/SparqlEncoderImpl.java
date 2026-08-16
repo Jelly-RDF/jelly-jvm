@@ -291,9 +291,41 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         for (int i = 0; i < columns.length; i++) {
             if (types[i] == TYPE_IRI) {
                 final SparqlIriColumn.Mutable column = SparqlIriColumn.newInstance();
+                final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
+                // The prefix ids keep the "same prefix as the previous IRI" inference of RdfIri.
+                // If the whole column resolves to one prefix – the usual case – it is stated once
+                // instead of once per value.
+                final int[] prefixes = new int[columns[i].values.size()];
+                int lastPrefix = 0;
+                int columnPrefix = 0;
+                boolean onePrefix = true;
+                int index = 0;
                 for (final Object value : columns[i].values) {
-                    column.addValues((RdfIri) value);
+                    final RdfIri iri = (RdfIri) value;
+                    nameIds.add(iri.getNameId());
+                    final int prefix = iri.getPrefixId();
+                    prefixes[index] = prefix;
+                    // Resolve the inference to see whether the column really stays on one prefix
+                    lastPrefix = prefix == 0 ? lastPrefix : prefix;
+                    if (index == 0) {
+                        columnPrefix = lastPrefix;
+                    } else if (lastPrefix != columnPrefix) {
+                        onePrefix = false;
+                    }
+                    index++;
                 }
+                column.setNameIds(nameIds);
+                final RepeatedInt prefixIds = RepeatedInt.newEmptyInstance();
+                if (!onePrefix) {
+                    for (int j = 0; j < prefixes.length; j++) {
+                        prefixIds.add(prefixes[j]);
+                    }
+                    column.setPrefixIds(prefixIds);
+                } else if (columnPrefix != 0) {
+                    prefixIds.add(columnPrefix);
+                    column.setPrefixIds(prefixIds);
+                }
+                // Otherwise every value has prefix id 0, which the decoder assumes anyway
                 column.setLayout(copyLayout(columns[i].layout));
                 frame.addIriColumns(column);
             }

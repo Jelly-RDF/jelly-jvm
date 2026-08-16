@@ -89,20 +89,48 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.setVariables(Seq("x").asJava)
       for iri <- Seq("https://a.org/x1", "https://a.org/x2", "https://a.org/x1", "https://b.org/z")
       do e.appendRow(Array[Node](Iri(iri)))
-      val values = e.endFrame().getIriColumns.asScala.head.getValues.asScala.toSeq
+      val column = e.endFrame().getIriColumns.asScala.head
 
-      // First IRI of the column: new prefix, name 1 (which is "the next one" from the initial 0)
-      values(0).getPrefixId shouldBe 1
-      values(0).getNameId shouldBe 0
-      // Same prefix, next name: fully inferred, nothing on the wire
-      values(1).getPrefixId shouldBe 0
-      values(1).getNameId shouldBe 0
-      // Same prefix, but back to name 1: the name must be stated
-      values(2).getPrefixId shouldBe 0
-      values(2).getNameId shouldBe 1
-      // New prefix and a non-consecutive name: both must be stated
-      values(3).getPrefixId shouldBe 2
-      values(3).getNameId shouldBe 3
+      // Names: 0 means "the next one", so only the two that break the sequence are stated
+      (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(0, 0, 1, 3)
+      // Prefixes: 0 means "same as the previous IRI", so only the change to namespace 2 is stated
+      (0 until column.getPrefixIds.size).map(column.getPrefixIds.get) shouldBe Seq(1, 0, 0, 2)
+    }
+
+    "omit the prefix ids when they are all zero" in {
+      val noPrefixes = SparqlResultsOptions
+        .newInstance()
+        .setMaxNameTableSize(64)
+        .setMaxPrefixTableSize(0)
+        .setMaxDatatypeTableSize(8)
+      val e = encoder(noPrefixes)
+      e.setVariables(Seq("x").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1")))
+      e.appendRow(Array[Node](Iri("https://a.org/x2")))
+      val column = e.endFrame().getIriColumns.asScala.head
+      column.getNameIds.size shouldBe 2
+      // With the prefix table disabled every prefix id is 0, so the array is dropped entirely
+      column.getPrefixIds.size shouldBe 0
+    }
+
+    "state a single prefix id once for a column that stays on one namespace" in {
+      def prefixesOf(iris: String*) =
+        val e = encoder()
+        e.setVariables(Seq("x").asJava)
+        for i <- iris do e.appendRow(Array[Node](Iri(i)))
+        val column = e.endFrame().getIriColumns.asScala.head
+        (0 until column.getPrefixIds.size).map(column.getPrefixIds.get)
+
+      // One namespace for the whole column: a single entry covers every value
+      prefixesOf("https://a.org/x1", "https://a.org/x2", "https://a.org/x3") shouldBe Seq(1)
+      // More than one: an entry per value, with 0 meaning "same prefix as the previous IRI"
+      prefixesOf(
+        "https://a.org/x1",
+        "https://b.org/x2",
+        "https://b.org/x3",
+        "https://b.org/x4",
+      ) shouldBe Seq(1, 2, 0, 0)
+      prefixesOf("https://a.org/x1", "https://b.org/x2", "https://a.org/x3") shouldBe Seq(1, 2, 1)
     }
 
     "restart the IRI inference state in every frame" in {
@@ -112,8 +140,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.endFrame()
       // Same IRI again, in a new frame: it must state its prefix, as the decoder resets per column
       e.appendRow(Array[Node](Iri("https://a.org/x1")))
-      val value = e.endFrame().getIriColumns.asScala.head.getValues.asScala.head
-      value.getPrefixId shouldBe 1
+      e.endFrame().getIriColumns.asScala.head.getPrefixIds.get(0) shouldBe 1
     }
 
     "expose uncompressed IRIs to converters that ask for them" in {
@@ -125,9 +152,10 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.setVariables(Seq("x").asJava)
       e.appendRow(Array[Node](Iri("https://a.org/x1")))
       e.appendRow(Array[Node](Iri("https://a.org/x2")))
-      val values = e.endFrame().getIriColumns.asScala.head.getValues.asScala.toSeq
-      // Raw IRIs always carry their real identifiers – no 0-compression
-      values.map(v => (v.getPrefixId, v.getNameId)) shouldBe Seq((1, 1), (1, 2))
+      val column = e.endFrame().getIriColumns.asScala.head
+      // Raw IRIs always carry their real name ids – no "next one" compression
+      (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(1, 2)
+      (0 until column.getPrefixIds.size).map(column.getPrefixIds.get) shouldBe Seq(1)
     }
 
     "reject the default graph as a binding" in {

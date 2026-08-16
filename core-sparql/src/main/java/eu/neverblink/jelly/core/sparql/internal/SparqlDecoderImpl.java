@@ -6,7 +6,6 @@ import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.internal.DecoderBase;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
@@ -140,7 +139,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             final Object[] out = decodeBufferForVariable(v, rows);
             if (c < iriEnd) {
                 final SparqlIriColumn column = get(iriColumns, c);
-                decodeColumn(new IriReader(column.getValues().iterator()), column.getLayout(), rows, out);
+                decodeColumn(new IriReader(column), column.getLayout(), rows, out);
             } else if (c < bnodeEnd) {
                 final SparqlBnodeColumn column = get(bnodeColumns, c - iriEnd);
                 decodeColumn(new BnodeReader(column.getValues().iterator()), column.getLayout(), rows, out);
@@ -263,14 +262,12 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         private int lastPrefixId = 0;
         private int lastNameId = 0;
 
-        TNode decode(RdfIri iri) {
-            int prefixId = iri.getPrefixId();
+        TNode decode(int prefixId, int nameId) {
             if (prefixId == 0) {
                 prefixId = lastPrefixId;
             } else {
                 lastPrefixId = prefixId;
             }
-            int nameId = iri.getNameId();
             if (nameId == 0) {
                 nameId = lastNameId + 1;
             }
@@ -291,21 +288,46 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
     private final class IriReader extends ValueReader<TNode> {
 
-        private final Iterator<RdfIri> values;
+        private final RepeatedInt nameIds;
+        // Empty (every value has prefix id 0), one prefix for the whole column, or one entry
+        // per value – in which case the RdfIri prefix inference applies along the list
+        private final RepeatedInt prefixIds;
         private final IriState iriState = new IriState();
+        private int index = 0;
 
-        IriReader(Iterator<RdfIri> values) {
-            this.values = values;
+        IriReader(SparqlIriColumn column) {
+            this.nameIds = column.getNameIds();
+            this.prefixIds = column.getPrefixIds();
+            final int prefixCount = prefixIds.size();
+            if (prefixCount > 1 && prefixCount != nameIds.size()) {
+                throw new RdfProtoDeserializationError(
+                    "Corrupt IRI column: %d prefix ids for %d name ids, expected 0, 1 or %d.".formatted(
+                        prefixCount,
+                        nameIds.size(),
+                        nameIds.size()
+                    )
+                );
+            }
         }
 
         @Override
         boolean hasNext() {
-            return values.hasNext();
+            return index < nameIds.size();
         }
 
         @Override
         TNode decodeNext() {
-            return iriState.decode(values.next());
+            final int i = index++;
+            final int prefixCount = prefixIds.size();
+            final int prefixId;
+            if (prefixCount == 0) {
+                prefixId = 0;
+            } else if (prefixCount == 1) {
+                prefixId = prefixIds.get(0);
+            } else {
+                prefixId = prefixIds.get(i);
+            }
+            return iriState.decode(prefixId, nameIds.get(i));
         }
     }
 
@@ -365,7 +387,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         TNode decodeNext() {
             final SparqlTerm term = values.next();
             return switch (term.getTermFieldNumber()) {
-                case SparqlTerm.IRI -> iriState.decode(term.getIri());
+                case SparqlTerm.IRI -> iriState.decode(term.getIri().getPrefixId(), term.getIri().getNameId());
                 case SparqlTerm.BNODE -> converter.makeBlankNode(term.getBnode());
                 case SparqlTerm.LITERAL -> convertLiteral(term.getLiteral());
                 default -> throw new RdfProtoDeserializationError("A term in a polymorphic column has no value set.");

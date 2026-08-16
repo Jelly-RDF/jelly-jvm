@@ -2,7 +2,7 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.{RdfIri, RdfNameEntry}
+import eu.neverblink.jelly.core.proto.v1.{RdfNameEntry, RdfPrefixEntry}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
 import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
 import org.scalatest.matchers.should.Matchers
@@ -29,7 +29,8 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
 
   private def iriColumn(valueCount: Int, layout: Seq[Int]) =
     val column = SparqlIriColumn.newInstance()
-    for _ <- 0 until valueCount do column.addValues(RdfIri.newInstance())
+    // Name id 0 = "the next one", so these resolve to ids 1, 2, 3, ... in the name table
+    for _ <- 0 until valueCount do column.addNameIds(0)
     layout.foreach(column.addLayout)
     column
 
@@ -248,6 +249,46 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       expectCorrupt(rowCount = 0, valueCount = 1, layout = Seq.empty) should include(
         "more cells than the frame row count",
       )
+    }
+
+    "apply a single prefix id to the whole column" in {
+      // Three IRIs, one prefix id: it covers all of them
+      val column = SparqlIriColumn
+        .newInstance()
+        .addNameIds(1)
+        .addNameIds(2)
+        .addNameIds(3)
+        .addPrefixIds(2)
+      val collector = ResultsCollector()
+      val frame = frameWithOneVariable(3)
+        // Overwrites the name entry that frameWithOneVariable sets for id 1
+        .addNames(RdfNameEntry.newInstance().setId(1).setValue("a"))
+        .addNames(RdfNameEntry.newInstance().setId(2).setValue("b"))
+        .addNames(RdfNameEntry.newInstance().setId(3).setValue("c"))
+        .addPrefixes(RdfPrefixEntry.newInstance().setId(1).setValue("https://one.org/"))
+        .addPrefixes(RdfPrefixEntry.newInstance().setId(2).setValue("https://two.org/"))
+        .addIriColumns(column)
+      MockSparqlConverterFactory
+        .decoder(collector, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
+        .ingestFrame(frame)
+      collector.rows.map(_.head) shouldBe Seq(
+        Iri("https://two.org/a"),
+        Iri("https://two.org/b"),
+        Iri("https://two.org/c"),
+      )
+    }
+
+    "reject an IRI column with a prefix id count that is neither 1 nor the name id count" in {
+      val column = SparqlIriColumn
+        .newInstance()
+        .addNameIds(1)
+        .addNameIds(2)
+        .addNameIds(3)
+        .addPrefixIds(1)
+        .addPrefixIds(2)
+      val frame = frameWithOneVariable(3).addIriColumns(column)
+      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
+      e.getMessage should include("2 prefix ids for 3 name ids, expected 0, 1 or 3")
     }
 
     "reject a polymorphic term with no value set" in {

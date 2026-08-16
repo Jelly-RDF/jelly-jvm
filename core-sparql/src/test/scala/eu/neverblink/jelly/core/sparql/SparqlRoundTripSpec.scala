@@ -62,6 +62,30 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       assertResults(collector, Seq("s", "o"), rows)
     }
 
+    "round-trip IRIs from several namespaces" in {
+      // Exercises the per-value form of prefix_ids, with the "same prefix as before" inference
+      val rows = Seq(
+        Seq[Node | Null](Iri("https://a.org/x1")),
+        Seq[Node | Null](Iri("https://b.org/x2")),
+        Seq[Node | Null](Iri("https://b.org/x3")),
+        Seq[Node | Null](Iri("https://a.org/x4")),
+      )
+      val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+      assertResults(collector, Seq("x"), rows)
+      val column = frames.head.getIriColumns.asScala.head
+      (0 until column.getPrefixIds.size).map(column.getPrefixIds.get) shouldBe Seq(1, 2, 0, 1)
+    }
+
+    "round-trip IRIs from a single namespace" in {
+      val rows = (1 to 4).map(i => Seq[Node | Null](Iri(s"https://a.org/x$i")))
+      val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+      assertResults(collector, Seq("x"), rows)
+      // The whole column shares one prefix, so it is stated exactly once
+      val column = frames.head.getIriColumns.asScala.head
+      column.getNameIds.size shouldBe 4
+      (0 until column.getPrefixIds.size).map(column.getPrefixIds.get) shouldBe Seq(1)
+    }
+
     "round-trip mixed column types" in {
       val rows = Seq(
         Seq(iri(1), BlankNode("b1"), SimpleLiteral("hello")),
@@ -87,7 +111,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       assertResults(collector, Seq("a", "b", "empty"), rows)
       // The never-bound column is emitted as an empty IRI column
       frames.head.getIriColumns.size() shouldBe 2
-      val emptyColumn = frames.head.getIriColumns.asScala.find(_.getValues.isEmpty)
+      val emptyColumn = frames.head.getIriColumns.asScala.find(_.getNameIds.isEmpty)
       emptyColumn should not be empty
       // Trailing unbound cells cost nothing: the all-unbound column has an empty layout too
       emptyColumn.get.getLayout.size() shouldBe 0
@@ -103,7 +127,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
       // 8 logical cells, but only 3 run values: a, b, a
-      frames.head.getIriColumns.asScala.head.getValues.size() shouldBe 3
+      frames.head.getIriColumns.asScala.head.getNameIds.size shouldBe 3
     }
 
     "round-trip long runs (with escaped run lengths)" in {
@@ -114,7 +138,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
         Seq(Seq[Node | Null](b))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      frames.head.getIriColumns.asScala.head.getValues.size() shouldBe 2
+      frames.head.getIriColumns.asScala.head.getNameIds.size shouldBe 2
     }
 
     "reproduce the layout from the design example" in {
@@ -128,7 +152,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
       val column = frames.head.getIriColumns.asScala.head
-      column.getValues.size() shouldBe 5
+      column.getNameIds.size shouldBe 5
       val layout = (0 until column.getLayout.size()).map(column.getLayout.get)
       layout shouldBe Seq(0, 81, 1, 16)
     }

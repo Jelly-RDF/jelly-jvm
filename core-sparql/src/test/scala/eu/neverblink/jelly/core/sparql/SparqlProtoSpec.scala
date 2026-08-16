@@ -74,8 +74,10 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
 
   private def iriColumn = SparqlIriColumn
     .newInstance()
-    .addValues(iri(1, 1))
-    .addValues(iri(0, 0))
+    .addNameIds(1)
+    .addNameIds(0)
+    .addPrefixIds(1)
+    .addPrefixIds(0)
     .addLayout(0)
     .addLayout(41)
 
@@ -235,7 +237,8 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       // The same for message and scalar collections
       val iris = iriColumn
       iris.clone().clear()
-      iris.getValues.size shouldBe 2
+      iris.getNameIds.size shouldBe 2
+      iris.getPrefixIds.size shouldBe 2
       iris.getLayout.size shouldBe 2
 
       val frame = fullFrame
@@ -267,7 +270,8 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
 
       SparqlIriColumn
         .newInstance()
-        .setValues(iriColumn.getValues)
+        .setNameIds(iriColumn.getNameIds)
+        .setPrefixIds(iriColumn.getPrefixIds)
         .setLayout(iriColumn.getLayout) shouldBe iriColumn
       SparqlBnodeColumn
         .newInstance()
@@ -416,8 +420,9 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
 
       val column = SparqlIriColumn.parseFrom(
         concat(
+          SparqlIriColumn.newInstance().addPrefixIds(1).addPrefixIds(0).toByteArray,
           SparqlIriColumn.newInstance().addLayout(0).addLayout(41).toByteArray,
-          SparqlIriColumn.newInstance().addValues(iri(1, 1)).addValues(iri(0, 0)).toByteArray,
+          SparqlIriColumn.newInstance().addNameIds(1).addNameIds(0).toByteArray,
         ),
       )
       column shouldBe iriColumn
