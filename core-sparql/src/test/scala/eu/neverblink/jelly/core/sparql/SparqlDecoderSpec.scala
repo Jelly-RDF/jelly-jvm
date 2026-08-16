@@ -2,7 +2,12 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.{RdfNameEntry, RdfPrefixEntry}
+import eu.neverblink.jelly.core.proto.v1.{
+  RdfDatatypeEntry,
+  RdfLiteral,
+  RdfNameEntry,
+  RdfPrefixEntry,
+}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
 import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
 import org.scalatest.matchers.should.Matchers
@@ -289,6 +294,40 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       val frame = frameWithOneVariable(3).addIriColumns(column)
       val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
       e.getMessage should include("2 prefix ids for 3 name ids, expected 0, 1 or 3")
+    }
+
+    "apply a single datatype to a whole literal column" in {
+      val column = SparqlLiteralColumn
+        .newInstance()
+        .addLexValues("1")
+        .addLexValues("2")
+        .setDatatype(1)
+      val collector = ResultsCollector()
+      val frame = frameWithOneVariable(2)
+        .addDatatypes(RdfDatatypeEntry.newInstance().setId(1).setValue("https://test.org/int"))
+        .addLiteralColumns(column)
+      newDecoder(collector).ingestFrame(frame)
+      collector.rows.map(_.head) shouldBe Seq(
+        DtLiteral("1", Datatype("https://test.org/int")),
+        DtLiteral("2", Datatype("https://test.org/int")),
+      )
+    }
+
+    "reject a literal column holding both lexical forms and full literal values" in {
+      val column = SparqlLiteralColumn
+        .newInstance()
+        .addLexValues("a")
+        .addValues(RdfLiteral.newInstance().setLex("b"))
+      val frame = frameWithOneVariable(2).addLiteralColumns(column)
+      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
+      e.getMessage should include("both lexical forms and full literal values")
+    }
+
+    "reject a literal column stating a datatype but holding no lexical forms" in {
+      val column = SparqlLiteralColumn.newInstance().setDatatype(1)
+      val frame = frameWithOneVariable(0).addLiteralColumns(column)
+      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
+      e.getMessage should include("datatype is stated for a column with no lexical forms")
     }
 
     "reject a polymorphic term with no value set" in {

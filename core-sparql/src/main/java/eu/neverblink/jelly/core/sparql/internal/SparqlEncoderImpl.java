@@ -51,6 +51,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     private static final RdfIri ZERO_IRI = RdfIri.newInstance();
 
+    // Not a valid datatype lookup id – marks a literal column that cannot state one datatype
+    private static final int MIXED_DATATYPES = -1;
+
     private static final class ColumnState {
 
         // Column type; sticky once set, only ever escalated to TYPE_POLY.
@@ -343,8 +346,22 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         for (int i = 0; i < columns.length; i++) {
             if (types[i] == TYPE_LITERAL) {
                 final SparqlLiteralColumn.Mutable column = SparqlLiteralColumn.newInstance();
-                for (final Object value : columns[i].values) {
-                    column.addValues((RdfLiteral) value);
+                final List<Object> values = columns[i].values;
+                // If every value has the same datatype – the usual case – the column states it
+                // once and carries only the lexical forms.
+                final int datatype = commonDatatype(values);
+                if (datatype == MIXED_DATATYPES) {
+                    for (final Object value : values) {
+                        column.addValues((RdfLiteral) value);
+                    }
+                } else {
+                    for (final Object value : values) {
+                        column.addLexValues(((RdfLiteral) value).getLex());
+                    }
+                    if (datatype != 0) {
+                        column.setDatatype(datatype);
+                    }
+                    // Datatype 0 means simple literals, which the decoder assumes anyway
                 }
                 column.setLayout(copyLayout(columns[i].layout));
                 frame.addLiteralColumns(column);
@@ -458,6 +475,32 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             col.layout.add(len - MAX_INLINE_LEN);
         }
         col.skip = 0;
+    }
+
+    /**
+     * Returns the datatype id shared by all values of a literal column (0 for simple literals),
+     * or MIXED_DATATYPES if the values have more than one datatype or any of them is
+     * language-tagged. An empty column counts as simple literals – both forms are empty anyway.
+     */
+    private static int commonDatatype(List<Object> values) {
+        int datatype = 0;
+        boolean first = true;
+        for (final Object value : values) {
+            final RdfLiteral literal = (RdfLiteral) value;
+            final int kind = literal.getLiteralKindFieldNumber();
+            if (kind == RdfLiteral.LANGTAG) {
+                return MIXED_DATATYPES;
+            }
+            // A simple literal has no literal kind set at all
+            final int dt = kind == RdfLiteral.DATATYPE ? literal.getDatatype() : 0;
+            if (first) {
+                datatype = dt;
+                first = false;
+            } else if (dt != datatype) {
+                return MIXED_DATATYPES;
+            }
+        }
+        return datatype;
     }
 
     private static RepeatedInt copyLayout(RepeatedInt layout) {

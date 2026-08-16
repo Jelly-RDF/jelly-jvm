@@ -91,6 +91,14 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .addValues(RdfLiteral.newInstance().setLex("42").setDatatype(1))
     .addLayout(1)
 
+  /** The datatype-monomorphic form of a literal column: bare lexical forms plus one datatype. */
+  private def lexLiteralColumn = SparqlLiteralColumn
+    .newInstance()
+    .addLexValues("1")
+    .addLexValues("2")
+    .setDatatype(1)
+    .addLayout(1)
+
   private def polyColumn = SparqlPolyColumn
     .newInstance()
     .addValues(SparqlTerm.newInstance().setIri(iri(1, 2)))
@@ -183,13 +191,14 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         SparqlBnodeColumn.parseFrom,
         SparqlBnodeColumn.parseDelimitedFrom,
       )
-      checkMessage(
-        literalColumn,
-        () => SparqlLiteralColumn.newInstance(),
-        SparqlLiteralColumn.parseFrom,
-        SparqlLiteralColumn.parseFrom,
-        SparqlLiteralColumn.parseDelimitedFrom,
-      )
+      for column <- Seq(literalColumn, lexLiteralColumn) do
+        checkMessage(
+          column,
+          () => SparqlLiteralColumn.newInstance(),
+          SparqlLiteralColumn.parseFrom,
+          SparqlLiteralColumn.parseFrom,
+          SparqlLiteralColumn.parseDelimitedFrom,
+        )
       checkMessage(
         polyColumn,
         () => SparqlPolyColumn.newInstance(),
@@ -281,6 +290,11 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .newInstance()
         .setValues(literalColumn.getValues)
         .setLayout(literalColumn.getLayout) shouldBe literalColumn
+      SparqlLiteralColumn
+        .newInstance()
+        .setLexValues(lexLiteralColumn.getLexValues)
+        .setDatatype(lexLiteralColumn.getDatatype)
+        .setLayout(lexLiteralColumn.getLayout) shouldBe lexLiteralColumn
       SparqlPolyColumn
         .newInstance()
         .setValues(polyColumn.getValues)

@@ -14,6 +14,7 @@ import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
 import eu.neverblink.protoc.java.runtime.RepeatedInt;
+import eu.neverblink.protoc.java.runtime.RepeatedString;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -145,7 +146,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 decodeColumn(new BnodeReader(column.getValues().iterator()), column.getLayout(), rows, out);
             } else if (c < literalEnd) {
                 final SparqlLiteralColumn column = get(literalColumns, c - bnodeEnd);
-                decodeColumn(new LiteralReader(column.getValues().iterator()), column.getLayout(), rows, out);
+                decodeColumn(literalReader(column), column.getLayout(), rows, out);
             } else {
                 final SparqlPolyColumn column = get(polyColumns, c - literalEnd);
                 decodeColumn(new PolyReader(column.getValues().iterator()), column.getLayout(), rows, out);
@@ -350,6 +351,27 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
     }
 
+    /**
+     * Picks the reader for a literal column: the lexical forms replace the RdfLiteral values
+     * if present (see the sparql.proto comments).
+     */
+    private ValueReader<TNode> literalReader(SparqlLiteralColumn column) {
+        if (column.getLexValues().isEmpty()) {
+            if (column.getDatatype() != 0) {
+                throw new RdfProtoDeserializationError(
+                    "Corrupt literal column: a datatype is stated for a column with no lexical forms."
+                );
+            }
+            return new LiteralReader(column.getValues().iterator());
+        }
+        if (!column.getValues().isEmpty()) {
+            throw new RdfProtoDeserializationError(
+                "Corrupt literal column: the column has both lexical forms and full literal values."
+            );
+        }
+        return new LexLiteralReader(column);
+    }
+
     private final class LiteralReader extends ValueReader<TNode> {
 
         private final Iterator<RdfLiteral> values;
@@ -366,6 +388,35 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         @Override
         TNode decodeNext() {
             return convertLiteral(values.next());
+        }
+    }
+
+    /**
+     * Reader for a datatype-monomorphic literal column: the values are plain lexical forms and
+     * the datatype (if any) is resolved once for the whole column.
+     */
+    private final class LexLiteralReader extends ValueReader<TNode> {
+
+        private final RepeatedString values;
+        // Null for a column of simple literals
+        private final TDatatype datatype;
+        private int index = 0;
+
+        LexLiteralReader(SparqlLiteralColumn column) {
+            this.values = column.getLexValues();
+            final int datatypeId = column.getDatatype();
+            this.datatype = datatypeId == 0 ? null : getDatatypeLookup().get(datatypeId);
+        }
+
+        @Override
+        boolean hasNext() {
+            return index < values.size();
+        }
+
+        @Override
+        TNode decodeNext() {
+            final String lex = values.get(index++);
+            return datatype == null ? converter.makeSimpleLiteral(lex) : converter.makeDtLiteral(lex, datatype);
         }
     }
 

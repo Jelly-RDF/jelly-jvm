@@ -15,6 +15,9 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
 
   private def iri(i: Int) = Iri(f"https://test.org/ns#term$i")
 
+  private def lexValues(column: SparqlLiteralColumn) =
+    (0 until column.getLexValues.size).map(column.getLexValues.get)
+
   /** Encode the row batches (one batch = one frame), round-trip each frame through its serialized
     * form, decode, and return the collected results.
     */
@@ -98,6 +101,83 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       frames.head.getBnodeColumns.size() shouldBe 1
       frames.head.getLiteralColumns.size() shouldBe 1
       frames.head.getPolyColumns.size() shouldBe 0
+    }
+
+    "round-trip a column of simple literals" in {
+      val rows = Seq("one", "two", "three").map(s => Seq[Node | Null](SimpleLiteral(s)))
+      val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+      assertResults(collector, Seq("x"), rows)
+      val column = frames.head.getLiteralColumns.asScala.head
+      // Datatype-monomorphic: only the lexical forms go on the wire. Simple literals are
+      // xsd:string, which needs no datatype lookup entry and no datatype reference.
+      column.getValues.size shouldBe 0
+      lexValues(column) shouldBe Seq("one", "two", "three")
+      column.getDatatype shouldBe 0
+      frames.head.getDatatypes.size shouldBe 0
+    }
+
+    "round-trip a column of literals sharing one datatype" in {
+      val dt = Datatype("https://test.org/xsd#integer")
+      val rows = Seq("1", "2", "3").map(s => Seq[Node | Null](DtLiteral(s, dt)))
+      val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+      assertResults(collector, Seq("x"), rows)
+      val column = frames.head.getLiteralColumns.asScala.head
+      // The datatype is stated once for the column instead of once per value
+      column.getValues.size shouldBe 0
+      lexValues(column) shouldBe Seq("1", "2", "3")
+      column.getDatatype shouldBe 1
+    }
+
+    "fall back to full literals in a column mixing datatypes" in {
+      val rows = Seq(
+        Seq[Node | Null](DtLiteral("1", Datatype("https://test.org/xsd#integer"))),
+        Seq[Node | Null](DtLiteral("2.5", Datatype("https://test.org/xsd#double"))),
+        Seq[Node | Null](SimpleLiteral("plain")),
+      )
+      val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+      assertResults(collector, Seq("x"), rows)
+      val column = frames.head.getLiteralColumns.asScala.head
+      column.getLexValues.size shouldBe 0
+      column.getValues.size shouldBe 3
+      column.getDatatype shouldBe 0
+    }
+
+    "fall back to full literals in a column with language tags" in {
+      // Even a column that is otherwise uniform cannot state a datatype if it has a language tag
+      val rows = Seq(
+        Seq[Node | Null](SimpleLiteral("hello")),
+        Seq[Node | Null](LangLiteral("bonjour", "fr")),
+      )
+      val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+      assertResults(collector, Seq("x"), rows)
+      val column = frames.head.getLiteralColumns.asScala.head
+      column.getLexValues.size shouldBe 0
+      column.getValues.size shouldBe 2
+    }
+
+    "pick the literal column form per frame" in {
+      // Monomorphism is a property of a frame, not of the whole stream
+      val dt = Datatype("https://test.org/xsd#integer")
+      val batch1 = Seq(Seq[Node | Null](DtLiteral("1", dt)))
+      val batch2 = Seq(Seq[Node | Null](DtLiteral("2", dt)), Seq[Node | Null](SimpleLiteral("x")))
+      val batch3 = Seq(Seq[Node | Null](SimpleLiteral("y")))
+      val (collector, frames) = roundTrip(Seq("x"), Seq(batch1, batch2, batch3))
+      assertResults(collector, Seq("x"), batch1 ++ batch2 ++ batch3)
+      val columns = frames.map(_.getLiteralColumns.asScala.head)
+      columns.map(c => (c.getLexValues.size, c.getValues.size)) shouldBe Seq((1, 0), (0, 2), (1, 0))
+      // The datatype id survives from the first frame, but the third frame states none
+      columns.map(_.getDatatype) shouldBe Seq(1, 0, 0)
+    }
+
+    "round-trip an all-unbound literal column" in {
+      // A column that held literals before, but has no values at all in this frame
+      val batch1 = Seq(Seq[Node | Null](SimpleLiteral("a")))
+      val batch2 = Seq(Seq[Node | Null](null))
+      val (collector, frames) = roundTrip(Seq("x"), Seq(batch1, batch2))
+      assertResults(collector, Seq("x"), batch1 ++ batch2)
+      val column = frames(1).getLiteralColumns.asScala.head
+      column.getLexValues.size shouldBe 0
+      column.getValues.size shouldBe 0
     }
 
     "round-trip unbound values" in {
