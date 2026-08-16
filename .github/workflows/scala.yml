@@ -29,17 +29,17 @@ jobs:
             # Jena 5.3.0 is the last version supporting RDF-star.
             # 5.4.0 dropped it in favor of RDF1.2.
             jena_version: "5.3.0"
-            # Test the last RDF4J 4.x version.
-            rdf4j_version: "4.3.16"
+            rdf4j_version: ""
           # Jena 6 requires Java 21.
           - os: ubuntu-latest
             java: 21
-            jena_version: "6.0.0"
+            jena_version: "6.1.0"
             rdf4j_version: ""
+          # RDF4J 6 requires Java 25.
           - os: ubuntu-latest
             java: 25
             jena_version: ""
-            rdf4j_version: ""
+            rdf4j_version: "6.0.0-M3"
           - os: ubuntu-latest
             java: 26
             jena_version: ""
