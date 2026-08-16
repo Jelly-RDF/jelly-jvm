@@ -209,19 +209,19 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
 
   "the column layout decoder" should {
     "reject an escaped run length with no extension" in {
-      expectCorrupt(rowCount = 1, valueCount = 1, layout = Seq(7)) should include(
+      expectCorrupt(rowCount = 1, valueCount = 1, layout = Seq(15)) should include(
         "escaped length token is not followed by an extension",
       )
     }
 
     "reject a skip past the end of the frame" in {
-      expectCorrupt(rowCount = 0, valueCount = 0, layout = Seq(1 << 4)) should include(
+      expectCorrupt(rowCount = 0, valueCount = 0, layout = Seq(1 << 5)) should include(
         "more cells than the frame row count",
       )
     }
 
     "reject a skip past the last value of the column" in {
-      expectCorrupt(rowCount = 5, valueCount = 0, layout = Seq(1 << 4)) should include(
+      expectCorrupt(rowCount = 5, valueCount = 0, layout = Seq(1 << 5)) should include(
         "not enough values in the column",
       )
     }
@@ -239,7 +239,7 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
     }
 
     "reject an unbound run past the end of the frame" in {
-      expectCorrupt(rowCount = 0, valueCount = 0, layout = Seq(1 << 3)) should include(
+      expectCorrupt(rowCount = 0, valueCount = 0, layout = Seq(1 << 4)) should include(
         "more cells than the frame row count",
       )
     }

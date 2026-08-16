@@ -46,14 +46,14 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
     "reject more rows in one frame than the layout encoding can address" in {
       val e = encoder()
       e.setVariables(Seq("x").asJava)
-      // Pretend the frame is already full – appending 2^28 rows for real would take forever
+      // Pretend the frame is already full – appending 2^27 rows for real would take forever
       val rowCount = classOf[SparqlEncoderImpl[?]].getDeclaredField("rowCount")
       rowCount.setAccessible(true)
-      rowCount.setInt(e, (1 << 28) - 1)
+      rowCount.setInt(e, (1 << 27) - 1)
       val error = intercept[RdfProtoSerializationError] {
         e.appendRow(Array[Node](Iri("https://test.org/a")))
       }
-      error.getMessage should include("cannot hold more than 268435455 rows")
+      error.getMessage should include("cannot hold more than 134217727 rows")
     }
 
     "reject quoted triples appended as a buffer appender" in {

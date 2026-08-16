@@ -29,6 +29,9 @@ import java.util.List;
 @InternalApi
 public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode, TDatatype> implements SparqlDecoder {
 
+    // Run lengths of 0–14 are inlined in the layout token; 15 escapes to an extension varint.
+    private static final int MAX_INLINE_LEN = 15;
+
     private final SparqlResultsHandler<TNode> handler;
     private final SparqlResultsOptions supportedOptions;
 
@@ -380,17 +383,17 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         final int layoutSize = layout.size();
         for (int k = 0; k < layoutSize; k++) {
             final int token = layout.get(k);
-            final int skip = token >>> 4;
-            final int kind = (token >>> 3) & 1;
-            long len = token & 7;
-            if (len == 7) {
+            final int skip = token >>> 5;
+            final int kind = (token >>> 4) & 1;
+            long len = token & MAX_INLINE_LEN;
+            if (len == MAX_INLINE_LEN) {
                 k++;
                 if (k >= layoutSize) {
                     throw new RdfProtoDeserializationError(
                         "Corrupt column layout: an escaped length token is not followed by an extension."
                     );
                 }
-                len = 7 + Integer.toUnsignedLong(layout.get(k));
+                len = MAX_INLINE_LEN + Integer.toUnsignedLong(layout.get(k));
             }
             if (skip > rows - pos) {
                 throw new RdfProtoDeserializationError("Corrupt column layout: more cells than the frame row count.");

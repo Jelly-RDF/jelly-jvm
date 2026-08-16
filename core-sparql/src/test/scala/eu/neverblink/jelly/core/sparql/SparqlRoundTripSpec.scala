@@ -118,7 +118,11 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
     }
 
     "reproduce the layout from the design example" in {
-      // N = aabc__ddd_e, M = abcde => layout = [0, 41, 1, 8]
+      // N = aabc__ddd_e, M = abcde. With token = (skip << 5) | (kind << 4) | len_code:
+      //   "aa"          skip 0, repeat,  len 0 -> 0
+      //   "__" before d skip 2, unbound, len 1 -> (2 << 5) | (1 << 4) | 1 = 81
+      //   "ddd"         skip 0, repeat,  len 1 -> 1
+      //   "_" before e  skip 0, unbound, len 0 -> 16
       val Seq(a, b, c, d, e) = (1 to 5).map(iri)
       val rows = Seq[Node | Null](a, a, b, c, null, null, d, d, d, null, e).map(Seq(_))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
@@ -126,7 +130,23 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val column = frames.head.getIriColumns.asScala.head
       column.getValues.size() shouldBe 5
       val layout = (0 until column.getLayout.size()).map(column.getLayout.get)
-      layout shouldBe Seq(0, 41, 1, 8)
+      layout shouldBe Seq(0, 81, 1, 16)
+    }
+
+    "inline run lengths up to the escape threshold" in {
+      // len_code is 4 bits: a repeat run of 16 (len 14) is the longest that fits in one token,
+      // and 15 unbound cells (len 14) likewise. One more of either needs an extension varint.
+      def layoutOf(rows: Seq[Seq[Node | Null]]) =
+        val column = roundTrip(Seq("x"), Seq(rows))._2.head.getIriColumns.asScala.head
+        (0 until column.getLayout.size()).map(column.getLayout.get)
+
+      val a = iri(1)
+      layoutOf(Seq.fill(16)(Seq[Node | Null](a))) shouldBe Seq(14)
+      layoutOf(Seq.fill(17)(Seq[Node | Null](a))) shouldBe Seq(15, 0)
+
+      val b = iri(2)
+      layoutOf(Seq.fill(15)(Seq[Node | Null](null)) :+ Seq[Node | Null](b)) shouldBe Seq(16 | 14)
+      layoutOf(Seq.fill(16)(Seq[Node | Null](null)) :+ Seq[Node | Null](b)) shouldBe Seq(16 | 15, 0)
     }
 
     "round-trip a polymorphic column" in {

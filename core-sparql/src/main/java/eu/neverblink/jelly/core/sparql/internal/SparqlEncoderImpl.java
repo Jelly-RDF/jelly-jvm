@@ -41,9 +41,12 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     private static final int KIND_REPEAT = 0;
     private static final int KIND_UNBOUND = 1;
 
-    // The layout tokens are uint32 with skip in the upper 28 bits, so a frame can hold at most
-    // 2^28 - 1 rows (see the layout encoding notes in sparql.proto).
-    private static final int MAX_ROWS_PER_FRAME = (1 << 28) - 1;
+    // The layout tokens are uint32 with skip in the upper 27 bits, so a frame can hold at most
+    // 2^27 - 1 rows (see the layout encoding notes in sparql.proto).
+    private static final int MAX_ROWS_PER_FRAME = (1 << 27) - 1;
+
+    // Run lengths of 0–14 are inlined in the token; 15 escapes to an extension varint.
+    private static final int MAX_INLINE_LEN = 15;
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     private static final RdfIri ZERO_IRI = RdfIri.newInstance();
@@ -417,10 +420,10 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     }
 
     private void emitException(ColumnState col, int kind, int len) {
-        final int lenCode = Math.min(len, 7);
-        col.layout.add((col.skip << 4) | (kind << 3) | lenCode);
-        if (lenCode == 7) {
-            col.layout.add(len - 7);
+        final int lenCode = Math.min(len, MAX_INLINE_LEN);
+        col.layout.add((col.skip << 5) | (kind << 4) | lenCode);
+        if (lenCode == MAX_INLINE_LEN) {
+            col.layout.add(len - MAX_INLINE_LEN);
         }
         col.skip = 0;
     }
