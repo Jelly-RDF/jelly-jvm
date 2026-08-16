@@ -159,23 +159,24 @@ class FieldGenerator(val info: FieldInfo):
     else throw new IllegalStateException("unhandled field: " + info.descriptor)
 
   def generateCopyFromCode(method: MethodSpec.Builder): Unit =
-    if (info.isSingularPrimitiveOrEnum || info.isString || info.isBytes)
+    // Repeated fields must be checked first: a repeated string or bytes field is also isString /
+    // isBytes, and copying it by reference would make the copy share the source's store.
+    if (info.isRepeated)
+      method
+        .addStatement(named("$field:N.clear()"))
+        .addStatement(named("$field:N.addAll(other.$field:N)"))
+    else if (info.isSingularPrimitiveOrEnum || info.isString || info.isBytes)
       method.addStatement(named("$field:N = other.$field:N"))
-    else if (info.isRepeated || info.isMessageOrGroup) {
-      if info.isRepeated then
-        method
-          .addStatement(named("$field:N.clear()"))
-          .addStatement(named("$field:N.addAll(other.$field:N)"))
-      else
-        // The field may be unset (null) in the source message
-        method
-          .beginControlFlow("if (other.$N == null)", info.fieldName)
-          .addStatement(named("$field:N = null"))
-          .nextControlFlow("else")
-          .addStatement(named("$lazyInitMethod:L()"))
-          .addStatement(named("$field:N.copyFrom(other.$field:N)"))
-          .endControlFlow()
-    } else throw new IllegalStateException("unhandled field: " + info.descriptor)
+    else if (info.isMessageOrGroup)
+      // The field may be unset (null) in the source message
+      method
+        .beginControlFlow("if (other.$N == null)", info.fieldName)
+        .addStatement(named("$field:N = null"))
+        .nextControlFlow("else")
+        .addStatement(named("$lazyInitMethod:L()"))
+        .addStatement(named("$field:N.copyFrom(other.$field:N)"))
+        .endControlFlow()
+    else throw new IllegalStateException("unhandled field: " + info.descriptor)
 
   def generateMergeFromMessageCode(method: MethodSpec.Builder): Unit =
     if (info.isRepeated) method.addStatement(named("$getMethod:N().addAll(other.$field:N)"))

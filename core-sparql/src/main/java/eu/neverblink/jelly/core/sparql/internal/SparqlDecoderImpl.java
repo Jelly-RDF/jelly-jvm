@@ -1,7 +1,5 @@
 package eu.neverblink.jelly.core.sparql.internal;
 
-import static eu.neverblink.jelly.core.internal.BaseJellyOptions.*;
-
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
@@ -54,19 +52,23 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             supportedOptions != null ? supportedOptions : JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS;
     }
 
+    // The lookup tables are sized from the stream options, and the sizes are baked in when the
+    // lookups are lazily created. ingestFrame rejects any frame content before the options are
+    // received, so currentOptions is always set by the time these are called.
+
     @Override
     protected int getNameTableSize() {
-        return currentOptions == null ? SMALL_NAME_TABLE_SIZE : currentOptions.getMaxNameTableSize();
+        return currentOptions.getMaxNameTableSize();
     }
 
     @Override
     protected int getPrefixTableSize() {
-        return currentOptions == null ? SMALL_PREFIX_TABLE_SIZE : currentOptions.getMaxPrefixTableSize();
+        return currentOptions.getMaxPrefixTableSize();
     }
 
     @Override
     protected int getDatatypeTableSize() {
-        return currentOptions == null ? SMALL_DT_TABLE_SIZE : currentOptions.getMaxDatatypeTableSize();
+        return currentOptions.getMaxDatatypeTableSize();
     }
 
     @Override

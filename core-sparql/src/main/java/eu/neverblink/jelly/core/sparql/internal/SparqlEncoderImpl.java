@@ -139,9 +139,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         @Override
         public RdfLiteral makeDtLiteral(TNode lit, String lex, String dt) {
             final RdfLiteral literal = getNodeEncoder().makeDtLiteral(lit, lex, dt);
-            if (literal.getLiteralKindFieldNumber() == RdfLiteral.DATATYPE) {
-                markUsed(usedDatatypes, literal.getDatatype());
-            }
+            markUsed(usedDatatypes, literal.getDatatype());
             return literal;
         }
 
@@ -170,15 +168,13 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     private final ArrayList<RdfPrefixEntry> prefixEntries = new ArrayList<>();
     private final ArrayList<RdfDatatypeEntry> datatypeEntries = new ArrayList<>();
 
-    // Bitsets tracking lookup ids referenced (used) and assigned in the current frame.
-    // Used to detect when a lookup entry would be overwritten while still referenced by
-    // this frame – which cannot be represented in the columnar layout.
+    // Bitsets tracking the lookup ids touched by the current frame – both the ids assigned by
+    // its lookup entries and the ids its columns refer to. Used to detect when a lookup entry
+    // would be overwritten while still referenced by this frame, which cannot be represented in
+    // the columnar layout (all lookup entries of a frame are applied before any of its columns).
     private final long[] usedNames;
     private final long[] usedPrefixes;
     private final long[] usedDatatypes;
-    private final long[] assignedNames;
-    private final long[] assignedPrefixes;
-    private final long[] assignedDatatypes;
 
     // State for resolving 0-compressed lookup entry identifiers
     private int lastAssignedNameId = 0;
@@ -194,11 +190,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     public SparqlEncoderImpl(ProtoEncoderConverter<TNode> converter, SparqlEncoder.Params params) {
         super(converter, params);
         usedNames = newBitset(options.getMaxNameTableSize());
-        assignedNames = newBitset(options.getMaxNameTableSize());
         usedPrefixes = newBitset(options.getMaxPrefixTableSize());
-        assignedPrefixes = newBitset(options.getMaxPrefixTableSize());
         usedDatatypes = newBitset(options.getMaxDatatypeTableSize());
-        assignedDatatypes = newBitset(options.getMaxDatatypeTableSize());
     }
 
     @Override
@@ -351,9 +344,6 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         Arrays.fill(usedNames, 0);
         Arrays.fill(usedPrefixes, 0);
         Arrays.fill(usedDatatypes, 0);
-        Arrays.fill(assignedNames, 0);
-        Arrays.fill(assignedPrefixes, 0);
-        Arrays.fill(assignedDatatypes, 0);
         rowCount = 0;
         firstFrame = false;
 
@@ -445,7 +435,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     public void appendNameEntry(RdfNameEntry nameEntry) {
         final int id = nameEntry.getId() == 0 ? lastAssignedNameId + 1 : nameEntry.getId();
         lastAssignedNameId = id;
-        checkAndMarkAssigned(usedNames, assignedNames, id, "name");
+        checkAndMarkUsed(usedNames, id, "name");
         nameEntries.add(nameEntry);
     }
 
@@ -453,7 +443,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
         final int id = prefixEntry.getId() == 0 ? lastAssignedPrefixId + 1 : prefixEntry.getId();
         lastAssignedPrefixId = id;
-        checkAndMarkAssigned(usedPrefixes, assignedPrefixes, id, "prefix");
+        checkAndMarkUsed(usedPrefixes, id, "prefix");
         prefixEntries.add(prefixEntry);
     }
 
@@ -461,7 +451,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
         final int id = datatypeEntry.getId() == 0 ? lastAssignedDatatypeId + 1 : datatypeEntry.getId();
         lastAssignedDatatypeId = id;
-        checkAndMarkAssigned(usedDatatypes, assignedDatatypes, id, "datatype");
+        checkAndMarkUsed(usedDatatypes, id, "datatype");
         datatypeEntries.add(datatypeEntry);
     }
 
@@ -470,8 +460,12 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         throw new RdfProtoSerializationError("RDF-star quoted triples are not supported in Jelly-SPARQL.");
     }
 
-    private void checkAndMarkAssigned(long[] used, long[] assigned, int id, String kind) {
-        if (isSet(used, id) || isSet(assigned, id)) {
+    /**
+     * Registers a lookup entry assigned by the current frame. Assigning an id that the frame
+     * already touched means the entry would be overwritten while the frame still refers to it.
+     */
+    private void checkAndMarkUsed(long[] used, int id, String kind) {
+        if (isSet(used, id)) {
             throw new RdfProtoSerializationError(
                 (
                     "The %s lookup table is too small to encode this batch of results: entry %d " +
@@ -480,7 +474,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                 ).formatted(kind, id, kind)
             );
         }
-        markUsed(assigned, id);
+        markUsed(used, id);
     }
 
     private static long[] newBitset(int tableSize) {
