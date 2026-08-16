@@ -187,6 +187,57 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
     }
   }
 
+  "the packed lookup entries" should {
+    "hold a whole run of consecutively numbered entries" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      for i <- 1 to 5 do e.appendRow(Array[Node](Iri(s"https://a.org/x$i")))
+      val frame = e.endFrame()
+      // Five names and one prefix, all introduced in order: one message per lookup
+      frame.getNames.size shouldBe 1
+      frame.getPrefixes.size shouldBe 1
+      val names = frame.getNames.asScala.head
+      // Id 0: the run continues from wherever the stream left off, so it costs nothing
+      names.getId shouldBe 0
+      (0 until names.getValues.size).map(names.getValues.get) shouldBe
+        Seq("x1", "x2", "x3", "x4", "x5")
+    }
+
+    "start a new message when the identifiers are not consecutive" in {
+      val options = SparqlResultsOptions
+        .newInstance()
+        .setMaxNameTableSize(8)
+        .setMaxPrefixTableSize(8)
+        .setMaxDatatypeTableSize(8)
+      val e = encoder(options)
+      e.setVariables(Seq("x").asJava)
+      // Fills ids 1-6 of the name table
+      for i <- 1 to 6 do e.appendRow(Array[Node](Iri(s"https://a.org/x$i")))
+      e.endFrame()
+      // Takes 7 and 8, then wraps around to the start of the table
+      for i <- 7 to 10 do e.appendRow(Array[Node](Iri(s"https://a.org/x$i")))
+      val entries = e.endFrame().getNames.asScala.toSeq
+      entries.map(_.getValues.size).sum shouldBe 4
+      entries.size shouldBe 2
+      // The run that wrapped around cannot be numbered implicitly, so it states its id
+      entries.head.getId shouldBe 0
+      entries(1).getId should not be 0
+    }
+
+    "keep the entries of a frame out of the next one" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1")))
+      e.endFrame().getNames.asScala.head.getValues.size shouldBe 1
+      e.appendRow(Array[Node](Iri("https://a.org/x2")))
+      val frame = e.endFrame()
+      // A new frame starts a new run, even though the ids are still consecutive
+      frame.getNames.size shouldBe 1
+      frame.getNames.asScala.head.getValues.size shouldBe 1
+      frame.getNames.asScala.head.getId shouldBe 0
+    }
+  }
+
   "the lookup table guard" should {
     "reject a frame whose prefixes do not fit the prefix table" in {
       val options = SparqlResultsOptions

@@ -116,9 +116,9 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .setAskResult(SparqlAskResult.newInstance().setValue(true))
     .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
     .addVariables(SparqlVariable.newInstance().setName("y").setColumnIndex(1))
-    .addNames(RdfNameEntry.newInstance().setId(1).setValue("name"))
-    .addPrefixes(RdfPrefixEntry.newInstance().setId(1).setValue("https://test.org/"))
-    .addDatatypes(RdfDatatypeEntry.newInstance().setId(1).setValue("https://test.org/dt"))
+    .addNames(RdfNameEntryPacked.newInstance().setId(1).addValues("name").addValues("name2"))
+    .addPrefixes(RdfPrefixEntryPacked.newInstance().setId(1).addValues("https://test.org/"))
+    .addDatatypes(RdfDatatypeEntryPacked.newInstance().setId(1).addValues("https://test.org/dt"))
     .addIriColumns(iriColumn)
     .addBnodeColumns(bnodeColumn)
     .addLiteralColumns(literalColumn)
@@ -449,15 +449,21 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
           SparqlResultsFrame.newInstance().addIriColumns(iriColumn).toByteArray,
           SparqlResultsFrame
             .newInstance()
-            .addDatatypes(RdfDatatypeEntry.newInstance().setId(1).setValue("https://test.org/dt"))
+            .addDatatypes(
+              RdfDatatypeEntryPacked.newInstance().setId(1).addValues("https://test.org/dt"),
+            )
             .toByteArray,
           SparqlResultsFrame
             .newInstance()
-            .addPrefixes(RdfPrefixEntry.newInstance().setId(1).setValue("https://test.org/"))
+            .addPrefixes(
+              RdfPrefixEntryPacked.newInstance().setId(1).addValues("https://test.org/"),
+            )
             .toByteArray,
           SparqlResultsFrame
             .newInstance()
-            .addNames(RdfNameEntry.newInstance().setId(1).setValue("name"))
+            .addNames(
+              RdfNameEntryPacked.newInstance().setId(1).addValues("name").addValues("name2"),
+            )
             .toByteArray,
           SparqlResultsFrame
             .newInstance()

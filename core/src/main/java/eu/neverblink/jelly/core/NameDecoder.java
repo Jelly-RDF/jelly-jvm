@@ -15,10 +15,30 @@ public interface NameDecoder<TIri> {
     void updateNames(RdfNameEntry nameEntry);
 
     /**
+     * Update the name table with a new entry, given as its identifier and value.
+     * <p>
+     * This is used by extensions that do not carry the entries as RdfNameEntry messages
+     * (e.g., the packed lookup entries of Jelly-SPARQL).
+     *
+     * @param id 1-based identifier, or 0 for "the previous id + 1"
+     * @param value new value of the entry
+     */
+    void updateNames(int id, String value);
+
+    /**
      * Update the prefix table with a new entry.
      * @param prefixEntry new prefix entry
      */
     void updatePrefixes(RdfPrefixEntry prefixEntry);
+
+    /**
+     * Update the prefix table with a new entry, given as its identifier and value.
+     * See {@link #updateNames(int, String)}.
+     *
+     * @param id 1-based identifier, or 0 for "the previous id + 1"
+     * @param value new value of the entry
+     */
+    void updatePrefixes(int id, String value);
 
     /**
      * Reconstruct an IRI from its prefix and name ids.

@@ -5,10 +5,10 @@ import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.internal.DecoderBase;
-import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
+import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
-import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
+import eu.neverblink.jelly.core.proto.v1.RdfNameEntryPacked;
+import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
@@ -102,15 +102,28 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             throw new RdfProtoDeserializationError("The result set header (variables) was not received.");
         }
 
-        // Apply all lookup entries before decoding any column
-        for (final RdfNameEntry entry : frame.getNames()) {
-            getNameDecoder().updateNames(entry);
+        // Apply all lookup entries before decoding any column. In a packed entry only the first
+        // value states its id; the rest continue from it, which is what id 0 means.
+        for (final RdfNameEntryPacked entry : frame.getNames()) {
+            int id = entry.getId();
+            for (final String value : entry.getValues()) {
+                getNameDecoder().updateNames(id, value);
+                id = 0;
+            }
         }
-        for (final RdfPrefixEntry entry : frame.getPrefixes()) {
-            getNameDecoder().updatePrefixes(entry);
+        for (final RdfPrefixEntryPacked entry : frame.getPrefixes()) {
+            int id = entry.getId();
+            for (final String value : entry.getValues()) {
+                getNameDecoder().updatePrefixes(id, value);
+                id = 0;
+            }
         }
-        for (final RdfDatatypeEntry entry : frame.getDatatypes()) {
-            getDatatypeLookup().update(entry.getId(), converter.makeDatatype(entry.getValue()));
+        for (final RdfDatatypeEntryPacked entry : frame.getDatatypes()) {
+            int id = entry.getId();
+            for (final String value : entry.getValues()) {
+                getDatatypeLookup().update(id, converter.makeDatatype(value));
+                id = 0;
+            }
         }
 
         final int rows = frame.getRowCount();

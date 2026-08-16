@@ -72,7 +72,18 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      */
     @Override
     public void updateNames(RdfNameEntry nameEntry) {
-        int id = nameEntry.getId();
+        updateNames(nameEntry.getId(), nameEntry.getValue());
+    }
+
+    /**
+     * Update the name table with a new entry.
+     *
+     * @param id 1-based identifier, or 0 for "the previous id + 1"
+     * @param value new value of the entry
+     * @throws RdfProtoDeserializationError if the identifier is out of bounds
+     */
+    @Override
+    public void updateNames(int id, String value) {
         // Branchless! Equivalent to:
         //   if (id == 0) lastNameIdSet++;
         //   else lastNameIdSet = id;
@@ -80,7 +91,7 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         lastNameIdSet = ((lastNameIdSet + 1) & ((id - 1) >> 31)) + id;
         try {
             NameLookupEntry entry = nameLookup[lastNameIdSet];
-            entry.name = nameEntry.getValue();
+            entry.name = value;
             // Enough to invalidate the last IRI – we don't have to touch the serial number.
             entry.lastPrefixId = 0;
             // Set to null is required to avoid a false positive in the decode method for cases without a prefix.
@@ -100,11 +111,22 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      */
     @Override
     public void updatePrefixes(RdfPrefixEntry prefixEntry) {
-        int id = prefixEntry.getId();
+        updatePrefixes(prefixEntry.getId(), prefixEntry.getValue());
+    }
+
+    /**
+     * Update the prefix table with a new entry.
+     *
+     * @param id 1-based identifier, or 0 for "the previous id + 1"
+     * @param value new value of the entry
+     * @throws RdfProtoDeserializationError if the identifier is out of bounds
+     */
+    @Override
+    public void updatePrefixes(int id, String value) {
         lastPrefixIdSet = ((lastPrefixIdSet + 1) & ((id - 1) >> 31)) + id;
         try {
             PrefixLookupEntry entry = prefixLookup[lastPrefixIdSet];
-            entry.prefix = prefixEntry.getValue();
+            entry.prefix = value;
             entry.serial++;
         } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
             throw new RdfProtoDeserializationError(

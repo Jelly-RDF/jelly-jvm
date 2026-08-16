@@ -323,7 +323,7 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
   .enablePlugins(ProtobufPlugin)
   .settings(
     name := "jelly-core-protos-google",
-    description := "Optional proto classes for Jelly-RDF (rdf.proto) compiled with Google's " +
+    description := "Optional proto classes for Jelly-RDF (rdf.proto, rdf2.proto) compiled with Google's " +
       "official Java protoc plugin. This is not needed, unless you need some functionality " +
       "that is only available with the more heavyweight, Google-style proto classes, like " +
       "support for the Protobuf Text Format.",
@@ -345,6 +345,7 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
     ),
     ProtobufConfig / protobufIncludeFilters := Seq(
       Glob(baseDirectory.value.toPath) / "**" / "rdf.proto",
+      Glob(baseDirectory.value.toPath) / "**" / "rdf2.proto",
     ),
     // Don't throw errors, because Google's protoc generates code with a lot of warnings
     javacOptions := javacOptions.value.filterNot(_ == "-Werror"),
