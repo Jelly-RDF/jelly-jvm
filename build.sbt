@@ -469,7 +469,8 @@ lazy val jenaSparql = (project in file("jena-sparql"))
     commonSettings,
     commonJavaSettings,
   )
-  .dependsOn(coreSparql, jena)
+  // Test-time dependency on the core-sparql test sources for the shared result set generator
+  .dependsOn(coreSparql % "compile->compile;test->test", jena)
 
 // jena-plugin is a dummy directory that contains only a symlink (src) to the source code
 // in the jena directory. This way sbt won't shout at us for having two projects in the
@@ -616,6 +617,11 @@ lazy val integrationTests = (project in file("integration-tests"))
     core % "compile->compile;test->test",
     jena % "compile->compile;test->test",
     jenaPatch,
+    // The SPARQL fuzzing tests drive both the core codec (with the mock node model) and the Jena
+    // integration from the shared result set generator, which lives in the test sources of these
+    // two modules.
+    coreSparql % "compile->compile;test->test",
+    jenaSparql % "compile->compile;test->test",
     rdf4j,
     rdf4jPatch,
     titaniumRdfApi,
@@ -654,7 +660,15 @@ lazy val jmh = (project in file("jmh"))
     ),
     commonSettings,
   )
-  .dependsOn(core, jena)
+  // The benchmarks are compiled in the Compile config, so the shared result set generator (which
+  // lives in the test sources of the two SPARQL modules) has to be pulled onto the compile
+  // classpath.
+  .dependsOn(
+    core,
+    jena,
+    coreSparql % "compile->compile;compile->test",
+    jenaSparql % "compile->compile;compile->test",
+  )
 
 lazy val grpc = (project in file("pekko-grpc"))
   .settings(
