@@ -159,11 +159,28 @@ class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers:
       gotRows shouldBe expRows
     }
 
-    "refuse to write boolean (ASK) results" in {
+    "round-trip a boolean (ASK) result" in {
+      for value <- Seq(true, false) do
+        val out = ByteArrayOutputStream()
+        val writer =
+          RowSetWriterJelly(RowSetWriterJelly.Options(), JenaSparqlConverterFactory.getInstance())
+        writer.write(out, value, null)
+        val reader =
+          RowSetReaderJelly(RowSetReaderJelly.Options(), JenaSparqlConverterFactory.getInstance())
+        val result = reader.readAny(ByteArrayInputStream(out.toByteArray), null)
+        result.isBoolean shouldBe true
+        result.booleanResult() shouldBe value
+    }
+
+    "refuse to read a boolean (ASK) result as a RowSet" in {
+      val out = ByteArrayOutputStream()
       val writer =
         RowSetWriterJelly(RowSetWriterJelly.Options(), JenaSparqlConverterFactory.getInstance())
+      writer.write(out, true, null)
+      val reader =
+        RowSetReaderJelly(RowSetReaderJelly.Options(), JenaSparqlConverterFactory.getInstance())
       val e = intercept[RiotException] {
-        writer.write(ByteArrayOutputStream(), true, null)
+        reader.read(ByteArrayInputStream(out.toByteArray), null)
       }
       e.getMessage should include("boolean")
     }

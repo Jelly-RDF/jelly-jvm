@@ -126,7 +126,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val column = frames.head.getIriColumns.asScala.head
       column.getValues.size() shouldBe 5
       val layout = (0 until column.getLayout.size()).map(column.getLayout.get)
-      layout shouldBe Seq(0L, 41L, 1L, 8L)
+      layout shouldBe Seq(0, 41, 1, 8)
     }
 
     "round-trip a polymorphic column" in {
@@ -263,6 +263,38 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
         decoder.ingestFrame(frame)
       }
       e.getMessage should include("Unsupported proto version")
+    }
+
+    "round-trip a boolean (ASK) result" in {
+      for value <- Seq(true, false) do
+        val frame = SparqlEncoder.askResultFrame(JellySparqlOptions.SMALL, value)
+        val parsed = SparqlResultsFrame.parseFrom(frame.toByteArray)
+        val collector = ResultsCollector()
+        val decoder =
+          MockSparqlConverterFactory.decoder(
+            collector,
+            JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS,
+          )
+        decoder.ingestFrame(parsed)
+        collector.askResult shouldBe Some(value)
+        collector.rows shouldBe empty
+        collector.variableCalls shouldBe 0
+    }
+
+    "throw when a boolean (ASK) result follows bindings" in {
+      val encoder =
+        MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(JellySparqlOptions.SMALL))
+      encoder.setVariables(Seq("x").asJava)
+      encoder.appendRow(Array[Node](iri(1)))
+      val collector = ResultsCollector()
+      val decoder =
+        MockSparqlConverterFactory.decoder(collector, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
+      decoder.ingestFrame(SparqlResultsFrame.parseFrom(encoder.endFrame().toByteArray))
+      val askFrame = SparqlEncoder.askResultFrame(JellySparqlOptions.SMALL, true)
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(SparqlResultsFrame.parseFrom(askFrame.toByteArray))
+      }
+      e.getMessage should include("Unexpected boolean")
     }
 
     "throw when a restated header changes the variables" in {

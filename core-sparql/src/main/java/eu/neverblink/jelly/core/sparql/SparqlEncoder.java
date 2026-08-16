@@ -5,6 +5,7 @@ import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.internal.EncoderBase;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlAskResult;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import java.util.List;
@@ -105,4 +106,21 @@ public abstract class SparqlEncoder<TNode> extends EncoderBase<TNode> {
      * @return the encoded frame
      */
     public abstract SparqlResultsFrame endFrame();
+
+    /**
+     * Builds the single frame of a boolean (ASK) result stream. Such a stream consists of
+     * exactly this one frame – no encoder instance is needed.
+     *
+     * @param options options for the result stream
+     * @param value the boolean result
+     * @return the encoded frame, ready for serialization
+     */
+    public static SparqlResultsFrame askResultFrame(SparqlResultsOptions options, boolean value) {
+        final SparqlResultsFrame.Mutable frame = SparqlResultsFrame.newInstance()
+            .setOptions(options.clone().setVersion(JellySparqlConstants.PROTO_VERSION))
+            .setAskResult(SparqlAskResult.newInstance().setValue(value));
+        // Pre-calculate the serialized size
+        frame.getSerializedSize();
+        return frame;
+    }
 }

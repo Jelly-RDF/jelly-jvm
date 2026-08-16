@@ -3,21 +3,21 @@ package eu.neverblink.protoc.java.runtime;
 import java.util.Arrays;
 
 /**
- * Growable store for repeated {@code int64}, {@code uint64}, {@code sint64}, {@code fixed64},
- * and {@code sfixed64} proto fields. Backed by a plain {@code long[]} to avoid boxing.
+ * Growable store for repeated {@code int32}, {@code uint32}, {@code sint32}, {@code fixed32},
+ * and {@code sfixed32} proto fields. Backed by a plain {@code int[]} to avoid boxing.
  */
-public final class RepeatedLong {
+public final class RepeatedInt {
 
-    private static final long[] EMPTY_ARRAY = new long[0];
+    private static final int[] EMPTY_ARRAY = new int[0];
     private static final int DEFAULT_CAPACITY = 8;
 
-    private long[] values = EMPTY_ARRAY;
+    private int[] values = EMPTY_ARRAY;
     private int size = 0;
 
-    private RepeatedLong() {}
+    private RepeatedInt() {}
 
-    public static RepeatedLong newEmptyInstance() {
-        return new RepeatedLong();
+    public static RepeatedInt newEmptyInstance() {
+        return new RepeatedInt();
     }
 
     public int size() {
@@ -28,19 +28,19 @@ public final class RepeatedLong {
         return size == 0;
     }
 
-    public long get(int index) {
+    public int get(int index) {
         if (index >= size) {
             throw new IndexOutOfBoundsException("Index %d out of bounds for size %d".formatted(index, size));
         }
         return values[index];
     }
 
-    public void add(long value) {
+    public void add(int value) {
         reserve(1);
         values[size++] = value;
     }
 
-    public void addAll(RepeatedLong other) {
+    public void addAll(RepeatedInt other) {
         reserve(other.size);
         System.arraycopy(other.values, 0, values, size, other.size);
         size += other.size;
@@ -56,7 +56,7 @@ public final class RepeatedLong {
      *
      * @return the backing array
      */
-    public long[] array() {
+    public int[] array() {
         return values;
     }
 
@@ -72,7 +72,7 @@ public final class RepeatedLong {
         if (o == this) {
             return true;
         }
-        if (!(o instanceof RepeatedLong other) || other.size != size) {
+        if (!(o instanceof RepeatedInt other) || other.size != size) {
             return false;
         }
         return Arrays.equals(values, 0, size, other.values, 0, size);
@@ -82,7 +82,7 @@ public final class RepeatedLong {
     public int hashCode() {
         int result = 1;
         for (int i = 0; i < size; i++) {
-            result = 31 * result + Long.hashCode(values[i]);
+            result = 31 * result + values[i];
         }
         return result;
     }

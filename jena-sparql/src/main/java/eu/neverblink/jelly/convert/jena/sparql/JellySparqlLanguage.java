@@ -93,7 +93,7 @@ public final class JellySparqlLanguage {
 
             @Override
             public void write(OutputStream out, boolean result, Context context) {
-                throw new RiotException("Jelly-SPARQL does not support boolean (ASK) results yet.");
+                RowSetWriterJelly.FACTORY.create(lang).write(out, result, context);
             }
         };
 }

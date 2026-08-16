@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core.sparql;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
+import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import java.util.List;
 
 /**
@@ -41,4 +42,16 @@ public interface SparqlResultsHandler<TNode> {
      * @param row the values bound to the variables in this row
      */
     void handleRow(TNode[] row);
+
+    /**
+     * Called when the stream carries a boolean (ASK) result instead of a solution sequence.
+     * In that case, neither {@link #handleVariables} nor {@link #handleRow} is ever called.
+     * <p>
+     * The default implementation throws, for handlers that only expect bindings.
+     *
+     * @param value the boolean result
+     */
+    default void handleAskResult(boolean value) {
+        throw new RdfProtoDeserializationError("This handler does not support boolean (ASK) results.");
+    }
 }

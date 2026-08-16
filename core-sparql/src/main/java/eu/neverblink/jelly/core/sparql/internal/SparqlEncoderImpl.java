@@ -14,7 +14,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
-import eu.neverblink.protoc.java.runtime.RepeatedLong;
+import eu.neverblink.protoc.java.runtime.RepeatedInt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,8 +38,12 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     private static final byte TYPE_LITERAL = 3;
     private static final byte TYPE_POLY = 4;
 
-    private static final long KIND_REPEAT = 0;
-    private static final long KIND_UNBOUND = 1;
+    private static final int KIND_REPEAT = 0;
+    private static final int KIND_UNBOUND = 1;
+
+    // The layout tokens are uint32 with skip in the upper 28 bits, so a frame can hold at most
+    // 2^28 - 1 rows (see the layout encoding notes in sparql.proto).
+    private static final int MAX_ROWS_PER_FRAME = (1 << 28) - 1;
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     private static final RdfIri ZERO_IRI = RdfIri.newInstance();
@@ -51,11 +55,11 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
 
         // Run-length state
         Object runNode = null;
-        long runLength = 0;
+        int runLength = 0;
         boolean runIsUnbound = false;
         boolean runActive = false;
         // Number of values emitted exactly once since the last layout exception
-        long skip = 0;
+        int skip = 0;
 
         // Per-frame, per-column IRI inference state.
         // lastPrefixId = -1 forces the first IRI of a column to carry its prefix id.
@@ -65,7 +69,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         // Encoded run values of the current frame (RdfIri, String or RdfLiteral)
         final ArrayList<Object> values = new ArrayList<>();
         // Layout of the current frame
-        final RepeatedLong layout = RepeatedLong.newEmptyInstance();
+        final RepeatedInt layout = RepeatedInt.newEmptyInstance();
 
         void resetFrameState() {
             runNode = null;
@@ -217,6 +221,13 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         if (row.length != columns.length) {
             throw new RdfProtoSerializationError(
                 "Expected %d bindings in the row, got %d.".formatted(columns.length, row.length)
+            );
+        }
+        if (rowCount >= MAX_ROWS_PER_FRAME) {
+            throw new RdfProtoSerializationError(
+                "A single frame cannot hold more than %d rows. Call endFrame() more often.".formatted(
+                    MAX_ROWS_PER_FRAME
+                )
             );
         }
         for (int i = 0; i < row.length; i++) {
@@ -415,8 +426,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         }
     }
 
-    private void emitException(ColumnState col, long kind, long len) {
-        final long lenCode = Math.min(len, 7);
+    private void emitException(ColumnState col, int kind, int len) {
+        final int lenCode = Math.min(len, 7);
         col.layout.add((col.skip << 4) | (kind << 3) | lenCode);
         if (lenCode == 7) {
             col.layout.add(len - 7);
@@ -424,8 +435,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         col.skip = 0;
     }
 
-    private static RepeatedLong copyLayout(RepeatedLong layout) {
-        final RepeatedLong copy = RepeatedLong.newEmptyInstance();
+    private static RepeatedInt copyLayout(RepeatedInt layout) {
+        final RepeatedInt copy = RepeatedInt.newEmptyInstance();
         copy.addAll(layout);
         return copy;
     }

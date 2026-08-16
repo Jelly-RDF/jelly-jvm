@@ -98,6 +98,16 @@ public final class RowSetWriterJelly implements RowSetWriter {
 
     @Override
     public void write(OutputStream out, boolean result, Context context) {
-        throw new RiotException("Jelly-SPARQL does not support boolean (ASK) results yet.");
+        final SparqlResultsFrame frame = SparqlEncoder.askResultFrame(options.options(), result);
+        try {
+            if (options.delimited()) {
+                frame.writeDelimitedTo(out);
+            } else {
+                frame.writeTo(out);
+            }
+            out.flush();
+        } catch (IOException e) {
+            throw new RiotException(e);
+        }
     }
 }

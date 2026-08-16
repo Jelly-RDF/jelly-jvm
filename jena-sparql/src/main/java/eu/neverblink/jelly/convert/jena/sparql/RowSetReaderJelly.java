@@ -62,11 +62,26 @@ public final class RowSetReaderJelly implements RowSetReader {
 
     @Override
     public QueryExecResult readAny(InputStream in, Context context) {
-        return new QueryExecResult(read(in, context));
+        final Object result = readInternal(in);
+        if (result instanceof Boolean askResult) {
+            return new QueryExecResult(askResult);
+        }
+        return new QueryExecResult((RowSet) result);
     }
 
     @Override
     public RowSet read(InputStream in, Context context) {
+        final Object result = readInternal(in);
+        if (result instanceof Boolean) {
+            throw new RiotException("The stream carries a boolean (ASK) result, not bindings. Use readAny to read it.");
+        }
+        return (RowSet) result;
+    }
+
+    /**
+     * Reads the stream, returning either a RowSet (bindings) or a Boolean (ASK result).
+     */
+    private Object readInternal(InputStream in) {
         final RowCollector handler = new RowCollector();
         final SparqlDecoder decoder = converterFactory.decoder(handler, options.supportedOptions());
         try {
@@ -74,6 +89,9 @@ public final class RowSetReaderJelly implements RowSetReader {
             if (!response.isDelimited()) {
                 // Non-delimited: the entire input is a single frame
                 decoder.ingestFrame(SparqlResultsFrame.parseFrom(response.newInput()));
+                if (handler.askResult != null) {
+                    return handler.askResult;
+                }
                 if (handler.vars == null) {
                     throw new RiotException("No result set header found in the input.");
                 }
@@ -81,10 +99,18 @@ public final class RowSetReaderJelly implements RowSetReader {
             }
 
             final InputStream input = response.newInput();
-            // Read frames until the header is known (the first frame must carry it)
+            // Read frames until the header (or an ASK result) is known;
+            // the first frame must carry one of them.
             SparqlResultsFrame frame;
-            while (handler.vars == null && (frame = SparqlResultsFrame.parseDelimitedFrom(input)) != null) {
+            while (
+                handler.vars == null &&
+                handler.askResult == null &&
+                (frame = SparqlResultsFrame.parseDelimitedFrom(input)) != null
+            ) {
                 decoder.ingestFrame(frame);
+            }
+            if (handler.askResult != null) {
+                return handler.askResult;
             }
             if (handler.vars == null) {
                 throw new RiotException("No result set header found in the input.");
@@ -124,11 +150,17 @@ public final class RowSetReaderJelly implements RowSetReader {
     private static final class RowCollector implements SparqlResultsHandler<Node> {
 
         private List<Var> vars = null;
+        private Boolean askResult = null;
         private final ArrayDeque<Binding> queue = new ArrayDeque<>();
 
         @Override
         public void handleVariables(List<String> variables) {
             vars = variables.stream().map(Var::alloc).toList();
+        }
+
+        @Override
+        public void handleAskResult(boolean value) {
+            askResult = value;
         }
 
         @Override

@@ -56,7 +56,7 @@ The implementation is split into a few modules that can be used separately:
 
 ### Jelly-SPARQL (experimental)
 
-Jelly-SPARQL is an efficient columnar format for SPARQL query results (solution sequences). Jelly-JVM has an experimental implementation of Jelly-SPARQL:
+Jelly-SPARQL is an efficient columnar format for SPARQL query results (solution sequences and boolean ASK results). Jelly-JVM has an experimental implementation of Jelly-SPARQL:
 
 - `jelly-core-sparql` – core generic code for serializing/deserializing Jelly-SPARQL data. You need an additional module (like `jelly-jena-sparql`) to integrate it with a specific RDF library.
     - {{ java_module_badges('core-sparql') }}

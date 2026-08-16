@@ -167,15 +167,25 @@ class FieldGenerator(val info: FieldInfo):
           .addStatement(named("$field:N.clear()"))
           .addStatement(named("$field:N.addAll(other.$field:N)"))
       else
+        // The field may be unset (null) in the source message
         method
+          .beginControlFlow("if (other.$N == null)", info.fieldName)
+          .addStatement(named("$field:N = null"))
+          .nextControlFlow("else")
           .addStatement(named("$lazyInitMethod:L()"))
           .addStatement(named("$field:N.copyFrom(other.$field:N)"))
+          .endControlFlow()
     } else throw new IllegalStateException("unhandled field: " + info.descriptor)
 
   def generateMergeFromMessageCode(method: MethodSpec.Builder): Unit =
     if (info.isRepeated) method.addStatement(named("$getMethod:N().addAll(other.$field:N)"))
     else if (info.isMessageOrGroup)
-      method.addStatement(named("$getMethod:N().mergeFrom(other.$field:N)"))
+      // Merge only if the field is set in the source message, per protobuf semantics
+      method
+        .beginControlFlow("if (other.$N != null)", info.fieldName)
+        .addStatement(named("$lazyInitMethod:L()"))
+        .addStatement(named("$field:N.mergeFrom(other.$field:N)"))
+        .endControlFlow()
     else if (info.isBytes || info.isString) method.addStatement(named("$field:N = other.$field:N"))
     else if (info.isEnum) method.addStatement(named("$setMethod:NValue(other.$field:N)"))
     else if (info.isPrimitive) method.addStatement(named("$setMethod:N(other.$field:N)"))

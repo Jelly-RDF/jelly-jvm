@@ -122,73 +122,30 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      * @throws RdfProtoDeserializationError if the IRI reference is invalid
      * @throws NullPointerException if the IRI reference is invalid
      */
-    @SuppressWarnings("unchecked")
     @Override
     public TIri decode(int prefixId, int nameId) {
-        lastNameIdReference = ((lastNameIdReference + 1) & ((nameId - 1) >> 31)) + nameId;
-        NameLookupEntry nameEntry;
-        try {
-            nameEntry = nameLookup[lastNameIdReference];
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new RdfProtoDeserializationError(
-                (
-                    "Encountered an invalid name table reference (out of bounds). " +
-                    "Name ID: %d, Prefix ID: %d"
-                ).formatted(nameId, prefixId)
-            );
-        }
-
-        // Branchless way to update the prefix ID
-        // Equivalent to:
+        // Branchless inference of the 0 identifiers. Equivalent to:
+        //   if (nameId == 0) nameId = lastNameIdReference + 1;
         //   if (prefixId == 0) prefixId = lastPrefixIdReference;
         //   else lastPrefixIdReference = prefixId;
-        final int originalPrefixId = prefixId;
-        lastPrefixIdReference = prefixId = (((prefixId - 1) >> 31) & lastPrefixIdReference) + prefixId;
-        if (prefixId != 0) {
-            // Name and prefix
-            PrefixLookupEntry prefixEntry;
-            try {
-                prefixEntry = prefixLookup[prefixId];
-            } catch (ArrayIndexOutOfBoundsException e) {
-                throw new RdfProtoDeserializationError(
-                    (
-                        "Encountered an invalid prefix table reference (out of bounds). " +
-                        "Prefix ID: %d, Name ID: %d"
-                    ).formatted(prefixId, nameId)
-                );
-            }
-            if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
-                // Update the last prefix
-                nameEntry.lastPrefixId = prefixId;
-                nameEntry.lastPrefixSerial = prefixEntry.serial;
-                // And compute a new IRI
-                nameEntry.lastIri = iriFactory.apply(prefixEntry.prefix.concat(nameEntry.name));
-                return (TIri) nameEntry.lastIri;
-            }
-            if (nameEntry.lastIri == null) {
-                throw new RdfProtoDeserializationError(
-                    "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(
-                        originalPrefixId,
-                        nameId
-                    )
-                );
-            }
-        } else if (nameEntry.lastIri == null) {
-            if (nameEntry.name == null) {
-                throw new RdfProtoDeserializationError(
-                    "Encountered an invalid IRI reference. No prefix, Name ID: %d".formatted(nameId)
-                );
-            }
-            // Name only, no need to check the prefix lookup
-            nameEntry.lastIri = iriFactory.apply(nameEntry.name);
-        }
-
-        return (TIri) nameEntry.lastIri;
+        lastNameIdReference = ((lastNameIdReference + 1) & ((nameId - 1) >> 31)) + nameId;
+        final int resolvedPrefixId = lastPrefixIdReference =
+            (((prefixId - 1) >> 31) & lastPrefixIdReference) + prefixId;
+        return decodeResolved(resolvedPrefixId, lastNameIdReference, prefixId, nameId);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public TIri decodeRaw(int prefixId, int nameId) {
+        return decodeResolved(prefixId, nameId, prefixId, nameId);
+    }
+
+    /**
+     * Shared decoding logic for {@link #decode} and {@link #decodeRaw}. Takes the actual
+     * (resolved) lookup identifiers; the original (possibly 0-compressed) identifiers are only
+     * used in error messages.
+     */
+    @SuppressWarnings("unchecked")
+    private TIri decodeResolved(int prefixId, int nameId, int originalPrefixId, int originalNameId) {
         NameLookupEntry nameEntry;
         try {
             nameEntry = nameLookup[nameId];
@@ -197,12 +154,16 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                 (
                     "Encountered an invalid name table reference (out of bounds). " +
                     "Name ID: %d, Prefix ID: %d"
-                ).formatted(nameId, prefixId)
+                ).formatted(originalNameId, originalPrefixId)
             );
         }
         if (nameEntry == null) {
+            // Only possible when nameId = 0 is passed to decodeRaw
             throw new RdfProtoDeserializationError(
-                "Encountered an invalid name table reference. Name ID: %d, Prefix ID: %d".formatted(nameId, prefixId)
+                "Encountered an invalid name table reference. Name ID: %d, Prefix ID: %d".formatted(
+                    originalNameId,
+                    originalPrefixId
+                )
             );
         }
 
@@ -216,7 +177,7 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                     (
                         "Encountered an invalid prefix table reference (out of bounds). " +
                         "Prefix ID: %d, Name ID: %d"
-                    ).formatted(prefixId, nameId)
+                    ).formatted(prefixId, originalNameId)
                 );
             }
             if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
@@ -227,14 +188,17 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                 nameEntry.lastIri = iriFactory.apply(prefixEntry.prefix.concat(nameEntry.name));
             } else if (nameEntry.lastIri == null) {
                 throw new RdfProtoDeserializationError(
-                    "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(prefixId, nameId)
+                    "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(
+                        originalPrefixId,
+                        originalNameId
+                    )
                 );
             }
         } else if (nameEntry.lastPrefixId != 0 || nameEntry.lastIri == null) {
-            // The cached IRI (if any) was computed with a prefix – recompute the name-only IRI.
+            // No prefix. The cached IRI (if any) may have been computed with a prefix – recompute.
             if (nameEntry.name == null) {
                 throw new RdfProtoDeserializationError(
-                    "Encountered an invalid IRI reference. No prefix, Name ID: %d".formatted(nameId)
+                    "Encountered an invalid IRI reference. No prefix, Name ID: %d".formatted(originalNameId)
                 );
             }
             nameEntry.lastPrefixId = 0;
