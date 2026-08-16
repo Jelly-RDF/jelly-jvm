@@ -185,4 +185,62 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
 
         return (TIri) nameEntry.lastIri;
     }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public TIri decodeRaw(int prefixId, int nameId) {
+        NameLookupEntry nameEntry;
+        try {
+            nameEntry = nameLookup[nameId];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new RdfProtoDeserializationError(
+                (
+                    "Encountered an invalid name table reference (out of bounds). " +
+                    "Name ID: %d, Prefix ID: %d"
+                ).formatted(nameId, prefixId)
+            );
+        }
+        if (nameEntry == null) {
+            throw new RdfProtoDeserializationError(
+                "Encountered an invalid name table reference. Name ID: %d, Prefix ID: %d".formatted(nameId, prefixId)
+            );
+        }
+
+        if (prefixId != 0) {
+            // Name and prefix
+            PrefixLookupEntry prefixEntry;
+            try {
+                prefixEntry = prefixLookup[prefixId];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new RdfProtoDeserializationError(
+                    (
+                        "Encountered an invalid prefix table reference (out of bounds). " +
+                        "Prefix ID: %d, Name ID: %d"
+                    ).formatted(prefixId, nameId)
+                );
+            }
+            if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
+                // Update the last prefix
+                nameEntry.lastPrefixId = prefixId;
+                nameEntry.lastPrefixSerial = prefixEntry.serial;
+                // And compute a new IRI
+                nameEntry.lastIri = iriFactory.apply(prefixEntry.prefix.concat(nameEntry.name));
+            } else if (nameEntry.lastIri == null) {
+                throw new RdfProtoDeserializationError(
+                    "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(prefixId, nameId)
+                );
+            }
+        } else if (nameEntry.lastPrefixId != 0 || nameEntry.lastIri == null) {
+            // The cached IRI (if any) was computed with a prefix – recompute the name-only IRI.
+            if (nameEntry.name == null) {
+                throw new RdfProtoDeserializationError(
+                    "Encountered an invalid IRI reference. No prefix, Name ID: %d".formatted(nameId)
+                );
+            }
+            nameEntry.lastPrefixId = 0;
+            nameEntry.lastIri = iriFactory.apply(nameEntry.name);
+        }
+
+        return (TIri) nameEntry.lastIri;
+    }
 }

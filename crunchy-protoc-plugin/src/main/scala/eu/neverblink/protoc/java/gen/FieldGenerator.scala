@@ -208,7 +208,10 @@ class FieldGenerator(val info: FieldInfo):
       )
       return false // tag is already read, so don't read again
     } else if (info.isRepeated) {
-      method.addNamedCode("tag = input.readRepeated$capitalizedType:L($field:N, tag);\n", m)
+      method.addNamedCode(
+        "tag = $protoUtil:T.readRepeated$capitalizedType:L(input, $field:N, tag);\n",
+        m,
+      )
       return false // tag is already read, so don't read again
     } else if (info.isString)
       method.addStatement(named("$field:N = input.readString()"))
@@ -236,9 +239,7 @@ class FieldGenerator(val info: FieldInfo):
   def generateMergingCodeFromPacked(method: MethodSpec.Builder): Boolean =
     if (!info.isPackable) throw new IllegalStateException("not a packable type: " + info.descriptor)
     method.addCode(ensureFieldNotNull)
-    if (info.isFixedWidth)
-      method.addStatement(named("input.readPacked$capitalizedType:L($field:N)"))
-    else method.addStatement(named("input.readPacked$capitalizedType:L($field:N, tag)"))
+    method.addStatement(named("$protoUtil:T.readPacked$capitalizedType:L(input, $field:N)"))
     true
 
   def generateHasChecker(code: CodeBlock.Builder): Unit =
@@ -265,10 +266,10 @@ class FieldGenerator(val info: FieldInfo):
       method.addNamedCode(
         "" +
           "$writePackedTagToOutput:L" +
-          "output.writePacked$capitalizedType:LNoTag($field:N);\n",
+          "$protoUtil:T.writePacked$capitalizedType:L(output, $field:N);\n",
         m,
       )
-    else if (info.isRepeated)
+    else if (info.isRepeated && info.isMessageOrGroup)
       method.addNamedCode(
         "" +
           "for (final var _field : $field:N) {$>\n" +
@@ -276,6 +277,16 @@ class FieldGenerator(val info: FieldInfo):
           "output.writeUInt32NoTag(_field.getCachedSize());\n" +
           "_field.writeTo(output);\n" +
           "$writeEndGroupTagToOutput:L" +
+          "$<}\n",
+        m,
+      )
+    else if (info.isRepeated)
+      // Non-packable repeated field (e.g., repeated string)
+      method.addNamedCode(
+        "" +
+          "for (int _i = 0; _i < $field:N.size(); _i++) {$>\n" +
+          "$writeTagToOutput:L" +
+          "output.write$capitalizedType:LNoTag($field:N.get(_i));\n" +
           "$<}\n",
         m,
       )

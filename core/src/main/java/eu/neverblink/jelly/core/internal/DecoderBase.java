@@ -112,7 +112,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
         }
     }
 
-    private TNode convertLiteral(RdfLiteral literal) {
+    protected final TNode convertLiteral(RdfLiteral literal) {
         switch (literal.getLiteralKindFieldNumber()) {
             case RdfLiteral.LANGTAG -> {
                 return converter.makeLangLiteral(literal.getLex(), literal.getLangtag());

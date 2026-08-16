@@ -410,6 +410,30 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
     commonJavaSettings,
   ).dependsOn(coreProtosGoogle)
 
+lazy val coreSparql = (project in file("core-sparql"))
+  .settings(
+    name := "jelly-core-sparql",
+    description := "Core code for the Jelly-SPARQL extension: columnar serialization of " +
+      "SPARQL query results.",
+    Compile / sourceGenerators += Def.task {
+      // Copy from the managed source directory to the output directory
+      val inputDir = (rdfProtos / ProtobufConfig / javaSource).value /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "sparql"
+      val outputDir = sourceManaged.value / "main" /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "sparql"
+      val javaFiles = (inputDir * "*.java").get()
+      javaFiles.map { file =>
+        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+        IO.copyFile(file, outputFile)
+        outputFile
+      }
+    }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
+    Compile / sourceManaged := sourceManaged.value / "main",
+    commonSettings,
+    commonJavaSettings,
+  )
+  .dependsOn(core % "compile->compile;test->test")
+
 lazy val jena = (project in file("jena"))
   .settings(
     name := "jelly-jena",
@@ -436,6 +460,16 @@ lazy val jenaPatch = (project in file("jena-patch"))
     commonJavaSettings,
   )
   .dependsOn(corePatch, jena)
+
+lazy val jenaSparql = (project in file("jena-sparql"))
+  .settings(
+    name := "jelly-jena-sparql",
+    description := "Jelly-SPARQL integration for Apache Jena: reading and writing " +
+      "SPARQL query results.",
+    commonSettings,
+    commonJavaSettings,
+  )
+  .dependsOn(coreSparql, jena)
 
 // jena-plugin is a dummy directory that contains only a symlink (src) to the source code
 // in the jena directory. This way sbt won't shout at us for having two projects in the
@@ -670,8 +704,10 @@ lazy val root = (project in file("."))
     coreProtosGoogle,
     corePatch,
     corePatchProtosGoogle,
+    coreSparql,
     jena,
     jenaPatch,
+    jenaSparql,
     jenaPlugin,
     rdf4j,
     rdf4jPatch,

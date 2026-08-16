@@ -17,6 +17,21 @@ public interface NodeEncoder<TNode> {
     RdfIri makeIri(String iri);
 
     /**
+     * Encode an IRI node WITHOUT applying the same-prefix / next-name inference
+     * (the prefix_id = 0 / name_id = 0 compression). The returned RdfIri always carries the
+     * actual lookup table identifiers. Lookup table entries are still emitted as needed, exactly
+     * like in {@link #makeIri(String)}.
+     * <p>
+     * This is used by extensions that define their own ordering of the IRI inference state
+     * (e.g., the columnar Jelly-SPARQL encoding) and apply the compression themselves.
+     * <p>
+     * The returned instance may be shared and reused by the encoder – do not mutate it.
+     *
+     * @param iri The IRI to encode.
+     */
+    RdfIri makeIriRaw(String iri);
+
+    /**
      * Encode a blank node.
      * @param label The label of the blank node.
      */
