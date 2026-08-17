@@ -22,11 +22,11 @@ public final class TitaniumNode {
     }
 
     public static TitaniumNodeType typeOf(Object node) {
-        if ((node instanceof String iriLike)) {
+        if (node instanceof String iriLike) {
             return RdfQuadConsumer.isBlank(iriLike) ? TitaniumNodeType.BLANK : TitaniumNodeType.IRI;
         }
 
-        if ((node instanceof TitaniumLiteral literal)) {
+        if (node instanceof TitaniumLiteral literal) {
             return literal.type();
         }
 

@@ -337,7 +337,7 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
     ),
     // The .proto files under src/main/protobuf are produced by prepareGoogleProtos at build time
     // (only .gitkeep is committed). protobufSources scans that directory to decide what to compile,
-    // but sbt-protobuf does not order that scan after prepareGoogleProtos — only protobufRunProtoc.
+    // but sbt-protobuf does not order that scan after prepareGoogleProtos – only protobufRunProtoc.
     // On a clean checkout the scan therefore runs against an empty directory and nothing is
     // generated (0 classes). Make the scan depend on prepareGoogleProtos so the protos exist first.
     ProtobufConfig / protobufSources := Def.uncached(
@@ -397,7 +397,7 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
     ),
     // The .proto files under src/main/protobuf are produced by prepareGoogleProtos at build time
     // (only .gitkeep is committed). protobufSources scans that directory to decide what to compile,
-    // but sbt-protobuf does not order that scan after prepareGoogleProtos — only protobufRunProtoc.
+    // but sbt-protobuf does not order that scan after prepareGoogleProtos – only protobufRunProtoc.
     // On a clean checkout the scan therefore runs against an empty directory and nothing is
     // generated (0 classes). Make the scan depend on prepareGoogleProtos so the protos exist first.
     ProtobufConfig / protobufSources := Def.uncached(
@@ -523,17 +523,9 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   )
   .dependsOn(core % "compile->compile;test->test")
 
-// PARKED — not part of the root aggregate, not built or tested in CI.
-//
+// PARKED – not part of the root aggregate, not built or tested in CI.
 // This plugin runs inside Neo4j, alongside the Neosemantics plugin, which fat-jars RDF4J 4.3.12.
-// Since jelly-rdf4j moved to RDF4J 6 it can no longer work there: RDF4J 6 needs Java 25, while
-// Neo4j 5.26 targets Java 17, and the bundled RDF4J 4.3.12 has neither IntegerRioSetting nor
-// TripleTerm — both of which jelly-rdf4j now uses unconditionally.
-//
 // The sources are kept so the integration can be revived once Neosemantics ships a modern RDF4J.
-// Until then, Neo4j support stays at the last RDF4J-5-based Jelly-JVM release. Building this
-// project requires pinning jelly-rdf4j back to RDF4J 5.x.
-// See: https://github.com/Jelly-RDF/jelly-jvm/issues/622
 lazy val neo4jPlugin = (project in file("neo4j-plugin"))
   .settings(
     name := "jelly-neo4j-plugin",
@@ -672,7 +664,7 @@ lazy val grpc = (project in file("pekko-grpc"))
   .dependsOn(core % "compile->compile;test->test")
 
 // Explicit aggregate root. Defined explicitly (rather than relying on sbt's implicit root) so we can
-// attach ensureJacocoDir to it — the root has no classes of its own, so it hits the same sbt-jacoco
+// attach ensureJacocoDir to it – the root has no classes of its own, so it hits the same sbt-jacoco
 // / definedTestDigests problem as the proto-only project. It publishes nothing itself; the CI
 // release flow publishes the individual modules.
 lazy val root = (project in file("."))
@@ -690,7 +682,7 @@ lazy val root = (project in file("."))
     rdf4jPatch,
     rdf4jPlugin,
     titaniumRdfApi,
-    // neo4jPlugin is deliberately not aggregated — see its definition above.
+    // neo4jPlugin is deliberately not aggregated – see its definition above.
     stream,
     integrationTests,
     examples,

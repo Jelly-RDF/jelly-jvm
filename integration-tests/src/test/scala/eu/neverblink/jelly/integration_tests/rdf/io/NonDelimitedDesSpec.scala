@@ -33,7 +33,7 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
 
   TestRiot.initialize()
 
-  /** Skips test cases whose flavour of quoted triples the deserializer cannot represent — e.g.
+  /** Skips test cases whose flavour of quoted triples the deserializer cannot represent – e.g.
     * RDF4J 6 has no way to hold a triple term in subject position, as RDF 1.2 forbids it.
     */
   private def checkTestCaseSupport(des: NativeSerDes[?, ?], caseName: String) =

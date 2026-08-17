@@ -94,8 +94,9 @@ public class Rdf4jRio implements Example {
         StatementCollector collector = new StatementCollector();
         parser.setRDFHandler(collector);
         supportedOptions.ifPresent(opt ->
-            // If the user provided supported options, set them on the parser
-            parser.setParserConfig(JellyParserSettings.from(opt))
+            parser
+                // If the user provided supported options, set them on the parser
+                .setParserConfig(JellyParserSettings.from(opt))
         );
 
         try (InputStream is = file.toURI().toURL().openStream()) {

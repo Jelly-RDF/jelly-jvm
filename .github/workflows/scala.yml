@@ -156,7 +156,7 @@ jobs:
     - name: Test building assemblies
       shell: bash
       # sbt 2.x's sbtn client joins CLI args into one command line; separate commands with `;`.
-      # neo4jPlugin is not built — it cannot work with RDF4J 6. See build.sbt.
+      # neo4jPlugin is not built – it cannot work with RDF4J 6. See build.sbt.
       run: sbt -v "+jenaPlugin/assembly; +rdf4jPlugin/assembly"
 
     - name: Cache Jena

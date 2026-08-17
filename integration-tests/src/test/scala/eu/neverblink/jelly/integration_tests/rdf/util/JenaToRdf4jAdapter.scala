@@ -26,10 +26,6 @@ class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
 
   def makeResource(n: Node): Resource = {
     if n.isBlank then vf.createBNode(n.getBlankNodeLabel)
-    // In RDF 1.2 a triple term is only a Value, not a Resource: it may appear in object position
-    // only. RDF4J 6 models this too, so there is nothing to build here.
-    else if n.isTripleTerm then
-      throw RuntimeException(s"Illegal position for a triple term (object position only): $n")
     else makeIRI(n)
   }
 

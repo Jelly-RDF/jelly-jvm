@@ -30,8 +30,6 @@ case object Rdf4jTestStream extends TestStream:
       jellyOpt: RdfStreamOptions,
   ): Source[RdfStreamFrame, NotUsed] =
     // This buffers everything in memory... but I'm too lazy to implement my own RDFHandler for this
-    // In RDF4J 6 triple terms are part of the plain Turtle and TriG grammars — the separate
-    // Turtle-star / TriG-star formats of RDF4J 5 and older are gone.
     val parser = Rio.createParser(RDFFormat.TURTLE)
     val collector = new StatementCollector()
     parser.setRDFHandler(collector)

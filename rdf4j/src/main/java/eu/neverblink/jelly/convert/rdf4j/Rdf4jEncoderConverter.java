@@ -32,11 +32,7 @@ public final class Rdf4jEncoderConverter
                 }
             }
         } else if (value instanceof TripleTerm tripleTerm) {
-            return encoder.makeQuotedTriple(
-                tripleTerm.getSubject(),
-                tripleTerm.getPredicate(),
-                tripleTerm.getObject()
-            );
+            return encoder.makeQuotedTriple(tripleTerm.getSubject(), tripleTerm.getPredicate(), tripleTerm.getObject());
         } else {
             throw new RdfProtoSerializationError("Cannot encode node: %s".formatted(value));
         }

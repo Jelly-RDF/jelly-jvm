@@ -1,10 +1,10 @@
 # Getting started with Neo4j
 
-!!! warning "Neo4j support is paused"
+!!! warning "For Neo4j support download Jelly-JVM 3.7.x"
 
-    The Jelly-Neo4j plugin is **no longer built or released**. Jelly-JVM's RDF4J integration now requires RDF4J 6, and therefore Java 25, while neosemantics still bundles RDF4J 4.3.12 and Neo4j targets Java 17 — the two can no longer run together.
+    The Jelly-Neo4j plugin is **no longer built or released**, because neosemantics still bundles RDF4J 4.3.12 (released in June 2024). We cannot keep supporting such old RDF4J releases.
 
-    If you need Neo4j support, use the **[last Jelly-JVM release that shipped the plugin](https://github.com/Jelly-RDF/jelly-jvm/releases)**; the instructions below apply to it. Support will return once neosemantics ships a modern RDF4J.
+    If you need Neo4j support, use the **[last Jelly-JVM release that shipped the plugin](https://github.com/Jelly-RDF/jelly-jvm/releases/tag/v3.7.3)**, the instructions below apply to it. Support will return once neosemantics ships a modern RDF4J.
 
 !!! info
 
@@ -12,7 +12,7 @@
 
 ## Installation
 
-The **[latest version ({{ jvm_package_version() }}) of the Jelly-Neo4j plugin](https://github.com/Jelly-RDF/jelly-jvm/releases/download/v{{ jvm_package_version() }}/jelly-neo4j-plugin.jar)** is compatible with Neo4j versions {{ neo4j_version('min') }}–{{ neo4j_version('max') }}[^1]. Jelly-Neo4j depends on the [neosemantics](https://neo4j.com/labs/neosemantics/) plugin, which must also be installed. Neosemantics must have the same version as the Neo4j database.
+The **[latest version (3.7.3) of the Jelly-Neo4j plugin](https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3,7.3/jelly-neo4j-plugin.jar)** is compatible with Neo4j versions {{ neo4j_version('min') }}–{{ neo4j_version('max') }}[^1]. Jelly-Neo4j depends on the [neosemantics](https://neo4j.com/labs/neosemantics/) plugin, which must also be installed. Neosemantics must have the same version as the Neo4j database.
 
 === "Neo4j Desktop"
 
@@ -21,7 +21,7 @@ The **[latest version ({{ jvm_package_version() }}) of the Jelly-Neo4j plugin](h
     3. In the list of instances, click on the :material-folder-outline: button next to "**Path:**" to open the instance folder.
     4. Open the `plugins` subfolder.
     5. Download the neosemantics plugin `.jar` file from the [neosemantics releases page](https://github.com/neo4j-labs/neosemantics/releases) and place it in the `plugins` folder.
-    6. Download the [Jelly-Neo4j plugin `.jar` file](https://github.com/Jelly-RDF/jelly-jvm/releases/download/v{{ jvm_package_version() }}/jelly-neo4j-plugin.jar) and place it in the `plugins` folder.
+    6. Download the [Jelly-Neo4j plugin `.jar` file](https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.7.3/jelly-neo4j-plugin.jar) and place it in the `plugins` folder.
     7. Go back to the Neo4j Desktop application and restart your instance.
 
 === "Self-hosted server (Community and Enterprise editions)"
@@ -30,7 +30,7 @@ The **[latest version ({{ jvm_package_version() }}) of the Jelly-Neo4j plugin](h
     2. Open the Neo4j installation folder (`$NEO4J_HOME`).
     3. Open the `plugins` subfolder.
     4. Download the neosemantics plugin `.jar` file from the [neosemantics releases page](https://github.com/neo4j-labs/neosemantics/releases) and place it in the `plugins` folder. The plugin's version must be the same as Neo4j's.
-    5. Download the [Jelly-Neo4j plugin `.jar` file](https://github.com/Jelly-RDF/jelly-jvm/releases/download/v{{ jvm_package_version() }}/jelly-neo4j-plugin.jar) and place it in the `plugins` folder.
+    5. Download the [Jelly-Neo4j plugin `.jar` file](https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.7.3/jelly-neo4j-plugin.jar) and place it in the `plugins` folder.
     6. Start the Neo4j server.
 
 At the end, your `plugins` folder should look like this:

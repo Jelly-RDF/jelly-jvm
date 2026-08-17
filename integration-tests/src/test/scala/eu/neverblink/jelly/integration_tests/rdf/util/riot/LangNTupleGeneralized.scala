@@ -13,7 +13,7 @@ abstract class LangNTupleGeneralized[T](tokens: Tokenizer, profile: ParserProfil
 
   /** Consumes an RDF 1.2 version directive if one is next in the stream.
     *
-    * RDF 1.2 serializers put this at the top of a document — RDF4J 6's Turtle writer always does.
+    * RDF 1.2 serializers put this at the top of a document – RDF4J 6's Turtle writer always does.
     * It comes in two shapes: `VERSION "1.2"` in the N-Triples/N-Quads grammars (a bare keyword) and
     * `@version "1.2" .` in Turtle/TriG (a directive). This parser is a fork of Jena's pre-RDF-1.2
     * N-Tuple parser and would otherwise fail on either with "Illegal: [KEYWORD:VERSION]".
