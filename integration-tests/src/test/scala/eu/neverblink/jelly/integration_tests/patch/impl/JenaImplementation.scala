@@ -4,7 +4,7 @@ import eu.neverblink.jelly.convert.jena.patch.*
 import eu.neverblink.jelly.core.patch.JellyPatchOptions
 import eu.neverblink.jelly.core.proto.v1.patch.{PatchStatementType, RdfPatchOptions}
 import eu.neverblink.jelly.integration_tests.patch.traits.*
-import eu.neverblink.jelly.integration_tests.util.{CompatibilityUtils, TestComparable}
+import eu.neverblink.jelly.integration_tests.util.TestComparable
 import org.apache.jena.rdfpatch.text.RDFPatchReaderText
 import org.scalatest.matchers.should.Matchers.*
 
@@ -26,7 +26,8 @@ object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
 
   override def name: String = "Jena"
 
-  override def supportsRdfStar: Boolean = !CompatibilityUtils.jenaVersion54OrHigher
+  // Jena dropped RDF-star in 5.4.0, in favor of RDF 1.2.
+  override def supportsRdfStar: Boolean = false
 
   override def readRdf(in: InputStream, stType: PatchStatementType): JenaChangesCollector =
     val collector = JellyPatchOps.changesCollector(stType)

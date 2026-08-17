@@ -19,14 +19,20 @@ import scala.concurrent.Future
 case object Rdf4jTestStream extends TestStream:
   given Rdf4jConverterFactory = Rdf4jConverterFactory.getInstance()
 
+  override def supportsRdf12: Boolean = true
+
+  // RDF4J dropped RDF-star in 6.0.0, in favor of RDF 1.2.
+  override def supportsRdfStar: Boolean = false
+
   override def tripleSource(
       is: InputStream,
       limiter: SizeLimiter,
       jellyOpt: RdfStreamOptions,
   ): Source[RdfStreamFrame, NotUsed] =
     // This buffers everything in memory... but I'm too lazy to implement my own RDFHandler for this
-    // RDF4J at the moment only has two formats with RDF-star support – Turtle and Trig.
-    val parser = Rio.createParser(RDFFormat.TURTLESTAR)
+    // In RDF4J 6 triple terms are part of the plain Turtle and TriG grammars — the separate
+    // Turtle-star / TriG-star formats of RDF4J 5 and older are gone.
+    val parser = Rio.createParser(RDFFormat.TURTLE)
     val collector = new StatementCollector()
     parser.setRDFHandler(collector)
     parser.parse(is)
@@ -64,7 +70,7 @@ case object Rdf4jTestStream extends TestStream:
   override def tripleSink(os: OutputStream)(using
       ExecutionContext,
   ): Sink[RdfStreamFrame, Future[Done]] =
-    val writer = Rio.createWriter(RDFFormat.TURTLESTAR, os)
+    val writer = Rio.createWriter(RDFFormat.TURTLE, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
       .via(DecoderFlow.decodeTriples.asFlatTripleStream)

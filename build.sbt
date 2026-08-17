@@ -29,11 +29,9 @@ Test / logBuffered := false
 lazy val pekkoV = "1.6.0"
 lazy val pekkoGrpcV = "1.2.0"
 lazy val jenaV = "5.6.0"
-//lazy val rdf4jV = "5.3.2"
-lazy val rdf4jV = "6.0.0-M3"
-// Last RDF4J 5.x release. Used only to compile the RDF4J-5 triple-term compat shim
-// (see the rdf4jCompat5 project and Rdf4jCompatHelper).
-lazy val rdf4j5V = "5.3.2"
+// RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
+// targets Java 21 (see javacOptions), but jelly-rdf4j can only *run* on Java 25+, as RDF4J 6 does.
+lazy val rdf4jV = "6.0.0"
 lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
 lazy val neo4jV = "5.26.0"
@@ -67,9 +65,7 @@ lazy val commonSettings = Seq(
   ) ++ wErrorIfCI,
   // Explicitly specify the options for javadoc, otherwise sbt will pass all javacOptions to it
   // which will cause an error.
-  // Exclude org.apache to avoid including JenaCompatHelper.
-  // See: https://github.com/Jelly-RDF/jelly-jvm/issues/622
-  Compile / doc / javacOptions := Seq("-source", "21", "-exclude", "org.apache"),
+  Compile / doc / javacOptions := Seq("-source", "21"),
   assemblyJarName := s"${name.value}.jar",
   assemblyMergeStrategy := {
     case x if x.endsWith("module-info.class") => MergeStrategy.concat
@@ -471,21 +467,6 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
   )
   .dependsOn(core)
 
-// Holds the RDF4J-5 half of the triple-term compatibility shim (Rdf4jTripleTerms5), which calls
-// ValueFactory.createTriple — a method that only exists in RDF4J 5.x. It must therefore be compiled
-// against RDF4J 5, separately from the main rdf4j module (which compiles against RDF4J 6). Its
-// compiled classes are folded into jelly-rdf4j (see rdf4j below); it is not published on its own.
-lazy val rdf4jCompat5 = (project in file("rdf4j-compat5"))
-  .settings(
-    name := "jelly-rdf4j-compat5",
-    description := "RDF4J 5.x compatibility shim for jelly-rdf4j. Not published separately.",
-    libraryDependencies += "org.eclipse.rdf4j" % "rdf4j-model" % rdf4j5V % Provided,
-    publish / skip := true,
-    publishArtifact := false,
-    commonSettings,
-    commonJavaSettings,
-  )
-
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
@@ -494,12 +475,6 @@ lazy val rdf4j = (project in file("rdf4j"))
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
     ),
-    // Fold the RDF4J-5 compat shim (compiled against RDF4J 5) into this module: on the compile
-    // classpath so Rdf4jCompatHelper can reference it, and in the output products so it lands in the
-    // JAR and on downstream classpaths — all without a separate published artifact or a POM
-    // dependency on an unpublished module.
-    Compile / dependencyClasspath ++= (rdf4jCompat5 / Compile / exportedProducts).value,
-    Compile / products ++= (rdf4jCompat5 / Compile / products).value,
     commonSettings,
     commonJavaSettings,
   )
@@ -522,10 +497,6 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV % "provided,test",
       "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV % "provided,test",
     ),
-    // This project's src is a symlink to rdf4j/src, so it also compiles the triple-term compat
-    // classes and needs the RDF4J-5 shim on the classpath and bundled into the plugin assembly.
-    Compile / dependencyClasspath ++= (rdf4jCompat5 / Compile / exportedProducts).value,
-    Compile / products ++= (rdf4jCompat5 / Compile / products).value,
     stableAssemblyOutput,
     // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
     publishArtifact := false,
@@ -552,10 +523,21 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   )
   .dependsOn(core % "compile->compile;test->test")
 
+// PARKED — not part of the root aggregate, not built or tested in CI.
+//
+// This plugin runs inside Neo4j, alongside the Neosemantics plugin, which fat-jars RDF4J 4.3.12.
+// Since jelly-rdf4j moved to RDF4J 6 it can no longer work there: RDF4J 6 needs Java 25, while
+// Neo4j 5.26 targets Java 17, and the bundled RDF4J 4.3.12 has neither IntegerRioSetting nor
+// TripleTerm — both of which jelly-rdf4j now uses unconditionally.
+//
+// The sources are kept so the integration can be revived once Neosemantics ships a modern RDF4J.
+// Until then, Neo4j support stays at the last RDF4J-5-based Jelly-JVM release. Building this
+// project requires pinning jelly-rdf4j back to RDF4J 5.x.
+// See: https://github.com/Jelly-RDF/jelly-jvm/issues/622
 lazy val neo4jPlugin = (project in file("neo4j-plugin"))
   .settings(
     name := "jelly-neo4j-plugin",
-    description := "Integration of Jelly with Neo4j via the Neosemantics plugin.",
+    description := "Integration of Jelly with Neo4j via the Neosemantics plugin. Currently unmaintained.",
     libraryDependencies ++= Seq(
       "org.neo4j" % "neo4j" % neo4jV % "provided,test",
       "org.neo4j" % "neosemantics" % neo4jV % "provided,test",
@@ -563,6 +545,8 @@ lazy val neo4jPlugin = (project in file("neo4j-plugin"))
       "org.neo4j.driver" % "neo4j-java-driver" % "6.2.1" % Test,
     ),
     stableAssemblyOutput,
+    publishArtifact := false,
+    publish / skip := true,
     commonSettings,
     commonJavaSettings,
   )
@@ -702,12 +686,11 @@ lazy val root = (project in file("."))
     jena,
     jenaPatch,
     jenaPlugin,
-    rdf4jCompat5,
     rdf4j,
     rdf4jPatch,
     rdf4jPlugin,
     titaniumRdfApi,
-    neo4jPlugin,
+    // neo4jPlugin is deliberately not aggregated — see its definition above.
     stream,
     integrationTests,
     examples,

@@ -7,8 +7,8 @@ import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
 import eu.neverblink.jelly.integration_tests.util.Measure
 import org.apache.jena.riot.RDFParser
 import org.apache.jena.riot.lang.LabelToNode
-import org.eclipse.rdf4j.model.impl.{SimpleTriple, SimpleValueFactory}
-import org.eclipse.rdf4j.model.{Statement, Value}
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.{Statement, TripleTerm, Value}
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 
@@ -26,7 +26,12 @@ object Rdf4jSerDes
 
   override def supportsGeneralizedStatements: Boolean = false
 
-  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = true
+  override def supportsRdf12: Boolean = true
+
+  // RDF4J dropped RDF-star in 6.0.0, in favor of RDF 1.2.
+  override def supportsRdfStar: Boolean = false
+
+  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
 
   private def read(
       streams: Seq[InputStream],
@@ -43,11 +48,11 @@ object Rdf4jSerDes
 
     collector.getStatements.asScala.toSeq
 
-  override def readTriplesW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.TURTLESTAR)
+  override def readTriplesW3C(is: InputStream): Seq[Statement] = read(Seq(is), RDFFormat.TURTLE)
 
   override def readTriplesW3C(files: Seq[File]): Seq[Statement] =
     val fileIss = files.map(FileInputStream(_))
-    val result = read(fileIss, RDFFormat.TURTLESTAR)
+    val result = read(fileIss, RDFFormat.TURTLE)
     fileIss.foreach(_.close())
     result
 
@@ -161,15 +166,15 @@ object Rdf4jSerDes
 
   override def getBlankNodeLabel(node: Value): String = node.stringValue()
 
-  override def isNodeTriple(node: Value): Boolean = node.isTriple
+  override def isNodeTriple(node: Value): Boolean = node.isTripleTerm
 
   override def asNodeTriple(node: Value): Statement =
-    val triple = node.asInstanceOf[SimpleTriple]
-    // We have to convert into statement because node triple is not statement in Rdf4j
+    val tripleTerm = node.asInstanceOf[TripleTerm]
+    // We have to convert into statement because a triple term is not a statement in Rdf4j
     SimpleValueFactory.getInstance.createStatement(
-      triple.getSubject,
-      triple.getPredicate,
-      triple.getObject,
+      tripleTerm.getSubject,
+      tripleTerm.getPredicate,
+      tripleTerm.getObject,
     )
 
   override def iterateTerms(statement: Statement): Seq[Value] =

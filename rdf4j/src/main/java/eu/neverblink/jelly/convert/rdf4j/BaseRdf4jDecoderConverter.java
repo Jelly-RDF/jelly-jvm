@@ -29,7 +29,7 @@ public abstract class BaseRdf4jDecoderConverter
     public final Value makeTripleNode(Value s, Value p, Value o) {
         try {
             // RDF4J doesn't accept generalized statements (unlike Jena) which is why we need to do a type cast here.
-            return Rdf4jCompatHelper.createTripleTerm(vf, (Resource) s, (IRI) p, o);
+            return vf.createTripleTerm((Resource) s, (IRI) p, o);
         } catch (ClassCastException e) {
             throw new RdfProtoDeserializationError(
                 "Cannot create generalized triple node with %s, %s, %s".formatted(s, p, o),

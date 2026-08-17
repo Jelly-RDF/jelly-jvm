@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.integration_tests.rdf.util
 
-import org.apache.jena.graph.{JenaCompatHelper, Node, Triple}
+import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.system.StreamRDF
 import org.apache.jena.sparql.core.Quad
 import org.eclipse.rdf4j.model.{IRI, Resource, Value}
@@ -15,16 +15,22 @@ class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
     else throw RuntimeException(s"Illegal position for term $n")
   }
 
+  private def makeTripleTerm(n: Node): Value = {
+    val t = n.getTriple
+    vf.createTripleTerm(
+      makeResource(t.getSubject),
+      makeIRI(t.getPredicate),
+      makeValue(t.getObject),
+    )
+  }
+
   def makeResource(n: Node): Resource = {
     if n.isBlank then vf.createBNode(n.getBlankNodeLabel)
-    else if JenaCompatHelper.isNodeTriple(n) then {
-      val t = n.getTriple
-      vf.createTriple(
-        makeResource(t.getSubject),
-        makeIRI(t.getPredicate),
-        makeValue(t.getObject),
-      )
-    } else makeIRI(n)
+    // In RDF 1.2 a triple term is only a Value, not a Resource: it may appear in object position
+    // only. RDF4J 6 models this too, so there is nothing to build here.
+    else if n.isTripleTerm then
+      throw RuntimeException(s"Illegal position for a triple term (object position only): $n")
+    else makeIRI(n)
   }
 
   def makeValue(n: Node): Value = {
@@ -34,7 +40,8 @@ class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
       else if lit.getDatatype != null then
         vf.createLiteral(lit.getLexicalForm, vf.createIRI(lit.getDatatypeURI))
       else vf.createLiteral(lit.getValue.toString)
-    } else makeResource(n)
+    } else if n.isTripleTerm then makeTripleTerm(n)
+    else makeResource(n)
   }
 
   override def start(): Unit = delegate.startRDF()

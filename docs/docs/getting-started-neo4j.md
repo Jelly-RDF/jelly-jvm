@@ -1,5 +1,11 @@
 # Getting started with Neo4j
 
+!!! warning "Neo4j support is paused"
+
+    The Jelly-Neo4j plugin is **no longer built or released**. Jelly-JVM's RDF4J integration now requires RDF4J 6, and therefore Java 25, while neosemantics still bundles RDF4J 4.3.12 and Neo4j targets Java 17 — the two can no longer run together.
+
+    If you need Neo4j support, use the **[last Jelly-JVM release that shipped the plugin](https://github.com/Jelly-RDF/jelly-jvm/releases)**; the instructions below apply to it. Support will return once neosemantics ships a modern RDF4J.
+
 !!! info
 
     This integration with Neo4j requires the use of the [neosemantics](https://neo4j.com/labs/neosemantics/) plugin that only works with Neo4j Desktop and self-hosted instances (Neo4j Community/Enterprise). **It does not work with AuraDB.** For AuraDB, you can alternatively use the **[Python integration that connects to Neo4j over Bolt](https://w3id.org/jelly/pyjelly/dev/rdflib-neo4j-integration/)** via [rdflib-neo4j](https://neo4j.com/labs/rdflib-neo4j/).

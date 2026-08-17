@@ -31,11 +31,11 @@ public final class Rdf4jEncoderConverter
                     return encoder.makeSimpleLiteral(lex);
                 }
             }
-        } else if (Rdf4jCompatHelper.isTripleTerm(value)) {
+        } else if (value instanceof TripleTerm tripleTerm) {
             return encoder.makeQuotedTriple(
-                Rdf4jCompatHelper.getSubject(value),
-                Rdf4jCompatHelper.getPredicate(value),
-                Rdf4jCompatHelper.getObject(value)
+                tripleTerm.getSubject(),
+                tripleTerm.getPredicate(),
+                tripleTerm.getObject()
             );
         } else {
             throw new RdfProtoSerializationError("Cannot encode node: %s".formatted(value));
