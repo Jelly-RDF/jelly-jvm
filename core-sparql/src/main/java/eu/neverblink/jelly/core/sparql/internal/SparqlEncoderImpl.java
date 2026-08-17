@@ -46,11 +46,10 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     private static final int KIND_REPEAT = 0;
     private static final int KIND_UNBOUND = 1;
 
-    // The layout tokens are uint32 with skip in the upper 27 bits, so a frame can hold at most
-    // 2^27 - 1 rows (see the layout encoding notes in sparql.proto).
+    // The layout tokens are uint32 with skip in the upper 27 bits.
     private static final int MAX_ROWS_PER_FRAME = (1 << 27) - 1;
 
-    // Run lengths of 0–14 are inlined in the token; 15 escapes to an extension varint.
+    // Run lengths of 0–14 are inlined in the token. 15 uses an extension varint.
     private static final int MAX_INLINE_LEN = 15;
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
@@ -61,7 +60,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
 
     private static final class ColumnState {
 
-        // Column type; sticky once set, only ever escalated to TYPE_POLY.
+        // Column type. Sticky once set, only ever escalated to TYPE_POLY.
         byte type = TYPE_UNSET;
 
         // Run-length state

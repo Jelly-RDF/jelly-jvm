@@ -29,7 +29,7 @@ import java.util.List;
 @InternalApi
 public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode, TDatatype> implements SparqlDecoder {
 
-    // Run lengths of 0–14 are inlined in the layout token; 15 escapes to an extension varint.
+    // Run lengths of 0–14 are inlined in the layout token. 15 needs an extension varint.
     private static final int MAX_INLINE_LEN = 15;
 
     private final SparqlResultsHandler<TNode> handler;
@@ -103,7 +103,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
 
         // Apply all lookup entries before decoding any column. In a packed entry only the first
-        // value states its id; the rest continue from it, which is what id 0 means.
+        // value states its id, the rest are sequential.
         for (final RdfNameEntryPacked entry : frame.getNames()) {
             int id = entry.getId();
             for (final String value : entry.getValues()) {
@@ -462,7 +462,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     /**
      * Decodes one column: walks the sequence layout, materializing the cells of the column into
      * {@code out}. Cells past the encoded sequence, up to the frame row count, are unbound
-     * (nulls). The buffer may be longer than {@code rows}; cells past it are left untouched.
+     * (nulls). The buffer may be longer than {@code rows}. Cells past it are left untouched.
      */
     private void decodeColumn(ValueReader<TNode> reader, RepeatedInt layout, int rows, Object[] out) {
         int pos = 0;
@@ -470,7 +470,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         for (int k = 0; k < layoutSize; k++) {
             final int token = layout.get(k);
             final int skip = token >>> 5;
-            final int kind = (token >>> 4) & 1;
+            final int kind = token & 0b10000;
             long len = token & MAX_INLINE_LEN;
             if (len == MAX_INLINE_LEN) {
                 k++;
