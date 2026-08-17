@@ -46,8 +46,8 @@ object SparqlDecodeBench:
     )
     var preset: String = _
 
-    @Param(Array("256"))
-    var frameSize: Int = _
+    @Param(Array("4096"))
+    var valuesPerFrame: Int = _
 
     var bytes: Array[Byte] = _
     var frames: Array[SparqlResultsFrame] = _
@@ -55,7 +55,7 @@ object SparqlDecodeBench:
     @Setup(Level.Trial)
     def setup(): Unit =
       val data = SparqlBenchData.load(preset)
-      bytes = SparqlBenchData.encodeToBytes(data, frameSize)
+      bytes = SparqlBenchData.encodeToBytes(data, valuesPerFrame)
       val in = ByteArrayInputStream(bytes)
       frames = Iterator
         .continually(SparqlResultsFrame.parseDelimitedFrom(in))

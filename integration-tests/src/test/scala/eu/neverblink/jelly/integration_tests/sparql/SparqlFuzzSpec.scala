@@ -57,18 +57,24 @@ class SparqlFuzzSpec extends AnyWordSpec, Matchers:
   private def encodeCore(
       vars: Seq[String],
       rows: IndexedSeq[Array[Mrl.Node & Object]],
-      frameSize: Int,
+      maxValuesPerFrame: Int,
       options: SparqlResultsOptions,
   ): Array[Byte] =
     val encoder = MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(options))
     encoder.setVariables(vars.asJava)
     val out = ByteArrayOutputStream()
+    val rowLimit = math.max(1, maxValuesPerFrame / math.max(1, vars.size))
     var rowsInFrame = 0
     var wroteAnyFrame = false
     for row <- rows do
-      encoder.appendRow(row)
+      if !encoder.appendRow(row) then
+        // The frame ran out of lookup entries before reaching the row limit
+        encoder.endFrame().writeDelimitedTo(out)
+        wroteAnyFrame = true
+        rowsInFrame = 0
+        encoder.appendRow(row) shouldBe true
       rowsInFrame += 1
-      if rowsInFrame >= frameSize then
+      if rowsInFrame >= rowLimit then
         encoder.endFrame().writeDelimitedTo(out)
         wroteAnyFrame = true
         rowsInFrame = 0
@@ -90,7 +96,7 @@ class SparqlFuzzSpec extends AnyWordSpec, Matchers:
   private def encodeJena(
       vars: Seq[String],
       rows: IndexedSeq[Array[Node]],
-      frameSize: Int,
+      maxValuesPerFrame: Int,
       options: SparqlResultsOptions,
   ): Array[Byte] =
     val jenaVars = vars.map(Var.alloc)
@@ -101,7 +107,7 @@ class SparqlFuzzSpec extends AnyWordSpec, Matchers:
     }
     val out = ByteArrayOutputStream()
     val writer = RowSetWriterJelly(
-      RowSetWriterJelly.Options(options, frameSize, true),
+      RowSetWriterJelly.Options(options, maxValuesPerFrame, true),
       JenaSparqlConverterFactory.getInstance(),
     )
     writer.write(out, RowSetStream.create(jenaVars.asJava, bindings.iterator.asJava), null)
@@ -120,18 +126,16 @@ class SparqlFuzzSpec extends AnyWordSpec, Matchers:
   // Test driver
   // -----------------------------------------------------------------------------------------
 
-  /** Frame size and lookup table sizes for one case.
+  /** Frame value budget and lookup table sizes for one case.
     *
-    * The name table must be able to hold the working set of a single frame, otherwise the encoder
-    * legitimately refuses to encode. One row contributes at most one name per column, so
-    * `frameSize * columns` is a safe upper bound.
+    * The two are chosen independently on purpose: whenever the frame's working set outgrows the
+    * name table, the encoder must end the frame early and the caller must carry the row over. That
+    * path is the interesting one, so most cases should hit it.
     */
   private def parametersFor(spec: ResultSetSpec, rnd: Random): (Int, SparqlResultsOptions) =
-    val frameSize = 1 + rnd.nextInt(64)
-    val nameTableSize = math.min(
-      JellySparqlOptions.BIG.getMaxNameTableSize,
-      math.max(8, frameSize * math.max(1, spec.columns.size) + 32),
-    )
+    val maxValuesPerFrame = 1 + rnd.nextInt(1024)
+    val nameTableSize = JellySparqlOptions.MIN_NAME_TABLE_SIZE +
+      rnd.nextInt(JellySparqlOptions.BIG_NAME_TABLE_SIZE - JellySparqlOptions.MIN_NAME_TABLE_SIZE)
     val options = SparqlResultsOptions
       .newInstance()
       .setMaxNameTableSize(nameTableSize)
@@ -140,7 +144,7 @@ class SparqlFuzzSpec extends AnyWordSpec, Matchers:
         if rnd.nextInt(4) == 0 then 0 else JellySparqlOptions.BIG.getMaxPrefixTableSize,
       )
       .setMaxDatatypeTableSize(JellySparqlOptions.BIG.getMaxDatatypeTableSize)
-    (frameSize, options)
+    (maxValuesPerFrame, options)
 
   private def compare(
       label: String,
@@ -155,8 +159,8 @@ class SparqlFuzzSpec extends AnyWordSpec, Matchers:
       withClue(s"$label – row $i: ") { actualRows(i) shouldBe expectedRows(i) }
 
   private def runCase(spec: ResultSetSpec, rnd: Random): Unit =
-    val (frameSize, options) = parametersFor(spec, rnd)
-    withClue(s"spec: $spec, frameSize: $frameSize, options: $options\n") {
+    val (maxValuesPerFrame, options) = parametersFor(spec, rnd)
+    withClue(s"spec: $spec, maxValuesPerFrame: $maxValuesPerFrame, options: $options\n") {
       val generated = SparqlDataGen.generate(spec)
       val vars = spec.variables
 
@@ -165,8 +169,8 @@ class SparqlFuzzSpec extends AnyWordSpec, Matchers:
       val mrlExpected = mrlRows.map(_.toSeq)
       val jenaExpected = jenaRows.map(_.toSeq)
 
-      val coreBytes = encodeCore(vars, mrlRows, frameSize, options)
-      val jenaBytes = encodeJena(vars, jenaRows, frameSize, options)
+      val coreBytes = encodeCore(vars, mrlRows, maxValuesPerFrame, options)
+      val jenaBytes = encodeJena(vars, jenaRows, maxValuesPerFrame, options)
 
       compare("core -> core", decodeCore(coreBytes), vars, mrlExpected)
       compare("jena -> jena", decodeJena(jenaBytes), vars, jenaExpected)

@@ -56,21 +56,26 @@ object SparqlBenchData:
 
   def load(preset: String): Data = Data(SparqlDataGen.preset(preset))
 
+  /** Frames are budgeted in values, so how many rows fit depends on the width of the result set. */
+  def rowsPerFrame(data: Data, maxValuesPerFrame: Int): Int =
+    math.max(1, maxValuesPerFrame / math.max(1, data.variables.size))
+
   /** Encodes the data with the core encoder, writing delimited frames to the given stream. */
-  def encodeCore(data: Data, frameSize: Int, out: OutputStream): Unit =
+  def encodeCore(data: Data, maxValuesPerFrame: Int, out: OutputStream): Unit =
     val encoder = JenaSparqlConverterFactory.getInstance().encoder(SparqlEncoder.Params.of(options))
     encoder.setVariables(data.variables)
+    val rowLimit = rowsPerFrame(data, maxValuesPerFrame)
     var rowsInFrame = 0
     var wroteAnyFrame = false
     for row <- data.rows do
       if !encoder.appendRow(row) then
-        // The frame ran out of lookup entries before reaching frameSize rows
+        // The frame ran out of lookup entries before reaching the row limit
         encoder.endFrame().writeDelimitedTo(out)
         wroteAnyFrame = true
         rowsInFrame = 0
         encoder.appendRow(row)
       rowsInFrame += 1
-      if rowsInFrame >= frameSize then
+      if rowsInFrame >= rowLimit then
         encoder.endFrame().writeDelimitedTo(out)
         wroteAnyFrame = true
         rowsInFrame = 0
@@ -78,13 +83,13 @@ object SparqlBenchData:
     if rowsInFrame > 0 || !wroteAnyFrame then encoder.endFrame().writeDelimitedTo(out)
 
   /** Serializes the data through the Jena RowSet writer. */
-  def encodeJena(data: Data, frameSize: Int, out: OutputStream): Unit =
+  def encodeJena(data: Data, maxValuesPerFrame: Int, out: OutputStream): Unit =
     RowSetWriterJelly(
-      RowSetWriterJelly.Options(options, frameSize, true),
+      RowSetWriterJelly.Options(options, maxValuesPerFrame, true),
       JenaSparqlConverterFactory.getInstance(),
     ).write(out, data.rowSet(), null)
 
-  def encodeToBytes(data: Data, frameSize: Int): Array[Byte] =
+  def encodeToBytes(data: Data, maxValuesPerFrame: Int): Array[Byte] =
     val out = ByteArrayOutputStream()
-    encodeCore(data, frameSize, out)
+    encodeCore(data, maxValuesPerFrame, out)
     out.toByteArray

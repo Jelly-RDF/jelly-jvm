@@ -94,6 +94,7 @@ class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers:
           rows,
           RowSetWriterJelly.Options(
             eu.neverblink.jelly.core.sparql.JellySparqlOptions.SMALL,
+            // One variable, so 4 values per frame is 4 rows per frame
             4,
             true,
           ),
@@ -122,9 +123,9 @@ class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers:
     }
 
     "round-trip a result set that outgrows the lookup tables" in {
-      // Regression: the writer asks for frames of frameSize rows, but the lookup tables of a frame
-      // may fill up first. That used to corrupt the encoder mid-frame; now the writer flushes and
-      // carries on. 400 distinct IRIs against SMALL (a 128-entry name table) and 1000-row frames.
+      // Regression: the writer asks for frames of a given value budget, but the lookup tables of a
+      // frame may fill up first. That used to corrupt the encoder mid-frame; now the writer flushes
+      // and carries on. 400 distinct IRIs against SMALL, whose name table holds 256.
       val vars = Seq("x")
       val rows = (1 to 400).map(i => Seq[Node | Null](iri(s"node$i")))
       val (gotVars, gotRows) = roundTrip(
@@ -132,7 +133,8 @@ class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers:
         rows,
         RowSetWriterJelly.Options(
           eu.neverblink.jelly.core.sparql.JellySparqlOptions.SMALL,
-          1000,
+          // Far more values than the SMALL name table holds, so the tables end the frames
+          1_000_000,
           true,
         ),
       )
@@ -149,7 +151,7 @@ class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers:
           rows,
           RowSetWriterJelly.Options(
             eu.neverblink.jelly.core.sparql.JellySparqlOptions.SMALL,
-            1000,
+            1_000_000,
             false,
           ),
         )

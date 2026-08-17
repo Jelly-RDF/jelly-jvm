@@ -49,7 +49,7 @@ object SparqlSizeReport:
        |""".stripMargin
 
   private final case class Config(
-      frameSize: Int = 256,
+      maxValuesPerFrame: Int = JellySparqlConstants.DEFAULT_MAX_VALUES_PER_FRAME,
       dumpDir: Option[Path] = None,
       presets: Seq[String] = Seq.empty,
   )
@@ -63,8 +63,8 @@ object SparqlSizeReport:
     case Nil => Some(config)
     case ("-f" | "--frame-size") :: value :: rest =>
       value.toIntOption match
-        case Some(frameSize) if frameSize > 0 =>
-          parseArgs(rest, config.copy(frameSize = frameSize))
+        case Some(values) if values > 0 =>
+          parseArgs(rest, config.copy(maxValuesPerFrame = values))
         case _ =>
           Console.err.println(s"Frame size must be a positive integer, got: $value")
           None
@@ -87,8 +87,12 @@ object SparqlSizeReport:
     RowSetWriterRegistry.getFactory(lang).create(lang).write(out, data.rowSet(), null)
     out.toByteArray
 
-  private def serialize(data: SparqlBenchData.Data, frameSize: Int): Seq[Output] =
-    Output("jelly", jellyExtension, Some(SparqlBenchData.encodeToBytes(data, frameSize))) +:
+  private def serialize(data: SparqlBenchData.Data, maxValuesPerFrame: Int): Seq[Output] =
+    Output(
+      "jelly",
+      jellyExtension,
+      Some(SparqlBenchData.encodeToBytes(data, maxValuesPerFrame)),
+    ) +:
       baselines.map { (label, lang) =>
         Output(label, label, Try(writeBaseline(data, lang)).toOption)
       }
@@ -121,14 +125,14 @@ object SparqlSizeReport:
       Output("jelly", jellyExtension, None) +: baselines.map((l, _) => Output(l, l, None))
     val header = Seq("preset", "rows", "vars") ++
       labels.flatMap(o => Seq(o.label, s"${o.label}.gz")) ++ Seq("B/row")
-    println(s"Jelly-SPARQL size report (frame size: ${config.frameSize} rows)")
+    println(s"Jelly-SPARQL size report (frame size: ${config.maxValuesPerFrame} values)")
     println(header.map(h => f"$h%18s").mkString)
     println("-" * (header.size * 18))
 
     var filesWritten = 0
     for name <- names do
       val data = SparqlBenchData.load(name)
-      val outputs = serialize(data, config.frameSize)
+      val outputs = serialize(data, config.maxValuesPerFrame)
 
       config.dumpDir.foreach { dir =>
         for output <- outputs; bytes <- output.bytes do

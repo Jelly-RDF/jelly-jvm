@@ -19,11 +19,11 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
     MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(options))
 
   /** An encoder whose converter does whatever the test tells it to. */
-  private def customEncoder(f: (eu.neverblink.jelly.core.NodeEncoder[Node], Node) => Object) =
-    SparqlEncoderImpl[Node](
-      CustomEncoderConverter(f),
-      SparqlEncoder.Params.of(JellySparqlOptions.SMALL),
-    )
+  private def customEncoder(
+      f: (eu.neverblink.jelly.core.NodeEncoder[Node], Node) => Object,
+      options: SparqlResultsOptions = JellySparqlOptions.SMALL,
+  ) =
+    SparqlEncoderImpl[Node](CustomEncoderConverter(f), SparqlEncoder.Params.of(options))
 
   "SparqlEncoder" should {
     "reject setting the variables twice" in {
@@ -155,6 +155,28 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       // Raw IRIs always carry their real name ids – no "next one" compression
       (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(1, 2)
       (0 until column.getPrefixIds.size).map(column.getPrefixIds.get) shouldBe Seq(1)
+    }
+
+    "expose uncompressed IRIs with the prefix lookup disabled" in {
+      val noPrefixes = SparqlResultsOptions
+        .newInstance()
+        .setMaxNameTableSize(JellySparqlOptions.MIN_NAME_TABLE_SIZE)
+        .setMaxPrefixTableSize(0)
+        .setMaxDatatypeTableSize(8)
+      val e = customEncoder(
+        (enc, node) =>
+          node match
+            case Iri(iri) => enc.makeIriRaw(iri)
+            case other => throw RuntimeException(s"unexpected $other"),
+        noPrefixes,
+      )
+      e.setVariables(Seq("x").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1")))
+      e.appendRow(Array[Node](Iri("https://a.org/x2")))
+      val column = e.endFrame().getIriColumns.asScala.head
+      // The whole IRI goes in the name table, so there is no prefix id to track
+      (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(1, 2)
+      column.getPrefixIds.size shouldBe 0
     }
 
     "reject the default graph as a binding" in {

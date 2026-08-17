@@ -311,7 +311,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
     "round-trip with the prefix lookup disabled" in {
       val options = SparqlResultsOptions
         .newInstance()
-        .setMaxNameTableSize(64)
+        .setMaxNameTableSize(JellySparqlOptions.MIN_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(0)
         .setMaxDatatypeTableSize(8)
       val rows = Seq(
@@ -358,7 +358,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       // refuse the row first, leaving the caller free to end the frame and append it again.
       val options = SparqlResultsOptions
         .newInstance()
-        .setMaxNameTableSize(8)
+        .setMaxNameTableSize(JellySparqlOptions.MIN_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(4)
         .setMaxDatatypeTableSize(4)
       val encoder = MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(options))
@@ -367,11 +367,11 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val decoder =
         MockSparqlConverterFactory.decoder(collector, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
 
-      // 60 distinct IRIs from 5 namespaces against an 8-entry name table: the frames end where
-      // the tables run out, and nowhere else
-      val rows = (1 to 30).map(i =>
+      // 800 distinct IRIs from 4 namespaces against the smallest allowed name table: the frames
+      // end where the tables run out, and nowhere else
+      val rows = (1 to 400).map(i =>
         Seq[Node | Null](
-          Iri(s"https://ns${i % 5}.org/name$i"),
+          Iri(s"https://ns${i % 4}.org/name$i"),
           Iri(s"https://ns${i % 3}.org/other$i"),
         ),
       )

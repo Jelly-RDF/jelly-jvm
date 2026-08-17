@@ -5,6 +5,7 @@ import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
@@ -31,13 +32,16 @@ public final class RowSetWriterJelly implements RowSetWriter {
      * Options for the Jelly-SPARQL writer.
      *
      * @param options options for the result stream
-     * @param frameSize maximum number of rows in a single frame (only used with delimited = true)
+     * @param maxValuesPerFrame maximum number of values (cells) in a single frame, turned into a
+     *                          row limit once the number of variables is known (only used with
+     *                          delimited = true). A frame may still end earlier, when its lookup
+     *                          tables fill up.
      * @param delimited whether to write the stream as delimited frames (standard for files and
      *                  streams) or a single non-delimited frame
      */
-    public record Options(SparqlResultsOptions options, int frameSize, boolean delimited) {
+    public record Options(SparqlResultsOptions options, int maxValuesPerFrame, boolean delimited) {
         public Options() {
-            this(JellySparqlOptions.BIG, 256, true);
+            this(JellySparqlOptions.BIG, JellySparqlConstants.DEFAULT_MAX_VALUES_PER_FRAME, true);
         }
     }
 
@@ -61,6 +65,9 @@ public final class RowSetWriterJelly implements RowSetWriter {
         final SparqlEncoder<Node> encoder = converterFactory.encoder(SparqlEncoder.Params.of(options.options()));
         encoder.setVariables(vars.stream().map(Var::getVarName).toList());
         final Node[] row = new Node[vars.size()];
+        // Frames are budgeted in values, so the row limit depends on how wide the result set is.
+        // A zero-variable result set carries no values at all, hence the lower bound of one row.
+        final int rowsPerFrame = Math.max(1, options.maxValuesPerFrame() / Math.max(1, row.length));
         final CodedOutputStream codedOutput = ProtobufUtil.createCodedOutputStream(out);
         try {
             boolean wroteAnyFrame = false;
@@ -85,7 +92,7 @@ public final class RowSetWriterJelly implements RowSetWriter {
                     // An empty frame always takes the row
                     encoder.appendRow(row);
                 }
-                if (options.delimited() && ++rowsInFrame >= options.frameSize()) {
+                if (options.delimited() && ++rowsInFrame >= rowsPerFrame) {
                     encoder.endFrame().writeDelimitedTo(codedOutput);
                     wroteAnyFrame = true;
                     rowsInFrame = 0;

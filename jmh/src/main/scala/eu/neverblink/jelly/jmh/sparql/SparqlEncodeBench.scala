@@ -14,9 +14,9 @@ import java.io.OutputStream
   *     nodes, so nothing but the layout encoding and the lookup tables is on the clock.
   *   - `jenaRowSetWriter` – the whole Jena stack, including pulling values out of Bindings.
   *
-  * The `preset` and `frameSize` parameters can be overridden from the command line, e.g.
+  * The `preset` and `valuesPerFrame` parameters can be overridden from the command line, e.g.
   * {{{
-  * sbt "jmh/Jmh/run -p preset=sparse-alternating,runs-8 -p frameSize=16,256,4096 SparqlEncodeBench"
+  * sbt "jmh/Jmh/run -p preset=sparse-alternating,runs-8 -p valuesPerFrame=256,4096,65536 SparqlEncodeBench"
   * }}}
   * The full list of presets is in `SparqlDataGen.presetNames`.
   */
@@ -38,8 +38,8 @@ object SparqlEncodeBench:
     )
     var preset: String = _
 
-    @Param(Array("256"))
-    var frameSize: Int = _
+    @Param(Array("4096"))
+    var valuesPerFrame: Int = _
 
     var data: SparqlBenchData.Data = _
 
@@ -59,15 +59,16 @@ class SparqlEncodeBench:
       .getInstance()
       .encoder(SparqlEncoder.Params.of(SparqlBenchData.options))
     encoder.setVariables(input.data.variables)
+    val rowLimit = SparqlBenchData.rowsPerFrame(input.data, input.valuesPerFrame)
     var rowsInFrame = 0
     for row <- input.data.rows do
       if !encoder.appendRow(row) then
-        // The frame ran out of lookup entries before reaching frameSize rows
+        // The frame ran out of lookup entries before reaching the row limit
         blackhole.consume(encoder.endFrame())
         rowsInFrame = 0
         encoder.appendRow(row)
       rowsInFrame += 1
-      if rowsInFrame >= input.frameSize then
+      if rowsInFrame >= rowLimit then
         blackhole.consume(encoder.endFrame())
         rowsInFrame = 0
     blackhole.consume(encoder.endFrame())
@@ -77,11 +78,11 @@ class SparqlEncodeBench:
   @OutputTimeUnit(java.util.concurrent.TimeUnit.MILLISECONDS)
   @BenchmarkMode(Array(Mode.AverageTime))
   def coreEncoderSerialized(input: BenchInput): Unit =
-    SparqlBenchData.encodeCore(input.data, input.frameSize, OutputStream.nullOutputStream())
+    SparqlBenchData.encodeCore(input.data, input.valuesPerFrame, OutputStream.nullOutputStream())
 
   /** The full Jena stack: RowSet -> Binding -> encoder -> bytes. */
   @Benchmark
   @OutputTimeUnit(java.util.concurrent.TimeUnit.MILLISECONDS)
   @BenchmarkMode(Array(Mode.AverageTime))
   def jenaRowSetWriter(input: BenchInput): Unit =
-    SparqlBenchData.encodeJena(input.data, input.frameSize, OutputStream.nullOutputStream())
+    SparqlBenchData.encodeJena(input.data, input.valuesPerFrame, OutputStream.nullOutputStream())
