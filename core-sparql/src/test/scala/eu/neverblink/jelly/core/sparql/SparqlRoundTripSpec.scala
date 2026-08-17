@@ -194,7 +194,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val emptyColumn = frames.head.getIriColumns.asScala.find(_.getNameIds.isEmpty)
       emptyColumn should not be empty
       // Trailing unbound cells cost nothing: the all-unbound column has an empty layout too
-      emptyColumn.get.getLayout.size() shouldBe 0
+      emptyColumn.get.getLayouts.size() shouldBe 0
     }
 
     "round-trip consecutive repeated values" in {
@@ -233,7 +233,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       assertResults(collector, Seq("x"), rows)
       val column = frames.head.getIriColumns.asScala.head
       column.getNameIds.size shouldBe 5
-      val layout = (0 until column.getLayout.size()).map(column.getLayout.get)
+      val layout = (0 until column.getLayouts.size()).map(column.getLayouts.get)
       layout shouldBe Seq(0, 81, 1, 16)
     }
 
@@ -242,7 +242,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       // and 15 unbound cells (len 14) likewise. One more of either needs an extension varint.
       def layoutOf(rows: Seq[Seq[Node | Null]]) =
         val column = roundTrip(Seq("x"), Seq(rows))._2.head.getIriColumns.asScala.head
-        (0 until column.getLayout.size()).map(column.getLayout.get)
+        (0 until column.getLayouts.size()).map(column.getLayouts.get)
 
       val a = iri(1)
       layoutOf(Seq.fill(16)(Seq[Node | Null](a))) shouldBe Seq(14)

@@ -153,16 +153,16 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             final Object[] out = decodeBufferForVariable(v, rows);
             if (c < iriEnd) {
                 final SparqlIriColumn column = get(iriColumns, c);
-                decodeColumn(new IriReader(column), column.getLayout(), rows, out);
+                decodeColumn(new IriReader(column), column.getLayouts(), rows, out);
             } else if (c < bnodeEnd) {
                 final SparqlBnodeColumn column = get(bnodeColumns, c - iriEnd);
-                decodeColumn(new BnodeReader(column.getValues().iterator()), column.getLayout(), rows, out);
+                decodeColumn(new BnodeReader(column.getValues().iterator()), column.getLayouts(), rows, out);
             } else if (c < literalEnd) {
                 final SparqlLiteralColumn column = get(literalColumns, c - bnodeEnd);
-                decodeColumn(literalReader(column), column.getLayout(), rows, out);
+                decodeColumn(literalReader(column), column.getLayouts(), rows, out);
             } else {
                 final SparqlPolyColumn column = get(polyColumns, c - literalEnd);
-                decodeColumn(new PolyReader(column.getValues().iterator()), column.getLayout(), rows, out);
+                decodeColumn(new PolyReader(column.getValues().iterator()), column.getLayouts(), rows, out);
             }
         }
 

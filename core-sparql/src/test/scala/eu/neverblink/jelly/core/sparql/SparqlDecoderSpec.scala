@@ -36,7 +36,7 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
     val column = SparqlIriColumn.newInstance()
     // Name id 0 = "the next one", so these resolve to ids 1, 2, 3, ... in the name table
     for _ <- 0 until valueCount do column.addNameIds(0)
-    layout.foreach(column.addLayout)
+    layout.foreach(column.addLayouts)
     column
 
   /** A handler that builds its row buffer in a way the test controls. */

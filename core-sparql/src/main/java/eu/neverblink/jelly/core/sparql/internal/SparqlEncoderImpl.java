@@ -462,7 +462,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                     column.setPrefixIds(prefixIds);
                 }
                 // Otherwise every value has prefix id 0, which the decoder assumes anyway
-                column.setLayout(copyLayout(columns[i].layout));
+                column.setLayouts(copyLayout(columns[i].layout));
                 frame.addIriColumns(column);
             }
         }
@@ -472,7 +472,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                 for (final Object value : columns[i].values) {
                     column.addValues((String) value);
                 }
-                column.setLayout(copyLayout(columns[i].layout));
+                column.setLayouts(copyLayout(columns[i].layout));
                 frame.addBnodeColumns(column);
             }
         }
@@ -496,7 +496,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                     }
                     // Datatype 0 means simple literals, which the decoder assumes anyway
                 }
-                column.setLayout(copyLayout(columns[i].layout));
+                column.setLayouts(copyLayout(columns[i].layout));
                 frame.addLiteralColumns(column);
             }
         }
@@ -514,7 +514,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                     }
                     column.addValues(term);
                 }
-                column.setLayout(copyLayout(columns[i].layout));
+                column.setLayouts(copyLayout(columns[i].layout));
                 frame.addPolyColumns(column);
             }
         }

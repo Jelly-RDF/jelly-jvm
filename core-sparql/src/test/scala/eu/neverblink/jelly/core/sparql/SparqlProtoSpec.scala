@@ -78,18 +78,18 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .addNameIds(0)
     .addPrefixIds(1)
     .addPrefixIds(0)
-    .addLayout(0)
-    .addLayout(41)
+    .addLayouts(0)
+    .addLayouts(41)
 
   private def bnodeColumn =
-    SparqlBnodeColumn.newInstance().addValues("b1").addValues("b2").addLayout(8)
+    SparqlBnodeColumn.newInstance().addValues("b1").addValues("b2").addLayouts(8)
 
   private def literalColumn = SparqlLiteralColumn
     .newInstance()
     .addValues(RdfLiteral.newInstance().setLex("hello"))
     .addValues(RdfLiteral.newInstance().setLex("bonjour").setLangtag("fr"))
     .addValues(RdfLiteral.newInstance().setLex("42").setDatatype(1))
-    .addLayout(1)
+    .addLayouts(1)
 
   /** The datatype-monomorphic form of a literal column: bare lexical forms plus one datatype. */
   private def lexLiteralColumn = SparqlLiteralColumn
@@ -97,14 +97,14 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .addLexValues("1")
     .addLexValues("2")
     .setDatatype(1)
-    .addLayout(1)
+    .addLayouts(1)
 
   private def polyColumn = SparqlPolyColumn
     .newInstance()
     .addValues(SparqlTerm.newInstance().setIri(iri(1, 2)))
     .addValues(SparqlTerm.newInstance().setBnode("b1"))
     .addValues(SparqlTerm.newInstance().setLiteral(RdfLiteral.newInstance().setLex("x")))
-    .addLayout(16)
+    .addLayouts(16)
 
   /** A frame with every field set – not a semantically valid frame, but it exercises the whole
     * serialization surface of the message.
@@ -240,7 +240,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       val copy = original.clone()
       copy.clear()
       original.getValues.size shouldBe 2
-      original.getLayout.size shouldBe 1
+      original.getLayouts.size shouldBe 1
       original.clone().getSerializedSize shouldBe size
 
       // The same for message and scalar collections
@@ -248,7 +248,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       iris.clone().clear()
       iris.getNameIds.size shouldBe 2
       iris.getPrefixIds.size shouldBe 2
-      iris.getLayout.size shouldBe 2
+      iris.getLayouts.size shouldBe 2
 
       val frame = fullFrame
       frame.clone().clear()
@@ -281,24 +281,24 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .newInstance()
         .setNameIds(iriColumn.getNameIds)
         .setPrefixIds(iriColumn.getPrefixIds)
-        .setLayout(iriColumn.getLayout) shouldBe iriColumn
+        .setLayouts(iriColumn.getLayouts) shouldBe iriColumn
       SparqlBnodeColumn
         .newInstance()
         .setValues(bnodeColumn.getValues)
-        .setLayout(bnodeColumn.getLayout) shouldBe bnodeColumn
+        .setLayouts(bnodeColumn.getLayouts) shouldBe bnodeColumn
       SparqlLiteralColumn
         .newInstance()
         .setValues(literalColumn.getValues)
-        .setLayout(literalColumn.getLayout) shouldBe literalColumn
+        .setLayouts(literalColumn.getLayouts) shouldBe literalColumn
       SparqlLiteralColumn
         .newInstance()
         .setLexValues(lexLiteralColumn.getLexValues)
         .setDatatype(lexLiteralColumn.getDatatype)
-        .setLayout(lexLiteralColumn.getLayout) shouldBe lexLiteralColumn
+        .setLayouts(lexLiteralColumn.getLayouts) shouldBe lexLiteralColumn
       SparqlPolyColumn
         .newInstance()
         .setValues(polyColumn.getValues)
-        .setLayout(polyColumn.getLayout) shouldBe polyColumn
+        .setLayouts(polyColumn.getLayouts) shouldBe polyColumn
     }
   }
 
@@ -412,10 +412,10 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       // Field 2 (layout), wire type 0 (varint), repeated – the pre-3.0 encoding of packed fields
       val bytes = Array[Byte](0x10, 5, 0x10, 41)
       val layouts = Seq(
-        SparqlIriColumn.parseFrom(bytes).getLayout,
-        SparqlBnodeColumn.parseFrom(bytes).getLayout,
-        SparqlLiteralColumn.parseFrom(bytes).getLayout,
-        SparqlPolyColumn.parseFrom(bytes).getLayout,
+        SparqlIriColumn.parseFrom(bytes).getLayouts,
+        SparqlBnodeColumn.parseFrom(bytes).getLayouts,
+        SparqlLiteralColumn.parseFrom(bytes).getLayouts,
+        SparqlPolyColumn.parseFrom(bytes).getLayouts,
       )
       for layout <- layouts do
         layout.size shouldBe 2
@@ -435,7 +435,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       val column = SparqlIriColumn.parseFrom(
         concat(
           SparqlIriColumn.newInstance().addPrefixIds(1).addPrefixIds(0).toByteArray,
-          SparqlIriColumn.newInstance().addLayout(0).addLayout(41).toByteArray,
+          SparqlIriColumn.newInstance().addLayouts(0).addLayouts(41).toByteArray,
           SparqlIriColumn.newInstance().addNameIds(1).addNameIds(0).toByteArray,
         ),
       )
@@ -491,11 +491,11 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     }
 
     "merge repeated fields of concatenated messages" in {
-      val a = SparqlBnodeColumn.newInstance().addValues("b1").addLayout(1)
-      val b = SparqlBnodeColumn.newInstance().addValues("b2").addLayout(2)
+      val a = SparqlBnodeColumn.newInstance().addValues("b1").addLayouts(1)
+      val b = SparqlBnodeColumn.newInstance().addValues("b2").addLayouts(2)
       val merged = SparqlBnodeColumn.parseFrom(a.toByteArray ++ b.toByteArray)
       merged.getValues.size shouldBe 2
-      merged.getLayout.size shouldBe 2
+      merged.getLayouts.size shouldBe 2
       // The in-memory merge behaves the same way
       a.mergeFrom(b) shouldBe merged
     }
