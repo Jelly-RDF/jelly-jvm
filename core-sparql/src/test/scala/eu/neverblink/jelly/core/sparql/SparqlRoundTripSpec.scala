@@ -351,18 +351,44 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       e.getMessage should include("quoted triples are not supported")
     }
 
-    "throw when the lookup table is too small for one frame" in {
+    "round-trip a result set that outgrows the lookup tables" in {
+      // Regression: appending a row that would overwrite a lookup entry the current frame still
+      // refers to used to corrupt the encoder – the eviction had already happened by the time it
+      // was detected, so neither the row nor the frame could be salvaged. The encoder must now
+      // refuse the row first, leaving the caller free to end the frame and append it again.
       val options = SparqlResultsOptions
         .newInstance()
         .setMaxNameTableSize(8)
         .setMaxPrefixTableSize(4)
         .setMaxDatatypeTableSize(4)
       val encoder = MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(options))
-      encoder.setVariables(Seq("x").asJava)
-      val e = intercept[RdfProtoSerializationError] {
-        for i <- 1 to 20 do encoder.appendRow(Array[Node](iri(i)))
-      }
-      e.getMessage should include("lookup table is too small")
+      encoder.setVariables(Seq("x", "y").asJava)
+      val collector = ResultsCollector()
+      val decoder =
+        MockSparqlConverterFactory.decoder(collector, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
+
+      // 60 distinct IRIs from 5 namespaces against an 8-entry name table: the frames end where
+      // the tables run out, and nowhere else
+      val rows = (1 to 30).map(i =>
+        Seq[Node | Null](
+          Iri(s"https://ns${i % 5}.org/name$i"),
+          Iri(s"https://ns${i % 3}.org/other$i"),
+        ),
+      )
+      var frames = 0
+      for row <- rows do
+        val array = row.toArray.asInstanceOf[Array[Node]]
+        if !encoder.appendRow(array) then
+          decoder.ingestFrame(SparqlResultsFrame.parseFrom(encoder.endFrame().toByteArray))
+          frames += 1
+          // An empty frame always accepts the row
+          encoder.appendRow(array) shouldBe true
+      decoder.ingestFrame(SparqlResultsFrame.parseFrom(encoder.endFrame().toByteArray))
+      frames += 1
+
+      // The tables really did overflow – otherwise this would not be testing anything
+      frames should be > 1
+      assertResults(collector, Seq("x", "y"), rows)
     }
 
     "throw when decoding a frame without options" in {

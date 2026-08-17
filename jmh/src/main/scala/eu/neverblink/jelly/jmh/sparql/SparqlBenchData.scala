@@ -63,7 +63,12 @@ object SparqlBenchData:
     var rowsInFrame = 0
     var wroteAnyFrame = false
     for row <- data.rows do
-      encoder.appendRow(row)
+      if !encoder.appendRow(row) then
+        // The frame ran out of lookup entries before reaching frameSize rows
+        encoder.endFrame().writeDelimitedTo(out)
+        wroteAnyFrame = true
+        rowsInFrame = 0
+        encoder.appendRow(row)
       rowsInFrame += 1
       if rowsInFrame >= frameSize then
         encoder.endFrame().writeDelimitedTo(out)

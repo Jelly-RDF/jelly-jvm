@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.convert.jena.sparql
 
+import eu.neverblink.jelly.core.RdfProtoSerializationError
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph.{Node, NodeFactory}
 import org.apache.jena.query.{QueryExecutionFactory, QueryFactory, ResultSet}
@@ -118,6 +119,42 @@ class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       gotVars shouldBe vars
       gotRows shouldBe expected(vars, rows)
+    }
+
+    "round-trip a result set that outgrows the lookup tables" in {
+      // Regression: the writer asks for frames of frameSize rows, but the lookup tables of a frame
+      // may fill up first. That used to corrupt the encoder mid-frame; now the writer flushes and
+      // carries on. 400 distinct IRIs against SMALL (a 128-entry name table) and 1000-row frames.
+      val vars = Seq("x")
+      val rows = (1 to 400).map(i => Seq[Node | Null](iri(s"node$i")))
+      val (gotVars, gotRows) = roundTrip(
+        vars,
+        rows,
+        RowSetWriterJelly.Options(
+          eu.neverblink.jelly.core.sparql.JellySparqlOptions.SMALL,
+          1000,
+          true,
+        ),
+      )
+      gotVars shouldBe vars
+      gotRows shouldBe expected(vars, rows)
+    }
+
+    "refuse a non-delimited result set that outgrows the lookup tables" in {
+      // A single frame cannot be flushed early, so there is nothing to do but say so
+      val rows = (1 to 400).map(i => Seq[Node | Null](iri(s"node$i")))
+      val e = intercept[RdfProtoSerializationError] {
+        roundTrip(
+          Seq("x"),
+          rows,
+          RowSetWriterJelly.Options(
+            eu.neverblink.jelly.core.sparql.JellySparqlOptions.SMALL,
+            1000,
+            false,
+          ),
+        )
+      }
+      e.getMessage should include("too large to be written as a single non-delimited frame")
     }
 
     "round-trip an empty result set" in {

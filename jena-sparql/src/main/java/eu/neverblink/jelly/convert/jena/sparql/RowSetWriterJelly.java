@@ -2,6 +2,7 @@ package eu.neverblink.jelly.convert.jena.sparql;
 
 import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.ExperimentalApi;
+import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
@@ -69,7 +70,21 @@ public final class RowSetWriterJelly implements RowSetWriter {
                 for (int i = 0; i < row.length; i++) {
                     row[i] = binding.get(vars.get(i));
                 }
-                encoder.appendRow(row);
+                if (!encoder.appendRow(row)) {
+                    // The frame filled up its lookup tables before reaching frameSize rows
+                    if (!options.delimited()) {
+                        throw new RdfProtoSerializationError(
+                            ("This result set is too large to be written as a single " +
+                                "non-delimited frame: its lookup tables cannot hold all the terms. " +
+                                "Write delimited output, or increase the max lookup table sizes.")
+                        );
+                    }
+                    encoder.endFrame().writeDelimitedTo(codedOutput);
+                    wroteAnyFrame = true;
+                    rowsInFrame = 0;
+                    // An empty frame always takes the row
+                    encoder.appendRow(row);
+                }
                 if (options.delimited() && ++rowsInFrame >= options.frameSize()) {
                     encoder.endFrame().writeDelimitedTo(codedOutput);
                     wroteAnyFrame = true;

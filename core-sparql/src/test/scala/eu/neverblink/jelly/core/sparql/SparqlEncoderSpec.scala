@@ -2,7 +2,6 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.RdfProtoSerializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.RdfIri
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions
 import eu.neverblink.jelly.core.sparql.helpers.{CustomEncoderConverter, MockSparqlConverterFactory}
 import eu.neverblink.jelly.core.sparql.internal.SparqlEncoderImpl
@@ -43,17 +42,17 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       error.getMessage should include("Variables must be set")
     }
 
-    "reject more rows in one frame than the layout encoding can address" in {
+    "refuse more rows in one frame than the layout encoding can address" in {
       val e = encoder()
       e.setVariables(Seq("x").asJava)
       // Pretend the frame is already full – appending 2^27 rows for real would take forever
       val rowCount = classOf[SparqlEncoderImpl[?]].getDeclaredField("rowCount")
       rowCount.setAccessible(true)
       rowCount.setInt(e, (1 << 27) - 1)
-      val error = intercept[RdfProtoSerializationError] {
-        e.appendRow(Array[Node](Iri("https://test.org/a")))
-      }
-      error.getMessage should include("cannot hold more than 134217727 rows")
+      e.appendRow(Array[Node](Iri("https://test.org/a"))) shouldBe false
+      // The row is taken once the frame has been ended
+      e.endFrame().getRowCount shouldBe (1 << 27) - 1
+      e.appendRow(Array[Node](Iri("https://test.org/a"))) shouldBe true
     }
 
     "reject quoted triples appended as a buffer appender" in {
@@ -239,7 +238,23 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
   }
 
   "the lookup table guard" should {
-    "reject a frame whose prefixes do not fit the prefix table" in {
+    "end a frame whose names would not fit the name table" in {
+      val options = SparqlResultsOptions
+        .newInstance()
+        .setMaxNameTableSize(8)
+        .setMaxPrefixTableSize(16)
+        .setMaxDatatypeTableSize(8)
+      val e = encoder(options)
+      e.setVariables(Seq("x").asJava)
+      // 8 names fit; the 9th would have to overwrite one that this frame still refers to
+      for i <- 1 to 8 do
+        withClue(s"row $i: ") {
+          e.appendRow(Array[Node](Iri(s"https://a.org/thing$i"))) shouldBe true
+        }
+      e.appendRow(Array[Node](Iri("https://a.org/thing9"))) shouldBe false
+    }
+
+    "end a frame whose prefixes would not fit the prefix table" in {
       val options = SparqlResultsOptions
         .newInstance()
         .setMaxNameTableSize(1000)
@@ -247,13 +262,12 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
         .setMaxDatatypeTableSize(8)
       val e = encoder(options)
       e.setVariables(Seq("x").asJava)
-      val error = intercept[RdfProtoSerializationError] {
-        for i <- 1 to 10 do e.appendRow(Array[Node](Iri(s"https://ns$i.org/thing")))
-      }
-      error.getMessage should include("prefix lookup table is too small")
+      e.appendRow(Array[Node](Iri("https://ns1.org/thing"))) shouldBe true
+      e.appendRow(Array[Node](Iri("https://ns2.org/thing"))) shouldBe true
+      e.appendRow(Array[Node](Iri("https://ns3.org/thing"))) shouldBe false
     }
 
-    "reject a frame whose datatypes do not fit the datatype table" in {
+    "end a frame whose datatypes would not fit the datatype table" in {
       val options = SparqlResultsOptions
         .newInstance()
         .setMaxNameTableSize(1000)
@@ -261,11 +275,41 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
         .setMaxDatatypeTableSize(2)
       val e = encoder(options)
       e.setVariables(Seq("x").asJava)
+      for i <- 1 to 2 do
+        e.appendRow(Array[Node](DtLiteral("v", Datatype(s"https://test.org/dt$i")))) shouldBe true
+      e.appendRow(Array[Node](DtLiteral("v", Datatype("https://test.org/dt3")))) shouldBe false
+    }
+
+    "not let a disabled lookup table limit the frame size" in {
+      // Regression: the budget of a table of size 0 must not be 0 - varCount, which would
+      // refuse every row after the first
+      val options = SparqlResultsOptions
+        .newInstance()
+        .setMaxNameTableSize(1000)
+        .setMaxPrefixTableSize(0)
+        .setMaxDatatypeTableSize(0)
+      val e = encoder(options)
+      e.setVariables(Seq("x", "y").asJava)
+      for i <- 1 to 20 do
+        withClue(s"row $i: ") {
+          e.appendRow(Array[Node](Iri(s"https://a.org/x$i"), SimpleLiteral(s"v$i"))) shouldBe true
+        }
+      e.endFrame().getRowCount shouldBe 20
+    }
+
+    "throw for a single row that cannot fit in the lookup tables at all" in {
+      // No framing decision can help here: one row needs more names than the table has
+      val options = SparqlResultsOptions
+        .newInstance()
+        .setMaxNameTableSize(8)
+        .setMaxPrefixTableSize(16)
+        .setMaxDatatypeTableSize(8)
+      val e = encoder(options)
+      e.setVariables((1 to 10).map(i => s"v$i").asJava)
       val error = intercept[RdfProtoSerializationError] {
-        for i <- 1 to 10 do
-          e.appendRow(Array[Node](DtLiteral("v", Datatype(s"https://test.org/dt$i"))))
+        e.appendRow((1 to 10).map(i => Iri(s"https://a.org/thing$i")).toArray[Node])
       }
-      error.getMessage should include("datatype lookup table is too small")
+      error.getMessage should include("too small to encode a single row")
     }
 
     "allow reusing the same lookup entries in the next frame" in {

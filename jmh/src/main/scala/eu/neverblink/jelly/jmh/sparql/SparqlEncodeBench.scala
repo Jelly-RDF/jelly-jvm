@@ -61,7 +61,11 @@ class SparqlEncodeBench:
     encoder.setVariables(input.data.variables)
     var rowsInFrame = 0
     for row <- input.data.rows do
-      encoder.appendRow(row)
+      if !encoder.appendRow(row) then
+        // The frame ran out of lookup entries before reaching frameSize rows
+        blackhole.consume(encoder.endFrame())
+        rowsInFrame = 0
+        encoder.appendRow(row)
       rowsInFrame += 1
       if rowsInFrame >= input.frameSize then
         blackhole.consume(encoder.endFrame())

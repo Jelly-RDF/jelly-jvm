@@ -88,12 +88,23 @@ public abstract class SparqlEncoder<TNode> extends EncoderBase<TNode> {
 
     /**
      * Append one row (solution) to the current frame.
+     * <p>
+     * Returns false if the row was NOT appended because the current frame is full: either it
+     * already holds as many rows as the format can address, or its working set of lookup entries
+     * has grown so large that another row could no longer be encoded safely. In that case the
+     * caller must call {@link #endFrame()}, write the frame out, and append the same row again –
+     * a row rejected by an empty frame is always accepted.
+     * <p>
+     * The encoder state is unchanged when false is returned, so retrying is always safe. Ignoring
+     * the result is not: the next call may then throw, and the frame under construction cannot be
+     * salvaged.
      *
      * @param row the values bound to the variables, in the order given to
      *            {@link #setVariables(List)}. Unbound variables must be nulls.
      *            The array is not retained – it may be reused by the caller.
+     * @return true if the row was appended, false if the frame must be ended first
      */
-    public abstract void appendRow(TNode[] row);
+    public abstract boolean appendRow(TNode[] row);
 
     /**
      * Finish the current frame and return it. The returned frame is ready for serialization
