@@ -4,7 +4,6 @@ import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.utils.QuadMaker;
 import eu.neverblink.jelly.core.utils.TripleMaker;
 import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.graph.JenaCompatHelper;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -46,7 +45,7 @@ public final class JenaDecoderConverter
 
     @Override
     public Node makeTripleNode(Node s, Node p, Node o) {
-        return JenaCompatHelper.createTripleNode(s, p, o);
+        return NodeFactory.createTripleTerm(s, p, o);
     }
 
     @Override

@@ -4,8 +4,8 @@ import eu.neverblink.jelly.convert.jena.riot.JellyLanguage
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
-import eu.neverblink.jelly.integration_tests.util.{CompatibilityUtils, Measure}
-import org.apache.jena.graph.{JenaCompatHelper, Node, Triple}
+import eu.neverblink.jelly.integration_tests.util.Measure
+import org.apache.jena.graph.{Node, Triple}
 import org.apache.jena.riot.lang.LabelToNode
 import org.apache.jena.riot.system.{StreamRDFLib, StreamRDFWriter}
 import org.apache.jena.riot.{RDFParser, RIOT}
@@ -26,12 +26,12 @@ object JenaStreamSerDes
 
   override def name: String = "Jena (StreamRDF)"
 
-  override def supportsRdf12: Boolean = CompatibilityUtils.jenaVersion54OrHigher
+  override def supportsRdf12: Boolean = true
 
-  override def supportsRdfStar: Boolean = !CompatibilityUtils.jenaVersion54OrHigher
+  // Jena dropped RDF-star in 5.4.0, in favor of RDF 1.2.
+  override def supportsRdfStar: Boolean = false
 
-  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean =
-    !CompatibilityUtils.jenaVersion54OrHigher
+  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
 
   override def readTriplesW3C(is: InputStream): Seq[Triple] =
     val sink = SinkSeq[Triple]()
@@ -215,7 +215,7 @@ object JenaStreamSerDes
 
   override def getBlankNodeLabel(node: Node): String = node.getBlankNodeLabel
 
-  override def isNodeTriple(node: Node): Boolean = JenaCompatHelper.isNodeTriple(node)
+  override def isNodeTriple(node: Node): Boolean = node.isTripleTerm
 
   override def iterateTerms(node: Triple | Quad): Seq[Node] =
     node match {

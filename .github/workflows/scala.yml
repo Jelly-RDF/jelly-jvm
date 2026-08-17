@@ -23,12 +23,11 @@ jobs:
           # Tests run on JDK 21 (LTS baseline), 25, and the latest release (26).
           # Across those we also exercise the oldest and newest supported Jena/RDF4J versions.
           # The dependency is set by default to Jena 5.6.
-          # See: https://github.com/Jelly-RDF/jelly-jvm/issues/622
           - os: ubuntu-latest
             java: 21
-            # Jena 5.3.0 is the last version supporting RDF-star.
-            # 5.4.0 dropped it in favor of RDF1.2.
-            jena_version: "5.3.0"
+            # Jena 5.4.0 is the oldest supported version - it introduced the RDF 1.2 triple term
+            # API that we use, replacing the RDF-star API of 5.3.x and older.
+            jena_version: "5.4.0"
             # Test the last RDF4J 4.x version.
             rdf4j_version: "4.3.16"
           # Jena 6 requires Java 21.
@@ -61,9 +60,8 @@ jobs:
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
 
-    # This is necessary, as Jena suddenly dropped support for RDF-star in 5.4.0 in favor of RDF1.2.
-    # We want to keep RDF-star support a possibility, so we test against Jena 5.3 as well as the latest version.
-    # See: https://github.com/Jelly-RDF/jelly-jvm/issues/368
+    # Jena and RDF4J occasionally change their APIs between minor versions, so we test against
+    # the oldest and the newest supported version of each.
     - name: Switch Jena and RDF4J versions
       shell: bash
       run: |

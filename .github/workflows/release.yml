@@ -55,10 +55,6 @@ jobs:
           if [ $JELLY_VERSION = "refs/heads/main" ]; then
             JELLY_VERSION="dev"
           fi
-          # For Jena 5.5.0
-          sbt "integrationTests/testOnly *ProtocolConformanceSpec -- -z Jena -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"
-          # Jena 5.3.0 and the rest
-          sed -i "s/lazy val jenaV = .*/lazy val jenaV = \"5.3.0\"/g" build.sbt
           sbt "integrationTests/testOnly *ProtocolConformanceSpec -- -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"
           cd integration-tests/target
           tar -czf conformance_reports.tar.gz reports/

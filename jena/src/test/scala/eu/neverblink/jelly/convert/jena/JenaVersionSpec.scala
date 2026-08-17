@@ -4,7 +4,7 @@ import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class JenaCompatHelperSpec extends AnyWordSpec, Matchers, JenaTest:
+class JenaVersionSpec extends AnyWordSpec, Matchers, JenaTest:
   val isCi: Boolean = System.getenv("CI") != null
   val jenaVersionCI: String = System.getenv("JENA_VERSION")
   val jenaVersionFromClass = org.apache.jena.Jena.VERSION

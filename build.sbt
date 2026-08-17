@@ -63,9 +63,7 @@ lazy val commonSettings = Seq(
   ) ++ wErrorIfCI,
   // Explicitly specify the options for javadoc, otherwise sbt will pass all javacOptions to it
   // which will cause an error.
-  // Exclude org.apache to avoid including JenaCompatHelper.
-  // See: https://github.com/Jelly-RDF/jelly-jvm/issues/622
-  Compile / doc / javacOptions := Seq("-source", "21", "-exclude", "org.apache"),
+  Compile / doc / javacOptions := Seq("-source", "21"),
   assemblyJarName := s"${name.value}.jar",
   assemblyMergeStrategy := {
     case x if x.endsWith("module-info.class") => MergeStrategy.concat
