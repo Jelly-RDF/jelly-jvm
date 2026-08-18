@@ -5,10 +5,8 @@ import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.internal.DecoderBase;
-import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
-import eu.neverblink.jelly.core.proto.v1.RdfNameEntryPacked;
-import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntryPacked;
+import eu.neverblink.jelly.core.proto.v1.RdfLookupEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
@@ -104,21 +102,21 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
         // Apply all lookup entries before decoding any column. In a packed entry only the first
         // value states its id, the rest are sequential.
-        for (final RdfNameEntryPacked entry : frame.getNames()) {
+        for (final RdfLookupEntryPacked entry : frame.getNames()) {
             int id = entry.getId();
             for (final String value : entry.getValues()) {
                 getNameDecoder().updateNames(id, value);
                 id = 0;
             }
         }
-        for (final RdfPrefixEntryPacked entry : frame.getPrefixes()) {
+        for (final RdfLookupEntryPacked entry : frame.getPrefixes()) {
             int id = entry.getId();
             for (final String value : entry.getValues()) {
                 getNameDecoder().updatePrefixes(id, value);
                 id = 0;
             }
         }
-        for (final RdfDatatypeEntryPacked entry : frame.getDatatypes()) {
+        for (final RdfLookupEntryPacked entry : frame.getDatatypes()) {
             int id = entry.getId();
             for (final String value : entry.getValues()) {
                 getDatatypeLookup().update(id, converter.makeDatatype(value));

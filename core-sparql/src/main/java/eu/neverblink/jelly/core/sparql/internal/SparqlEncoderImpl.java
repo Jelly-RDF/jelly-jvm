@@ -6,14 +6,12 @@ import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfDefaultGraph;
 import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
+import eu.neverblink.jelly.core.proto.v1.RdfLookupEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfNameEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
-import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
@@ -26,8 +24,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.function.BiConsumer;
-import java.util.function.IntFunction;
 
 /**
  * Implementation of SparqlEncoder.
@@ -453,9 +449,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     private final long[] usedDatatypes;
 
     // Lookup entries collected for the current frame, packed into runs of consecutive ids
-    private final PackedEntries<RdfNameEntryPacked.Mutable> nameEntries;
-    private final PackedEntries<RdfPrefixEntryPacked.Mutable> prefixEntries;
-    private final PackedEntries<RdfDatatypeEntryPacked.Mutable> datatypeEntries;
+    private final PackedEntries nameEntries = new PackedEntries();
+    private final PackedEntries prefixEntries = new PackedEntries();
+    private final PackedEntries datatypeEntries = new PackedEntries();
 
     // Bit words for 1-based ids up to tableSize, plus the counter slot in front
     private static long[] newUsedIds(int tableSize) {
@@ -488,39 +484,27 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
      * Collects the lookup entries of a frame, coalescing consecutively numbered entries into
      * packed messages. The identifier numbering runs across frames, but the packing does not:
      * every frame starts a new packed entry.
-     *
-     * @param <T> the packed entry message type
      */
-    private static final class PackedEntries<T> {
+    private static final class PackedEntries {
 
-        private final long[] used;
-        private final String kind;
-        private final IntFunction<T> factory;
-        private final BiConsumer<T, String> adder;
-
-        private final ArrayList<T> entries = new ArrayList<>();
-        private T current = null;
+        private final ArrayList<RdfLookupEntryPacked.Mutable> entries = new ArrayList<>();
+        // The entry of the currently open run – always the last element of entries, but kept
+        // in a field so that continuing a run does not go through the ArrayList
+        private RdfLookupEntryPacked.Mutable current = null;
         // State for resolving 0-compressed lookup entry identifiers
         private int lastAssignedId = 0;
 
-        PackedEntries(long[] used, String kind, IntFunction<T> factory, BiConsumer<T, String> adder) {
-            this.used = used;
-            this.kind = kind;
-            this.factory = factory;
-            this.adder = adder;
-        }
-
-        void append(int entryId, String value) {
+        void append(long[] used, String kind, int entryId, String value) {
             final int id = entryId == 0 ? lastAssignedId + 1 : entryId;
             checkAndMarkUsed(used, id, kind);
             if (current != null && id == lastAssignedId + 1) {
                 // Continues the open run – the packed entry numbers it implicitly
-                adder.accept(current, value);
+                current.addValues(value);
             } else {
                 // The id of a fresh entry is passed on as it came, so that a 0 keeps meaning
                 // "continue from the previous frame"
-                current = factory.apply(entryId);
-                adder.accept(current, value);
+                current = RdfLookupEntryPacked.newInstance().setId(entryId);
+                current.addValues(value);
                 entries.add(current);
             }
             lastAssignedId = id;
@@ -543,24 +527,6 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         usedNames = newUsedIds(options.getMaxNameTableSize());
         usedPrefixes = newUsedIds(options.getMaxPrefixTableSize());
         usedDatatypes = newUsedIds(options.getMaxDatatypeTableSize());
-        nameEntries = new PackedEntries<>(
-            usedNames,
-            "name",
-            id -> RdfNameEntryPacked.newInstance().setId(id),
-            RdfNameEntryPacked.Mutable::addValues
-        );
-        prefixEntries = new PackedEntries<>(
-            usedPrefixes,
-            "prefix",
-            id -> RdfPrefixEntryPacked.newInstance().setId(id),
-            RdfPrefixEntryPacked.Mutable::addValues
-        );
-        datatypeEntries = new PackedEntries<>(
-            usedDatatypes,
-            "datatype",
-            id -> RdfDatatypeEntryPacked.newInstance().setId(id),
-            RdfDatatypeEntryPacked.Mutable::addValues
-        );
     }
 
     @Override
@@ -687,13 +653,13 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         }
 
         frame.setRowCount(rowCount);
-        for (final RdfNameEntryPacked.Mutable entry : nameEntries.entries) {
+        for (final RdfLookupEntryPacked.Mutable entry : nameEntries.entries) {
             frame.addNames(entry);
         }
-        for (final RdfPrefixEntryPacked.Mutable entry : prefixEntries.entries) {
+        for (final RdfLookupEntryPacked.Mutable entry : prefixEntries.entries) {
             frame.addPrefixes(entry);
         }
-        for (final RdfDatatypeEntryPacked.Mutable entry : datatypeEntries.entries) {
+        for (final RdfLookupEntryPacked.Mutable entry : datatypeEntries.entries) {
             frame.addDatatypes(entry);
         }
 
@@ -916,17 +882,17 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
 
     @Override
     public void appendNameEntry(RdfNameEntry nameEntry) {
-        nameEntries.append(nameEntry.getId(), nameEntry.getValue());
+        nameEntries.append(usedNames, "name", nameEntry.getId(), nameEntry.getValue());
     }
 
     @Override
     public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
-        prefixEntries.append(prefixEntry.getId(), prefixEntry.getValue());
+        prefixEntries.append(usedPrefixes, "prefix", prefixEntry.getId(), prefixEntry.getValue());
     }
 
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
-        datatypeEntries.append(datatypeEntry.getId(), datatypeEntry.getValue());
+        datatypeEntries.append(usedDatatypes, "datatype", datatypeEntry.getId(), datatypeEntry.getValue());
     }
 
     @Override
