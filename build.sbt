@@ -478,12 +478,12 @@ lazy val jenaSparql = (project in file("jena-sparql"))
       // Integration with Fuseki is optional, so include this dep as "provided"
       "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
     ),
-    Test / fork := true,
     commonSettings,
     commonJavaSettings,
   )
-  // Test-time dependency on the core-sparql test sources for the shared result set generator
-  .dependsOn(coreSparql % "compile->compile;test->test", jena)
+  // Test-time dependency on the core-sparql test sources for the shared result set generator, and
+  // on the jena test sources for the JenaTest trait, which initializes Jena exactly once.
+  .dependsOn(coreSparql % "compile->compile;test->test", jena % "compile->compile;test->test")
 
 // jena-plugin has no sources of its own – it only fat-jars the Jelly modules to be put in the
 // Jena's lib directory.

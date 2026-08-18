@@ -1,11 +1,11 @@
 package eu.neverblink.jelly.convert.jena.sparql
 
+import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants
 import org.apache.jena.fuseki.DEF
 import org.apache.jena.fuseki.main.FusekiServer
 import org.apache.jena.query.DatasetFactory
 import org.apache.jena.sparql.core.Var
-import org.apache.jena.sys.JenaSystem
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -15,12 +15,12 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import scala.jdk.CollectionConverters.*
 
 /** Tests that Fuseki serves Jelly-SPARQL when the client asks for it in the Accept header.
   */
-class JellySparqlFusekiSpec extends AnyWordSpec, Matchers, BeforeAndAfterAll:
-  JenaSystem.init()
+class JellySparqlFusekiSpec extends AnyWordSpec, Matchers, BeforeAndAfterAll, JenaTest:
 
   private val jellyMediaRange = JellySparqlFusekiLifecycle.JELLY_SPARQL_MEDIA_RANGE
   private val jellyContentType = JellySparqlConstants.JELLY_SPARQL_CONTENT_TYPE
@@ -36,17 +36,25 @@ class JellySparqlFusekiSpec extends AnyWordSpec, Matchers, BeforeAndAfterAll:
         null,
         "N-TRIPLES",
       )
-    // Port 0 – let the OS pick a free port, so that the test doesn't clash with anything
-    server = FusekiServer.create().port(0).add("/ds", dataset).build().start()
+    // Port 0 – let the OS pick a free port, so that the test doesn't clash with anything.
+    server = FusekiServer.create().port(0).loopback(true).add("/ds", dataset).build().start()
 
   override def afterAll(): Unit =
     if server != null then server.stop()
 
+  // Time out rather than wait forever – a test that hangs blocks the whole build.
+  private val client =
+    HttpClient.newBuilder.connectTimeout(Duration.ofSeconds(30)).build()
+
   private def query(queryString: String, accept: String): HttpResponse[Array[Byte]] =
-    val url = s"http://localhost:${server.getPort}/ds?query=" +
+    val url = s"http://127.0.0.1:${server.getPort}/ds?query=" +
       URLEncoder.encode(queryString, StandardCharsets.UTF_8)
-    val request = HttpRequest.newBuilder(URI.create(url)).header("Accept", accept).build()
-    HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofByteArray())
+    val request = HttpRequest
+      .newBuilder(URI.create(url))
+      .header("Accept", accept)
+      .timeout(Duration.ofSeconds(40))
+      .build()
+    client.send(request, HttpResponse.BodyHandlers.ofByteArray())
 
   private def contentTypeOf(response: HttpResponse[Array[Byte]]): String =
     response.headers.firstValue("Content-Type").orElse("")
