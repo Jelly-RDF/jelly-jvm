@@ -17,7 +17,6 @@ import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
-import eu.neverblink.protoc.java.runtime.ArrayListMessageCollection;
 import eu.neverblink.protoc.java.runtime.MessageCollection;
 import eu.neverblink.protoc.java.runtime.RepeatedInt;
 import eu.neverblink.protoc.java.runtime.RepeatedString;
@@ -61,8 +60,16 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     private static final RdfIri ZERO_IRI = RdfIri.newInstance();
 
+    // Returned by the literal makers as a type marker – the literal's parts go into the
+    // column buffers, not into the returned message
+    private static final RdfLiteral LITERAL_MARKER = RdfLiteral.newInstance();
+
     // Not a valid datatype lookup id – marks a literal column that cannot state one datatype
     private static final int MIXED_DATATYPES = -1;
+    // The column datatype of a column that has no literals yet
+    private static final int DATATYPE_NONE = -2;
+    // Per-value marker in litDatatypes for a language-tagged literal
+    private static final int LANG_LITERAL = -1;
 
     /**
      * Reusable store for the SparqlTerm wrappers of a polymorphic column.
@@ -129,6 +136,66 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     }
 
     /**
+     * The same reusable store, for the RdfLiteral messages of a mixed-datatype literal column
+     * or a polymorphic column. Literal values are kept as buffer entries while the frame is
+     * built (see ColumnState), so messages only get materialized here, at frame end.
+     */
+    private static final class LiteralBuffer
+        extends AbstractCollection<RdfLiteral>
+        implements MessageCollection<RdfLiteral, RdfLiteral.Mutable>
+    {
+
+        private RdfLiteral.Mutable[] literals = new RdfLiteral.Mutable[0];
+        private int size = 0;
+
+        @Override
+        public RdfLiteral.Mutable appendMessage() {
+            if (size == literals.length) {
+                literals = Arrays.copyOf(literals, Math.max(8, literals.length * 2));
+            }
+            RdfLiteral.Mutable literal = literals[size];
+            if (literal == null) {
+                literal = RdfLiteral.newInstance();
+                literals[size] = literal;
+            } else {
+                literal.clear();
+            }
+            size++;
+            return literal;
+        }
+
+        @Override
+        public int size() {
+            return size;
+        }
+
+        @Override
+        public void clear() {
+            size = 0;
+        }
+
+        @Override
+        public Iterator<RdfLiteral> iterator() {
+            return new Iterator<>() {
+                private int index = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return index < size;
+                }
+
+                @Override
+                public RdfLiteral next() {
+                    if (index >= size) {
+                        throw new NoSuchElementException();
+                    }
+                    return literals[index++];
+                }
+            };
+        }
+    }
+
+    /**
      * Reusable store for the RdfIri messages a polymorphic column wraps in its SparqlTerms.
      * IRI values are kept as plain ints while the frame is built (see ColumnState), so the
      * messages only get materialized here, at frame end, and only for polymorphic columns.
@@ -175,10 +242,16 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         // resolved at frame end, from rawPrefixIds).
         int lastNameId = 0;
 
-        // Encoded run values of the current frame. Strings for bnodes, RdfLiterals for
-        // literals. An IRI is stored as the shared ZERO_IRI marker, with its ids pushed into
-        // nameIds/rawPrefixIds instead.
-        final ArrayList<Object> values = new ArrayList<>();
+        // Datatype shared by all literals of the column so far: a lookup id, 0 for simple
+        // literals, DATATYPE_NONE before the first literal, or MIXED_DATATYPES.
+        int columnDatatype = DATATYPE_NONE;
+
+        // Term type (TYPE_IRI/BNODE/LITERAL) of each encoded value of the frame, in order.
+        // Only read back for polymorphic columns – the values themselves sit in the per-type
+        // buffers below, and a mono-typed column reads its buffer directly.
+        byte[] tags = new byte[0];
+        int valueCount = 0;
+
         // Layout of the current frame
         final RepeatedInt layout = RepeatedInt.newEmptyInstance();
 
@@ -187,17 +260,29 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
         // Uncompressed prefix ids of the frame's IRI values, parallel to nameIds
         final RepeatedInt rawPrefixIds = RepeatedInt.newEmptyInstance();
+        // Datatype lookup id per literal value: 0 for a simple literal, LANG_LITERAL for a
+        // language-tagged one (its tag then sits in litLangtags)
+        final RepeatedInt litDatatypes = RepeatedInt.newEmptyInstance();
+        // Language tags of the frame's language-tagged literals, in order
+        final RepeatedString litLangtags = RepeatedString.newEmptyInstance();
 
-        // Output buffers handed straight to the column messages of the frame being closed, instead
-        // of a fresh one per frame. A column has exactly one type per frame, so only the buffer
-        // matching that type is ever filled. They keep their capacity across frames.
+        // Buffers handed straight to the column messages of the frame being closed, instead
+        // of a fresh one per frame. They keep their capacity across frames.
         final RepeatedInt prefixIds = RepeatedInt.newEmptyInstance();
+        // Bnode labels and literal lexical forms, appended at encode time in value order.
+        // A bnode or single-datatype literal column hands this buffer to its message as-is;
+        // a mixed-datatype or polymorphic column reads it back with a cursor.
         final RepeatedString strings = RepeatedString.newEmptyInstance();
-        final MessageCollection<RdfLiteral, RdfLiteral.Mutable> literals = new ArrayListMessageCollection<>(
-            RdfLiteral::newInstance
-        );
+        final LiteralBuffer literals = new LiteralBuffer();
         final TermBuffer terms = new TermBuffer();
         final IriBuffer polyIris = new IriBuffer();
+
+        void addValueTag(byte tag) {
+            if (valueCount == tags.length) {
+                tags = Arrays.copyOf(tags, Math.max(16, tags.length * 2));
+            }
+            tags[valueCount++] = tag;
+        }
 
         void resetFrameState() {
             runNode = null;
@@ -206,10 +291,13 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             runIsUnbound = false;
             skip = 0;
             lastNameId = 0;
-            values.clear();
+            columnDatatype = DATATYPE_NONE;
+            valueCount = 0;
             layout.clear();
             nameIds.clear();
             rawPrefixIds.clear();
+            litDatatypes.clear();
+            litLangtags.clear();
             prefixIds.clear();
             strings.clear();
             literals.clear();
@@ -219,10 +307,11 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     }
 
     /**
-     * NodeEncoder passed to the converter: same as the underlying encoder, except that IRIs
-     * go straight into the current column's int buffers (with the next-name inference already
-     * applied), and all lookup references are tracked for the frame working-set check.
-     * The RdfIri return value is only the shared ZERO_IRI, serving as a type marker.
+     * NodeEncoder passed to the converter. Unlike the underlying encoder, it does not build
+     * proto messages: every term's parts go straight into the current column's buffers, and
+     * all lookup references are tracked for the frame working-set check. The return values
+     * only carry the term type back to encodeValue – shared markers for IRIs and literals,
+     * the label itself for bnodes.
      */
     private final class ColumnNodeEncoder implements NodeEncoder<TNode> {
 
@@ -257,24 +346,54 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
 
         @Override
         public String makeBlankNode(String label) {
-            return getNodeEncoder().makeBlankNode(label);
+            final String bnode = getNodeEncoder().makeBlankNode(label);
+            // Straight into the string buffer – a bnode column hands the buffer to its
+            // message as-is, without a copy pass at frame end.
+            currentColumn.strings.add(bnode);
+            return bnode;
         }
 
         @Override
         public RdfLiteral makeSimpleLiteral(String lex) {
-            return getNodeEncoder().makeSimpleLiteral(lex);
+            // No lookup table involved – the underlying encoder (and its cache) is skipped
+            final ColumnState col = currentColumn;
+            col.strings.add(lex);
+            col.litDatatypes.add(0);
+            trackColumnDatatype(col, 0);
+            return LITERAL_MARKER;
         }
 
         @Override
         public RdfLiteral makeLangLiteral(TNode lit, String lex, String lang) {
-            return getNodeEncoder().makeLangLiteral(lit, lex, lang);
+            final ColumnState col = currentColumn;
+            col.strings.add(lex);
+            col.litDatatypes.add(LANG_LITERAL);
+            col.litLangtags.add(lang);
+            // A language-tagged literal always forces the per-value literal representation
+            col.columnDatatype = MIXED_DATATYPES;
+            return LITERAL_MARKER;
         }
 
         @Override
         public RdfLiteral makeDtLiteral(TNode lit, String lex, String dt) {
+            // The underlying encoder is still consulted for the datatype lookup id (and the
+            // lookup entry emission that comes with it)
             final RdfLiteral literal = getNodeEncoder().makeDtLiteral(lit, lex, dt);
-            usedDatatypes.mark(literal.getDatatype());
-            return literal;
+            final int datatype = literal.getDatatype();
+            usedDatatypes.mark(datatype);
+            final ColumnState col = currentColumn;
+            col.strings.add(lex);
+            col.litDatatypes.add(datatype);
+            trackColumnDatatype(col, datatype);
+            return LITERAL_MARKER;
+        }
+
+        private void trackColumnDatatype(ColumnState col, int datatype) {
+            if (col.columnDatatype == DATATYPE_NONE) {
+                col.columnDatatype = datatype;
+            } else if (col.columnDatatype != datatype) {
+                col.columnDatatype = MIXED_DATATYPES;
+            }
         }
 
         @Override
@@ -607,11 +726,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             if (types[i] == TYPE_BNODE) {
                 final ColumnState col = columns[i];
                 final SparqlBnodeColumn.Mutable column = SparqlBnodeColumn.newInstance();
-                final RepeatedString labels = col.strings;
-                for (final Object value : col.values) {
-                    labels.add((String) value);
-                }
-                column.setValues(labels);
+                // The labels were appended to the buffer as they were encoded
+                column.setValues(col.strings);
                 column.setLayouts(col.layout);
                 frame.addBnodeColumns(column);
             }
@@ -620,22 +736,27 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             if (types[i] == TYPE_LITERAL) {
                 final ColumnState col = columns[i];
                 final SparqlLiteralColumn.Mutable column = SparqlLiteralColumn.newInstance();
-                final List<Object> values = col.values;
                 // If every value has the same datatype – the usual case – the column states it
-                // once and carries only the lexical forms.
-                final int datatype = commonDatatype(values);
+                // once and carries only the lexical forms, already sitting in the buffer.
+                // An empty column counts as simple literals – both forms are empty anyway.
+                final int datatype = col.columnDatatype == DATATYPE_NONE ? 0 : col.columnDatatype;
                 if (datatype == MIXED_DATATYPES) {
-                    final MessageCollection<RdfLiteral, RdfLiteral.Mutable> literals = col.literals;
-                    for (final Object value : values) {
-                        literals.add((RdfLiteral) value);
+                    final LiteralBuffer literals = col.literals;
+                    final int litCount = col.litDatatypes.size();
+                    int langIndex = 0;
+                    for (int j = 0; j < litCount; j++) {
+                        final RdfLiteral.Mutable literal = literals.appendMessage().setLex(col.strings.get(j));
+                        final int dt = col.litDatatypes.get(j);
+                        if (dt == LANG_LITERAL) {
+                            literal.setLangtag(col.litLangtags.get(langIndex++));
+                        } else if (dt != 0) {
+                            literal.setDatatype(dt);
+                        }
+                        // dt == 0 is a simple literal, which carries only its lexical form
                     }
                     column.setValues(literals);
                 } else {
-                    final RepeatedString lexValues = col.strings;
-                    for (final Object value : values) {
-                        lexValues.add(((RdfLiteral) value).getLex());
-                    }
-                    column.setLexValues(lexValues);
+                    column.setLexValues(col.strings);
                     if (datatype != 0) {
                         column.setDatatype(datatype);
                     }
@@ -650,28 +771,43 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                 final ColumnState col = columns[i];
                 final SparqlPolyColumn.Mutable column = SparqlPolyColumn.newInstance();
                 final TermBuffer terms = col.terms;
-                // Cursor into the column's IRI ids: the values list holds only markers for
-                // IRIs, the ids themselves sit in nameIds/rawPrefixIds in the same order.
+                // Cursors into the per-type buffers: the tags say which buffer the next value
+                // sits in. Bnode labels and literal lexical forms share the string buffer, in
+                // encoding order.
                 int iriIndex = 0;
+                int stringIndex = 0;
+                int litIndex = 0;
+                int langIndex = 0;
                 // -1 forces the first IRI of the column to carry its prefix id
                 int prevPrefix = -1;
-                for (final Object value : col.values) {
+                for (int v = 0; v < col.valueCount; v++) {
                     final SparqlTerm.Mutable term = terms.appendMessage();
-                    if (value instanceof RdfIri) {
-                        final int nameId = col.nameIds.get(iriIndex);
-                        final int rawPrefix = col.rawPrefixIds.get(iriIndex);
-                        iriIndex++;
-                        final int prefixId = rawPrefix == prevPrefix ? 0 : rawPrefix;
-                        prevPrefix = rawPrefix;
-                        if (prefixId == 0 && nameId == 0) {
-                            term.setIri(ZERO_IRI);
-                        } else {
-                            term.setIri(col.polyIris.append().setPrefixId(prefixId).setNameId(nameId));
+                    switch (col.tags[v]) {
+                        case TYPE_IRI -> {
+                            final int nameId = col.nameIds.get(iriIndex);
+                            final int rawPrefix = col.rawPrefixIds.get(iriIndex);
+                            iriIndex++;
+                            final int prefixId = rawPrefix == prevPrefix ? 0 : rawPrefix;
+                            prevPrefix = rawPrefix;
+                            if (prefixId == 0 && nameId == 0) {
+                                term.setIri(ZERO_IRI);
+                            } else {
+                                term.setIri(col.polyIris.append().setPrefixId(prefixId).setNameId(nameId));
+                            }
                         }
-                    } else if (value instanceof String bnode) {
-                        term.setBnode(bnode);
-                    } else {
-                        term.setLiteral((RdfLiteral) value);
+                        case TYPE_BNODE -> term.setBnode(col.strings.get(stringIndex++));
+                        default -> {
+                            final RdfLiteral.Mutable literal = col.literals
+                                .appendMessage()
+                                .setLex(col.strings.get(stringIndex++));
+                            final int dt = col.litDatatypes.get(litIndex++);
+                            if (dt == LANG_LITERAL) {
+                                literal.setLangtag(col.litLangtags.get(langIndex++));
+                            } else if (dt != 0) {
+                                literal.setDatatype(dt);
+                            }
+                            term.setLiteral(literal);
+                        }
                     }
                 }
                 column.setValues(terms);
@@ -736,7 +872,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         } else if (col.type != TYPE_POLY && col.type != valueType) {
             col.type = TYPE_POLY;
         }
-        col.values.add(encoded);
+        col.addValueTag(valueType);
     }
 
     private void finalizeRun(ColumnState col) {
@@ -760,32 +896,6 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             col.layout.add(len - MAX_INLINE_LEN);
         }
         col.skip = 0;
-    }
-
-    /**
-     * Returns the datatype id shared by all values of a literal column (0 for simple literals),
-     * or MIXED_DATATYPES if the values have more than one datatype or any of them is
-     * language-tagged. An empty column counts as simple literals – both forms are empty anyway.
-     */
-    private static int commonDatatype(List<Object> values) {
-        int datatype = 0;
-        boolean first = true;
-        for (final Object value : values) {
-            final RdfLiteral literal = (RdfLiteral) value;
-            final int kind = literal.getLiteralKindFieldNumber();
-            if (kind == RdfLiteral.LANGTAG) {
-                return MIXED_DATATYPES;
-            }
-            // A simple literal has no literal kind set at all
-            final int dt = kind == RdfLiteral.DATATYPE ? literal.getDatatype() : 0;
-            if (first) {
-                datatype = dt;
-                first = false;
-            } else if (dt != datatype) {
-                return MIXED_DATATYPES;
-            }
-        }
-        return datatype;
     }
 
     @Override
