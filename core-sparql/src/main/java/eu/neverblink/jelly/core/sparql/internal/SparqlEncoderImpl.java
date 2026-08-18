@@ -19,7 +19,6 @@ import eu.neverblink.protoc.java.runtime.MessageCollection;
 import eu.neverblink.protoc.java.runtime.RepeatedInt;
 import eu.neverblink.protoc.java.runtime.RepeatedString;
 import java.util.AbstractCollection;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -483,11 +482,17 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
      * packed messages. The identifier numbering runs across frames, but the packing does not:
      * every frame starts a new packed entry.
      */
-    private static final class PackedEntries {
+    private static final class PackedEntries
+        extends AbstractCollection<RdfLookupEntryPacked>
+        implements MessageCollection<RdfLookupEntryPacked, RdfLookupEntryPacked.Mutable>
+    {
 
-        private final ArrayList<RdfLookupEntryPacked.Mutable> entries = new ArrayList<>();
-        // The entry of the currently open run – always the last element of entries, but kept
-        // in a field so that continuing a run does not go through the ArrayList
+        // Pooled packed entry messages, reused across frames: the first `size` hold the
+        // current frame's entries, the rest are kept around for the next frames.
+        private RdfLookupEntryPacked.Mutable[] entries = new RdfLookupEntryPacked.Mutable[0];
+        private int size = 0;
+        // The entry of the currently open run – always entries[size - 1], but kept in a
+        // field so that continuing a run does not go through the array
         private RdfLookupEntryPacked.Mutable current = null;
         // State for resolving 0-compressed lookup entry identifiers
         private int lastAssignedId = 0;
@@ -501,16 +506,60 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             } else {
                 // The id of a fresh entry is passed on as it came, so that a 0 keeps meaning
                 // "continue from the previous frame"
-                current = RdfLookupEntryPacked.newInstance().setId(entryId);
+                current = appendMessage().setId(entryId);
                 current.addValues(value);
-                entries.add(current);
             }
             lastAssignedId = id;
         }
 
-        void resetFrameState() {
-            entries.clear();
+        @Override
+        public RdfLookupEntryPacked.Mutable appendMessage() {
+            if (size == entries.length) {
+                entries = Arrays.copyOf(entries, Math.max(8, entries.length * 2));
+            }
+            RdfLookupEntryPacked.Mutable entry = entries[size];
+            if (entry == null) {
+                entry = RdfLookupEntryPacked.newInstance();
+                entries[size] = entry;
+            } else {
+                // Same reuse rule as the frame buffers: clear resets the previous frame's
+                // values and the cached serialized size
+                entry.clear();
+            }
+            size++;
+            return entry;
+        }
+
+        @Override
+        public int size() {
+            return size;
+        }
+
+        @Override
+        public void clear() {
+            // Keeps the messages around for the next frame
+            size = 0;
             current = null;
+        }
+
+        @Override
+        public Iterator<RdfLookupEntryPacked> iterator() {
+            return new Iterator<>() {
+                private int index = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return index < size;
+                }
+
+                @Override
+                public RdfLookupEntryPacked next() {
+                    if (index >= size) {
+                        throw new NoSuchElementException();
+                    }
+                    return entries[index++];
+                }
+            };
         }
     }
 
@@ -599,9 +648,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         for (final ColumnState col : columns) {
             col.resetFrameState();
         }
-        nameEntries.resetFrameState();
-        prefixEntries.resetFrameState();
-        datatypeEntries.resetFrameState();
+        nameEntries.clear();
+        prefixEntries.clear();
+        datatypeEntries.clear();
         resetUsedIds();
         rowCount = 0;
     }
@@ -655,15 +704,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         }
 
         frame.setRowCount(rowCount);
-        for (final RdfLookupEntryPacked.Mutable entry : nameEntries.entries) {
-            frame.addNames(entry);
-        }
-        for (final RdfLookupEntryPacked.Mutable entry : prefixEntries.entries) {
-            frame.addPrefixes(entry);
-        }
-        for (final RdfLookupEntryPacked.Mutable entry : datatypeEntries.entries) {
-            frame.addDatatypes(entry);
-        }
+        frame.setNames(nameEntries);
+        frame.setPrefixes(prefixEntries);
+        frame.setDatatypes(datatypeEntries);
 
         // Emit the columns grouped by type, in variable order within each group – the same
         // order in which the column indices were assigned.
@@ -823,7 +866,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             return;
         }
         // runNode != null implies an active bound run
-        if (col.runNode != null && node.equals(col.runNode)) {
+        if (node.equals(col.runNode)) {
             col.runLength++;
             return;
         }
