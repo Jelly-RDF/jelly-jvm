@@ -12,7 +12,7 @@
 
 ## Installation
 
-The **[latest version (3.7.3) of the Jelly-Neo4j plugin](https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3,7.3/jelly-neo4j-plugin.jar)** is compatible with Neo4j versions {{ neo4j_version('min') }}–{{ neo4j_version('max') }}[^1]. Jelly-Neo4j depends on the [neosemantics](https://neo4j.com/labs/neosemantics/) plugin, which must also be installed. Neosemantics must have the same version as the Neo4j database.
+The **[latest version (3.7.3) of the Jelly-Neo4j plugin](https://github.com/Jelly-RDF/jelly-jvm/releases/download/v3.7.3/jelly-neo4j-plugin.jar)** is compatible with Neo4j versions {{ neo4j_version('min') }}–{{ neo4j_version('max') }}[^1]. Jelly-Neo4j depends on the [neosemantics](https://neo4j.com/labs/neosemantics/) plugin, which must also be installed. Neosemantics must have the same version as the Neo4j database.
 
 === "Neo4j Desktop"
 
