@@ -42,7 +42,7 @@ class JellySparqlFusekiSpec extends AnyWordSpec, Matchers, BeforeAndAfterAll, Je
   override def afterAll(): Unit =
     if server != null then server.stop()
 
-  // Time out rather than wait forever – a test that hangs blocks the whole build.
+  // Set a timeout for the HTTP client, so that we don't hang forever if the server doesn't respond.
   private val client =
     HttpClient.newBuilder.connectTimeout(Duration.ofSeconds(30)).build()
 
