@@ -478,6 +478,7 @@ lazy val jenaSparql = (project in file("jena-sparql"))
       // Integration with Fuseki is optional, so include this dep as "provided"
       "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
     ),
+    Test / fork := true,
     commonSettings,
     commonJavaSettings,
   )
