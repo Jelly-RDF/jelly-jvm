@@ -37,7 +37,7 @@ object RdfTripleRecursiveBench:
         makeNestedTriple(maxDepth).writeDelimitedTo(os)
       toParse = os.toByteArray
 
-class RdfTripleRecursiveBench:
+class RdfTripleRecursiveBench extends CommonParams:
   import RdfTripleRecursiveBench.*
 
   @Benchmark

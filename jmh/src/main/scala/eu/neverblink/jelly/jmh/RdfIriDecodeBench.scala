@@ -40,7 +40,7 @@ object RdfIriDecodeBench:
         })
         .toArray
 
-class RdfIriDecodeBench:
+class RdfIriDecodeBench extends CommonParams:
   import RdfIriDecodeBench.*
 
   @Benchmark
