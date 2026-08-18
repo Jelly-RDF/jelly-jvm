@@ -127,9 +127,13 @@ def doPrepareGoogleProtos(baseDir: File): Seq[File] = {
       outputFile
     }
     .map { file =>
-      // Append java options to the file
-      val outPackage = "eu.neverblink.jelly.core.proto.google.v1" +
-        (if (file.getName == "patch.proto") ".patch" else "")
+      // Append java options to the file. The sub-package must match the one the crunchy plugin
+      // uses for the same file, so that the two sets of classes can live side by side.
+      val outPackage = "eu.neverblink.jelly.core.proto.google.v1" + (file.getName match {
+        case "patch.proto" => ".patch"
+        case "sparql.proto" => ".sparql"
+        case _ => ""
+      })
       val content = IO.read(file)
       val newContent = content +
         f"""
@@ -440,7 +444,42 @@ lazy val coreSparql = (project in file("core-sparql"))
     commonSettings,
     commonJavaSettings,
   )
-  .dependsOn(core % "compile->compile;test->test")
+  .dependsOn(
+    core % "compile->compile;test->test",
+    // Test-time dependency on Google protos for SparqlProtoSpec
+    coreSparqlProtosGoogle % "test->compile",
+  )
+
+lazy val coreSparqlProtosGoogle = (project in file("core-sparql-protos-google"))
+  .enablePlugins(ProtobufPlugin)
+  .settings(
+    name := "jelly-core-sparql-protos-google",
+    description := "Optional proto classes for Jelly-SPARQL (sparql.proto) compiled with Google's " +
+      "official Java protoc plugin. This is not needed, unless you need some functionality " +
+      "that is only available with the more heavyweight, Google-style proto classes, like " +
+      "support for the Protobuf Text Format.",
+    libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
+    prepareGoogleProtos := Def.uncached { doPrepareGoogleProtos(baseDirectory.value) },
+    Compile / compile := Def.uncached((Compile / compile).dependsOn(prepareGoogleProtos).value),
+    ProtobufConfig / protobufRunProtoc := Def.uncached(
+      (ProtobufConfig / protobufRunProtoc).dependsOn(
+        prepareGoogleProtos,
+      ).value,
+    ),
+    // See the comment in corePatchProtosGoogle: the scan of src/main/protobuf has to be ordered
+    // after prepareGoogleProtos, or a clean checkout generates nothing.
+    ProtobufConfig / protobufSources := Def.uncached(
+      (ProtobufConfig / protobufSources).dependsOn(prepareGoogleProtos).value,
+    ),
+    ProtobufConfig / protobufIncludeFilters := Seq(
+      Glob(baseDirectory.value.toPath) / "**" / "sparql.proto",
+    ),
+    // Don't throw errors, because Google's protoc generates code with a lot of warnings
+    javacOptions := javacOptions.value.filterNot(_ == "-Werror"),
+    commonSettings,
+    commonJavaSettings,
+    // sparql.proto imports rdf.proto and rdf2.proto, whose Google classes live in coreProtosGoogle
+  ).dependsOn(coreProtosGoogle)
 
 lazy val jena = (project in file("jena"))
   .settings(
@@ -736,6 +775,7 @@ lazy val root = (project in file("."))
     corePatch,
     corePatchProtosGoogle,
     coreSparql,
+    coreSparqlProtosGoogle,
     jena,
     jenaPatch,
     jenaSparql,
