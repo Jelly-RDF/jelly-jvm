@@ -225,21 +225,39 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         }
     }
 
+    /**
+     * The buffers only a mixed-datatype or polymorphic column needs: the SparqlTerm wrappers
+     * of a poly column and the pools for the messages materialized at frame end. Split out of
+     * ColumnState and created lazily, so that the mono-typed columns – the usual case – stay
+     * within one cache line and never allocate any of this.
+     */
+    private static final class PolyBuffers {
+
+        final TermBuffer terms = new TermBuffer();
+        final LiteralBuffer literals = new LiteralBuffer();
+        final IriBuffer iris = new IriBuffer();
+
+        void resetFrameState() {
+            terms.clear();
+            literals.clear();
+            iris.clear();
+        }
+    }
+
     private static final class ColumnState {
 
         // Column type. Sticky once set, only ever escalated to TYPE_POLY.
         byte type = TYPE_UNSET;
 
-        // Run-length state
+        // Run-length state. A run is active while runLength > 0; runNode == null then means
+        // a run of unbound cells. Whenever runLength is 0, runNode is null too.
         Object runNode = null;
         int runLength = 0;
-        boolean runIsUnbound = false;
-        boolean runActive = false;
         // Number of values emitted exactly once since the last layout exception
         int skip = 0;
 
         // Per-frame, per-column IRI inference state (the prefix side of the inference is
-        // resolved at frame end, from rawPrefixIds).
+        // resolved at frame end, from the aux ids).
         int lastNameId = 0;
 
         // Datatype shared by all literals of the column so far: a lookup id, 0 for simple
@@ -258,24 +276,26 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         // Name ids of the frame's IRI values, with the next-name inference already applied
         // (0 means "previous + 1").
         final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
-        // Uncompressed prefix ids of the frame's IRI values, parallel to nameIds
-        final RepeatedInt rawPrefixIds = RepeatedInt.newEmptyInstance();
-        // Datatype lookup id per literal value: 0 for a simple literal, LANG_LITERAL for a
-        // language-tagged one (its tag then sits in litLangtags)
-        final RepeatedInt litDatatypes = RepeatedInt.newEmptyInstance();
-        // Language tags of the frame's language-tagged literals, in order
-        final RepeatedString litLangtags = RepeatedString.newEmptyInstance();
-
-        // Buffers handed straight to the column messages of the frame being closed, instead
-        // of a fresh one per frame. They keep their capacity across frames.
-        final RepeatedInt prefixIds = RepeatedInt.newEmptyInstance();
-        // Bnode labels and literal lexical forms, appended at encode time in value order.
-        // A bnode or single-datatype literal column hands this buffer to its message as-is;
-        // a mixed-datatype or polymorphic column reads it back with a cursor.
+        // One auxiliary int per IRI or literal value, in value order: the uncompressed prefix
+        // id of an IRI, or the datatype lookup id of a literal (0 for a simple literal,
+        // LANG_LITERAL for a language-tagged one). Bnodes add nothing. A mono-typed column
+        // thus sees only its own kind of entry.
+        final RepeatedInt auxIds = RepeatedInt.newEmptyInstance();
+        // Bnode labels, literal lexical forms and language tags (right after their lexical
+        // form), appended at encode time in value order. A bnode or single-datatype literal
+        // column hands this buffer to its message as-is – safe, because a language tag forces
+        // MIXED_DATATYPES; a mixed-datatype or polymorphic column reads it back with a cursor.
         final RepeatedString strings = RepeatedString.newEmptyInstance();
-        final LiteralBuffer literals = new LiteralBuffer();
-        final TermBuffer terms = new TermBuffer();
-        final IriBuffer polyIris = new IriBuffer();
+
+        // Lazily created – see PolyBuffers
+        private PolyBuffers poly = null;
+
+        PolyBuffers poly() {
+            if (poly == null) {
+                poly = new PolyBuffers();
+            }
+            return poly;
+        }
 
         void addValueTag(byte tag) {
             if (valueCount == tags.length) {
@@ -287,22 +307,17 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         void resetFrameState() {
             runNode = null;
             runLength = 0;
-            runActive = false;
-            runIsUnbound = false;
             skip = 0;
             lastNameId = 0;
             columnDatatype = DATATYPE_NONE;
             valueCount = 0;
             layout.clear();
             nameIds.clear();
-            rawPrefixIds.clear();
-            litDatatypes.clear();
-            litLangtags.clear();
-            prefixIds.clear();
+            auxIds.clear();
             strings.clear();
-            literals.clear();
-            terms.clear();
-            polyIris.clear();
+            if (poly != null) {
+                poly.resetFrameState();
+            }
         }
     }
 
@@ -340,7 +355,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                 usedPrefixes.mark(prefixId);
             }
             col.nameIds.add(storedNameId);
-            col.rawPrefixIds.add(prefixId);
+            col.auxIds.add(prefixId);
             col.lastNameId = nameId;
         }
 
@@ -358,7 +373,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             // No lookup table involved – the underlying encoder (and its cache) is skipped
             final ColumnState col = currentColumn;
             col.strings.add(lex);
-            col.litDatatypes.add(0);
+            col.auxIds.add(0);
             trackColumnDatatype(col, 0);
             return LITERAL_MARKER;
         }
@@ -367,8 +382,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         public RdfLiteral makeLangLiteral(TNode lit, String lex, String lang) {
             final ColumnState col = currentColumn;
             col.strings.add(lex);
-            col.litDatatypes.add(LANG_LITERAL);
-            col.litLangtags.add(lang);
+            col.strings.add(lang);
+            col.auxIds.add(LANG_LITERAL);
             // A language-tagged literal always forces the per-value literal representation
             col.columnDatatype = MIXED_DATATYPES;
             return LITERAL_MARKER;
@@ -383,7 +398,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             usedDatatypes.mark(datatype);
             final ColumnState col = currentColumn;
             col.strings.add(lex);
-            col.litDatatypes.add(datatype);
+            col.auxIds.add(datatype);
             trackColumnDatatype(col, datatype);
             return LITERAL_MARKER;
         }
@@ -637,9 +652,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         }
         beginFrame();
         for (final ColumnState col : columns) {
-            if (col.runActive && col.runIsUnbound) {
+            if (col.runLength > 0 && col.runNode == null) {
                 // Trailing unbound run – omitted, the decoder pads with unbound cells.
-                col.runActive = false;
+                col.runLength = 0;
             } else {
                 finalizeRun(col);
             }
@@ -692,30 +707,35 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                 final ColumnState col = columns[i];
                 final SparqlIriColumn.Mutable column = SparqlIriColumn.newInstance();
                 column.setNameIds(col.nameIds);
-                final RepeatedInt rawPrefixIds = col.rawPrefixIds;
-                final int valueCount = rawPrefixIds.size();
-                // The prefix ids keep the "same prefix as the previous IRI" inference of RdfIri.
-                final int columnPrefix = valueCount == 0 ? 0 : rawPrefixIds.get(0);
+                // For an IRI column the aux ids are exactly its uncompressed prefix ids.
+                // If the whole column stays on one prefix – the usual case – it is stated
+                // once instead of once per value.
+                final RepeatedInt prefixes = col.auxIds;
+                final int valueCount = prefixes.size();
+                final int columnPrefix = valueCount == 0 ? 0 : prefixes.get(0);
                 boolean onePrefix = true;
                 for (int j = 1; j < valueCount; j++) {
-                    if (rawPrefixIds.get(j) != columnPrefix) {
+                    if (prefixes.get(j) != columnPrefix) {
                         onePrefix = false;
                         break;
                     }
                 }
-                final RepeatedInt prefixIds = col.prefixIds;
                 if (!onePrefix) {
-                    // prev = -1 forces the first IRI of the column to carry its prefix id
+                    // Rewrite the buffer into the "same prefix as the previous IRI" inference
+                    // of RdfIri in place – the raw value only has to survive one step, in prev.
+                    // prev = -1 forces the first IRI of the column to carry its prefix id.
+                    final int[] raw = prefixes.array();
                     int prev = -1;
                     for (int j = 0; j < valueCount; j++) {
-                        final int prefix = rawPrefixIds.get(j);
-                        prefixIds.add(prefix == prev ? 0 : prefix);
+                        final int prefix = raw[j];
+                        raw[j] = prefix == prev ? 0 : prefix;
                         prev = prefix;
                     }
-                    column.setPrefixIds(prefixIds);
+                    column.setPrefixIds(prefixes);
                 } else if (columnPrefix != 0) {
-                    prefixIds.add(columnPrefix);
-                    column.setPrefixIds(prefixIds);
+                    prefixes.clear();
+                    prefixes.add(columnPrefix);
+                    column.setPrefixIds(prefixes);
                 }
                 // Otherwise every value has prefix id 0, which the decoder assumes anyway
                 column.setLayouts(col.layout);
@@ -741,14 +761,17 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                 // An empty column counts as simple literals – both forms are empty anyway.
                 final int datatype = col.columnDatatype == DATATYPE_NONE ? 0 : col.columnDatatype;
                 if (datatype == MIXED_DATATYPES) {
-                    final LiteralBuffer literals = col.literals;
-                    final int litCount = col.litDatatypes.size();
-                    int langIndex = 0;
+                    // For a literal column the aux ids are exactly its datatype ids
+                    final LiteralBuffer literals = col.poly().literals;
+                    final int litCount = col.auxIds.size();
+                    int stringIndex = 0;
                     for (int j = 0; j < litCount; j++) {
-                        final RdfLiteral.Mutable literal = literals.appendMessage().setLex(col.strings.get(j));
-                        final int dt = col.litDatatypes.get(j);
+                        final RdfLiteral.Mutable literal = literals
+                            .appendMessage()
+                            .setLex(col.strings.get(stringIndex++));
+                        final int dt = col.auxIds.get(j);
                         if (dt == LANG_LITERAL) {
-                            literal.setLangtag(col.litLangtags.get(langIndex++));
+                            literal.setLangtag(col.strings.get(stringIndex++));
                         } else if (dt != 0) {
                             literal.setDatatype(dt);
                         }
@@ -770,39 +793,38 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             if (types[i] == TYPE_POLY) {
                 final ColumnState col = columns[i];
                 final SparqlPolyColumn.Mutable column = SparqlPolyColumn.newInstance();
-                final TermBuffer terms = col.terms;
+                final PolyBuffers poly = col.poly();
+                final TermBuffer terms = poly.terms;
                 // Cursors into the per-type buffers: the tags say which buffer the next value
-                // sits in. Bnode labels and literal lexical forms share the string buffer, in
-                // encoding order.
+                // sits in. IRIs and literals share the aux buffer; bnode labels and literal
+                // lexical forms (with their language tags) share the string buffer.
                 int iriIndex = 0;
+                int auxIndex = 0;
                 int stringIndex = 0;
-                int litIndex = 0;
-                int langIndex = 0;
                 // -1 forces the first IRI of the column to carry its prefix id
                 int prevPrefix = -1;
                 for (int v = 0; v < col.valueCount; v++) {
                     final SparqlTerm.Mutable term = terms.appendMessage();
                     switch (col.tags[v]) {
                         case TYPE_IRI -> {
-                            final int nameId = col.nameIds.get(iriIndex);
-                            final int rawPrefix = col.rawPrefixIds.get(iriIndex);
-                            iriIndex++;
+                            final int nameId = col.nameIds.get(iriIndex++);
+                            final int rawPrefix = col.auxIds.get(auxIndex++);
                             final int prefixId = rawPrefix == prevPrefix ? 0 : rawPrefix;
                             prevPrefix = rawPrefix;
                             if (prefixId == 0 && nameId == 0) {
                                 term.setIri(ZERO_IRI);
                             } else {
-                                term.setIri(col.polyIris.append().setPrefixId(prefixId).setNameId(nameId));
+                                term.setIri(poly.iris.append().setPrefixId(prefixId).setNameId(nameId));
                             }
                         }
                         case TYPE_BNODE -> term.setBnode(col.strings.get(stringIndex++));
                         default -> {
-                            final RdfLiteral.Mutable literal = col.literals
+                            final RdfLiteral.Mutable literal = poly.literals
                                 .appendMessage()
                                 .setLex(col.strings.get(stringIndex++));
-                            final int dt = col.litDatatypes.get(litIndex++);
+                            final int dt = col.auxIds.get(auxIndex++);
                             if (dt == LANG_LITERAL) {
-                                literal.setLangtag(col.litLangtags.get(langIndex++));
+                                literal.setLangtag(col.strings.get(stringIndex++));
                             } else if (dt != 0) {
                                 literal.setDatatype(dt);
                             }
@@ -827,24 +849,20 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
 
     private void addCell(ColumnState col, TNode node) {
         if (node == null) {
-            if (col.runActive && col.runIsUnbound) {
+            if (col.runLength > 0 && col.runNode == null) {
                 col.runLength++;
                 return;
             }
             finalizeRun(col);
-            col.runActive = true;
-            col.runIsUnbound = true;
             col.runLength = 1;
-            col.runNode = null;
             return;
         }
-        if (col.runActive && !col.runIsUnbound && node.equals(col.runNode)) {
+        // runNode != null implies an active bound run
+        if (col.runNode != null && node.equals(col.runNode)) {
             col.runLength++;
             return;
         }
         finalizeRun(col);
-        col.runActive = true;
-        col.runIsUnbound = false;
         col.runLength = 1;
         col.runNode = node;
         encodeValue(col, node);
@@ -876,17 +894,18 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     }
 
     private void finalizeRun(ColumnState col) {
-        if (!col.runActive) {
+        if (col.runLength == 0) {
             return;
         }
-        col.runActive = false;
-        if (col.runIsUnbound) {
+        if (col.runNode == null) {
             emitException(col, KIND_UNBOUND, col.runLength - 1);
         } else if (col.runLength >= 2) {
             emitException(col, KIND_REPEAT, col.runLength - 2);
         } else {
             col.skip++;
         }
+        col.runLength = 0;
+        col.runNode = null;
     }
 
     private void emitException(ColumnState col, int kind, int len) {
