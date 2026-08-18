@@ -101,7 +101,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             final var node = nodes[slot];
             if (node == null) {
                 keys[slot] = key;
-                return nodes[slot] = new DependentNode<>();
+                return (nodes[slot] = new DependentNode<>());
             }
             if (!key.equals(keys[slot])) {
                 keys[slot] = key;
