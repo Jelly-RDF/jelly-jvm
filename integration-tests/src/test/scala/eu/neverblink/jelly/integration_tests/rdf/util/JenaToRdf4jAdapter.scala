@@ -1,13 +1,13 @@
 package eu.neverblink.jelly.integration_tests.rdf.util
 
-import org.apache.jena.graph.{JenaCompatHelper, Node, Triple}
-import org.apache.jena.riot.system.StreamRDF
+import org.apache.jena.graph.{Node, Triple}
+import org.apache.jena.riot.system.StreamRDFBase
 import org.apache.jena.sparql.core.Quad
 import org.eclipse.rdf4j.model.{IRI, Resource, Value}
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.rio.RDFHandler
 
-class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
+class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDFBase {
   val vf: SimpleValueFactory = SimpleValueFactory.getInstance()
 
   def makeIRI(n: Node): IRI = {
@@ -15,16 +15,18 @@ class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
     else throw RuntimeException(s"Illegal position for term $n")
   }
 
+  private def makeTripleTerm(n: Node): Value = {
+    val t = n.getTriple
+    vf.createTripleTerm(
+      makeResource(t.getSubject),
+      makeIRI(t.getPredicate),
+      makeValue(t.getObject),
+    )
+  }
+
   def makeResource(n: Node): Resource = {
     if n.isBlank then vf.createBNode(n.getBlankNodeLabel)
-    else if JenaCompatHelper.isNodeTriple(n) then {
-      val t = n.getTriple
-      vf.createTriple(
-        makeResource(t.getSubject),
-        makeIRI(t.getPredicate),
-        makeValue(t.getObject),
-      )
-    } else makeIRI(n)
+    else makeIRI(n)
   }
 
   def makeValue(n: Node): Value = {
@@ -34,7 +36,8 @@ class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
       else if lit.getDatatype != null then
         vf.createLiteral(lit.getLexicalForm, vf.createIRI(lit.getDatatypeURI))
       else vf.createLiteral(lit.getValue.toString)
-    } else makeResource(n)
+    } else if n.isTripleTerm then makeTripleTerm(n)
+    else makeResource(n)
   }
 
   override def start(): Unit = delegate.startRDF()

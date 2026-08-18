@@ -19,10 +19,12 @@ class Rdf4jReactiveSerDes(using Materializer)
 
   override def name: String = "Reactive (RDF4J)"
 
-  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean =
-    physicalStreamType match
-      case PhysicalStreamType.TRIPLES => true
-      case _ => false
+  override def supportsRdf12: Boolean = true
+
+  // RDF4J dropped RDF-star in 6.0.0, in favor of RDF 1.2.
+  override def supportsRdfStar: Boolean = false
+
+  override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
 
   override def supportsGeneralizedStatements: Boolean = false
 

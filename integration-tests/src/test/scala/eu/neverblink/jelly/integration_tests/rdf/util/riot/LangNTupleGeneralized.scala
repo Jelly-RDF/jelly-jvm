@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.integration_tests.rdf.util.riot
 
-import org.apache.jena.graph.{JenaCompatHelper, Node, Triple}
+import org.apache.jena.graph.{Node, NodeFactory, Triple}
 import org.apache.jena.riot.lang.LangNTuple
 import org.apache.jena.riot.system.{ParserProfile, StreamRDF}
 import org.apache.jena.riot.tokens.{StringType, Token, TokenType, Tokenizer}
@@ -10,6 +10,26 @@ import org.apache.jena.riot.tokens.{StringType, Token, TokenType, Tokenizer}
   */
 abstract class LangNTupleGeneralized[T](tokens: Tokenizer, profile: ParserProfile, dest: StreamRDF)
     extends LangNTuple[T](tokens, profile, dest):
+
+  /** Consumes an RDF 1.2 version directive if one is next in the stream.
+    *
+    * RDF 1.2 serializers put this at the top of a document – RDF4J 6's Turtle writer always does.
+    * It comes in two shapes: `VERSION "1.2"` in the N-Triples/N-Quads grammars (a bare keyword) and
+    * `@version "1.2" .` in Turtle/TriG (a directive). This parser is a fork of Jena's pre-RDF-1.2
+    * N-Tuple parser and would otherwise fail on either with "Illegal: [KEYWORD:VERSION]".
+    */
+  protected final def skipVersionDirective(): Unit =
+    while (moreTokens() && isVersionDirective(peekToken())) {
+      nextToken() // the keyword or directive itself
+      // The version string that follows, e.g. "1.2".
+      if (moreTokens() && peekToken().hasType(TokenType.STRING)) nextToken()
+      // Turtle terminates the directive with a DOT; N-Triples does not.
+      skipIf(TokenType.DOT)
+    }
+
+  private def isVersionDirective(token: Token): Boolean =
+    (token.hasType(TokenType.DIRECTIVE) || token.hasType(TokenType.KEYWORD)) &&
+      "version".equalsIgnoreCase(token.getImage)
 
   // extracted from Jena library for compat with older versions...
   private def checkRDFTermCompat(token: Token): Unit = token.getType match {
@@ -69,4 +89,4 @@ abstract class LangNTupleGeneralized[T](tokens: Tokenizer, profile: ParserProfil
     val x = nextToken
     if ((x.getType ne TokenType.GT2) && (x.getType ne TokenType.R_TRIPLE))
       exception(x, "Triple term not terminated by >>: %s", x)
-    JenaCompatHelper.createTripleNode(t)
+    NodeFactory.createTripleTerm(t)

@@ -78,12 +78,12 @@ public final class RowSetWriterJelly implements RowSetWriter {
                     row[i] = binding.get(vars.get(i));
                 }
                 if (!encoder.appendRow(row)) {
-                    // The frame filled up its lookup tables before reaching frameSize rows
+                    // The frame filled up its lookup tables before reaching the row limit
                     if (!options.delimited()) {
                         throw new RdfProtoSerializationError(
-                            ("This result set is too large to be written as a single " +
+                            "This result set is too large to be written as a single " +
                                 "non-delimited frame: its lookup tables cannot hold all the terms. " +
-                                "Write delimited output, or increase the max lookup table sizes.")
+                                "Write delimited output, or increase the max lookup table sizes."
                         );
                     }
                     encoder.endFrame().writeDelimitedTo(codedOutput);

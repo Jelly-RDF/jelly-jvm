@@ -19,9 +19,11 @@ final class LangNQuadsGeneralized(tokens: Tokenizer, profile: ParserProfile, des
 
   /** Method to parse the whole stream of triples, sending each to the sink */
   override protected def runParser(): Unit =
+    skipVersionDirective()
     while (hasNext) {
       val x = parseOne
       if (x != null) dest.quad(x)
+      skipVersionDirective()
     }
 
   override protected def parseOne: Quad =

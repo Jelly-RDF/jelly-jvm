@@ -29,7 +29,7 @@ public final class JellyParserSettings {
         false
     );
 
-    public static final AbstractRioSetting<Integer> PROTO_VERSION = new JellyIntegerRioSetting(
+    public static final IntegerRioSetting PROTO_VERSION = new IntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.protoVersion",
         "Maximum supported Jelly protocol version",
         DEFAULT_SUPPORTED_OPTIONS.getVersion()
@@ -47,19 +47,19 @@ public final class JellyParserSettings {
         DEFAULT_SUPPORTED_OPTIONS.getRdfStar()
     );
 
-    public static final AbstractRioSetting<Integer> MAX_NAME_TABLE_SIZE = new JellyIntegerRioSetting(
+    public static final IntegerRioSetting MAX_NAME_TABLE_SIZE = new IntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.maxNameTableSize",
         "Maximum size of the name table",
         DEFAULT_SUPPORTED_OPTIONS.getMaxNameTableSize()
     );
 
-    public static final AbstractRioSetting<Integer> MAX_PREFIX_TABLE_SIZE = new JellyIntegerRioSetting(
+    public static final IntegerRioSetting MAX_PREFIX_TABLE_SIZE = new IntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.maxPrefixTableSize",
         "Maximum size of the prefix table",
         DEFAULT_SUPPORTED_OPTIONS.getMaxPrefixTableSize()
     );
 
-    public static final AbstractRioSetting<Integer> MAX_DATATYPE_TABLE_SIZE = new JellyIntegerRioSetting(
+    public static final IntegerRioSetting MAX_DATATYPE_TABLE_SIZE = new IntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.maxDatatypeTableSize",
         "Maximum size of the datatype table",
         DEFAULT_SUPPORTED_OPTIONS.getMaxDatatypeTableSize()

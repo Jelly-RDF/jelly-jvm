@@ -46,11 +46,12 @@ public abstract class SparqlEncoder<TNode> extends EncoderBase<TNode> {
      */
     protected SparqlEncoder(ProtoEncoderConverter<TNode> converter, Params params) {
         super(converter);
-        this.options = params
-            .options()
-            .clone()
-            // Override the user's version setting with what is really supported by the encoder.
-            .setVersion(JellySparqlConstants.PROTO_VERSION);
+        this.options =
+            params
+                .options()
+                .clone()
+                // Override the user's version setting with what is really supported by the encoder.
+                .setVersion(JellySparqlConstants.PROTO_VERSION);
     }
 
     @Override

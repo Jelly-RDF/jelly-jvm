@@ -4,8 +4,8 @@ import scala.sys.process.*
 
 ThisBuild / scalaVersion := "3.3.8"
 ThisBuild / organization := "eu.neverblink.jelly"
-ThisBuild / homepage := Some(url("https://w3id.org/jelly/jelly-jvm"))
-ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
+ThisBuild / homepage := Some(uri("https://w3id.org/jelly/jelly-jvm"))
+ThisBuild / licenses := List("Apache-2.0" -> uri("https://www.apache.org/licenses/LICENSE-2.0"))
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / autoAPIMappings := true
 ThisBuild / developers := List(
@@ -13,7 +13,7 @@ ThisBuild / developers := List(
     "Ostrzyciel",
     "Piotr Sowiński",
     "piotr@neverblink.eu",
-    url("https://github.com/Ostrzyciel"),
+    uri("https://github.com/Ostrzyciel"),
   ),
 )
 ThisBuild / semanticdbEnabled := true
@@ -29,14 +29,16 @@ Test / logBuffered := false
 lazy val pekkoV = "1.6.0"
 lazy val pekkoGrpcV = "1.2.0"
 lazy val jenaV = "5.6.0"
-lazy val rdf4jV = "5.3.2"
+// RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
+// targets Java 21 (see javacOptions), but jelly-rdf4j can only *run* on Java 25+, as RDF4J 6 does.
+lazy val rdf4jV = "6.0.0"
 lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
 lazy val neo4jV = "5.26.0"
 lazy val protobufV = "4.35.1"
 lazy val javapoetV = "0.18.0"
 lazy val jmhV = "1.37"
-lazy val grpcV = "1.83.0"
+lazy val grpcV = "1.83.1"
 
 lazy val jellyCliV = "0.8.0"
 
@@ -63,9 +65,7 @@ lazy val commonSettings = Seq(
   ) ++ wErrorIfCI,
   // Explicitly specify the options for javadoc, otherwise sbt will pass all javacOptions to it
   // which will cause an error.
-  // Exclude org.apache to avoid including JenaCompatHelper.
-  // See: https://github.com/Jelly-RDF/jelly-jvm/issues/622
-  Compile / doc / javacOptions := Seq("-source", "21", "-exclude", "org.apache"),
+  Compile / doc / javacOptions := Seq("-source", "21"),
   assemblyJarName := s"${name.value}.jar",
   assemblyMergeStrategy := {
     case x if x.endsWith("module-info.class") => MergeStrategy.concat
@@ -80,6 +80,13 @@ lazy val commonSettings = Seq(
     // on JDK 22+ where Jacoco instrumentation is not supported.
     "-Djacoco.skip=true",
   ),
+)
+
+// Pekko's ActorSystem registers a JVM shutdown hook that outlives the test run. Unforked, those
+// hooks execute in sbt's own JVM after sbt has already discarded the test classloader...
+// which crashes sbt.
+lazy val pekkoTestSettings = Seq(
+  Test / fork := true,
 )
 
 // Shared settings for all Java-only modules
@@ -337,7 +344,7 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
     ),
     // The .proto files under src/main/protobuf are produced by prepareGoogleProtos at build time
     // (only .gitkeep is committed). protobufSources scans that directory to decide what to compile,
-    // but sbt-protobuf does not order that scan after prepareGoogleProtos — only protobufRunProtoc.
+    // but sbt-protobuf does not order that scan after prepareGoogleProtos – only protobufRunProtoc.
     // On a clean checkout the scan therefore runs against an empty directory and nothing is
     // generated (0 classes). Make the scan depend on prepareGoogleProtos so the protos exist first.
     ProtobufConfig / protobufSources := Def.uncached(
@@ -398,7 +405,7 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
     ),
     // The .proto files under src/main/protobuf are produced by prepareGoogleProtos at build time
     // (only .gitkeep is committed). protobufSources scans that directory to decide what to compile,
-    // but sbt-protobuf does not order that scan after prepareGoogleProtos — only protobufRunProtoc.
+    // but sbt-protobuf does not order that scan after prepareGoogleProtos – only protobufRunProtoc.
     // On a clean checkout the scan therefore runs against an empty directory and nothing is
     // generated (0 classes). Make the scan depend on prepareGoogleProtos so the protos exist first.
     ProtobufConfig / protobufSources := Def.uncached(
@@ -559,17 +566,22 @@ lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   )
   .dependsOn(core % "compile->compile;test->test")
 
+// PARKED – not part of the root aggregate, not built or tested in CI.
+// This plugin runs inside Neo4j, alongside the Neosemantics plugin, which fat-jars RDF4J 4.3.12.
+// The sources are kept so the integration can be revived once Neosemantics ships a modern RDF4J.
 lazy val neo4jPlugin = (project in file("neo4j-plugin"))
   .settings(
     name := "jelly-neo4j-plugin",
-    description := "Integration of Jelly with Neo4j via the Neosemantics plugin.",
+    description := "Integration of Jelly with Neo4j via the Neosemantics plugin. Currently unmaintained.",
     libraryDependencies ++= Seq(
       "org.neo4j" % "neo4j" % neo4jV % "provided,test",
       "org.neo4j" % "neosemantics" % neo4jV % "provided,test",
       "org.neo4j.test" % "neo4j-harness" % neo4jV % Test,
-      "org.neo4j.driver" % "neo4j-java-driver" % "6.2.0" % Test,
+      "org.neo4j.driver" % "neo4j-java-driver" % "6.2.1" % Test,
     ),
     stableAssemblyOutput,
+    publishArtifact := false,
+    publish / skip := true,
     commonSettings,
     commonJavaSettings,
   )
@@ -584,6 +596,7 @@ lazy val stream = (project in file("pekko-stream"))
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
     ),
     commonSettings,
+    pekkoTestSettings,
   )
   .dependsOn(core % "compile->compile;test->test")
 
@@ -613,6 +626,7 @@ lazy val integrationTests = (project in file("integration-tests"))
       Seq(cliBinary)
     },
     commonSettings,
+    pekkoTestSettings,
   )
   .dependsOn(
     core % "compile->compile;test->test",
@@ -639,6 +653,7 @@ lazy val examples = (project in file("examples"))
       "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV,
     ),
     commonSettings,
+    pekkoTestSettings,
   )
   .dependsOn(
     core % "compile->compile;test->test",
@@ -703,12 +718,13 @@ lazy val grpc = (project in file("pekko-grpc"))
     }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
     Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
+    pekkoTestSettings,
   )
   .dependsOn(stream)
   .dependsOn(core % "compile->compile;test->test")
 
 // Explicit aggregate root. Defined explicitly (rather than relying on sbt's implicit root) so we can
-// attach ensureJacocoDir to it — the root has no classes of its own, so it hits the same sbt-jacoco
+// attach ensureJacocoDir to it – the root has no classes of its own, so it hits the same sbt-jacoco
 // / definedTestDigests problem as the proto-only project. It publishes nothing itself; the CI
 // release flow publishes the individual modules.
 lazy val root = (project in file("."))
@@ -728,7 +744,7 @@ lazy val root = (project in file("."))
     rdf4jPatch,
     rdf4jPlugin,
     titaniumRdfApi,
-    neo4jPlugin,
+    // neo4jPlugin is deliberately not aggregated – see its definition above.
     stream,
     integrationTests,
     examples,

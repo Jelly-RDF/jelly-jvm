@@ -92,6 +92,15 @@ public final class JellyStreamWriterAutodetectType implements StreamRDF {
         // Not supported
     }
 
+    /**
+     * Deliberately not annotated with {@code @Override}: this method was only added to
+     * {@link StreamRDF} in Jena 5.5.0 (as a default method, made abstract in 6.1.0), and we still
+     * support Jena 5.4.x.
+     */
+    public void version(String version) {
+        // Not supported
+    }
+
     @Override
     public void prefix(String prefix, String iri) {
         if (delegatedWriter != null) {

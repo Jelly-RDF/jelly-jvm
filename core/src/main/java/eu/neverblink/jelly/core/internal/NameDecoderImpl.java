@@ -151,8 +151,8 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         //   if (prefixId == 0) prefixId = lastPrefixIdReference;
         //   else lastPrefixIdReference = prefixId;
         lastNameIdReference = ((lastNameIdReference + 1) & ((nameId - 1) >> 31)) + nameId;
-        final int resolvedPrefixId = lastPrefixIdReference =
-            (((prefixId - 1) >> 31) & lastPrefixIdReference) + prefixId;
+        final int resolvedPrefixId = (lastPrefixIdReference =
+            (((prefixId - 1) >> 31) & lastPrefixIdReference) + prefixId);
         return decodeResolved(resolvedPrefixId, lastNameIdReference, prefixId, nameId);
     }
 
@@ -174,8 +174,7 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new RdfProtoDeserializationError(
                 (
-                    "Encountered an invalid name table reference (out of bounds). " +
-                    "Name ID: %d, Prefix ID: %d"
+                    "Encountered an invalid name table reference (out of bounds). " + "Name ID: %d, Prefix ID: %d"
                 ).formatted(originalNameId, originalPrefixId)
             );
         }
@@ -197,8 +196,7 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new RdfProtoDeserializationError(
                     (
-                        "Encountered an invalid prefix table reference (out of bounds). " +
-                        "Prefix ID: %d, Name ID: %d"
+                        "Encountered an invalid prefix table reference (out of bounds). " + "Prefix ID: %d, Name ID: %d"
                     ).formatted(prefixId, originalNameId)
                 );
             }

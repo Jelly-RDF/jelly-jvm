@@ -12,10 +12,10 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v5.6.0
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '25'
           cache: 'sbt'
 
       - name: Setup SBT
@@ -36,10 +36,10 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v5.6.0
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '25'
           cache: 'sbt'
 
       - name: Setup SBT
@@ -47,7 +47,8 @@ jobs:
 
       - name: 'Build plugins'
         run: |
-          sbt -v "+jenaPlugin/assembly; +rdf4jPlugin/assembly; +neo4jPlugin/assembly"
+          # neo4jPlugin is not built – it cannot work with RDF4J 6. See build.sbt.
+          sbt -v "+jenaPlugin/assembly; +rdf4jPlugin/assembly"
 
       - name: 'Build conformance reports'
         run: |
@@ -55,10 +56,6 @@ jobs:
           if [ $JELLY_VERSION = "refs/heads/main" ]; then
             JELLY_VERSION="dev"
           fi
-          # For Jena 5.5.0
-          sbt "integrationTests/testOnly *ProtocolConformanceSpec -- -z Jena -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"
-          # Jena 5.3.0 and the rest
-          sed -i "s/lazy val jenaV = .*/lazy val jenaV = \"5.3.0\"/g" build.sbt
           sbt "integrationTests/testOnly *ProtocolConformanceSpec -- -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"
           cd integration-tests/target
           tar -czf conformance_reports.tar.gz reports/
@@ -80,7 +77,6 @@ jobs:
           artifacts: >-
             jena-plugin/target/*-plugin.jar,
             rdf4j-plugin/target/*-plugin.jar,
-            neo4j-plugin/target/*-plugin.jar,
             integration-tests/target/conformance_reports.tar.gz
           generateReleaseNotes: true
 
@@ -96,7 +92,6 @@ jobs:
           artifacts: >-
             jena-plugin/target/*-plugin.jar,
             rdf4j-plugin/target/*-plugin.jar,
-            neo4j-plugin/target/*-plugin.jar,
             integration-tests/target/conformance_reports.tar.gz
           generateReleaseNotes: true
 
@@ -108,7 +103,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip

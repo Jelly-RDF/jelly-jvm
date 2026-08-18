@@ -1,5 +1,7 @@
 See the README here: https://github.com/sbt/sbt-jmh
 
+These benchmarks should be run with the latest JDK (at least 24).
+
 Run all benchmarks with:
 
 ```bash
@@ -22,4 +24,10 @@ Run this to get all options for perfasm:
 
 ```bash
 sbt jmh/Jmh/run -f1 -prof "perfasm:help"
+```
+
+To see allocation rates:
+
+```bash
+sbt jmh/Jmh/run -f1 -prof gc .*NodeCacheBench.*
 ```

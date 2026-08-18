@@ -32,7 +32,7 @@ object ReadStringBench:
       inputStream = CodedInputStream.newInstance(is)
       inputStream.pushLimit(toParse.length)
 
-class ReadStringBench:
+class ReadStringBench extends CommonParams:
   import ReadStringBench.*
 
   @Benchmark

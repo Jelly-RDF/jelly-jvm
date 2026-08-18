@@ -33,6 +33,13 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
 
   TestRiot.initialize()
 
+  /** Skips test cases whose flavour of quoted triples the deserializer cannot represent – e.g.
+    * RDF4J 6 has no way to hold a triple term in subject position, as RDF 1.2 forbids it.
+    */
+  private def checkTestCaseSupport(des: NativeSerDes[?, ?], caseName: String) =
+    (des.supportsRdfStar || !caseName.contains("star")) &&
+      (des.supportsRdf12 || !caseName.contains("rdf12"))
+
   for (caseName, file) <- TestCases.triples do
     val model = RDFDataMgr.loadModel(file.toURI.toString, TestRiot.NT_ANY)
     val originalSize = model.size()
@@ -57,9 +64,10 @@ class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
       runTest(Rdf4jSerDes, "RDF4J Rio")
 
       def runTest[TMDes: Measure](method: NativeSerDes[TMDes, ?], methodName: String) =
-        f"$methodName" should {
-          f"deserialize non-delimited triples from $presetName ($caseName)" in {
-            val deserialized = method.readTriplesJelly(new ByteArrayInputStream(bytes), None)
-            summon[Measure[TMDes]].size(deserialized) shouldEqual originalSize
+        if checkTestCaseSupport(method, caseName) then
+          f"$methodName" should {
+            f"deserialize non-delimited triples from $presetName ($caseName)" in {
+              val deserialized = method.readTriplesJelly(new ByteArrayInputStream(bytes), None)
+              summon[Measure[TMDes]].size(deserialized) shouldEqual originalSize
+            }
           }
-        }

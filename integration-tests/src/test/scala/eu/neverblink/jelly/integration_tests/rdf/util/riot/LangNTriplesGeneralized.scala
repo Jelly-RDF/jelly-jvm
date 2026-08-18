@@ -18,9 +18,11 @@ final class LangNTriplesGeneralized(tokens: Tokenizer, profile: ParserProfile, d
 
   /** Method to parse the whole stream of triples, sending each to the sink */
   override protected def runParser(): Unit =
+    skipVersionDirective()
     while (hasNext) {
       val x = parseOne
       if (x != null) dest.triple(x)
+      skipVersionDirective()
     }
 
   override protected def parseOne: Triple =

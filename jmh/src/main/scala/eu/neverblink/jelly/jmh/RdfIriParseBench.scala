@@ -44,7 +44,7 @@ object RdfIriParseBench:
         iri.writeDelimitedTo(os)
       toParse = os.toByteArray
 
-class RdfIriParseBench:
+class RdfIriParseBench extends CommonParams:
   import RdfIriParseBench.*
 
   @Benchmark

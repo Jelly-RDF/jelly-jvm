@@ -31,8 +31,8 @@ public final class Rdf4jEncoderConverter
                     return encoder.makeSimpleLiteral(lex);
                 }
             }
-        } else if (value instanceof Triple triple) {
-            return encoder.makeQuotedTriple(triple.getSubject(), triple.getPredicate(), triple.getObject());
+        } else if (value instanceof TripleTerm tripleTerm) {
+            return encoder.makeQuotedTriple(tripleTerm.getSubject(), tripleTerm.getPredicate(), tripleTerm.getObject());
         } else {
             throw new RdfProtoSerializationError("Cannot encode node: %s".formatted(value));
         }
