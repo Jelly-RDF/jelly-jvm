@@ -4,7 +4,6 @@ import static eu.neverblink.jelly.core.internal.BaseJellyOptions.MIN_NAME_TABLE_
 
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.proto.v1.*;
-import java.util.LinkedHashMap;
 import java.util.Objects;
 
 /**
@@ -34,22 +33,81 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         public int lookupSerial2;
     }
 
+    /** Rounds up to a power of two, so the caches can mask instead of divide. */
+    private static int tableSizeFor(int minSize) {
+        return Integer.highestOneBit(Math.max(minSize - 1, 1)) << 1;
+    }
+
+    /** Picks the slot for a key, xor-folding so that hashCodes differing only high up still spread. */
+    private static int slotFor(Object key, int mask) {
+        final int h = key.hashCode() * 0x9E3779B1;
+        return (h ^ (h >>> 16)) & mask;
+    }
+
     /**
-     * A simple LRU cache for already encoded nodes.
-     * @param <K> Key type
+     * A direct-mapped cache for already encoded nodes: the hash picks one slot, and a colliding key
+     * takes it over. No eviction bookkeeping and no per-entry object, which makes it ~2x faster than
+     * a LinkedHashMap at a similar hit rate on real data. See NodeCacheBench.
      * @param <V> Value type
      */
-    private static final class NodeCache<K, V> extends LinkedHashMap<K, V> {
+    private static final class NodeCache<V> {
 
-        private final int maxSize;
+        private final Object[] keys;
+        private final Object[] values;
+        private final int mask;
 
-        public NodeCache(int maxSize) {
-            this.maxSize = maxSize;
+        NodeCache(int minSize) {
+            final int size = tableSizeFor(minSize);
+            this.keys = new Object[size];
+            this.values = new Object[size];
+            this.mask = size - 1;
         }
 
-        @Override
-        protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
-            return size() > maxSize;
+        @SuppressWarnings("unchecked")
+        V get(Object key) {
+            final int slot = slotFor(key, mask);
+            return key.equals(keys[slot]) ? (V) values[slot] : null;
+        }
+
+        void put(Object key, V value) {
+            final int slot = slotFor(key, mask);
+            keys[slot] = key;
+            values[slot] = value;
+        }
+    }
+
+    /**
+     * The same, for nodes that depend on lookup entries. The DependentNode in a slot is recycled, so
+     * taking a slot over MUST clear `encoded` – otherwise the stale lookupPointer/lookupSerial pair
+     * could still validate and we would emit the previous key's IRI or datatype.
+     * @param <V> Type of the encoded node
+     */
+    private static final class DependentNodeCache<V> {
+
+        private final Object[] keys;
+        private final DependentNode<V>[] nodes;
+        private final int mask;
+
+        @SuppressWarnings("unchecked")
+        DependentNodeCache(int minSize) {
+            final int size = tableSizeFor(minSize);
+            this.keys = new Object[size];
+            this.nodes = new DependentNode[size];
+            this.mask = size - 1;
+        }
+
+        DependentNode<V> get(Object key) {
+            final int slot = slotFor(key, mask);
+            final var node = nodes[slot];
+            if (node == null) {
+                keys[slot] = key;
+                return nodes[slot] = new DependentNode<>();
+            }
+            if (!key.equals(keys[slot])) {
+                keys[slot] = key;
+                node.encoded = null;
+            }
+            return node;
         }
     }
 
@@ -65,9 +123,9 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     // We split the node caches in three – the first two are for nodes that depend on the lookups
     // (IRIs and datatype literals). The third one is for nodes that don't depend on the lookups.
-    private final NodeCache<Object, DependentNode<RdfIri>> iriNodeCache;
-    private final NodeCache<Object, DependentNode<RdfLiteral>> dtLiteralNodeCache;
-    private final NodeCache<Object, RdfLiteral> otherLiteralCache;
+    private final DependentNodeCache<RdfIri> iriNodeCache;
+    private final DependentNodeCache<RdfLiteral> dtLiteralNodeCache;
+    private final NodeCache<RdfLiteral> otherLiteralCache;
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     static final RdfIri zeroIri = RdfIri.newInstance();
@@ -97,7 +155,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         this.maxPrefixTableSize = prefixTableSize;
         if (maxPrefixTableSize > 0) {
             prefixLookup = new EncoderLookup(maxPrefixTableSize, true);
-            iriNodeCache = new NodeCache<>(iriNodeCacheSize);
+            iriNodeCache = new DependentNodeCache<>(iriNodeCacheSize);
         } else {
             prefixLookup = null;
             iriNodeCache = null;
@@ -114,7 +172,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         for (int i = 0; i < nameOnlyIris.length; i++) {
             nameOnlyIris[i] = RdfIri.newInstance().setPrefixId(0).setNameId(i);
         }
-        dtLiteralNodeCache = new NodeCache<>(dtLiteralNodeCacheSize);
+        dtLiteralNodeCache = new DependentNodeCache<>(dtLiteralNodeCacheSize);
         nameLookup = new EncoderLookup(nameTableSize, maxPrefixTableSize > 0);
         otherLiteralCache = new NodeCache<>(nodeCacheSize);
         this.bufferAppender = bufferAppender;
@@ -138,9 +196,9 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             maxPrefixTableSize,
             maxNameTableSize,
             maxDatatypeTableSize,
-            Math.max(Math.min(maxNameTableSize, 1024), 256),
+            Math.clamp(maxNameTableSize, 256, 1024),
             maxNameTableSize,
-            Math.max(Math.min(maxNameTableSize, 1024), 256),
+            Math.clamp(maxNameTableSize, 256, 1024),
             bufferAppender
         );
     }
@@ -168,7 +226,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
 
         // Slow path, with splitting out the prefix
-        final var cachedNode = Objects.requireNonNull(iriNodeCache).computeIfAbsent(iri, k -> new DependentNode<>());
+        final var cachedNode = Objects.requireNonNull(iriNodeCache).get(iri);
         // Check if the value is still valid
         if (
             cachedNode.encoded != null &&
@@ -224,12 +282,22 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     @Override
     public RdfLiteral makeSimpleLiteral(String lex) {
-        return otherLiteralCache.computeIfAbsent(lex, k -> RdfLiteral.newInstance().setLex(lex));
+        var literal = otherLiteralCache.get(lex);
+        if (literal == null) {
+            literal = RdfLiteral.newInstance().setLex(lex);
+            otherLiteralCache.put(lex, literal);
+        }
+        return literal;
     }
 
     @Override
     public RdfLiteral makeLangLiteral(TNode lit, String lex, String lang) {
-        return otherLiteralCache.computeIfAbsent(lit, k -> RdfLiteral.newInstance().setLex(lex).setLangtag(lang));
+        var literal = otherLiteralCache.get(lit);
+        if (literal == null) {
+            literal = RdfLiteral.newInstance().setLex(lex).setLangtag(lang);
+            otherLiteralCache.put(lit, literal);
+        }
+        return literal;
     }
 
     /**
@@ -247,7 +315,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                     "to a positive value."
             );
         }
-        final var cachedNode = dtLiteralNodeCache.computeIfAbsent(key, k -> new DependentNode<>());
+        final var cachedNode = dtLiteralNodeCache.get(key);
         // Check if the value is still valid
         if (
             cachedNode.encoded != null &&

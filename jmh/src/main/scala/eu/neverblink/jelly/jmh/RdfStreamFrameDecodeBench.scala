@@ -22,7 +22,7 @@ object RdfStreamFrameDecodeBench:
         .takeWhile(_ != null)
         .toArray
 
-class RdfStreamFrameDecodeBench:
+class RdfStreamFrameDecodeBench extends CommonParams:
   import RdfStreamFrameDecodeBench.*
 
   @Benchmark
