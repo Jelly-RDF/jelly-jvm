@@ -143,11 +143,11 @@ object SparqlSizeReport:
       val jellySize = outputs.head.bytes.fold(0)(_.length)
       val cells = Seq(
         name,
-        format(data.spec.rows),
-        data.spec.columns.size.toString,
+        format(data.rows.size),
+        data.variables.size.toString,
       ) ++ outputs.flatMap { output =>
         output.bytes.fold(Seq("n/a", "n/a"))(b => Seq(format(b.length), format(gzippedSize(b))))
-      } ++ Seq(f"${jellySize.toDouble / math.max(1, data.spec.rows)}%.1f")
+      } ++ Seq(f"${jellySize.toDouble / math.max(1, data.rows.size)}%.1f")
       println(cells.map(c => f"$c%18s").mkString)
 
     if filesWritten > 0 then println(s"\nWrote $filesWritten files.")
