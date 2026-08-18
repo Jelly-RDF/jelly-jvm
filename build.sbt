@@ -4,8 +4,8 @@ import scala.sys.process.*
 
 ThisBuild / scalaVersion := "3.3.8"
 ThisBuild / organization := "eu.neverblink.jelly"
-ThisBuild / homepage := Some(url("https://w3id.org/jelly/jelly-jvm"))
-ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
+ThisBuild / homepage := Some(uri("https://w3id.org/jelly/jelly-jvm"))
+ThisBuild / licenses := List("Apache-2.0" -> uri("https://www.apache.org/licenses/LICENSE-2.0"))
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / autoAPIMappings := true
 ThisBuild / developers := List(
@@ -13,7 +13,7 @@ ThisBuild / developers := List(
     "Ostrzyciel",
     "Piotr Sowiński",
     "piotr@neverblink.eu",
-    url("https://github.com/Ostrzyciel"),
+    uri("https://github.com/Ostrzyciel"),
   ),
 )
 ThisBuild / semanticdbEnabled := true
@@ -80,6 +80,13 @@ lazy val commonSettings = Seq(
     // on JDK 22+ where Jacoco instrumentation is not supported.
     "-Djacoco.skip=true",
   ),
+)
+
+// Pekko's ActorSystem registers a JVM shutdown hook that outlives the test run. Unforked, those
+// hooks execute in sbt's own JVM after sbt has already discarded the test classloader...
+// which crashes sbt.
+lazy val pekkoTestSettings = Seq(
+  Test / fork := true,
 )
 
 // Shared settings for all Java-only modules
@@ -553,6 +560,7 @@ lazy val stream = (project in file("pekko-stream"))
       "org.apache.pekko" %% "pekko-stream-typed" % pekkoV,
     ),
     commonSettings,
+    pekkoTestSettings,
   )
   .dependsOn(core % "compile->compile;test->test")
 
@@ -582,6 +590,7 @@ lazy val integrationTests = (project in file("integration-tests"))
       Seq(cliBinary)
     },
     commonSettings,
+    pekkoTestSettings,
   )
   .dependsOn(
     core % "compile->compile;test->test",
@@ -603,6 +612,7 @@ lazy val examples = (project in file("examples"))
       "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV,
     ),
     commonSettings,
+    pekkoTestSettings,
   )
   .dependsOn(
     core % "compile->compile;test->test",
@@ -659,6 +669,7 @@ lazy val grpc = (project in file("pekko-grpc"))
     }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
     Compile / sourceManaged := sourceManaged.value / "main",
     commonSettings,
+    pekkoTestSettings,
   )
   .dependsOn(stream)
   .dependsOn(core % "compile->compile;test->test")
