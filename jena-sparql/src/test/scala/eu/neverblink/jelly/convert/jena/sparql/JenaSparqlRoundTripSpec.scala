@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.convert.jena.sparql
 
+import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.RdfProtoSerializationError
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph.{Node, NodeFactory}
@@ -11,15 +12,13 @@ import org.apache.jena.riot.{RDFLanguages, ResultSetMgr, RiotException}
 import org.apache.jena.sparql.core.Var
 import org.apache.jena.sparql.engine.binding.BindingFactory
 import org.apache.jena.sparql.exec.{RowSet, RowSetStream}
-import org.apache.jena.sys.JenaSystem
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import scala.jdk.CollectionConverters.*
 
-class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers:
-  JenaSystem.init()
+class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private val exNs = "https://test.org/example#"
 

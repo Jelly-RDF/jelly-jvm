@@ -52,6 +52,14 @@ You can use [Apache Jena](https://jena.apache.org/index.html) or [Apacha Jena Fu
 
 The Jelly format is registered under the name `jelly` in the RDF libraries, so you can use it in the same way as other formats like Turtle, RDF/XML, or JSON-LD.
 
+### Jelly-SPARQL support
+
+The Jena plugin JAR also bundles [Jelly-SPARQL](index.md#jelly-sparql-experimental), the columnar format for SPARQL query results. Dropping the JAR in your classpath registers it in Jena's result set readers and writers under the name `Jelly-SPARQL`, with the media type `application/x-jelly-sparql` and the `.jellys` file extension.
+
+In Fuseki, this also enables content negotiation: a client that sends `Accept: application/x-jelly-sparql` gets SELECT and ASK results back in Jelly-SPARQL.
+
+One thing that does not work is Jena's `--results=` command-line option – it only knows about the result formats built into Jena, and that list cannot be extended by a plugin.
+
 ## See also
 
 - **[Getting started with the Neo4j plugin](getting-started-neo4j.md)**

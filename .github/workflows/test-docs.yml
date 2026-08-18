@@ -39,9 +39,12 @@ jobs:
           # And canonical links don't work correctly
           TAG='main' mkdocs serve &
           sleep 5
+          # The compatibility table links to the docs of 4.0.x, which only get published when
+          # 4.0.0 is released. Drop this ignore then.
           linkchecker \
             --no-warning \
             --check-extern \
             --ignore "https://doi.org" \
+            --ignore "https://w3id.org/jelly/jelly-jvm/4.0.x" \
             http://localhost:8000
           kill $!

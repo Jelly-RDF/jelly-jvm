@@ -1,1 +1,2 @@
 eu.neverblink.jelly.convert.jena.sparql.JellySparqlSubsystemLifecycle
+eu.neverblink.jelly.convert.jena.sparql.JellySparqlFusekiLifecycle

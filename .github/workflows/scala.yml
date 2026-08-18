@@ -203,11 +203,51 @@ jobs:
         path: rdf4j-dir
         key: rdf4j
 
+    - name: Cache Fuseki
+      id: cache-fuseki
+      uses: actions/cache@v6
+      with:
+        path: fuseki-dir
+        key: fuseki
+
+    - name: Download Fuseki
+      if: steps.cache-fuseki.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        wget --progress=dot:mega -O fuseki.tar.gz https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-5.6.0.tar.gz
+        mkdir -p fuseki-dir
+        tar -xzf fuseki.tar.gz -C fuseki-dir --strip-components=1
+
+    - name: Save Fuseki cache
+      if: steps.cache-fuseki.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: fuseki-dir
+        key: fuseki
+
     - name: Test plugins
       shell: bash
       run: |
         echo '_:b <http://ex.org/p> <http://ex.org/o> .' > test.nt
         cp examples/src/main/resources/jelly/weather.jelly test.jelly
+
+        # The Jena plugin JAR must contain Jelly's classes and nothing else.
+        # A second copy of Jena or protobuf-java in the classpath would break the host app.
+        if unzip -l jena-plugin/target/jelly-jena-plugin.jar \
+            | grep -qE "org/apache/jena/|com/google/protobuf/"; then
+          echo "Jena plugin JAR bundles classes that Jena already provides"
+          exit 1
+        fi
+        # Both the RDF and the SPARQL parts of the plugin have to register themselves. The two
+        # service files come from separate modules, so a packaging mistake would drop one of them.
+        for lifecycle in riot.JellySubsystemLifecycle fuseki.JellyFusekiLifecycle \
+            sparql.JellySparqlSubsystemLifecycle sparql.JellySparqlFusekiLifecycle; do
+          unzip -p jena-plugin/target/jelly-jena-plugin.jar \
+            META-INF/services/org.apache.jena.sys.JenaSubsystemLifecycle \
+            | grep -q "$lifecycle" \
+            || { echo "Jena plugin JAR does not register $lifecycle"; exit 1; }
+        done
+        echo Jena plugin JAR contents OK
 
         cp -f jena-plugin/target/jelly-jena-plugin.jar jena-dir/lib
         ./jena-dir/bin/riot --stream=nt test.jelly > jena.nt
@@ -223,3 +263,54 @@ jobs:
 #        # Broken because of an upstream issue
 #        echo "convert test.nt rdf4j.jelly" | ./rdf4j-dir/bin/console.sh
 #        [ -s rdf4j.jelly ] && echo RDF4J writing Jelly OK
+
+    - name: Test Jelly-SPARQL in Fuseki
+      shell: bash
+      run: |
+        # Fuseki picks up plugins from $FUSEKI_BASE/extra, which is run/extra by default.
+        mkdir -p fuseki-dir/run/extra
+        cp -f jena-plugin/target/jelly-jena-plugin.jar fuseki-dir/run/extra/
+        echo '<http://ex.org/s> <http://ex.org/p> "hello" .' > fuseki-test.nt
+
+        root=$(pwd)
+        cd fuseki-dir
+        ./fuseki-server --port=3391 --file="$root/fuseki-test.nt" /ds > "$root/fuseki.log" 2>&1 &
+        fuseki_pid=$!
+        cd "$root"
+
+        for _ in $(seq 1 60); do
+          curl -fsS "http://localhost:3391/\$/ping" > /dev/null 2>&1 && break
+          sleep 1
+        done
+
+        query() {
+          curl -s -H "Accept: $1" --get --data-urlencode "query=$2" \
+            "http://localhost:3391/ds" -o "$3" -w '%{content_type}' | cut -d';' -f1
+        }
+
+        status=0
+
+        if ! grep -q "Added application/x-jelly-sparql" fuseki.log; then
+          echo "Fuseki did not register the Jelly-SPARQL content type"
+          cat fuseki.log
+          status=1
+        fi
+
+        select_ct=$(query application/x-jelly-sparql 'SELECT * WHERE { ?s ?p ?o }' select.jellys)
+        if [ "$select_ct" = "application/x-jelly-sparql" ] && [ -s select.jellys ]; then
+          echo "Fuseki answering SELECT with Jelly-SPARQL OK"
+        else
+          echo "Fuseki answered SELECT with $select_ct instead of Jelly-SPARQL"
+          status=1
+        fi
+
+        ask_ct=$(query application/x-jelly-sparql 'ASK { ?s ?p ?o }' ask.jellys)
+        if [ "$ask_ct" = "application/x-jelly-sparql" ] && [ -s ask.jellys ]; then
+          echo "Fuseki answering ASK with Jelly-SPARQL OK"
+        else
+          echo "Fuseki answered ASK with $ask_ct instead of Jelly-SPARQL"
+          status=1
+        fi
+
+        kill $fuseki_pid
+        exit $status
