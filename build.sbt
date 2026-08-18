@@ -510,6 +510,9 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
     publishArtifact := false,
     commonSettings,
     commonJavaSettings,
+    // This project has no classes of its own, so sbt-jacoco never creates its instrumented-classes
+    // directory – same situation as the root and proto-only projects above.
+    ensureJacocoDir,
   )
   .dependsOn(jena, jenaSparql)
 
