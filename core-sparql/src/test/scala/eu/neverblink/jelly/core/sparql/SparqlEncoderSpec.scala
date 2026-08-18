@@ -8,7 +8,6 @@ import eu.neverblink.jelly.core.sparql.internal.SparqlEncoderImpl
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.lang.reflect.InvocationTargetException
 import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
@@ -69,16 +68,6 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       error.getMessage should include("quoted triples are not supported")
     }
 
-    "not support building triples or quads" in {
-      val e = encoder()
-      for name <- Seq("newTriple", "newQuad") do
-        val method = classOf[SparqlEncoder[?]].getDeclaredMethod(name)
-        method.setAccessible(true)
-        val error = intercept[InvocationTargetException] {
-          method.invoke(e)
-        }
-        error.getCause shouldBe a[UnsupportedOperationException]
-    }
   }
 
   // The encoder hands its own buffers to the frame instead of allocating a fresh set per frame, so

@@ -14,7 +14,7 @@ import java.util.Objects;
  * @param <TNode> The type of RDF nodes used by the RDF library.
  */
 @InternalApi
-final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
+public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     /**
      * A cached node that depends on other lookups (RdfIri and RdfLiteral in the datatype variant).
