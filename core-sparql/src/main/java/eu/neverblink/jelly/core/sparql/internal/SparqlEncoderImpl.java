@@ -350,9 +350,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         }
 
         private void appendIriIds(ColumnState col, int storedNameId, int prefixId, int nameId) {
-            usedNames.mark(nameId);
+            markUsed(usedNames, nameId);
             if (prefixId != 0) {
-                usedPrefixes.mark(prefixId);
+                markUsed(usedPrefixes, prefixId);
             }
             col.nameIds.add(storedNameId);
             col.auxIds.add(prefixId);
@@ -395,7 +395,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             // lookup entry emission that comes with it)
             final RdfLiteral literal = getNodeEncoder().makeDtLiteral(lit, lex, dt);
             final int datatype = literal.getDatatype();
-            usedDatatypes.mark(datatype);
+            markUsed(usedDatatypes, datatype);
             final ColumnState col = currentColumn;
             col.strings.add(lex);
             col.auxIds.add(datatype);
@@ -434,69 +434,54 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     // True while the buffers still hold the contents of the frame endFrame last returned.
     private boolean framePending = false;
 
-    // The lookup ids touched by the current frame – both the ids assigned by its lookup entries
-    // and the ids its columns refer to.
-    private final UsedIds usedNames;
-    private final UsedIds usedPrefixes;
-    private final UsedIds usedDatatypes;
+    /**
+     * The lookup ids of one table touched by the current frame – both the ids assigned by
+     * its lookup entries and the ids its columns refer to. One bit per id, starting at
+     * slot 1; slot 0 is the remaining-budget counter: it starts at the table's budget,
+     * every fresh mark decrements it, and a negative value means the frame has no room
+     * for another row.
+     * <p>
+     * A frame's lookup entries are all applied before any of its columns, so an entry that
+     * the frame overwrites while still referring to the old value cannot be represented. The
+     * lookups evict the least recently used entry and everything this frame touched sits at
+     * the recent end, so the frame stays safe exactly as long as it has not touched every id
+     * of the table. The budget is set so that one more row of fresh ids still fits: the
+     * table size minus one potential id per variable.
+     */
+    private final long[] usedNames;
+    private final long[] usedPrefixes;
+    private final long[] usedDatatypes;
 
     // Lookup entries collected for the current frame, packed into runs of consecutive ids
     private final PackedEntries<RdfNameEntryPacked.Mutable> nameEntries;
     private final PackedEntries<RdfPrefixEntryPacked.Mutable> prefixEntries;
     private final PackedEntries<RdfDatatypeEntryPacked.Mutable> datatypeEntries;
 
+    // Bit words for 1-based ids up to tableSize, plus the counter slot in front
+    private static long[] newUsedIds(int tableSize) {
+        return new long[1 + ((tableSize + 64) >> 6)];
+    }
+
     /**
-     * The set of ids of one lookup table touched by the current frame.
-     * <p>
-     * A frame's lookup entries are all applied before any of its columns, so an entry that the
-     * frame overwrites while still referring to the old value cannot be represented. The lookups
-     * evict the least recently used entry and everything this frame touched sits at the recent
-     * end, so the frame stays safe exactly as long as it has not touched every id of the table –
-     * which is what the count is for.
+     * Marks an id as used by this frame. Branchless, and called for every encoded term, so
+     * it folds the "was it already set" answer into the remaining-budget counter at used[0]
+     * instead of branching on it.
      */
-    private static final class UsedIds {
+    private static void markUsed(long[] used, int id) {
+        final int word = 1 + (id >> 6);
+        final int bit = id & 63;
+        final long old = used[word];
+        used[word] = old | (1L << bit);
+        used[0] -= (~old >>> bit) & 1L;
+    }
 
-        private final long[] bits;
-        private final String kind;
-        // Number of set bits
-        private int count = 0;
-        // Highest count that still leaves room for one more row. Set in setVariables.
-        private int budget = 0;
+    private static boolean isUsed(long[] used, int id) {
+        return (used[1 + (id >> 6)] & (1L << (id & 63))) != 0;
+    }
 
-        UsedIds(int tableSize, String kind) {
-            this.bits = new long[(tableSize + 64) >> 6];
-            this.kind = kind;
-        }
-
-        /**
-         * Marks an id as used by this frame. Branchless, and called for every encoded term, so it
-         * folds the "was it already set" answer into the counter instead of branching on it.
-         */
-        void mark(int id) {
-            final int word = id >> 6;
-            final int bit = id & 63;
-            final long old = bits[word];
-            bits[word] = old | (1L << bit);
-            count += (int) ((old >>> bit) & 1) ^ 1;
-        }
-
-        boolean isSet(int id) {
-            return (bits[id >> 6] & (1L << (id & 63))) != 0;
-        }
-
-        boolean isFull() {
-            return count > budget;
-        }
-
-        void setVariableCount(int variables, int tableSize) {
-            // A disabled table can never be referenced, so it must not constrain the frame size
-            budget = tableSize == 0 ? Integer.MAX_VALUE : tableSize - variables;
-        }
-
-        void resetFrameState() {
-            Arrays.fill(bits, 0);
-            count = 0;
-        }
+    // A disabled table can never be referenced, so it must not constrain the frame size
+    private static long usedIdsBudget(int tableSize, int variables) {
+        return tableSize == 0 ? Long.MAX_VALUE : tableSize - variables;
     }
 
     /**
@@ -508,7 +493,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
      */
     private static final class PackedEntries<T> {
 
-        private final UsedIds used;
+        private final long[] used;
+        private final String kind;
         private final IntFunction<T> factory;
         private final BiConsumer<T, String> adder;
 
@@ -517,15 +503,16 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         // State for resolving 0-compressed lookup entry identifiers
         private int lastAssignedId = 0;
 
-        PackedEntries(UsedIds used, IntFunction<T> factory, BiConsumer<T, String> adder) {
+        PackedEntries(long[] used, String kind, IntFunction<T> factory, BiConsumer<T, String> adder) {
             this.used = used;
+            this.kind = kind;
             this.factory = factory;
             this.adder = adder;
         }
 
         void append(int entryId, String value) {
             final int id = entryId == 0 ? lastAssignedId + 1 : entryId;
-            checkAndMarkUsed(used, id);
+            checkAndMarkUsed(used, id, kind);
             if (current != null && id == lastAssignedId + 1) {
                 // Continues the open run – the packed entry numbers it implicitly
                 adder.accept(current, value);
@@ -553,21 +540,24 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
      */
     public SparqlEncoderImpl(ProtoEncoderConverter<TNode> converter, SparqlEncoder.Params params) {
         super(converter, params);
-        usedNames = new UsedIds(options.getMaxNameTableSize(), "name");
-        usedPrefixes = new UsedIds(options.getMaxPrefixTableSize(), "prefix");
-        usedDatatypes = new UsedIds(options.getMaxDatatypeTableSize(), "datatype");
+        usedNames = newUsedIds(options.getMaxNameTableSize());
+        usedPrefixes = newUsedIds(options.getMaxPrefixTableSize());
+        usedDatatypes = newUsedIds(options.getMaxDatatypeTableSize());
         nameEntries = new PackedEntries<>(
             usedNames,
+            "name",
             id -> RdfNameEntryPacked.newInstance().setId(id),
             RdfNameEntryPacked.Mutable::addValues
         );
         prefixEntries = new PackedEntries<>(
             usedPrefixes,
+            "prefix",
             id -> RdfPrefixEntryPacked.newInstance().setId(id),
             RdfPrefixEntryPacked.Mutable::addValues
         );
         datatypeEntries = new PackedEntries<>(
             usedDatatypes,
+            "datatype",
             id -> RdfDatatypeEntryPacked.newInstance().setId(id),
             RdfDatatypeEntryPacked.Mutable::addValues
         );
@@ -583,10 +573,20 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         for (int i = 0; i < columns.length; i++) {
             columns[i] = new ColumnState();
         }
+        resetUsedIds();
+    }
+
+    /** Clears the used-ids bits and puts each remaining-budget counter back at its budget. */
+    private void resetUsedIds() {
         final int n = columns.length;
-        usedNames.setVariableCount(n, options.getMaxNameTableSize());
-        usedPrefixes.setVariableCount(n, options.getMaxPrefixTableSize());
-        usedDatatypes.setVariableCount(n, options.getMaxDatatypeTableSize());
+        resetUsedIds(usedNames, usedIdsBudget(options.getMaxNameTableSize(), n));
+        resetUsedIds(usedPrefixes, usedIdsBudget(options.getMaxPrefixTableSize(), n));
+        resetUsedIds(usedDatatypes, usedIdsBudget(options.getMaxDatatypeTableSize(), n));
+    }
+
+    private static void resetUsedIds(long[] used, long budget) {
+        Arrays.fill(used, 0L);
+        used[0] = budget;
     }
 
     @Override
@@ -618,9 +618,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
      * been mutated, neither is possible any more.
      */
     private boolean hasRoomForAnotherRow() {
-        return (
-            rowCount < MAX_ROWS_PER_FRAME && !usedNames.isFull() && !usedPrefixes.isFull() && !usedDatatypes.isFull()
-        );
+        // A table with its remaining-budget counter below zero has no room left
+        return rowCount < MAX_ROWS_PER_FRAME && usedNames[0] >= 0 && usedPrefixes[0] >= 0 && usedDatatypes[0] >= 0;
     }
 
     /**
@@ -639,9 +638,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         nameEntries.resetFrameState();
         prefixEntries.resetFrameState();
         datatypeEntries.resetFrameState();
-        usedNames.resetFrameState();
-        usedPrefixes.resetFrameState();
-        usedDatatypes.resetFrameState();
+        resetUsedIds();
         rowCount = 0;
     }
 
@@ -944,16 +941,16 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
      * appendRow ends a frame before it can get that far, so this can only fire for a single row
      * that does not fit in the lookup tables at all – no framing decision can help there.
      */
-    private static void checkAndMarkUsed(UsedIds used, int id) {
-        if (used.isSet(id)) {
+    private static void checkAndMarkUsed(long[] used, int id, String kind) {
+        if (isUsed(used, id)) {
             throw new RdfProtoSerializationError(
                 (
                     "The %s lookup table is too small to encode a single row of these results: " +
                     "entry %d would be overwritten while still referenced in the current frame. " +
                     "Increase the max %s table size."
-                ).formatted(used.kind, id, used.kind)
+                ).formatted(kind, id, kind)
             );
         }
-        used.mark(id);
+        markUsed(used, id);
     }
 }
