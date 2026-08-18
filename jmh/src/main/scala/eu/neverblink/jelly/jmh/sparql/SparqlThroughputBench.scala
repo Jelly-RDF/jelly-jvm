@@ -22,7 +22,6 @@ inline val throughputRows = 100_000
 
 /** End-to-end throughput of Jelly-SPARQL reading and writing through Jena, in rows per second.
   *
-  *
   * By default only Jelly is measured. Pass `format` to compare it against Jena's own result set
   * formats:
   * {{{
