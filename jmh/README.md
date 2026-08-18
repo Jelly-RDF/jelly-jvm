@@ -17,13 +17,13 @@ sbt "jmh/Jmh/run -wi 10 -i 10 .*RdfIriParseBench.*"
 To run with the perfasm profiler, use:
 
 ```bash
-sbt "jmh/Jmh/run -f1 -prof "perfasm:intelSyntax=true;tooBigThreshold=1500;top=3" .*RdfIriParseBench.*"
+sbt "jmh/Jmh/run -f1 -prof \"perfasm:intelSyntax=true;tooBigThreshold=1500;top=3\" .*RdfIriParseBench.*"
 ```
 
 Run this to get all options for perfasm:
 
 ```bash
-sbt "jmh/Jmh/run -f1 -prof perfasm:help"
+sbt "jmh/Jmh/run -f1 -prof \"perfasm:help\""
 ```
 
 To see allocation rates:

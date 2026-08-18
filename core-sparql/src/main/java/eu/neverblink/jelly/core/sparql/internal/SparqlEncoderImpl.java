@@ -128,6 +128,36 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         }
     }
 
+    /**
+     * Reusable store for the RdfIri messages a polymorphic column wraps in its SparqlTerms.
+     * IRI values are kept as plain ints while the frame is built (see ColumnState), so the
+     * messages only get materialized here, at frame end, and only for polymorphic columns.
+     */
+    private static final class IriBuffer {
+
+        private RdfIri.Mutable[] iris = new RdfIri.Mutable[0];
+        private int size = 0;
+
+        RdfIri.Mutable append() {
+            if (size == iris.length) {
+                iris = Arrays.copyOf(iris, Math.max(8, iris.length * 2));
+            }
+            RdfIri.Mutable iri = iris[size];
+            if (iri == null) {
+                iri = RdfIri.newInstance();
+                iris[size] = iri;
+            } else {
+                iri.clear();
+            }
+            size++;
+            return iri;
+        }
+
+        void clear() {
+            size = 0;
+        }
+    }
+
     private static final class ColumnState {
 
         // Column type. Sticky once set, only ever escalated to TYPE_POLY.
@@ -141,26 +171,33 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         // Number of values emitted exactly once since the last layout exception
         int skip = 0;
 
-        // Per-frame, per-column IRI inference state.
-        // lastPrefixId = -1 forces the first IRI of a column to carry its prefix id.
-        int lastPrefixId = -1;
+        // Per-frame, per-column IRI inference state (the prefix side of the inference is
+        // resolved at frame end, from rawPrefixIds).
         int lastNameId = 0;
 
-        // Encoded run values of the current frame (RdfIri, String or RdfLiteral)
+        // Encoded run values of the current frame. Strings for bnodes, RdfLiterals for
+        // literals. An IRI is stored as the shared ZERO_IRI marker, with its ids pushed into
+        // nameIds/rawPrefixIds instead.
         final ArrayList<Object> values = new ArrayList<>();
         // Layout of the current frame
         final RepeatedInt layout = RepeatedInt.newEmptyInstance();
 
+        // Name ids of the frame's IRI values, with the next-name inference already applied
+        // (0 means "previous + 1").
+        final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
+        // Uncompressed prefix ids of the frame's IRI values, parallel to nameIds
+        final RepeatedInt rawPrefixIds = RepeatedInt.newEmptyInstance();
+
         // Output buffers handed straight to the column messages of the frame being closed, instead
         // of a fresh one per frame. A column has exactly one type per frame, so only the buffer
         // matching that type is ever filled. They keep their capacity across frames.
-        final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
         final RepeatedInt prefixIds = RepeatedInt.newEmptyInstance();
         final RepeatedString strings = RepeatedString.newEmptyInstance();
         final MessageCollection<RdfLiteral, RdfLiteral.Mutable> literals = new ArrayListMessageCollection<>(
             RdfLiteral::newInstance
         );
         final TermBuffer terms = new TermBuffer();
+        final IriBuffer polyIris = new IriBuffer();
 
         void resetFrameState() {
             runNode = null;
@@ -168,59 +205,54 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             runActive = false;
             runIsUnbound = false;
             skip = 0;
-            lastPrefixId = -1;
             lastNameId = 0;
             values.clear();
             layout.clear();
             nameIds.clear();
+            rawPrefixIds.clear();
             prefixIds.clear();
             strings.clear();
             literals.clear();
             terms.clear();
+            polyIris.clear();
         }
     }
 
     /**
      * NodeEncoder passed to the converter: same as the underlying encoder, except that IRIs
-     * are compressed against the current column's inference state, and all lookup references
-     * are tracked for the frame working-set check.
+     * go straight into the current column's int buffers (with the next-name inference already
+     * applied), and all lookup references are tracked for the frame working-set check.
+     * The RdfIri return value is only the shared ZERO_IRI, serving as a type marker.
      */
     private final class ColumnNodeEncoder implements NodeEncoder<TNode> {
 
         @Override
         public RdfIri makeIri(String iri) {
             final RdfIri raw = getNodeEncoder().makeIriRaw(iri);
-            final int prefixId = raw.getPrefixId();
             final int nameId = raw.getNameId();
-            usedNames.mark(nameId);
-            if (prefixId != 0) {
-                usedPrefixes.mark(prefixId);
-            }
             final ColumnState col = currentColumn;
-            final boolean samePrefix = prefixId == col.lastPrefixId;
-            final boolean nextName = nameId == col.lastNameId + 1;
-            col.lastPrefixId = prefixId;
-            col.lastNameId = nameId;
-            if (samePrefix) {
-                if (nextName) {
-                    return ZERO_IRI;
-                }
-                return RdfIri.newInstance().setNameId(nameId);
-            } else if (nextName) {
-                return RdfIri.newInstance().setPrefixId(prefixId);
-            }
-            return raw;
+            appendIriIds(col, nameId == col.lastNameId + 1 ? 0 : nameId, raw.getPrefixId(), nameId);
+            return ZERO_IRI;
         }
 
         @Override
         public RdfIri makeIriRaw(String iri) {
             final RdfIri raw = getNodeEncoder().makeIriRaw(iri);
-            usedNames.mark(raw.getNameId());
-            final int prefixId = raw.getPrefixId();
+            // Raw means no next-name inference, so the name id is stored as it is. The decoder
+            // still tracks it as the new "previous name", hence the lastNameId update.
+            final int nameId = raw.getNameId();
+            appendIriIds(currentColumn, nameId, raw.getPrefixId(), nameId);
+            return ZERO_IRI;
+        }
+
+        private void appendIriIds(ColumnState col, int storedNameId, int prefixId, int nameId) {
+            usedNames.mark(nameId);
             if (prefixId != 0) {
                 usedPrefixes.mark(prefixId);
             }
-            return raw;
+            col.nameIds.add(storedNameId);
+            col.rawPrefixIds.add(prefixId);
+            col.lastNameId = nameId;
         }
 
         @Override
@@ -540,34 +572,26 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             if (types[i] == TYPE_IRI) {
                 final ColumnState col = columns[i];
                 final SparqlIriColumn.Mutable column = SparqlIriColumn.newInstance();
-                final RepeatedInt nameIds = col.nameIds;
+                column.setNameIds(col.nameIds);
+                final RepeatedInt rawPrefixIds = col.rawPrefixIds;
+                final int valueCount = rawPrefixIds.size();
                 // The prefix ids keep the "same prefix as the previous IRI" inference of RdfIri.
-                // If the whole column resolves to one prefix – the usual case – it is stated once
-                // instead of once per value.
-                int lastPrefix = 0;
-                int columnPrefix = 0;
+                final int columnPrefix = valueCount == 0 ? 0 : rawPrefixIds.get(0);
                 boolean onePrefix = true;
-                int index = 0;
-                for (final Object value : col.values) {
-                    final RdfIri iri = (RdfIri) value;
-                    nameIds.add(iri.getNameId());
-                    // Resolve the inference to see whether the column really stays on one prefix
-                    final int prefix = iri.getPrefixId();
-                    lastPrefix = prefix == 0 ? lastPrefix : prefix;
-                    if (index == 0) {
-                        columnPrefix = lastPrefix;
-                    } else if (lastPrefix != columnPrefix) {
+                for (int j = 1; j < valueCount; j++) {
+                    if (rawPrefixIds.get(j) != columnPrefix) {
                         onePrefix = false;
+                        break;
                     }
-                    index++;
                 }
-                column.setNameIds(nameIds);
                 final RepeatedInt prefixIds = col.prefixIds;
                 if (!onePrefix) {
-                    // Rare enough to be worth a second pass over the values rather than a buffer
-                    // to stash the raw prefix ids in
-                    for (final Object value : col.values) {
-                        prefixIds.add(((RdfIri) value).getPrefixId());
+                    // prev = -1 forces the first IRI of the column to carry its prefix id
+                    int prev = -1;
+                    for (int j = 0; j < valueCount; j++) {
+                        final int prefix = rawPrefixIds.get(j);
+                        prefixIds.add(prefix == prev ? 0 : prefix);
+                        prev = prefix;
                     }
                     column.setPrefixIds(prefixIds);
                 } else if (columnPrefix != 0) {
@@ -626,10 +650,24 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                 final ColumnState col = columns[i];
                 final SparqlPolyColumn.Mutable column = SparqlPolyColumn.newInstance();
                 final TermBuffer terms = col.terms;
+                // Cursor into the column's IRI ids: the values list holds only markers for
+                // IRIs, the ids themselves sit in nameIds/rawPrefixIds in the same order.
+                int iriIndex = 0;
+                // -1 forces the first IRI of the column to carry its prefix id
+                int prevPrefix = -1;
                 for (final Object value : col.values) {
                     final SparqlTerm.Mutable term = terms.appendMessage();
-                    if (value instanceof RdfIri iri) {
-                        term.setIri(iri);
+                    if (value instanceof RdfIri) {
+                        final int nameId = col.nameIds.get(iriIndex);
+                        final int rawPrefix = col.rawPrefixIds.get(iriIndex);
+                        iriIndex++;
+                        final int prefixId = rawPrefix == prevPrefix ? 0 : rawPrefix;
+                        prevPrefix = rawPrefix;
+                        if (prefixId == 0 && nameId == 0) {
+                            term.setIri(ZERO_IRI);
+                        } else {
+                            term.setIri(col.polyIris.append().setPrefixId(prefixId).setNameId(nameId));
+                        }
                     } else if (value instanceof String bnode) {
                         term.setBnode(bnode);
                     } else {
