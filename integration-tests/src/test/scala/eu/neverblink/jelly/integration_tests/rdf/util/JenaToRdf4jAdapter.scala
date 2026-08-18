@@ -1,13 +1,13 @@
 package eu.neverblink.jelly.integration_tests.rdf.util
 
 import org.apache.jena.graph.{Node, Triple}
-import org.apache.jena.riot.system.StreamRDF
+import org.apache.jena.riot.system.StreamRDFBase
 import org.apache.jena.sparql.core.Quad
 import org.eclipse.rdf4j.model.{IRI, Resource, Value}
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.rio.RDFHandler
 
-class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDF {
+class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDFBase {
   val vf: SimpleValueFactory = SimpleValueFactory.getInstance()
 
   def makeIRI(n: Node): IRI = {

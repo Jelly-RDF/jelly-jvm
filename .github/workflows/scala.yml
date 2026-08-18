@@ -33,7 +33,7 @@ jobs:
             rdf4j_version: ""
           - os: ubuntu-latest
             java: 25
-            jena_version: "6.1.0"
+            jena_version: "6.2.0"
             rdf4j_version: ""
           - os: ubuntu-latest
             java: 26
