@@ -2,11 +2,10 @@ package eu.neverblink.jelly.convert.titanium;
 
 import com.apicatalog.rdf.api.RdfConsumerException;
 import com.apicatalog.rdf.api.RdfQuadConsumer;
-import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-import eu.neverblink.protoc.java.runtime.ProtobufUtil;
+import eu.neverblink.protoc.java.runtime.BufferedProtoWriter;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,16 +13,14 @@ import java.io.OutputStream;
 @InternalApi
 final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
 
-    private final OutputStream outputStream;
-    private final CodedOutputStream codedOutput;
+    private final BufferedProtoWriter output;
     private final int frameSize;
 
     private final TitaniumJellyEncoder encoder;
     private final RdfStreamFrame.Mutable reusableFrame;
 
     TitaniumJellyWriterImpl(OutputStream outputStream, RdfStreamOptions options, int frameSize) {
-        this.outputStream = outputStream;
-        this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
+        this.output = new BufferedProtoWriter(outputStream);
         this.frameSize = frameSize;
 
         this.encoder = new TitaniumJellyEncoderImpl(options, frameSize);
@@ -32,7 +29,7 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
 
     @Override
     public OutputStream getOutputStream() {
-        return outputStream;
+        return output.getOutputStream();
     }
 
     @Override
@@ -60,7 +57,7 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
             reusableFrame.resetCachedSize();
             reusableFrame.setRows(encoder.getRows());
             try {
-                reusableFrame.writeDelimitedTo(codedOutput);
+                output.writeDelimited(reusableFrame);
             } catch (IOException e) {
                 throw new RdfConsumerException(e);
             }
@@ -76,17 +73,12 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
         if (encoder.getRowCount() > 0) {
             reusableFrame.resetCachedSize();
             reusableFrame.setRows(encoder.getRows());
-            reusableFrame.writeDelimitedTo(codedOutput);
+            output.writeDelimited(reusableFrame);
 
             encoder.clearRows();
         }
 
-        if (outputStream != null) {
-            // !!! CodedOutputStream.flush() does not flush the underlying OutputStream,
-            // so we need to do it explicitly.
-            codedOutput.flush();
-            outputStream.flush();
-            outputStream.close();
-        }
+        output.flush();
+        output.getOutputStream().close();
     }
 }

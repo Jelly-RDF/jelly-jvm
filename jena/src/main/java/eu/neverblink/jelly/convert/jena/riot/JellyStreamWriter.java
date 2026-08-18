@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.jena.riot;
 
-import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
 import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.memory.EncoderAllocator;
@@ -8,7 +7,7 @@ import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
-import eu.neverblink.protoc.java.runtime.ProtobufUtil;
+import eu.neverblink.protoc.java.runtime.BufferedProtoWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.jena.graph.Node;
@@ -28,8 +27,7 @@ import org.apache.jena.sparql.core.Quad;
 public sealed class JellyStreamWriter implements StreamRDF {
 
     protected final JellyFormatVariant formatVariant;
-    protected final OutputStream outputStream;
-    protected final CodedOutputStream codedOutput;
+    protected final BufferedProtoWriter output;
 
     protected final ReusableRowBuffer buffer;
     protected final EncoderAllocator allocator;
@@ -62,8 +60,7 @@ public sealed class JellyStreamWriter implements StreamRDF {
         OutputStream outputStream
     ) {
         this.formatVariant = formatVariant;
-        this.outputStream = outputStream;
-        this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
+        this.output = new BufferedProtoWriter(outputStream);
         this.buffer = RowBuffer.newReusableForEncoder(formatVariant.getFrameSize() + 8);
         this.allocator = EncoderAllocator.newArenaAllocator(formatVariant.getFrameSize() + 8);
         this.reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
@@ -172,7 +169,7 @@ public sealed class JellyStreamWriter implements StreamRDF {
         if (!formatVariant.isDelimited()) {
             // Non-delimited variant – whole stream in one frame
             try {
-                reusableFrame.writeTo(codedOutput);
+                output.write(reusableFrame);
             } catch (IOException e) {
                 throw new RiotException(e);
             }
@@ -183,10 +180,7 @@ public sealed class JellyStreamWriter implements StreamRDF {
         }
 
         try {
-            // !!! CodedOutputStream.flush() does not flush the underlying OutputStream,
-            // so we need to do it explicitly.
-            codedOutput.flush();
-            outputStream.flush();
+            output.flush();
         } catch (IOException e) {
             throw new RiotException(e);
         }
@@ -195,7 +189,7 @@ public sealed class JellyStreamWriter implements StreamRDF {
     protected void flushBuffer() {
         reusableFrame.resetCachedSize();
         try {
-            reusableFrame.writeDelimitedTo(codedOutput);
+            output.writeDelimited(reusableFrame);
         } catch (IOException e) {
             throw new RiotException(e);
         } finally {

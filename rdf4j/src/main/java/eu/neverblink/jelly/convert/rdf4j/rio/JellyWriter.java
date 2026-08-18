@@ -2,7 +2,6 @@ package eu.neverblink.jelly.convert.rdf4j.rio;
 
 import static eu.neverblink.jelly.convert.rdf4j.rio.JellyFormat.JELLY;
 
-import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.core.ProtoEncoder;
 import eu.neverblink.jelly.core.memory.EncoderAllocator;
@@ -12,7 +11,7 @@ import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-import eu.neverblink.protoc.java.runtime.ProtobufUtil;
+import eu.neverblink.protoc.java.runtime.BufferedProtoWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -37,8 +36,7 @@ public final class JellyWriter extends AbstractRDFWriter {
 
     private final Rdf4jConverterFactory converterFactory;
     private final ValueFactory valueFactory;
-    private final OutputStream outputStream;
-    private final CodedOutputStream codedOutput;
+    private final BufferedProtoWriter output;
     // Initialized in startRDF()
     private ReusableRowBuffer buffer = null;
     private EncoderAllocator allocator = null;
@@ -60,8 +58,7 @@ public final class JellyWriter extends AbstractRDFWriter {
     public JellyWriter(Rdf4jConverterFactory converterFactory, ValueFactory valueFactory, OutputStream outputStream) {
         this.converterFactory = converterFactory;
         this.valueFactory = valueFactory;
-        this.outputStream = outputStream;
-        this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
+        this.output = new BufferedProtoWriter(outputStream);
         this.reusableFrame = RdfStreamFrame.newInstance();
     }
 
@@ -145,7 +142,7 @@ public final class JellyWriter extends AbstractRDFWriter {
         if (!isDelimited) {
             // Non-delimited variant – whole stream in one frame
             try {
-                reusableFrame.writeTo(codedOutput);
+                output.write(reusableFrame);
             } catch (Exception e) {
                 throw new RDFHandlerException("Error writing frame", e);
             }
@@ -154,10 +151,7 @@ public final class JellyWriter extends AbstractRDFWriter {
         }
 
         try {
-            // !!! CodedOutputStream.flush() does not flush the underlying OutputStream,
-            // so we need to do it explicitly.
-            codedOutput.flush();
-            outputStream.flush();
+            output.flush();
         } catch (IOException e) {
             throw new RDFHandlerException("Error flushing output", e);
         }
@@ -183,7 +177,7 @@ public final class JellyWriter extends AbstractRDFWriter {
     private void flushBuffer() {
         reusableFrame.resetCachedSize();
         try {
-            reusableFrame.writeDelimitedTo(codedOutput);
+            output.writeDelimited(reusableFrame);
         } catch (Exception e) {
             throw new RDFHandlerException("Error writing frame", e);
         } finally {
