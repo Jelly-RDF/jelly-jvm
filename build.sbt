@@ -474,16 +474,18 @@ lazy val jenaSparql = (project in file("jena-sparql"))
     name := "jelly-jena-sparql",
     description := "Jelly-SPARQL integration for Apache Jena: reading and writing " +
       "SPARQL query results.",
+    libraryDependencies ++= Seq(
+      // Integration with Fuseki is optional, so include this dep as "provided"
+      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
+    ),
     commonSettings,
     commonJavaSettings,
   )
   // Test-time dependency on the core-sparql test sources for the shared result set generator
   .dependsOn(coreSparql % "compile->compile;test->test", jena)
 
-// jena-plugin is a dummy directory that contains only a symlink (src) to the source code
-// in the jena directory. This way sbt won't shout at us for having two projects in the
-// same directory.
-// Same applies to rdf4j-plugin below.
+// jena-plugin has no sources of its own – it only fat-jars the Jelly modules to be put in the
+// Jena's lib directory.
 lazy val jenaPlugin = (project in file("jena-plugin"))
   .settings(
     name := "jelly-jena-plugin",
@@ -493,13 +495,14 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
       "org.apache.jena" % "jena-arq" % jenaV % "provided,test",
       "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
     ),
-    // Excludes protobuf-java from the jar, since it's already provided in jena-core.
-    // I couldn't figure out a cleaner way since it's also a dependency of jelly-core.
-    assemblyMergeStrategy := {
-      case PathList("com", "google", "protobuf", _*) => MergeStrategy.discard
-      case PathList("google", "protobuf", _*) => MergeStrategy.discard
-      case x => assemblyMergeStrategy.value(x) // defer to old strategy
-    },
+    // Depending on the jena and jena-sparql projects also puts *their* Jena dependencies on our
+    // runtime classpath, where the "provided" scope above cannot get rid of them, and assembly
+    // would pack them into the JAR. Keep only the class and resource directories of the Jelly
+    // modules – those are plain directories thanks to exportJars := false at the top of this file,
+    // while everything else on this classpath is a JAR.
+    assembly / fullClasspath := (Runtime / fullClasspath).value.filterNot(
+      _.data.name.endsWith(".jar"),
+    ),
     stableAssemblyOutput,
     // Don't run tests for the plugin project
     Test / skip := true,
@@ -508,7 +511,7 @@ lazy val jenaPlugin = (project in file("jena-plugin"))
     commonSettings,
     commonJavaSettings,
   )
-  .dependsOn(core)
+  .dependsOn(jena, jenaSparql)
 
 lazy val rdf4j = (project in file("rdf4j"))
   .settings(
@@ -532,6 +535,9 @@ lazy val rdf4jPatch = (project in file("rdf4j-patch"))
   )
   .dependsOn(corePatch, rdf4j)
 
+// rdf4j-plugin is a dummy directory that contains only a symlink (src) to the source code in the
+// rdf4j directory. This way sbt won't shout at us for having two projects in the same directory.
+// Unlike jena-plugin above, this one still bundles protobuf-java, which RDF4J does not provide.
 lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
   .settings(
     name := "jelly-rdf4j-plugin",
