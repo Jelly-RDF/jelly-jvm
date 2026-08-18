@@ -37,11 +37,12 @@ public class Rdf4jRio implements Example {
 
         // Write the RDF graph to a Jelly file
         // First, create the stream's options:
-        RdfStreamOptions options = JellyOptions.SMALL_STRICT.clone()
-            // Setting the physical stream type is mandatory! It will always be either TRIPLES or QUADS.
-            .setPhysicalType(PhysicalStreamType.TRIPLES)
-            // Set other optional options
-            .setStreamName("My weather data");
+        RdfStreamOptions options =
+            JellyOptions.SMALL_STRICT.clone()
+                // Setting the physical stream type is mandatory! It will always be either TRIPLES or QUADS.
+                .setPhysicalType(PhysicalStreamType.TRIPLES)
+                // Set other optional options
+                .setStreamName("My weather data");
         // Create the config object to pass to the writer
         JellyWriterSettings config = JellyWriterSettings.empty().setJellyOptions(options).setFrameSize(128);
 
@@ -94,8 +95,9 @@ public class Rdf4jRio implements Example {
         StatementCollector collector = new StatementCollector();
         parser.setRDFHandler(collector);
         supportedOptions.ifPresent(opt ->
-            // If the user provided supported options, set them on the parser
-            parser.setParserConfig(JellyParserSettings.from(opt))
+            parser
+                // If the user provided supported options, set them on the parser
+                .setParserConfig(JellyParserSettings.from(opt))
         );
 
         try (InputStream is = file.toURI().toURL().openStream()) {

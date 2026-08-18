@@ -69,23 +69,24 @@ public final class RdfPatchWriterJelly implements RDFChanges {
         this.outputStream = outputStream;
         this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
 
-        this.patchOptions = options
-            .patchOptions()
-            .clone()
-            // If no stream type is set, we default to PUNCTUATED, as it's the safest option.
-            // It can handle patches of any size and preserves the segmentation marks.
-            .setStreamType(
-                options.patchOptions().getStreamType() == PatchStreamType.UNSPECIFIED
-                    ? PatchStreamType.PUNCTUATED
-                    : options.patchOptions().getStreamType()
-            )
-            // Statement type: go for QUADS if unknown. Otherwise, if we encounter a quad later, we will
-            // have to throw an error.
-            .setStatementType(
-                options.patchOptions().getStatementType() == PatchStatementType.UNSPECIFIED
-                    ? PatchStatementType.QUADS
-                    : options.patchOptions().getStatementType()
-            );
+        this.patchOptions =
+            options
+                .patchOptions()
+                .clone()
+                // If no stream type is set, we default to PUNCTUATED, as it's the safest option.
+                // It can handle patches of any size and preserves the segmentation marks.
+                .setStreamType(
+                    options.patchOptions().getStreamType() == PatchStreamType.UNSPECIFIED
+                        ? PatchStreamType.PUNCTUATED
+                        : options.patchOptions().getStreamType()
+                )
+                // Statement type: go for QUADS if unknown. Otherwise, if we encounter a quad later, we will
+                // have to throw an error.
+                .setStatementType(
+                    options.patchOptions().getStatementType() == PatchStatementType.UNSPECIFIED
+                        ? PatchStatementType.QUADS
+                        : options.patchOptions().getStatementType()
+                );
 
         // Arena size depends on frame size (if PUNCTUATED) or is fixed at 1024 for other cases.
         int arenaSize = this.patchOptions.getStreamType() == PatchStreamType.PUNCTUATED ? options.frameSize + 8 : 1024;
