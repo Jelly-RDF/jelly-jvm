@@ -17,10 +17,16 @@ import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
+import eu.neverblink.protoc.java.runtime.ArrayListMessageCollection;
+import eu.neverblink.protoc.java.runtime.MessageCollection;
 import eu.neverblink.protoc.java.runtime.RepeatedInt;
+import eu.neverblink.protoc.java.runtime.RepeatedString;
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.BiConsumer;
 import java.util.function.IntFunction;
 
@@ -58,6 +64,70 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
     // Not a valid datatype lookup id – marks a literal column that cannot state one datatype
     private static final int MIXED_DATATYPES = -1;
 
+    /**
+     * Reusable store for the SparqlTerm wrappers of a polymorphic column.
+     * <p>
+     * Only {@link #appendMessage()} adds to this - {@code add} is not supported, because a
+     * caller-supplied message would not come from the pool.
+     */
+    private static final class TermBuffer
+        extends AbstractCollection<SparqlTerm>
+        implements MessageCollection<SparqlTerm, SparqlTerm.Mutable>
+    {
+
+        private SparqlTerm.Mutable[] terms = new SparqlTerm.Mutable[0];
+        private int size = 0;
+
+        @Override
+        public SparqlTerm.Mutable appendMessage() {
+            if (size == terms.length) {
+                terms = Arrays.copyOf(terms, Math.max(8, terms.length * 2));
+            }
+            SparqlTerm.Mutable term = terms[size];
+            if (term == null) {
+                term = SparqlTerm.newInstance();
+                terms[size] = term;
+            } else {
+                // The setters leave the cached serialized size alone, so a reused wrapper has to be
+                // cleared - otherwise the frame would be written with the previous value's length.
+                term.clear();
+            }
+            size++;
+            return term;
+        }
+
+        @Override
+        public int size() {
+            return size;
+        }
+
+        @Override
+        public void clear() {
+            // Keeps the wrappers around for the next frame
+            size = 0;
+        }
+
+        @Override
+        public Iterator<SparqlTerm> iterator() {
+            return new Iterator<>() {
+                private int index = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return index < size;
+                }
+
+                @Override
+                public SparqlTerm next() {
+                    if (index >= size) {
+                        throw new NoSuchElementException();
+                    }
+                    return terms[index++];
+                }
+            };
+        }
+    }
+
     private static final class ColumnState {
 
         // Column type. Sticky once set, only ever escalated to TYPE_POLY.
@@ -81,6 +151,17 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         // Layout of the current frame
         final RepeatedInt layout = RepeatedInt.newEmptyInstance();
 
+        // Output buffers handed straight to the column messages of the frame being closed, instead
+        // of a fresh one per frame. A column has exactly one type per frame, so only the buffer
+        // matching that type is ever filled. They keep their capacity across frames.
+        final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
+        final RepeatedInt prefixIds = RepeatedInt.newEmptyInstance();
+        final RepeatedString strings = RepeatedString.newEmptyInstance();
+        final MessageCollection<RdfLiteral, RdfLiteral.Mutable> literals = new ArrayListMessageCollection<>(
+            RdfLiteral::newInstance
+        );
+        final TermBuffer terms = new TermBuffer();
+
         void resetFrameState() {
             runNode = null;
             runLength = 0;
@@ -91,6 +172,11 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             lastNameId = 0;
             values.clear();
             layout.clear();
+            nameIds.clear();
+            prefixIds.clear();
+            strings.clear();
+            literals.clear();
+            terms.clear();
         }
     }
 
@@ -178,6 +264,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
 
     private ColumnState currentColumn = null;
     private final ColumnNodeEncoder columnNodeEncoder = new ColumnNodeEncoder();
+
+    // True while the buffers still hold the contents of the frame endFrame last returned.
+    private boolean framePending = false;
 
     // The lookup ids touched by the current frame – both the ids assigned by its lookup entries
     // and the ids its columns refer to.
@@ -344,6 +433,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                 "Expected %d bindings in the row, got %d.".formatted(columns.length, row.length)
             );
         }
+        beginFrame();
         // A frame that already holds rows is ended rather than overfilled. An empty frame takes
         // the row whatever it costs – ending it again would not make any more room.
         if (rowCount > 0 && !hasRoomForAnotherRow()) {
@@ -367,11 +457,34 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         );
     }
 
+    /**
+     * Discards the previous frame's state, if it is still around. Called before anything is written
+     * into the buffers, so that the frame the caller got from endFrame stays readable for as long
+     * as the contract promises.
+     */
+    private void beginFrame() {
+        if (!framePending) {
+            return;
+        }
+        framePending = false;
+        for (final ColumnState col : columns) {
+            col.resetFrameState();
+        }
+        nameEntries.resetFrameState();
+        prefixEntries.resetFrameState();
+        datatypeEntries.resetFrameState();
+        usedNames.resetFrameState();
+        usedPrefixes.resetFrameState();
+        usedDatatypes.resetFrameState();
+        rowCount = 0;
+    }
+
     @Override
     public SparqlResultsFrame endFrame() {
         if (columns == null) {
             throw new RdfProtoSerializationError("Variables must be set before ending a frame.");
         }
+        beginFrame();
         for (final ColumnState col : columns) {
             if (col.runActive && col.runIsUnbound) {
                 // Trailing unbound run – omitted, the decoder pads with unbound cells.
@@ -425,22 +538,21 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         // order in which the column indices were assigned.
         for (int i = 0; i < columns.length; i++) {
             if (types[i] == TYPE_IRI) {
+                final ColumnState col = columns[i];
                 final SparqlIriColumn.Mutable column = SparqlIriColumn.newInstance();
-                final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
+                final RepeatedInt nameIds = col.nameIds;
                 // The prefix ids keep the "same prefix as the previous IRI" inference of RdfIri.
                 // If the whole column resolves to one prefix – the usual case – it is stated once
                 // instead of once per value.
-                final int[] prefixes = new int[columns[i].values.size()];
                 int lastPrefix = 0;
                 int columnPrefix = 0;
                 boolean onePrefix = true;
                 int index = 0;
-                for (final Object value : columns[i].values) {
+                for (final Object value : col.values) {
                     final RdfIri iri = (RdfIri) value;
                     nameIds.add(iri.getNameId());
-                    final int prefix = iri.getPrefixId();
-                    prefixes[index] = prefix;
                     // Resolve the inference to see whether the column really stays on one prefix
+                    final int prefix = iri.getPrefixId();
                     lastPrefix = prefix == 0 ? lastPrefix : prefix;
                     if (index == 0) {
                         columnPrefix = lastPrefix;
@@ -450,10 +562,12 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                     index++;
                 }
                 column.setNameIds(nameIds);
-                final RepeatedInt prefixIds = RepeatedInt.newEmptyInstance();
+                final RepeatedInt prefixIds = col.prefixIds;
                 if (!onePrefix) {
-                    for (int j = 0; j < prefixes.length; j++) {
-                        prefixIds.add(prefixes[j]);
+                    // Rare enough to be worth a second pass over the values rather than a buffer
+                    // to stash the raw prefix ids in
+                    for (final Object value : col.values) {
+                        prefixIds.add(((RdfIri) value).getPrefixId());
                     }
                     column.setPrefixIds(prefixIds);
                 } else if (columnPrefix != 0) {
@@ -461,49 +575,59 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                     column.setPrefixIds(prefixIds);
                 }
                 // Otherwise every value has prefix id 0, which the decoder assumes anyway
-                column.setLayouts(copyLayout(columns[i].layout));
+                column.setLayouts(col.layout);
                 frame.addIriColumns(column);
             }
         }
         for (int i = 0; i < columns.length; i++) {
             if (types[i] == TYPE_BNODE) {
+                final ColumnState col = columns[i];
                 final SparqlBnodeColumn.Mutable column = SparqlBnodeColumn.newInstance();
-                for (final Object value : columns[i].values) {
-                    column.addValues((String) value);
+                final RepeatedString labels = col.strings;
+                for (final Object value : col.values) {
+                    labels.add((String) value);
                 }
-                column.setLayouts(copyLayout(columns[i].layout));
+                column.setValues(labels);
+                column.setLayouts(col.layout);
                 frame.addBnodeColumns(column);
             }
         }
         for (int i = 0; i < columns.length; i++) {
             if (types[i] == TYPE_LITERAL) {
+                final ColumnState col = columns[i];
                 final SparqlLiteralColumn.Mutable column = SparqlLiteralColumn.newInstance();
-                final List<Object> values = columns[i].values;
+                final List<Object> values = col.values;
                 // If every value has the same datatype – the usual case – the column states it
                 // once and carries only the lexical forms.
                 final int datatype = commonDatatype(values);
                 if (datatype == MIXED_DATATYPES) {
+                    final MessageCollection<RdfLiteral, RdfLiteral.Mutable> literals = col.literals;
                     for (final Object value : values) {
-                        column.addValues((RdfLiteral) value);
+                        literals.add((RdfLiteral) value);
                     }
+                    column.setValues(literals);
                 } else {
+                    final RepeatedString lexValues = col.strings;
                     for (final Object value : values) {
-                        column.addLexValues(((RdfLiteral) value).getLex());
+                        lexValues.add(((RdfLiteral) value).getLex());
                     }
+                    column.setLexValues(lexValues);
                     if (datatype != 0) {
                         column.setDatatype(datatype);
                     }
                     // Datatype 0 means simple literals, which the decoder assumes anyway
                 }
-                column.setLayouts(copyLayout(columns[i].layout));
+                column.setLayouts(col.layout);
                 frame.addLiteralColumns(column);
             }
         }
         for (int i = 0; i < columns.length; i++) {
             if (types[i] == TYPE_POLY) {
+                final ColumnState col = columns[i];
                 final SparqlPolyColumn.Mutable column = SparqlPolyColumn.newInstance();
-                for (final Object value : columns[i].values) {
-                    final SparqlTerm.Mutable term = SparqlTerm.newInstance();
+                final TermBuffer terms = col.terms;
+                for (final Object value : col.values) {
+                    final SparqlTerm.Mutable term = terms.appendMessage();
                     if (value instanceof RdfIri iri) {
                         term.setIri(iri);
                     } else if (value instanceof String bnode) {
@@ -511,25 +635,16 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
                     } else {
                         term.setLiteral((RdfLiteral) value);
                     }
-                    column.addValues(term);
                 }
-                column.setLayouts(copyLayout(columns[i].layout));
+                column.setValues(terms);
+                column.setLayouts(col.layout);
                 frame.addPolyColumns(column);
             }
         }
 
-        // Reset the per-frame state
-        for (final ColumnState col : columns) {
-            col.resetFrameState();
-        }
-        nameEntries.resetFrameState();
-        prefixEntries.resetFrameState();
-        datatypeEntries.resetFrameState();
-        usedNames.resetFrameState();
-        usedPrefixes.resetFrameState();
-        usedDatatypes.resetFrameState();
-        rowCount = 0;
         firstFrame = false;
+        // The frame points at the encoder's buffers, so they stay untouched until the next frame
+        framePending = true;
 
         // Pre-calculate the serialized size, while all objects are likely still in cache.
         frame.getSerializedSize();
@@ -633,12 +748,6 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             }
         }
         return datatype;
-    }
-
-    private static RepeatedInt copyLayout(RepeatedInt layout) {
-        final RepeatedInt copy = RepeatedInt.newEmptyInstance();
-        copy.addAll(layout);
-        return copy;
     }
 
     @Override

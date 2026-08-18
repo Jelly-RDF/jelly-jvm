@@ -81,6 +81,68 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
     }
   }
 
+  // The encoder hands its own buffers to the frame instead of allocating a fresh set per frame, so
+  // the frame is only valid until the next one starts. These check that the hand-off does not leak
+  // data from one frame into the next.
+  "the reused frame buffers" should {
+    "produce an empty frame when endFrame is called twice in a row" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1")))
+      val first = e.endFrame()
+      first.getRowCount shouldBe 1
+      first.getIriColumns.asScala.head.getNameIds.size shouldBe 1
+      val second = e.endFrame()
+      second.getRowCount shouldBe 0
+      second.getIriColumns.asScala.head.getNameIds.size shouldBe 0
+      second.getNames.size shouldBe 0
+    }
+
+    "not carry a column's values into the next frame" in {
+      // One case per column type, since each has its own buffer
+      val cases = Seq(
+        "iri" -> Seq[Node](Iri("https://a.org/x1"), Iri("https://a.org/x2")),
+        "bnode" -> Seq[Node](BlankNode("b1"), BlankNode("b2")),
+        "literal" -> Seq[Node](SimpleLiteral("one"), SimpleLiteral("two")),
+        "literal-mixed-dt" -> Seq[Node](
+          DtLiteral("1", Datatype("https://a.org/d1")),
+          LangLiteral("hi", "en"),
+        ),
+        "poly" -> Seq[Node](Iri("https://a.org/x1"), SimpleLiteral("one")),
+      )
+      for (name, rows) <- cases do
+        withClue(s"$name: ") {
+          val e = encoder()
+          e.setVariables(Seq("x").asJava)
+          for row <- rows do e.appendRow(Array(row))
+          e.endFrame().getRowCount shouldBe rows.size
+          // A second frame with a single row must carry exactly that one value
+          e.appendRow(Array(rows.head))
+          val frame = e.endFrame()
+          frame.getRowCount shouldBe 1
+          val valueCount = frame.getIriColumns.asScala.map(_.getNameIds.size).sum +
+            frame.getBnodeColumns.asScala.map(_.getValues.size).sum +
+            frame.getLiteralColumns.asScala
+              .map(c => math.max(c.getValues.size, c.getLexValues.size))
+              .sum +
+            frame.getPolyColumns.asScala.map(_.getValues.size).sum
+          valueCount shouldBe 1
+        }
+    }
+
+    "not carry a column's layout into the next frame" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      // A run of three plus an unbound cell, so the layout is non-empty
+      for _ <- 1 to 3 do e.appendRow(Array[Node](Iri("https://a.org/x1")))
+      e.appendRow(Array[Node](null))
+      e.endFrame().getIriColumns.asScala.head.getLayouts.size should be > 0
+      // A single distinct value emits no layout tokens at all
+      e.appendRow(Array[Node](Iri("https://a.org/x2")))
+      e.endFrame().getIriColumns.asScala.head.getLayouts.size shouldBe 0
+    }
+  }
+
   "the column node encoder" should {
     "compress IRIs against the state of the current column" in {
       // Exercises all four combinations of (same prefix, next name) in one column.

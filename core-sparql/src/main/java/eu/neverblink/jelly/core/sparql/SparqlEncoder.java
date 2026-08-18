@@ -111,6 +111,11 @@ public abstract class SparqlEncoder<TNode> extends EncoderBase<TNode> {
      * Finish the current frame and return it. The returned frame is ready for serialization
      * and must be written out (or discarded) before the next row is appended.
      * <p>
+     * The frame points at buffers owned by the encoder, which are refilled for the next frame.
+     * Reading it after the next {@link #appendRow(Object[])} or {@link #endFrame()} call gives
+     * whatever the encoder has put there since, so frames must not be collected and read later.
+     * Serialize the frame, or copy what you need out of it, before continuing.
+     * <p>
      * The first returned frame carries the stream options and the result set header. A later
      * frame restates the header if the column layout had to change (e.g., a previously
      * IRI-only variable encountered a literal).

@@ -1,7 +1,11 @@
 package eu.neverblink.jelly.jmh.sparql
 
+import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.convert.jena.sparql.gen.JenaTermFactory
 import eu.neverblink.jelly.convert.jena.sparql.{JenaSparqlConverterFactory, RowSetWriterJelly}
+import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.core.RdfHandler.TripleHandler
+import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions
 import eu.neverblink.jelly.core.sparql.gen.{ResultSetSpec, SparqlDataGen}
 import eu.neverblink.jelly.core.sparql.{JellySparqlOptions, SparqlEncoder}
@@ -12,6 +16,8 @@ import org.apache.jena.sparql.exec.{RowSet, RowSetStream}
 import org.apache.jena.sys.JenaSystem
 
 import java.io.{ByteArrayOutputStream, OutputStream}
+import java.util.zip.GZIPInputStream
+import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 
 /** Shared fixture for the Jelly-SPARQL benchmarks.
@@ -28,20 +34,15 @@ object SparqlBenchData:
     */
   val options: SparqlResultsOptions = JellySparqlOptions.BIG
 
-  /** A generated result set, materialized into Jena nodes and pre-built bindings.
+  /** A result set materialized into Jena nodes and pre-built bindings.
     *
     * Both representations are built once, at trial setup: node construction and binding building
     * are not what these benchmarks are about.
     */
-  final class Data(val spec: ResultSetSpec):
-    JenaSystem.init()
+  final class Data(variableNames: Seq[String], val rows: IndexedSeq[Array[Node]]):
+    val variables: java.util.List[String] = variableNames.asJava
 
-    val rows: IndexedSeq[Array[Node]] =
-      JenaTermFactory.materializeRows(SparqlDataGen.generate(spec))
-
-    val variables: java.util.List[String] = spec.variables.asJava
-
-    private val vars: Seq[Var] = spec.variables.map(Var.alloc)
+    private val vars: Seq[Var] = variableNames.map(Var.alloc)
 
     val jenaVars: java.util.List[Var] = vars.asJava
 
@@ -54,7 +55,35 @@ object SparqlBenchData:
     /** A fresh single-use RowSet over the pre-built bindings. */
     def rowSet(): RowSet = RowSetStream.create(jenaVars, bindings.iterator())
 
-  def load(preset: String): Data = Data(SparqlDataGen.preset(preset))
+  /** Generates the result set described by the spec. */
+  def generate(spec: ResultSetSpec): Data =
+    JenaSystem.init()
+    Data(spec.variables, JenaTermFactory.materializeRows(SparqlDataGen.generate(spec)))
+
+  def load(preset: String): Data = generate(SparqlDataGen.preset(preset))
+
+  private val weatherResource = "/assist-iot-weather_100kt.jelly.gz"
+
+  /** The assist-iot-weather dataset (100k real triples from RiverBench) turned into the result of
+    * `SELECT * WHERE { ?s ?p ?o }` – one row per triple, three columns.
+    */
+  def loadWeather(maxRows: Int): Data =
+    JenaSystem.init()
+    val rows = mutable.ArrayBuffer.empty[Array[Node]]
+    val handler = new TripleHandler[Node]:
+      override def handleTriple(subject: Node, predicate: Node, `object`: Node): Unit =
+        if rows.size < maxRows then rows += Array(subject, predicate, `object`)
+    val decoder = JenaConverterFactory
+      .getInstance()
+      .triplesDecoder(handler, JellyOptions.DEFAULT_SUPPORTED_OPTIONS)
+    val in = GZIPInputStream(getClass.getResourceAsStream(weatherResource))
+    try
+      Iterator
+        .continually(RdfStreamFrame.parseDelimitedFrom(in))
+        .takeWhile(_ != null)
+        .foreach(_.getRows.forEach(decoder.ingestRow(_)))
+    finally in.close()
+    Data(Seq("s", "p", "o"), rows.toIndexedSeq)
 
   /** Frames are budgeted in values, so how many rows fit depends on the width of the result set. */
   def rowsPerFrame(data: Data, maxValuesPerFrame: Int): Int =

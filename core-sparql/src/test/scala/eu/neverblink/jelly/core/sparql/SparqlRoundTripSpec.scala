@@ -266,6 +266,24 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       frames.head.getIriColumns.size() shouldBe 0
     }
 
+    "round-trip a polymorphic column across frames whose terms differ in encoded length" in {
+      // The encoder reuses the SparqlTerm wrappers of a poly column between frames. A wrapper
+      // caches its serialized size, so refilling one with a value of a different length has to
+      // invalidate that – otherwise the second frame is written with the first frame's lengths.
+      val batch1 = Seq(
+        Seq[Node | Null](iri(1)),
+        Seq[Node | Null](SimpleLiteral("a lexical form long enough to need a different length")),
+      )
+      val batch2 = Seq(
+        Seq[Node | Null](SimpleLiteral("q")),
+        Seq[Node | Null](iri(2)),
+      )
+      val (collector, frames) = roundTrip(Seq("x"), Seq(batch1, batch2))
+      assertResults(collector, Seq("x"), batch1 ++ batch2)
+      frames.head.getPolyColumns.size() shouldBe 1
+      frames(1).getPolyColumns.size() shouldBe 1
+    }
+
     "round-trip multiple frames" in {
       val batch1 = Seq(Seq[Node | Null](iri(1), SimpleLiteral("a")))
       val batch2 = Seq(Seq[Node | Null](iri(2), SimpleLiteral("b")), Seq[Node | Null](iri(3), null))
