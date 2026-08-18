@@ -113,9 +113,11 @@ object NodeCacheBench:
     val fifo = new LinkedHashMapNodeCache[AnyRef, DependentNode](cacheSize)
     val lru = new LinkedHashMapLruNodeCache[AnyRef, DependentNode](cacheSize)
     val array = new ArrayNodeCache[AnyRef, DependentNode](cacheSize)
+    val array2Way = new ArrayNodeCache[AnyRef, DependentNode](cacheSize)
     var fifoHits = 0
     var lruHits = 0
     var arrayHits = 0
+    var array2WayHits = 0
     for key <- keys do
       var missed = false
       fifo.getOrCompute(key, _ => { missed = true; new DependentNode })
@@ -126,10 +128,14 @@ object NodeCacheBench:
       missed = false
       array.getOrCompute(key, _ => { missed = true; new DependentNode })
       if !missed then arrayHits += 1
+      missed = false
+      array2Way.getOrCompute2Way(key, _ => { missed = true; new DependentNode })
+      if !missed then array2WayHits += 1
     Seq(
       "FIFO" -> fifoHits.toDouble / keys.length,
       "LRU" -> lruHits.toDouble / keys.length,
       "direct-mapped" -> arrayHits.toDouble / keys.length,
+      "2-way" -> array2WayHits.toDouble / keys.length,
     )
 
   private def report(rates: Seq[(String, Double)]): String =
@@ -160,6 +166,19 @@ class NodeCacheBench extends CommonParams:
     var i = 0
     while i < keys.length do
       blackhole.consume(cache.getOrCompute(keys(i), make))
+      i += 1
+
+  /** Same table size as `iriArray`, read 2-way set associative. */
+  @Benchmark
+  @OutputTimeUnit(TimeUnit.MICROSECONDS)
+  @BenchmarkMode(Array(Mode.AverageTime))
+  def iriArray2Way(blackhole: Blackhole, input: BenchInput): Unit =
+    val cache = new ArrayNodeCache[String, DependentNode](input.iriCacheSize)
+    val make: java.util.function.Function[String, DependentNode] = _ => new DependentNode
+    val keys = input.iriKeys
+    var i = 0
+    while i < keys.length do
+      blackhole.consume(cache.getOrCompute2Way(keys(i), make))
       i += 1
 
   @Benchmark

@@ -77,9 +77,20 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     }
 
     /**
-     * The same, for nodes that depend on lookup entries. The DependentNode in a slot is recycled, so
-     * taking a slot over MUST clear `encoded` – otherwise the stale lookupPointer/lookupSerial pair
-     * could still validate and we would emit the previous key's IRI or datatype.
+     * The same, for nodes that depend on lookup entries, but 2-way set associative: the hash picks a
+     * pair of adjacent slots and the key may be in either of them. Two keys that hash to the same set
+     * can then both stay cached, which a direct-mapped table cannot do. The pair is kept
+     * most-recent-first, so a miss evicts the older of the two. Adjacent slots share a cache line, so
+     * the second probe costs almost nothing.
+     *
+     * Worth it because a miss here is expensive: it splits the IRI into two substrings, hashes both
+     * in full and probes two lookup tables. On the SPARQL benchmark presets the IRI cache missed
+     * 22-32% of the time when direct-mapped, and most of that was keys evicting each other rather
+     * than the table being full.
+     *
+     * The DependentNode in a slot is recycled, so taking a slot over MUST clear `encoded` – otherwise
+     * the stale lookupPointer/lookupSerial pair could still validate and we would emit the previous
+     * key's IRI or datatype.
      * @param <V> Type of the encoded node
      */
     private static final class DependentNodeCache<V> {
@@ -93,21 +104,31 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             final int size = tableSizeFor(minSize);
             this.keys = new Object[size];
             this.nodes = new DependentNode[size];
-            this.mask = size - 1;
+            // A set is two adjacent slots, so there are half as many sets as slots.
+            this.mask = (size >> 1) - 1;
         }
 
         DependentNode<V> get(Object key) {
-            final int slot = slotFor(key, mask);
-            final var node = nodes[slot];
-            if (node == null) {
-                keys[slot] = key;
-                return (nodes[slot] = new DependentNode<>());
+            final int slot = slotFor(key, mask) << 1;
+            if (key.equals(keys[slot])) {
+                return nodes[slot];
             }
-            if (!key.equals(keys[slot])) {
-                keys[slot] = key;
+            // Not in the first way. Whatever is in the first way moves to the second, and the key we
+            // are looking for takes the first – either promoted from the second way, or reusing the
+            // node that the second way held. A key is never in both ways, and a slot only ever has a
+            // node once it has a key, so a null node here means the pair is not full yet.
+            final var other = nodes[slot + 1];
+            final DependentNode<V> node;
+            if (key.equals(keys[slot + 1])) {
+                node = other;
+            } else {
+                node = other == null ? new DependentNode<>() : other;
                 node.encoded = null;
             }
-            return node;
+            keys[slot + 1] = keys[slot];
+            nodes[slot + 1] = nodes[slot];
+            keys[slot] = key;
+            return (nodes[slot] = node);
         }
     }
 
@@ -197,7 +218,12 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             maxNameTableSize,
             maxDatatypeTableSize,
             Math.clamp(maxNameTableSize, 256, 1024),
-            maxNameTableSize,
+            // Two IRI cache slots per name table entry. Distinct IRIs outnumber distinct names – one
+            // name can be the tail of several IRIs – so one slot per name entry leaves the cache
+            // short: on the SPARQL benchmark presets it missed 20-28% of the time at that size and
+            // 4-13% at twice that. The extra cost is one more slot pair per name entry, which is on
+            // the order of the RdfIri per name entry that the encoder already keeps in nameOnlyIris.
+            maxNameTableSize * 2,
             Math.clamp(maxNameTableSize, 256, 1024),
             bufferAppender
         );
