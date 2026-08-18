@@ -285,6 +285,32 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     }
 
     @InternalApi
+    protected static int computeDelimitedSize(final int dataSize) {
+        return CodedOutputStream.computeUInt32SizeNoTag(dataSize) + dataSize;
+    }
+
+    @InternalApi
+    protected static int computeRepeatedUInt32SizeNoTag(final RepeatedInt values) {
+        final int[] array = values.array();
+        final int size = values.size();
+        int dataSize = 0;
+        for (int i = 0; i < size; i++) {
+            dataSize += CodedOutputStream.computeUInt32SizeNoTag(array[i]);
+        }
+        return dataSize;
+    }
+
+    @InternalApi
+    protected static int computeRepeatedStringSizeNoTag(final RepeatedString values) {
+        final int size = values.size();
+        int dataSize = 0;
+        for (int i = 0; i < size; i++) {
+            dataSize += CodedOutputStream.computeStringSizeNoTag(values.get(i));
+        }
+        return dataSize;
+    }
+
+    @InternalApi
     protected static <T extends ProtoMessage<T>> int computeRepeatedMessageSizeNoTag(final Collection<T> values) {
         int dataSize = 0;
         for (final ProtoMessage<?> value : values) {

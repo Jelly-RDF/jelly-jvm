@@ -313,7 +313,9 @@ object RequestInfo:
     private def isSingular: Boolean = !isRepeated
 
     def isPacked: Boolean =
-      isPackable && descriptor.getOptions.hasPacked && descriptor.getOptions.getPacked
+      // In proto3 (the only syntax we support), packable fields are packed by default,
+      // unless explicitly set to packed=false.
+      isPackable && (!descriptor.getOptions.hasPacked || descriptor.getOptions.getPacked)
 
     def isSingularPrimitiveOrEnum: Boolean = isSingular && (isPrimitive || isEnum)
 

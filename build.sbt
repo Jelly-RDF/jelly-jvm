@@ -330,7 +330,7 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
   .enablePlugins(ProtobufPlugin)
   .settings(
     name := "jelly-core-protos-google",
-    description := "Optional proto classes for Jelly-RDF (rdf.proto) compiled with Google's " +
+    description := "Optional proto classes for Jelly-RDF (rdf.proto, rdf2.proto) compiled with Google's " +
       "official Java protoc plugin. This is not needed, unless you need some functionality " +
       "that is only available with the more heavyweight, Google-style proto classes, like " +
       "support for the Protobuf Text Format.",
@@ -352,6 +352,7 @@ lazy val coreProtosGoogle = (project in file("core-protos-google"))
     ),
     ProtobufConfig / protobufIncludeFilters := Seq(
       Glob(baseDirectory.value.toPath) / "**" / "rdf.proto",
+      Glob(baseDirectory.value.toPath) / "**" / "rdf2.proto",
     ),
     // Don't throw errors, because Google's protoc generates code with a lot of warnings
     javacOptions := javacOptions.value.filterNot(_ == "-Werror"),
@@ -417,6 +418,30 @@ lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
     commonJavaSettings,
   ).dependsOn(coreProtosGoogle)
 
+lazy val coreSparql = (project in file("core-sparql"))
+  .settings(
+    name := "jelly-core-sparql",
+    description := "Core code for the Jelly-SPARQL extension: columnar serialization of " +
+      "SPARQL query results.",
+    Compile / sourceGenerators += Def.task {
+      // Copy from the managed source directory to the output directory
+      val inputDir = (rdfProtos / ProtobufConfig / javaSource).value /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "sparql"
+      val outputDir = sourceManaged.value / "main" /
+        "eu" / "neverblink" / "jelly" / "core" / "proto" / "v1" / "sparql"
+      val javaFiles = (inputDir * "*.java").get()
+      javaFiles.map { file =>
+        val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
+        IO.copyFile(file, outputFile)
+        outputFile
+      }
+    }.dependsOn(rdfProtos / ProtobufConfig / protobufGenerate),
+    Compile / sourceManaged := sourceManaged.value / "main",
+    commonSettings,
+    commonJavaSettings,
+  )
+  .dependsOn(core % "compile->compile;test->test")
+
 lazy val jena = (project in file("jena"))
   .settings(
     name := "jelly-jena",
@@ -443,6 +468,17 @@ lazy val jenaPatch = (project in file("jena-patch"))
     commonJavaSettings,
   )
   .dependsOn(corePatch, jena)
+
+lazy val jenaSparql = (project in file("jena-sparql"))
+  .settings(
+    name := "jelly-jena-sparql",
+    description := "Jelly-SPARQL integration for Apache Jena: reading and writing " +
+      "SPARQL query results.",
+    commonSettings,
+    commonJavaSettings,
+  )
+  // Test-time dependency on the core-sparql test sources for the shared result set generator
+  .dependsOn(coreSparql % "compile->compile;test->test", jena)
 
 // jena-plugin is a dummy directory that contains only a symlink (src) to the source code
 // in the jena directory. This way sbt won't shout at us for having two projects in the
@@ -596,6 +632,11 @@ lazy val integrationTests = (project in file("integration-tests"))
     core % "compile->compile;test->test",
     jena % "compile->compile;test->test",
     jenaPatch,
+    // The SPARQL fuzzing tests drive both the core codec (with the mock node model) and the Jena
+    // integration from the shared result set generator, which lives in the test sources of these
+    // two modules.
+    coreSparql % "compile->compile;test->test",
+    jenaSparql % "compile->compile;test->test",
     rdf4j,
     rdf4jPatch,
     titaniumRdfApi,
@@ -635,7 +676,15 @@ lazy val jmh = (project in file("jmh"))
     ),
     commonSettings,
   )
-  .dependsOn(core, jena)
+  // The benchmarks are compiled in the Compile config, so the shared result set generator (which
+  // lives in the test sources of the two SPARQL modules) has to be pulled onto the compile
+  // classpath.
+  .dependsOn(
+    core,
+    jena,
+    coreSparql % "compile->compile;compile->test",
+    jenaSparql % "compile->compile;compile->test",
+  )
 
 lazy val grpc = (project in file("pekko-grpc"))
   .settings(
@@ -686,8 +735,10 @@ lazy val root = (project in file("."))
     coreProtosGoogle,
     corePatch,
     corePatchProtosGoogle,
+    coreSparql,
     jena,
     jenaPatch,
+    jenaSparql,
     jenaPlugin,
     rdf4j,
     rdf4jPatch,

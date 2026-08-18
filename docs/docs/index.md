@@ -54,6 +54,15 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-rdf4j-patch` – partial integration with [Eclipse RDF4J](https://rdf4j.org/). RDF4J does not support RDF Patch, so this module only provides low-level Jelly-Patch support.
     - {{ java_module_badges('rdf4j-patch') }}
 
+### Jelly-SPARQL (experimental)
+
+Jelly-SPARQL is an efficient columnar format for SPARQL query results (solution sequences and boolean ASK results). Jelly-JVM has an experimental implementation of Jelly-SPARQL:
+
+- `jelly-core-sparql` – core generic code for serializing/deserializing Jelly-SPARQL data. You need an additional module (like `jelly-jena-sparql`) to integrate it with a specific RDF library.
+    - {{ java_module_badges('core-sparql') }}
+- `jelly-jena-sparql` – integration with [Apache Jena](https://jena.apache.org/), including registration in Jena's result set readers and writers.
+    - {{ java_module_badges('jena-sparql') }}
+
 ## Plugin JARs
 
 We also publish plugin JARs which allow you to use Jelly-JVM with [Apache Jena](getting-started-plugins.md), [RDF4J](getting-started-plugins.md), and [Neo4j](getting-started-neo4j.md) just by dropping the JARs into the classpath.

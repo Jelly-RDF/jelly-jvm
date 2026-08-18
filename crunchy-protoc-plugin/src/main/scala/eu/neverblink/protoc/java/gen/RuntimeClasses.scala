@@ -41,7 +41,7 @@ object RuntimeClasses:
   val CodedInputStream: ClassName = ClassName.get(GOOGLE_PACKAGE, "CodedInputStream")
   val LimitedCodedInputStream: ClassName = ClassName.get(API_PACKAGE, "LimitedCodedInputStream")
   val CodedOutputStream: ClassName = ClassName.get(GOOGLE_PACKAGE, "CodedOutputStream")
-  val ProtoUtil: ClassName = ClassName.get(API_PACKAGE, "ProtoUtil")
+  val ProtoUtil: ClassName = ClassName.get(API_PACKAGE, "ProtobufUtil")
   val AbstractMessage: ClassName = ClassName.get(API_PACKAGE, "ProtoMessage")
   val MessageFactory: ClassName = ClassName.get(API_PACKAGE, "MessageFactory")
   val ObjectType: ClassName = ClassName.get(classOf[Object])

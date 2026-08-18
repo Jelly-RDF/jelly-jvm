@@ -211,11 +211,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     public RdfIri makeIri(String iri) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
-            final var nameEntry = nameLookup.getOrAddEntry(iri);
-            if (nameEntry.newEntry) {
-                bufferAppender.appendNameEntry(RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(iri));
-            }
-            int nameId = nameEntry.getId;
+            int nameId = encodeIriNameOnly(iri);
             if (lastIriNameId + 1 == nameId) {
                 lastIriNameId = nameId;
                 return zeroIri;
@@ -224,7 +220,38 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 return nameOnlyIris[nameId];
             }
         }
+        return outputIri(encodeIriWithPrefix(iri));
+    }
 
+    @Override
+    public RdfIri makeIriRaw(String iri) {
+        if (maxPrefixTableSize == 0) {
+            // Fast path for no prefixes
+            return nameOnlyIris[encodeIriNameOnly(iri)];
+        }
+        return encodeIriWithPrefix(iri).encoded;
+    }
+
+    /**
+     * Encodes an IRI in the name lookup only (prefix table disabled).
+     * @param iri The IRI to encode
+     * @return the identifier of the IRI in the name lookup
+     */
+    private int encodeIriNameOnly(String iri) {
+        final var nameEntry = nameLookup.getOrAddEntry(iri);
+        if (nameEntry.newEntry) {
+            bufferAppender.appendNameEntry(RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(iri));
+        }
+        return nameEntry.getId;
+    }
+
+    /**
+     * Encodes an IRI in the prefix and name lookups, returning the cached dependent node with
+     * valid lookup pointers and the full (uncompressed) encoded RdfIri.
+     * @param iri The IRI to encode
+     * @return the cached dependent node
+     */
+    private DependentNode<RdfIri> encodeIriWithPrefix(String iri) {
         // Slow path, with splitting out the prefix
         final var cachedNode = Objects.requireNonNull(iriNodeCache).get(iri);
         // Check if the value is still valid
@@ -236,7 +263,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         ) {
             nameLookup.onAccess(cachedNode.lookupPointer1);
             prefixLookup.onAccess(cachedNode.lookupPointer2);
-            return outputIri(cachedNode);
+            return cachedNode;
         }
 
         int i = iri.indexOf('#', 8);
@@ -271,7 +298,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         cachedNode.lookupPointer2 = prefixId;
         cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
         cachedNode.encoded = RdfIri.newInstance().setPrefixId(prefixId).setNameId(nameId);
-        return outputIri(cachedNode);
+        return cachedNode;
     }
 
     @Override

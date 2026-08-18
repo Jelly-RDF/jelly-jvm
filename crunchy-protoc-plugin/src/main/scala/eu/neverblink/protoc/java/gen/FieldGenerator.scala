@@ -159,23 +159,34 @@ class FieldGenerator(val info: FieldInfo):
     else throw new IllegalStateException("unhandled field: " + info.descriptor)
 
   def generateCopyFromCode(method: MethodSpec.Builder): Unit =
-    if (info.isSingularPrimitiveOrEnum || info.isString || info.isBytes)
+    // Repeated fields must be checked first: a repeated string or bytes field is also isString /
+    // isBytes, and copying it by reference would make the copy share the source's store.
+    if (info.isRepeated)
+      method
+        .addStatement(named("$field:N.clear()"))
+        .addStatement(named("$field:N.addAll(other.$field:N)"))
+    else if (info.isSingularPrimitiveOrEnum || info.isString || info.isBytes)
       method.addStatement(named("$field:N = other.$field:N"))
-    else if (info.isRepeated || info.isMessageOrGroup) {
-      if info.isRepeated then
-        method
-          .addStatement(named("$field:N.clear()"))
-          .addStatement(named("$field:N.addAll(other.$field:N)"))
-      else
-        method
-          .addStatement(named("$lazyInitMethod:L()"))
-          .addStatement(named("$field:N.copyFrom(other.$field:N)"))
-    } else throw new IllegalStateException("unhandled field: " + info.descriptor)
+    else if (info.isMessageOrGroup)
+      // The field may be unset (null) in the source message
+      method
+        .beginControlFlow("if (other.$N == null)", info.fieldName)
+        .addStatement(named("$field:N = null"))
+        .nextControlFlow("else")
+        .addStatement(named("$lazyInitMethod:L()"))
+        .addStatement(named("$field:N.copyFrom(other.$field:N)"))
+        .endControlFlow()
+    else throw new IllegalStateException("unhandled field: " + info.descriptor)
 
   def generateMergeFromMessageCode(method: MethodSpec.Builder): Unit =
     if (info.isRepeated) method.addStatement(named("$getMethod:N().addAll(other.$field:N)"))
     else if (info.isMessageOrGroup)
-      method.addStatement(named("$getMethod:N().mergeFrom(other.$field:N)"))
+      // Merge only if the field is set in the source message, per protobuf semantics
+      method
+        .beginControlFlow("if (other.$N != null)", info.fieldName)
+        .addStatement(named("$lazyInitMethod:L()"))
+        .addStatement(named("$field:N.mergeFrom(other.$field:N)"))
+        .endControlFlow()
     else if (info.isBytes || info.isString) method.addStatement(named("$field:N = other.$field:N"))
     else if (info.isEnum) method.addStatement(named("$setMethod:NValue(other.$field:N)"))
     else if (info.isPrimitive) method.addStatement(named("$setMethod:N(other.$field:N)"))
@@ -208,7 +219,10 @@ class FieldGenerator(val info: FieldInfo):
       )
       return false // tag is already read, so don't read again
     } else if (info.isRepeated) {
-      method.addNamedCode("tag = input.readRepeated$capitalizedType:L($field:N, tag);\n", m)
+      method.addNamedCode(
+        "tag = $protoUtil:T.readRepeated$capitalizedType:L(input, $field:N, tag);\n",
+        m,
+      )
       return false // tag is already read, so don't read again
     } else if (info.isString)
       method.addStatement(named("$field:N = input.readString()"))
@@ -236,9 +250,7 @@ class FieldGenerator(val info: FieldInfo):
   def generateMergingCodeFromPacked(method: MethodSpec.Builder): Boolean =
     if (!info.isPackable) throw new IllegalStateException("not a packable type: " + info.descriptor)
     method.addCode(ensureFieldNotNull)
-    if (info.isFixedWidth)
-      method.addStatement(named("input.readPacked$capitalizedType:L($field:N)"))
-    else method.addStatement(named("input.readPacked$capitalizedType:L($field:N, tag)"))
+    method.addStatement(named("$protoUtil:T.readPacked$capitalizedType:L(input, $field:N)"))
     true
 
   def generateHasChecker(code: CodeBlock.Builder): Unit =
@@ -265,10 +277,10 @@ class FieldGenerator(val info: FieldInfo):
       method.addNamedCode(
         "" +
           "$writePackedTagToOutput:L" +
-          "output.writePacked$capitalizedType:LNoTag($field:N);\n",
+          "$protoUtil:T.writePacked$capitalizedType:L(output, $field:N);\n",
         m,
       )
-    else if (info.isRepeated)
+    else if (info.isRepeated && info.isMessageOrGroup)
       method.addNamedCode(
         "" +
           "for (final var _field : $field:N) {$>\n" +
@@ -276,6 +288,16 @@ class FieldGenerator(val info: FieldInfo):
           "output.writeUInt32NoTag(_field.getCachedSize());\n" +
           "_field.writeTo(output);\n" +
           "$writeEndGroupTagToOutput:L" +
+          "$<}\n",
+        m,
+      )
+    else if (info.isRepeated)
+      // Non-packable repeated field (e.g., repeated string)
+      method.addNamedCode(
+        "" +
+          "for (int _i = 0; _i < $field:N.size(); _i++) {$>\n" +
+          "$writeTagToOutput:L" +
+          "output.write$capitalizedType:LNoTag($field:N.get(_i));\n" +
           "$<}\n",
         m,
       )
