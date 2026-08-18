@@ -132,8 +132,7 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new RdfProtoDeserializationError(
                 (
-                    "Encountered an invalid name table reference (out of bounds). " +
-                    "Name ID: %d, Prefix ID: %d"
+                    "Encountered an invalid name table reference (out of bounds). " + "Name ID: %d, Prefix ID: %d"
                 ).formatted(nameId, prefixId)
             );
         }
@@ -152,8 +151,7 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new RdfProtoDeserializationError(
                     (
-                        "Encountered an invalid prefix table reference (out of bounds). " +
-                        "Prefix ID: %d, Name ID: %d"
+                        "Encountered an invalid prefix table reference (out of bounds). " + "Prefix ID: %d, Name ID: %d"
                     ).formatted(prefixId, nameId)
                 );
             }

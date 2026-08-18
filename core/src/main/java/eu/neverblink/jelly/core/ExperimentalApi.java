@@ -10,15 +10,13 @@ import java.lang.annotation.*;
  * Note: This annotation is not intended for public use and should only be used internally within the Jelly-JVM.
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target(
-    {
-        ElementType.ANNOTATION_TYPE,
-        ElementType.CONSTRUCTOR,
-        ElementType.FIELD,
-        ElementType.METHOD,
-        ElementType.PACKAGE,
-        ElementType.TYPE,
-    }
-)
+@Target({
+    ElementType.ANNOTATION_TYPE,
+    ElementType.CONSTRUCTOR,
+    ElementType.FIELD,
+    ElementType.METHOD,
+    ElementType.PACKAGE,
+    ElementType.TYPE,
+})
 @Documented
 public @interface ExperimentalApi {}
