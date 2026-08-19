@@ -118,6 +118,52 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         v.getId should be > 0
     }
 
+    "look up keys given as a suffix of a longer string" in {
+      val lookup = EncoderLookup(8, true)
+      // Same key, once as a whole string and once as a suffix – both must land on the same entry.
+      val whole = lookup.getOrAddEntry("name0")
+      whole.newEntry should be(true)
+      val suffix = lookup.getOrAddEntry("https://example.org/name0", 20)
+      suffix.newEntry should be(false)
+      suffix.getId should be(whole.getId)
+      // A suffix that is not there yet is added, and the stored name is just the suffix.
+      val fresh = lookup.getOrAddEntry("https://example.org/name1", 20)
+      fresh.newEntry should be(true)
+      lookup.names(fresh.getId) should be("name1")
+      lookup.getOrAddEntry("name1").getId should be(fresh.getId)
+      // from == 0 is the whole string
+      lookup.getOrAddEntry("name0", 0).getId should be(whole.getId)
+    }
+
+    // Eviction reassigns an id, which means the old key has to come out of the hash index. With
+    // linear probing that leaves a hole which the keys behind it may be reachable only through, so
+    // this exercises a deliberately tiny index filled with keys that all collide.
+    "keep colliding keys reachable across many evictions" in {
+      val lookup = EncoderLookup(8, true)
+      // 64 keys cycling through 8 entries, so the 16-slot index is permanently half full and
+      // every miss both evicts and re-inserts.
+      val keys = (0 until 64).map(i => s"k${('a' + i % 26).toChar}${('a' + i / 26).toChar}")
+      val seen = scala.collection.mutable.LinkedHashMap.empty[String, Int]
+      for round <- 0 until 200 do
+        val key = keys(Random.nextInt(keys.size))
+        val v = lookup.getOrAddEntry(key)
+        v.getId should be > 0
+        v.getId should be <= 8
+        // The lookup's own name table is the ground truth for what an id currently means.
+        lookup.names(v.getId) should be(key)
+        if v.newEntry then seen(key) = v.getId
+        else seen(key) should be(v.getId)
+        // Everything the LRU still holds must be findable, and nothing else may be.
+        for (k, id) <- seen.toSeq do
+          if lookup.names(id) == k then lookup.getOrAddEntry(k).newEntry should be(false)
+          else seen -= k
+      // The name table and the index must agree in both directions at the end.
+      for id <- 1 to 8 do
+        val name = lookup.names(id)
+        name should not be null
+        lookup.getOrAddEntry(name).getId should be(id)
+    }
+
     "not use the serials table if not needed" in {
       val lookup = EncoderLookup(16, false)
       for _ <- 1 to 2000 do

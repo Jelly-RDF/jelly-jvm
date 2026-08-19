@@ -330,10 +330,13 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             this.lastPrefixId = prefixId;
         }
 
-        final String postfix = i == -1 ? iri : iri.substring(prefixLen);
-        final var nameEntry = nameLookup.getOrAddEntry(postfix);
+        // The name is the tail of the IRI, so the lookup can match it in place. Most of the time
+        // the name is already known and no substring has to be cut out at all.
+        final var nameEntry = nameLookup.getOrAddEntry(iri, prefixLen);
         if (nameEntry.newEntry) {
-            bufferAppender.appendNameEntry(RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(postfix));
+            bufferAppender.appendNameEntry(
+                RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(nameLookup.names[nameEntry.getId])
+            );
         }
         int nameId = nameEntry.getId;
         cachedNode.lookupPointer1 = nameId;
