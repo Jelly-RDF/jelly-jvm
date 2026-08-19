@@ -22,9 +22,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     static final class DependentNode<V> {
 
         // The key this entry stands for, and its spread hash. Both live here rather than in a
-        // parallel array in the cache so that a probe touches the array and this object and
-        // nothing else: the hash decides whether the slot can match at all, and it sits in the
-        // same object as the answer.
+        // parallel array for better cache locality.
         public Object key;
         public int keyHash;
         // The actual cached node
@@ -94,19 +92,8 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * most-recent-first, so a miss evicts the older of the two. Adjacent slots share a cache line, so
      * the second probe costs almost nothing.
      *
-     * Worth it because a miss here is expensive: it splits the IRI into two substrings, hashes both
-     * in full and probes two lookup tables. On the SPARQL benchmark presets the IRI cache missed
-     * 22-32% of the time when direct-mapped, and most of that was keys evicting each other rather
-     * than the table being full.
+     * Worth it because a miss here is expensive (IRI re-encoding).
      *
-     * The DependentNode in a slot is recycled, so taking a slot over MUST clear `encoded` – otherwise
-     * the stale lookupPointer/lookupSerial pair could still validate and we would emit the previous
-     * key's IRI or datatype.
-     *
-     * The key and its hash live in the DependentNode rather than in a second array, so a probe reads
-     * the slot array and then one object, instead of a key array, a node array and then the object.
-     * The stored hash also means a slot that cannot match is rejected without dereferencing its key,
-     * which for the datatype literal cache saves a node comparison, not just a string one.
      * @param <V> Type of the encoded node
      */
     private static final class DependentNodeCache<V> {
@@ -155,14 +142,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     private final int maxPrefixTableSize;
     private int lastIriNameId;
     private int lastIriPrefixId = -1000;
-
-    // Lookup id of the prefix we split off the previous IRI. Consecutive IRIs almost always come
-    // from the same namespace, so checking whether this IRI starts with that prefix lets us skip
-    // allocating the prefix substring, hashing it, and probing the prefix map. The prefix string
-    // itself is read back from the lookup's names array, which by definition holds whatever the id
-    // means right now – so an entry that has been evicted and reassigned in the meantime cannot
-    // give a stale answer. Id 0 is never assigned and its name is always null, which is what makes
-    // the initial value safe.
+    // Lookup id of the prefix of the previous IRI.
     private int lastPrefixId;
 
     private final EncoderLookup datatypeLookup;
@@ -181,19 +161,10 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     static final RdfIri zeroIri = RdfIri.newInstance();
 
     /**
-     * Stand-in for a cache entry whose lookup ids are filled in but whose RdfIri was never built.
-     * Jelly-SPARQL only ever wants the two ids (see {@link #makeIriIds}), and building a message
-     * just to read them straight back out is the most expensive thing on that path. It is only
-     * ever a marker: a caller that does want the message materializes it, and this instance is
-     * never handed out.
+     * Marker for a cache entry whose lookup ids are filled in but whose RdfIri was never built.
+     * For example, Jelly-SPARQL only ever wants the two ids (see {@link #makeIriIds}).
      */
     private static final RdfIri IDS_ONLY = RdfIri.newInstance();
-    // One IRI with prefixId=0 per name lookup id, created the first time that id is emitted.
-    // Filling this eagerly used to dominate the cost of building an encoder – a name table entry
-    // is 8 bytes of array, but an RdfIri per entry is a separate object each. Most streams touch
-    // only a fraction of the table, and a stream that uses the prefix table (which is what
-    // Jelly-SPARQL always does) never reads this array at all, because it goes through
-    // makeIriRaw. Slot 0 is never used: lookup ids start at 1.
     private final RdfIri[] nameOnlyIris;
 
     /**
@@ -258,10 +229,6 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             maxNameTableSize,
             maxDatatypeTableSize,
             Math.clamp(maxNameTableSize, 256, 1024),
-            // Two IRI cache slots per name table entry. Distinct IRIs outnumber distinct names – one
-            // name can be the tail of several IRIs – so one slot per name entry leaves the cache
-            // short: on the SPARQL benchmark presets it missed 20-28% of the time at that size and
-            // 4-13% at twice that. The extra cost is one more slot pair per name entry.
             maxNameTableSize * 2,
             Math.clamp(maxNameTableSize, 256, 1024),
             bufferAppender
@@ -269,10 +236,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     }
 
     /**
-     * The prefix-0 IRI for a name id, created on first use. The returned object is handed on to the
-     * frame buffer and must therefore stay valid until the frame is serialized, which is why one is
-     * kept per id instead of a single mutable one. An id that gets evicted and reassigned keeps its
-     * IRI: only the id is encoded, not the name behind it.
+     * The prefix-0 IRI for a name id, created on first use.
      * @param nameId The id of the entry in the name lookup
      */
     private RdfIri nameOnlyIri(int nameId) {
@@ -337,8 +301,6 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         final var nameSerials = Objects.requireNonNull(nameLookup.serials);
         // Slow path, with splitting out the prefix
         final var cachedNode = Objects.requireNonNull(iriNodeCache).get(iri);
-        // Check if the value is still valid. A recycled slot has its `encoded` cleared, and an
-        // entry whose ids are filled in carries at least the IDS_ONLY marker, so this covers both.
         if (
             cachedNode.encoded != null &&
             cachedNode.lookupSerial1 == nameSerials[cachedNode.lookupPointer1] &&
@@ -353,10 +315,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         if (i == -1) {
             i = iri.lastIndexOf('/');
         }
-        // The prefix is iri[0, i + 1) and the name is the rest. i == -1 means there is no prefix,
-        // which falls out of the same arithmetic: an empty prefix and the whole IRI as the name.
         final int prefixLen = i + 1;
-
         final int prefixId;
         final String prefix;
         final String lastPrefix = prefixLookup.names[lastPrefixId];
@@ -378,12 +337,8 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             this.lastPrefixId = prefixId;
         }
 
-        // The name is the tail of the IRI, so the lookup can match it in place. Most of the time
-        // the name is already known and no substring has to be cut out at all.
-        //
-        // Its hash comes out of the IRI's and the prefix's, so the name never has to be scanned.
-        // Both of those are cached in their String: the IRI's was just computed by the node cache
-        // probe above, and the prefix is the one the lookup itself is holding on to.
+        // Name's (suffix's) hashcode is calculated without looking at the string itself,
+        // based on the prefix hashcode. See EncoderLookup.hashOfSuffix
         final var nameEntry = nameLookup.getOrAddEntry(
             iri,
             prefixLen,
@@ -396,12 +351,9 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
         int nameId = nameEntry.getId;
         cachedNode.lookupPointer1 = nameId;
-        // The serial arrays are read from the lookups again here: adding an entry can grow a
-        // lookup, and then the arrays fetched at the top of this method are the old, shorter ones.
         cachedNode.lookupSerial1 = Objects.requireNonNull(nameLookup.serials)[nameId];
         cachedNode.lookupPointer2 = prefixId;
         cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
-        // Left unbuilt until someone asks for the message itself – see IDS_ONLY.
         cachedNode.encoded = IDS_ONLY;
         return cachedNode;
     }
@@ -421,11 +373,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     /**
      * The name and prefix ids of an IRI, packed as {@code (nameId << 32) | prefixId}, without
-     * building an RdfIri for them.
-     * <p>
-     * This is what Jelly-SPARQL encodes from: it writes the two ids into its own column buffers
-     * and never needs the message, so going through {@link #makeIriRaw} would allocate one on
-     * every cache miss purely to have two ints read back out of it.
+     * building an RdfIri. Used in Jelly-SPARQL.
      *
      * @param iri The IRI to encode
      */

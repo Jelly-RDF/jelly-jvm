@@ -14,19 +14,10 @@ import scala.collection.mutable
 import scala.compiletime.uninitialized
 
 /** Number of triples the benchmark encodes per invocation.
-  *
-  * Has to be an `inline val` – `@OperationsPerInvocation` takes a compile-time constant.
   */
 inline val encoderTriples = 100_000
 
 /** Throughput of the RDF encoder (Jena nodes in, RdfStreamRows out), in triples per second.
-  *
-  * Protobuf serialization is deliberately left out – this measures `ProtoEncoder` and everything
-  * under it (the node caches and `EncoderLookup`), which is what changes there actually move.
-  *
-  * The `preset` parameter matters a lot for `EncoderLookup`: with `big` the lookup tables never
-  * fill up on this dataset and nothing is ever evicted, while with `small` the prefix table
-  * thrashes and roughly half the lookups end in an eviction.
   */
 object EncoderBench:
   @State(Scope.Benchmark)
@@ -85,7 +76,7 @@ class EncoderBench extends CommonParams:
   @Benchmark
   @OperationsPerInvocation(encoderTriples)
   def encodeTriples(blackhole: Blackhole, input: BenchInput): Unit =
-    // Mirrors JellyStreamWriter: a reusable buffer and an arena allocator, flushed every frame.
+    // Same as JellyStreamWriter: a reusable buffer and an arena allocator, flushed every frame.
     val buffer = RowBuffer.newReusableForEncoder(frameSize + 8)
     val allocator = EncoderAllocator.newArenaAllocator(frameSize + 8)
     val encoder = JenaConverterFactory
