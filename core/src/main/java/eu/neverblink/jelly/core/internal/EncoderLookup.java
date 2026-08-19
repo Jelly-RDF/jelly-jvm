@@ -159,13 +159,63 @@ final class EncoderLookup {
         return h ^ (h >>> 16);
     }
 
+    /** Powers of 31, for {@link #hashOfSuffix}. Long enough to cover any sane IRI local name. */
+    private static final int[] POW31 = new int[256];
+
+    static {
+        int p = 1;
+        for (int i = 0; i < POW31.length; i++) {
+            POW31[i] = p;
+            p *= 31;
+        }
+    }
+
+    /**
+     * The hash of a suffix, worked out from the hash of the whole string and the hash of the prefix
+     * that was cut off it, without looking at a single character.
+     * <p>
+     * String.hashCode is {@code h = 31 * h + c} per character, so for {@code s = prefix + suffix}
+     * it satisfies {@code hash(s) = hash(prefix) * 31^len(suffix) + hash(suffix)}, and the suffix
+     * hash falls out. The int arithmetic wraps the same way on both sides, so this is exact, not an
+     * approximation.
+     * <p>
+     * Both inputs are hashes of Strings that are kept alive – the IRI by the caller's node cache and
+     * the prefix by the lookup's names array – so String has them cached and this costs no scanning
+     * at all, where hashing the suffix directly costs one pass over it.
+     *
+     * @param wholeHash {@code source.hashCode()}
+     * @param prefixHash hash of the first {@code source.length() - suffixLength} characters
+     * @param suffixLength length of the suffix
+     * @return the hash the suffix would have
+     */
+    static int hashOfSuffix(int wholeHash, int prefixHash, int suffixLength) {
+        return wholeHash - prefixHash * pow31(suffixLength);
+    }
+
+    /** 31 to the n. Tabulated for the lengths that occur in practice, computed for the rest. */
+    private static int pow31(int n) {
+        if (n < POW31.length) {
+            return POW31[n];
+        }
+        int result = 1;
+        int base = 31;
+        while (n > 0) {
+            if ((n & 1) != 0) {
+                result *= base;
+            }
+            base *= base;
+            n >>>= 1;
+        }
+        return result;
+    }
+
     /**
      * The same value as {@code source.substring(from).hashCode()}, without materializing the substring.
      * It has to agree with String.hashCode, because keys given as whole strings are hashed with that.
      * @param source The string the key is a suffix of.
      * @param from Index at which the key starts.
      */
-    private static int hashSuffix(String source, int from) {
+    static int hashSuffix(String source, int from) {
         final int len = source.length();
         int h = 0;
         int i = from;
@@ -341,7 +391,17 @@ final class EncoderLookup {
         return getOrAddEntry(source, from, hashSuffix(source, from));
     }
 
-    private LookupEntry getOrAddEntry(String source, int from, int hash) {
+    /**
+     * The same, for a caller that already knows the key's hash. It must be exactly what
+     * {@code source.substring(from).hashCode()} would return – a wrong one either fails to find an
+     * entry that is there, or files the key under a slot no later lookup will probe.
+     * See {@link #hashOfSuffix} for how to get one without scanning the key.
+     * @param source The string the key is a suffix of.
+     * @param from Index at which the key starts.
+     * @param hash Hash of the key.
+     * @return The entry.
+     */
+    public LookupEntry getOrAddEntry(String source, int from, int hash) {
         final int spread = spread(hash);
         final var entry = entryForReturns;
         final int existing = findId(spread, source, from);
