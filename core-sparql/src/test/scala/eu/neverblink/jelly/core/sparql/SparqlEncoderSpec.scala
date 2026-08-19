@@ -119,6 +119,63 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
         }
     }
 
+    // A polymorphic column reads its literals back out of the shared buffers at frame end, where
+    // language tags and datatypes take their own branches. Every mixed-type preset in
+    // SparqlDataGen pairs its column with plain literals, so nothing else reaches those branches.
+    "encode language-tagged and datatype literals in a polymorphic column" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      val rows = Seq[Node](
+        Iri("https://a.org/x1"),
+        LangLiteral("hello", "en"),
+        DtLiteral("1", Datatype("https://a.org/d1")),
+        SimpleLiteral("plain"),
+        // A second language tag and datatype, so the buffer cursors have to keep advancing
+        LangLiteral("bonjour", "fr"),
+        DtLiteral("2", Datatype("https://a.org/d2")),
+        // A second IRI in the same namespace and with the next name id, so both are inferred away
+        // and the term is written as the shared all-zero IRI
+        Iri("https://a.org/x2"),
+        // Back to the first name: same namespace still, but the name id no longer follows on, so
+        // only the prefix is inferred away
+        Iri("https://a.org/x1"),
+      )
+      for row <- rows do e.appendRow(Array(row))
+      val frame = e.endFrame()
+
+      val terms = frame.getPolyColumns.asScala.head.getValues.asScala.toSeq
+      terms.size shouldBe rows.size
+      terms.head.hasIri shouldBe true
+      // The lexical forms must line up with the values – a language tag takes a second slot in
+      // the shared string buffer, which is what the cursor gets wrong if it is not accounted for
+      terms.map(t => Option.when(t.hasLiteral)(t.getLiteral.getLex)) shouldBe Seq(
+        None,
+        Some("hello"),
+        Some("1"),
+        Some("plain"),
+        Some("bonjour"),
+        Some("2"),
+        None,
+        None,
+      )
+      terms(1).getLiteral.getLangtag shouldBe "en"
+      terms(4).getLiteral.getLangtag shouldBe "fr"
+      // Datatypes are lookup references, and the two distinct ones must not collapse into one
+      val dt1 = terms(2).getLiteral.getDatatype
+      val dt2 = terms(5).getLiteral.getDatatype
+      dt1 should not be 0
+      dt2 should not be 0
+      dt1 should not be dt2
+      // A simple literal is neither, so its literal kind stays unset
+      terms(3).getLiteral.hasLiteralKind shouldBe false
+      // The trailing IRI repeats the first one's prefix and follows its name id, so both
+      // compress to zero
+      terms(6).getIri.getPrefixId shouldBe 0
+      terms(6).getIri.getNameId shouldBe 0
+      terms(7).getIri.getPrefixId shouldBe 0
+      terms(7).getIri.getNameId should not be 0
+    }
+
     "not carry a column's layout into the next frame" in {
       val e = encoder()
       e.setVariables(Seq("x").asJava)

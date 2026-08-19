@@ -224,6 +224,24 @@ object SparqlDataGen:
       Seq(ColumnSpec(distinctValues = 2048, mixFraction = 0.0005, mixStartRow = 5_000)),
       N,
     ),
+    // A mixed column pairs its kind with IRIs (see altKind), so these two are the only way a
+    // preset puts a language-tagged or a datatype literal in a polymorphic column. Those take
+    // their own branches when the column is written out, and the IRI-based poly presets above
+    // never reach them.
+    ResultSetSpec(
+      "poly-lang",
+      Seq(
+        ColumnSpec(ColumnKind.LangLiteral, distinctValues = 2048, namespaces = 4, mixFraction = 0.3),
+      ),
+      N,
+    ),
+    ResultSetSpec(
+      "poly-typed",
+      Seq(
+        ColumnSpec(ColumnKind.DtLiteral, distinctValues = 2048, namespaces = 8, mixFraction = 0.3),
+      ),
+      N,
+    ),
     // --- Result set shape ---
     ResultSetSpec("wide-5", Seq.fill(5)(ColumnSpec(distinctValues = 2048)), N),
     ResultSetSpec("wide-20", Seq.fill(20)(ColumnSpec(distinctValues = 2048)), N / 2),
