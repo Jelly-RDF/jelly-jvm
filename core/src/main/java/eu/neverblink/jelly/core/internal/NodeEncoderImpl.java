@@ -21,6 +21,12 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      */
     static final class DependentNode<V> {
 
+        // The key this entry stands for, and its spread hash. Both live here rather than in a
+        // parallel array in the cache so that a probe touches the array and this object and
+        // nothing else: the hash decides whether the slot can match at all, and it sits in the
+        // same object as the answer.
+        public Object key;
+        public int keyHash;
         // The actual cached node
         public V encoded;
         // 1: datatypes and IRI names
@@ -38,10 +44,15 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         return Integer.highestOneBit(Math.max(minSize - 1, 1)) << 1;
     }
 
+    /** Xor-folds a hash, so that hashCodes differing only high up still spread over the slots. */
+    private static int spread(Object key) {
+        final int h = key.hashCode() * 0x9E3779B1;
+        return h ^ (h >>> 16);
+    }
+
     /** Picks the slot for a key, xor-folding so that hashCodes differing only high up still spread. */
     private static int slotFor(Object key, int mask) {
-        final int h = key.hashCode() * 0x9E3779B1;
-        return (h ^ (h >>> 16)) & mask;
+        return spread(key) & mask;
     }
 
     /**
@@ -91,43 +102,52 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * The DependentNode in a slot is recycled, so taking a slot over MUST clear `encoded` – otherwise
      * the stale lookupPointer/lookupSerial pair could still validate and we would emit the previous
      * key's IRI or datatype.
+     *
+     * The key and its hash live in the DependentNode rather than in a second array, so a probe reads
+     * the slot array and then one object, instead of a key array, a node array and then the object.
+     * The stored hash also means a slot that cannot match is rejected without dereferencing its key,
+     * which for the datatype literal cache saves a node comparison, not just a string one.
      * @param <V> Type of the encoded node
      */
     private static final class DependentNodeCache<V> {
 
-        private final Object[] keys;
         private final DependentNode<V>[] nodes;
         private final int mask;
 
         @SuppressWarnings("unchecked")
         DependentNodeCache(int minSize) {
             final int size = tableSizeFor(minSize);
-            this.keys = new Object[size];
             this.nodes = new DependentNode[size];
             // A set is two adjacent slots, so there are half as many sets as slots.
             this.mask = (size >> 1) - 1;
         }
 
+        private static boolean holds(DependentNode<?> node, Object key, int hash) {
+            return node != null && node.keyHash == hash && key.equals(node.key);
+        }
+
         DependentNode<V> get(Object key) {
-            final int slot = slotFor(key, mask) << 1;
-            if (key.equals(keys[slot])) {
-                return nodes[slot];
+            final int hash = spread(key);
+            final int slot = (hash & mask) << 1;
+            final var first = nodes[slot];
+            if (holds(first, key, hash)) {
+                return first;
             }
             // Not in the first way. Whatever is in the first way moves to the second, and the key we
             // are looking for takes the first – either promoted from the second way, or reusing the
-            // node that the second way held. A key is never in both ways, and a slot only ever has a
-            // node once it has a key, so a null node here means the pair is not full yet.
+            // node that the second way held. A key is never in both ways, and the second way is only
+            // ever filled after the first, so a null there means the pair is not full yet.
             final var other = nodes[slot + 1];
             final DependentNode<V> node;
-            if (key.equals(keys[slot + 1])) {
+            if (holds(other, key, hash)) {
                 node = other;
             } else {
                 node = other == null ? new DependentNode<>() : other;
                 node.encoded = null;
+                node.key = key;
+                node.keyHash = hash;
             }
-            keys[slot + 1] = keys[slot];
-            nodes[slot + 1] = nodes[slot];
-            keys[slot] = key;
+            nodes[slot + 1] = first;
             return (nodes[slot] = node);
         }
     }
