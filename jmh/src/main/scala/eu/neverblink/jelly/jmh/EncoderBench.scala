@@ -9,7 +9,6 @@ import org.apache.jena.graph.{Node, Triple}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 
-import java.util.concurrent.TimeUnit
 import scala.collection.mutable
 import scala.compiletime.uninitialized
 
