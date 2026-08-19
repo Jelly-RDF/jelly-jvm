@@ -159,7 +159,12 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     static final RdfIri zeroIri = RdfIri.newInstance();
-    // Pre-allocated IRIs that have prefixId=0
+    // One IRI with prefixId=0 per name lookup id, created the first time that id is emitted.
+    // Filling this eagerly used to dominate the cost of building an encoder – a name table entry
+    // is 8 bytes of array, but an RdfIri per entry is a separate object each. Most streams touch
+    // only a fraction of the table, and a stream that uses the prefix table (which is what
+    // Jelly-SPARQL always does) never reads this array at all, because it goes through
+    // makeIriRaw. Slot 0 is never used: lookup ids start at 1.
     private final RdfIri[] nameOnlyIris;
 
     /**
@@ -199,9 +204,6 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             );
         }
         nameOnlyIris = new RdfIri[nameTableSize + 1];
-        for (int i = 0; i < nameOnlyIris.length; i++) {
-            nameOnlyIris[i] = RdfIri.newInstance().setPrefixId(0).setNameId(i);
-        }
         dtLiteralNodeCache = new DependentNodeCache<>(dtLiteralNodeCacheSize);
         nameLookup = new EncoderLookup(nameTableSize, maxPrefixTableSize > 0);
         otherLiteralCache = new NodeCache<>(nodeCacheSize);
@@ -230,12 +232,26 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             // Two IRI cache slots per name table entry. Distinct IRIs outnumber distinct names – one
             // name can be the tail of several IRIs – so one slot per name entry leaves the cache
             // short: on the SPARQL benchmark presets it missed 20-28% of the time at that size and
-            // 4-13% at twice that. The extra cost is one more slot pair per name entry, which is on
-            // the order of the RdfIri per name entry that the encoder already keeps in nameOnlyIris.
+            // 4-13% at twice that. The extra cost is one more slot pair per name entry.
             maxNameTableSize * 2,
             Math.clamp(maxNameTableSize, 256, 1024),
             bufferAppender
         );
+    }
+
+    /**
+     * The prefix-0 IRI for a name id, created on first use. The returned object is handed on to the
+     * frame buffer and must therefore stay valid until the frame is serialized, which is why one is
+     * kept per id instead of a single mutable one. An id that gets evicted and reassigned keeps its
+     * IRI: only the id is encoded, not the name behind it.
+     * @param nameId The id of the entry in the name lookup
+     */
+    private RdfIri nameOnlyIri(int nameId) {
+        final var iri = nameOnlyIris[nameId];
+        if (iri != null) {
+            return iri;
+        }
+        return (nameOnlyIris[nameId] = RdfIri.newInstance().setPrefixId(0).setNameId(nameId));
     }
 
     /**
@@ -252,7 +268,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 return zeroIri;
             } else {
                 lastIriNameId = nameId;
-                return nameOnlyIris[nameId];
+                return nameOnlyIri(nameId);
             }
         }
         return outputIri(encodeIriWithPrefix(iri));
@@ -262,7 +278,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     public RdfIri makeIriRaw(String iri) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
-            return nameOnlyIris[encodeIriNameOnly(iri)];
+            return nameOnlyIri(encodeIriNameOnly(iri));
         }
         return encodeIriWithPrefix(iri).encoded;
     }
@@ -435,7 +451,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 return zeroIri;
             } else {
                 lastIriNameId = nameId;
-                return nameOnlyIris[nameId];
+                return nameOnlyIri(nameId);
             }
         } else {
             lastIriPrefixId = prefixId;
