@@ -120,19 +120,34 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
 
     "look up keys given as a suffix of a longer string" in {
       val lookup = EncoderLookup(8, true)
+      // The caller supplies the hash, and it has to be the one the suffix itself would have.
+      def suffixEntry(source: String, from: Int) =
+        lookup.getOrAddEntry(source, from, source.substring(from).hashCode)
+
       // Same key, once as a whole string and once as a suffix – both must land on the same entry.
       val whole = lookup.getOrAddEntry("name0")
       whole.newEntry should be(true)
-      val suffix = lookup.getOrAddEntry("https://example.org/name0", 20)
+      val suffix = suffixEntry("https://example.org/name0", 20)
       suffix.newEntry should be(false)
       suffix.getId should be(whole.getId)
       // A suffix that is not there yet is added, and the stored name is just the suffix.
-      val fresh = lookup.getOrAddEntry("https://example.org/name1", 20)
+      val fresh = suffixEntry("https://example.org/name1", 20)
       fresh.newEntry should be(true)
       lookup.names(fresh.getId) should be("name1")
       lookup.getOrAddEntry("name1").getId should be(fresh.getId)
       // from == 0 is the whole string
-      lookup.getOrAddEntry("name0", 0).getId should be(whole.getId)
+      suffixEntry("name0", 0).getId should be(whole.getId)
+    }
+
+    "reject a table larger than the id field can address" in {
+      val error = intercept[IllegalArgumentException] {
+        EncoderLookup(EncoderLookup.MAX_TABLE_SIZE + 1, true)
+      }
+      error.getMessage should include("above the maximum")
+      // The boundary itself is fine – allocating it is wasteful but legal
+      EncoderLookup(EncoderLookup.MAX_TABLE_SIZE, false).size should be(
+        EncoderLookup.MAX_TABLE_SIZE,
+      )
     }
 
     // Eviction reassigns an id, which means the old key has to come out of the hash index. With

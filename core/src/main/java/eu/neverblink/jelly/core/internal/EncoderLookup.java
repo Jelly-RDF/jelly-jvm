@@ -55,11 +55,19 @@ final class EncoderLookup {
      */
     private final int[] index;
 
-    /** Slot mask for {@link #index}. */
+    /** Slot mask for {@link #index}, which is always a power of two long. */
     private final int indexMask;
 
+    /**
+     * How many low bits of an index slot hold the entry id. The rest are the hash tag.
+     */
+    private static final int ID_BITS = 18;
+
     /** Mask of the low bits of an index slot that hold the entry id. */
-    private final int idMask;
+    private static final int ID_MASK = (1 << ID_BITS) - 1;
+
+    /** The largest lookup table that fits in {@link #ID_BITS}. */
+    static final int MAX_TABLE_SIZE = ID_MASK;
 
     /**
      * For each id, the slot its key hashes to. Only read when an entry is evicted.
@@ -104,17 +112,19 @@ final class EncoderLookup {
     private final LookupEntry entryForReturns = new LookupEntry(0, 0, true);
 
     public EncoderLookup(int size, boolean useSerials) {
+        if (size > MAX_TABLE_SIZE) {
+            throw new IllegalArgumentException(
+                "Lookup table size %d is above the maximum of %d.".formatted(size, MAX_TABLE_SIZE)
+            );
+        }
         this.size = size;
         capacity = Math.min(size, INITIAL_CAPACITY);
         table = new int[(capacity + 1) * 2];
         names = new String[capacity + 1];
         homeSlots = new int[capacity + 1];
-        final int idBits = 32 - Integer.numberOfLeadingZeros(Math.max(size, 1));
-        idMask = (1 << idBits) - 1;
         // Two slots per entry: linear probing degrades badly above a half-full table.
-        final int indexSize = Integer.highestOneBit(Math.max(size * 2 - 1, 1)) << 1;
-        index = new int[indexSize];
-        indexMask = indexSize - 1;
+        index = new int[Integer.highestOneBit(Math.max(size * 2 - 1, 1)) << 1];
+        indexMask = index.length - 1;
         this.useSerials = useSerials;
         if (useSerials) {
             serials = new int[capacity + 1];
@@ -183,40 +193,13 @@ final class EncoderLookup {
         return result;
     }
 
-    // TODO: remove?
-    /**
-     * The same value as {@code source.substring(from).hashCode()}, without materializing the substring.
-     * It has to agree with String.hashCode, because keys given as whole strings are hashed with that.
-     * @param source The string the key is a suffix of.
-     * @param from Index at which the key starts.
-     */
-    static int hashSuffix(String source, int from) {
-        final int len = source.length();
-        int h = 0;
-        int i = from;
-        // Four characters at a time, so the multiplications don't form one long dependency chain.
-        // 923521 = 31^4, 29791 = 31^3, 961 = 31^2.
-        for (; i + 3 < len; i += 4) {
-            h =
-                h * 923521 +
-                source.charAt(i) * 29791 +
-                source.charAt(i + 1) * 961 +
-                source.charAt(i + 2) * 31 +
-                source.charAt(i + 3);
-        }
-        for (; i < len; i++) {
-            h = h * 31 + source.charAt(i);
-        }
-        return h;
-    }
-
     /**
      * Finds the entry whose name is the suffix of source starting at from.
      * @param spread The spread hash of the key.
      * @return The id of the entry, or 0 if there is none.
      */
     private int findId(int spread, String source, int from) {
-        final int tag = spread & ~idMask;
+        final int tag = spread & ~ID_MASK;
         final int keyLength = source.length() - from;
         int slot = spread & indexMask;
         while (true) {
@@ -224,8 +207,8 @@ final class EncoderLookup {
             if (value == 0) {
                 return 0;
             }
-            if ((value & ~idMask) == tag) {
-                final int id = value & idMask;
+            if ((value & ~ID_MASK) == tag) {
+                final int id = value & ID_MASK;
                 final String name = names[id];
                 if (name.length() == keyLength && source.startsWith(name, from)) {
                     return id;
@@ -245,7 +228,7 @@ final class EncoderLookup {
         while (index[slot] != 0) {
             slot = (slot + 1) & indexMask;
         }
-        index[slot] = id | (spread & ~idMask);
+        index[slot] = id | (spread & ~ID_MASK);
         homeSlots[id] = home;
     }
 
@@ -258,7 +241,7 @@ final class EncoderLookup {
      */
     private void removeId(int id) {
         int hole = homeSlots[id];
-        while ((index[hole] & idMask) != id) {
+        while ((index[hole] & ID_MASK) != id) {
             hole = (hole + 1) & indexMask;
         }
         index[hole] = 0;
@@ -269,10 +252,9 @@ final class EncoderLookup {
             if (value == 0) {
                 return;
             }
-            final int home = homeSlots[value & idMask];
+            final int home = homeSlots[value & ID_MASK];
             // Leave the entry alone if its home lies in (hole, slot] – then it is still reachable
-            // from its home without passing through the hole. Otherwise move it down into the hole,
-            // which becomes the new hole.
+            // from its home without passing through the hole.
             final boolean reachable = hole <= slot ? hole < home && home <= slot : hole < home || home <= slot;
             if (!reachable) {
                 index[hole] = value;
@@ -323,7 +305,6 @@ final class EncoderLookup {
         tail = base;
         names[id] = key;
         insertId(id, spread);
-        // The ids handed out here run 1, 2, 3, ..., so the decoder can always infer them.
         entryForReturns.setId = 0;
     }
 
@@ -355,23 +336,12 @@ final class EncoderLookup {
     }
 
     /**
-     * // TODO: remove?
      * Adds a new entry to the lookup table or retrieves it if it already exists, with the key given
      * as the suffix of an existing string. This way an already-known key costs no allocation at all:
      * the substring is only cut out when the entry actually turns out to be new.
-     * @param source The string the key is a suffix of.
-     * @param from Index at which the key starts.
-     * @return The entry.
-     */
-    public LookupEntry getOrAddEntry(String source, int from) {
-        return getOrAddEntry(source, from, hashSuffix(source, from));
-    }
-
-    /**
-     * The same, for a caller that already knows the key's hash. It must be exactly what
-     * {@code source.substring(from).hashCode()} would return – a wrong one either fails to find an
-     * entry that is there, or files the key under a slot no later lookup will probe.
-     * See {@link #hashOfSuffix} for how to get one without scanning the key.
+     * <p>
+     * The hash must be exactly what {@code source.substring(from).hashCode()} would return.
+     * {@link #hashOfSuffix} produces it without scanning the key.
      * @param source The string the key is a suffix of.
      * @param from Index at which the key starts.
      * @param hash Hash of the key.
@@ -389,7 +359,6 @@ final class EncoderLookup {
             entry.newEntry = false;
             return entry;
         }
-        // substring(0) returns the string itself, so a whole-string key costs nothing here
         final String key = source.substring(from);
         int id;
         if (used < size) {
