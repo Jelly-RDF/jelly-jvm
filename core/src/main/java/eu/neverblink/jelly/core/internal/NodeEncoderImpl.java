@@ -356,9 +356,11 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
         int nameId = nameEntry.getId;
         cachedNode.lookupPointer1 = nameId;
-        cachedNode.lookupSerial1 = nameSerials[nameId];
+        // The serial arrays are read from the lookups again here: adding an entry can grow a
+        // lookup, and then the arrays fetched at the top of this method are the old, shorter ones.
+        cachedNode.lookupSerial1 = Objects.requireNonNull(nameLookup.serials)[nameId];
         cachedNode.lookupPointer2 = prefixId;
-        cachedNode.lookupSerial2 = prefixSerials[prefixId];
+        cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
         cachedNode.encoded = RdfIri.newInstance().setPrefixId(prefixId).setNameId(nameId);
         return cachedNode;
     }

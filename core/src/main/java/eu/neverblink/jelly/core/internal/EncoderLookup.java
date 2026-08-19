@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.InternalApi;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -36,12 +37,29 @@ final class EncoderLookup {
     }
 
     /**
+     * How many ids the entry arrays start out holding. The declared table size is an upper bound,
+     * and most streams never come near it – a one-row result set uses a handful of names – so the
+     * arrays start small and are grown as ids are handed out. Building the arrays at full size
+     * used to be most of the cost of creating an encoder.
+     */
+    private static final int INITIAL_CAPACITY = 64;
+
+    /**
+     * By how much the entry arrays grow at a time. Big, so that a table which does fill up gets
+     * there in a couple of copies.
+     */
+    private static final int GROWTH_FACTOR = 4;
+
+    /**
      * Index from a key's hash to the id of the entry holding it, with linear probing.
      * <p>
      * The keys themselves are already stored in {@link #names}, so a slot only has to hold an id.
      * The bits above the id hold a tag taken from the key's hash, which lets a probe walk past a
      * colliding slot without dereferencing any string. A slot value of 0 means "empty" – that is
      * unambiguous because id 0 is never handed out.
+     * <p>
+     * Unlike the entry arrays, this one is built at full size right away: growing it would mean
+     * rehashing every key in it, which costs more than the allocation it saves.
      */
     private final int[] index;
 
@@ -55,7 +73,7 @@ final class EncoderLookup {
      * For each id, the slot its key hashes to. Only read when an entry is evicted, where the probe
      * chain around the freed slot has to be repaired.
      */
-    private final int[] homeSlots;
+    private int[] homeSlots;
 
     /**
      * The doubly-linked list of entries, with 1-based indexing.
@@ -63,15 +81,18 @@ final class EncoderLookup {
      * The head pointer is in table[1].
      * The first valid entry is in table[2] – table[3].
      */
-    private final int[] table;
+    private int[] table;
 
     /**
      * The serial numbers of the entries, incremented each time the entry is replaced in the table.
      * This could theoretically overflow and cause bogus cache hits, but it's enormously
      * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that
      * causes this to happen.
+     * <p>
+     * Replaced by a longer array when the lookup grows, so a caller must not hold on to it across
+     * a call that can add an entry.
      */
-    final int[] serials;
+    int[] serials;
 
     // Tail pointer for the table.
     private int tail;
@@ -80,10 +101,12 @@ final class EncoderLookup {
     // Current size of the lookup (how many entries are used).
     // This will monotonically increase until it reaches the maximum size.
     private int used;
+    // How many ids the entry arrays currently hold. Grows towards `size` as ids are handed out.
+    private int capacity;
     // The last id that was set in the table.
     private int lastSetId = -1000;
     // Names of the entries. Entry 0 is always null.
-    final String[] names;
+    String[] names;
     // Whether to maintain serial numbers for the entries.
     private final boolean useSerials;
 
@@ -93,9 +116,10 @@ final class EncoderLookup {
 
     public EncoderLookup(int size, boolean useSerials) {
         this.size = size;
-        table = new int[(size + 1) * 2];
-        names = new String[size + 1];
-        homeSlots = new int[size + 1];
+        capacity = Math.min(size, INITIAL_CAPACITY);
+        table = new int[(capacity + 1) * 2];
+        names = new String[capacity + 1];
+        homeSlots = new int[capacity + 1];
         // Ids run 1..size, so this is how many bits one of them takes in an index slot.
         final int idBits = 32 - Integer.numberOfLeadingZeros(Math.max(size, 1));
         idMask = (1 << idBits) - 1;
@@ -105,12 +129,27 @@ final class EncoderLookup {
         indexMask = indexSize - 1;
         this.useSerials = useSerials;
         if (useSerials) {
-            serials = new int[size + 1];
+            serials = new int[capacity + 1];
             // Set the head's serial to non-zero value, so that default-initialized DependentNodes are not
             // accidentally considered as valid entries.
             serials[0] = -1;
         } else {
             serials = null;
+        }
+    }
+
+    /**
+     * Makes room for more ids, up to the table's configured size. Only the arrays indexed by id
+     * have to grow – the values in them are keyed by id, so copying them over is enough and
+     * nothing has to be rehashed.
+     */
+    private void grow() {
+        capacity = Math.min(size, capacity * GROWTH_FACTOR);
+        table = Arrays.copyOf(table, (capacity + 1) * 2);
+        names = Arrays.copyOf(names, capacity + 1);
+        homeSlots = Arrays.copyOf(homeSlots, capacity + 1);
+        if (useSerials) {
+            serials = Arrays.copyOf(Objects.requireNonNull(serials), capacity + 1);
         }
     }
 
@@ -320,6 +359,9 @@ final class EncoderLookup {
         if (used < size) {
             // We still have space in the table, add a new entry to the end of the table.
             id = ++used;
+            if (id > capacity) {
+                grow();
+            }
             addEntrySequential(key, id, spread);
         } else {
             // The table is full, evict the least recently used entry.
@@ -358,6 +400,9 @@ final class EncoderLookup {
         int id;
         if (used < size) {
             id = ++used;
+            if (id > capacity) {
+                grow();
+            }
             addEntrySequential(key, id, spread);
         } else {
             // The table is full
