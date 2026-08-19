@@ -24,11 +24,6 @@ final class EncoderLookup {
         /** Whether this entry is a new entry. */
         public boolean newEntry;
 
-        public LookupEntry(int getId, int setId) {
-            this.getId = getId;
-            this.setId = setId;
-        }
-
         public LookupEntry(int getId, int setId, boolean newEntry) {
             this.getId = getId;
             this.setId = setId;
@@ -67,8 +62,7 @@ final class EncoderLookup {
     private final int idMask;
 
     /**
-     * For each id, the slot its key hashes to. Only read when an entry is evicted, where the probe
-     * chain around the freed slot has to be repaired.
+     * For each id, the slot its key hashes to. Only read when an entry is evicted.
      */
     private int[] homeSlots;
 
@@ -98,7 +92,7 @@ final class EncoderLookup {
     // Current size of the lookup (how many entries are used).
     // This will monotonically increase until it reaches the maximum size.
     private int used;
-    // How many ids the entry arrays currently hold. Grows towards `size` as ids are handed out.
+    // How many ids the entry arrays can currently hold.
     private int capacity;
     // The last id that was set in the table.
     private int lastSetId = -1000;
@@ -107,8 +101,6 @@ final class EncoderLookup {
     // Whether to maintain serial numbers for the entries.
     private final boolean useSerials;
 
-    // The only LookupEntry this class ever hands out. Callers read its fields and are done with it
-    // before they call the lookup again, so there is no reason to allocate one per entry.
     private final LookupEntry entryForReturns = new LookupEntry(0, 0, true);
 
     public EncoderLookup(int size, boolean useSerials) {
@@ -117,7 +109,6 @@ final class EncoderLookup {
         table = new int[(capacity + 1) * 2];
         names = new String[capacity + 1];
         homeSlots = new int[capacity + 1];
-        // Ids run 1..size, so this is how many bits one of them takes in an index slot.
         final int idBits = 32 - Integer.numberOfLeadingZeros(Math.max(size, 1));
         idMask = (1 << idBits) - 1;
         // Two slots per entry: linear probing degrades badly above a half-full table.
@@ -135,11 +126,6 @@ final class EncoderLookup {
         }
     }
 
-    /**
-     * Makes room for more ids, up to the table's configured size. Only the arrays indexed by id
-     * have to grow – the values in them are keyed by id, so copying them over is enough and
-     * nothing has to be rehashed.
-     */
     private void grow() {
         capacity = Math.min(size, capacity * GROWTH_FACTOR);
         table = Arrays.copyOf(table, (capacity + 1) * 2);
@@ -156,7 +142,7 @@ final class EncoderLookup {
         return h ^ (h >>> 16);
     }
 
-    /** Powers of 31, for {@link #hashOfSuffix}. Long enough to cover any sane IRI local name. */
+    /** Powers of 31, for {@link #hashOfSuffix}. Long enough to cover any sane IRI prefix. */
     private static final int[] POW31 = new int[256];
 
     static {
@@ -169,16 +155,7 @@ final class EncoderLookup {
 
     /**
      * The hash of a suffix, worked out from the hash of the whole string and the hash of the prefix
-     * that was cut off it, without looking at a single character.
-     * <p>
-     * String.hashCode is {@code h = 31 * h + c} per character, so for {@code s = prefix + suffix}
-     * it satisfies {@code hash(s) = hash(prefix) * 31^len(suffix) + hash(suffix)}, and the suffix
-     * hash falls out. The int arithmetic wraps the same way on both sides, so this is exact, not an
-     * approximation.
-     * <p>
-     * Both inputs are hashes of Strings that are kept alive – the IRI by the caller's node cache and
-     * the prefix by the lookup's names array – so String has them cached and this costs no scanning
-     * at all, where hashing the suffix directly costs one pass over it.
+     * that was cut off it, without looking at the actual string. Yes, it does work.
      *
      * @param wholeHash {@code source.hashCode()}
      * @param prefixHash hash of the first {@code source.length() - suffixLength} characters
@@ -189,7 +166,7 @@ final class EncoderLookup {
         return wholeHash - prefixHash * pow31(suffixLength);
     }
 
-    /** 31 to the n. Tabulated for the lengths that occur in practice, computed for the rest. */
+    /** 31 to the n. Tabulated for the lengths that occur in practice. */
     private static int pow31(int n) {
         if (n < POW31.length) {
             return POW31[n];
@@ -206,6 +183,7 @@ final class EncoderLookup {
         return result;
     }
 
+    // TODO: remove?
     /**
      * The same value as {@code source.substring(from).hashCode()}, without materializing the substring.
      * It has to agree with String.hashCode, because keys given as whole strings are hashed with that.
@@ -377,6 +355,7 @@ final class EncoderLookup {
     }
 
     /**
+     * // TODO: remove?
      * Adds a new entry to the lookup table or retrieves it if it already exists, with the key given
      * as the suffix of an existing string. This way an already-known key costs no allocation at all:
      * the substring is only cut out when the entry actually turns out to be new.
