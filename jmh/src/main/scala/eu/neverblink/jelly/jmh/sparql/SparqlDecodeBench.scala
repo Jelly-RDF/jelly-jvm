@@ -4,6 +4,7 @@ import eu.neverblink.jelly.convert.jena.sparql.{JenaSparqlConverterFactory, RowS
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame
 import eu.neverblink.jelly.core.sparql.{JellySparqlOptions, SparqlResultsHandler}
 import org.apache.jena.graph.Node
+import eu.neverblink.jelly.jmh.CommonParams
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 
@@ -62,7 +63,7 @@ object SparqlDecodeBench:
         .takeWhile(_ != null)
         .toArray
 
-class SparqlDecodeBench:
+class SparqlDecodeBench extends CommonParams:
   import SparqlDecodeBench.*
 
   @Benchmark

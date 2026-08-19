@@ -2,6 +2,7 @@ package eu.neverblink.jelly.jmh.sparql
 
 import eu.neverblink.jelly.convert.jena.sparql.JenaSparqlConverterFactory
 import eu.neverblink.jelly.core.sparql.SparqlEncoder
+import eu.neverblink.jelly.jmh.CommonParams
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 
@@ -47,7 +48,7 @@ object SparqlEncodeBench:
     def setup(): Unit =
       data = SparqlBenchData.load(preset)
 
-class SparqlEncodeBench:
+class SparqlEncodeBench extends CommonParams:
   import SparqlEncodeBench.*
 
   /** The encoder alone: builds the frames, but does not serialize them. */
