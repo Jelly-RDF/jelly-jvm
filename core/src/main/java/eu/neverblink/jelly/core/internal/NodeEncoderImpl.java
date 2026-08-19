@@ -328,14 +328,16 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         final int prefixLen = i + 1;
 
         final int prefixId;
+        final String prefix;
         final String lastPrefix = prefixLookup.names[lastPrefixId];
         if (lastPrefix != null && lastPrefix.length() == prefixLen && iri.startsWith(lastPrefix)) {
             // Same namespace as the previous IRI, so its id can be reused as it is. Only the LRU
             // order has to be updated.
+            prefix = lastPrefix;
             prefixId = lastPrefixId;
             prefixLookup.onAccess(prefixId);
         } else {
-            final String prefix = iri.substring(0, prefixLen);
+            prefix = iri.substring(0, prefixLen);
             final var prefixEntry = prefixLookup.getOrAddEntry(prefix);
             if (prefixEntry.newEntry) {
                 bufferAppender.appendPrefixEntry(
@@ -348,7 +350,15 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
         // The name is the tail of the IRI, so the lookup can match it in place. Most of the time
         // the name is already known and no substring has to be cut out at all.
-        final var nameEntry = nameLookup.getOrAddEntry(iri, prefixLen);
+        //
+        // Its hash comes out of the IRI's and the prefix's, so the name never has to be scanned.
+        // Both of those are cached in their String: the IRI's was just computed by the node cache
+        // probe above, and the prefix is the one the lookup itself is holding on to.
+        final var nameEntry = nameLookup.getOrAddEntry(
+            iri,
+            prefixLen,
+            EncoderLookup.hashOfSuffix(iri.hashCode(), prefix.hashCode(), iri.length() - prefixLen)
+        );
         if (nameEntry.newEntry) {
             bufferAppender.appendNameEntry(
                 RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(nameLookup.names[nameEntry.getId])

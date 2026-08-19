@@ -164,6 +164,30 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         lookup.getOrAddEntry(name).getId should be(id)
     }
 
+    // The encoder never scans an IRI's local name to hash it – it subtracts the prefix's hash out
+    // of the whole IRI's. If that arithmetic is off by anything at all, the same name gets filed
+    // under two different slots and the lookup silently stops finding entries that are there.
+    "derive a suffix's hash from the whole string's and the prefix's" in {
+      val strings = Seq(
+        "",
+        "a",
+        "https://example.org/ns0#term1",
+        "https://example.org/a/b/c",
+        // Longer than the tabulated powers of 31, so this goes through the computed path
+        "https://example.org/" + "x" * 400,
+        // Non-ASCII, where a char is not a byte
+        "https://example.org/é中😀",
+      )
+      for s <- strings; i <- 0 to s.length do
+        val prefix = s.substring(0, i)
+        val suffix = s.substring(i)
+        withClue(s"'$s' split at $i: ") {
+          EncoderLookup.hashOfSuffix(s.hashCode, prefix.hashCode, suffix.length) should be(
+            suffix.hashCode,
+          )
+        }
+    }
+
     "not use the serials table if not needed" in {
       val lookup = EncoderLookup(16, false)
       for _ <- 1 to 2000 do
