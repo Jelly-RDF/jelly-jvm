@@ -65,7 +65,7 @@ final class EncoderLookup {
     // The last id that was set in the table.
     private int lastSetId = -1000;
     // Names of the entries. Entry 0 is always null.
-    private final String[] names;
+    final String[] names;
     // Whether to maintain serial numbers for the entries.
     private final boolean useSerials;
 

@@ -136,6 +136,15 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     private int lastIriNameId;
     private int lastIriPrefixId = -1000;
 
+    // Lookup id of the prefix we split off the previous IRI. Consecutive IRIs almost always come
+    // from the same namespace, so checking whether this IRI starts with that prefix lets us skip
+    // allocating the prefix substring, hashing it, and probing the prefix map. The prefix string
+    // itself is read back from the lookup's names array, which by definition holds whatever the id
+    // means right now – so an entry that has been evicted and reassigned in the meantime cannot
+    // give a stale answer. Id 0 is never assigned and its name is always null, which is what makes
+    // the initial value safe.
+    private int lastPrefixId;
+
     private final EncoderLookup datatypeLookup;
     private final EncoderLookup prefixLookup;
     private final EncoderLookup nameLookup;
@@ -278,14 +287,16 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @return the cached dependent node
      */
     private DependentNode<RdfIri> encodeIriWithPrefix(String iri) {
+        final var prefixLookup = Objects.requireNonNull(this.prefixLookup);
+        final var prefixSerials = Objects.requireNonNull(prefixLookup.serials);
+        final var nameSerials = Objects.requireNonNull(nameLookup.serials);
         // Slow path, with splitting out the prefix
         final var cachedNode = Objects.requireNonNull(iriNodeCache).get(iri);
         // Check if the value is still valid
         if (
             cachedNode.encoded != null &&
-            cachedNode.lookupSerial1 == Objects.requireNonNull(nameLookup.serials)[cachedNode.lookupPointer1] &&
-            cachedNode.lookupSerial2 ==
-                Objects.requireNonNull(Objects.requireNonNull(prefixLookup).serials)[cachedNode.lookupPointer2]
+            cachedNode.lookupSerial1 == nameSerials[cachedNode.lookupPointer1] &&
+            cachedNode.lookupSerial2 == prefixSerials[cachedNode.lookupPointer2]
         ) {
             nameLookup.onAccess(cachedNode.lookupPointer1);
             prefixLookup.onAccess(cachedNode.lookupPointer2);
@@ -293,36 +304,42 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
 
         int i = iri.indexOf('#', 8);
-        String prefix;
-        String postfix;
         if (i == -1) {
             i = iri.lastIndexOf('/');
-            if (i != -1) {
-                prefix = iri.substring(0, i + 1);
-                postfix = iri.substring(i + 1);
-            } else {
-                prefix = "";
-                postfix = iri;
-            }
+        }
+        // The prefix is iri[0, i + 1) and the name is the rest. i == -1 means there is no prefix,
+        // which falls out of the same arithmetic: an empty prefix and the whole IRI as the name.
+        final int prefixLen = i + 1;
+
+        final int prefixId;
+        final String lastPrefix = prefixLookup.names[lastPrefixId];
+        if (lastPrefix != null && lastPrefix.length() == prefixLen && iri.startsWith(lastPrefix)) {
+            // Same namespace as the previous IRI, so its id can be reused as it is. Only the LRU
+            // order has to be updated.
+            prefixId = lastPrefixId;
+            prefixLookup.onAccess(prefixId);
         } else {
-            prefix = iri.substring(0, i + 1);
-            postfix = iri.substring(i + 1);
+            final String prefix = iri.substring(0, prefixLen);
+            final var prefixEntry = prefixLookup.getOrAddEntry(prefix);
+            if (prefixEntry.newEntry) {
+                bufferAppender.appendPrefixEntry(
+                    RdfPrefixEntry.newInstance().setId(prefixEntry.setId).setValue(prefix)
+                );
+            }
+            prefixId = prefixEntry.getId;
+            this.lastPrefixId = prefixId;
         }
 
-        final var prefixEntry = Objects.requireNonNull(prefixLookup).getOrAddEntry(prefix);
+        final String postfix = i == -1 ? iri : iri.substring(prefixLen);
         final var nameEntry = nameLookup.getOrAddEntry(postfix);
-        if (prefixEntry.newEntry) {
-            bufferAppender.appendPrefixEntry(RdfPrefixEntry.newInstance().setId(prefixEntry.setId).setValue(prefix));
-        }
         if (nameEntry.newEntry) {
             bufferAppender.appendNameEntry(RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(postfix));
         }
         int nameId = nameEntry.getId;
-        int prefixId = prefixEntry.getId;
         cachedNode.lookupPointer1 = nameId;
-        cachedNode.lookupSerial1 = Objects.requireNonNull(nameLookup.serials)[nameId];
+        cachedNode.lookupSerial1 = nameSerials[nameId];
         cachedNode.lookupPointer2 = prefixId;
-        cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
+        cachedNode.lookupSerial2 = prefixSerials[prefixId];
         cachedNode.encoded = RdfIri.newInstance().setPrefixId(prefixId).setNameId(nameId);
         return cachedNode;
     }
