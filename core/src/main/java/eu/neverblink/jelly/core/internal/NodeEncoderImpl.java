@@ -144,6 +144,9 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             } else {
                 node = other == null ? new DependentNode<>() : other;
                 node.encoded = null;
+                // The pointers are what says "this entry has been encoded" for IRIs, so a recycled
+                // slot has to lose them as well as its message.
+                node.lookupPointer1 = 0;
                 node.key = key;
                 node.keyHash = hash;
             }
@@ -238,7 +241,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @param maxDatatypeTableSize The maximum size of the datatype table
      * @return A new NodeEncoder
      */
-    public static <TNode> NodeEncoder<TNode> create(
+    public static <TNode> NodeEncoderImpl<TNode> create(
         RdfBufferAppender<TNode> bufferAppender,
         int maxPrefixTableSize,
         int maxNameTableSize,
@@ -300,7 +303,38 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             // Fast path for no prefixes
             return nameOnlyIri(encodeIriNameOnly(iri));
         }
-        return encodeIriWithPrefix(iri).encoded;
+        return encodedIriOf(encodeIriWithPrefix(iri));
+    }
+
+    /**
+     * The RdfIri message for a cached node, built the first time it is asked for. Jelly-SPARQL only
+     * ever wants the two ids, so for it this is never called and the message never exists.
+     */
+    private static RdfIri encodedIriOf(DependentNode<RdfIri> node) {
+        final var encoded = node.encoded;
+        if (encoded != null) {
+            return encoded;
+        }
+        return (node.encoded = RdfIri.newInstance().setPrefixId(node.lookupPointer2).setNameId(node.lookupPointer1));
+    }
+
+    /**
+     * Encodes an IRI and returns only its lookup ids: the name id in the high 32 bits, the prefix id
+     * in the low 32. No RdfIri message is built and none is read back, which saves an allocation on
+     * a cache miss and a dereference on a hit - the ids are in the cache entry the probe just read.
+     * <p>
+     * The name-id and prefix-id inference of {@link #makeIri} is NOT applied: the ids come out as
+     * they are, and the caller decides how to compress them.
+     * @param iri The IRI to encode
+     * @return (nameId &lt;&lt; 32) | prefixId
+     */
+    public long makeIriIds(String iri) {
+        if (maxPrefixTableSize == 0) {
+            // Fast path for no prefixes
+            return (long) encodeIriNameOnly(iri) << 32;
+        }
+        final var node = encodeIriWithPrefix(iri);
+        return ((long) node.lookupPointer1 << 32) | Integer.toUnsignedLong(node.lookupPointer2);
     }
 
     /**
@@ -329,8 +363,11 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         // Slow path, with splitting out the prefix
         final var cachedNode = Objects.requireNonNull(iriNodeCache).get(iri);
         // Check if the value is still valid
+        // Lookup ids start at 1, so a zero name pointer means the slot has never been filled.
+        // The message itself is not the flag any more: a caller that only wants the ids never
+        // builds one.
         if (
-            cachedNode.encoded != null &&
+            cachedNode.lookupPointer1 != 0 &&
             cachedNode.lookupSerial1 == nameSerials[cachedNode.lookupPointer1] &&
             cachedNode.lookupSerial2 == prefixSerials[cachedNode.lookupPointer2]
         ) {
@@ -391,7 +428,9 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         cachedNode.lookupSerial1 = Objects.requireNonNull(nameLookup.serials)[nameId];
         cachedNode.lookupPointer2 = prefixId;
         cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
-        cachedNode.encoded = RdfIri.newInstance().setPrefixId(prefixId).setNameId(nameId);
+        // Whatever message was here is stale now that the ids have moved. Only Jelly-RDF ever
+        // builds one, and it does so on demand.
+        cachedNode.encoded = null;
         return cachedNode;
     }
 
@@ -492,7 +531,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 return RdfIri.newInstance().setPrefixId(prefixId);
             } else {
                 lastIriNameId = nameId;
-                return cachedNode.encoded;
+                return encodedIriOf(cachedNode);
             }
         }
     }

@@ -38,7 +38,7 @@ public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
 
     protected final ProtoEncoderConverter<TNode> converter;
     protected final SparqlResultsOptions options;
-    private final NodeEncoder<TNode> lookupEncoder;
+    private final NodeEncoderImpl<TNode> lookupEncoder;
 
     /**
      * Creates a new SparqlEncoder instance.
@@ -71,6 +71,22 @@ public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
      */
     protected final NodeEncoder<TNode> getLookupEncoder() {
         return lookupEncoder;
+    }
+
+    /**
+     * Encodes an IRI in the lookup tables and returns only its ids: the name id in the high 32 bits
+     * of the result, the prefix id in the low 32.
+     * <p>
+     * The columnar format stores the two ids and compresses them itself, so unlike Jelly-RDF it
+     * never needs the RdfIri message the node encoder would otherwise build and then be read back
+     * out of. Going straight for the ids saves that allocation on a cache miss, and a dereference
+     * into a second object on every hit.
+     *
+     * @param iri the IRI to encode
+     * @return (nameId &lt;&lt; 32) | prefixId
+     */
+    protected final long lookupIriIds(String iri) {
+        return lookupEncoder.makeIriIds(iri);
     }
 
     /**

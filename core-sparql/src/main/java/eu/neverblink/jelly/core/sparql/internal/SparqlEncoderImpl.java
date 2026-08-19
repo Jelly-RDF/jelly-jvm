@@ -328,20 +328,20 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
 
     @Override
     public RdfIri makeIri(String iri) {
-        final RdfIri raw = getLookupEncoder().makeIriRaw(iri);
-        final int nameId = raw.getNameId();
+        final long ids = lookupIriIds(iri);
+        final int nameId = (int) (ids >>> 32);
         final ColumnState col = currentColumn;
-        appendIriIds(col, nameId == col.lastNameId + 1 ? 0 : nameId, raw.getPrefixId(), nameId);
+        appendIriIds(col, nameId == col.lastNameId + 1 ? 0 : nameId, (int) ids, nameId);
         return ZERO_IRI;
     }
 
     @Override
     public RdfIri makeIriRaw(String iri) {
-        final RdfIri raw = getLookupEncoder().makeIriRaw(iri);
+        final long ids = lookupIriIds(iri);
         // Raw means no next-name inference, so the name id is stored as it is. The decoder
         // still tracks it as the new "previous name", hence the lastNameId update.
-        final int nameId = raw.getNameId();
-        appendIriIds(currentColumn, nameId, raw.getPrefixId(), nameId);
+        final int nameId = (int) (ids >>> 32);
+        appendIriIds(currentColumn, nameId, (int) ids, nameId);
         return ZERO_IRI;
     }
 
