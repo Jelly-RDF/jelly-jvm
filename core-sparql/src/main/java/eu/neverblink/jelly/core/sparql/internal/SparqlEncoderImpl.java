@@ -264,7 +264,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
 
         // Term type (TYPE_IRI/BNODE/LITERAL) of each encoded value of the frame, in order.
         // Only read back for polymorphic columns – the values themselves sit in the per-type
-        // buffers below, and a mono-typed column reads its buffer directly.
+        // buffers below, and a mono-typed column reads its buffer directly. So this is only
+        // filled in while the column is polymorphic; a column that becomes one mid-frame
+        // backfills what it skipped (see backfillTags).
         byte[] tags = new byte[0];
         int valueCount = 0;
 
@@ -296,10 +298,26 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         }
 
         void addValueTag(byte tag) {
-            if (valueCount == tags.length) {
-                tags = Arrays.copyOf(tags, Math.max(16, tags.length * 2));
+            // A mono-typed column never reads these back, so recording them would be a bounds
+            // check, a growth check and a store per value for nothing.
+            if (type == TYPE_POLY) {
+                if (valueCount == tags.length) {
+                    tags = Arrays.copyOf(tags, Math.max(16, tags.length * 2));
+                }
+                tags[valueCount] = tag;
             }
-            tags[valueCount++] = tag;
+            valueCount++;
+        }
+
+        /**
+         * Records the type of the values encoded before this column turned polymorphic. They were
+         * all of the column's previous type, which is what made it mono-typed until now.
+         */
+        void backfillTags(byte previousType) {
+            if (valueCount > tags.length) {
+                tags = new byte[Math.max(16, valueCount * 2)];
+            }
+            Arrays.fill(tags, 0, valueCount, previousType);
         }
 
         void resetFrameState() {
@@ -899,6 +917,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         if (col.type == TYPE_UNSET) {
             col.type = valueType;
         } else if (col.type != TYPE_POLY && col.type != valueType) {
+            // The values already in this frame were all of the old type, and nothing recorded
+            // that while the column still looked mono-typed.
+            col.backfillTags(col.type);
             col.type = TYPE_POLY;
         }
         col.addValueTag(valueType);
