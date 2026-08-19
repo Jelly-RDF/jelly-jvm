@@ -55,8 +55,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     private static final RdfIri ZERO_IRI = RdfIri.newInstance();
 
-    // Returned by the literal makers as a type marker – the literal's parts go into the
-    // column buffers, not into the returned message
+    // Used as a type marker – the literal's parts go into the column buffers,
+    // not into the returned proto message.
     private static final RdfLiteral LITERAL_MARKER = RdfLiteral.newInstance();
 
     // Not a valid datatype lookup id – marks a literal column that cannot state one datatype
@@ -67,205 +67,35 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     private static final int LANG_LITERAL = -1;
 
     /**
-     * Reusable store for the SparqlTerm wrappers of a polymorphic column.
-     * <p>
-     * Only {@link #appendMessage()} adds to this - {@code add} is not supported, because a
-     * caller-supplied message would not come from the pool.
+     * Temporary column state, filled in from beginFrame() through to endFrame().
      */
-    private static final class TermBuffer
-        extends AbstractCollection<SparqlTerm>
-        implements MessageCollection<SparqlTerm, SparqlTerm.Mutable>
-    {
-
-        private SparqlTerm.Mutable[] terms = new SparqlTerm.Mutable[0];
-        private int size = 0;
-
-        @Override
-        public SparqlTerm.Mutable appendMessage() {
-            if (size == terms.length) {
-                terms = Arrays.copyOf(terms, Math.max(8, terms.length * 2));
-            }
-            SparqlTerm.Mutable term = terms[size];
-            if (term == null) {
-                term = SparqlTerm.newInstance();
-                terms[size] = term;
-            } else {
-                // The setters leave the cached serialized size alone, so a reused wrapper has to be
-                // cleared - otherwise the frame would be written with the previous value's length.
-                term.clear();
-            }
-            size++;
-            return term;
-        }
-
-        @Override
-        public int size() {
-            return size;
-        }
-
-        @Override
-        public void clear() {
-            // Keeps the wrappers around for the next frame
-            size = 0;
-        }
-
-        @Override
-        public Iterator<SparqlTerm> iterator() {
-            return new Iterator<>() {
-                private int index = 0;
-
-                @Override
-                public boolean hasNext() {
-                    return index < size;
-                }
-
-                @Override
-                public SparqlTerm next() {
-                    if (index >= size) {
-                        throw new NoSuchElementException();
-                    }
-                    return terms[index++];
-                }
-            };
-        }
-    }
-
-    /**
-     * The same reusable store, for the RdfLiteral messages of a mixed-datatype literal column
-     * or a polymorphic column. Literal values are kept as buffer entries while the frame is
-     * built (see ColumnState), so messages only get materialized here, at frame end.
-     */
-    private static final class LiteralBuffer
-        extends AbstractCollection<RdfLiteral>
-        implements MessageCollection<RdfLiteral, RdfLiteral.Mutable>
-    {
-
-        private RdfLiteral.Mutable[] literals = new RdfLiteral.Mutable[0];
-        private int size = 0;
-
-        @Override
-        public RdfLiteral.Mutable appendMessage() {
-            if (size == literals.length) {
-                literals = Arrays.copyOf(literals, Math.max(8, literals.length * 2));
-            }
-            RdfLiteral.Mutable literal = literals[size];
-            if (literal == null) {
-                literal = RdfLiteral.newInstance();
-                literals[size] = literal;
-            } else {
-                literal.clear();
-            }
-            size++;
-            return literal;
-        }
-
-        @Override
-        public int size() {
-            return size;
-        }
-
-        @Override
-        public void clear() {
-            size = 0;
-        }
-
-        @Override
-        public Iterator<RdfLiteral> iterator() {
-            return new Iterator<>() {
-                private int index = 0;
-
-                @Override
-                public boolean hasNext() {
-                    return index < size;
-                }
-
-                @Override
-                public RdfLiteral next() {
-                    if (index >= size) {
-                        throw new NoSuchElementException();
-                    }
-                    return literals[index++];
-                }
-            };
-        }
-    }
-
-    /**
-     * Reusable store for the RdfIri messages a polymorphic column wraps in its SparqlTerms.
-     * IRI values are kept as plain ints while the frame is built (see ColumnState), so the
-     * messages only get materialized here, at frame end, and only for polymorphic columns.
-     */
-    private static final class IriBuffer {
-
-        private RdfIri.Mutable[] iris = new RdfIri.Mutable[0];
-        private int size = 0;
-
-        RdfIri.Mutable append() {
-            if (size == iris.length) {
-                iris = Arrays.copyOf(iris, Math.max(8, iris.length * 2));
-            }
-            RdfIri.Mutable iri = iris[size];
-            if (iri == null) {
-                iri = RdfIri.newInstance();
-                iris[size] = iri;
-            } else {
-                iri.clear();
-            }
-            size++;
-            return iri;
-        }
-
-        void clear() {
-            size = 0;
-        }
-    }
-
-    /**
-     * The buffers only a mixed-datatype or polymorphic column needs: the SparqlTerm wrappers
-     * of a poly column and the pools for the messages materialized at frame end. Split out of
-     * ColumnState and created lazily, so that the mono-typed columns – the usual case – stay
-     * within one cache line and never allocate any of this.
-     */
-    private static final class PolyBuffers {
-
-        final TermBuffer terms = new TermBuffer();
-        final LiteralBuffer literals = new LiteralBuffer();
-        final IriBuffer iris = new IriBuffer();
-
-        void resetFrameState() {
-            terms.clear();
-            literals.clear();
-            iris.clear();
-        }
-    }
-
     private static final class ColumnState {
 
         // Column type. Sticky once set, only ever escalated to TYPE_POLY.
         byte type = TYPE_UNSET;
-        // The effective type this column had in the last emitted header, TYPE_UNSET before
-        // the first one. Like type, this survives frame resets.
+        // The effective type this column had in the last emitted header.
+        // This value is kept across frame resets.
         byte lastEmittedType = TYPE_UNSET;
 
-        // Run-length state. A run is active while runLength > 0; runNode == null then means
+        // Run-length state. A run is active while runLength > 0. runNode == null then means
         // a run of unbound cells. Whenever runLength is 0, runNode is null too.
         Object runNode = null;
         int runLength = 0;
         // Number of values emitted exactly once since the last layout exception
         int skip = 0;
 
-        // Per-frame, per-column IRI inference state (the prefix side of the inference is
-        // resolved at frame end, from the aux ids).
+        // Per-frame, per-column IRI inference state. The prefix side of the inference is
+        // resolved at frame end, from the aux ids.
         int lastNameId = 0;
 
-        // Datatype shared by all literals of the column so far: a lookup id, 0 for simple
-        // literals, DATATYPE_NONE before the first literal, or MIXED_DATATYPES.
+        // Datatype shared by all literals of the column so far. One of: a positive lookup id,
+        // 0 for simple literals, DATATYPE_NONE before the first literal, or MIXED_DATATYPES.
         int columnDatatype = DATATYPE_NONE;
 
         // Term type (TYPE_IRI/BNODE/LITERAL) of each encoded value of the frame, in order.
         // Only read back for polymorphic columns – the values themselves sit in the per-type
-        // buffers below, and a mono-typed column reads its buffer directly. So this is only
-        // filled in while the column is polymorphic; a column that becomes one mid-frame
+        // buffers below, and a mono-typed column reads its buffer directly. This is only
+        // filled in while the column is polymorphic. A column that becomes polymorphic mid-frame
         // backfills what it skipped (see backfillTags).
         byte[] tags = new byte[0];
         int valueCount = 0;
@@ -278,13 +108,10 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
         // One auxiliary int per IRI or literal value, in value order: the uncompressed prefix
         // id of an IRI, or the datatype lookup id of a literal (0 for a simple literal,
-        // LANG_LITERAL for a language-tagged one). Bnodes add nothing. A mono-typed column
-        // thus sees only its own kind of entry.
+        // LANG_LITERAL for a language-tagged one). Bnodes add nothing.
         final RepeatedInt auxIds = RepeatedInt.newEmptyInstance();
         // Bnode labels, literal lexical forms and language tags (right after their lexical
-        // form), appended at encode time in value order. A bnode or single-datatype literal
-        // column hands this buffer to its message as-is – safe, because a language tag forces
-        // MIXED_DATATYPES; a mixed-datatype or polymorphic column reads it back with a cursor.
+        // form), appended at encode time in value order.
         final RepeatedString strings = RepeatedString.newEmptyInstance();
 
         // Lazily created – see PolyBuffers
@@ -298,8 +125,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         }
 
         void addValueTag(byte tag) {
-            // A mono-typed column never reads these back, so recording them would be a bounds
-            // check, a growth check and a store per value for nothing.
+            // This is only needed for polymorphic columns.
             if (type == TYPE_POLY) {
                 if (valueCount == tags.length) {
                     tags = Arrays.copyOf(tags, Math.max(16, tags.length * 2));
@@ -310,8 +136,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         }
 
         /**
-         * Records the type of the values encoded before this column turned polymorphic. They were
-         * all of the column's previous type, which is what made it mono-typed until now.
+         * Records the type of the values encoded before this column turned polymorphic.
          */
         void backfillTags(byte previousType) {
             if (valueCount > tags.length) {
@@ -337,18 +162,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         }
     }
 
-    // The encoder is itself the NodeEncoder passed to the converter – a separate object would
-    // only add an indirection to every maker call. Unlike the underlying encoder, the maker
-    // methods below do not build proto messages: every term's parts go straight into the
-    // current column's buffers, and all lookup references are tracked for the frame
-    // working-set check. The return values only carry the term type back to encodeValue –
-    // shared markers for IRIs and literals, the label itself for bnodes.
-
     @Override
     public RdfIri makeIri(String iri) {
-        // Only the two ids are wanted here – they go straight into the column buffers – so the
-        // underlying encoder is asked for them directly, without an RdfIri being built to carry
-        // them across.
+        // Get the ids directly without RdfIri allocation.
         final long ids = getLookupEncoder().makeIriIds(iri);
         final int nameId = (int) (ids >>> 32);
         final ColumnState col = currentColumn;
@@ -379,15 +195,16 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     @Override
     public String makeBlankNode(String label) {
         final String bnode = getLookupEncoder().makeBlankNode(label);
-        // Straight into the string buffer – a bnode column hands the buffer to its
-        // message as-is, without a copy pass at frame end.
         currentColumn.strings.add(bnode);
         return bnode;
     }
 
     @Override
     public RdfLiteral makeSimpleLiteral(String lex) {
-        // No lookup table involved – the underlying encoder (and its cache) is skipped
+        // No lookup table involved – the underlying encoder (and its cache) is skipped.
+        // The reasoning here is that literals in SPARQL results repeat rarely anyway,
+        // so this saves quite a lot of cache thrashing. Also, the cost of encoding a literal
+        // here is much smaller than in RDF (no allocations).
         final ColumnState col = currentColumn;
         col.strings.add(lex);
         col.auxIds.add(0);
@@ -430,7 +247,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
 
     @Override
     public RdfTriple makeQuotedTriple(TNode s, TNode p, TNode o) {
-        throw new RdfProtoSerializationError("RDF-star quoted triples are not supported in Jelly-SPARQL.");
+        throw new RdfProtoSerializationError("Triple terms are not supported in Jelly-SPARQL.");
     }
 
     @Override
@@ -449,9 +266,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     private boolean framePending = false;
 
     /**
-     * The lookup ids of one table touched by the current frame – both the ids assigned by
+     * The lookup ids used by the current frame – both the ids assigned by
      * its lookup entries and the ids its columns refer to. One bit per id, starting at
-     * slot 1; slot 0 is the remaining-budget counter: it starts at the table's budget,
+     * slot 1. Slot 0 is the remaining-budget counter: it starts at the table's budget,
      * every fresh mark decrements it, and a negative value means the frame has no room
      * for another row.
      * <p>
@@ -460,7 +277,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
      * lookups evict the least recently used entry and everything this frame touched sits at
      * the recent end, so the frame stays safe exactly as long as it has not touched every id
      * of the table. The budget is set so that one more row of fresh ids still fits: the
-     * table size minus one potential id per variable.
+     * table size minus one potential id per variable. Note that this will not work for triple terms,
+     * but that's a future problem...
      */
     private final long[] usedNames;
     private final long[] usedPrefixes;
@@ -471,15 +289,13 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     private final PackedEntries prefixEntries = new PackedEntries();
     private final PackedEntries datatypeEntries = new PackedEntries();
 
-    // Bit words for 1-based ids up to tableSize, plus the counter slot in front
+    // Bit words for 1-based ids up to tableSize, plus the counter slot at index 0
     private static long[] newUsedIds(int tableSize) {
         return new long[1 + ((tableSize + 64) >> 6)];
     }
 
     /**
-     * Marks an id as used by this frame. Branchless, and called for every encoded term, so
-     * it folds the "was it already set" answer into the remaining-budget counter at used[0]
-     * instead of branching on it.
+     * Marks an id as used by this frame. Branchless.
      */
     private static void markUsed(long[] used, int id) {
         final int word = 1 + (id >> 6);
@@ -493,8 +309,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         return (used[1 + (id >> 6)] & (1L << (id & 63))) != 0;
     }
 
-    // A disabled table can never be referenced, so it must not constrain the frame size
     private static long usedIdsBudget(int tableSize, int variables) {
+        // If table size is 0, then it's not used (does not constrain us)
         return tableSize == 0 ? Long.MAX_VALUE : tableSize - variables;
     }
 
@@ -508,11 +324,10 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         implements MessageCollection<RdfLookupEntryPacked, RdfLookupEntryPacked.Mutable>
     {
 
-        // Pooled packed entry messages, reused across frames: the first `size` hold the
-        // current frame's entries, the rest are kept around for the next frames.
+        // Pooled packed entry messages, reused across frames.
         private RdfLookupEntryPacked.Mutable[] entries = new RdfLookupEntryPacked.Mutable[0];
         private int size = 0;
-        // The entry of the currently open run – always entries[size - 1], but kept in a
+        // The entry of the currently open run, kept in a
         // field so that continuing a run does not go through the array
         private RdfLookupEntryPacked.Mutable current = null;
         // State for resolving 0-compressed lookup entry identifiers
@@ -522,11 +337,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             final int id = entryId == 0 ? lastAssignedId + 1 : entryId;
             checkAndMarkUsed(used, id, kind);
             if (current != null && id == lastAssignedId + 1) {
-                // Continues the open run – the packed entry numbers it implicitly
                 current.addValues(value);
             } else {
-                // The id of a fresh entry is passed on as it came, so that a 0 keeps meaning
-                // "continue from the previous frame"
                 current = appendMessage().setId(entryId);
                 current.addValues(value);
             }
@@ -585,8 +397,6 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     }
 
     /**
-     * Constructor.
-     *
      * @param converter the converter to use
      * @param params parameters for the encoder
      */
@@ -736,8 +546,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             if (effectiveType(col) == TYPE_IRI) {
                 final SparqlIriColumn.Mutable column = SparqlIriColumn.newInstance();
                 column.setNameIds(col.nameIds);
-                // For an IRI column the aux ids are exactly its uncompressed prefix ids.
-                // If the whole column stays on one prefix – the usual case – it is stated
+                // For an IRI column the aux ids are its uncompressed prefix ids.
+                // If the whole column stays on one prefix, it is stated
                 // once instead of once per value.
                 final RepeatedInt prefixes = col.auxIds;
                 final int valueCount = prefixes.size();
@@ -751,8 +561,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                 }
                 if (!onePrefix) {
                     // Rewrite the buffer into the "same prefix as the previous IRI" inference
-                    // of RdfIri in place – the raw value only has to survive one step, in prev.
-                    // prev = -1 forces the first IRI of the column to carry its prefix id.
+                    // of RdfIri in place.
                     final int[] raw = prefixes.array();
                     int prev = -1;
                     for (int j = 0; j < valueCount; j++) {
@@ -775,7 +584,6 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             final ColumnState col = columns[i];
             if (effectiveType(col) == TYPE_BNODE) {
                 final SparqlBnodeColumn.Mutable column = SparqlBnodeColumn.newInstance();
-                // The labels were appended to the buffer as they were encoded
                 column.setValues(col.strings);
                 column.setLayouts(col.layout);
                 frame.addBnodeColumns(column);
@@ -785,9 +593,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             final ColumnState col = columns[i];
             if (effectiveType(col) == TYPE_LITERAL) {
                 final SparqlLiteralColumn.Mutable column = SparqlLiteralColumn.newInstance();
-                // If every value has the same datatype – the usual case – the column states it
-                // once and carries only the lexical forms, already sitting in the buffer.
-                // An empty column counts as simple literals – both forms are empty anyway.
+                // If every value has the same datatype  the column states it
+                // once and contains only the lexical forms, already sitting in the buffer.
+                // An empty column counts as simple literals.
                 final int datatype = col.columnDatatype == DATATYPE_NONE ? 0 : col.columnDatatype;
                 if (datatype == MIXED_DATATYPES) {
                     // For a literal column the aux ids are exactly its datatype ids
@@ -804,7 +612,6 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                         } else if (dt != 0) {
                             literal.setDatatype(dt);
                         }
-                        // dt == 0 is a simple literal, which carries only its lexical form
                     }
                     column.setValues(literals);
                 } else {
@@ -820,13 +627,13 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         }
         for (int i = 0; i < columns.length; i++) {
             final ColumnState col = columns[i];
+            // Slow path: polymorphic column
             if (effectiveType(col) == TYPE_POLY) {
                 final SparqlPolyColumn.Mutable column = SparqlPolyColumn.newInstance();
                 final PolyBuffers poly = col.poly();
                 final TermBuffer terms = poly.terms;
-                // Cursors into the per-type buffers: the tags say which buffer the next value
-                // sits in. IRIs and literals share the aux buffer; bnode labels and literal
-                // lexical forms (with their language tags) share the string buffer.
+                // Iterates through the per-type buffers: the tags say which buffer the next value
+                // sits in.
                 int iriIndex = 0;
                 int auxIndex = 0;
                 int stringIndex = 0;
@@ -886,7 +693,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             col.runLength = 1;
             return;
         }
-        // runNode != null implies an active bound run
+        // runNode != null means an active bound run
         if (node.equals(col.runNode)) {
             col.runLength++;
             return;
@@ -917,8 +724,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         if (col.type == TYPE_UNSET) {
             col.type = valueType;
         } else if (col.type != TYPE_POLY && col.type != valueType) {
-            // The values already in this frame were all of the old type, and nothing recorded
-            // that while the column still looked mono-typed.
+            // Lazy-switch to a polymorphic column
             col.backfillTags(col.type);
             col.type = TYPE_POLY;
         }

@@ -366,7 +366,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val e = intercept[RdfProtoSerializationError] {
         encoder.appendRow(Array[Node](TripleNode(iri(1), iri(2), iri(3))))
       }
-      e.getMessage should include("quoted triples are not supported")
+      e.getMessage should include("Triple terms are not supported")
     }
 
     "round-trip a result set that outgrows the lookup tables" in {

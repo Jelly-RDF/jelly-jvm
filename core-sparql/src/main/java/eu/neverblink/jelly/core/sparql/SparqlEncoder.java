@@ -53,7 +53,7 @@ public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
                 .clone()
                 // Override the user's version setting with what is really supported by the encoder.
                 .setVersion(JellySparqlConstants.PROTO_VERSION);
-        // Safe to pass `this` here: the node encoder only stores it as the receiver of the
+        // Safe to pass `this` here: the node encoder only stores `this` as the receiver of the
         // lookup entries it emits later, during encoding.
         this.lookupEncoder = NodeEncoderImpl.create(
             this,
@@ -64,12 +64,10 @@ public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
     }
 
     /**
-     * The underlying node encoder, which owns the lookup tables and their caches – as opposed
-     * to a SparqlEncoder implementation, which may itself act as the NodeEncoder handed to
-     * the converter.
+     * The underlying node encoder, which manages the lookup tables and their caches.
      * <p>
      * Typed as the implementation rather than the interface, because the SPARQL encoder needs
-     * its ids-only IRI entry point, which is not part of NodeEncoder.
+     * the ids-only IRI entry point, which is not part of NodeEncoder.
      */
     protected final NodeEncoderImpl<TNode> getLookupEncoder() {
         return lookupEncoder;

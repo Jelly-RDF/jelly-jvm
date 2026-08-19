@@ -25,18 +25,11 @@ public final class JellySparqlOptions {
     public static final int MIN_NAME_TABLE_SIZE = 128;
 
     public static final int SMALL_NAME_TABLE_SIZE = 256;
-
     /**
-     * The name table of the "big" preset. Deliberately larger than the frame's value budget: a
-     * table sized to exactly one frame's working set evicts almost everything between frames, so
-     * the same names have to be added again and again. With a 4096 table the realistic-mixed
-     * benchmark preset turned 41,785 of its 46,460 name lookups into new entries, because the
-     * preset's ~6,176 distinct names did not fit and so none of them survived a frame boundary.
+     * Double of DEFAULT_MAX_VALUES_PER_FRAME, so that we can avoid churning all entries from frame
+     * to frame in IRI-heavy datasets.
      */
     public static final int BIG_NAME_TABLE_SIZE = 8192;
-
-    // Kept at the same absolute cap as before (16384), so that raising the "big" preset does not
-    // let a peer force a larger table than it already could.
     public static final int MAX_NAME_TABLE_SIZE = BIG_NAME_TABLE_SIZE * 2;
 
     public static final int SMALL_PREFIX_TABLE_SIZE = 64;

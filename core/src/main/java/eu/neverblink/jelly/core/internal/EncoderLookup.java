@@ -37,10 +37,8 @@ final class EncoderLookup {
     }
 
     /**
-     * How many ids the entry arrays start out holding. The declared table size is an upper bound,
-     * and most streams never come near it – a one-row result set uses a handful of names – so the
-     * arrays start small and are grown as ids are handed out. Building the arrays at full size
-     * used to be most of the cost of creating an encoder.
+     * How many ids the entry arrays start with. Small to avoid large up-front allocations for
+     * small datasets.
      */
     private static final int INITIAL_CAPACITY = 64;
 
@@ -55,18 +53,17 @@ final class EncoderLookup {
      * <p>
      * The keys themselves are already stored in {@link #names}, so a slot only has to hold an id.
      * The bits above the id hold a tag taken from the key's hash, which lets a probe walk past a
-     * colliding slot without dereferencing any string. A slot value of 0 means "empty" – that is
-     * unambiguous because id 0 is never handed out.
+     * colliding slot without dereferencing any string. A slot value of 0 means "empty".
      * <p>
      * Unlike the entry arrays, this one is built at full size right away: growing it would mean
-     * rehashing every key in it, which costs more than the allocation it saves.
+     * rehashing every key in it.
      */
     private final int[] index;
 
-    /** Slot mask for {@link #index}. There are at least two slots per entry, so it never fills up. */
+    /** Slot mask for {@link #index}. */
     private final int indexMask;
 
-    /** Mask of the low bits of an index slot that hold the entry id; the rest is the hash tag. */
+    /** Mask of the low bits of an index slot that hold the entry id. */
     private final int idMask;
 
     /**
