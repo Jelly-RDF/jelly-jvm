@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.core.sparql;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
-import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.internal.NodeEncoderImpl;
@@ -38,7 +37,7 @@ public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
 
     protected final ProtoEncoderConverter<TNode> converter;
     protected final SparqlResultsOptions options;
-    private final NodeEncoder<TNode> lookupEncoder;
+    private final NodeEncoderImpl<TNode> lookupEncoder;
 
     /**
      * Creates a new SparqlEncoder instance.
@@ -68,8 +67,11 @@ public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
      * The underlying node encoder, which owns the lookup tables and their caches – as opposed
      * to a SparqlEncoder implementation, which may itself act as the NodeEncoder handed to
      * the converter.
+     * <p>
+     * Typed as the implementation rather than the interface, because the SPARQL encoder needs
+     * its ids-only IRI entry point, which is not part of NodeEncoder.
      */
-    protected final NodeEncoder<TNode> getLookupEncoder() {
+    protected final NodeEncoderImpl<TNode> getLookupEncoder() {
         return lookupEncoder;
     }
 

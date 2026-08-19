@@ -159,6 +159,15 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     static final RdfIri zeroIri = RdfIri.newInstance();
+
+    /**
+     * Stand-in for a cache entry whose lookup ids are filled in but whose RdfIri was never built.
+     * Jelly-SPARQL only ever wants the two ids (see {@link #makeIriIds}), and building a message
+     * just to read them straight back out is the most expensive thing on that path. It is only
+     * ever a marker: a caller that does want the message materializes it, and this instance is
+     * never handed out.
+     */
+    private static final RdfIri IDS_ONLY = RdfIri.newInstance();
     // One IRI with prefixId=0 per name lookup id, created the first time that id is emitted.
     // Filling this eagerly used to dominate the cost of building an encoder – a name table entry
     // is 8 bytes of array, but an RdfIri per entry is a separate object each. Most streams touch
@@ -218,7 +227,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @param maxDatatypeTableSize The maximum size of the datatype table
      * @return A new NodeEncoder
      */
-    public static <TNode> NodeEncoder<TNode> create(
+    public static <TNode> NodeEncoderImpl<TNode> create(
         RdfBufferAppender<TNode> bufferAppender,
         int maxPrefixTableSize,
         int maxNameTableSize,
@@ -280,7 +289,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             // Fast path for no prefixes
             return nameOnlyIri(encodeIriNameOnly(iri));
         }
-        return encodeIriWithPrefix(iri).encoded;
+        return materializedIri(encodeIriWithPrefix(iri));
     }
 
     /**
@@ -361,8 +370,41 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         cachedNode.lookupSerial1 = Objects.requireNonNull(nameLookup.serials)[nameId];
         cachedNode.lookupPointer2 = prefixId;
         cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
-        cachedNode.encoded = RdfIri.newInstance().setPrefixId(prefixId).setNameId(nameId);
+        // Left unbuilt until someone asks for the message itself – see IDS_ONLY.
+        cachedNode.encoded = IDS_ONLY;
         return cachedNode;
+    }
+
+    /**
+     * The RdfIri of a cached node, built now if it was only ever asked for as a pair of ids.
+     */
+    private static RdfIri materializedIri(DependentNode<RdfIri> cachedNode) {
+        final RdfIri encoded = cachedNode.encoded;
+        if (encoded != IDS_ONLY) {
+            return encoded;
+        }
+        return (cachedNode.encoded = RdfIri.newInstance()
+                .setPrefixId(cachedNode.lookupPointer2)
+                .setNameId(cachedNode.lookupPointer1));
+    }
+
+    /**
+     * The name and prefix ids of an IRI, packed as {@code (nameId << 32) | prefixId}, without
+     * building an RdfIri for them.
+     * <p>
+     * This is what Jelly-SPARQL encodes from: it writes the two ids into its own column buffers
+     * and never needs the message, so going through {@link #makeIriRaw} would allocate one on
+     * every cache miss purely to have two ints read back out of it.
+     *
+     * @param iri The IRI to encode
+     */
+    public long makeIriIds(String iri) {
+        if (maxPrefixTableSize == 0) {
+            // Fast path for no prefixes – the prefix id is always 0
+            return (long) encodeIriNameOnly(iri) << 32;
+        }
+        final var cachedNode = encodeIriWithPrefix(iri);
+        return ((long) cachedNode.lookupPointer1 << 32) | (cachedNode.lookupPointer2 & 0xffffffffL);
     }
 
     @Override
@@ -462,7 +504,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 return RdfIri.newInstance().setPrefixId(prefixId);
             } else {
                 lastIriNameId = nameId;
-                return cachedNode.encoded;
+                return materializedIri(cachedNode);
             }
         }
     }
