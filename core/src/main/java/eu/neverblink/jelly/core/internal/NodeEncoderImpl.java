@@ -91,8 +91,9 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * can then both stay cached, which a direct-mapped table cannot do. The pair is kept
      * most-recent-first, so a miss evicts the older of the two. Adjacent slots share a cache line, so
      * the second probe costs almost nothing.
-     *
-     * Worth it because a miss here is expensive (IRI re-encoding).
+     * <p>
+     * This is worth it because a cache miss here is expensive (requires re-encoding the IRI
+     * and a few more lookups).
      *
      * @param <V> Type of the encoded node
      */
@@ -120,9 +121,10 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             if (holds(first, key, hash)) {
                 return first;
             }
-            // Not in the first way. Whatever is in the first way moves to the second, and the key we
-            // are looking for takes the first – either promoted from the second way, or reusing the
-            // node that the second way held. A key is never in both ways, and the second way is only
+            // The item is not in the first cache line.
+            // Whatever is in the first line is moved to the second line, and the key we
+            // are looking for takes the first – either promoted from the second line, or reusing the
+            // node that the second line held. A key is never in both lines, and the second line is only
             // ever filled after the first, so a null there means the pair is not full yet.
             final var other = nodes[slot + 1];
             final DependentNode<V> node;
