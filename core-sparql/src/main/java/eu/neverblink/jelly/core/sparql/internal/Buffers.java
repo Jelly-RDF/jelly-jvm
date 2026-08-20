@@ -162,8 +162,8 @@ final class IriBuffer {
 
 /**
  * Buffer for a mixed-datatype or polymorphic column. It is separated from
- * ColumnState and created lazily, so that monomorphic columns never allocate any of this. This also saves bytes in
- * the SparqlEncoderImpl object, allowing us to fit it into one cache line.
+ * ColumnState and created lazily, so that monomorphic columns never allocate any of this.
+ * This also saves bytes in the SparqlEncoderImpl object, allowing us to fit it into one cache line.
  */
 final class PolyBuffers {
 

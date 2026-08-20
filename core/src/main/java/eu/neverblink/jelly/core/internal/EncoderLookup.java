@@ -235,9 +235,9 @@ final class EncoderLookup {
     /**
      * Takes an id out of the index.
      * <p>
-     * With linear probing, the entries sitting after the freed slot may only be reachable through
-     * it, so the ones that are have to be shifted back – otherwise a later lookup would stop at the
-     * hole and never see them. This is Knuth's backward-shift deletion.
+     * We use linear probing. So, entries that are in the array after a freed slot would become
+     * invisible (the linear probe would stop at the hole). To prevent this, we shift them back.
+     * This is Knuth's backward-shift deletion.
      */
     private void removeId(int id) {
         int hole = homeSlots[id];
