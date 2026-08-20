@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.InternalApi;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -24,11 +24,6 @@ final class EncoderLookup {
         /** Whether this entry is a new entry. */
         public boolean newEntry;
 
-        public LookupEntry(int getId, int setId) {
-            this.getId = getId;
-            this.setId = setId;
-        }
-
         public LookupEntry(int getId, int setId, boolean newEntry) {
             this.getId = getId;
             this.setId = setId;
@@ -36,8 +31,48 @@ final class EncoderLookup {
         }
     }
 
-    /** The lookup hash map */
-    private final HashMap<String, LookupEntry> map = new HashMap<>();
+    /**
+     * How many ids the entry arrays start with. Small to avoid large up-front allocations for
+     * small datasets.
+     */
+    private static final int INITIAL_CAPACITY = 64;
+
+    /**
+     * By how much the entry arrays grow at a time. Big, so that a table which does fill up gets
+     * there in a couple of copies.
+     */
+    private static final int GROWTH_FACTOR = 4;
+
+    /**
+     * Index from a key's hash to the id of the entry holding it, with linear probing.
+     * <p>
+     * The keys themselves are already stored in {@link #names}, so a slot only has to hold an id.
+     * The bits above the id hold a tag taken from the key's hash, which lets a probe walk past a
+     * colliding slot without dereferencing any string. A slot value of 0 means "empty".
+     * <p>
+     * Unlike the entry arrays, this one is built at full size right away: growing it would mean
+     * rehashing every key in it.
+     */
+    private final int[] index;
+
+    /** Slot mask for {@link #index}, which is always a power of two long. */
+    private final int indexMask;
+
+    /**
+     * How many low bits of an index slot hold the entry id. The rest are the hash tag.
+     */
+    private static final int ID_BITS = 18;
+
+    /** Mask of the low bits of an index slot that hold the entry id. */
+    private static final int ID_MASK = (1 << ID_BITS) - 1;
+
+    /** The largest lookup table that fits in {@link #ID_BITS}. */
+    static final int MAX_TABLE_SIZE = ID_MASK;
+
+    /**
+     * For each id, the slot its key hashes to. Only read when an entry is evicted.
+     */
+    private int[] homeSlots;
 
     /**
      * The doubly-linked list of entries, with 1-based indexing.
@@ -45,15 +80,18 @@ final class EncoderLookup {
      * The head pointer is in table[1].
      * The first valid entry is in table[2] – table[3].
      */
-    private final int[] table;
+    private int[] table;
 
     /**
      * The serial numbers of the entries, incremented each time the entry is replaced in the table.
      * This could theoretically overflow and cause bogus cache hits, but it's enormously
      * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that
      * causes this to happen.
+     * <p>
+     * Replaced by a longer array when the lookup grows, so a caller must not hold on to it across
+     * a call that can add an entry.
      */
-    final int[] serials;
+    int[] serials;
 
     // Tail pointer for the table.
     private int tail;
@@ -62,27 +100,167 @@ final class EncoderLookup {
     // Current size of the lookup (how many entries are used).
     // This will monotonically increase until it reaches the maximum size.
     private int used;
+    // How many ids the entry arrays can currently hold.
+    private int capacity;
     // The last id that was set in the table.
     private int lastSetId = -1000;
     // Names of the entries. Entry 0 is always null.
-    private final String[] names;
+    String[] names;
     // Whether to maintain serial numbers for the entries.
     private final boolean useSerials;
 
     private final LookupEntry entryForReturns = new LookupEntry(0, 0, true);
 
     public EncoderLookup(int size, boolean useSerials) {
+        if (size > MAX_TABLE_SIZE) {
+            throw new IllegalArgumentException(
+                "Lookup table size %d is above the maximum of %d.".formatted(size, MAX_TABLE_SIZE)
+            );
+        }
         this.size = size;
-        table = new int[(size + 1) * 2];
-        names = new String[size + 1];
+        capacity = Math.min(size, INITIAL_CAPACITY);
+        table = new int[(capacity + 1) * 2];
+        names = new String[capacity + 1];
+        homeSlots = new int[capacity + 1];
+        // Two slots per entry: linear probing degrades badly above a half-full table.
+        index = new int[Integer.highestOneBit(Math.max(size * 2 - 1, 1)) << 1];
+        indexMask = index.length - 1;
         this.useSerials = useSerials;
         if (useSerials) {
-            serials = new int[size + 1];
+            serials = new int[capacity + 1];
             // Set the head's serial to non-zero value, so that default-initialized DependentNodes are not
             // accidentally considered as valid entries.
             serials[0] = -1;
         } else {
             serials = null;
+        }
+    }
+
+    private void grow() {
+        capacity = Math.min(size, capacity * GROWTH_FACTOR);
+        table = Arrays.copyOf(table, (capacity + 1) * 2);
+        names = Arrays.copyOf(names, capacity + 1);
+        homeSlots = Arrays.copyOf(homeSlots, capacity + 1);
+        if (useSerials) {
+            serials = Arrays.copyOf(Objects.requireNonNull(serials), capacity + 1);
+        }
+    }
+
+    /** Mixes a hash so that both the slot bits (low) and the tag bits (high) depend on all of it. */
+    private static int spread(int hash) {
+        final int h = hash * 0x9E3779B1;
+        return h ^ (h >>> 16);
+    }
+
+    /** Powers of 31, for {@link #hashOfSuffix}. Long enough to cover any sane IRI prefix. */
+    private static final int[] POW31 = new int[256];
+
+    static {
+        int p = 1;
+        for (int i = 0; i < POW31.length; i++) {
+            POW31[i] = p;
+            p *= 31;
+        }
+    }
+
+    /**
+     * The hash of a suffix, worked out from the hash of the whole string and the hash of the prefix
+     * that was cut off it, without looking at the actual string. Yes, it does work.
+     *
+     * @param wholeHash {@code source.hashCode()}
+     * @param prefixHash hash of the first {@code source.length() - suffixLength} characters
+     * @param suffixLength length of the suffix
+     * @return the hash the suffix would have
+     */
+    static int hashOfSuffix(int wholeHash, int prefixHash, int suffixLength) {
+        return wholeHash - prefixHash * pow31(suffixLength);
+    }
+
+    /** 31 to the n. Tabulated for the lengths that occur in practice. */
+    private static int pow31(int n) {
+        if (n < POW31.length) {
+            return POW31[n];
+        }
+        int result = 1;
+        int base = 31;
+        while (n > 0) {
+            if ((n & 1) != 0) {
+                result *= base;
+            }
+            base *= base;
+            n >>>= 1;
+        }
+        return result;
+    }
+
+    /**
+     * Finds the entry whose name is the suffix of source starting at from.
+     * @param spread The spread hash of the key.
+     * @return The id of the entry, or 0 if there is none.
+     */
+    private int findId(int spread, String source, int from) {
+        final int tag = spread & ~ID_MASK;
+        final int keyLength = source.length() - from;
+        int slot = spread & indexMask;
+        while (true) {
+            final int value = index[slot];
+            if (value == 0) {
+                return 0;
+            }
+            if ((value & ~ID_MASK) == tag) {
+                final int id = value & ID_MASK;
+                final String name = names[id];
+                if (name.length() == keyLength && source.startsWith(name, from)) {
+                    return id;
+                }
+            }
+            slot = (slot + 1) & indexMask;
+        }
+    }
+
+    /**
+     * Puts an id into the index. The key must not already be there.
+     * @param spread The spread hash of the key.
+     */
+    private void insertId(int id, int spread) {
+        final int home = spread & indexMask;
+        int slot = home;
+        while (index[slot] != 0) {
+            slot = (slot + 1) & indexMask;
+        }
+        index[slot] = id | (spread & ~ID_MASK);
+        homeSlots[id] = home;
+    }
+
+    /**
+     * Takes an id out of the index.
+     * <p>
+     * We use linear probing. So, entries that are in the array after a freed slot would become
+     * invisible (the linear probe would stop at the hole). To prevent this, we shift them back.
+     * This is Knuth's backward-shift deletion.
+     */
+    private void removeId(int id) {
+        int hole = homeSlots[id];
+        while ((index[hole] & ID_MASK) != id) {
+            hole = (hole + 1) & indexMask;
+        }
+        index[hole] = 0;
+        int slot = hole;
+        while (true) {
+            slot = (slot + 1) & indexMask;
+            final int value = index[slot];
+            if (value == 0) {
+                return;
+            }
+            final int home = homeSlots[value & ID_MASK];
+            // Leave the entry alone if its home lies in (hole, slot] – then it is still reachable
+            // from its home without passing through the hole.
+            final boolean reachable = hole <= slot ? hole < home && home <= slot : hole < home || home <= slot;
+            if (!reachable) {
+                index[hole] = value;
+                index[slot] = 0;
+                hole = slot;
+            }
         }
     }
 
@@ -114,8 +292,9 @@ final class EncoderLookup {
      * One branch of the getOrAddEntry method. Should be inlined by the JIT.
      * @param key The key of the entry.
      * @param id The ID of the entry.
+     * @param spread The spread hash of the key.
      */
-    private void addEntrySequential(String key, int id) {
+    private void addEntrySequential(String key, int id, int spread) {
         int base = id * 2;
         // Set the left to the tail
         table[base] = tail;
@@ -125,20 +304,21 @@ final class EncoderLookup {
         table[tail + 1] = base;
         tail = base;
         names[id] = key;
-        map.put(key, new LookupEntry(id, id));
+        insertId(id, spread);
+        entryForReturns.setId = 0;
     }
 
     /**
      * Another branch of the getOrAddEntry method. Should be inlined by the JIT.
      * @param key The key of the entry.
      * @param id The ID of the entry.
+     * @param spread The spread hash of the key.
      */
-    private void addEntryEvicting(String key, int id) {
-        // Remove the entry from the map
-        LookupEntry oldEntry = map.remove(names[id]);
-        // Insert the new entry
+    private void addEntryEvicting(String key, int id, int spread) {
+        // Move the id from the old key to the new one
+        removeId(id);
         names[id] = key;
-        map.put(key, oldEntry);
+        insertId(id, spread);
         // Update the table
         onAccess(id);
         entryForReturns.setId = lastSetId + 1 == id ? 0 : id;
@@ -152,21 +332,46 @@ final class EncoderLookup {
      * @return The entry.
      */
     public LookupEntry getOrAddEntry(String key) {
-        final var value = map.get(key);
-        if (value != null) {
+        return getOrAddEntry(key, 0, key.hashCode());
+    }
+
+    /**
+     * Adds a new entry to the lookup table or retrieves it if it already exists, with the key given
+     * as the suffix of an existing string. This way an already-known key costs no allocation at all:
+     * the substring is only cut out when the entry actually turns out to be new.
+     * <p>
+     * The hash must be exactly what {@code source.substring(from).hashCode()} would return.
+     * {@link #hashOfSuffix} produces it without scanning the key.
+     * @param source The string the key is a suffix of.
+     * @param from Index at which the key starts.
+     * @param hash Hash of the key.
+     * @return The entry.
+     */
+    public LookupEntry getOrAddEntry(String source, int from, int hash) {
+        final int spread = spread(hash);
+        final var entry = entryForReturns;
+        final int existing = findId(spread, source, from);
+        if (existing != 0) {
             // The entry is already in the table, just update the access order
-            onAccess(value.getId);
-            return value;
+            onAccess(existing);
+            entry.getId = existing;
+            entry.setId = existing;
+            entry.newEntry = false;
+            return entry;
         }
+        final String key = source.substring(from);
         int id;
         if (used < size) {
             // We still have space in the table, add a new entry to the end of the table.
             id = ++used;
-            addEntrySequential(key, id);
+            if (id > capacity) {
+                grow();
+            }
+            addEntrySequential(key, id, spread);
         } else {
             // The table is full, evict the least recently used entry.
             id = table[1] / 2;
-            addEntryEvicting(key, id);
+            addEntryEvicting(key, id, spread);
         }
         if (this.useSerials) {
             // Increment the serial number
@@ -174,8 +379,9 @@ final class EncoderLookup {
             // The if should be very predictable and have no negative performance impact.
             ++Objects.requireNonNull(serials)[id];
         }
-        entryForReturns.getId = id;
-        return entryForReturns;
+        entry.getId = id;
+        entry.newEntry = true;
+        return entry;
     }
 
     /**
@@ -186,15 +392,23 @@ final class EncoderLookup {
      * @return The entry.
      */
     public LookupEntry getOrAddEntryTranscoder(String key, int evictHint) {
-        final var value = map.get(key);
-        if (value != null) {
-            onAccess(value.getId);
-            return value;
+        final int spread = spread(key.hashCode());
+        final var entry = entryForReturns;
+        final int existing = findId(spread, key, 0);
+        if (existing != 0) {
+            onAccess(existing);
+            entry.getId = existing;
+            entry.setId = existing;
+            entry.newEntry = false;
+            return entry;
         }
         int id;
         if (used < size) {
             id = ++used;
-            addEntrySequential(key, id);
+            if (id > capacity) {
+                grow();
+            }
+            addEntrySequential(key, id, spread);
         } else {
             // The table is full
             if (evictHint != 0) {
@@ -204,10 +418,11 @@ final class EncoderLookup {
                 // Evict the least recently used entry.
                 id = table[1] / 2;
             }
-            addEntryEvicting(key, id);
+            addEntryEvicting(key, id, spread);
         }
         // Serials are not used for transcoders
-        entryForReturns.getId = id;
-        return entryForReturns;
+        entry.getId = id;
+        entry.newEntry = true;
+        return entry;
     }
 }

@@ -2,9 +2,8 @@ package eu.neverblink.jelly.core.sparql;
 
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
-import eu.neverblink.jelly.core.internal.EncoderBase;
-import eu.neverblink.jelly.core.proto.v1.RdfQuad;
-import eu.neverblink.jelly.core.proto.v1.RdfTriple;
+import eu.neverblink.jelly.core.RdfBufferAppender;
+import eu.neverblink.jelly.core.internal.NodeEncoderImpl;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlAskResult;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
@@ -20,7 +19,7 @@ import java.util.List;
  * @param <TNode> type of RDF nodes in the library
  */
 @ExperimentalApi
-public abstract class SparqlEncoder<TNode> extends EncoderBase<TNode> {
+public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
 
     /**
      * Parameters passed to the Jelly-SPARQL encoder.
@@ -36,7 +35,9 @@ public abstract class SparqlEncoder<TNode> extends EncoderBase<TNode> {
         }
     }
 
+    protected final ProtoEncoderConverter<TNode> converter;
     protected final SparqlResultsOptions options;
+    private final NodeEncoderImpl<TNode> lookupEncoder;
 
     /**
      * Creates a new SparqlEncoder instance.
@@ -45,38 +46,31 @@ public abstract class SparqlEncoder<TNode> extends EncoderBase<TNode> {
      * @param params parameters for the encoder
      */
     protected SparqlEncoder(ProtoEncoderConverter<TNode> converter, Params params) {
-        super(converter);
+        this.converter = converter;
         this.options =
             params
                 .options()
                 .clone()
                 // Override the user's version setting with what is really supported by the encoder.
                 .setVersion(JellySparqlConstants.PROTO_VERSION);
+        // Safe to pass `this` here: the node encoder only stores `this` as the receiver of the
+        // lookup entries it emits later, during encoding.
+        this.lookupEncoder = NodeEncoderImpl.create(
+            this,
+            options.getMaxPrefixTableSize(),
+            options.getMaxNameTableSize(),
+            options.getMaxDatatypeTableSize()
+        );
     }
 
-    @Override
-    protected int getNameTableSize() {
-        return options.getMaxNameTableSize();
-    }
-
-    @Override
-    protected int getPrefixTableSize() {
-        return options.getMaxPrefixTableSize();
-    }
-
-    @Override
-    protected int getDatatypeTableSize() {
-        return options.getMaxDatatypeTableSize();
-    }
-
-    @Override
-    protected RdfTriple.Mutable newTriple() {
-        throw new UnsupportedOperationException("Not supported in SparqlEncoder");
-    }
-
-    @Override
-    protected RdfQuad.Mutable newQuad() {
-        throw new UnsupportedOperationException("Not supported in SparqlEncoder");
+    /**
+     * The underlying node encoder, which manages the lookup tables and their caches.
+     * <p>
+     * Typed as the implementation rather than the interface, because the SPARQL encoder needs
+     * the ids-only IRI entry point, which is not part of NodeEncoder.
+     */
+    protected final NodeEncoderImpl<TNode> getLookupEncoder() {
+        return lookupEncoder;
     }
 
     /**

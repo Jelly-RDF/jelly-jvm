@@ -14,13 +14,17 @@ import java.util.Objects;
  * @param <TNode> The type of RDF nodes used by the RDF library.
  */
 @InternalApi
-final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
+public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     /**
      * A cached node that depends on other lookups (RdfIri and RdfLiteral in the datatype variant).
      */
     static final class DependentNode<V> {
 
+        // The key this entry stands for, and its spread hash. Both live here rather than in a
+        // parallel array for better cache locality.
+        public Object key;
+        public int keyHash;
         // The actual cached node
         public V encoded;
         // 1: datatypes and IRI names
@@ -38,10 +42,15 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         return Integer.highestOneBit(Math.max(minSize - 1, 1)) << 1;
     }
 
+    /** Xor-folds a hash, so that hashCodes differing only high up still spread over the slots. */
+    private static int spread(Object key) {
+        final int h = key.hashCode() * 0x9E3779B1;
+        return h ^ (h >>> 16);
+    }
+
     /** Picks the slot for a key, xor-folding so that hashCodes differing only high up still spread. */
     private static int slotFor(Object key, int mask) {
-        final int h = key.hashCode() * 0x9E3779B1;
-        return (h ^ (h >>> 16)) & mask;
+        return spread(key) & mask;
     }
 
     /**
@@ -77,43 +86,66 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     }
 
     /**
-     * The same, for nodes that depend on lookup entries. The DependentNode in a slot is recycled, so
-     * taking a slot over MUST clear `encoded` – otherwise the stale lookupPointer/lookupSerial pair
-     * could still validate and we would emit the previous key's IRI or datatype.
+     * The same, for nodes that depend on lookup entries, but 2-way set associative: the hash picks a
+     * pair of adjacent slots and the key may be in either of them. Two keys that hash to the same set
+     * can then both stay cached, which a direct-mapped table cannot do. The pair is kept
+     * most-recent-first, so a miss evicts the older of the two. Adjacent slots share a cache line, so
+     * the second probe costs almost nothing.
+     * <p>
+     * This is worth it because a cache miss here is expensive (requires re-encoding the IRI
+     * and a few more lookups).
+     *
      * @param <V> Type of the encoded node
      */
     private static final class DependentNodeCache<V> {
 
-        private final Object[] keys;
         private final DependentNode<V>[] nodes;
         private final int mask;
 
         @SuppressWarnings("unchecked")
         DependentNodeCache(int minSize) {
             final int size = tableSizeFor(minSize);
-            this.keys = new Object[size];
             this.nodes = new DependentNode[size];
-            this.mask = size - 1;
+            // A set is two adjacent slots, so there are half as many sets as slots.
+            this.mask = (size >> 1) - 1;
+        }
+
+        private static boolean holds(DependentNode<?> node, Object key, int hash) {
+            return node != null && node.keyHash == hash && key.equals(node.key);
         }
 
         DependentNode<V> get(Object key) {
-            final int slot = slotFor(key, mask);
-            final var node = nodes[slot];
-            if (node == null) {
-                keys[slot] = key;
-                return (nodes[slot] = new DependentNode<>());
+            final int hash = spread(key);
+            final int slot = (hash & mask) << 1;
+            final var first = nodes[slot];
+            if (holds(first, key, hash)) {
+                return first;
             }
-            if (!key.equals(keys[slot])) {
-                keys[slot] = key;
+            // The item is not in the first cache line.
+            // Whatever is in the first line is moved to the second line, and the key we
+            // are looking for takes the first – either promoted from the second line, or reusing the
+            // node that the second line held. A key is never in both lines, and the second line is only
+            // ever filled after the first, so a null there means the pair is not full yet.
+            final var other = nodes[slot + 1];
+            final DependentNode<V> node;
+            if (holds(other, key, hash)) {
+                node = other;
+            } else {
+                node = other == null ? new DependentNode<>() : other;
                 node.encoded = null;
+                node.key = key;
+                node.keyHash = hash;
             }
-            return node;
+            nodes[slot + 1] = first;
+            return (nodes[slot] = node);
         }
     }
 
     private final int maxPrefixTableSize;
     private int lastIriNameId;
     private int lastIriPrefixId = -1000;
+    // Lookup id of the prefix of the previous IRI.
+    private int lastPrefixId;
 
     private final EncoderLookup datatypeLookup;
     private final EncoderLookup prefixLookup;
@@ -129,7 +161,12 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
 
     // Pre-allocated IRI that has prefixId=0 and nameId=0
     static final RdfIri zeroIri = RdfIri.newInstance();
-    // Pre-allocated IRIs that have prefixId=0
+
+    /**
+     * Marker for a cache entry whose lookup ids are filled in but whose RdfIri was never built.
+     * For example, Jelly-SPARQL only ever wants the two ids (see {@link #makeIriIds}).
+     */
+    private static final RdfIri IDS_ONLY = RdfIri.newInstance();
     private final RdfIri[] nameOnlyIris;
 
     /**
@@ -169,9 +206,6 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             );
         }
         nameOnlyIris = new RdfIri[nameTableSize + 1];
-        for (int i = 0; i < nameOnlyIris.length; i++) {
-            nameOnlyIris[i] = RdfIri.newInstance().setPrefixId(0).setNameId(i);
-        }
         dtLiteralNodeCache = new DependentNodeCache<>(dtLiteralNodeCacheSize);
         nameLookup = new EncoderLookup(nameTableSize, maxPrefixTableSize > 0);
         otherLiteralCache = new NodeCache<>(nodeCacheSize);
@@ -186,7 +220,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @param maxDatatypeTableSize The maximum size of the datatype table
      * @return A new NodeEncoder
      */
-    public static <TNode> NodeEncoder<TNode> create(
+    public static <TNode> NodeEncoderImpl<TNode> create(
         RdfBufferAppender<TNode> bufferAppender,
         int maxPrefixTableSize,
         int maxNameTableSize,
@@ -197,10 +231,22 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             maxNameTableSize,
             maxDatatypeTableSize,
             Math.clamp(maxNameTableSize, 256, 1024),
-            maxNameTableSize,
+            maxNameTableSize * 2,
             Math.clamp(maxNameTableSize, 256, 1024),
             bufferAppender
         );
+    }
+
+    /**
+     * The prefix-0 IRI for a name id, created on first use.
+     * @param nameId The id of the entry in the name lookup
+     */
+    private RdfIri nameOnlyIri(int nameId) {
+        final var iri = nameOnlyIris[nameId];
+        if (iri != null) {
+            return iri;
+        }
+        return (nameOnlyIris[nameId] = RdfIri.newInstance().setPrefixId(0).setNameId(nameId));
     }
 
     /**
@@ -217,7 +263,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 return zeroIri;
             } else {
                 lastIriNameId = nameId;
-                return nameOnlyIris[nameId];
+                return nameOnlyIri(nameId);
             }
         }
         return outputIri(encodeIriWithPrefix(iri));
@@ -227,9 +273,9 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     public RdfIri makeIriRaw(String iri) {
         if (maxPrefixTableSize == 0) {
             // Fast path for no prefixes
-            return nameOnlyIris[encodeIriNameOnly(iri)];
+            return nameOnlyIri(encodeIriNameOnly(iri));
         }
-        return encodeIriWithPrefix(iri).encoded;
+        return materializedIri(encodeIriWithPrefix(iri));
     }
 
     /**
@@ -252,14 +298,15 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      * @return the cached dependent node
      */
     private DependentNode<RdfIri> encodeIriWithPrefix(String iri) {
+        final var prefixLookup = Objects.requireNonNull(this.prefixLookup);
+        final var prefixSerials = Objects.requireNonNull(prefixLookup.serials);
+        final var nameSerials = Objects.requireNonNull(nameLookup.serials);
         // Slow path, with splitting out the prefix
         final var cachedNode = Objects.requireNonNull(iriNodeCache).get(iri);
-        // Check if the value is still valid
         if (
             cachedNode.encoded != null &&
-            cachedNode.lookupSerial1 == Objects.requireNonNull(nameLookup.serials)[cachedNode.lookupPointer1] &&
-            cachedNode.lookupSerial2 ==
-                Objects.requireNonNull(Objects.requireNonNull(prefixLookup).serials)[cachedNode.lookupPointer2]
+            cachedNode.lookupSerial1 == nameSerials[cachedNode.lookupPointer1] &&
+            cachedNode.lookupSerial2 == prefixSerials[cachedNode.lookupPointer2]
         ) {
             nameLookup.onAccess(cachedNode.lookupPointer1);
             prefixLookup.onAccess(cachedNode.lookupPointer2);
@@ -267,38 +314,78 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
 
         int i = iri.indexOf('#', 8);
-        String prefix;
-        String postfix;
         if (i == -1) {
             i = iri.lastIndexOf('/');
-            if (i != -1) {
-                prefix = iri.substring(0, i + 1);
-                postfix = iri.substring(i + 1);
-            } else {
-                prefix = "";
-                postfix = iri;
-            }
+        }
+        final int prefixLen = i + 1;
+        final int prefixId;
+        final String prefix;
+        final String lastPrefix = prefixLookup.names[lastPrefixId];
+        if (lastPrefix != null && lastPrefix.length() == prefixLen && iri.startsWith(lastPrefix)) {
+            // Same namespace as the previous IRI, so its id can be reused as it is. Only the LRU
+            // order has to be updated.
+            prefix = lastPrefix;
+            prefixId = lastPrefixId;
+            prefixLookup.onAccess(prefixId);
         } else {
-            prefix = iri.substring(0, i + 1);
-            postfix = iri.substring(i + 1);
+            prefix = iri.substring(0, prefixLen);
+            final var prefixEntry = prefixLookup.getOrAddEntry(prefix);
+            if (prefixEntry.newEntry) {
+                bufferAppender.appendPrefixEntry(
+                    RdfPrefixEntry.newInstance().setId(prefixEntry.setId).setValue(prefix)
+                );
+            }
+            prefixId = prefixEntry.getId;
+            this.lastPrefixId = prefixId;
         }
 
-        final var prefixEntry = Objects.requireNonNull(prefixLookup).getOrAddEntry(prefix);
-        final var nameEntry = nameLookup.getOrAddEntry(postfix);
-        if (prefixEntry.newEntry) {
-            bufferAppender.appendPrefixEntry(RdfPrefixEntry.newInstance().setId(prefixEntry.setId).setValue(prefix));
-        }
+        // Name's (suffix's) hashcode is calculated without looking at the string itself,
+        // based on the prefix hashcode. See EncoderLookup.hashOfSuffix
+        final var nameEntry = nameLookup.getOrAddEntry(
+            iri,
+            prefixLen,
+            EncoderLookup.hashOfSuffix(iri.hashCode(), prefix.hashCode(), iri.length() - prefixLen)
+        );
         if (nameEntry.newEntry) {
-            bufferAppender.appendNameEntry(RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(postfix));
+            bufferAppender.appendNameEntry(
+                RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(nameLookup.names[nameEntry.getId])
+            );
         }
         int nameId = nameEntry.getId;
-        int prefixId = prefixEntry.getId;
         cachedNode.lookupPointer1 = nameId;
         cachedNode.lookupSerial1 = Objects.requireNonNull(nameLookup.serials)[nameId];
         cachedNode.lookupPointer2 = prefixId;
         cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
-        cachedNode.encoded = RdfIri.newInstance().setPrefixId(prefixId).setNameId(nameId);
+        cachedNode.encoded = IDS_ONLY;
         return cachedNode;
+    }
+
+    /**
+     * The RdfIri of a cached node, built now if it was only ever asked for as a pair of ids.
+     */
+    private static RdfIri materializedIri(DependentNode<RdfIri> cachedNode) {
+        final RdfIri encoded = cachedNode.encoded;
+        if (encoded != IDS_ONLY) {
+            return encoded;
+        }
+        return (cachedNode.encoded = RdfIri.newInstance()
+            .setPrefixId(cachedNode.lookupPointer2)
+            .setNameId(cachedNode.lookupPointer1));
+    }
+
+    /**
+     * The name and prefix ids of an IRI, packed as {@code (nameId << 32) | prefixId}, without
+     * building an RdfIri. Used in Jelly-SPARQL.
+     *
+     * @param iri The IRI to encode
+     */
+    public long makeIriIds(String iri) {
+        if (maxPrefixTableSize == 0) {
+            // Fast path for no prefixes – the prefix id is always 0
+            return (long) encodeIriNameOnly(iri) << 32;
+        }
+        final var cachedNode = encodeIriWithPrefix(iri);
+        return ((long) cachedNode.lookupPointer1 << 32) | (cachedNode.lookupPointer2 & 0xffffffffL);
     }
 
     @Override
@@ -389,7 +476,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 return zeroIri;
             } else {
                 lastIriNameId = nameId;
-                return nameOnlyIris[nameId];
+                return nameOnlyIri(nameId);
             }
         } else {
             lastIriPrefixId = prefixId;
@@ -398,7 +485,7 @@ final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
                 return RdfIri.newInstance().setPrefixId(prefixId);
             } else {
                 lastIriNameId = nameId;
-                return cachedNode.encoded;
+                return materializedIri(cachedNode);
             }
         }
     }

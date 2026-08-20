@@ -33,33 +33,25 @@ class Rdf2ProtoSpec extends AnyWordSpec, Matchers:
     msg.getSerializedSize shouldBe bytes.length
 
   "the packed lookup entries" should {
-    "round-trip a run of names" in {
+    "round-trip a run with an explicit id" in {
       checkMessage(
-        RdfNameEntryPacked.newInstance().setId(3).addValues("a").addValues("b"),
-        () => RdfNameEntryPacked.newInstance(),
-        RdfNameEntryPacked.parseFrom,
+        RdfLookupEntryPacked.newInstance().setId(3).addValues("a").addValues("b"),
+        () => RdfLookupEntryPacked.newInstance(),
+        RdfLookupEntryPacked.parseFrom,
       )
     }
 
-    "round-trip a run of prefixes" in {
+    "round-trip a run continuing from the previous entry" in {
       checkMessage(
-        RdfPrefixEntryPacked.newInstance().addValues("https://test.org/"),
-        () => RdfPrefixEntryPacked.newInstance(),
-        RdfPrefixEntryPacked.parseFrom,
-      )
-    }
-
-    "round-trip a run of datatypes" in {
-      checkMessage(
-        RdfDatatypeEntryPacked.newInstance().setId(1).addValues("https://test.org/dt"),
-        () => RdfDatatypeEntryPacked.newInstance(),
-        RdfDatatypeEntryPacked.parseFrom,
+        RdfLookupEntryPacked.newInstance().addValues("https://test.org/"),
+        () => RdfLookupEntryPacked.newInstance(),
+        RdfLookupEntryPacked.parseFrom,
       )
     }
 
     "cost less than the same entries stated one by one" in {
       val values = (1 to 10).map(i => s"name$i")
-      val packed = RdfNameEntryPacked.newInstance()
+      val packed = RdfLookupEntryPacked.newInstance()
       values.foreach(packed.addValues)
       val unpacked = values.map(v => RdfNameEntry.newInstance().setValue(v))
       // Each unpacked entry pays for its own message framing when put in a repeated field
@@ -70,15 +62,7 @@ class Rdf2ProtoSpec extends AnyWordSpec, Matchers:
 
   "the rdf2 descriptors" should {
     "be available for every message" in {
-      Rdf2.getDescriptor.getMessageTypes.size shouldBe 3
-      Seq(
-        RdfNameEntryPacked.getDescriptor,
-        RdfPrefixEntryPacked.getDescriptor,
-        RdfDatatypeEntryPacked.getDescriptor,
-      ).map(_.getName) shouldBe Seq(
-        "RdfNameEntryPacked",
-        "RdfPrefixEntryPacked",
-        "RdfDatatypeEntryPacked",
-      )
+      Rdf2.getDescriptor.getMessageTypes.size shouldBe 1
+      RdfLookupEntryPacked.getDescriptor.getName shouldBe "RdfLookupEntryPacked"
     }
   }

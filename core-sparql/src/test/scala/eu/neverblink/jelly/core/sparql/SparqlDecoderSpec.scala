@@ -2,12 +2,7 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.{
-  RdfDatatypeEntryPacked,
-  RdfLiteral,
-  RdfNameEntryPacked,
-  RdfPrefixEntryPacked,
-}
+import eu.neverblink.jelly.core.proto.v1.{RdfLiteral, RdfLookupEntryPacked}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
 import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
 import org.scalatest.matchers.should.Matchers
@@ -30,7 +25,7 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       .setOptions(JellySparqlOptions.SMALL)
       .setRowCount(rowCount)
       .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
-      .addNames(RdfNameEntryPacked.newInstance().setId(1).addValues("https://test.org/x"))
+      .addNames(RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/x"))
 
   private def iriColumn(valueCount: Int, layout: Seq[Int]) =
     val column = SparqlIriColumn.newInstance()
@@ -227,10 +222,10 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
         .setOptions(JellySparqlOptions.SMALL)
         .setRowCount(4)
         .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
-        .addNames(RdfNameEntryPacked.newInstance().addValues("a").addValues("b"))
-        .addNames(RdfNameEntryPacked.newInstance().setId(5).addValues("e").addValues("f"))
+        .addNames(RdfLookupEntryPacked.newInstance().addValues("a").addValues("b"))
+        .addNames(RdfLookupEntryPacked.newInstance().setId(5).addValues("e").addValues("f"))
         .addPrefixes(
-          RdfPrefixEntryPacked.newInstance().addValues("https://one.org/").addValues(
+          RdfLookupEntryPacked.newInstance().addValues("https://one.org/").addValues(
             "https://two.org/",
           ),
         )
@@ -245,7 +240,7 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       val frame = frameWithOneVariable(1)
         .addVariables(SparqlVariable.newInstance().setName("y").setColumnIndex(1))
         .addDatatypes(
-          RdfDatatypeEntryPacked
+          RdfLookupEntryPacked
             .newInstance()
             .addValues("https://test.org/int")
             .addValues("https://test.org/double"),
@@ -316,10 +311,10 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       val frame = frameWithOneVariable(3)
         // Overwrites the name entry that frameWithOneVariable sets for id 1
         .addNames(
-          RdfNameEntryPacked.newInstance().setId(1).addValues("a").addValues("b").addValues("c"),
+          RdfLookupEntryPacked.newInstance().setId(1).addValues("a").addValues("b").addValues("c"),
         )
         .addPrefixes(
-          RdfPrefixEntryPacked
+          RdfLookupEntryPacked
             .newInstance()
             .setId(1)
             .addValues("https://one.org/")
@@ -358,7 +353,7 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       val collector = ResultsCollector()
       val frame = frameWithOneVariable(2)
         .addDatatypes(
-          RdfDatatypeEntryPacked.newInstance().setId(1).addValues("https://test.org/int"),
+          RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/int"),
         )
         .addLiteralColumns(column)
       newDecoder(collector).ingestFrame(frame)

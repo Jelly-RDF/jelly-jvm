@@ -25,8 +25,12 @@ public final class JellySparqlOptions {
     public static final int MIN_NAME_TABLE_SIZE = 128;
 
     public static final int SMALL_NAME_TABLE_SIZE = 256;
-    public static final int BIG_NAME_TABLE_SIZE = 4096;
-    public static final int MAX_NAME_TABLE_SIZE = BIG_NAME_TABLE_SIZE * 4;
+    /**
+     * Double of DEFAULT_MAX_VALUES_PER_FRAME, so that we can avoid churning all entries from frame
+     * to frame in IRI-heavy datasets.
+     */
+    public static final int BIG_NAME_TABLE_SIZE = 8192;
+    public static final int MAX_NAME_TABLE_SIZE = BIG_NAME_TABLE_SIZE * 2;
 
     public static final int SMALL_PREFIX_TABLE_SIZE = 64;
     public static final int BIG_PREFIX_TABLE_SIZE = 1024;

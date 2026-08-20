@@ -64,7 +64,9 @@ public final class RowSetWriterJelly implements RowSetWriter {
         final List<Var> vars = rowSet.getResultVars();
         final SparqlEncoder<Node> encoder = converterFactory.encoder(SparqlEncoder.Params.of(options.options()));
         encoder.setVariables(vars.stream().map(Var::getVarName).toList());
-        final Node[] row = new Node[vars.size()];
+        // Repeatedly iterating over an array copy is faster than over a List.
+        final Var[] varArray = vars.toArray(new Var[0]);
+        final Node[] row = new Node[varArray.length];
         // Frames are budgeted in values, so the row limit depends on how wide the result set is.
         // A zero-variable result set carries no values at all, hence the lower bound of one row.
         final int rowsPerFrame = Math.max(1, options.maxValuesPerFrame() / Math.max(1, row.length));
@@ -74,8 +76,8 @@ public final class RowSetWriterJelly implements RowSetWriter {
             int rowsInFrame = 0;
             while (rowSet.hasNext()) {
                 final Binding binding = rowSet.next();
-                for (int i = 0; i < row.length; i++) {
-                    row[i] = binding.get(vars.get(i));
+                for (int i = 0; i < varArray.length; i++) {
+                    row[i] = binding.get(varArray[i]);
                 }
                 if (!encoder.appendRow(row)) {
                     // The frame filled up its lookup tables before reaching the row limit

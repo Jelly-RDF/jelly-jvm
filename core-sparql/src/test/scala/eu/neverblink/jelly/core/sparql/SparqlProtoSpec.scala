@@ -120,9 +120,9 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .setAskResult(SparqlAskResult.newInstance().setValue(true))
     .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
     .addVariables(SparqlVariable.newInstance().setName("y").setColumnIndex(1))
-    .addNames(RdfNameEntryPacked.newInstance().setId(1).addValues("name").addValues("name2"))
-    .addPrefixes(RdfPrefixEntryPacked.newInstance().setId(1).addValues("https://test.org/"))
-    .addDatatypes(RdfDatatypeEntryPacked.newInstance().setId(1).addValues("https://test.org/dt"))
+    .addNames(RdfLookupEntryPacked.newInstance().setId(1).addValues("name").addValues("name2"))
+    .addPrefixes(RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/"))
+    .addDatatypes(RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/dt"))
     .addIriColumns(iriColumn)
     .addBnodeColumns(bnodeColumn)
     .addLiteralColumns(literalColumn)
@@ -454,19 +454,19 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
           SparqlResultsFrame
             .newInstance()
             .addDatatypes(
-              RdfDatatypeEntryPacked.newInstance().setId(1).addValues("https://test.org/dt"),
+              RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/dt"),
             )
             .toByteArray,
           SparqlResultsFrame
             .newInstance()
             .addPrefixes(
-              RdfPrefixEntryPacked.newInstance().setId(1).addValues("https://test.org/"),
+              RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/"),
             )
             .toByteArray,
           SparqlResultsFrame
             .newInstance()
             .addNames(
-              RdfNameEntryPacked.newInstance().setId(1).addValues("name").addValues("name2"),
+              RdfLookupEntryPacked.newInstance().setId(1).addValues("name").addValues("name2"),
             )
             .toByteArray,
           SparqlResultsFrame
