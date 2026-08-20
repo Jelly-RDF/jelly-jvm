@@ -11,9 +11,6 @@ import java.util.NoSuchElementException;
 
 /**
  * Reusable store for the SparqlTerm wrappers of a polymorphic column.
- * <p>
- * Only {@link #appendMessage()} adds to this - {@code add} is not supported, because a
- * caller-supplied message would not come from the pool.
  */
 final class TermBuffer
     extends AbstractCollection<SparqlTerm>
@@ -164,9 +161,8 @@ final class IriBuffer {
 }
 
 /**
- * Buffer for a mixed-datatype or polymorphic column: the SparqlTerm wrappers
- * of a poly column and the pools for the messages materialized at endFrame(). Split out of
- * ColumnState and created lazily, so that never allocate any of this. This also saves bytes in
+ * Buffer for a mixed-datatype or polymorphic column. It is separated from
+ * ColumnState and created lazily, so that monomorphic columns never allocate any of this. This also saves bytes in
  * the SparqlEncoderImpl object, allowing us to fit it into one cache line.
  */
 final class PolyBuffers {
