@@ -31,7 +31,7 @@ lazy val pekkoGrpcV = "1.2.0"
 lazy val jenaV = "5.6.0"
 // RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
 // targets Java 21 (see javacOptions), but jelly-rdf4j can only *run* on Java 25+, as RDF4J 6 does.
-lazy val rdf4jV = "6.0.0"
+lazy val rdf4jV = "6.0.1"
 lazy val titaniumApiV = "1.0.0"
 lazy val titaniumNqV = "1.0.2"
 lazy val neo4jV = "5.26.0"
