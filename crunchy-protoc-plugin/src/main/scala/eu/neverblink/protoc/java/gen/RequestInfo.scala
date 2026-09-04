@@ -350,10 +350,10 @@ object RequestInfo:
     // Used for the return type in the method, e.g., Optional<String>
     private def getOptionalReturnType: TypeName =
       if (isRepeated)
-        return ParameterizedTypeName.get(ClassName.get(classOf[Optional[_]]), getRepeatedStoreType)
+        return ParameterizedTypeName.get(ClassName.get(classOf[Optional[?]]), getRepeatedStoreType)
       val typeName = getTypeName
       if (!isPrimitive || (typeName eq TypeName.BOOLEAN))
-        return ParameterizedTypeName.get(ClassName.get(classOf[Optional[_]]), typeName.box)
+        return ParameterizedTypeName.get(ClassName.get(classOf[Optional[?]]), typeName.box)
       if (typeName eq TypeName.INT) return TypeName.get(classOf[OptionalInt])
       if (typeName eq TypeName.LONG) return TypeName.get(classOf[OptionalLong])
       if (typeName eq TypeName.FLOAT) return TypeName.get(classOf[OptionalDouble])
