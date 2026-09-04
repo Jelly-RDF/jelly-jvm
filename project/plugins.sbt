@@ -6,5 +6,3 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.4")
 addSbtPlugin("com.github.sbt" % "sbt-jacoco" % "3.6.0")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.7")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.6.2")
-
-addDependencyTreePlugin
