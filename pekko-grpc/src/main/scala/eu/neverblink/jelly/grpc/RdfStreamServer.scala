@@ -50,12 +50,12 @@ object RdfStreamServer:
   *   actor system
   */
 final class RdfStreamServer(options: RdfStreamServer.Options, streamService: RdfStreamService)(using
-    system: ActorSystem[_],
+    system: ActorSystem[?],
 ):
   given ExecutionContext = system.executionContext
 
   private val logger = LoggerFactory.getLogger(getClass)
-  private var binding: Option[ServerBinding] = _
+  private var binding: Option[ServerBinding] = scala.compiletime.uninitialized
 
   /** Start this server.
     * @return

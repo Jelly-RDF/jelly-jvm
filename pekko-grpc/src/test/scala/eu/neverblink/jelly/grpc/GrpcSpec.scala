@@ -48,10 +48,10 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     .withFallback(ConfigFactory.defaultApplication())
 
   val testKit: ActorTestKit = ActorTestKit(conf)
-  val serverSystem: ActorSystem[_] = testKit.system
+  val serverSystem: ActorSystem[?] = testKit.system
 
   class TestService(storedData: Map[String, Seq[RdfStreamFrame]]) extends RdfStreamService:
-    given system: ActorSystem[_] = serverSystem
+    given system: ActorSystem[?] = serverSystem
     given ExecutionContext = system.executionContext
     var receivedData: mutable.Map[String, Seq[RdfStreamFrame]] = mutable.Map()
 
@@ -105,7 +105,7 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     (name, confKey, service, bound)
   })
 
-  given clientSystem: ActorSystem[_] = ActorSystem(Behaviors.empty, "TestClient", conf)
+  given clientSystem: ActorSystem[?] = ActorSystem(Behaviors.empty, "TestClient", conf)
 
   override def afterAll(): Unit =
     ActorTestKit.shutdown(clientSystem)

@@ -6,11 +6,11 @@ import org.openjdk.jmh.annotations.*
 object ReadStringBench:
   @State(Scope.Benchmark)
   class BenchInput:
-    var toParse: Array[Byte] = _
+    var toParse: Array[Byte] = scala.compiletime.uninitialized
 
     val size = 1000
 
-    var inputStream: CodedInputStream = _
+    var inputStream: CodedInputStream = scala.compiletime.uninitialized
 
     @Setup(Level.Trial)
     def setup(): Unit =
