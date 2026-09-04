@@ -229,7 +229,7 @@ class EnumGenerator(val info: EnumInfo):
       .sorted
       .toArray
     val createCaseIfs = (len: Int) => {
-      info.values.stream.filter(value => value.getName.length eq len).forEach(value => {
+      info.values.stream.filter(value => value.getName.length == len).forEach(value => {
         forName
           .beginControlFlow("if ($S == value)", value.getName)
           .addStatement("return $N", NamingUtil.filterKeyword(value.getName))

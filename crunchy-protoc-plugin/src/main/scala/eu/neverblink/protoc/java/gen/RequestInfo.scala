@@ -453,6 +453,6 @@ object RequestInfo:
 
     def getFields: Seq[RequestInfo.FieldInfo] = parentTypeInfo.fields
       .filter(field => field.descriptor.hasOneofIndex)
-      .filter(field => field.descriptor.getOneofIndex eq oneOfIndex)
+      .filter(field => field.descriptor.getOneofIndex == oneOfIndex)
       .toSeq
   }
