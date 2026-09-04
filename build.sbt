@@ -2,7 +2,7 @@ import scala.language.postfixOps
 import scala.language.implicitConversions
 import scala.sys.process.*
 
-ThisBuild / scalaVersion := "3.3.8"
+ThisBuild / scalaVersion := "3.9.0"
 ThisBuild / organization := "eu.neverblink.jelly"
 ThisBuild / homepage := Some(uri("https://w3id.org/jelly/jelly-jvm"))
 ThisBuild / licenses := List("Apache-2.0" -> uri("https://www.apache.org/licenses/LICENSE-2.0"))
