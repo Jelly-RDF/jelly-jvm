@@ -114,7 +114,8 @@ object SparqlSizeReport:
 
   private def run(config: Config): Unit =
     JenaSystem.init()
-    val names = if config.presets.nonEmpty then config.presets else SparqlDataGen.presetNames
+    val names = if config.presets.nonEmpty then config.presets
+    else SparqlDataGen.presetNames :+ "weather"
 
     config.dumpDir.foreach { dir =>
       Files.createDirectories(dir)
@@ -131,7 +132,8 @@ object SparqlSizeReport:
 
     var filesWritten = 0
     for name <- names do
-      val data = SparqlBenchData.load(name)
+      val data = if name == "weather" then SparqlBenchData.loadWeather(throughputRows)
+      else SparqlBenchData.load(name)
       val outputs = serialize(data, config.maxValuesPerFrame)
 
       config.dumpDir.foreach { dir =>

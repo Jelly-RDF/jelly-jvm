@@ -117,10 +117,14 @@ object RdfStreamServiceHandler {
         (reader, writer) =>
           (method match {
             case "SubscribeRdf" =>
-              GrpcMarshalling.unmarshal(request.entity)(RdfStreamSubscribeSerializer, mat, reader)
+              GrpcMarshalling.unmarshal(request.entity)(using
+                RdfStreamSubscribeSerializer,
+                mat,
+                reader,
+              )
                 .map(implementation.subscribeRdf)
                 .map(e =>
-                  GrpcMarshalling.marshalStream(e, eHandler)(
+                  GrpcMarshalling.marshalStream(e, eHandler)(using
                     RdfStreamFrameSerializer,
                     writer,
                     system,
@@ -128,15 +132,25 @@ object RdfStreamServiceHandler {
                 )
 
             case "PublishRdf" =>
-              GrpcMarshalling.unmarshalStream(request.entity)(RdfStreamFrameSerializer, mat, reader)
+              GrpcMarshalling.unmarshalStream(request.entity)(using
+                RdfStreamFrameSerializer,
+                mat,
+                reader,
+              )
                 .flatMap(implementation.publishRdf)
                 .map(e =>
-                  GrpcMarshalling.marshal(e, eHandler)(RdfStreamReceivedSerializer, writer, system),
+                  GrpcMarshalling.marshal(e, eHandler)(using
+                    RdfStreamReceivedSerializer,
+                    writer,
+                    system,
+                  ),
                 )
 
             case m => Future.failed(new NotImplementedError(s"Not implemented: $m"))
           })
-            .recoverWith(GrpcExceptionHandler.from(eHandler(system.classicSystem))(system, writer)),
+            .recoverWith(
+              GrpcExceptionHandler.from(eHandler(system.classicSystem))(using system, writer),
+            ),
       ).getOrElse(unsupportedMediaType)
 
     Function.unlift((req: model.HttpRequest) =>

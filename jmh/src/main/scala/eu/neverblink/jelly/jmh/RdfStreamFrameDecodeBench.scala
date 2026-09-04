@@ -11,7 +11,7 @@ import org.openjdk.jmh.infra.Blackhole
 object RdfStreamFrameDecodeBench:
   @State(Scope.Benchmark)
   class BenchInput:
-    var toDecode: Array[RdfStreamFrame] = _
+    var toDecode: Array[RdfStreamFrame] = scala.compiletime.uninitialized
 
     @Setup(Level.Trial)
     def setup(): Unit =

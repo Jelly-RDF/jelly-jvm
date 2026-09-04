@@ -10,7 +10,7 @@ object RdfTripleRecursiveBench:
   class BenchInput:
     val random = new scala.util.Random(123)
 
-    var toParse: Array[Byte] = _
+    var toParse: Array[Byte] = scala.compiletime.uninitialized
 
     val size = 1000
 

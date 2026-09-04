@@ -63,8 +63,8 @@ object PekkoGrpc extends shared.ScalaExample:
     .withFallback(ConfigFactory.defaultApplication())
 
   // We will need two Pekko actor systems to run the streams – one for the server and one for the client
-  val serverActorSystem: ActorSystem[_] = ActorSystem(Behaviors.empty, "ServerSystem")
-  val clientActorSystem: ActorSystem[_] = ActorSystem(Behaviors.empty, "ClientSystem", config)
+  val serverActorSystem: ActorSystem[?] = ActorSystem(Behaviors.empty, "ServerSystem")
+  val clientActorSystem: ActorSystem[?] = ActorSystem(Behaviors.empty, "ClientSystem", config)
 
   // Our mock dataset that we will send around in the streams
   val dataset: Dataset =
@@ -73,7 +73,7 @@ object PekkoGrpc extends shared.ScalaExample:
   /** Main method that starts the server and the client.
     */
   def main(args: Array[String]): Unit =
-    given system: ActorSystem[_] = serverActorSystem
+    given system: ActorSystem[?] = serverActorSystem
     given ExecutionContext = system.executionContext
 
     // Start the server
@@ -95,7 +95,7 @@ object PekkoGrpc extends shared.ScalaExample:
   /** The client part of the example.
     */
   private def runClient(): Unit =
-    given system: ActorSystem[_] = clientActorSystem
+    given system: ActorSystem[?] = clientActorSystem
     given ExecutionContext = system.executionContext
 
     // Create a gRPC client
@@ -192,7 +192,7 @@ object PekkoGrpc extends shared.ScalaExample:
     * You will also need to implement this trait in your own service. It defines the logic with
     * which the server will handle incoming streams and subscriptions.
     */
-  class ExampleJellyService(using system: ActorSystem[_]) extends RdfStreamService:
+  class ExampleJellyService(using system: ActorSystem[?]) extends RdfStreamService:
     given ExecutionContext = system.executionContext
 
     /** Handler for clients publishing RDF streams to the server.

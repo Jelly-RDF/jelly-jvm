@@ -37,12 +37,12 @@ object SparqlEncodeBench:
         "realistic-mixed",
       ),
     )
-    var preset: String = _
+    var preset: String = scala.compiletime.uninitialized
 
     @Param(Array("4096"))
-    var valuesPerFrame: Int = _
+    var valuesPerFrame: Int = scala.compiletime.uninitialized
 
-    var data: SparqlBenchData.Data = _
+    var data: SparqlBenchData.Data = scala.compiletime.uninitialized
 
     @Setup(Level.Trial)
     def setup(): Unit =

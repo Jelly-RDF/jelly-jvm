@@ -45,13 +45,13 @@ object SparqlDecodeBench:
         "realistic-mixed",
       ),
     )
-    var preset: String = _
+    var preset: String = scala.compiletime.uninitialized
 
     @Param(Array("4096"))
-    var valuesPerFrame: Int = _
+    var valuesPerFrame: Int = scala.compiletime.uninitialized
 
-    var bytes: Array[Byte] = _
-    var frames: Array[SparqlResultsFrame] = _
+    var bytes: Array[Byte] = scala.compiletime.uninitialized
+    var frames: Array[SparqlResultsFrame] = scala.compiletime.uninitialized
 
     @Setup(Level.Trial)
     def setup(): Unit =
