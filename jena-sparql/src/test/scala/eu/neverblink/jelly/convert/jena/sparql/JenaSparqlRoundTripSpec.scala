@@ -121,6 +121,27 @@ class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers, JenaTest:
       gotRows shouldBe expected(vars, rows)
     }
 
+    "round-trip in the non-delimited form with the default options" in {
+      // Regression: the default options serialize to 10 bytes, so a non-delimited frame starts
+      // with 0A 0A – which the RDF delimiting autodetection mistook for a delimited stream.
+      val vars = Seq("x", "y")
+      val rows = Seq(
+        Seq[Node | Null](iri("a"), iri("b")),
+        Seq[Node | Null](iri("a"), null),
+      )
+      val (gotVars, gotRows) = roundTrip(
+        vars,
+        rows,
+        RowSetWriterJelly.Options(
+          eu.neverblink.jelly.core.sparql.JellySparqlOptions.BIG,
+          4,
+          false,
+        ),
+      )
+      gotVars shouldBe vars
+      gotRows shouldBe expected(vars, rows)
+    }
+
     "round-trip a result set that outgrows the lookup tables" in {
       // Regression: the writer asks for frames of a given value budget, but the lookup tables of a
       // frame may fill up first. That used to corrupt the encoder mid-frame; now the writer flushes

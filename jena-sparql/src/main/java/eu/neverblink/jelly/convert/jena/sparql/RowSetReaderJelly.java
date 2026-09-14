@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.jena.sparql;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.sparql.JellySparqlIoUtils;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
@@ -85,7 +86,7 @@ public final class RowSetReaderJelly implements RowSetReader {
         final RowCollector handler = new RowCollector();
         final SparqlDecoder decoder = converterFactory.decoder(handler, options.supportedOptions());
         try {
-            final IoUtils.AutodetectDelimitingResponse response = IoUtils.autodetectDelimiting(in);
+            final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
             if (!response.isDelimited()) {
                 // Non-delimited: the entire input is a single frame
                 decoder.ingestFrame(SparqlResultsFrame.parseFrom(response.newInput()));

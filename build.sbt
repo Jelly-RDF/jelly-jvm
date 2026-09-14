@@ -578,9 +578,22 @@ lazy val rdf4jPatch = (project in file("rdf4j-patch"))
   )
   .dependsOn(corePatch, rdf4j)
 
-// rdf4j-plugin is a dummy directory that contains only a symlink (src) to the source code in the
-// rdf4j directory. This way sbt won't shout at us for having two projects in the same directory.
-// Unlike jena-plugin above, this one still bundles protobuf-java, which RDF4J does not provide.
+lazy val rdf4jSparql = (project in file("rdf4j-sparql"))
+  .settings(
+    name := "jelly-rdf4j-sparql",
+    description := "Jelly-SPARQL integration for RDF4J: reading and writing " +
+      "SPARQL query results.",
+    libraryDependencies ++= Seq(
+      // Brings in rdf4j-query, which the rdf4j module does not need on its own
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-api" % rdf4jV,
+    ),
+    commonSettings,
+    commonJavaSettings,
+  )
+  .dependsOn(coreSparql % "compile->compile;test->test", rdf4j % "compile->compile;test->test")
+
+// rdf4j-plugin has no sources of its own – it only fat-jars the Jelly modules to be put in RDF4J's
+// lib directory. Unlike jena-plugin, this one bundles protobuf-java, which RDF4J does not provide.
 lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
   .settings(
     name := "jelly-rdf4j-plugin",
@@ -588,16 +601,19 @@ lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
       // Use the "provided" scope to not include the RDF4J dependencies in the plugin JAR
       "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV % "provided,test",
       "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV % "provided,test",
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-api" % rdf4jV % "provided,test",
+    ),
+    assembly / fullClasspath := (Runtime / fullClasspath).value.filter(entry =>
+      !entry.data.name.endsWith(".jar") || entry.data.name.startsWith("protobuf-java"),
     ),
     stableAssemblyOutput,
-    // Do not publish this to Maven – we will separately do sbt assembly and publish to GitHub
     publishArtifact := false,
-    // Don't run tests for the plugin project
     Test / skip := true,
     commonSettings,
     commonJavaSettings,
+    ensureJacocoDir,
   )
-  .dependsOn(core)
+  .dependsOn(rdf4j, rdf4jSparql)
 
 lazy val titaniumRdfApi = (project in file("titanium-rdf-api"))
   .settings(
@@ -681,11 +697,12 @@ lazy val integrationTests = (project in file("integration-tests"))
     core % "compile->compile;test->test",
     jena % "compile->compile;test->test",
     jenaPatch,
-    // The SPARQL fuzzing tests drive both the core codec (with the mock node model) and the Jena
-    // integration from the shared result set generator, which lives in the test sources of these
-    // two modules.
+    // The SPARQL fuzzing tests drive the core codec (with the mock node model) and both library
+    // integrations from the shared result set generator, which lives in the test sources of these
+    // modules.
     coreSparql % "compile->compile;test->test",
     jenaSparql % "compile->compile;test->test",
+    rdf4jSparql % "compile->compile;test->test",
     rdf4j,
     rdf4jPatch,
     titaniumRdfApi,
@@ -792,6 +809,7 @@ lazy val root = (project in file("."))
     jenaPlugin,
     rdf4j,
     rdf4jPatch,
+    rdf4jSparql,
     rdf4jPlugin,
     titaniumRdfApi,
     // neo4jPlugin is deliberately not aggregated – see its definition above.
