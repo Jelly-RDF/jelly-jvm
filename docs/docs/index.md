@@ -62,6 +62,8 @@ Jelly-SPARQL is an efficient columnar format for SPARQL query results (solution 
     - {{ java_module_badges('core-sparql') }}
 - `jelly-jena-sparql` – integration with [Apache Jena](https://jena.apache.org/), including registration in Jena's result set readers and writers, and Fuseki's content negotiation.
     - {{ java_module_badges('jena-sparql') }}
+- `jelly-rdf4j-sparql` – integration with [Eclipse RDF4J](https://rdf4j.org/), including registration in RDF4J's tuple and boolean query result parsers and writers.
+    - {{ java_module_badges('rdf4j-sparql') }}
 
 ## Plugin JARs
 

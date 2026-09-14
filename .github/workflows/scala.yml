@@ -256,6 +256,29 @@ jobs:
         ./jena-dir/bin/riot --stream=jelly test.nt > jena.jelly
         [ -s jena.jelly ] && echo Jena writing Jelly OK
 
+        # The RDF4J plugin JAR must not carry a second copy of RDF4J, but it does have to bundle
+        # protobuf-java, which RDF4J does not provide.
+        if unzip -l rdf4j-plugin/target/jelly-rdf4j-plugin.jar | grep -q "org/eclipse/rdf4j/"; then
+          echo "RDF4J plugin JAR bundles classes that RDF4J already provides"
+          exit 1
+        fi
+        if ! unzip -l rdf4j-plugin/target/jelly-rdf4j-plugin.jar | grep -q "com/google/protobuf/"; then
+          echo "RDF4J plugin JAR does not bundle protobuf-java"
+          exit 1
+        fi
+        # Both the RDF and the SPARQL parts of the plugin have to register themselves.
+        for service in org.eclipse.rdf4j.rio.RDFParserFactory \
+            org.eclipse.rdf4j.rio.RDFWriterFactory \
+            org.eclipse.rdf4j.query.resultio.TupleQueryResultParserFactory \
+            org.eclipse.rdf4j.query.resultio.TupleQueryResultWriterFactory \
+            org.eclipse.rdf4j.query.resultio.BooleanQueryResultParserFactory \
+            org.eclipse.rdf4j.query.resultio.BooleanQueryResultWriterFactory; do
+          unzip -p rdf4j-plugin/target/jelly-rdf4j-plugin.jar "META-INF/services/$service" \
+            | grep -q "eu.neverblink.jelly" \
+            || { echo "RDF4J plugin JAR does not register $service"; exit 1; }
+        done
+        echo RDF4J plugin JAR contents OK
+
         cp -f rdf4j-plugin/target/jelly-rdf4j-plugin.jar rdf4j-dir/lib
         echo "convert test.jelly rdf4j.nt" | ./rdf4j-dir/bin/console.sh
         [ -s rdf4j.nt ] && echo RDF4J reading Jelly OK
