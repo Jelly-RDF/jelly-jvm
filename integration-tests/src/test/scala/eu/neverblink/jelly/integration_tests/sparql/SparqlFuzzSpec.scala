@@ -14,8 +14,7 @@ import scala.util.Random
   * ([[eu.neverblink.jelly.core.sparql.gen.SparqlDataGen]], also used by the JMH benchmarks).
   *
   * Every generated result set is pushed through every writer/reader pair of every implementation
-  * (core codec with the mock node model, Jena, RDF4J), so that a bug in one implementation cannot
-  * hide behind the matching bug in its counterpart.
+  * (core codec with the mock node model, Jena, RDF4J).
   *
   * The number of random cases and the seed can be overridden with the JELLY_SPARQL_FUZZ_ITERATIONS
   * and JELLY_SPARQL_FUZZ_SEED environment variables – bump the iterations for a long soak run.

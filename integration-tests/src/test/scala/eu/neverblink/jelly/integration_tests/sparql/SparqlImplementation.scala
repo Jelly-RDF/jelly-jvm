@@ -62,11 +62,9 @@ trait SparqlImplementation:
   ): Array[Byte] =
     encodeRows(vars, termFactory.materializeRows(generated), maxValuesPerFrame, options)
 
-  /** The generated data in this implementation's node model – what its reader must produce. */
   final def expected(generated: SparqlDataGen.Rows): Seq[Seq[Any]] =
     termFactory.materializeRows(generated).map(_.toSeq)
 
-/** Implementation using the test-only Mock RDF Library (MRL). */
 @experimental
 object CoreImplementation extends SparqlImplementation:
   type TNode = Mrl.Node & Object
