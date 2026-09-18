@@ -1,10 +1,14 @@
 package eu.neverblink.jelly.core
 
+import eu.neverblink.jelly.core.RdfHandler.AnyRdfHandler
+import eu.neverblink.jelly.core.helpers.Mrl.Node
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
-import eu.neverblink.jelly.core.helpers.{MockConverterFactory, ProtoCollector}
+import eu.neverblink.jelly.core.helpers.{ByteFuzzer, MockConverterFactory, ProtoCollector}
 import eu.neverblink.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
+import java.io.IOException
 
 /** Tests for decoding hostile input: rows that parse as valid protobuf, but whose contents are
   * chosen to make the decoder dereference or index something it never checked.
@@ -103,3 +107,52 @@ class ProtoDecoderHardeningSpec extends AnyWordSpec, Matchers:
       )
     }
   }
+
+  "the decoder" should {
+    "handle mutated frames (fuzzing)" in {
+      var reachedDecoder = 0
+      val findings = ByteFuzzer.findings(corpus, fuzzIterations, fuzzSeed, isExpected) { bytes =>
+        val frame = RdfStreamFrame.parseFrom(bytes)
+        reachedDecoder += 1
+        val decoder = MockConverterFactory.anyStatementDecoder(
+          NoOpHandler,
+          JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
+        )
+        frame.getRows.forEach(decoder.ingestRow)
+      }
+      withClue(s"${findings.size} kinds of unchecked failure:\n${findings.mkString("\n")}\n") {
+        findings shouldBe empty
+      }
+      withClue("mutations that got past the parser: ") {
+        reachedDecoder should be > fuzzIterations / 20
+      }
+    }
+  }
+
+  // Bump the iterations for a longer soak run, following the convention of SparqlFuzzSpec
+  private lazy val fuzzIterations =
+    sys.env.get("JELLY_FUZZ_ITERATIONS").map(_.toInt).getOrElse(30_000)
+  private lazy val fuzzSeed = sys.env.get("JELLY_FUZZ_SEED").map(_.toLong).getOrElse(20260918L)
+
+  private def isExpected(t: Throwable): Boolean = t match
+    case _: RdfProtoDeserializationError => true
+    case _: IOException => true
+    case _ => false
+
+  private lazy val corpus: Seq[Array[Byte]] =
+    def opt(physicalType: PhysicalStreamType) =
+      JellyOptions.SMALL_ALL_FEATURES.clone.setPhysicalType(physicalType)
+    val frames =
+      Triples1.encodedFull(opt(PhysicalStreamType.TRIPLES), 4) ++
+        Triples2NsDecl.encodedFull(opt(PhysicalStreamType.TRIPLES), 4) ++
+        Quads1.encodedFull(opt(PhysicalStreamType.QUADS), 4) ++
+        Graphs1.encodedFull(opt(PhysicalStreamType.GRAPHS), 4)
+    frames.map(_.toByteArray)
+
+  /** Keeps the handler's own behaviour out of the fuzzer's findings. */
+  private object NoOpHandler extends AnyRdfHandler[Node]:
+    override def handleNamespace(prefix: String, namespace: Node): Unit = ()
+    override def handleTriple(s: Node, p: Node, o: Node): Unit = ()
+    override def handleQuad(s: Node, p: Node, o: Node, g: Node): Unit = ()
+    override def handleGraphStart(graph: Node): Unit = ()
+    override def handleGraphEnd(): Unit = ()

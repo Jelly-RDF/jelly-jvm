@@ -4,10 +4,12 @@ import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.proto.v1.{RdfIri, RdfLiteral, RdfLookupEntryPacked}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
+import eu.neverblink.jelly.core.helpers.ByteFuzzer
 import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import java.io.IOException
 import java.util
 import scala.annotation.experimental
 
@@ -206,3 +208,58 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
       expectRejected(newDecoder().ingestFrame(frame))
     }
   }
+
+  "the decoder" should {
+    "handle mutated frames (fuzzing)" in {
+      var reachedDecoder = 0
+      val findings = ByteFuzzer.findings(corpus, fuzzIterations, fuzzSeed, isExpected) { bytes =>
+        val frame = SparqlResultsFrame.parseFrom(bytes)
+        reachedDecoder += 1
+        // A tight row limit, so a mutation that inflates the row count is rejected
+        newDecoder(BoundedHandler(limit = 1_000), maxRowsPerFrame = 64).ingestFrame(frame)
+      }
+      withClue(s"${findings.size} kinds of unchecked failure:\n${findings.mkString("\n")}\n") {
+        findings shouldBe empty
+      }
+      withClue("mutations that got past the parser: ") {
+        reachedDecoder should be > fuzzIterations / 20
+      }
+    }
+  }
+
+  private lazy val fuzzIterations =
+    sys.env.get("JELLY_FUZZ_ITERATIONS").map(_.toInt).getOrElse(30_000)
+  private lazy val fuzzSeed = sys.env.get("JELLY_FUZZ_SEED").map(_.toLong).getOrElse(20260918L)
+
+  /** A mutated frame may be turned away by the parser or by the decoder – both are fine. */
+  private def isExpected(t: Throwable): Boolean = t match
+    case _: RdfProtoDeserializationError => true
+    case _: IOException => true
+    case _ => false
+
+  /** Valid frames from the encoder, as the seed corpus. Between them these cover every column type,
+    * the lookup tables, repeated and unbound runs, and a boolean result.
+    */
+  private lazy val corpus: Seq[Array[Byte]] =
+    val encoder = MockSparqlConverterFactory.encoder(
+      SparqlEncoder.Params.of(JellySparqlOptions.SMALL),
+    )
+    encoder.setVariables(util.List.of("x", "y", "z"))
+    val rows = Seq[Array[Node]](
+      Array(Iri("https://test.org/a"), SimpleLiteral("plain"), BlankNode("b1")),
+      // Repeats the row before it, so the encoder emits a repeat run
+      Array(Iri("https://test.org/a"), SimpleLiteral("plain"), BlankNode("b1")),
+      Array(Iri("https://test.org/b"), DtLiteral("1", Datatype("https://test.org/int")), null),
+      // Mixes term types in a column, which moves it to a polymorphic one
+      Array(BlankNode("b2"), LangLiteral("hello", "en"), Iri("https://test.org/c")),
+      Array(null, null, null),
+      Array(Iri("https://test.org/d"), SimpleLiteral("x"), BlankNode("b3")),
+    )
+    val frames = Seq.newBuilder[SparqlResultsFrame]
+    for row <- rows do
+      if !encoder.appendRow(row) then
+        frames += encoder.endFrame()
+        encoder.appendRow(row)
+    frames += encoder.endFrame()
+    frames += SparqlEncoder.askResultFrame(JellySparqlOptions.SMALL, true)
+    frames.result().map(_.toByteArray)
