@@ -134,6 +134,11 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
 
     protected void handleNamespace(RdfNamespaceDeclaration namespace) {
         final var iri = namespace.getValue();
+        if (iri == null) {
+            throw new RdfProtoDeserializationError(
+                "Namespace declaration '%s' has no IRI.".formatted(namespace.getName())
+            );
+        }
         protoHandler.handleNamespace(namespace.getName(), getNameDecoder().decode(iri.getPrefixId(), iri.getNameId()));
     }
 

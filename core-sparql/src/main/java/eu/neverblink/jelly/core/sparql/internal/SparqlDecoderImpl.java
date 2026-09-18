@@ -8,6 +8,7 @@ import eu.neverblink.jelly.core.internal.DecoderBase;
 import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
 import eu.neverblink.jelly.core.proto.v1.RdfLookupEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
+import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
@@ -32,6 +33,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
     private final SparqlResultsHandler<TNode> handler;
     private final SparqlResultsOptions supportedOptions;
+    private final int maxRowsPerFrame;
 
     private SparqlResultsOptions currentOptions = null;
     private String[] variableNames = null;
@@ -45,12 +47,14 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     public SparqlDecoderImpl(
         ProtoDecoderConverter<TNode, TDatatype> converter,
         SparqlResultsHandler<TNode> handler,
-        SparqlResultsOptions supportedOptions
+        SparqlResultsOptions supportedOptions,
+        int maxRowsPerFrame
     ) {
         super(converter);
         this.handler = handler;
         this.supportedOptions =
             supportedOptions != null ? supportedOptions : JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS;
+        this.maxRowsPerFrame = Math.min(maxRowsPerFrame, JellySparqlConstants.MAX_ROWS_PER_FRAME);
     }
 
     // The lookup tables are sized from the stream options, and the sizes are baked in when the
@@ -127,6 +131,11 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         final int rows = frame.getRowCount();
         if (rows < 0) {
             throw new RdfProtoDeserializationError("Invalid row count (over 2^31).");
+        }
+        if (rows > maxRowsPerFrame) {
+            throw new RdfProtoDeserializationError(
+                "The frame declares %d rows, more than the %d this reader accepts.".formatted(rows, maxRowsPerFrame)
+            );
         }
         final var iriColumns = frame.getIriColumns();
         final var bnodeColumns = frame.getBnodeColumns();

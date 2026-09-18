@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.jena.sparql;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlIoUtils;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
@@ -40,10 +41,15 @@ public final class RowSetReaderJelly implements RowSetReader {
      * Options for the Jelly-SPARQL reader.
      *
      * @param supportedOptions options supported by the reader
+     * @param maxRowsPerFrame largest row count a single frame may declare
      */
-    public record Options(SparqlResultsOptions supportedOptions) {
+    public record Options(SparqlResultsOptions supportedOptions, int maxRowsPerFrame) {
         public Options() {
             this(JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS);
+        }
+
+        public Options(SparqlResultsOptions supportedOptions) {
+            this(supportedOptions, JellySparqlConstants.DEFAULT_MAX_ROWS_PER_FRAME);
         }
     }
 
@@ -84,7 +90,11 @@ public final class RowSetReaderJelly implements RowSetReader {
      */
     private Object readInternal(InputStream in) {
         final RowCollector handler = new RowCollector();
-        final SparqlDecoder decoder = converterFactory.decoder(handler, options.supportedOptions());
+        final SparqlDecoder decoder = converterFactory.decoder(
+            handler,
+            options.supportedOptions(),
+            options.maxRowsPerFrame()
+        );
         try {
             final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
             if (!response.isDelimited()) {

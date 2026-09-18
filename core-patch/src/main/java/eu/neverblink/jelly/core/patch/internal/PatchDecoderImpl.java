@@ -70,6 +70,10 @@ public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
 
     @Override
     public void ingestRow(RdfPatchRow row) {
+        if (row == null) {
+            throw new RdfProtoDeserializationError("Row kind is not set.");
+        }
+
         switch (row.getRowFieldNumber()) {
             case RdfPatchRow.OPTIONS -> handleOptions(row.getOptions());
             case RdfPatchRow.STATEMENT_ADD -> handleStatementAdd(row.getStatementAdd());
@@ -111,10 +115,13 @@ public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
     }
 
     private void handleNamespaceAdd(RdfPatchNamespace nsRow) {
+        // The value is required for the namespace add operation
         final var valueIri = nsRow.getValue();
+        if (valueIri == null) {
+            throw new RdfProtoDeserializationError("Namespace add row '%s' has no IRI.".formatted(nsRow.getName()));
+        }
         patchHandler.addNamespace(
             nsRow.getName(),
-            // The value is required for the namespace add operation
             getNameDecoder().decode(valueIri.getPrefixId(), valueIri.getNameId()),
             convertGraphTermWrapped(nsRow)
         );

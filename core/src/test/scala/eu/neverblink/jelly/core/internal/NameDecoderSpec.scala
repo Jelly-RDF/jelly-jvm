@@ -12,15 +12,16 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
     .setMaxPrefixTableSize(8)
 
   def makeDecoder(opt: RdfStreamOptions): NameDecoderImpl[String] =
-    NameDecoderImpl(opt.getMaxPrefixTableSize(), opt.getMaxNameTableSize(), identity)
+    NameDecoderImpl(opt.getMaxPrefixTableSize, opt.getMaxNameTableSize, identity)
 
   "A NameDecoder" when {
     "empty" should {
-      "throw NullPointerException when trying to retrieve a non-existent IRI" in {
+      "throw exception when trying to retrieve a non-existent IRI" in {
         val dec = makeDecoder(smallOptions)
-        intercept[NullPointerException] {
+        val error = intercept[RdfProtoDeserializationError] {
           dec.decode(3, 5)
         }
+        error.getMessage should include("Prefix ID: 3, Name ID: 5")
       }
 
       "throw exception when trying to retrieve a non-existent IRI with no prefix" in {

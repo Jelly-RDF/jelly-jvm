@@ -50,6 +50,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         settings.add(JellySparqlParserSettings.MAX_NAME_TABLE_SIZE);
         settings.add(JellySparqlParserSettings.MAX_PREFIX_TABLE_SIZE);
         settings.add(JellySparqlParserSettings.MAX_DATATYPE_TABLE_SIZE);
+        settings.add(JellySparqlParserSettings.MAX_ROWS_PER_FRAME);
         return settings;
     }
 
@@ -72,7 +73,11 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             throw new IllegalArgumentException("Input stream must not be null");
         }
         final var resultsHandler = new ResultsHandler();
-        final SparqlDecoder decoder = converterFactory.decoder(resultsHandler, readSupportedOptions());
+        final SparqlDecoder decoder = converterFactory.decoder(
+            resultsHandler,
+            readSupportedOptions(),
+            getParserConfig().get(JellySparqlParserSettings.MAX_ROWS_PER_FRAME)
+        );
         try {
             final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
             final InputStream input = response.newInput();
