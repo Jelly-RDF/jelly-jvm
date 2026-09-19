@@ -171,7 +171,7 @@ class PatchDecoderHardeningSpec extends AnyWordSpec, Matchers:
     case _: IOException => true
     case _ => false
 
-  /** Valid frames spanning the patch row kinds, as the seed corpus. */
+  /** Valid frames spanning the patch row kinds, as the seed examples. */
   private lazy val corpus: Seq[Array[Byte]] =
     val frames = Seq(
       rdfPatchFrame(

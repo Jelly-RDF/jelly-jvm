@@ -237,8 +237,8 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
     case _: IOException => true
     case _ => false
 
-  /** Valid frames from the encoder, as the seed corpus. Between them these cover every column type,
-    * the lookup tables, repeated and unbound runs, and a boolean result.
+  /** Valid frames from the encoder, as the starting examples. Between them these cover every column
+    * type, the lookup tables, repeated and unbound runs, and a boolean result.
     */
   private lazy val corpus: Seq[Array[Byte]] =
     val encoder = MockSparqlConverterFactory.encoder(
