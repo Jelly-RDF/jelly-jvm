@@ -142,7 +142,6 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
      * @param nameId name ID
      * @return full IRI combining the prefix and the name
      * @throws RdfProtoDeserializationError if the IRI reference is invalid
-     * @throws NullPointerException if the IRI reference is invalid
      */
     @Override
     public TIri decode(int prefixId, int nameId) {
@@ -201,11 +200,21 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                 );
             }
             if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
+                final String iri;
+                try {
+                    iri = prefixEntry.prefix.concat(nameEntry.name);
+                } catch (NullPointerException e) {
+                    throw new RdfProtoDeserializationError(
+                        "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(
+                            originalPrefixId,
+                            originalNameId
+                        )
+                    );
+                }
                 // Update the last prefix
                 nameEntry.lastPrefixId = prefixId;
                 nameEntry.lastPrefixSerial = prefixEntry.serial;
-                // And compute a new IRI
-                nameEntry.lastIri = iriFactory.apply(prefixEntry.prefix.concat(nameEntry.name));
+                nameEntry.lastIri = iriFactory.apply(iri);
             } else if (nameEntry.lastIri == null) {
                 throw new RdfProtoDeserializationError(
                     "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(

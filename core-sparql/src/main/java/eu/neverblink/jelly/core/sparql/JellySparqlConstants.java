@@ -24,6 +24,20 @@ public final class JellySparqlConstants {
      */
     public static final int DEFAULT_MAX_VALUES_PER_FRAME = 4096;
 
+    /**
+     * Largest row count a frame may physically declare, whatever a reader is configured to accept.
+     */
+    public static final int MAX_ROWS_PER_FRAME = (1 << 27) - 1;
+
+    /**
+     * How many rows a writer puts in one frame by default, and how many a reader accepts in one
+     * frame unless told otherwise.
+     * <p>
+     * Readers that legitimately need bigger frames can
+     * raise the limit, up to {@link #MAX_ROWS_PER_FRAME}.
+     */
+    public static final int DEFAULT_MAX_ROWS_PER_FRAME = 1 << 20;
+
     public static final int PROTO_VERSION_1_0_X = 1;
     public static final int PROTO_VERSION = PROTO_VERSION_1_0_X;
 

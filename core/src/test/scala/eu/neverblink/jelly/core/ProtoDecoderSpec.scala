@@ -403,7 +403,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       error.getMessage should include("Error while decoding term")
-      error.getCause shouldBe a[NullPointerException]
+      error.getCause.getMessage should include("invalid IRI reference")
     }
   }
 
@@ -678,7 +678,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
       }
 
       error.getMessage should include("Error while decoding term")
-      error.getCause shouldBe a[NullPointerException]
+      error.getCause.getMessage should include("invalid IRI reference")
     }
   }
 

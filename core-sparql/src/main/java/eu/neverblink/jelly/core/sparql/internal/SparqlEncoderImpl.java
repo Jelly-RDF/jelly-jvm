@@ -14,6 +14,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
+import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
 import eu.neverblink.protoc.java.runtime.MessageCollection;
 import eu.neverblink.protoc.java.runtime.RepeatedInt;
@@ -46,8 +47,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     private static final int KIND_REPEAT = 0;
     private static final int KIND_UNBOUND = 1;
 
-    // The layout tokens are uint32 with skip in the upper 27 bits.
-    private static final int MAX_ROWS_PER_FRAME = (1 << 27) - 1;
+    // Frames are ended after this many rows, so that what we write stays readable
+    // by a reader running with the default row limit.
+    private static final int ROW_LIMIT_PER_FRAME = JellySparqlConstants.DEFAULT_MAX_ROWS_PER_FRAME;
 
     // Run lengths of 0–14 are inlined in the token. 15 uses an extension varint.
     private static final int MAX_INLINE_LEN = 15;
@@ -463,7 +465,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
      */
     private boolean hasRoomForAnotherRow() {
         // A table with its remaining-budget counter below zero has no room left
-        return rowCount < MAX_ROWS_PER_FRAME && usedNames[0] >= 0 && usedPrefixes[0] >= 0 && usedDatatypes[0] >= 0;
+        return rowCount < ROW_LIMIT_PER_FRAME && usedNames[0] >= 0 && usedPrefixes[0] >= 0 && usedDatatypes[0] >= 0;
     }
 
     /**

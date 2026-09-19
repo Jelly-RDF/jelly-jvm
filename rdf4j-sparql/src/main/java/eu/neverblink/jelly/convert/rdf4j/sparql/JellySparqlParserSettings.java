@@ -4,6 +4,7 @@ import static eu.neverblink.jelly.core.sparql.JellySparqlOptions.DEFAULT_SUPPORT
 
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.helpers.IntegerRioSetting;
 
@@ -52,5 +53,14 @@ public final class JellySparqlParserSettings {
         "eu.neverblink.jelly.convert.rdf4j.sparql.maxDatatypeTableSize",
         "Maximum supported size of the datatype table",
         DEFAULT_SUPPORTED_OPTIONS.getMaxDatatypeTableSize()
+    );
+
+    /**
+     * Without a limit, a frame of a few bytes can ask the parser for billions of rows.
+     */
+    public static final IntegerRioSetting MAX_ROWS_PER_FRAME = new IntegerRioSetting(
+        "eu.neverblink.jelly.convert.rdf4j.sparql.maxRowsPerFrame",
+        "Maximum number of rows accepted in a single frame",
+        JellySparqlConstants.DEFAULT_MAX_ROWS_PER_FRAME
     );
 }

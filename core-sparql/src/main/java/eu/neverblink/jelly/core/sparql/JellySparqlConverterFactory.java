@@ -46,13 +46,31 @@ public abstract class JellySparqlConverterFactory<
     }
 
     /**
-     * Create a new {@link SparqlDecoder} pushing the decoded results to the given handler.
+     * Create a new {@link SparqlDecoder} pushing the decoded results to the given handler,
+     * accepting {@link JellySparqlConstants#DEFAULT_MAX_ROWS_PER_FRAME} rows per frame.
      *
      * @param handler handler for the decoded results
      * @param supportedOptions supported options for the decoder
      * @return decoder
      */
     public final SparqlDecoder decoder(SparqlResultsHandler<TNode> handler, SparqlResultsOptions supportedOptions) {
-        return new SparqlDecoderImpl<>(converterFactory.decoderConverter(), handler, supportedOptions);
+        return decoder(handler, supportedOptions, JellySparqlConstants.DEFAULT_MAX_ROWS_PER_FRAME);
+    }
+
+    /**
+     * Create a new {@link SparqlDecoder} pushing the decoded results to the given handler.
+     *
+     * @param handler handler for the decoded results
+     * @param supportedOptions supported options for the decoder
+     * @param maxRowsPerFrame largest row count a frame may declare. Capped by
+     *        {@link JellySparqlConstants#MAX_ROWS_PER_FRAME}.
+     * @return decoder
+     */
+    public final SparqlDecoder decoder(
+        SparqlResultsHandler<TNode> handler,
+        SparqlResultsOptions supportedOptions,
+        int maxRowsPerFrame
+    ) {
+        return new SparqlDecoderImpl<>(converterFactory.decoderConverter(), handler, supportedOptions, maxRowsPerFrame);
     }
 }
