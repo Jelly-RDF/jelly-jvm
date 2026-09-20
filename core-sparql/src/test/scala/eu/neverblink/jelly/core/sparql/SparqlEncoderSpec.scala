@@ -427,6 +427,22 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.endFrame().getRowCount shouldBe 20
     }
 
+    "not let an unused lookup table limit the frame size" in {
+      // Regression: the size of the datatype table must not limit the size of the frame,
+      // if we have a lot of variables.
+      val e = encoder(JellySparqlOptions.BIG)
+      e.options.getMaxDatatypeTableSize should be(64)
+      val vars = (1 to 65).map(i => s"v$i")
+      e.setVariables(vars.asJava)
+      for row <- 1 to 10 do
+        withClue(s"row $row: ") {
+          e.appendRow(
+            vars.indices.map(i => Iri(s"https://a.org/r${row}c$i")).toArray[Node],
+          ) shouldBe true
+        }
+      e.endFrame().getRowCount shouldBe 10
+    }
+
     "throw for a single row that cannot fit in the lookup tables at all" in {
       // No framing decision can help here: one row needs more names than the table has
       val options = SparqlResultsOptions
