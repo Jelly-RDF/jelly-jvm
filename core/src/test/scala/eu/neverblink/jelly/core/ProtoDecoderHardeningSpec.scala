@@ -1,9 +1,9 @@
 package eu.neverblink.jelly.core
 
 import eu.neverblink.jelly.core.RdfHandler.AnyRdfHandler
-import eu.neverblink.jelly.core.helpers.Mrl.Node
+import eu.neverblink.jelly.core.helpers.Mrl.{Datatype, Node}
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
-import eu.neverblink.jelly.core.helpers.{ByteFuzzer, MockConverterFactory, ProtoCollector}
+import eu.neverblink.jelly.core.helpers.*
 import eu.neverblink.jelly.core.proto.v1.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -25,9 +25,15 @@ class ProtoDecoderHardeningSpec extends AnyWordSpec, Matchers:
       .setPhysicalType(PhysicalStreamType.TRIPLES)
       .setMaxDatatypeTableSize(datatypeTableSize)
 
+  private type Factory =
+    JellyConverterFactory[Node, Datatype, MockProtoEncoderConverter, MockProtoDecoderConverter]
+
   /** Feeds the rows to a fresh triples decoder and hands back whatever the last one threw. */
-  private def expectRejected(rows: Seq[RdfStreamRowValue]): RdfProtoDeserializationError =
-    val decoder = MockConverterFactory.triplesDecoder(
+  private def expectRejected(
+      rows: Seq[RdfStreamRowValue],
+      factory: Factory = MockConverterFactory,
+  ): RdfProtoDeserializationError =
+    val decoder = factory.triplesDecoder(
       ProtoCollector(),
       JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
     )
@@ -105,6 +111,37 @@ class ProtoDecoderHardeningSpec extends AnyWordSpec, Matchers:
           rdfNamespaceDeclaration("ex", rdfIri(1, 1)),
         ),
       )
+    }
+  }
+
+  "an IRI refused by the RDF library" should {
+    "be rejected in a triple" in {
+      expectRejected(
+        Seq(
+          options(),
+          rdfNameEntry(1, "relative/subject"),
+          rdfTriple(rdfIri(0, 1), rdfIri(0, 1), rdfIri(0, 1)),
+        ),
+        StrictMockConverterFactory,
+      ).getMessage should include("relative/subject")
+    }
+
+    "be rejected in a namespace declaration" in {
+      expectRejected(
+        Seq(
+          options(),
+          rdfNameEntry(1, "relative/ns"),
+          rdfNamespaceDeclaration("ex", rdfIri(0, 1)),
+        ),
+        StrictMockConverterFactory,
+      ).getMessage should include("namespace declaration 'ex'")
+    }
+
+    "be rejected in a datatype lookup entry" in {
+      expectRejected(
+        Seq(options(), rdfDatatypeEntry(1, "relative/dt")),
+        StrictMockConverterFactory,
+      ).getMessage should include("datatype 'relative/dt'")
     }
   }
 

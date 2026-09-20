@@ -18,7 +18,7 @@ object SparqlDataGen:
   private val datatypeBase = "https://example.org/dt#"
   // Canonically cased (RFC 5646) on purpose: Jena rewrites "en-gb" to "en-GB" when it builds the
   // node, so a non-canonical tag here would make the mock and Jena models disagree about the data
-  // before Jelly ever sees it.
+  // before Jelly ever sees it. Note that by spec "en-gb" and "en-GB" are equivalent.
   private val langs = IndexedSeq("en", "fr", "de", "es", "pl", "nl", "en-GB", "pt-BR")
 
   /** Rows of a generated result set, in row-major order. Unbound cells are nulls. */

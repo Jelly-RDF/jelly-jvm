@@ -129,7 +129,19 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
     }
 
     protected void handleDatatype(RdfDatatypeEntry datatype) {
-        getDatatypeLookup().update(datatype.getId(), converter.makeDatatype(datatype.getValue()));
+        final TDatatype dt;
+        try {
+            dt = converter.makeDatatype(datatype.getValue());
+        } catch (RdfProtoDeserializationError e) {
+            throw e;
+        } catch (Exception e) {
+            // Most likely the IRI was not accepted by the RDF library
+            throw new RdfProtoDeserializationError(
+                "Error while decoding datatype '%s': %s".formatted(datatype.getValue(), e),
+                e
+            );
+        }
+        getDatatypeLookup().update(datatype.getId(), dt);
     }
 
     protected void handleNamespace(RdfNamespaceDeclaration namespace) {
@@ -139,7 +151,19 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
                 "Namespace declaration '%s' has no IRI.".formatted(namespace.getName())
             );
         }
-        protoHandler.handleNamespace(namespace.getName(), getNameDecoder().decode(iri.getPrefixId(), iri.getNameId()));
+        final TNode node;
+        try {
+            node = getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
+        } catch (RdfProtoDeserializationError e) {
+            throw e;
+        } catch (Exception e) {
+            // Same as above
+            throw new RdfProtoDeserializationError(
+                "Error while decoding the IRI of namespace declaration '%s': %s".formatted(namespace.getName(), e),
+                e
+            );
+        }
+        protoHandler.handleNamespace(namespace.getName(), node);
     }
 
     protected void handleTriple(RdfTriple triple) {

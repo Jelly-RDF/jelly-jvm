@@ -5,7 +5,7 @@ import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.proto.v1.{RdfIri, RdfLiteral, RdfLookupEntryPacked}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
 import eu.neverblink.jelly.core.helpers.ByteFuzzer
-import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
+import eu.neverblink.jelly.core.sparql.helpers.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -30,6 +30,9 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
       JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS,
       maxRowsPerFrame,
     )
+
+  private def newStrictDecoder(handler: SparqlResultsHandler[Node] = ResultsCollector()) =
+    StrictMockSparqlConverterFactory.decoder(handler, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
 
   private def expectRejected(body: => Any): RdfProtoDeserializationError =
     val outcome =
@@ -206,6 +209,39 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
             ),
         )
       expectRejected(newDecoder().ingestFrame(frame))
+    }
+  }
+
+  "an IRI refused by the RDF library" should {
+    "be rejected in an IRI column" in {
+      val frame = oneVariableFrame(1)
+        .addNames(RdfLookupEntryPacked.newInstance().setId(1).addValues("relative/x"))
+        .addIriColumns(SparqlIriColumn.newInstance().addNameIds(1))
+      expectRejected(newStrictDecoder().ingestFrame(frame)).getMessage should include(
+        "column for variable 'x'",
+      )
+    }
+
+    "be rejected in a polymorphic column" in {
+      val frame = oneVariableFrame(1)
+        .addNames(RdfLookupEntryPacked.newInstance().setId(1).addValues("relative/x"))
+        .addPolyColumns(
+          SparqlPolyColumn
+            .newInstance()
+            .addValues(SparqlTerm.newInstance().setIri(RdfIri.newInstance().setNameId(1))),
+        )
+      expectRejected(newStrictDecoder().ingestFrame(frame)).getMessage should include(
+        "column for variable 'x'",
+      )
+    }
+
+    "be rejected in a datatype lookup entry" in {
+      val frame = oneVariableFrame(0)
+        .addDatatypes(RdfLookupEntryPacked.newInstance().setId(1).addValues("relative/dt"))
+        .addIriColumns(SparqlIriColumn.newInstance())
+      expectRejected(newStrictDecoder().ingestFrame(frame)).getMessage should include(
+        "datatype 'relative/dt'",
+      )
     }
   }
 
