@@ -123,7 +123,19 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         for (final RdfLookupEntryPacked entry : frame.getDatatypes()) {
             int id = entry.getId();
             for (final String value : entry.getValues()) {
-                getDatatypeLookup().update(id, converter.makeDatatype(value));
+                final TDatatype datatype;
+                try {
+                    datatype = converter.makeDatatype(value);
+                } catch (RdfProtoDeserializationError e) {
+                    throw e;
+                } catch (Exception e) {
+                    // Most likely the RDF library rejected the IRI
+                    throw new RdfProtoDeserializationError(
+                        "Error while decoding datatype '%s': %s".formatted(value, e),
+                        e
+                    );
+                }
+                getDatatypeLookup().update(id, datatype);
                 id = 0;
             }
         }
@@ -154,22 +166,31 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             );
         }
 
-        // Decode each variable's column into a row-indexed array (reused across frames)
+        // Decode each variable's column into a row-indexed array (reused across frames).
         for (int v = 0; v < variableNames.length; v++) {
             final int c = varToColumn[v];
             final Object[] out = decodeBufferForVariable(v, rows);
-            if (c < iriEnd) {
-                final SparqlIriColumn column = get(iriColumns, c);
-                decodeColumn(new IriReader(column), column.getLayouts(), rows, out);
-            } else if (c < bnodeEnd) {
-                final SparqlBnodeColumn column = get(bnodeColumns, c - iriEnd);
-                decodeColumn(new BnodeReader(column.getValues().iterator()), column.getLayouts(), rows, out);
-            } else if (c < literalEnd) {
-                final SparqlLiteralColumn column = get(literalColumns, c - bnodeEnd);
-                decodeColumn(literalReader(column), column.getLayouts(), rows, out);
-            } else {
-                final SparqlPolyColumn column = get(polyColumns, c - literalEnd);
-                decodeColumn(new PolyReader(column.getValues().iterator()), column.getLayouts(), rows, out);
+            try {
+                if (c < iriEnd) {
+                    final SparqlIriColumn column = get(iriColumns, c);
+                    decodeColumn(new IriReader(column), column.getLayouts(), rows, out);
+                } else if (c < bnodeEnd) {
+                    final SparqlBnodeColumn column = get(bnodeColumns, c - iriEnd);
+                    decodeColumn(new BnodeReader(column.getValues().iterator()), column.getLayouts(), rows, out);
+                } else if (c < literalEnd) {
+                    final SparqlLiteralColumn column = get(literalColumns, c - bnodeEnd);
+                    decodeColumn(literalReader(column), column.getLayouts(), rows, out);
+                } else {
+                    final SparqlPolyColumn column = get(polyColumns, c - literalEnd);
+                    decodeColumn(new PolyReader(column.getValues().iterator()), column.getLayouts(), rows, out);
+                }
+            } catch (RdfProtoDeserializationError e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RdfProtoDeserializationError(
+                    "Error while decoding the column for variable '%s': %s".formatted(variableNames[v], e),
+                    e
+                );
             }
         }
 

@@ -1,7 +1,12 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql
 
 import eu.neverblink.jelly.core.RdfProtoSerializationError
-import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame
+import eu.neverblink.jelly.core.proto.v1.RdfLookupEntryPacked
+import eu.neverblink.jelly.core.proto.v1.sparql.{
+  SparqlIriColumn,
+  SparqlResultsFrame,
+  SparqlVariable,
+}
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions
 import org.eclipse.rdf4j.model.{IRI, Value}
 import org.eclipse.rdf4j.model.base.AbstractValueFactory
@@ -14,6 +19,7 @@ import org.eclipse.rdf4j.query.resultio.{
   BooleanQueryResultParserRegistry,
   BooleanQueryResultWriterRegistry,
   QueryResultIO,
+  QueryResultParseException,
   TupleQueryResultParserRegistry,
   TupleQueryResultWriterRegistry,
 }
@@ -335,5 +341,24 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
       parser.parseQueryResult(ByteArrayInputStream(bytes))
       collector.getBindingSets.asScala.head.getValue("x") shouldBe iri("a")
       createdIris should be > 0
+    }
+
+    "report an IRI refused by the value factory as a parse error" in {
+      val frame = SparqlResultsFrame
+        .newInstance()
+        .setOptions(JellySparqlOptions.SMALL)
+        .setRowCount(1)
+        .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
+        .addNames(RdfLookupEntryPacked.newInstance().setId(1).addValues("relative/x"))
+        .addIriColumns(SparqlIriColumn.newInstance().addNameIds(1))
+      val out = ByteArrayOutputStream()
+      frame.writeDelimitedTo(out)
+
+      val parser = JellySparqlTupleParser()
+      parser.setQueryResultHandler(QueryResultCollector())
+      val e = intercept[QueryResultParseException] {
+        parser.parseQueryResult(ByteArrayInputStream(out.toByteArray))
+      }
+      e.getMessage should include("relative/x")
     }
   }
