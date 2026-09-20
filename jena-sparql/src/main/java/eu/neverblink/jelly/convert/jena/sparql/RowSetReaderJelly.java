@@ -51,6 +51,24 @@ public final class RowSetReaderJelly implements RowSetReader {
         public Options(SparqlResultsOptions supportedOptions) {
             this(supportedOptions, JellySparqlConstants.DEFAULT_MAX_ROWS_PER_FRAME);
         }
+
+        /**
+         * Returns these options with whatever Jena's Context sets on top of them. Settings absent
+         * from the context are left as-is.
+         *
+         * @param context the context to read, may be null
+         * @return the updated options
+         * @see JellySparqlLanguage#SYMBOL_SUPPORTED_OPTIONS
+         */
+        public Options withContext(Context context) {
+            if (context == null) {
+                return this;
+            }
+            return new Options(
+                context.get(JellySparqlLanguage.SYMBOL_SUPPORTED_OPTIONS, this.supportedOptions),
+                context.getInt(JellySparqlLanguage.SYMBOL_MAX_ROWS_PER_FRAME, this.maxRowsPerFrame)
+            );
+        }
     }
 
     /**
@@ -69,7 +87,7 @@ public final class RowSetReaderJelly implements RowSetReader {
 
     @Override
     public QueryExecResult readAny(InputStream in, Context context) {
-        final Object result = readInternal(in);
+        final Object result = readInternal(in, options.withContext(context));
         if (result instanceof Boolean askResult) {
             return new QueryExecResult(askResult);
         }
@@ -78,7 +96,7 @@ public final class RowSetReaderJelly implements RowSetReader {
 
     @Override
     public RowSet read(InputStream in, Context context) {
-        final Object result = readInternal(in);
+        final Object result = readInternal(in, options.withContext(context));
         if (result instanceof Boolean) {
             throw new RiotException("The stream carries a boolean (ASK) result, not bindings. Use readAny to read it.");
         }
@@ -88,7 +106,7 @@ public final class RowSetReaderJelly implements RowSetReader {
     /**
      * Reads the stream, returning either a RowSet (bindings) or a Boolean (ASK result).
      */
-    private Object readInternal(InputStream in) {
+    private Object readInternal(InputStream in, Options options) {
         final RowCollector handler = new RowCollector();
         final SparqlDecoder decoder = converterFactory.decoder(
             handler,

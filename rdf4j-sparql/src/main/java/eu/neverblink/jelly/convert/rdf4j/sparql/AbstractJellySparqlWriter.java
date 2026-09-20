@@ -55,6 +55,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         final var settings = new HashSet<>(super.getSupportedSettings());
         settings.add(JellySparqlWriterSettings.MAX_VALUES_PER_FRAME);
         settings.add(JellySparqlWriterSettings.DELIMITED_OUTPUT);
+        settings.add(JellySparqlWriterSettings.STREAM_NAME);
         settings.add(JellySparqlWriterSettings.MAX_NAME_TABLE_SIZE);
         settings.add(JellySparqlWriterSettings.MAX_PREFIX_TABLE_SIZE);
         settings.add(JellySparqlWriterSettings.MAX_DATATYPE_TABLE_SIZE);
@@ -170,6 +171,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     private SparqlResultsOptions readOptions() {
         final var config = getWriterConfig();
         return SparqlResultsOptions.newInstance()
+            .setStreamName(config.get(JellySparqlWriterSettings.STREAM_NAME))
             .setMaxNameTableSize(config.get(JellySparqlWriterSettings.MAX_NAME_TABLE_SIZE))
             .setMaxPrefixTableSize(config.get(JellySparqlWriterSettings.MAX_PREFIX_TABLE_SIZE))
             .setMaxDatatypeTableSize(config.get(JellySparqlWriterSettings.MAX_DATATYPE_TABLE_SIZE));

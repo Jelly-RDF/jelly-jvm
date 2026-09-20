@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql
 
 import eu.neverblink.jelly.core.RdfProtoSerializationError
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions
 import org.eclipse.rdf4j.model.{IRI, Value}
 import org.eclipse.rdf4j.model.base.AbstractValueFactory
@@ -67,6 +68,9 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
       .map(bs => bs.asScala.map(b => b.getName -> b.getValue).toMap)
       .toSeq
     (names, rows)
+
+  private def firstFrameOptions(bytes: Array[Byte]) =
+    SparqlResultsFrame.parseDelimitedFrom(ByteArrayInputStream(bytes)).getOptions
 
   private def roundTrip(
       vars: Seq[String],
@@ -252,6 +256,7 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
       writer.getSupportedSettings.asScala should contain allOf (
         JellySparqlWriterSettings.MAX_VALUES_PER_FRAME,
         JellySparqlWriterSettings.DELIMITED_OUTPUT,
+        JellySparqlWriterSettings.STREAM_NAME,
         JellySparqlWriterSettings.MAX_NAME_TABLE_SIZE,
         JellySparqlWriterSettings.MAX_PREFIX_TABLE_SIZE,
         JellySparqlWriterSettings.MAX_DATATYPE_TABLE_SIZE,
@@ -263,6 +268,40 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
         JellySparqlParserSettings.MAX_PREFIX_TABLE_SIZE,
         JellySparqlParserSettings.MAX_DATATYPE_TABLE_SIZE,
       )
+    }
+
+    "leave the stream name empty unless it is set" in {
+      val bytes = write(Seq("x"), Seq(Seq[Value | Null](iri("a"))))
+      firstFrameOptions(bytes).getStreamName shouldBe ""
+    }
+
+    "write the stream name given in the settings" in {
+      val bytes = write(
+        Seq("x"),
+        Seq(Seq[Value | Null](iri("a"))),
+        JellySparqlWriterSettings.empty().setStreamName("my-topic"),
+      )
+      firstFrameOptions(bytes).getStreamName shouldBe "my-topic"
+    }
+
+    "use the stream name from the Jelly options" in {
+      val options = JellySparqlOptions.SMALL.clone().setStreamName("from-options")
+      val bytes = write(
+        Seq("x"),
+        Seq(Seq[Value | Null](iri("a"))),
+        JellySparqlWriterSettings.empty().setJellyOptions(options),
+      )
+      val got = firstFrameOptions(bytes)
+      got.getStreamName shouldBe "from-options"
+      got.getMaxNameTableSize shouldBe JellySparqlOptions.SMALL_NAME_TABLE_SIZE
+    }
+
+    "write the stream name on a boolean (ASK) result too" in {
+      val out = ByteArrayOutputStream()
+      val writer = JellySparqlBooleanWriter(Rdf4jSparqlConverterFactory.getInstance(), out)
+      writer.setWriterConfig(JellySparqlWriterSettings.empty().setStreamName("ask-topic"))
+      writer.write(true)
+      firstFrameOptions(out.toByteArray).getStreamName shouldBe "ask-topic"
     }
 
     "refuse a stream whose lookup tables are larger than the parser supports" in {

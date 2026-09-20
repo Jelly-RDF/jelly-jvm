@@ -43,6 +43,39 @@ public final class RowSetWriterJelly implements RowSetWriter {
         public Options() {
             this(JellySparqlOptions.BIG, JellySparqlConstants.DEFAULT_MAX_VALUES_PER_FRAME, true);
         }
+
+        /**
+         * Returns these options with Jena's Context settings applied on top.
+         *
+         * @param context the context to read, may be null
+         * @return the updated options
+         * @see JellySparqlLanguage#SYMBOL_STREAM_OPTIONS
+         */
+        public Options withContext(Context context) {
+            if (context == null) {
+                return this;
+            }
+            SparqlResultsOptions newOptions = this.options;
+            final String presetName = context.getAsString(JellySparqlLanguage.SYMBOL_PRESET);
+            if (presetName != null && !presetName.isEmpty()) {
+                newOptions = JellySparqlLanguage.PRESETS.get(presetName);
+                if (newOptions == null) {
+                    throw new RiotException(
+                        "Unknown Jelly-SPARQL preset: %s. Available presets: %s".formatted(
+                            presetName,
+                            String.join(", ", JellySparqlLanguage.PRESETS.keySet())
+                        )
+                    );
+                }
+            }
+            return new Options(
+                context.get(JellySparqlLanguage.SYMBOL_STREAM_OPTIONS, newOptions),
+                context.getInt(JellySparqlLanguage.SYMBOL_MAX_VALUES_PER_FRAME, this.maxValuesPerFrame),
+                context.isDefined(JellySparqlLanguage.SYMBOL_DELIMITED_OUTPUT)
+                    ? context.isTrue(JellySparqlLanguage.SYMBOL_DELIMITED_OUTPUT)
+                    : this.delimited
+            );
+        }
     }
 
     /**
@@ -61,6 +94,7 @@ public final class RowSetWriterJelly implements RowSetWriter {
 
     @Override
     public void write(OutputStream out, RowSet rowSet, Context context) {
+        final Options options = this.options.withContext(context);
         final List<Var> vars = rowSet.getResultVars();
         final SparqlEncoder<Node> encoder = converterFactory.encoder(SparqlEncoder.Params.of(options.options()));
         encoder.setVariables(vars.stream().map(Var::getVarName).toList());
@@ -122,6 +156,7 @@ public final class RowSetWriterJelly implements RowSetWriter {
 
     @Override
     public void write(OutputStream out, boolean result, Context context) {
+        final Options options = this.options.withContext(context);
         final SparqlResultsFrame frame = SparqlEncoder.askResultFrame(options.options(), result);
         try {
             if (options.delimited()) {
