@@ -431,12 +431,14 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       // Regression: the size of the datatype table must not limit the size of the frame,
       // if we have a lot of variables.
       val e = encoder(JellySparqlOptions.BIG)
-      e.options.getMaxDatatypeTableSize should be (64)
+      e.options.getMaxDatatypeTableSize should be(64)
       val vars = (1 to 65).map(i => s"v$i")
       e.setVariables(vars.asJava)
       for row <- 1 to 10 do
         withClue(s"row $row: ") {
-          e.appendRow(vars.indices.map(i => Iri(s"https://a.org/r${row}c$i")).toArray[Node]) shouldBe true
+          e.appendRow(
+            vars.indices.map(i => Iri(s"https://a.org/r${row}c$i")).toArray[Node],
+          ) shouldBe true
         }
       e.endFrame().getRowCount shouldBe 10
     }
