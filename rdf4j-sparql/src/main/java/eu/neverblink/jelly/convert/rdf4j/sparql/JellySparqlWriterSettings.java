@@ -7,6 +7,7 @@ import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BooleanRioSetting;
 import org.eclipse.rdf4j.rio.helpers.IntegerRioSetting;
+import org.eclipse.rdf4j.rio.helpers.StringRioSetting;
 
 /**
  * Settings for the Jelly-SPARQL query result writers.
@@ -30,7 +31,13 @@ public final class JellySparqlWriterSettings extends WriterConfig {
         return this;
     }
 
+    public JellySparqlWriterSettings setStreamName(String streamName) {
+        this.set(STREAM_NAME, streamName);
+        return this;
+    }
+
     public JellySparqlWriterSettings setJellyOptions(SparqlResultsOptions options) {
+        this.set(STREAM_NAME, options.getStreamName());
         this.set(MAX_NAME_TABLE_SIZE, options.getMaxNameTableSize());
         this.set(MAX_PREFIX_TABLE_SIZE, options.getMaxPrefixTableSize());
         this.set(MAX_DATATYPE_TABLE_SIZE, options.getMaxDatatypeTableSize());
@@ -52,6 +59,12 @@ public final class JellySparqlWriterSettings extends WriterConfig {
             "ONLY ONE FRAME, so a large result set will not fit – either because it runs out of memory, or " +
             "because its lookup tables overflow. **Disable this only if you know what you are doing.**",
         true
+    );
+
+    public static final StringRioSetting STREAM_NAME = new StringRioSetting(
+        "eu.neverblink.jelly.convert.rdf4j.sparql.streamName",
+        "Stream name",
+        ""
     );
 
     public static final IntegerRioSetting MAX_NAME_TABLE_SIZE = new IntegerRioSetting(
