@@ -279,8 +279,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
      * lookups evict the least recently used entry and everything this frame touched sits at
      * the recent end, so the frame stays safe exactly as long as it has not touched every id
      * of the table. The budget is set so that one more row of fresh ids still fits: the
-     * table size minus one potential id per variable. Note that this will not work for triple terms,
-     * but that's a future problem...
+     * table size minus one potential id per variable, floored at zero. Note that this will not
+     * work for triple terms, but that's a future problem...
      */
     private final long[] usedNames;
     private final long[] usedPrefixes;
@@ -313,7 +313,13 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
 
     private static long usedIdsBudget(int tableSize, int variables) {
         // If table size is 0, then it's not used (does not constrain us)
-        return tableSize == 0 ? Long.MAX_VALUE : tableSize - variables;
+        if (tableSize == 0) {
+            return Long.MAX_VALUE;
+        }
+        // Floor at 0 to avoid a situation where there are more variables than slots
+        // in e.g., datatype table, which causes the budget to be exhausted on the
+        // first row.
+        return Math.max(tableSize - variables, 0);
     }
 
     /**
