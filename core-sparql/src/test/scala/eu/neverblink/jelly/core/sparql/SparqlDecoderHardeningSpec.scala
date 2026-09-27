@@ -2,7 +2,7 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.{RdfIri, RdfLiteral, RdfLookupEntryPacked}
+import eu.neverblink.jelly.core.proto.v1.{RdfIri, RdfLiteral2, RdfLookupEntryPacked}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
 import eu.neverblink.jelly.core.helpers.ByteFuzzer
 import eu.neverblink.jelly.core.sparql.helpers.*
@@ -171,7 +171,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
         .addLiteralColumns(
           SparqlLiteralColumn
             .newInstance()
-            .addValues(RdfLiteral.newInstance().setLex("1").setDatatype(1)),
+            .addValues(RdfLiteral2.newInstance().setLex("1").setDatatype(1)),
         )
       expectRejected(newDecoder().ingestFrame(frame))
     }
@@ -181,7 +181,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
         .addLiteralColumns(
           SparqlLiteralColumn
             .newInstance()
-            .addValues(RdfLiteral.newInstance().setLex("1").setDatatype(0)),
+            .addValues(RdfLiteral2.newInstance().setLex("1").setDatatype(0)),
         )
       expectRejected(newDecoder().ingestFrame(frame))
     }

@@ -208,7 +208,7 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
 
         @Override
         protected void handleOptions(RdfStreamOptions opts) {
-            if (!opts.getPhysicalType().equals(PhysicalStreamType.TRIPLES)) {
+            if (opts.getPhysicalType() != PhysicalStreamType.TRIPLES) {
                 throw new RdfProtoDeserializationError("Incoming stream type is not TRIPLES.");
             }
             super.handleOptions(opts);
@@ -250,7 +250,7 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
 
         @Override
         protected void handleOptions(RdfStreamOptions opts) {
-            if (!opts.getPhysicalType().equals(PhysicalStreamType.QUADS)) {
+            if (opts.getPhysicalType() != PhysicalStreamType.QUADS) {
                 throw new RdfProtoDeserializationError("Incoming stream type is not QUADS.");
             }
             super.handleOptions(opts);
@@ -298,7 +298,7 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
 
         @Override
         protected void handleOptions(RdfStreamOptions opts) {
-            if (!opts.getPhysicalType().equals(PhysicalStreamType.GRAPHS)) {
+            if (opts.getPhysicalType() != PhysicalStreamType.GRAPHS) {
                 throw new RdfProtoDeserializationError("Incoming stream type is not GRAPHS.");
             }
             super.handleOptions(opts);
@@ -359,7 +359,7 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
 
         @Override
         protected void handleOptions(RdfStreamOptions opts) {
-            if (!opts.getPhysicalType().equals(PhysicalStreamType.GRAPHS)) {
+            if (opts.getPhysicalType() != PhysicalStreamType.GRAPHS) {
                 throw new RdfProtoDeserializationError("Incoming stream type is not GRAPHS.");
             }
             super.handleOptions(opts);

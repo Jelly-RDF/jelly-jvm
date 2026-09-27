@@ -2,7 +2,11 @@ package eu.neverblink.jelly.core.sparql.gen
 
 /** Term type that a column is predominantly made of. */
 enum ColumnKind:
-  case Iri, BNode, PlainLiteral, LangLiteral, DtLiteral
+  case Iri, BNode, PlainLiteral, LangLiteral, DtLiteral,
+    /** RDF 1.2 directional language-tagged strings. */
+    DirLangLiteral,
+    /** RDF 1.2 triple terms, with fresh IRIs in every value, some of them nested. */
+    TripleTerm
 
 /** How the unbound cells of a column are distributed over the rows. */
 enum Sparsity:

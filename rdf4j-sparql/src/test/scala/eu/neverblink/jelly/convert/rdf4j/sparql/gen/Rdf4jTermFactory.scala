@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql.gen
 
 import eu.neverblink.jelly.core.sparql.gen.{TermFactory, TermSpec}
-import org.eclipse.rdf4j.model.Value
+import org.eclipse.rdf4j.model.{IRI, Literal, Resource, Value}
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 
 /** Materializes generated terms into RDF4J values. */
@@ -15,5 +15,13 @@ object Rdf4jTermFactory extends TermFactory[Value]:
     case TermSpec.PlainLiteral(lex) => vf.createLiteral(lex)
     case TermSpec.LangLiteral(lex, lang) => vf.createLiteral(lex, lang)
     case TermSpec.DtLiteral(lex, datatype) => vf.createLiteral(lex, vf.createIRI(datatype))
+    case TermSpec.DirLangLiteral(lex, lang, ltr) =>
+      vf.createLiteral(
+        lex,
+        lang,
+        if ltr then Literal.BaseDirection.LTR else Literal.BaseDirection.RTL,
+      )
+    case TermSpec.TripleTerm(s, p, o) =>
+      vf.createTripleTerm(make(s).asInstanceOf[Resource], make(p).asInstanceOf[IRI], make(o))
 
   override def newRow(size: Int): Array[Value] = new Array[Value](size)

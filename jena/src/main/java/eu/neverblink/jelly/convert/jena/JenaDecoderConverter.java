@@ -1,11 +1,13 @@
 package eu.neverblink.jelly.convert.jena;
 
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.utils.QuadMaker;
 import eu.neverblink.jelly.core.utils.TripleMaker;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.TextDirection;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 
@@ -21,6 +23,15 @@ public final class JenaDecoderConverter
     @Override
     public Node makeLangLiteral(String lex, String lang) {
         return NodeFactory.createLiteralLang(lex, lang);
+    }
+
+    @Override
+    public Node makeDirLangLiteral(String lex, String lang, RdfBaseDirection direction) {
+        return NodeFactory.createLiteralDirLang(
+            lex,
+            lang,
+            direction == RdfBaseDirection.LTR ? TextDirection.LTR : TextDirection.RTL
+        );
     }
 
     @Override

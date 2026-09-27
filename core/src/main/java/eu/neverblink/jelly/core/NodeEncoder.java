@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core;
 
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.proto.v1.RdfDefaultGraph;
 import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
@@ -50,6 +51,22 @@ public interface NodeEncoder<TNode> {
      * @param lang The language tag.
      */
     RdfLiteral makeLangLiteral(TNode lit, String lex, String lang);
+
+    /**
+     * Encode a directional language-tagged literal (RDF 1.2, rdf:dirLangString).
+     * <p>
+     * The default ignores the direction and encodes an ordinary language-tagged literal, as
+     * formats without base directions (Jelly-RDF) do. Encoders that can include the direction
+     * override this.
+     *
+     * @param lit The literal node. This is used for caching and deduplication.
+     * @param lex The lexical form of the literal.
+     * @param lang The language tag.
+     * @param direction The base direction – LTR or RTL, never NONE.
+     */
+    default RdfLiteral makeDirLangLiteral(TNode lit, String lex, String lang, RdfBaseDirection direction) {
+        return makeLangLiteral(lit, lex, lang);
+    }
 
     /**
      * Encode a datatype literal (not xsd:string and not language-tagged).

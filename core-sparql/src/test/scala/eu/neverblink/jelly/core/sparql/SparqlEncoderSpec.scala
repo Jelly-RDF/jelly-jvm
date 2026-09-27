@@ -164,7 +164,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
         e.appendRow(
           Array[Node](
             Iri("https://a.org/new"),
-            TripleNode(Iri("https://a.org/s"), Iri("https://a.org/p"), Iri("https://a.org/o")),
+            DefaultGraphNode(),
           ),
         )
       }

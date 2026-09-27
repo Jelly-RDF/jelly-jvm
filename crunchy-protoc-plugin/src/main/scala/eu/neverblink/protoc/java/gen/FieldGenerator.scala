@@ -236,12 +236,11 @@ class FieldGenerator(val info: FieldInfo):
       method.addStatement(named("$field:N = input.readBytes()"))
     else if (info.isPrimitive)
       method.addStatement(named("$field:N = input.read$capitalizedType:L()"))
-    else if (info.isEnum) {
-      method.addStatement("final int value = input.readInt32()")
-        .beginControlFlow("if ($T.forNumber(value) != null)", typeName)
-        .addStatement(named("$field:N = value"))
-      method.endControlFlow
-    } else throw new IllegalStateException("unhandled field: " + info.descriptor)
+    else if (info.isEnum)
+      // proto3 enums are open: an unknown value is kept as a number, so that the reader can tell
+      // it apart from the default and reject it. The enum getter returns null for it.
+      method.addStatement(named("$field:N = input.readInt32()"))
+    else throw new IllegalStateException("unhandled field: " + info.descriptor)
     true
 
   /** @return

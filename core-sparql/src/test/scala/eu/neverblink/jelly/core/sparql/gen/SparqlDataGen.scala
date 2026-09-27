@@ -110,6 +110,26 @@ object SparqlDataGen:
         )
       case ColumnKind.DtLiteral =>
         (0 until n).map(j => TermSpec.DtLiteral(pad(s"$j", len), s"${datatypeBase}d${j % ns}"))
+      case ColumnKind.DirLangLiteral =>
+        // Each "namespace" is one combination of a tag and a direction: 1 means a single one
+        (0 until n).map { j =>
+          val k = j % ns
+          TermSpec.DirLangLiteral(pad(s"value $j ", len), langs(k / 2 % langs.size), k % 2 == 0)
+        }
+      case ColumnKind.TripleTerm =>
+        (0 until n).map { j =>
+          def iri(name: String) = TermSpec.Iri(s"$namespaceBase${j % ns}#${pad(name, len)}")
+          val obj = j % 3 match
+            case 0 => iri(s"o$j")
+            case 1 => TermSpec.DirLangLiteral(s"value $j", "en", j % 2 == 0)
+            case _ =>
+              TermSpec.TripleTerm(
+                TermSpec.BNode(s"b$j"),
+                iri(s"q$j"),
+                TermSpec.DtLiteral(s"$j", s"${datatypeBase}d${j % ns}"),
+              )
+          TermSpec.TripleTerm(iri(s"s$j"), iri(s"p${j % 16}"), obj)
+        }
 
   private def pad(base: String, length: Int): String =
     if base.length >= length then base else base + "x" * (length - base.length)
@@ -234,6 +254,35 @@ object SparqlDataGen:
     // preset puts a language-tagged or a datatype literal in a polymorphic column. Those take
     // their own branches when the column is written out, and the IRI-based poly presets above
     // never reach them.
+    // --- RDF 1.2 terms ---
+    // One tag and direction for the whole column (the lexical form), then all four combinations
+    // of two tags and two directions (the full form).
+    ResultSetSpec(
+      "lit-dirlang-one",
+      Seq(ColumnSpec(ColumnKind.DirLangLiteral, distinctValues = 2048, namespaces = 1)),
+      N,
+    ),
+    ResultSetSpec(
+      "lit-dirlang",
+      Seq(ColumnSpec(ColumnKind.DirLangLiteral, distinctValues = 2048, namespaces = 4)),
+      N,
+    ),
+    // Triple terms with fresh IRIs in every value, some nested: stresses the lookup budget of a
+    // frame, as one value can need several name entries. Next to an IRI column, and mixed with
+    // IRIs in their own column.
+    ResultSetSpec(
+      "triple-terms",
+      Seq(
+        ColumnSpec(ColumnKind.TripleTerm, distinctValues = N, namespaces = 4),
+        ColumnSpec(distinctValues = 2048),
+      ),
+      N,
+    ),
+    ResultSetSpec(
+      "poly-triple-terms",
+      Seq(ColumnSpec(ColumnKind.TripleTerm, distinctValues = 4096, mixFraction = 0.5)),
+      N,
+    ),
     ResultSetSpec(
       "poly-lang",
       Seq(

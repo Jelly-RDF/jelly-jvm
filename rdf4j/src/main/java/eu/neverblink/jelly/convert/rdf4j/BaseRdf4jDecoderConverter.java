@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.rdf4j;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.utils.QuadMaker;
 import eu.neverblink.jelly.core.utils.TripleMaker;
 import org.eclipse.rdf4j.model.*;
@@ -23,6 +24,15 @@ public abstract class BaseRdf4jDecoderConverter
 
     public final ValueFactory getValueFactory() {
         return vf;
+    }
+
+    @Override
+    public Value makeDirLangLiteral(String lex, String lang, RdfBaseDirection direction) {
+        return vf.createLiteral(
+            lex,
+            lang,
+            direction == RdfBaseDirection.LTR ? Literal.BaseDirection.LTR : Literal.BaseDirection.RTL
+        );
     }
 
     @Override

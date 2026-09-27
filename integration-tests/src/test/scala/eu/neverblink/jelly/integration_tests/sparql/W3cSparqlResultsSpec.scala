@@ -8,17 +8,17 @@ import eu.neverblink.jelly.convert.rdf4j.sparql.{
   JellySparqlWriterSettings,
   Rdf4jSparqlConverterFactory,
 }
+import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.sparql.{JellySparqlConstants, JellySparqlOptions}
 import eu.neverblink.jelly.core.sparql.gen.{SparqlDataGen, TermSpec}
 import org.apache.jena.datatypes.xsd.XSDDatatype
-import org.apache.jena.graph.Node
+import org.apache.jena.graph.{Node, TextDirection}
 import org.apache.jena.rdf.model.{Model, Property, ResourceFactory}
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.riot.resultset.ResultSetLang
 import org.apache.jena.sparql.core.Var
 import org.apache.jena.sparql.engine.binding.Binding
 import org.apache.jena.sparql.resultset.{ResultsReader, SPARQLResult}
-import org.apache.jena.sys.JenaSystem
 import org.eclipse.rdf4j.query.resultio.helpers.QueryResultCollector
 import org.eclipse.rdf4j.query.resultio.{
   BooleanQueryResultFormat,
@@ -48,8 +48,7 @@ import scala.util.Using
   * resources, see the README there.
   */
 @experimental
-class W3cSparqlResultsSpec extends AnyWordSpec, Matchers:
-  JenaSystem.init()
+class W3cSparqlResultsSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private val suites = Seq("sparql11" -> "SPARQL 1.1", "sparql12" -> "SPARQL 1.2")
 
@@ -112,16 +111,22 @@ class W3cSparqlResultsSpec extends AnyWordSpec, Matchers:
       else result
     }
 
-  /** Why Jelly-SPARQL cannot carry this term, if it cannot. */
-  private def unsupportedFeature(node: Node): Option[String] =
-    if node.isTripleTerm then Some("triple terms")
-    else if node.isLiteral && node.getLiteralBaseDirection != null then
-      Some("literals with a base direction")
-    else None
-
   private def toTermSpec(node: Node): TermSpec =
     if node.isURI then TermSpec.Iri(node.getURI)
     else if node.isBlank then TermSpec.BNode(node.getBlankNodeLabel)
+    else if node.isTripleTerm then
+      val t = node.getTriple
+      TermSpec.TripleTerm(
+        toTermSpec(t.getSubject),
+        toTermSpec(t.getPredicate),
+        toTermSpec(t.getObject),
+      )
+    else if node.getLiteralLanguage.nonEmpty && node.getLiteralBaseDirection != null then
+      TermSpec.DirLangLiteral(
+        node.getLiteralLexicalForm,
+        node.getLiteralLanguage,
+        node.getLiteralBaseDirection == TextDirection.LTR,
+      )
     else if node.getLiteralLanguage.nonEmpty then
       TermSpec.LangLiteral(node.getLiteralLexicalForm, node.getLiteralLanguage)
     else if node.getLiteralDatatypeURI == XSDDatatype.XSDstring.getURI then
@@ -134,17 +139,6 @@ class W3cSparqlResultsSpec extends AnyWordSpec, Matchers:
     val bindings =
       Iterator.continually(resultSet).takeWhile(_.hasNext).map(_.nextBinding()).toIndexedSeq
     (vars, bindings)
-
-  /** The Jelly-SPARQL feature the test case would need but that does not exist yet. */
-  private def unsupportedFeature(file: File): Option[String] =
-    val result = parseWithJena(file)
-    if result.isBoolean then None
-    else
-      val (vars, bindings) = bindingsOf(result)
-      bindings.iterator
-        .flatMap(b => vars.flatMap(v => Option(b.get(v))))
-        .flatMap(unsupportedFeature)
-        .nextOption()
 
   /** The variables and rows of a parsed result set. */
   private def solutions(result: SPARQLResult): (Seq[String], SparqlDataGen.Rows) =
@@ -253,18 +247,11 @@ class W3cSparqlResultsSpec extends AnyWordSpec, Matchers:
         val title = s"${test.name} (${test.uri})"
         val path = test.result.getPath.substring(test.result.getPath.indexOf(suite))
         s"$title – $path" should {
-          unsupportedFeature(test.result) match
-            case None =>
-              "round-trip through every pair of Jelly-SPARQL implementations" in {
-                roundTripAllImplementations(test)
-              }
-              "pass through RDF4J's parser, the Jelly-SPARQL writer and parser unchanged" in {
-                passThroughRdf4j(test)
-              }
-            case Some(feature) =>
-              // TODO: enable once we add RDF 1.2 support
-              val reason = s"(uses $feature, which Jelly-SPARQL version 1 does not support)"
-              s"round-trip through every pair of Jelly-SPARQL implementations $reason" ignore {}
-              s"pass through RDF4J's parser, the Jelly-SPARQL writer and parser unchanged $reason" ignore {}
+          "round-trip through every pair of Jelly-SPARQL implementations" in {
+            roundTripAllImplementations(test)
+          }
+          "pass through RDF4J's parser, the Jelly-SPARQL writer and parser unchanged" in {
+            passThroughRdf4j(test)
+          }
         }
     }

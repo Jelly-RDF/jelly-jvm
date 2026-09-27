@@ -3,7 +3,9 @@ package eu.neverblink.jelly.core.sparql;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
+import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 
 /**
  * Utilities for working with SparqlResultsOptions.
@@ -63,7 +65,7 @@ public final class JellySparqlOptions {
         .setVersion(JellySparqlConstants.PROTO_VERSION);
 
     /**
-     * What a decoder accepts unless told otherwise.
+     * What a decoder accepts unless told otherwise. This includes all terms of RDF 1.2.
      * <p>
      * This is deliberately more generous than the BIG writer preset, so that streams written
      * with slightly larger tables are still readable.
@@ -72,6 +74,7 @@ public final class JellySparqlOptions {
         .setMaxNameTableSize(MAX_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(MAX_PREFIX_TABLE_SIZE)
         .setMaxDatatypeTableSize(MAX_DT_TABLE_SIZE)
+        .setRdfVersion(RdfVersion.RDF_VERSION_1_2)
         .setVersion(JellySparqlConstants.PROTO_VERSION);
 
     /**
@@ -120,6 +123,7 @@ public final class JellySparqlOptions {
             );
         }
 
+        RdfVersionUtils.checkRdfVersion(requestedOptions.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
         checkTableSize(
             "name",
             requestedOptions.getMaxNameTableSize(),

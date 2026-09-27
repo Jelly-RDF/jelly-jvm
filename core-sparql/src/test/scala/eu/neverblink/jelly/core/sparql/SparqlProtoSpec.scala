@@ -90,9 +90,9 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
 
   private def literalColumn = SparqlLiteralColumn
     .newInstance()
-    .addValues(RdfLiteral.newInstance().setLex("hello"))
-    .addValues(RdfLiteral.newInstance().setLex("bonjour").setLangtag("fr"))
-    .addValues(RdfLiteral.newInstance().setLex("42").setDatatype(1))
+    .addValues(RdfLiteral2.newInstance().setLex("hello"))
+    .addValues(RdfLiteral2.newInstance().setLex("bonjour").setLangtag("fr"))
+    .addValues(RdfLiteral2.newInstance().setLex("42").setDatatype(1))
     .addLayouts(1)
 
   /** The language-tagged form of a literal column: bare lexical forms plus one language tag. */
@@ -101,6 +101,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .addLexValues("hello")
     .addLexValues("world")
     .setLangtag("en")
+    .setDirection(RdfBaseDirection.LTR)
     .addLayouts(1)
 
   /** The datatype-monomorphic form of a literal column: bare lexical forms plus one datatype. */
@@ -111,11 +112,26 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .setDatatype(1)
     .addLayouts(1)
 
+  private def tripleTerm = RdfTripleTerm
+    .newInstance()
+    .setSBnode("b1")
+    .setPIri(iri(1, 2))
+    .setOTripleTerm(
+      RdfTripleTerm
+        .newInstance()
+        .setSIri(iri(0, 0))
+        .setPIri(iri(0, 0))
+        .setOLiteral(
+          RdfLiteral2.newInstance().setLex("x").setLangtag("ar").setDirection(RdfBaseDirection.RTL),
+        ),
+    )
+
   private def polyColumn = SparqlPolyColumn
     .newInstance()
     .addValues(SparqlTerm.newInstance().setIri(iri(1, 2)))
     .addValues(SparqlTerm.newInstance().setBnode("b1"))
-    .addValues(SparqlTerm.newInstance().setLiteral(RdfLiteral.newInstance().setLex("x")))
+    .addValues(SparqlTerm.newInstance().setLiteral(RdfLiteral2.newInstance().setLex("x")))
+    .addValues(SparqlTerm.newInstance().setTripleTerm(tripleTerm))
     .addLayouts(16)
 
   /** A frame with every field set – not a semantically valid frame, but it exercises the whole
@@ -123,7 +139,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     */
   private def fullFrame = SparqlResultsFrame
     .newInstance()
-    .setOptions(JellySparqlOptions.BIG)
+    .setOptions(JellySparqlOptions.BIG.clone().setRdfVersion(RdfVersion.RDF_VERSION_1_2))
     .setRowCount(7)
     .setAskResult(SparqlAskResult.newInstance().setValue(true))
     .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
@@ -177,7 +193,15 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       val terms = Seq(
         SparqlTerm.newInstance().setIri(iri(2, 3)),
         SparqlTerm.newInstance().setBnode("b1"),
-        SparqlTerm.newInstance().setLiteral(RdfLiteral.newInstance().setLex("lex").setLangtag("en")),
+        SparqlTerm.newInstance().setLiteral(
+          RdfLiteral2.newInstance().setLex("lex").setLangtag("en"),
+        ),
+        SparqlTerm.newInstance().setLiteral(
+          RdfLiteral2.newInstance().setLex("lex").setLangtag("en").setDirection(
+            RdfBaseDirection.LTR,
+          ),
+        ),
+        SparqlTerm.newInstance().setTripleTerm(tripleTerm),
       )
       for term <- terms do
         checkMessage(
@@ -333,6 +357,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .newInstance()
         .setLexValues(langLiteralColumn.getLexValues)
         .setLangtag(langLiteralColumn.getLangtag)
+        .setDirection(langLiteralColumn.getDirection)
         .setLayouts(langLiteralColumn.getLayouts) shouldBe langLiteralColumn
       SparqlPolyColumn
         .newInstance()
@@ -420,7 +445,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       term.hasBnode shouldBe true
       term.getBnode shouldBe "b1"
 
-      term.setLiteral(RdfLiteral.newInstance().setLex("x"))
+      term.setLiteral(RdfLiteral2.newInstance().setLex("x"))
       term.hasBnode shouldBe false
       term.hasLiteral shouldBe true
       term.getLiteral.getLex shouldBe "x"
@@ -439,9 +464,9 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       mergedIri.getIri shouldBe iri(1, 2)
 
       val partialLiteral =
-        SparqlTerm.newInstance().setLiteral(RdfLiteral.newInstance().setLex("lex"))
+        SparqlTerm.newInstance().setLiteral(RdfLiteral2.newInstance().setLex("lex"))
       val restLiteral =
-        SparqlTerm.newInstance().setLiteral(RdfLiteral.newInstance().setLangtag("en"))
+        SparqlTerm.newInstance().setLiteral(RdfLiteral2.newInstance().setLangtag("en"))
       val mergedLiteral =
         SparqlTerm.parseFrom(partialLiteral.toByteArray ++ restLiteral.toByteArray)
       mergedLiteral.getLiteral.getLex shouldBe "lex"
@@ -521,7 +546,10 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
             .setTrailer(SparqlResultsTrailer.newInstance().setError("query timed out"))
             .toByteArray,
           SparqlResultsFrame.newInstance().setRowCount(7).toByteArray,
-          SparqlResultsFrame.newInstance().setOptions(JellySparqlOptions.BIG).toByteArray,
+          SparqlResultsFrame
+            .newInstance()
+            .setOptions(JellySparqlOptions.BIG.clone().setRdfVersion(RdfVersion.RDF_VERSION_1_2))
+            .toByteArray,
           SparqlResultsFrame
             .newInstance()
             .addMetadata(

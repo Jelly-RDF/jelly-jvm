@@ -9,6 +9,7 @@ import eu.neverblink.jelly.core.sparql.JellySparqlMetadata;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
 import eu.neverblink.jelly.core.utils.IoUtils;
+import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -56,6 +57,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
     public Collection<RioSetting<?>> getSupportedSettings() {
         final var settings = new HashSet<>(super.getSupportedSettings());
         settings.add(JellySparqlParserSettings.PROTO_VERSION);
+        settings.add(JellySparqlParserSettings.RDF_VERSION);
         settings.add(JellySparqlParserSettings.MAX_NAME_TABLE_SIZE);
         settings.add(JellySparqlParserSettings.MAX_PREFIX_TABLE_SIZE);
         settings.add(JellySparqlParserSettings.MAX_DATATYPE_TABLE_SIZE);
@@ -144,6 +146,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         final var config = getParserConfig();
         return SparqlResultsOptions.newInstance()
             .setVersion(config.get(JellySparqlParserSettings.PROTO_VERSION))
+            .setRdfVersion(RdfVersionUtils.rdfVersionFromLabel(config.get(JellySparqlParserSettings.RDF_VERSION)))
             .setMaxNameTableSize(config.get(JellySparqlParserSettings.MAX_NAME_TABLE_SIZE))
             .setMaxPrefixTableSize(config.get(JellySparqlParserSettings.MAX_PREFIX_TABLE_SIZE))
             .setMaxDatatypeTableSize(config.get(JellySparqlParserSettings.MAX_DATATYPE_TABLE_SIZE));

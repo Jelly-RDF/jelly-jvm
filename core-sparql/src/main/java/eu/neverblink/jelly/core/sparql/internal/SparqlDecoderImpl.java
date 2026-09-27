@@ -5,13 +5,18 @@ import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.internal.DecoderBase;
-import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
+import eu.neverblink.jelly.core.proto.v1.RdfIri;
+import eu.neverblink.jelly.core.proto.v1.RdfLiteral2;
 import eu.neverblink.jelly.core.proto.v1.RdfLookupEntryPacked;
+import eu.neverblink.jelly.core.proto.v1.RdfTripleTerm;
+import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
+import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 import eu.neverblink.protoc.java.runtime.RepeatedInt;
 import eu.neverblink.protoc.java.runtime.RepeatedString;
 import java.util.Arrays;
@@ -30,6 +35,9 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
     // Run lengths of 0–14 are inlined in the layout token. 15 needs an extension varint.
     private static final int MAX_INLINE_LEN = 15;
+
+    private static final String RDF_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString";
+    private static final String RDF_DIR_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#dirLangString";
 
     private final SparqlResultsHandler<TNode> handler;
     private final SparqlResultsOptions supportedOptions;
@@ -158,6 +166,11 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         for (final RdfLookupEntryPacked entry : frame.getDatatypes()) {
             int id = entry.getId();
             for (final String value : entry.getValues()) {
+                if (RDF_LANG_STRING.equals(value) || RDF_DIR_LANG_STRING.equals(value)) {
+                    // A literal with this datatype must have a language tag, which the datatype
+                    // form cannot carry
+                    throw new RdfProtoDeserializationError("The datatype lookup must not contain %s.".formatted(value));
+                }
                 final TDatatype datatype;
                 try {
                     datatype = converter.makeDatatype(value);
@@ -460,6 +473,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
      */
     private ValueReader<TNode> literalReader(SparqlLiteralColumn column) {
         final String langtag = column.getLangtag();
+        final int direction = column.getDirectionValue();
         if (column.getLexValues().isEmpty()) {
             if (column.getDatatype() != 0) {
                 throw new RdfProtoDeserializationError(
@@ -471,6 +485,11 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                     "Corrupt literal column: a language tag is stated for a column with no lexical forms."
                 );
             }
+            if (direction != 0) {
+                throw new RdfProtoDeserializationError(
+                    "Corrupt literal column: a base direction is stated for a column with no lexical forms."
+                );
+            }
             return new LiteralReader(column.getValues().iterator());
         }
         if (!column.getValues().isEmpty()) {
@@ -479,6 +498,11 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             );
         }
         if (langtag.isEmpty()) {
+            if (direction != 0) {
+                throw new RdfProtoDeserializationError(
+                    "Corrupt literal column: a base direction is stated without a language tag."
+                );
+            }
             return new LexLiteralReader(column);
         }
         if (column.getDatatype() != 0) {
@@ -486,14 +510,77 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 "Corrupt literal column: the column states both a datatype and a language tag."
             );
         }
-        return new LangLiteralReader(column.getLexValues(), langtag);
+        return new LangLiteralReader(column.getLexValues(), langtag, direction == 0 ? null : baseDirection(direction));
+    }
+
+    /**
+     * Converts a literal in the full form. Every literal of the stream that is not in the lexical
+     * form of a literal column goes through here.
+     */
+    private TNode convertLiteral(RdfLiteral2 literal) {
+        final int direction = literal.getDirectionValue();
+        switch (literal.getLiteralKindFieldNumber()) {
+            case RdfLiteral2.LANGTAG -> {
+                if (direction == 0) {
+                    return converter.makeLangLiteral(literal.getLex(), literal.getLangtag());
+                }
+                return converter.makeDirLangLiteral(literal.getLex(), literal.getLangtag(), baseDirection(direction));
+            }
+            case RdfLiteral2.DATATYPE -> {
+                if (direction != 0) {
+                    throw directionWithoutLangtag();
+                }
+                return converter.makeDtLiteral(literal.getLex(), getDatatypeLookup().get(literal.getDatatype()));
+            }
+            default -> {
+                if (direction != 0) {
+                    throw directionWithoutLangtag();
+                }
+                return converter.makeSimpleLiteral(literal.getLex());
+            }
+        }
+    }
+
+    private static RdfProtoDeserializationError directionWithoutLangtag() {
+        return new RdfProtoDeserializationError("A literal has a base direction, but no language tag.");
+    }
+
+    /** Checks a base direction read from the stream (LTR or RTL, never NONE). */
+    private RdfBaseDirection baseDirection(int value) {
+        final RdfBaseDirection direction = RdfBaseDirection.forNumber(value);
+        if (direction == null || direction == RdfBaseDirection.NONE) {
+            throw new RdfProtoDeserializationError("Unknown base direction: %d".formatted(value));
+        }
+        if (allowedRdfVersion() == RdfVersion.RDF_VERSION_1_1_VALUE) {
+            throw notAllowed("literals with a base direction");
+        }
+        return direction;
+    }
+
+    /**
+     * The RDF version the terms of the stream must conform to: the one the stream declares, or,
+     * if it declares none, the one this reader supports. 0 (unspecified) allows all terms.
+     */
+    private int allowedRdfVersion() {
+        final int declared = currentOptions.getRdfVersionValue();
+        return declared != RdfVersion.RDF_VERSION_UNSPECIFIED_VALUE ? declared : supportedOptions.getRdfVersionValue();
+    }
+
+    private RdfProtoDeserializationError notAllowed(String what) {
+        final int declared = currentOptions.getRdfVersionValue();
+        final String version = RdfVersionUtils.rdfVersionName(allowedRdfVersion());
+        return new RdfProtoDeserializationError(
+            declared != RdfVersion.RDF_VERSION_UNSPECIFIED_VALUE
+                ? "The stream declares %s, but contains %s.".formatted(version, what)
+                : "The stream contains %s, but this reader only supports %s.".formatted(what, version)
+        );
     }
 
     private final class LiteralReader extends ValueReader<TNode> {
 
-        private final Iterator<RdfLiteral> values;
+        private final Iterator<RdfLiteral2> values;
 
-        LiteralReader(Iterator<RdfLiteral> values) {
+        LiteralReader(Iterator<RdfLiteral2> values) {
             this.values = values;
         }
 
@@ -545,11 +632,14 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
         private final RepeatedString values;
         private final String langtag;
+        // Null for no base direction
+        private final RdfBaseDirection direction;
         private int index = 0;
 
-        LangLiteralReader(RepeatedString values, String langtag) {
+        LangLiteralReader(RepeatedString values, String langtag, RdfBaseDirection direction) {
             this.values = values;
             this.langtag = langtag;
+            this.direction = direction;
         }
 
         @Override
@@ -559,7 +649,10 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
         @Override
         TNode decodeNext() {
-            return converter.makeLangLiteral(values.get(index++), langtag);
+            final String lex = values.get(index++);
+            return direction == null
+                ? converter.makeLangLiteral(lex, langtag)
+                : converter.makeDirLangLiteral(lex, langtag, direction);
         }
     }
 
@@ -584,8 +677,42 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 case SparqlTerm.IRI -> iriState.decode(term.getIri().getPrefixId(), term.getIri().getNameId());
                 case SparqlTerm.BNODE -> converter.makeBlankNode(term.getBnode());
                 case SparqlTerm.LITERAL -> convertLiteral(term.getLiteral());
+                case SparqlTerm.TRIPLE_TERM -> {
+                    if (allowedRdfVersion() < RdfVersion.RDF_VERSION_1_2_VALUE) {
+                        throw notAllowed("triple terms");
+                    }
+                    yield decodeTripleTerm(term.getTripleTerm());
+                }
                 default -> throw new RdfProtoDeserializationError("A term in a polymorphic column has no value set.");
             };
+        }
+
+        /**
+         * Decodes a triple term. Its IRIs take part in the IRI inference of the column, in the
+         * order subject, predicate, object. The nesting depth is already limited by the parser.
+         */
+        private TNode decodeTripleTerm(RdfTripleTerm triple) {
+            final TNode s = switch (triple.getSubjectFieldNumber()) {
+                case RdfTripleTerm.S_IRI -> decodeIri(triple.getSIri());
+                case RdfTripleTerm.S_BNODE -> converter.makeBlankNode(triple.getSBnode());
+                default -> throw new RdfProtoDeserializationError("A triple term has no subject.");
+            };
+            if (triple.getPIri() == null) {
+                throw new RdfProtoDeserializationError("A triple term has no predicate.");
+            }
+            final TNode p = decodeIri(triple.getPIri());
+            final TNode o = switch (triple.getObjectFieldNumber()) {
+                case RdfTripleTerm.O_IRI -> decodeIri(triple.getOIri());
+                case RdfTripleTerm.O_BNODE -> converter.makeBlankNode(triple.getOBnode());
+                case RdfTripleTerm.O_LITERAL -> convertLiteral(triple.getOLiteral());
+                case RdfTripleTerm.O_TRIPLE_TERM -> decodeTripleTerm(triple.getOTripleTerm());
+                default -> throw new RdfProtoDeserializationError("A triple term has no object.");
+            };
+            return converter.makeTripleNode(s, p, o);
+        }
+
+        private TNode decodeIri(RdfIri iri) {
+            return iriState.decode(iri.getPrefixId(), iri.getNameId());
         }
     }
 

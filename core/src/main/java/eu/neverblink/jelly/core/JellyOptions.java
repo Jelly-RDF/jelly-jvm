@@ -155,6 +155,17 @@ public final class JellyOptions {
      */
     public static void checkCompatibility(RdfStreamOptions requestedOptions, RdfStreamOptions supportedOptions) {
         checkBaseCompatibility(requestedOptions, supportedOptions, JellyConstants.PROTO_VERSION);
+        // Check for unknown enum values in the input
+        if (requestedOptions.getPhysicalType() == null) {
+            throw new RdfProtoDeserializationError(
+                "Unknown physical stream type: %d".formatted(requestedOptions.getPhysicalTypeValue())
+            );
+        }
+        if (requestedOptions.getLogicalType() == null) {
+            throw new RdfProtoDeserializationError(
+                "Unknown logical stream type: %d".formatted(requestedOptions.getLogicalTypeValue())
+            );
+        }
         checkLogicalStreamType(requestedOptions, supportedOptions.getLogicalType());
     }
 

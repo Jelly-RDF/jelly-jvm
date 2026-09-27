@@ -2,7 +2,7 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.{RdfLiteral, RdfLookupEntryPacked}
+import eu.neverblink.jelly.core.proto.v1.{RdfLiteral2, RdfLookupEntryPacked}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
 import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
 import org.scalatest.matchers.should.Matchers
@@ -636,7 +636,7 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       val column = SparqlLiteralColumn
         .newInstance()
         .addLexValues("a")
-        .addValues(RdfLiteral.newInstance().setLex("b"))
+        .addValues(RdfLiteral2.newInstance().setLex("b"))
       val frame = frameWithOneVariable(2).addLiteralColumns(column)
       val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
       e.getMessage should include("both lexical forms and full literal values")
@@ -673,7 +673,7 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
     "reject a literal column stating a language tag with full literal values" in {
       val column = SparqlLiteralColumn
         .newInstance()
-        .addValues(RdfLiteral.newInstance().setLex("a"))
+        .addValues(RdfLiteral2.newInstance().setLex("a"))
         .setLangtag("en")
       val frame = frameWithOneVariable(1).addLiteralColumns(column)
       val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }

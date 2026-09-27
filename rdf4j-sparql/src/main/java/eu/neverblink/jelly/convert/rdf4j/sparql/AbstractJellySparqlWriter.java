@@ -7,6 +7,7 @@ import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlMetadata;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
+import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -72,6 +73,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         settings.add(JellySparqlWriterSettings.MAX_VALUES_PER_FRAME);
         settings.add(JellySparqlWriterSettings.DELIMITED_OUTPUT);
         settings.add(JellySparqlWriterSettings.STREAM_NAME);
+        settings.add(JellySparqlWriterSettings.RDF_VERSION);
         settings.add(JellySparqlWriterSettings.MAX_NAME_TABLE_SIZE);
         settings.add(JellySparqlWriterSettings.MAX_PREFIX_TABLE_SIZE);
         settings.add(JellySparqlWriterSettings.MAX_DATATYPE_TABLE_SIZE);
@@ -80,9 +82,6 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
 
     @Override
     public void startQueryResult(List<String> bindingNames) throws TupleQueryResultHandlerException {
-        // Sets up RDF4J's triple term encoding, which we need because Jelly-SPARQL cannot carry
-        // RDF 1.2 triple terms natively.
-        // TODO: remove this once we add triple terms
         super.startQueryResult(bindingNames);
         delimited = getWriterConfig().get(JellySparqlWriterSettings.DELIMITED_OUTPUT);
         encoder = converterFactory.encoder(SparqlEncoder.Params.of(readOptions()));
@@ -228,6 +227,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         final var config = getWriterConfig();
         return SparqlResultsOptions.newInstance()
             .setStreamName(config.get(JellySparqlWriterSettings.STREAM_NAME))
+            .setRdfVersion(RdfVersionUtils.rdfVersionFromLabel(config.get(JellySparqlWriterSettings.RDF_VERSION)))
             .setMaxNameTableSize(config.get(JellySparqlWriterSettings.MAX_NAME_TABLE_SIZE))
             .setMaxPrefixTableSize(config.get(JellySparqlWriterSettings.MAX_PREFIX_TABLE_SIZE))
             .setMaxDatatypeTableSize(config.get(JellySparqlWriterSettings.MAX_DATATYPE_TABLE_SIZE));

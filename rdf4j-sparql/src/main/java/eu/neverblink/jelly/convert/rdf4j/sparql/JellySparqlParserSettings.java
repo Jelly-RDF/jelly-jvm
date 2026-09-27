@@ -5,9 +5,11 @@ import static eu.neverblink.jelly.core.sparql.JellySparqlOptions.DEFAULT_SUPPORT
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
+import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.helpers.BooleanRioSetting;
 import org.eclipse.rdf4j.rio.helpers.IntegerRioSetting;
+import org.eclipse.rdf4j.rio.helpers.StringRioSetting;
 
 /**
  * Settings for the Jelly-SPARQL query result parsers.
@@ -26,6 +28,7 @@ public final class JellySparqlParserSettings {
     public static ParserConfig from(SparqlResultsOptions options) {
         final ParserConfig config = new ParserConfig();
         config.set(PROTO_VERSION, options.getVersion());
+        config.set(RDF_VERSION, RdfVersionUtils.rdfVersionLabel(options.getRdfVersion()));
         config.set(MAX_NAME_TABLE_SIZE, options.getMaxNameTableSize());
         config.set(MAX_PREFIX_TABLE_SIZE, options.getMaxPrefixTableSize());
         config.set(MAX_DATATYPE_TABLE_SIZE, options.getMaxDatatypeTableSize());
@@ -36,6 +39,13 @@ public final class JellySparqlParserSettings {
         "eu.neverblink.jelly.convert.rdf4j.sparql.protoVersion",
         "Maximum supported Jelly-SPARQL protocol version",
         DEFAULT_SUPPORTED_OPTIONS.getVersion()
+    );
+
+    public static final StringRioSetting RDF_VERSION = new StringRioSetting(
+        "eu.neverblink.jelly.convert.rdf4j.sparql.supportedRdfVersion",
+        "Highest version of RDF whose terms the parser accepts, as an RDF 1.2 version label: " +
+            "\"1.1\", \"1.2-basic\" or \"1.2\". Empty means all.",
+        RdfVersionUtils.rdfVersionLabel(DEFAULT_SUPPORTED_OPTIONS.getRdfVersion())
     );
 
     public static final IntegerRioSetting MAX_NAME_TABLE_SIZE = new IntegerRioSetting(

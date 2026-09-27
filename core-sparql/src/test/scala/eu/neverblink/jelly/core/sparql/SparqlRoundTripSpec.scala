@@ -449,16 +449,6 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       e.getMessage should include("Expected 2 bindings")
     }
 
-    "throw when encoding an RDF-star quoted triple" in {
-      val encoder =
-        MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(JellySparqlOptions.SMALL))
-      encoder.setVariables(Seq("x").asJava)
-      val e = intercept[RdfProtoSerializationError] {
-        encoder.appendRow(Array[Node](TripleNode(iri(1), iri(2), iri(3))))
-      }
-      e.getMessage should include("Triple terms are not supported")
-    }
-
     "round-trip a result set that outgrows the lookup tables" in {
       // Regression: appending a row that would overwrite a lookup entry the current frame still
       // refers to used to corrupt the encoder – the eviction had already happened by the time it

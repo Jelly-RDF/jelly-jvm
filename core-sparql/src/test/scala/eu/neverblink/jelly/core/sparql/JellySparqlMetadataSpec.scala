@@ -87,7 +87,7 @@ class JellySparqlMetadataSpec extends AnyWordSpec, Matchers:
       intercept[RdfProtoSerializationError] {
         e.appendRow(
           Array[Node](
-            TripleNode(Iri("https://a.org/s"), Iri("https://a.org/p"), Iri("https://a.org/o")),
+            DefaultGraphNode(),
           ),
         )
       }

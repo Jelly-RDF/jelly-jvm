@@ -11,7 +11,9 @@ enum TermSpec:
   case BNode(label: String)
   case PlainLiteral(lex: String)
   case LangLiteral(lex: String, lang: String)
+  case DirLangLiteral(lex: String, lang: String, ltr: Boolean)
   case DtLiteral(lex: String, datatype: String)
+  case TripleTerm(s: TermSpec, p: TermSpec, o: TermSpec)
 
 /** Materializes [[TermSpec]]s into the node type of a concrete RDF library. */
 trait TermFactory[TNode]:
