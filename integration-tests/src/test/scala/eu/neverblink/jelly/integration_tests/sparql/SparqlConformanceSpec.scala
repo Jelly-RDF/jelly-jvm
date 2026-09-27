@@ -22,8 +22,8 @@ import scala.util.Using
 
 /** Runs the Jelly-SPARQL conformance test suite (`test/sparql` in the jelly-protobuf submodule)
   * against the Jena and RDF4J integrations.
- *
- * We test against the SHOULD conformance level (strict).
+  *
+  * We test against the SHOULD conformance level (strict).
   */
 @experimental
 class SparqlConformanceSpec extends AnyWordSpec, Matchers, JenaTest:

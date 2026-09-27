@@ -221,7 +221,9 @@ class JenaSparqlTrailerSpec extends AnyWordSpec, Matchers, JenaTest:
       val e = intercept[RdfProtoDeserializationError] {
         reader.readAny(ByteArrayInputStream(out.toByteArray), null)
       }
-      e.getMessage should include("No frame may follow the frame containing the boolean (ASK) result")
+      e.getMessage should include(
+        "No frame may follow the frame containing the boolean (ASK) result",
+      )
     }
 
     "reject a boolean result without a trailer if told to" in {
