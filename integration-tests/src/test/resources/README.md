@@ -9,3 +9,6 @@
 ### Quads
 - `nq-syntax-tests.nq` – N-Quads test cases taken from the [N-Quads test suite](https://www.w3.org/2013/N-QuadsReports/index.html). The file includes tests named `nq-syntax-uri-*` and `nq-syntax-bnode-*`. It also includes all tests from `nt-syntax-subm-01.nt`.
 - `weather-quads.nq` – several named graphs and a default graph describing mock measurements from a weather station.
+
+### SPARQL results
+- `w3c-sparql/` – SELECT and ASK results from the W3C SPARQL 1.1 and 1.2 test suites. See `w3c-sparql/README.md`.
