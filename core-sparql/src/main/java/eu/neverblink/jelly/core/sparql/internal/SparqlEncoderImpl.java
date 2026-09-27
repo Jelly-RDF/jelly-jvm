@@ -267,6 +267,12 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     // True while the buffers still hold the contents of the frame endFrame last returned.
     private boolean framePending = false;
 
+    // Special flags to be used on the rowCount field.
+    // They are only relevant where rowCount is not used – this way we don't need additional
+    // fields in this class, which would take up another cache line.
+    private static final int ROW_COUNT_ROW_FAILED = -1;
+    private static final int ROW_COUNT_STREAM_ENDED = -2;
+
     /**
      * The lookup ids used by the current frame – both the ids assigned by
      * its lookup entries and the ids its columns refer to. One bit per id, starting at
@@ -444,7 +450,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     @Override
     public boolean appendRow(TNode[] row) {
         if (columns == null) {
-            throw new RdfProtoSerializationError("Variables must be set before appending rows.");
+            throw notUsable("appending rows");
         }
         if (row.length != columns.length) {
             throw new RdfProtoSerializationError(
@@ -457,11 +463,31 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         if (rowCount > 0 && !hasRoomForAnotherRow()) {
             return false;
         }
-        for (int i = 0; i < row.length; i++) {
-            addCell(columns[i], row[i]);
+        try {
+            for (int i = 0; i < row.length; i++) {
+                addCell(columns[i], row[i]);
+            }
+        } catch (Throwable e) {
+            // The frame is now half-written, and cannot be completed
+            columns = null;
+            rowCount = ROW_COUNT_ROW_FAILED;
+            throw e;
         }
         rowCount++;
         return true;
+    }
+
+    private RdfProtoSerializationError notUsable(String action) {
+        if (variableNames == null) {
+            return new RdfProtoSerializationError("Variables must be set before %s.".formatted(action));
+        }
+        if (rowCount == ROW_COUNT_ROW_FAILED) {
+            return new RdfProtoSerializationError(
+                "A previous row failed to encode, so the current frame cannot be completed. " +
+                    "Use endStream(String) to end the stream with an error."
+            );
+        }
+        return new RdfProtoSerializationError("The stream has already been ended.");
     }
 
     /**
@@ -497,8 +523,71 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     @Override
     public SparqlResultsFrame endFrame() {
         if (columns == null) {
-            throw new RdfProtoSerializationError("Variables must be set before ending a frame.");
+            throw notUsable("ending a frame");
         }
+        return buildFrame(null);
+    }
+
+    @Override
+    public SparqlResultsFrame endStream() {
+        if (columns == null) {
+            throw notUsable("ending the stream");
+        }
+        final SparqlResultsFrame frame = buildFrame(SparqlResultsTrailer.newInstance());
+        endEncoder();
+        return frame;
+    }
+
+    @Override
+    public SparqlResultsFrame endStream(String error) {
+        if (error == null || error.isEmpty()) {
+            throw new RdfProtoSerializationError("The error message of an incomplete result set must not be empty.");
+        }
+        final SparqlResultsTrailer trailer = SparqlResultsTrailer.newInstance().setError(error);
+        if (columns != null) {
+            final SparqlResultsFrame frame = buildFrame(trailer);
+            endEncoder();
+            return frame;
+        }
+        if (variableNames == null || rowCount != ROW_COUNT_ROW_FAILED) {
+            throw notUsable("ending the stream");
+        }
+        endEncoder();
+        return failedRowFrame(trailer);
+    }
+
+    private void endEncoder() {
+        // The returned frame still points at the buffers, which stay untouched from now on
+        columns = null;
+        rowCount = ROW_COUNT_STREAM_ENDED;
+    }
+
+    /**
+     * The last frame of a stream whose last row failed to encode. The frame's content cannot be
+     * encoded consistently anymore, but nothing follows the trailer, so it is fine to drop it,
+     * along with the lookup entries it needed.
+     */
+    private SparqlResultsFrame failedRowFrame(SparqlResultsTrailer trailer) {
+        final SparqlResultsFrame.Mutable frame = SparqlResultsFrame.newInstance();
+        if (firstFrame) {
+            frame.setOptions(options);
+            // The frame has no columns, so any valid column assignment will do
+            for (int i = 0; i < variableNames.length; i++) {
+                frame.addVariables(SparqlVariable.newInstance().setName(variableNames[i]).setColumnIndex(i));
+            }
+            firstFrame = false;
+        }
+        frame.setTrailer(trailer);
+        frame.getSerializedSize();
+        return frame;
+    }
+
+    /**
+     * Builds the frame from the buffers.
+     *
+     * @param trailer the trailer to attach, or null for none
+     */
+    private SparqlResultsFrame buildFrame(SparqlResultsTrailer trailer) {
         beginFrame();
         for (final ColumnState col : columns) {
             if (col.runLength > 0 && col.runNode == null) {
@@ -542,13 +631,32 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             }
         }
 
+        if (trailer != null) {
+            frame.setTrailer(trailer);
+        }
         frame.setRowCount(rowCount);
         frame.setNames(nameEntries);
         frame.setPrefixes(prefixEntries);
         frame.setDatatypes(datatypeEntries);
+        // A frame with no rows may leave out its columns altogether
+        if (rowCount > 0) {
+            addColumns(frame);
+        }
 
-        // Emit the columns grouped by type, in variable order within each group – the same
-        // order in which the column indices were assigned.
+        firstFrame = false;
+        // The frame points at the encoder's buffers, so they stay untouched until the next frame
+        framePending = true;
+
+        // Pre-calculate the serialized size, while all objects are likely still in cache.
+        frame.getSerializedSize();
+        return frame;
+    }
+
+    /**
+     * Emits the columns grouped by type, in variable order within each group – the same
+     * order in which the column indices were assigned.
+     */
+    private void addColumns(SparqlResultsFrame.Mutable frame) {
         for (int i = 0; i < columns.length; i++) {
             final ColumnState col = columns[i];
             if (effectiveType(col) == TYPE_IRI) {
@@ -681,14 +789,6 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                 frame.addPolyColumns(column);
             }
         }
-
-        firstFrame = false;
-        // The frame points at the encoder's buffers, so they stay untouched until the next frame
-        framePending = true;
-
-        // Pre-calculate the serialized size, while all objects are likely still in cache.
-        frame.getSerializedSize();
-        return frame;
     }
 
     private void addCell(ColumnState col, TNode node) {

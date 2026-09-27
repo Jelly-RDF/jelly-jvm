@@ -5,11 +5,14 @@ import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.sparql.JellySparqlMetadata;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import org.eclipse.rdf4j.common.io.ByteSink;
@@ -22,6 +25,14 @@ import org.eclipse.rdf4j.rio.RioSetting;
 
 /**
  * Shared implementation of the Jelly-SPARQL query result writers.
+ * <p>
+ * {@link #endQueryResult()} ends the stream with a trailer saying that the result set is
+ * complete. If the result set cannot be completed (for example, because evaluating the query
+ * failed midway), call {@link #endQueryResultWithError(String)} instead, so that the reader
+ * knows. RDF4J does not tell result writers about such failures, so this is up to the caller.
+ * <p>
+ * Links given to {@link #handleLinks(List)} are written in the first frame, under the "link"
+ * metadata key. They must be given before the first solution.
  */
 @ExperimentalApi
 public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWriter implements ByteSink {
@@ -36,8 +47,13 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     private Value[] row = null;
     private int rowsPerFrame;
     private int rowsInFrame;
-    private boolean wroteAnyFrame;
     private boolean delimited;
+    // Links from handleLinks, waiting for the first frame. FIRST_FRAME_WRITTEN once that frame is
+    // written. Only looked at once per frame, never per solution.
+    private List<String> links = null;
+
+    // A unique instance, so that no list of links given by the caller can be mistaken for it
+    private static final List<String> FIRST_FRAME_WRITTEN = Collections.unmodifiableList(new ArrayList<>());
 
     protected AbstractJellySparqlWriter(Rdf4jSparqlConverterFactory converterFactory, OutputStream out) {
         this.converterFactory = converterFactory;
@@ -79,7 +95,6 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         final int maxValues = getWriterConfig().get(JellySparqlWriterSettings.MAX_VALUES_PER_FRAME);
         rowsPerFrame = Math.max(1, maxValues / Math.max(1, row.length));
         rowsInFrame = 0;
-        wroteAnyFrame = false;
     }
 
     @Override
@@ -113,15 +128,33 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     @Override
     public void endQueryResult() throws TupleQueryResultHandlerException {
         checkStarted();
+        // If the rows ended exactly at a frame boundary, this frame holds only the trailer
+        writeLastFrame(encoder.endStream());
+    }
+
+    /**
+     * Ends the result stream with a trailer saying that the result set is incomplete, instead of
+     * {@link #endQueryResult()}. The solutions written so far are kept.
+     * <p>
+     * This is safe to call after {@link #handleSolution(BindingSet)} threw an exception, but the
+     * solutions not yet written out in a frame may then be dropped.
+     *
+     * @param error human-readable explanation of why the result set is incomplete. Must not be
+     *              empty.
+     * @throws TupleQueryResultHandlerException if writing to the output fails
+     */
+    public void endQueryResultWithError(String error) throws TupleQueryResultHandlerException {
+        checkStarted();
+        writeLastFrame(encoder.endStream(error));
+    }
+
+    private void writeLastFrame(SparqlResultsFrame frame) throws TupleQueryResultHandlerException {
+        attachLinks(frame);
         try {
-            if (rowsInFrame > 0 || !wroteAnyFrame) {
-                // The last frame still contains the header, so an empty result set writes one too
-                final SparqlResultsFrame frame = encoder.endFrame();
-                if (delimited) {
-                    frame.writeDelimitedTo(codedOutput);
-                } else {
-                    frame.writeTo(codedOutput);
-                }
+            if (delimited) {
+                frame.writeDelimitedTo(codedOutput);
+            } else {
+                frame.writeTo(codedOutput);
             }
             flush();
         } catch (IOException e) {
@@ -132,6 +165,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     @Override
     public void handleBoolean(boolean value) throws QueryResultHandlerException {
         final SparqlResultsFrame frame = SparqlEncoder.askResultFrame(readOptions(), value);
+        attachLinks(frame);
         try {
             if (getWriterConfig().get(JellySparqlWriterSettings.DELIMITED_OUTPUT)) {
                 frame.writeDelimitedTo(codedOutput);
@@ -145,7 +179,29 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     }
 
     @Override
-    public void handleLinks(List<String> linkUrls) {}
+    public void handleLinks(List<String> linkUrls) throws QueryResultHandlerException {
+        // rowsInFrame is only counted for delimited output. A non-delimited stream has one frame,
+        // written at the end, so there it is enough that the frame was not written yet.
+        if (links == FIRST_FRAME_WRITTEN || rowsInFrame > 0) {
+            throw new QueryResultHandlerException("Links must be given before the first solution.");
+        }
+        // No links is the same as no "link" key at all
+        links = linkUrls.isEmpty() ? null : List.copyOf(linkUrls);
+    }
+
+    /**
+     * Puts the links in the frame if it is the first one of the stream. Call before writing
+     * every frame.
+     */
+    private void attachLinks(SparqlResultsFrame frame) {
+        if (links == FIRST_FRAME_WRITTEN) {
+            return;
+        }
+        if (links != null) {
+            JellySparqlMetadata.addLinks(frame, links);
+        }
+        links = FIRST_FRAME_WRITTEN;
+    }
 
     @Override
     public void handleNamespace(String prefix, String uri) {
@@ -178,8 +234,9 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     }
 
     private void endFrame() throws IOException {
-        encoder.endFrame().writeDelimitedTo(codedOutput);
-        wroteAnyFrame = true;
+        final SparqlResultsFrame frame = encoder.endFrame();
+        attachLinks(frame);
+        frame.writeDelimitedTo(codedOutput);
         rowsInFrame = 0;
     }
 

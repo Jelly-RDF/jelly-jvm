@@ -46,8 +46,20 @@ class JellySparqlOptionsSpec extends AnyWordSpec, Matchers:
       BIG_DT_TABLE_SIZE should be < MAX_DT_TABLE_SIZE
     }
 
-    "default to the big preset for supported options" in {
-      JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS shouldBe JellySparqlOptions.BIG
+    "accept the max table sizes by default" in {
+      val supported = JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS
+      supported.getMaxNameTableSize shouldBe 16384
+      supported.getMaxPrefixTableSize shouldBe 4096
+      supported.getMaxDatatypeTableSize shouldBe 256
+      supported.getVersion shouldBe JellySparqlConstants.PROTO_VERSION
+      JellySparqlOptions.checkCompatibility(JellySparqlOptions.MAX, supported)
+    }
+
+    "accept streams written with somewhat larger tables than the big preset by default" in {
+      JellySparqlOptions.checkCompatibility(
+        options(BIG_NAME_TABLE_SIZE + 1, BIG_PREFIX_TABLE_SIZE + 1, BIG_DT_TABLE_SIZE + 1),
+        JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS,
+      )
     }
   }
 
@@ -87,12 +99,11 @@ class JellySparqlOptionsSpec extends AnyWordSpec, Matchers:
       )
     }
 
-    "reject tables larger than the maximum, however generous the supported options" in {
-      // MAX caps the supported sizes, so a caller cannot opt into larger tables than the format
-      // allows by passing oversized supported options
-      val tooBig = options(MAX_NAME_TABLE_SIZE * 2, 0, 0)
+    "accept tables larger than MAX if the supported options allow them" in {
+      val big = options(MAX_NAME_TABLE_SIZE * 2, MAX_PREFIX_TABLE_SIZE * 2, MAX_DT_TABLE_SIZE * 2)
+      JellySparqlOptions.checkCompatibility(big, big)
       val e = intercept[RdfProtoDeserializationError] {
-        JellySparqlOptions.checkCompatibility(tooBig, tooBig)
+        JellySparqlOptions.checkCompatibility(big, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
       }
       e.getMessage should include(s"larger than the maximum supported size of $MAX_NAME_TABLE_SIZE")
     }

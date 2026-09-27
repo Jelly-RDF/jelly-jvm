@@ -90,6 +90,12 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
       val decoder = newDecoder(handler, maxRowsPerFrame = Int.MaxValue)
       expectRejected(
         decoder.ingestFrame(frameWithRowCount(JellySparqlConstants.MAX_ROWS_PER_FRAME + 1)),
+      ).getMessage should include(s"Invalid row count ${1 << 27}")
+    }
+
+    "report an unsigned row count above 2^31 as such" in {
+      expectRejected(newDecoder().ingestFrame(frameWithRowCount(-1))).getMessage should include(
+        "Invalid row count 4294967295",
       )
     }
 

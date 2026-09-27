@@ -2,7 +2,7 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.RdfProtoSerializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions
+import eu.neverblink.jelly.core.proto.v1.sparql.{SparqlResultsFrame, SparqlResultsOptions}
 import eu.neverblink.jelly.core.sparql.helpers.{CustomEncoderConverter, MockSparqlConverterFactory}
 import eu.neverblink.jelly.core.sparql.internal.SparqlEncoderImpl
 import org.scalatest.matchers.should.Matchers
@@ -70,6 +70,147 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
 
   }
 
+  "the stream trailer" should {
+    "be set on the frame returned by endStream" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1")))
+      val frame = e.endStream()
+      frame.getRowCount shouldBe 1
+      frame.getIriColumns.size shouldBe 1
+      frame.getTrailer should not be null
+      frame.getTrailer.getError shouldBe ""
+    }
+
+    "not be set on frames returned by endFrame" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1")))
+      e.endFrame().getTrailer shouldBe null
+    }
+
+    "end an empty result set in a single frame with the options and the header" in {
+      val e = encoder()
+      e.setVariables(Seq("x", "y").asJava)
+      val frame = e.endStream()
+      frame.getOptions should not be null
+      frame.getVariables.size shouldBe 2
+      frame.getRowCount shouldBe 0
+      frame.getIriColumns.size shouldBe 0
+      frame.getTrailer.getError shouldBe ""
+    }
+
+    "be alone in the last frame if the rows were already written out" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1")))
+      e.endFrame()
+      val frame = e.endStream()
+      frame.getOptions shouldBe null
+      frame.getVariables.size shouldBe 0
+      frame.getRowCount shouldBe 0
+      frame.getIriColumns.size shouldBe 0
+      frame.getNames.size shouldBe 0
+      frame.getTrailer.getError shouldBe ""
+    }
+
+    "carry the error given to endStream" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1")))
+      val frame = e.endStream("query timed out")
+      // The rows appended so far are kept
+      frame.getRowCount shouldBe 1
+      frame.getIriColumns.size shouldBe 1
+      frame.getTrailer.getError shouldBe "query timed out"
+    }
+
+    "reject an empty error" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      for error <- Seq("", null) do
+        intercept[RdfProtoSerializationError] {
+          e.endStream(error)
+        }.getMessage should include("must not be empty")
+    }
+
+    "make the encoder refuse any further use" in {
+      for end <- Seq[SparqlEncoder[Node] => Any](_.endStream(), _.endStream("error")) do
+        val e = encoder()
+        e.setVariables(Seq("x").asJava)
+        end(e)
+        for call <- Seq[SparqlEncoder[Node] => Any](
+            _.appendRow(Array[Node](Iri("https://a.org/x1"))),
+            _.endFrame(),
+            _.endStream(),
+            _.endStream("error"),
+          )
+        do
+          intercept[RdfProtoSerializationError] { call(e) }.getMessage should include(
+            "already been ended",
+          )
+    }
+
+    "be set on a boolean result frame" in {
+      val frame = SparqlEncoder.askResultFrame(JellySparqlOptions.SMALL, true)
+      frame.getTrailer should not be null
+      frame.getTrailer.getError shouldBe ""
+    }
+  }
+
+  "a row that fails to encode" should {
+    def failRow(e: SparqlEncoder[Node]) =
+      intercept[RdfProtoSerializationError] {
+        e.appendRow(
+          Array[Node](
+            Iri("https://a.org/new"),
+            TripleNode(Iri("https://a.org/s"), Iri("https://a.org/p"), Iri("https://a.org/o")),
+          ),
+        )
+      }
+
+    "make appendRow and endFrame refuse to continue the frame" in {
+      val e = encoder()
+      e.setVariables(Seq("x", "y").asJava)
+      failRow(e)
+      for call <- Seq[SparqlEncoder[Node] => Any](
+          _.appendRow(Array[Node](Iri("https://a.org/x1"), null)),
+          _.endFrame(),
+          _.endStream(),
+        )
+      do
+        intercept[RdfProtoSerializationError] { call(e) }.getMessage should include(
+          "previous row failed to encode",
+        )
+    }
+
+    "still allow ending the stream with an error, dropping the frame's content" in {
+      val e = encoder()
+      e.setVariables(Seq("x", "y").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1"), Iri("https://a.org/y1")))
+      failRow(e)
+      val frame = SparqlResultsFrame.parseFrom(e.endStream("could not encode a row").toByteArray)
+      // Nothing was written before, so the frame still starts the stream
+      frame.getOptions should not be null
+      frame.getVariables.size shouldBe 2
+      frame.getRowCount shouldBe 0
+      frame.getNames.size shouldBe 0
+      frame.getPrefixes.size shouldBe 0
+      frame.getIriColumns.size shouldBe 0
+      frame.getPolyColumns.size shouldBe 0
+      frame.getTrailer.getError shouldBe "could not encode a row"
+
+      // And it decodes cleanly
+      val collector = helpers.ResultsCollector()
+      MockSparqlConverterFactory
+        .decoder(collector, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
+        .ingestFrame(frame)
+      collector.variables.toSeq shouldBe Seq("x", "y")
+      collector.rows shouldBe empty
+      collector.trailers.toSeq shouldBe Seq("could not encode a row")
+    }
+  }
+
   // The encoder hands its own buffers to the frame instead of allocating a fresh set per frame, so
   // the frame is only valid until the next one starts. These check that the hand-off does not leak
   // data from one frame into the next.
@@ -83,7 +224,8 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       first.getIriColumns.asScala.head.getNameIds.size shouldBe 1
       val second = e.endFrame()
       second.getRowCount shouldBe 0
-      second.getIriColumns.asScala.head.getNameIds.size shouldBe 0
+      // A frame with no rows leaves out its columns
+      second.getIriColumns.size shouldBe 0
       second.getNames.size shouldBe 0
     }
 

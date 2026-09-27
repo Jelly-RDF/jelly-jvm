@@ -127,6 +127,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .addBnodeColumns(bnodeColumn)
     .addLiteralColumns(literalColumn)
     .addPolyColumns(polyColumn)
+    .setTrailer(SparqlResultsTrailer.newInstance().setError("query timed out"))
     .addMetadata(
       SparqlResultsFrame.MetadataEntry.newInstance().setKey("k").setValue(
         ByteString.copyFromUtf8("v"),
@@ -212,6 +213,26 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       )
     }
 
+    "round-trip a trailer" in {
+      checkMessage(
+        SparqlResultsTrailer.newInstance().setError("query timed out"),
+        () => SparqlResultsTrailer.newInstance(),
+        SparqlResultsTrailer.parseFrom,
+        SparqlResultsTrailer.parseFrom,
+        SparqlResultsTrailer.parseDelimitedFrom,
+      )
+    }
+
+    "keep an empty trailer apart from no trailer" in {
+      // An empty trailer (a complete result set) must survive the round-trip as a set field
+      val frame = SparqlResultsFrame.newInstance().setTrailer(SparqlResultsTrailer.newInstance())
+      frame.getSerializedSize should be > 0
+      val parsed = SparqlResultsFrame.parseFrom(frame.toByteArray)
+      parsed.getTrailer should not be null
+      parsed.getTrailer.getError shouldBe ""
+      SparqlResultsFrame.parseFrom(Array.emptyByteArray).getTrailer shouldBe null
+    }
+
     "round-trip a frame with every field set" in {
       checkMessage(
         fullFrame,
@@ -278,6 +299,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .setBnodeColumns(source.getBnodeColumns)
         .setLiteralColumns(source.getLiteralColumns)
         .setPolyColumns(source.getPolyColumns)
+        .setTrailer(source.getTrailer)
         .setMetadata(source.getMetadata)
       target shouldBe source
 
@@ -330,6 +352,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       SparqlBnodeColumn.getFactory.create() shouldBe SparqlBnodeColumn.EMPTY
       SparqlLiteralColumn.getFactory.create() shouldBe SparqlLiteralColumn.EMPTY
       SparqlPolyColumn.getFactory.create() shouldBe SparqlPolyColumn.EMPTY
+      SparqlResultsTrailer.getFactory.create() shouldBe SparqlResultsTrailer.EMPTY
       SparqlResultsFrame.MetadataEntry.getFactory.create() shouldBe SparqlResultsFrame.MetadataEntry.EMPTY
     }
   }
@@ -347,6 +370,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         SparqlBnodeColumn.getDescriptor,
         SparqlLiteralColumn.getDescriptor,
         SparqlPolyColumn.getDescriptor,
+        SparqlResultsTrailer.getDescriptor,
       )
       descriptors.map(_.getName) shouldBe Seq(
         "SparqlResultsFrame",
@@ -359,8 +383,9 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         "SparqlBnodeColumn",
         "SparqlLiteralColumn",
         "SparqlPolyColumn",
+        "SparqlResultsTrailer",
       )
-      Sparql.getDescriptor.getMessageTypes should have size 9
+      Sparql.getDescriptor.getMessageTypes should have size 10
     }
   }
 
@@ -477,6 +502,10 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
           SparqlResultsFrame
             .newInstance()
             .setAskResult(SparqlAskResult.newInstance().setValue(true))
+            .toByteArray,
+          SparqlResultsFrame
+            .newInstance()
+            .setTrailer(SparqlResultsTrailer.newInstance().setError("query timed out"))
             .toByteArray,
           SparqlResultsFrame.newInstance().setRowCount(7).toByteArray,
           SparqlResultsFrame.newInstance().setOptions(JellySparqlOptions.BIG).toByteArray,

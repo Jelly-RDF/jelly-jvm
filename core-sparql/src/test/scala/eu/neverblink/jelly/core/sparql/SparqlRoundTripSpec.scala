@@ -409,6 +409,37 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       assertResults(collector, Seq("x", "y"), rows)
     }
 
+    "decode concatenated streams as one result set" in {
+      // Each part has its own lookup numbering, and the second one uses a different column layout
+      val parts = Seq(
+        (JellySparqlOptions.SMALL, Seq(Seq(iri(1), SimpleLiteral("a")), Seq(iri(2), null))),
+        (
+          JellySparqlOptions.BIG,
+          Seq(Seq(SimpleLiteral("b"), iri(3)), Seq(iri(1), BlankNode("b1")), Seq(null, iri(1))),
+        ),
+      )
+      val bytes = java.io.ByteArrayOutputStream()
+      for (options, rows) <- parts do
+        val encoder = MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(options))
+        encoder.setVariables(Seq("x", "y").asJava)
+        for row <- rows do
+          encoder.appendRow(row.toArray.asInstanceOf[Array[Node]])
+          encoder.endFrame().writeDelimitedTo(bytes)
+        encoder.endStream().writeDelimitedTo(bytes)
+
+      val collector = ResultsCollector()
+      val decoder =
+        MockSparqlConverterFactory.decoder(collector, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val in = java.io.ByteArrayInputStream(bytes.toByteArray)
+      var frame = SparqlResultsFrame.parseDelimitedFrom(in)
+      while frame != null do
+        decoder.ingestFrame(frame)
+        frame = SparqlResultsFrame.parseDelimitedFrom(in)
+
+      assertResults(collector, Seq("x", "y"), parts.flatMap(_._2))
+      collector.trailers.toSeq shouldBe Seq("", "")
+    }
+
     "throw when decoding a frame without options" in {
       val collector = ResultsCollector()
       val decoder =

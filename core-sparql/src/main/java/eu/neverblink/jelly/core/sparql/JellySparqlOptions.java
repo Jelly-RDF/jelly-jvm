@@ -53,8 +53,8 @@ public final class JellySparqlOptions {
         .setVersion(JellySparqlConstants.PROTO_VERSION);
 
     /**
-     * The largest lookup tables a Jelly-SPARQL stream may declare at all. A reader must not be
-     * asked to support more than this, whatever its supported options say.
+     * The largest lookup tables that a reader with the {@link #DEFAULT_SUPPORTED_OPTIONS} accepts.
+     * This is not a limit of the format – readers may be configured to accept larger tables.
      */
     public static final SparqlResultsOptions MAX = SparqlResultsOptions.newInstance()
         .setMaxNameTableSize(MAX_NAME_TABLE_SIZE)
@@ -63,10 +63,16 @@ public final class JellySparqlOptions {
         .setVersion(JellySparqlConstants.PROTO_VERSION);
 
     /**
-     * What a decoder accepts unless told otherwise. Bounded well below MAX, so that a stream
-     * cannot make the reader allocate large tables unless it was asked to allow that.
+     * What a decoder accepts unless told otherwise.
+     * <p>
+     * This is deliberately more generous than the BIG writer preset, so that streams written
+     * with slightly larger tables are still readable.
      */
-    public static final SparqlResultsOptions DEFAULT_SUPPORTED_OPTIONS = BIG;
+    public static final SparqlResultsOptions DEFAULT_SUPPORTED_OPTIONS = SparqlResultsOptions.newInstance()
+        .setMaxNameTableSize(MAX_NAME_TABLE_SIZE)
+        .setMaxPrefixTableSize(MAX_PREFIX_TABLE_SIZE)
+        .setMaxDatatypeTableSize(MAX_DT_TABLE_SIZE)
+        .setVersion(JellySparqlConstants.PROTO_VERSION);
 
     /**
      * Convert Jelly-RDF RdfStreamOptions to Jelly-SPARQL SparqlResultsOptions.
@@ -114,24 +120,17 @@ public final class JellySparqlOptions {
             );
         }
 
-        // The MAX sizes cap the supported ones: a reader cannot opt into tables larger than
-        // Jelly-SPARQL allows, however generous its supported options are.
         checkTableSize(
             "name",
             requestedOptions.getMaxNameTableSize(),
-            Math.min(supportedOptions.getMaxNameTableSize(), MAX_NAME_TABLE_SIZE),
+            supportedOptions.getMaxNameTableSize(),
             MIN_NAME_TABLE_SIZE
         );
-        checkTableSize(
-            "prefix",
-            requestedOptions.getMaxPrefixTableSize(),
-            Math.min(supportedOptions.getMaxPrefixTableSize(), MAX_PREFIX_TABLE_SIZE),
-            0
-        );
+        checkTableSize("prefix", requestedOptions.getMaxPrefixTableSize(), supportedOptions.getMaxPrefixTableSize(), 0);
         checkTableSize(
             "datatype",
             requestedOptions.getMaxDatatypeTableSize(),
-            Math.min(supportedOptions.getMaxDatatypeTableSize(), MAX_DT_TABLE_SIZE),
+            supportedOptions.getMaxDatatypeTableSize(),
             0
         );
     }

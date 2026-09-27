@@ -54,10 +54,11 @@ public final class JellySparqlWriterSettings extends WriterConfig {
 
     public static final BooleanRioSetting DELIMITED_OUTPUT = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.sparql.delimitedOutput",
-        "Write the output as delimited frames. Note: files saved to disk are recommended to be delimited, " +
-            "for better interoperability with other implementations. In a non-delimited file you can have " +
-            "ONLY ONE FRAME, so a large result set will not fit – either because it runs out of memory, or " +
-            "because its lookup tables overflow. **Disable this only if you know what you are doing.**",
+        "Write the output as delimited frames. Note: the application/x-jelly-sparql media type and " +
+            ".jellys files are always delimited. Non-delimited output is only meant for embedding a single " +
+            "frame in something else. It can hold ONLY ONE FRAME, so a large result set will not fit – " +
+            "either because it runs out of memory, or because its lookup tables overflow. " +
+            "**Disable this only if you know what you are doing.**",
         true
     );
 

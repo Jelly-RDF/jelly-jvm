@@ -15,6 +15,7 @@ final class ResultsCollector extends SparqlResultsHandler[Node]:
   val rows: ListBuffer[Seq[Node]] = ListBuffer[Seq[Node]]()
   var variableCalls: Int = 0
   var askResult: Option[Boolean] = None
+  val trailers: ListBuffer[String] = ListBuffer[String]()
 
   override def handleVariables(vars: util.List[String]): Unit =
     variableCalls += 1
@@ -25,6 +26,9 @@ final class ResultsCollector extends SparqlResultsHandler[Node]:
 
   override def handleAskResult(value: Boolean): Unit =
     askResult = Some(value)
+
+  override def handleTrailer(error: String): Unit =
+    trailers += error
 
   override def handleRow(row: Array[Object & Node]): Unit =
     // The array is reused by the decoder – copy it

@@ -6,6 +6,7 @@ import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import org.eclipse.rdf4j.rio.ParserConfig;
+import org.eclipse.rdf4j.rio.helpers.BooleanRioSetting;
 import org.eclipse.rdf4j.rio.helpers.IntegerRioSetting;
 
 /**
@@ -53,6 +54,17 @@ public final class JellySparqlParserSettings {
         "eu.neverblink.jelly.convert.rdf4j.sparql.maxDatatypeTableSize",
         "Maximum supported size of the datatype table",
         DEFAULT_SUPPORTED_OPTIONS.getMaxDatatypeTableSize()
+    );
+
+    /**
+     * Without a trailer, a result set that was cut off at a frame boundary looks complete.
+     * Producers should always write one, but they are not required to. A trailer that reports
+     * an error always makes the parser throw, whatever this is set to.
+     */
+    public static final BooleanRioSetting REQUIRE_TRAILER = new BooleanRioSetting(
+        "eu.neverblink.jelly.convert.rdf4j.sparql.requireTrailer",
+        "Throw if the stream ends without a trailer",
+        false
     );
 
     /**

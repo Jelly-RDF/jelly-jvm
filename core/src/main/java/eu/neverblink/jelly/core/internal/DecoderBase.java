@@ -43,6 +43,15 @@ public abstract class DecoderBase<TNode, TDatatype> {
         return datatypeLookup;
     }
 
+    /**
+     * Drops the name, prefix and datatype lookups. They are recreated empty on next use, with
+     * whatever sizes the table size getters return at that point.
+     */
+    protected final void resetLookups() {
+        nameDecoder = null;
+        datatypeLookup = null;
+    }
+
     protected abstract int getNameTableSize();
 
     protected abstract int getPrefixTableSize();

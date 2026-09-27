@@ -65,9 +65,26 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
 
     "reject a frame whose column count does not match the header" in {
       val e = intercept[RdfProtoDeserializationError] {
-        newDecoder().ingestFrame(frameWithOneVariable(0))
+        newDecoder().ingestFrame(frameWithOneVariable(1))
       }
       e.getMessage should include("The frame has 0 columns, but the header declares 1 variables")
+    }
+
+    "reject a frame with rows but only some of the columns" in {
+      val frame = frameWithOneVariable(0)
+        .addVariables(SparqlVariable.newInstance().setName("y").setColumnIndex(1))
+        .addIriColumns(iriColumn(0, Seq.empty))
+      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
+      e.getMessage should include("The frame has 1 columns, but the header declares 2 variables")
+    }
+
+    "accept a frame with no rows and no columns" in {
+      val collector = ResultsCollector()
+      val decoder = newDecoder(collector)
+      decoder.ingestFrame(frameWithOneVariable(0))
+      decoder.ingestFrame(SparqlResultsFrame.newInstance())
+      collector.variables.toSeq shouldBe Seq("x")
+      collector.rows shouldBe empty
     }
 
     "reject a column index outside the header" in {
@@ -175,13 +192,39 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
     }
 
     "reject bindings following a boolean result" in {
-      val decoder = newDecoder()
-      decoder.ingestFrame(SparqlEncoder.askResultFrame(JellySparqlOptions.SMALL, true))
-      // No options, no variables – there is no header to fall back on
-      val e = intercept[RdfProtoDeserializationError] {
-        decoder.ingestFrame(SparqlResultsFrame.newInstance().setRowCount(1))
-      }
-      e.getMessage should include("header (variables) was not received")
+      val askFrame = SparqlResultsFrame
+        .newInstance()
+        .setOptions(JellySparqlOptions.SMALL)
+        .setAskResult(SparqlAskResult.newInstance().setValue(true))
+      val contents = Seq[(String, SparqlResultsFrame.Mutable)](
+        "rows" -> SparqlResultsFrame.newInstance().setRowCount(1),
+        "variables" -> SparqlResultsFrame.newInstance().addVariables(
+          SparqlVariable.newInstance().setName("x").setColumnIndex(0),
+        ),
+        "names" -> SparqlResultsFrame.newInstance().addNames(
+          RdfLookupEntryPacked.newInstance().addValues("a"),
+        ),
+        "prefixes" -> SparqlResultsFrame.newInstance().addPrefixes(
+          RdfLookupEntryPacked.newInstance().addValues("a"),
+        ),
+        "datatypes" -> SparqlResultsFrame.newInstance().addDatatypes(
+          RdfLookupEntryPacked.newInstance().addValues("a"),
+        ),
+        "IRI columns" -> SparqlResultsFrame.newInstance().addIriColumns(iriColumn(0, Seq.empty)),
+        "blank node columns" ->
+          SparqlResultsFrame.newInstance().addBnodeColumns(SparqlBnodeColumn.newInstance()),
+        "literal columns" ->
+          SparqlResultsFrame.newInstance().addLiteralColumns(SparqlLiteralColumn.newInstance()),
+        "polymorphic columns" ->
+          SparqlResultsFrame.newInstance().addPolyColumns(SparqlPolyColumn.newInstance()),
+      )
+      for (what, frame) <- contents do
+        withClue(s"with $what: ") {
+          val decoder = newDecoder()
+          decoder.ingestFrame(askFrame)
+          val e = intercept[RdfProtoDeserializationError] { decoder.ingestFrame(frame) }
+          e.getMessage should include("No result content may follow a boolean (ASK) result")
+        }
     }
 
     "not read a zero-variable header into a frame that follows a boolean result" in {
@@ -190,7 +233,32 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       val e = intercept[RdfProtoDeserializationError] {
         decoder.ingestFrame(SparqlResultsFrame.newInstance().setOptions(JellySparqlOptions.SMALL))
       }
-      e.getMessage should include("header (variables) was not received")
+      e.getMessage should include("No result content may follow a boolean (ASK) result")
+    }
+
+    "accept a trailer in a separate frame after a boolean result" in {
+      val collector = ResultsCollector()
+      val decoder = newDecoder(collector)
+      decoder.ingestFrame(
+        SparqlResultsFrame
+          .newInstance()
+          .setOptions(JellySparqlOptions.SMALL)
+          .setAskResult(SparqlAskResult.newInstance().setValue(false)),
+      )
+      decoder.ingestFrame(
+        SparqlResultsFrame.newInstance().setTrailer(SparqlResultsTrailer.newInstance()),
+      )
+      collector.askResult shouldBe Some(false)
+      collector.trailers.toSeq shouldBe Seq("")
+    }
+
+    "pass on the trailer of a boolean result frame" in {
+      val collector = ResultsCollector()
+      newDecoder(collector).ingestFrame(
+        SparqlEncoder.askResultFrame(JellySparqlOptions.SMALL, true),
+      )
+      collector.askResult shouldBe Some(true)
+      collector.trailers.toSeq shouldBe Seq("")
     }
 
     "reject a boolean result for handlers that do not support one" in {
@@ -205,6 +273,207 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
         )
       }
       e.getMessage should include("does not support boolean (ASK) results")
+    }
+  }
+
+  /** A frame with one row: an IRI in column 0, from name id `nameId` (set by the frame). */
+  private def rowFrame(nameId: Int, name: String) =
+    SparqlResultsFrame
+      .newInstance()
+      .setRowCount(1)
+      .addNames(RdfLookupEntryPacked.newInstance().setId(nameId).addValues(name))
+      .addIriColumns(SparqlIriColumn.newInstance().addNameIds(nameId))
+
+  private def trailer(error: String = "") = SparqlResultsTrailer.newInstance().setError(error)
+
+  "the stream trailer" should {
+    "be passed to the handler after the rows of its frame" in {
+      val events = scala.collection.mutable.ListBuffer[String]()
+      val handler = new SparqlResultsHandler[Node]:
+        override def handleVariables(vars: util.List[String]): Unit = events += "variables"
+        override def handleRow(row: Array[Object & Node]): Unit = events += s"row ${row.head}"
+        override def createRowBuffer(size: Int): Array[Object & Node] =
+          new Array[Node](size).asInstanceOf[Array[Object & Node]]
+        override def handleTrailer(error: String): Unit = events += s"trailer '$error'"
+      val frame = frameWithOneVariable(1)
+        .addIriColumns(SparqlIriColumn.newInstance().addNameIds(1))
+        .setTrailer(trailer("oops"))
+      newDecoder(handler).ingestFrame(frame)
+      events.toSeq shouldBe Seq("variables", "row Iri(https://test.org/x)", "trailer 'oops'")
+    }
+
+    "be ignored by handlers that do not override handleTrailer" in {
+      val handler = new SparqlResultsHandler[Node]:
+        override def handleVariables(vars: util.List[String]): Unit = ()
+        override def handleRow(row: Array[Object & Node]): Unit = ()
+        override def createRowBuffer(size: Int): Array[Object & Node] =
+          new Array[Node](size).asInstanceOf[Array[Object & Node]]
+      newDecoder(handler).ingestFrame(frameWithOneVariable(0).setTrailer(trailer("oops")))
+    }
+
+    "be accepted in a frame of its own" in {
+      val collector = ResultsCollector()
+      val decoder = newDecoder(collector)
+      decoder.ingestFrame(frameWithOneVariable(1).addIriColumns(SparqlIriColumn.newInstance()))
+      decoder.ingestFrame(SparqlResultsFrame.newInstance().setTrailer(trailer()))
+      collector.rows.size shouldBe 1
+      collector.trailers.toSeq shouldBe Seq("")
+    }
+
+    "not be followed by a frame without the options" in {
+      val decoder = newDecoder()
+      decoder.ingestFrame(frameWithOneVariable(0).setTrailer(trailer()))
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(SparqlResultsFrame.newInstance())
+      }
+      e.getMessage should include("after the stream trailer that does not contain stream options")
+    }
+
+    "not be followed by a frame without the options, after a boolean result" in {
+      val decoder = newDecoder()
+      decoder.ingestFrame(SparqlEncoder.askResultFrame(JellySparqlOptions.SMALL, true))
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(SparqlResultsFrame.newInstance().setTrailer(trailer()))
+      }
+      e.getMessage should include("after the stream trailer that does not contain stream options")
+    }
+
+    "be followed by a frame with the options" in {
+      val collector = ResultsCollector()
+      val decoder = newDecoder(collector)
+      decoder.ingestFrame(frameWithOneVariable(0).setTrailer(trailer()))
+      decoder.ingestFrame(frameWithOneVariable(0).setTrailer(trailer("second part failed")))
+      collector.trailers.toSeq shouldBe Seq("", "second part failed")
+    }
+  }
+
+  "repeated stream options" should {
+    "require the header to be restated in the same frame" in {
+      val decoder = newDecoder()
+      decoder.ingestFrame(frameWithOneVariable(0))
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(SparqlResultsFrame.newInstance().setOptions(JellySparqlOptions.SMALL))
+      }
+      e.getMessage should include("must restate the result set header")
+    }
+
+    "require the restated header to declare the same variables" in {
+      val decoder = newDecoder()
+      decoder.ingestFrame(frameWithOneVariable(0))
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(
+          SparqlResultsFrame
+            .newInstance()
+            .setOptions(JellySparqlOptions.SMALL)
+            .addVariables(SparqlVariable.newInstance().setName("y").setColumnIndex(0)),
+        )
+      }
+      e.getMessage should include("same variables in the same order as the original header")
+    }
+
+    "reset the header even if the next frame does not repeat the options" in {
+      // The reset frame restates the header, so the stream carries on as normal
+      val collector = ResultsCollector()
+      val decoder = newDecoder(collector)
+      decoder.ingestFrame(frameWithOneVariable(0))
+      decoder.ingestFrame(frameWithOneVariable(0))
+      decoder.ingestFrame(rowFrame(2, "https://test.org/y"))
+      collector.variableCalls shouldBe 1
+      collector.rows.map(_.head) shouldBe Seq(Iri("https://test.org/y"))
+    }
+
+    "empty the lookup tables" in {
+      val decoder = newDecoder()
+      decoder.ingestFrame(
+        frameWithOneVariable(1).addIriColumns(SparqlIriColumn.newInstance().addNameIds(1)),
+      )
+      // Name 1 was set before the reset, so it must not be visible after it
+      val frame = SparqlResultsFrame
+        .newInstance()
+        .setOptions(JellySparqlOptions.SMALL)
+        .setRowCount(1)
+        .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
+        .addIriColumns(SparqlIriColumn.newInstance().addNameIds(1))
+      intercept[RdfProtoDeserializationError] { decoder.ingestFrame(frame) }
+    }
+
+    "restart the lookup entry numbering at 1" in {
+      val collector = ResultsCollector()
+      val decoder = newDecoder(collector)
+      // Before the reset: names 1 and 2
+      decoder.ingestFrame(
+        frameWithOneVariable(1)
+          .addNames(RdfLookupEntryPacked.newInstance().addValues("https://test.org/second"))
+          .addIriColumns(SparqlIriColumn.newInstance().addNameIds(2)),
+      )
+      // After it: an entry with id 0 is number 1 again, not 3
+      val frame = SparqlResultsFrame
+        .newInstance()
+        .setOptions(JellySparqlOptions.SMALL)
+        .setRowCount(1)
+        .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
+        .addNames(RdfLookupEntryPacked.newInstance().addValues("https://test.org/after"))
+        .addIriColumns(SparqlIriColumn.newInstance().addNameIds(1))
+      decoder.ingestFrame(frame)
+      collector.rows.map(_.head) shouldBe Seq(
+        Iri("https://test.org/second"),
+        Iri("https://test.org/after"),
+      )
+    }
+
+    "size the new lookup tables from the new options" in {
+      val collector = ResultsCollector()
+      val decoder = newDecoder(collector)
+      decoder.ingestFrame(frameWithOneVariable(0))
+      // An id past the end of the SMALL name table, which the BIG one has room for
+      val id = JellySparqlOptions.SMALL.getMaxNameTableSize + 1
+      decoder.ingestFrame(
+        rowFrame(id, "https://test.org/big")
+          .setOptions(JellySparqlOptions.BIG)
+          .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0)),
+      )
+      collector.rows.map(_.head) shouldBe Seq(Iri("https://test.org/big"))
+      decoder.getSparqlOptions.getMaxNameTableSize shouldBe JellySparqlOptions.BIG.getMaxNameTableSize
+    }
+
+    "be checked against the supported options" in {
+      val decoder = MockSparqlConverterFactory.decoder(ResultsCollector(), JellySparqlOptions.SMALL)
+      decoder.ingestFrame(frameWithOneVariable(0))
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(frameWithOneVariable(0).setOptions(JellySparqlOptions.BIG))
+      }
+      e.getMessage should include("larger than the maximum supported size")
+    }
+
+    "keep a zero-variable result set going" in {
+      val collector = ResultsCollector()
+      val decoder = newDecoder(collector)
+      val frame =
+        SparqlResultsFrame.newInstance().setOptions(JellySparqlOptions.SMALL).setRowCount(2)
+      decoder.ingestFrame(frame)
+      decoder.ingestFrame(frame)
+      collector.variableCalls shouldBe 1
+      collector.rows.size shouldBe 4
+    }
+
+    "not accept a zero-variable header after a header with variables" in {
+      val decoder = newDecoder()
+      decoder.ingestFrame(frameWithOneVariable(0))
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(
+          SparqlResultsFrame.newInstance().setOptions(JellySparqlOptions.SMALL).setRowCount(1),
+        )
+      }
+      e.getMessage should include("must restate the result set header")
+    }
+
+    "not accept a header with variables after a zero-variable header" in {
+      val decoder = newDecoder()
+      decoder.ingestFrame(SparqlResultsFrame.newInstance().setOptions(JellySparqlOptions.SMALL))
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(frameWithOneVariable(0))
+      }
+      e.getMessage should include("same variables as the original header")
     }
   }
 

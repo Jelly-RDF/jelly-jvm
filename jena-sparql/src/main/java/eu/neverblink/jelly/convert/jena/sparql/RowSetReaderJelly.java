@@ -33,6 +33,10 @@ import org.apache.jena.sparql.util.Context;
  * <p>
  * Both delimited and non-delimited inputs are accepted (autodetected). Delimited streams are
  * read frame-by-frame, so the returned RowSet is streaming.
+ * <p>
+ * If the stream ends with a trailer containing an error, the RowSet returns all rows that were
+ * received, and then throws a RiotException. A stream that ends without a trailer is accepted,
+ * unless {@link Options#requireTrailer()} is set.
  */
 @ExperimentalApi
 public final class RowSetReaderJelly implements RowSetReader {
@@ -42,14 +46,19 @@ public final class RowSetReaderJelly implements RowSetReader {
      *
      * @param supportedOptions options supported by the reader
      * @param maxRowsPerFrame largest row count a single frame may declare
+     * @param requireTrailer whether to throw when the stream ends without a trailer
      */
-    public record Options(SparqlResultsOptions supportedOptions, int maxRowsPerFrame) {
+    public record Options(SparqlResultsOptions supportedOptions, int maxRowsPerFrame, boolean requireTrailer) {
         public Options() {
             this(JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS);
         }
 
         public Options(SparqlResultsOptions supportedOptions) {
             this(supportedOptions, JellySparqlConstants.DEFAULT_MAX_ROWS_PER_FRAME);
+        }
+
+        public Options(SparqlResultsOptions supportedOptions, int maxRowsPerFrame) {
+            this(supportedOptions, maxRowsPerFrame, false);
         }
 
         /**
@@ -66,7 +75,10 @@ public final class RowSetReaderJelly implements RowSetReader {
             }
             return new Options(
                 context.get(JellySparqlLanguage.SYMBOL_SUPPORTED_OPTIONS, this.supportedOptions),
-                context.getInt(JellySparqlLanguage.SYMBOL_MAX_ROWS_PER_FRAME, this.maxRowsPerFrame)
+                context.getInt(JellySparqlLanguage.SYMBOL_MAX_ROWS_PER_FRAME, this.maxRowsPerFrame),
+                context.isDefined(JellySparqlLanguage.SYMBOL_REQUIRE_TRAILER)
+                    ? context.isTrue(JellySparqlLanguage.SYMBOL_REQUIRE_TRAILER)
+                    : this.requireTrailer
             );
         }
     }
@@ -113,66 +125,105 @@ public final class RowSetReaderJelly implements RowSetReader {
             options.supportedOptions(),
             options.maxRowsPerFrame()
         );
+        final FrameReader reader;
         try {
             final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
-            if (!response.isDelimited()) {
-                // Non-delimited: the entire input is a single frame
-                decoder.ingestFrame(SparqlResultsFrame.parseFrom(response.newInput()));
-                if (handler.askResult != null) {
-                    return handler.askResult;
-                }
-                if (handler.vars == null) {
-                    throw new RiotException("No result set header found in the input.");
-                }
-                return RowSetStream.create(handler.vars, handler.queue.iterator());
-            }
-
-            final InputStream input = response.newInput();
-            // Read frames until the header (or an ASK result) is known;
-            // the first frame must carry one of them.
-            SparqlResultsFrame frame;
-            while (
-                handler.vars == null &&
-                handler.askResult == null &&
-                (frame = SparqlResultsFrame.parseDelimitedFrom(input)) != null
-            ) {
-                decoder.ingestFrame(frame);
+            reader = new FrameReader(response.newInput(), response.isDelimited(), decoder, options.requireTrailer());
+            // Read frames until the header (or an ASK result) is known.
+            while (handler.vars == null && handler.askResult == null && reader.readFrame()) {
+                // Errors are reported by the iterator, after the rows received before them
             }
             if (handler.askResult != null) {
+                // Read the rest of the stream, which may still hold the trailer
+                do {
+                    handler.checkError();
+                } while (reader.readFrame());
                 return handler.askResult;
             }
-            if (handler.vars == null) {
-                throw new RiotException("No result set header found in the input.");
-            }
-            // Stream the rest of the frames lazily
-            final Iterator<Binding> iterator = new Iterator<>() {
-                @Override
-                public boolean hasNext() {
-                    while (handler.queue.isEmpty()) {
-                        try {
-                            final SparqlResultsFrame nextFrame = SparqlResultsFrame.parseDelimitedFrom(input);
-                            if (nextFrame == null) {
-                                return false;
-                            }
-                            decoder.ingestFrame(nextFrame);
-                        } catch (IOException e) {
-                            throw new RiotException(e);
-                        }
-                    }
-                    return true;
-                }
-
-                @Override
-                public Binding next() {
-                    if (!hasNext()) {
-                        throw new NoSuchElementException();
-                    }
-                    return handler.queue.poll();
-                }
-            };
-            return RowSetStream.create(handler.vars, iterator);
         } catch (IOException e) {
             throw new RiotException(e);
+        }
+        if (handler.vars == null) {
+            throw new RiotException("No result set header found in the input.");
+        }
+        // Stream the rest of the frames lazily
+        final Iterator<Binding> iterator = new Iterator<>() {
+            @Override
+            public boolean hasNext() {
+                while (handler.queue.isEmpty()) {
+                    // The rows before an error are still returned, the error comes after them
+                    handler.checkError();
+                    try {
+                        if (!reader.readFrame()) {
+                            return false;
+                        }
+                    } catch (IOException e) {
+                        throw new RiotException(e);
+                    }
+                }
+                return true;
+            }
+
+            @Override
+            public Binding next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return handler.queue.poll();
+            }
+        };
+        return RowSetStream.create(handler.vars, iterator);
+    }
+
+    /**
+     * Reads the frames of the stream one by one, and checks at the end of the stream that it was
+     * ended with a trailer, if one is required.
+     */
+    private static final class FrameReader {
+
+        private final InputStream input;
+        private final boolean delimited;
+        private final SparqlDecoder decoder;
+        private final boolean requireTrailer;
+        private boolean finished = false;
+        private boolean lastFrameHadTrailer = false;
+
+        FrameReader(InputStream input, boolean delimited, SparqlDecoder decoder, boolean requireTrailer) {
+            this.input = input;
+            this.delimited = delimited;
+            this.decoder = decoder;
+            this.requireTrailer = requireTrailer;
+        }
+
+        /**
+         * Reads and decodes the next frame.
+         *
+         * @return false if the stream has ended
+         */
+        boolean readFrame() throws IOException {
+            if (finished) {
+                return false;
+            }
+            final SparqlResultsFrame frame;
+            if (delimited) {
+                frame = SparqlResultsFrame.parseDelimitedFrom(input);
+            } else {
+                // Non-delimited: the entire input is a single frame
+                frame = SparqlResultsFrame.parseFrom(input);
+                finished = true;
+            }
+            if (frame == null) {
+                finished = true;
+            } else {
+                decoder.ingestFrame(frame);
+                lastFrameHadTrailer = frame.getTrailer() != null;
+            }
+            if (finished && requireTrailer && !lastFrameHadTrailer) {
+                throw new RiotException(
+                    "The Jelly-SPARQL stream ended without a trailer, so the result set may be incomplete."
+                );
+            }
+            return frame != null;
         }
     }
 
@@ -180,7 +231,21 @@ public final class RowSetReaderJelly implements RowSetReader {
 
         private List<Var> vars = null;
         private Boolean askResult = null;
+        private String error = null;
         private final ArrayDeque<Binding> queue = new ArrayDeque<>();
+
+        @Override
+        public void handleTrailer(String error) {
+            if (!error.isEmpty() && this.error == null) {
+                this.error = error;
+            }
+        }
+
+        void checkError() {
+            if (error != null) {
+                throw new RiotException("The producer could not complete the result set: " + error);
+            }
+        }
 
         @Override
         public void handleVariables(List<String> variables) {

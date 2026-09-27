@@ -83,22 +83,19 @@ object CoreImplementation extends SparqlImplementation:
     val out = ByteArrayOutputStream()
     val rowLimit = math.max(1, maxValuesPerFrame / math.max(1, vars.size))
     var rowsInFrame = 0
-    var wroteAnyFrame = false
     for row <- rows do
       if !encoder.appendRow(row) then
         // The frame ran out of lookup entries before reaching the row limit
         encoder.endFrame().writeDelimitedTo(out)
-        wroteAnyFrame = true
         rowsInFrame = 0
         // An empty frame always takes the row
         encoder.appendRow(row)
       rowsInFrame += 1
       if rowsInFrame >= rowLimit then
         encoder.endFrame().writeDelimitedTo(out)
-        wroteAnyFrame = true
         rowsInFrame = 0
-    // The last (possibly empty) frame still carries the header
-    if rowsInFrame > 0 || !wroteAnyFrame then encoder.endFrame().writeDelimitedTo(out)
+    // The last frame contains the trailer, and the header too if nothing was written before
+    encoder.endStream().writeDelimitedTo(out)
     out.toByteArray
 
   override def decode(bytes: Array[Byte]): (Seq[String], Seq[Seq[Any]]) =

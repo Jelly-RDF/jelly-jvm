@@ -36,13 +36,19 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     private final int maxRowsPerFrame;
 
     private SparqlResultsOptions currentOptions = null;
+    // Variables of the stream, as declared by the first header. Kept across options resets, as
+    // every header must declare the same ones.
     private String[] variableNames = null;
     private int[] varToColumn = null;
     private TNode[] rowBuffer = null;
     // Per-variable column decode buffers, reused across frames. The inner arrays grow to the
     // largest row count seen so far.
     private Object[][] decodedColumns = null;
-    private boolean askResultReceived = false;
+    // Stream-level flags, packed into one field. Only checked once per frame.
+    private static final byte ASK_RESULT_RECEIVED = 1;
+    // Set by a trailer, cleared by the next options message
+    private static final byte TRAILER_RECEIVED = 2;
+    private byte flags = 0;
 
     public SparqlDecoderImpl(
         ProtoDecoderConverter<TNode, TDatatype> converter,
@@ -85,23 +91,52 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     public void ingestFrame(SparqlResultsFrame frame) {
         if (frame.getOptions() != null) {
             handleOptions(frame.getOptions());
+        } else if ((flags & TRAILER_RECEIVED) != 0) {
+            throw new RdfProtoDeserializationError(
+                "Received a frame after the stream trailer that does not contain stream options."
+            );
         }
         if (currentOptions == null) {
             throw new RdfProtoDeserializationError("Stream options were not received before the first frame content.");
         }
+        if ((flags & ASK_RESULT_RECEIVED) != 0) {
+            handleFrameAfterAskResult(frame);
+            return;
+        }
         if (frame.getAskResult() != null) {
             handleAskResult(frame);
+            handleTrailer(frame);
             return;
         }
         if (!frame.getVariables().isEmpty()) {
             handleHeader(frame.getVariables());
-        } else if (variableNames == null && frame.getOptions() != null && !askResultReceived) {
-            // The first frame (the one carrying the options) with no variables:
+        } else if (varToColumn == null && frame.getOptions() != null) {
+            if (variableNames != null && variableNames.length > 0) {
+                throw new RdfProtoDeserializationError(
+                    "A frame that repeats the stream options must restate the result set header."
+                );
+            }
+            // A frame containing options but no header in effect and no variables:
             // a zero-variable result set.
             handleHeader(List.of());
         }
-        if (variableNames == null) {
+        if (varToColumn == null) {
             throw new RdfProtoDeserializationError("The result set header (variables) was not received.");
+        }
+
+        final int rows = frame.getRowCount();
+        if (rows < 0 || rows > JellySparqlConstants.MAX_ROWS_PER_FRAME) {
+            throw new RdfProtoDeserializationError(
+                "Invalid row count %s: a frame may have at most %d rows.".formatted(
+                    Integer.toUnsignedString(rows),
+                    JellySparqlConstants.MAX_ROWS_PER_FRAME
+                )
+            );
+        }
+        if (rows > maxRowsPerFrame) {
+            throw new RdfProtoDeserializationError(
+                "The frame declares %d rows, more than the %d this reader accepts.".formatted(rows, maxRowsPerFrame)
+            );
         }
 
         // Apply all lookup entries before decoding any column. In a packed entry only the first
@@ -140,15 +175,6 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             }
         }
 
-        final int rows = frame.getRowCount();
-        if (rows < 0) {
-            throw new RdfProtoDeserializationError("Invalid row count (over 2^31).");
-        }
-        if (rows > maxRowsPerFrame) {
-            throw new RdfProtoDeserializationError(
-                "The frame declares %d rows, more than the %d this reader accepts.".formatted(rows, maxRowsPerFrame)
-            );
-        }
         final var iriColumns = frame.getIriColumns();
         final var bnodeColumns = frame.getBnodeColumns();
         final var literalColumns = frame.getLiteralColumns();
@@ -157,7 +183,9 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         final int bnodeEnd = iriEnd + bnodeColumns.size();
         final int literalEnd = bnodeEnd + literalColumns.size();
         final int totalColumns = literalEnd + polyColumns.size();
-        if (totalColumns != variableNames.length) {
+        // A frame with no rows may skip serializing columns
+        final boolean noColumns = totalColumns == 0 && rows == 0;
+        if (totalColumns != variableNames.length && !noColumns) {
             throw new RdfProtoDeserializationError(
                 "The frame has %d columns, but the header declares %d variables.".formatted(
                     totalColumns,
@@ -167,7 +195,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
 
         // Decode each variable's column into a row-indexed array (reused across frames).
-        for (int v = 0; v < variableNames.length; v++) {
+        for (int v = 0; v < variableNames.length && !noColumns; v++) {
             final int c = varToColumn[v];
             final Object[] out = decodeBufferForVariable(v, rows);
             try {
@@ -203,6 +231,15 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             }
             handler.handleRow(row);
         }
+        handleTrailer(frame);
+    }
+
+    private void handleTrailer(SparqlResultsFrame frame) {
+        final SparqlResultsTrailer trailer = frame.getTrailer();
+        if (trailer != null) {
+            flags |= TRAILER_RECEIVED;
+            handler.handleTrailer(trailer.getError());
+        }
     }
 
     private Object[] decodeBufferForVariable(int variable, int rows) {
@@ -221,15 +258,40 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
     private void handleOptions(SparqlResultsOptions options) {
         JellySparqlOptions.checkCompatibility(options, supportedOptions);
-        if (currentOptions == null) {
-            currentOptions = options;
+        if (currentOptions != null) {
+            // Repeated options (e.g., in concatenated streams) reset the stream state.
+            resetLookups();
+            varToColumn = null;
         }
+        currentOptions = options;
+        flags &= ~TRAILER_RECEIVED;
+    }
+
+    /**
+     * Nothing but the trailer and the metadata may follow a boolean result.
+     */
+    private void handleFrameAfterAskResult(SparqlResultsFrame frame) {
+        if (frame.getAskResult() != null) {
+            throw new RdfProtoDeserializationError("Received more than one boolean (ASK) result.");
+        }
+        if (
+            frame.getOptions() != null ||
+            frame.getRowCount() != 0 ||
+            !frame.getVariables().isEmpty() ||
+            !frame.getNames().isEmpty() ||
+            !frame.getPrefixes().isEmpty() ||
+            !frame.getDatatypes().isEmpty() ||
+            !frame.getIriColumns().isEmpty() ||
+            !frame.getBnodeColumns().isEmpty() ||
+            !frame.getLiteralColumns().isEmpty() ||
+            !frame.getPolyColumns().isEmpty()
+        ) {
+            throw new RdfProtoDeserializationError("No result content may follow a boolean (ASK) result.");
+        }
+        handleTrailer(frame);
     }
 
     private void handleAskResult(SparqlResultsFrame frame) {
-        if (askResultReceived) {
-            throw new RdfProtoDeserializationError("Received more than one boolean (ASK) result.");
-        }
         if (variableNames != null) {
             throw new RdfProtoDeserializationError("Unexpected boolean (ASK) result in a stream of bindings.");
         }
@@ -245,7 +307,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 "A frame with a boolean (ASK) result must not carry any bindings content."
             );
         }
-        askResultReceived = true;
+        flags |= ASK_RESULT_RECEIVED;
         handler.handleAskResult(frame.getAskResult().getValue());
     }
 

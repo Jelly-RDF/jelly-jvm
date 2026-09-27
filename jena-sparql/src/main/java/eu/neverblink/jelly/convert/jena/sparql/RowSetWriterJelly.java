@@ -24,6 +24,10 @@ import org.apache.jena.sparql.util.Context;
 
 /**
  * Jena RowSet writer for the Jelly-SPARQL format.
+ * <p>
+ * The last frame includes a trailer, which tells the reader whether the result set is complete.
+ * If reading the RowSet throws (for example, because the query timed out), the writer ends the
+ * stream with a trailer carrying the error message, and then rethrows the exception.
  */
 @ExperimentalApi
 public final class RowSetWriterJelly implements RowSetWriter {
@@ -106,47 +110,64 @@ public final class RowSetWriterJelly implements RowSetWriter {
         final int rowsPerFrame = Math.max(1, options.maxValuesPerFrame() / Math.max(1, row.length));
         final CodedOutputStream codedOutput = ProtobufUtil.createCodedOutputStream(out);
         try {
-            boolean wroteAnyFrame = false;
-            int rowsInFrame = 0;
-            while (rowSet.hasNext()) {
-                final Binding binding = rowSet.next();
-                for (int i = 0; i < varArray.length; i++) {
-                    row[i] = binding.get(varArray[i]);
-                }
-                if (!encoder.appendRow(row)) {
-                    // The frame filled up its lookup tables before reaching the row limit
-                    if (!options.delimited()) {
-                        throw new RdfProtoSerializationError(
-                            "This result set is too large to be written as a single " +
-                                "non-delimited frame: its lookup tables cannot hold all the terms. " +
-                                "Write delimited output, or increase the max lookup table sizes."
-                        );
+            try {
+                int rowsInFrame = 0;
+                while (rowSet.hasNext()) {
+                    final Binding binding = rowSet.next();
+                    for (int i = 0; i < varArray.length; i++) {
+                        row[i] = binding.get(varArray[i]);
                     }
-                    encoder.endFrame().writeDelimitedTo(codedOutput);
-                    wroteAnyFrame = true;
-                    rowsInFrame = 0;
-                    // An empty frame always takes the row
-                    encoder.appendRow(row);
+                    if (!encoder.appendRow(row)) {
+                        // The frame filled up its lookup tables before reaching the row limit
+                        if (!options.delimited()) {
+                            throw new RdfProtoSerializationError(
+                                "This result set is too large to be written as a single " +
+                                    "non-delimited frame: its lookup tables cannot hold all the terms. " +
+                                    "Write delimited output, or increase the max lookup table sizes."
+                            );
+                        }
+                        encoder.endFrame().writeDelimitedTo(codedOutput);
+                        rowsInFrame = 0;
+                        // An empty frame always takes the row
+                        encoder.appendRow(row);
+                    }
+                    if (options.delimited() && ++rowsInFrame >= rowsPerFrame) {
+                        encoder.endFrame().writeDelimitedTo(codedOutput);
+                        rowsInFrame = 0;
+                    }
                 }
-                if (options.delimited() && ++rowsInFrame >= rowsPerFrame) {
-                    encoder.endFrame().writeDelimitedTo(codedOutput);
-                    wroteAnyFrame = true;
-                    rowsInFrame = 0;
+            } catch (RuntimeException e) {
+                // Tell the reader that the result set is incomplete, then pass the error on
+                try {
+                    writeFrame(encoder.endStream(errorMessage(e)), codedOutput, options.delimited());
+                    codedOutput.flush();
+                    out.flush();
+                } catch (IOException | RuntimeException suppressed) {
+                    e.addSuppressed(suppressed);
                 }
+                throw e;
             }
-            if (rowsInFrame > 0 || !wroteAnyFrame) {
-                final SparqlResultsFrame frame = encoder.endFrame();
-                if (options.delimited()) {
-                    frame.writeDelimitedTo(codedOutput);
-                } else {
-                    frame.writeTo(codedOutput);
-                }
-            }
+            // If the rows ended exactly at a frame boundary, this frame holds only the trailer
+            writeFrame(encoder.endStream(), codedOutput, options.delimited());
             codedOutput.flush();
             out.flush();
         } catch (IOException e) {
             throw new RiotException(e);
         }
+    }
+
+    private static void writeFrame(SparqlResultsFrame frame, CodedOutputStream output, boolean delimited)
+        throws IOException {
+        if (delimited) {
+            frame.writeDelimitedTo(output);
+        } else {
+            frame.writeTo(output);
+        }
+    }
+
+    private static String errorMessage(Throwable e) {
+        final String message = e.getMessage();
+        return message == null || message.isEmpty() ? e.getClass().getName() : message;
     }
 
     @Override
