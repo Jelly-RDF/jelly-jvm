@@ -110,6 +110,9 @@ public final class JellySparqlOptions {
         SparqlResultsOptions requestedOptions,
         SparqlResultsOptions supportedOptions
     ) {
+        if (requestedOptions.getVersion() == 0) {
+            throw new RdfProtoDeserializationError("The stream has version tag 0, which is not a valid version.");
+        }
         if (
             requestedOptions.getVersion() > supportedOptions.getVersion() ||
             requestedOptions.getVersion() > JellySparqlConstants.PROTO_VERSION

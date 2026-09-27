@@ -134,7 +134,7 @@ public final class RowSetReaderJelly implements RowSetReader {
                 // Errors are reported by the iterator, after the rows received before them
             }
             if (handler.askResult != null) {
-                // Read the rest of the stream, which may still hold the trailer
+                // Read to the end of the stream: the decoder rejects any frame after this one
                 do {
                     handler.checkError();
                 } while (reader.readFrame());

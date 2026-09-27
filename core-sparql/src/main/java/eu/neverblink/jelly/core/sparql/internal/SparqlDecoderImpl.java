@@ -281,27 +281,14 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     }
 
     /**
-     * Nothing but the trailer and the metadata may follow a boolean result.
+     * A boolean result stream is a single frame: nothing may follow it, not even a trailer, and it
+     * cannot be concatenated with another one.
      */
     private void handleFrameAfterAskResult(SparqlResultsFrame frame) {
         if (frame.getAskResult() != null) {
             throw new RdfProtoDeserializationError("Received more than one boolean (ASK) result.");
         }
-        if (
-            frame.getOptions() != null ||
-            frame.getRowCount() != 0 ||
-            !frame.getVariables().isEmpty() ||
-            !frame.getNames().isEmpty() ||
-            !frame.getPrefixes().isEmpty() ||
-            !frame.getDatatypes().isEmpty() ||
-            !frame.getIriColumns().isEmpty() ||
-            !frame.getBnodeColumns().isEmpty() ||
-            !frame.getLiteralColumns().isEmpty() ||
-            !frame.getPolyColumns().isEmpty()
-        ) {
-            throw new RdfProtoDeserializationError("No result content may follow a boolean (ASK) result.");
-        }
-        handleTrailer(frame);
+        throw new RdfProtoDeserializationError("No frame may follow the frame containing the boolean (ASK) result.");
     }
 
     private void handleAskResult(SparqlResultsFrame frame) {

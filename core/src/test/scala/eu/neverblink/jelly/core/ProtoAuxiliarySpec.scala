@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core
 
-import com.google.protobuf.{ByteString, Descriptors, TextFormat}
+import com.google.protobuf.{ByteString, Descriptors, InvalidProtocolBufferException, TextFormat}
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.proto.google.v1 as google
 import org.scalatest.matchers.should.Matchers
@@ -88,6 +88,26 @@ class ProtoAuxiliarySpec extends AnyWordSpec, Matchers:
           val bytes = tc.toByteArrayDelimited
           val frame = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
           frame should be(tc)
+        }
+    }
+
+    "reject a delimited frame with specified length higher than the actual data" when {
+      val frame = RdfStreamFrame
+        .newInstance()
+        .addRows(RdfStreamRow.newInstance().setOptions(JellyOptions.SMALL_STRICT))
+        .addRows(RdfStreamRow.newInstance().setOptions(JellyOptions.SMALL_STRICT))
+      val bytes = frame.toByteArrayDelimited
+      val firstRowEnd = bytes.length - frame.getRows.asScala.last.getSerializedSize - 1
+      for (name, cut) <- Seq(
+          "at a field boundary" -> firstRowEnd,
+          "within a field" -> (bytes.length - 2),
+        )
+      do
+        s"cut $name" in {
+          val exception = intercept[InvalidProtocolBufferException] {
+            RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes.take(cut)))
+          }
+          exception.getMessage should include("truncated")
         }
     }
 

@@ -87,10 +87,13 @@ public final class JellySparqlMetadata {
 
     /**
      * Returns the links set in the frame's metadata.
+     * <p>
+     * A value that is not valid UTF-8 is ignored, as the format recommends: the links do not affect
+     * the result data, so there is no reason to fail the whole stream over them.
      *
      * @param frame the frame to look in
-     * @return the link IRIs, or null if the frame does not set the {@link #LINK} key
-     * @throws RdfProtoDeserializationError if the value is not valid UTF-8
+     * @return the link IRIs, or null if the frame does not set the {@link #LINK} key to a valid
+     *         value
      */
     public static List<String> getLinks(SparqlResultsFrame frame) {
         ByteString value = null;
@@ -99,6 +102,6 @@ public final class JellySparqlMetadata {
                 value = entry.getValue();
             }
         }
-        return value == null ? null : decodeLinks(value);
+        return value == null || !value.isValidUtf8() ? null : decodeLinks(value);
     }
 }

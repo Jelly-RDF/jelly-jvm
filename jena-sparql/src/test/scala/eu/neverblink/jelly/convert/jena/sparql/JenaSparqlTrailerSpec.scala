@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.convert.jena.sparql
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
+import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.proto.v1.sparql.{SparqlResultsFrame, SparqlResultsTrailer}
 import eu.neverblink.jelly.core.sparql.{JellySparqlOptions, SparqlEncoder}
 import org.apache.jena.graph.{Node, NodeFactory}
@@ -208,7 +209,7 @@ class JenaSparqlTrailerSpec extends AnyWordSpec, Matchers, JenaTest:
       e.getMessage should include("failed")
     }
 
-    "read the trailer of a boolean result from a later frame" in {
+    "reject a frame after the one with the boolean result" in {
       val out = ByteArrayOutputStream()
       val frame = SparqlEncoder.askResultFrame(JellySparqlOptions.SMALL, true).clone()
       frame.setTrailer(null)
@@ -217,10 +218,10 @@ class JenaSparqlTrailerSpec extends AnyWordSpec, Matchers, JenaTest:
         .newInstance()
         .setTrailer(SparqlResultsTrailer.newInstance().setError("failed"))
         .writeDelimitedTo(out)
-      val e = intercept[RiotException] {
+      val e = intercept[RdfProtoDeserializationError] {
         reader.readAny(ByteArrayInputStream(out.toByteArray), null)
       }
-      e.getMessage should include("failed")
+      e.getMessage should include("No frame may follow the frame containing the boolean (ASK) result")
     }
 
     "reject a boolean result without a trailer if told to" in {

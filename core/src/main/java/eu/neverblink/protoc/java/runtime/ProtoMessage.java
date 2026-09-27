@@ -139,6 +139,14 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
         final var msg = factory.create();
         final var codedInput = CodedInputStream.newInstance(new LimitedInputStream(input, size));
         msg.mergeFrom(codedInput, DEFAULT_MAX_RECURSION_DEPTH);
+        if (codedInput.getTotalBytesRead() != size) {
+            throw new InvalidProtocolBufferException(
+                "The message is truncated: its length prefix promises %d bytes, but the input has only %d.".formatted(
+                    size,
+                    codedInput.getTotalBytesRead()
+                )
+            );
+        }
         return msg;
     }
 

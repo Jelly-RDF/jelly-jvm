@@ -11,8 +11,7 @@ import eu.neverblink.jelly.convert.rdf4j.sparql.{
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.sparql.{JellySparqlConstants, JellySparqlOptions}
 import eu.neverblink.jelly.core.sparql.gen.{SparqlDataGen, TermSpec}
-import org.apache.jena.datatypes.xsd.XSDDatatype
-import org.apache.jena.graph.{Node, TextDirection}
+import org.apache.jena.graph.Node
 import org.apache.jena.rdf.model.{Model, Property, ResourceFactory}
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.riot.resultset.ResultSetLang
@@ -111,27 +110,7 @@ class W3cSparqlResultsSpec extends AnyWordSpec, Matchers, JenaTest:
       else result
     }
 
-  private def toTermSpec(node: Node): TermSpec =
-    if node.isURI then TermSpec.Iri(node.getURI)
-    else if node.isBlank then TermSpec.BNode(node.getBlankNodeLabel)
-    else if node.isTripleTerm then
-      val t = node.getTriple
-      TermSpec.TripleTerm(
-        toTermSpec(t.getSubject),
-        toTermSpec(t.getPredicate),
-        toTermSpec(t.getObject),
-      )
-    else if node.getLiteralLanguage.nonEmpty && node.getLiteralBaseDirection != null then
-      TermSpec.DirLangLiteral(
-        node.getLiteralLexicalForm,
-        node.getLiteralLanguage,
-        node.getLiteralBaseDirection == TextDirection.LTR,
-      )
-    else if node.getLiteralLanguage.nonEmpty then
-      TermSpec.LangLiteral(node.getLiteralLexicalForm, node.getLiteralLanguage)
-    else if node.getLiteralDatatypeURI == XSDDatatype.XSDstring.getURI then
-      TermSpec.PlainLiteral(node.getLiteralLexicalForm)
-    else TermSpec.DtLiteral(node.getLiteralLexicalForm, node.getLiteralDatatypeURI)
+  private def toTermSpec(node: Node): TermSpec = JenaImplementation.toSpec(node)
 
   private def bindingsOf(result: SPARQLResult): (Seq[Var], IndexedSeq[Binding]) =
     val resultSet = result.getResultSet

@@ -17,14 +17,15 @@ import eu.neverblink.jelly.convert.rdf4j.sparql.{
 }
 import eu.neverblink.jelly.core.helpers.Mrl
 import eu.neverblink.jelly.core.proto.v1.sparql.{SparqlResultsFrame, SparqlResultsOptions}
-import eu.neverblink.jelly.core.sparql.gen.{MrlTermFactory, SparqlDataGen, TermFactory}
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection
+import eu.neverblink.jelly.core.sparql.gen.{MrlTermFactory, SparqlDataGen, TermFactory, TermSpec}
 import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
 import eu.neverblink.jelly.core.sparql.{JellySparqlOptions, SparqlEncoder}
-import org.apache.jena.graph.Node
+import org.apache.jena.graph.{Node, TextDirection}
 import org.apache.jena.sparql.core.Var
 import org.apache.jena.sparql.engine.binding.BindingFactory
 import org.apache.jena.sparql.exec.RowSetStream
-import org.eclipse.rdf4j.model.Value
+import org.eclipse.rdf4j.model.{BNode, IRI, Literal, TripleTerm, Value}
 import org.eclipse.rdf4j.query.impl.ListBindingSet
 import org.eclipse.rdf4j.query.resultio.helpers.QueryResultCollector
 
@@ -53,6 +54,17 @@ trait SparqlImplementation:
 
   def encodeAsk(value: Boolean, options: SparqlResultsOptions): Array[Byte]
   def decodeAsk(bytes: Array[Byte]): Boolean
+
+  /** Converts a decoded node back into a library-independent term. */
+  def toSpec(node: TNode): TermSpec
+
+  /** Reads a whole stream, of either kind: a boolean result, or the variables and rows. Throws if
+    * the stream is invalid – including errors that only show up once all rows are read.
+    */
+  def read(bytes: Array[Byte]): SparqlImplementation.Result
+
+  protected final def toSpecRow(row: Seq[TNode | Null]): IndexedSeq[TermSpec | Null] =
+    row.map(n => if n == null then null else toSpec(n.asInstanceOf[TNode])).toIndexedSeq
 
   final def encode(
       vars: Seq[String],
@@ -110,6 +122,32 @@ object CoreImplementation extends SparqlImplementation:
   override def decodeAsk(bytes: Array[Byte]): Boolean =
     ingest(bytes).askResult.get
 
+  override def toSpec(node: TNode): TermSpec = node match
+    case Mrl.Iri(iri) => TermSpec.Iri(iri)
+    case Mrl.BlankNode(label) => TermSpec.BNode(label)
+    case Mrl.SimpleLiteral(lex) => TermSpec.PlainLiteral(lex)
+    case Mrl.LangLiteral(lex, lang) => TermSpec.LangLiteral(lex, lang)
+    case Mrl.DirLangLiteral(lex, lang, direction) =>
+      TermSpec.DirLangLiteral(lex, lang, direction == RdfBaseDirection.LTR)
+    case Mrl.DtLiteral(lex, Mrl.Datatype(dt)) if dt == SparqlImplementation.XsdString =>
+      TermSpec.PlainLiteral(lex)
+    case Mrl.DtLiteral(lex, Mrl.Datatype(dt)) => TermSpec.DtLiteral(lex, dt)
+    case Mrl.TripleNode(s, p, o) =>
+      TermSpec.TripleTerm(
+        toSpec(s.asInstanceOf[TNode]),
+        toSpec(p.asInstanceOf[TNode]),
+        toSpec(o.asInstanceOf[TNode]),
+      )
+    case other => throw IllegalArgumentException(s"Not an RDF term: $other")
+
+  // The core decoder has no notion of a whole stream, so this only checks what it can
+  override def read(bytes: Array[Byte]): SparqlImplementation.Result =
+    val collector = ingest(bytes)
+    collector.askResult match
+      case Some(value) => Left(value)
+      case None =>
+        Right((collector.variables.toSeq, collector.rows.toSeq.map(r => toSpecRow(r))))
+
   private def ingest(bytes: Array[Byte]): ResultsCollector =
     val collector = ResultsCollector()
     val decoder =
@@ -159,6 +197,34 @@ object JenaImplementation extends SparqlImplementation:
 
   override def decodeAsk(bytes: Array[Byte]): Boolean =
     reader().readAny(ByteArrayInputStream(bytes), null).booleanResult()
+
+  override def toSpec(node: Node): TermSpec =
+    if node.isURI then TermSpec.Iri(node.getURI)
+    else if node.isBlank then TermSpec.BNode(node.getBlankNodeLabel)
+    else if node.isTripleTerm then
+      val t = node.getTriple
+      TermSpec.TripleTerm(toSpec(t.getSubject), toSpec(t.getPredicate), toSpec(t.getObject))
+    else if node.getLiteralLanguage.nonEmpty && node.getLiteralBaseDirection != null then
+      TermSpec.DirLangLiteral(
+        node.getLiteralLexicalForm,
+        node.getLiteralLanguage,
+        node.getLiteralBaseDirection == TextDirection.LTR,
+      )
+    else if node.getLiteralLanguage.nonEmpty then
+      TermSpec.LangLiteral(node.getLiteralLexicalForm, node.getLiteralLanguage)
+    else if node.getLiteralDatatypeURI == SparqlImplementation.XsdString then
+      TermSpec.PlainLiteral(node.getLiteralLexicalForm)
+    else TermSpec.DtLiteral(node.getLiteralLexicalForm, node.getLiteralDatatypeURI)
+
+  override def read(bytes: Array[Byte]): SparqlImplementation.Result =
+    val result = reader().readAny(ByteArrayInputStream(bytes), null)
+    if result.isBoolean then Left(result.booleanResult())
+    else
+      val rowSet = result.rowSet()
+      val jenaVars = rowSet.getResultVars.asScala.toSeq
+      // Reads all rows, so that errors at the end of the stream show up
+      val rows = rowSet.asScala.map(binding => toSpecRow(jenaVars.map(binding.get))).toSeq
+      Right((jenaVars.map(_.getVarName), rows))
 
   private def writer(maxValuesPerFrame: Int, options: SparqlResultsOptions) =
     RowSetWriterJelly(
@@ -221,7 +287,48 @@ object Rdf4jImplementation extends SparqlImplementation:
     parser.parseQueryResult(ByteArrayInputStream(bytes))
     collector.getBoolean
 
+  override def toSpec(value: Value): TermSpec = value match
+    case iri: IRI => TermSpec.Iri(iri.stringValue)
+    case bnode: BNode => TermSpec.BNode(bnode.getID)
+    case triple: TripleTerm =>
+      TermSpec.TripleTerm(
+        toSpec(triple.getSubject),
+        toSpec(triple.getPredicate),
+        toSpec(triple.getObject),
+      )
+    case literal: Literal if literal.getLanguage.isPresent =>
+      literal.getBaseDirection match
+        case Literal.BaseDirection.NONE =>
+          TermSpec.LangLiteral(literal.getLabel, literal.getLanguage.get)
+        case direction =>
+          TermSpec.DirLangLiteral(
+            literal.getLabel,
+            literal.getLanguage.get,
+            direction == Literal.BaseDirection.LTR,
+          )
+    case literal: Literal if literal.getDatatype.stringValue == SparqlImplementation.XsdString =>
+      TermSpec.PlainLiteral(literal.getLabel)
+    case literal: Literal => TermSpec.DtLiteral(literal.getLabel, literal.getDatatype.stringValue)
+    case other => throw IllegalArgumentException(s"Not an RDF term: $other")
+
+  // The tuple parser also takes boolean results, and passes them on to the handler
+  override def read(bytes: Array[Byte]): SparqlImplementation.Result =
+    val collector = QueryResultCollector()
+    val parser = JellySparqlTupleParser()
+    parser.setQueryResultHandler(collector)
+    parser.parseQueryResult(ByteArrayInputStream(bytes))
+    if collector.getHandledBoolean then Left(collector.getBoolean)
+    else
+      val names = collector.getBindingNames.asScala.toSeq
+      val rows = collector.getBindingSets.asScala.map(bs => toSpecRow(names.map(bs.getValue))).toSeq
+      Right((names, rows))
+
 @experimental
 object SparqlImplementation:
+  /** A whole result: a boolean, or the variables and the rows. Unbound cells are nulls. */
+  type Result = Either[Boolean, (Seq[String], Seq[IndexedSeq[TermSpec | Null]])]
+
+  val XsdString = "http://www.w3.org/2001/XMLSchema#string"
+
   val all: Seq[SparqlImplementation] =
     Seq(CoreImplementation, JenaImplementation, Rdf4jImplementation)

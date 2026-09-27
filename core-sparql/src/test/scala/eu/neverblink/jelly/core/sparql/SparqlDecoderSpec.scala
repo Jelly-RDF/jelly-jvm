@@ -223,7 +223,9 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
           val decoder = newDecoder()
           decoder.ingestFrame(askFrame)
           val e = intercept[RdfProtoDeserializationError] { decoder.ingestFrame(frame) }
-          e.getMessage should include("No result content may follow a boolean (ASK) result")
+          e.getMessage should include(
+            "No frame may follow the frame containing the boolean (ASK) result",
+          )
         }
     }
 
@@ -233,23 +235,23 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       val e = intercept[RdfProtoDeserializationError] {
         decoder.ingestFrame(SparqlResultsFrame.newInstance().setOptions(JellySparqlOptions.SMALL))
       }
-      e.getMessage should include("No result content may follow a boolean (ASK) result")
+      e.getMessage should include("No frame may follow the frame containing the boolean (ASK) result")
     }
 
-    "accept a trailer in a separate frame after a boolean result" in {
-      val collector = ResultsCollector()
-      val decoder = newDecoder(collector)
+    "reject even a trailer in a separate frame after a boolean result" in {
+      val decoder = newDecoder()
       decoder.ingestFrame(
         SparqlResultsFrame
           .newInstance()
           .setOptions(JellySparqlOptions.SMALL)
           .setAskResult(SparqlAskResult.newInstance().setValue(false)),
       )
-      decoder.ingestFrame(
-        SparqlResultsFrame.newInstance().setTrailer(SparqlResultsTrailer.newInstance()),
-      )
-      collector.askResult shouldBe Some(false)
-      collector.trailers.toSeq shouldBe Seq("")
+      val e = intercept[RdfProtoDeserializationError] {
+        decoder.ingestFrame(
+          SparqlResultsFrame.newInstance().setTrailer(SparqlResultsTrailer.newInstance()),
+        )
+      }
+      e.getMessage should include("No frame may follow the frame containing the boolean (ASK) result")
     }
 
     "pass on the trailer of a boolean result frame" in {
