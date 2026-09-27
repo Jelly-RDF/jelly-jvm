@@ -199,6 +199,12 @@ object SparqlDataGen:
       Seq(ColumnSpec(ColumnKind.LangLiteral, distinctValues = 2048, namespaces = 8)),
       N,
     ),
+    // Labels all in one language: written as bare lexical forms plus one language tag.
+    ResultSetSpec(
+      "lit-lang-one",
+      Seq(ColumnSpec(ColumnKind.LangLiteral, distinctValues = 2048, namespaces = 1)),
+      N,
+    ),
     ResultSetSpec(
       "lit-typed",
       Seq(ColumnSpec(ColumnKind.DtLiteral, distinctValues = 2048, namespaces = 8)),

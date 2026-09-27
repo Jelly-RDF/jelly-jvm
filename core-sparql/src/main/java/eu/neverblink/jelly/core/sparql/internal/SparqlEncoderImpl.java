@@ -65,8 +65,14 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     private static final int MIXED_DATATYPES = -1;
     // The column datatype of a column that has no literals yet
     private static final int DATATYPE_NONE = -2;
-    // Per-value marker in litDatatypes for a language-tagged literal
+    // Every literal of the column so far is language-tagged, with the tag in poly().langtag
+    private static final int LANG_SAME_TAG = -3;
+    // Per-value marker in auxIds for a language-tagged literal, whose tag follows its lexical form
+    // in the strings buffer
     private static final int LANG_LITERAL = -1;
+    // Per-value marker in auxIds for a language-tagged literal with the column's shared tag
+    // (poly().langtag), which is not stored in the strings buffer
+    private static final int LANG_LITERAL_SAME_TAG = -2;
 
     /**
      * Temporary column state, filled in from beginFrame() through to endFrame().
@@ -91,7 +97,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         int lastNameId = 0;
 
         // Datatype shared by all literals of the column so far. One of: a positive lookup id,
-        // 0 for simple literals, DATATYPE_NONE before the first literal, or MIXED_DATATYPES.
+        // 0 for simple literals, DATATYPE_NONE before the first literal, MIXED_DATATYPES, or
+        // LANG_SAME_TAG for a shared language tag.
         int columnDatatype = DATATYPE_NONE;
 
         // Term type (TYPE_IRI/BNODE/LITERAL) of each encoded value of the frame, in order.
@@ -110,10 +117,10 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
         // One auxiliary int per IRI or literal value, in value order: the uncompressed prefix
         // id of an IRI, or the datatype lookup id of a literal (0 for a simple literal,
-        // LANG_LITERAL for a language-tagged one). Bnodes add nothing.
+        // LANG_LITERAL or LANG_LITERAL_SAME_TAG for a language-tagged one). Bnodes add nothing.
         final RepeatedInt auxIds = RepeatedInt.newEmptyInstance();
         // Bnode labels, literal lexical forms and language tags (right after their lexical
-        // form), appended at encode time in value order.
+        // form, unless it is the column's shared tag), appended at encode time in value order.
         final RepeatedString strings = RepeatedString.newEmptyInstance();
 
         // Lazily created – see PolyBuffers
@@ -217,11 +224,26 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     @Override
     public RdfLiteral makeLangLiteral(TNode lit, String lex, String lang) {
         final ColumnState col = currentColumn;
+        final int columnDatatype = col.columnDatatype;
         col.strings.add(lex);
+        if (columnDatatype == LANG_SAME_TAG) {
+            // Tags are compared as they are, with no case folding
+            if (lang.equals(col.poly().langtag)) {
+                col.auxIds.add(LANG_LITERAL_SAME_TAG);
+                return LITERAL_MARKER;
+            }
+            col.columnDatatype = MIXED_DATATYPES;
+        } else if (columnDatatype == DATATYPE_NONE) {
+            // The first literal of the column: its tag becomes the shared one
+            col.poly().langtag = lang;
+            col.columnDatatype = LANG_SAME_TAG;
+            col.auxIds.add(LANG_LITERAL_SAME_TAG);
+            return LITERAL_MARKER;
+        } else {
+            col.columnDatatype = MIXED_DATATYPES;
+        }
         col.strings.add(lang);
         col.auxIds.add(LANG_LITERAL);
-        // A language-tagged literal always forces the per-value literal representation
-        col.columnDatatype = MIXED_DATATYPES;
         return LITERAL_MARKER;
     }
 
@@ -709,7 +731,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             final ColumnState col = columns[i];
             if (effectiveType(col) == TYPE_LITERAL) {
                 final SparqlLiteralColumn.Mutable column = SparqlLiteralColumn.newInstance();
-                // If every value has the same datatype  the column states it
+                // If every value has the same datatype or language tag, the column states it
                 // once and contains only the lexical forms, already sitting in the buffer.
                 // An empty column counts as simple literals.
                 final int datatype = col.columnDatatype == DATATYPE_NONE ? 0 : col.columnDatatype;
@@ -725,11 +747,17 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                         final int dt = col.auxIds.get(j);
                         if (dt == LANG_LITERAL) {
                             literal.setLangtag(col.strings.get(stringIndex++));
+                        } else if (dt == LANG_LITERAL_SAME_TAG) {
+                            literal.setLangtag(col.poly().langtag);
                         } else if (dt != 0) {
                             literal.setDatatype(dt);
                         }
                     }
                     column.setValues(literals);
+                } else if (datatype == LANG_SAME_TAG) {
+                    // The strings buffer holds only the lexical forms
+                    column.setLangtag(col.poly().langtag);
+                    column.setLexValues(col.strings);
                 } else {
                     column.setLexValues(col.strings);
                     if (datatype != 0) {
@@ -777,6 +805,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                             final int dt = col.auxIds.get(auxIndex++);
                             if (dt == LANG_LITERAL) {
                                 literal.setLangtag(col.strings.get(stringIndex++));
+                            } else if (dt == LANG_LITERAL_SAME_TAG) {
+                                literal.setLangtag(poly.langtag);
                             } else if (dt != 0) {
                                 literal.setDatatype(dt);
                             }

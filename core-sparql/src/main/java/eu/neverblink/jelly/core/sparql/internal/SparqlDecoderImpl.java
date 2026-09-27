@@ -459,10 +459,16 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
      * if present (see the sparql.proto comments).
      */
     private ValueReader<TNode> literalReader(SparqlLiteralColumn column) {
+        final String langtag = column.getLangtag();
         if (column.getLexValues().isEmpty()) {
             if (column.getDatatype() != 0) {
                 throw new RdfProtoDeserializationError(
                     "Corrupt literal column: a datatype is stated for a column with no lexical forms."
+                );
+            }
+            if (!langtag.isEmpty()) {
+                throw new RdfProtoDeserializationError(
+                    "Corrupt literal column: a language tag is stated for a column with no lexical forms."
                 );
             }
             return new LiteralReader(column.getValues().iterator());
@@ -472,7 +478,15 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 "Corrupt literal column: the column has both lexical forms and full literal values."
             );
         }
-        return new LexLiteralReader(column);
+        if (langtag.isEmpty()) {
+            return new LexLiteralReader(column);
+        }
+        if (column.getDatatype() != 0) {
+            throw new RdfProtoDeserializationError(
+                "Corrupt literal column: the column states both a datatype and a language tag."
+            );
+        }
+        return new LangLiteralReader(column.getLexValues(), langtag);
     }
 
     private final class LiteralReader extends ValueReader<TNode> {
@@ -520,6 +534,32 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         TNode decodeNext() {
             final String lex = values.get(index++);
             return datatype == null ? converter.makeSimpleLiteral(lex) : converter.makeDtLiteral(lex, datatype);
+        }
+    }
+
+    /**
+     * Reader for a literal column in which every value has the same language tag: the values are
+     * plain lexical forms and the tag is stated once for the whole column.
+     */
+    private final class LangLiteralReader extends ValueReader<TNode> {
+
+        private final RepeatedString values;
+        private final String langtag;
+        private int index = 0;
+
+        LangLiteralReader(RepeatedString values, String langtag) {
+            this.values = values;
+            this.langtag = langtag;
+        }
+
+        @Override
+        boolean hasNext() {
+            return index < values.size();
+        }
+
+        @Override
+        TNode decodeNext() {
+            return converter.makeLangLiteral(values.get(index++), langtag);
         }
     }
 

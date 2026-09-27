@@ -95,6 +95,14 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .addValues(RdfLiteral.newInstance().setLex("42").setDatatype(1))
     .addLayouts(1)
 
+  /** The language-tagged form of a literal column: bare lexical forms plus one language tag. */
+  private def langLiteralColumn = SparqlLiteralColumn
+    .newInstance()
+    .addLexValues("hello")
+    .addLexValues("world")
+    .setLangtag("en")
+    .addLayouts(1)
+
   /** The datatype-monomorphic form of a literal column: bare lexical forms plus one datatype. */
   private def lexLiteralColumn = SparqlLiteralColumn
     .newInstance()
@@ -196,7 +204,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         SparqlBnodeColumn.parseFrom,
         SparqlBnodeColumn.parseDelimitedFrom,
       )
-      for column <- Seq(literalColumn, lexLiteralColumn) do
+      for column <- Seq(literalColumn, lexLiteralColumn, langLiteralColumn) do
         checkMessage(
           column,
           () => SparqlLiteralColumn.newInstance(),
@@ -321,6 +329,11 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .setLexValues(lexLiteralColumn.getLexValues)
         .setDatatype(lexLiteralColumn.getDatatype)
         .setLayouts(lexLiteralColumn.getLayouts) shouldBe lexLiteralColumn
+      SparqlLiteralColumn
+        .newInstance()
+        .setLexValues(langLiteralColumn.getLexValues)
+        .setLangtag(langLiteralColumn.getLangtag)
+        .setLayouts(langLiteralColumn.getLayouts) shouldBe langLiteralColumn
       SparqlPolyColumn
         .newInstance()
         .setValues(polyColumn.getValues)
@@ -545,6 +558,12 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .setRowCount(3)
         .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
         .addLiteralColumns(lexLiteralColumn),
+      "frame with a language-tagged literal column" -> SparqlResultsFrame
+        .newInstance()
+        .setOptions(JellySparqlOptions.SMALL)
+        .setRowCount(3)
+        .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
+        .addLiteralColumns(langLiteralColumn),
     )
 
     "round-trip in non-delimited binary form" when {

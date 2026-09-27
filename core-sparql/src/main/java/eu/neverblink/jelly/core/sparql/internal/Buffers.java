@@ -171,6 +171,11 @@ final class PolyBuffers {
     final LiteralBuffer literals = new LiteralBuffer();
     final IriBuffer iris = new IriBuffer();
 
+    // The language tag shared by every literal of the column in the current frame, while the
+    // column's datatype state says so. Kept here rather than in ColumnState, because it's rarely
+    // used and ColumnState is much more performance-sensitive (shouldn't use more cache lines).
+    String langtag = null;
+
     void resetFrameState() {
         terms.clear();
         literals.clear();

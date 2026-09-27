@@ -649,6 +649,50 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       e.getMessage should include("datatype is stated for a column with no lexical forms")
     }
 
+    "apply a single language tag to a whole literal column" in {
+      val column = SparqlLiteralColumn
+        .newInstance()
+        .addLexValues("hello")
+        .addLexValues("world")
+        .setLangtag("en-GB")
+      val collector = ResultsCollector()
+      newDecoder(collector).ingestFrame(frameWithOneVariable(2).addLiteralColumns(column))
+      collector.rows.map(_.head) shouldBe Seq(
+        LangLiteral("hello", "en-GB"),
+        LangLiteral("world", "en-GB"),
+      )
+    }
+
+    "reject a literal column stating a language tag but holding no lexical forms" in {
+      val column = SparqlLiteralColumn.newInstance().setLangtag("en")
+      val frame = frameWithOneVariable(0).addLiteralColumns(column)
+      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
+      e.getMessage should include("language tag is stated for a column with no lexical forms")
+    }
+
+    "reject a literal column stating a language tag with full literal values" in {
+      val column = SparqlLiteralColumn
+        .newInstance()
+        .addValues(RdfLiteral.newInstance().setLex("a"))
+        .setLangtag("en")
+      val frame = frameWithOneVariable(1).addLiteralColumns(column)
+      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
+      e.getMessage should include("language tag is stated for a column with no lexical forms")
+    }
+
+    "reject a literal column stating both a datatype and a language tag" in {
+      val column = SparqlLiteralColumn
+        .newInstance()
+        .addLexValues("a")
+        .setDatatype(1)
+        .setLangtag("en")
+      val frame = frameWithOneVariable(1)
+        .addDatatypes(RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/dt"))
+        .addLiteralColumns(column)
+      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
+      e.getMessage should include("both a datatype and a language tag")
+    }
+
     "reject a polymorphic term with no value set" in {
       val column = SparqlPolyColumn.newInstance().addValues(SparqlTerm.newInstance())
       val frame = frameWithOneVariable(1).addPolyColumns(column)
