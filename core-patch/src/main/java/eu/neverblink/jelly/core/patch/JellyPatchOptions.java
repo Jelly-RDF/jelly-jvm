@@ -77,6 +77,17 @@ public final class JellyPatchOptions {
     public static void checkCompatibility(RdfPatchOptions requestedOptions, RdfPatchOptions supportedOptions) {
         checkBaseCompatibility(requestedOptions, supportedOptions, JellyPatchConstants.PROTO_VERSION);
 
+        // First check for unknown enum values
+        if (requestedOptions.getStreamType() == null) {
+            throw new RdfProtoDeserializationError(
+                "Unknown patch stream type: %d".formatted(requestedOptions.getStreamTypeValue())
+            );
+        }
+        if (requestedOptions.getStatementType() == null) {
+            throw new RdfProtoDeserializationError(
+                "Unknown patch statement type: %d".formatted(requestedOptions.getStatementTypeValue())
+            );
+        }
         if (requestedOptions.getStreamType() == PatchStreamType.UNSPECIFIED) {
             throw new RdfProtoDeserializationError(
                 "The patch stream type is unspecified. " +

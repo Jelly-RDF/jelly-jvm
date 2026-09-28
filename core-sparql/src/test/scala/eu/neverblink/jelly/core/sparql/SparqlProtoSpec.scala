@@ -90,9 +90,18 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
 
   private def literalColumn = SparqlLiteralColumn
     .newInstance()
-    .addValues(RdfLiteral.newInstance().setLex("hello"))
-    .addValues(RdfLiteral.newInstance().setLex("bonjour").setLangtag("fr"))
-    .addValues(RdfLiteral.newInstance().setLex("42").setDatatype(1))
+    .addValues(RdfLiteral2.newInstance().setLex("hello"))
+    .addValues(RdfLiteral2.newInstance().setLex("bonjour").setLangtag("fr"))
+    .addValues(RdfLiteral2.newInstance().setLex("42").setDatatype(1))
+    .addLayouts(1)
+
+  /** The language-tagged form of a literal column: bare lexical forms plus one language tag. */
+  private def langLiteralColumn = SparqlLiteralColumn
+    .newInstance()
+    .addLexValues("hello")
+    .addLexValues("world")
+    .setLangtag("en")
+    .setDirection(RdfBaseDirection.LTR)
     .addLayouts(1)
 
   /** The datatype-monomorphic form of a literal column: bare lexical forms plus one datatype. */
@@ -103,11 +112,26 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .setDatatype(1)
     .addLayouts(1)
 
+  private def tripleTerm = RdfTripleTerm
+    .newInstance()
+    .setSBnode("b1")
+    .setPIri(iri(1, 2))
+    .setOTripleTerm(
+      RdfTripleTerm
+        .newInstance()
+        .setSIri(iri(0, 0))
+        .setPIri(iri(0, 0))
+        .setOLiteral(
+          RdfLiteral2.newInstance().setLex("x").setLangtag("ar").setDirection(RdfBaseDirection.RTL),
+        ),
+    )
+
   private def polyColumn = SparqlPolyColumn
     .newInstance()
     .addValues(SparqlTerm.newInstance().setIri(iri(1, 2)))
     .addValues(SparqlTerm.newInstance().setBnode("b1"))
-    .addValues(SparqlTerm.newInstance().setLiteral(RdfLiteral.newInstance().setLex("x")))
+    .addValues(SparqlTerm.newInstance().setLiteral(RdfLiteral2.newInstance().setLex("x")))
+    .addValues(SparqlTerm.newInstance().setTripleTerm(tripleTerm))
     .addLayouts(16)
 
   /** A frame with every field set – not a semantically valid frame, but it exercises the whole
@@ -115,7 +139,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     */
   private def fullFrame = SparqlResultsFrame
     .newInstance()
-    .setOptions(JellySparqlOptions.BIG)
+    .setOptions(JellySparqlOptions.BIG.clone().setRdfVersion(RdfVersion.RDF_VERSION_1_2))
     .setRowCount(7)
     .setAskResult(SparqlAskResult.newInstance().setValue(true))
     .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
@@ -127,6 +151,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
     .addBnodeColumns(bnodeColumn)
     .addLiteralColumns(literalColumn)
     .addPolyColumns(polyColumn)
+    .setTrailer(SparqlResultsTrailer.newInstance().setError("query timed out"))
     .addMetadata(
       SparqlResultsFrame.MetadataEntry.newInstance().setKey("k").setValue(
         ByteString.copyFromUtf8("v"),
@@ -168,7 +193,15 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       val terms = Seq(
         SparqlTerm.newInstance().setIri(iri(2, 3)),
         SparqlTerm.newInstance().setBnode("b1"),
-        SparqlTerm.newInstance().setLiteral(RdfLiteral.newInstance().setLex("lex").setLangtag("en")),
+        SparqlTerm.newInstance().setLiteral(
+          RdfLiteral2.newInstance().setLex("lex").setLangtag("en"),
+        ),
+        SparqlTerm.newInstance().setLiteral(
+          RdfLiteral2.newInstance().setLex("lex").setLangtag("en").setDirection(
+            RdfBaseDirection.LTR,
+          ),
+        ),
+        SparqlTerm.newInstance().setTripleTerm(tripleTerm),
       )
       for term <- terms do
         checkMessage(
@@ -195,7 +228,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         SparqlBnodeColumn.parseFrom,
         SparqlBnodeColumn.parseDelimitedFrom,
       )
-      for column <- Seq(literalColumn, lexLiteralColumn) do
+      for column <- Seq(literalColumn, lexLiteralColumn, langLiteralColumn) do
         checkMessage(
           column,
           () => SparqlLiteralColumn.newInstance(),
@@ -210,6 +243,26 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         SparqlPolyColumn.parseFrom,
         SparqlPolyColumn.parseDelimitedFrom,
       )
+    }
+
+    "round-trip a trailer" in {
+      checkMessage(
+        SparqlResultsTrailer.newInstance().setError("query timed out"),
+        () => SparqlResultsTrailer.newInstance(),
+        SparqlResultsTrailer.parseFrom,
+        SparqlResultsTrailer.parseFrom,
+        SparqlResultsTrailer.parseDelimitedFrom,
+      )
+    }
+
+    "keep an empty trailer apart from no trailer" in {
+      // An empty trailer (a complete result set) must survive the round-trip as a set field
+      val frame = SparqlResultsFrame.newInstance().setTrailer(SparqlResultsTrailer.newInstance())
+      frame.getSerializedSize should be > 0
+      val parsed = SparqlResultsFrame.parseFrom(frame.toByteArray)
+      parsed.getTrailer should not be null
+      parsed.getTrailer.getError shouldBe ""
+      SparqlResultsFrame.parseFrom(Array.emptyByteArray).getTrailer shouldBe null
     }
 
     "round-trip a frame with every field set" in {
@@ -278,6 +331,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .setBnodeColumns(source.getBnodeColumns)
         .setLiteralColumns(source.getLiteralColumns)
         .setPolyColumns(source.getPolyColumns)
+        .setTrailer(source.getTrailer)
         .setMetadata(source.getMetadata)
       target shouldBe source
 
@@ -299,6 +353,12 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .setLexValues(lexLiteralColumn.getLexValues)
         .setDatatype(lexLiteralColumn.getDatatype)
         .setLayouts(lexLiteralColumn.getLayouts) shouldBe lexLiteralColumn
+      SparqlLiteralColumn
+        .newInstance()
+        .setLexValues(langLiteralColumn.getLexValues)
+        .setLangtag(langLiteralColumn.getLangtag)
+        .setDirection(langLiteralColumn.getDirection)
+        .setLayouts(langLiteralColumn.getLayouts) shouldBe langLiteralColumn
       SparqlPolyColumn
         .newInstance()
         .setValues(polyColumn.getValues)
@@ -330,6 +390,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       SparqlBnodeColumn.getFactory.create() shouldBe SparqlBnodeColumn.EMPTY
       SparqlLiteralColumn.getFactory.create() shouldBe SparqlLiteralColumn.EMPTY
       SparqlPolyColumn.getFactory.create() shouldBe SparqlPolyColumn.EMPTY
+      SparqlResultsTrailer.getFactory.create() shouldBe SparqlResultsTrailer.EMPTY
       SparqlResultsFrame.MetadataEntry.getFactory.create() shouldBe SparqlResultsFrame.MetadataEntry.EMPTY
     }
   }
@@ -347,6 +408,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         SparqlBnodeColumn.getDescriptor,
         SparqlLiteralColumn.getDescriptor,
         SparqlPolyColumn.getDescriptor,
+        SparqlResultsTrailer.getDescriptor,
       )
       descriptors.map(_.getName) shouldBe Seq(
         "SparqlResultsFrame",
@@ -359,8 +421,9 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         "SparqlBnodeColumn",
         "SparqlLiteralColumn",
         "SparqlPolyColumn",
+        "SparqlResultsTrailer",
       )
-      Sparql.getDescriptor.getMessageTypes should have size 9
+      Sparql.getDescriptor.getMessageTypes should have size 10
     }
   }
 
@@ -382,7 +445,7 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       term.hasBnode shouldBe true
       term.getBnode shouldBe "b1"
 
-      term.setLiteral(RdfLiteral.newInstance().setLex("x"))
+      term.setLiteral(RdfLiteral2.newInstance().setLex("x"))
       term.hasBnode shouldBe false
       term.hasLiteral shouldBe true
       term.getLiteral.getLex shouldBe "x"
@@ -401,9 +464,9 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       mergedIri.getIri shouldBe iri(1, 2)
 
       val partialLiteral =
-        SparqlTerm.newInstance().setLiteral(RdfLiteral.newInstance().setLex("lex"))
+        SparqlTerm.newInstance().setLiteral(RdfLiteral2.newInstance().setLex("lex"))
       val restLiteral =
-        SparqlTerm.newInstance().setLiteral(RdfLiteral.newInstance().setLangtag("en"))
+        SparqlTerm.newInstance().setLiteral(RdfLiteral2.newInstance().setLangtag("en"))
       val mergedLiteral =
         SparqlTerm.parseFrom(partialLiteral.toByteArray ++ restLiteral.toByteArray)
       mergedLiteral.getLiteral.getLex shouldBe "lex"
@@ -478,8 +541,15 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
             .newInstance()
             .setAskResult(SparqlAskResult.newInstance().setValue(true))
             .toByteArray,
+          SparqlResultsFrame
+            .newInstance()
+            .setTrailer(SparqlResultsTrailer.newInstance().setError("query timed out"))
+            .toByteArray,
           SparqlResultsFrame.newInstance().setRowCount(7).toByteArray,
-          SparqlResultsFrame.newInstance().setOptions(JellySparqlOptions.BIG).toByteArray,
+          SparqlResultsFrame
+            .newInstance()
+            .setOptions(JellySparqlOptions.BIG.clone().setRdfVersion(RdfVersion.RDF_VERSION_1_2))
+            .toByteArray,
           SparqlResultsFrame
             .newInstance()
             .addMetadata(
@@ -516,6 +586,12 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .setRowCount(3)
         .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
         .addLiteralColumns(lexLiteralColumn),
+      "frame with a language-tagged literal column" -> SparqlResultsFrame
+        .newInstance()
+        .setOptions(JellySparqlOptions.SMALL)
+        .setRowCount(3)
+        .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
+        .addLiteralColumns(langLiteralColumn),
     )
 
     "round-trip in non-delimited binary form" when {

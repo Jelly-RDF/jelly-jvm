@@ -53,6 +53,11 @@ class JenaSparqlContextSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private val oneVarRows = (1 to 20).map(i => Seq(iri(s"node$i")))
 
+  /** Larger tables than what a reader accepts by default. */
+  private val hugeOptions = JellySparqlOptions.MAX
+    .clone()
+    .setMaxNameTableSize(JellySparqlOptions.MAX_NAME_TABLE_SIZE * 2)
+
   "RowSetWriterJelly" should {
     "use its own options when the context is null" in {
       // Jena passes no context at all in some paths, for example ResultSetMgr.write()
@@ -113,14 +118,19 @@ class JenaSparqlContextSpec extends AnyWordSpec, Matchers, JenaTest:
       // Two variables, so a budget of 4 values is 2 rows per frame
       val rows = (1 to 10).map(i => Seq(iri(s"a$i"), iri(s"b$i")))
       val context = Context().set(JellySparqlLanguage.SYMBOL_MAX_VALUES_PER_FRAME, 4)
-      frames(write(rowSetOf(Seq("x", "y"), rows), context)) should have size 5
+      val written = frames(write(rowSetOf(Seq("x", "y"), rows), context))
+      // 5 full frames, then one with the trailer
+      written should have size 6
+      written.last.getRowCount should be(0)
+      written.last.getTrailer should not be null
     }
 
     "take the frame size from the context given as a string" in {
       // Jena's Context.getInt() also accepts strings, which is what you get from a config file
       val rows = (1 to 10).map(i => Seq(iri(s"a$i"), iri(s"b$i")))
       val context = Context().set(JellySparqlLanguage.SYMBOL_MAX_VALUES_PER_FRAME, "4")
-      frames(write(rowSetOf(Seq("x", "y"), rows), context)) should have size 5
+      // 5 full frames, then one with the trailer
+      frames(write(rowSetOf(Seq("x", "y"), rows), context)) should have size 6
     }
 
     "turn off delimited output based on Context settings" in {
@@ -144,8 +154,14 @@ class JenaSparqlContextSpec extends AnyWordSpec, Matchers, JenaTest:
   }
 
   "RowSetReaderJelly" should {
-    "refuse tables larger than it supports by default" in {
+    "accept the MAX preset by default" in {
       val written = Context().set(JellySparqlLanguage.SYMBOL_PRESET, "MAX")
+      val bytes = write(rowSetOf(Seq("x"), oneVarRows), written)
+      read(bytes, null).asScala.size should be(oneVarRows.size)
+    }
+
+    "refuse tables larger than it supports by default" in {
+      val written = Context().set(JellySparqlLanguage.SYMBOL_STREAM_OPTIONS, hugeOptions)
       val bytes = write(rowSetOf(Seq("x"), oneVarRows), written)
       val e = intercept[RdfProtoDeserializationError] {
         read(bytes, null)
@@ -154,12 +170,9 @@ class JenaSparqlContextSpec extends AnyWordSpec, Matchers, JenaTest:
     }
 
     "take the supported options from the context" in {
-      val written = Context().set(JellySparqlLanguage.SYMBOL_PRESET, "MAX")
+      val written = Context().set(JellySparqlLanguage.SYMBOL_STREAM_OPTIONS, hugeOptions)
       val bytes = write(rowSetOf(Seq("x"), oneVarRows), written)
-      val reading = Context().set(
-        JellySparqlLanguage.SYMBOL_SUPPORTED_OPTIONS,
-        JellySparqlOptions.MAX,
-      )
+      val reading = Context().set(JellySparqlLanguage.SYMBOL_SUPPORTED_OPTIONS, hugeOptions)
       read(bytes, reading).asScala.size should be(oneVarRows.size)
     }
 
@@ -186,7 +199,8 @@ class JenaSparqlContextSpec extends AnyWordSpec, Matchers, JenaTest:
         .write(out, rowSetOf(Seq("x"), oneVarRows))
 
       val written = frames(out.toByteArray)
-      written should have size 4
+      // 4 full frames, then one with the trailer
+      written should have size 5
       written.head.getOptions.getMaxNameTableSize should be(JellySparqlOptions.MAX_NAME_TABLE_SIZE)
 
       val reading = Context().set(

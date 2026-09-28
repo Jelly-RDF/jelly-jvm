@@ -33,6 +33,16 @@ object TestCases:
 
   val protocolVocabulary: File = File(getClass.getResource("/protocol/vocabulary.ttl").toURI)
 
+  val sparqlCollections: Seq[(String, File)] = Seq(
+    "sparql/from_jelly",
+    "sparql/to_jelly",
+  ).map(name =>
+    (
+      name,
+      File(getClass.getResource("/protocol/" + name + "/manifest.ttl").toURI),
+    ),
+  )
+
   val protocolCollections: Seq[(String, File)] = Seq(
     "rdf/from_jelly",
     "rdf/to_jelly",

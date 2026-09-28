@@ -5,14 +5,18 @@ import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfDefaultGraph;
 import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
+import eu.neverblink.jelly.core.proto.v1.RdfLiteral2;
 import eu.neverblink.jelly.core.proto.v1.RdfLookupEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
+import eu.neverblink.jelly.core.proto.v1.RdfTripleTerm;
+import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
@@ -43,6 +47,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     private static final byte TYPE_BNODE = 2;
     private static final byte TYPE_LITERAL = 3;
     private static final byte TYPE_POLY = 4;
+    // Only a value tag: there is no monomorphic column type for triple terms
+    private static final byte TYPE_TRIPLE = 5;
 
     private static final int KIND_REPEAT = 0;
     private static final int KIND_UNBOUND = 1;
@@ -60,13 +66,31 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     // Used as a type marker – the literal's parts go into the column buffers,
     // not into the returned proto message.
     private static final RdfLiteral LITERAL_MARKER = RdfLiteral.newInstance();
+    // Same for triple terms – the term itself goes into PolyBuffers.tripleTerms
+    private static final RdfTriple TRIPLE_MARKER = RdfTriple.newInstance();
+
+    static final int MAX_TRIPLE_TERM_DEPTH = 32;
+
+    private static final String RDF_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString";
+    private static final String RDF_DIR_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#dirLangString";
 
     // Not a valid datatype lookup id – marks a literal column that cannot state one datatype
     private static final int MIXED_DATATYPES = -1;
     // The column datatype of a column that has no literals yet
     private static final int DATATYPE_NONE = -2;
-    // Per-value marker in litDatatypes for a language-tagged literal
+    // Every literal of the column so far is language-tagged, with the tag in poly().langtag
+    private static final int LANG_SAME_TAG = -3;
+    // Per-value marker in auxIds for a language-tagged literal, whose tag follows its lexical form
+    // in the strings buffer
     private static final int LANG_LITERAL = -1;
+    // Per-value marker in auxIds for a language-tagged literal with the column's shared tag and
+    // base direction (poly().langtag and poly().direction), which are not stored in the strings
+    // buffer
+    private static final int LANG_LITERAL_SAME_TAG = -2;
+    // Per-value markers in auxIds for a language-tagged literal with a base direction, whose tag
+    // follows its lexical form in the strings buffer
+    private static final int LANG_LTR_LITERAL = -3;
+    private static final int LANG_RTL_LITERAL = -4;
 
     /**
      * Temporary column state, filled in from beginFrame() through to endFrame().
@@ -91,7 +115,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         int lastNameId = 0;
 
         // Datatype shared by all literals of the column so far. One of: a positive lookup id,
-        // 0 for simple literals, DATATYPE_NONE before the first literal, or MIXED_DATATYPES.
+        // 0 for simple literals, DATATYPE_NONE before the first literal, MIXED_DATATYPES, or
+        // LANG_SAME_TAG for a shared language tag.
         int columnDatatype = DATATYPE_NONE;
 
         // Term type (TYPE_IRI/BNODE/LITERAL) of each encoded value of the frame, in order.
@@ -110,10 +135,10 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
         // One auxiliary int per IRI or literal value, in value order: the uncompressed prefix
         // id of an IRI, or the datatype lookup id of a literal (0 for a simple literal,
-        // LANG_LITERAL for a language-tagged one). Bnodes add nothing.
+        // LANG_LITERAL or LANG_LITERAL_SAME_TAG for a language-tagged one). Bnodes add nothing.
         final RepeatedInt auxIds = RepeatedInt.newEmptyInstance();
         // Bnode labels, literal lexical forms and language tags (right after their lexical
-        // form), appended at encode time in value order.
+        // form, unless it is the column's shared tag), appended at encode time in value order.
         final RepeatedString strings = RepeatedString.newEmptyInstance();
 
         // Lazily created – see PolyBuffers
@@ -216,12 +241,46 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
 
     @Override
     public RdfLiteral makeLangLiteral(TNode lit, String lex, String lang) {
+        return langLiteral(lex, lang, RdfBaseDirection.NONE);
+    }
+
+    @Override
+    public RdfLiteral makeDirLangLiteral(TNode lit, String lex, String lang, RdfBaseDirection direction) {
+        checkBaseDirectionsAllowed();
+        return langLiteral(lex, lang, direction);
+    }
+
+    private RdfLiteral langLiteral(String lex, String lang, RdfBaseDirection direction) {
         final ColumnState col = currentColumn;
+        final int columnDatatype = col.columnDatatype;
         col.strings.add(lex);
+        if (columnDatatype == LANG_SAME_TAG) {
+            // Tags are compared as they are, with no case folding
+            final PolyBuffers poly = col.poly();
+            if (lang.equals(poly.langtag) && direction == poly.direction) {
+                col.auxIds.add(LANG_LITERAL_SAME_TAG);
+                return LITERAL_MARKER;
+            }
+            col.columnDatatype = MIXED_DATATYPES;
+        } else if (columnDatatype == DATATYPE_NONE) {
+            // The first literal of the column: its tag and direction become the shared ones
+            final PolyBuffers poly = col.poly();
+            poly.langtag = lang;
+            poly.direction = direction;
+            col.columnDatatype = LANG_SAME_TAG;
+            col.auxIds.add(LANG_LITERAL_SAME_TAG);
+            return LITERAL_MARKER;
+        } else {
+            col.columnDatatype = MIXED_DATATYPES;
+        }
         col.strings.add(lang);
-        col.auxIds.add(LANG_LITERAL);
-        // A language-tagged literal always forces the per-value literal representation
-        col.columnDatatype = MIXED_DATATYPES;
+        col.auxIds.add(
+            direction == RdfBaseDirection.NONE
+                ? LANG_LITERAL
+                : direction == RdfBaseDirection.LTR
+                  ? LANG_LTR_LITERAL
+                  : LANG_RTL_LITERAL
+        );
         return LITERAL_MARKER;
     }
 
@@ -249,7 +308,217 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
 
     @Override
     public RdfTriple makeQuotedTriple(TNode s, TNode p, TNode o) {
-        throw new RdfProtoSerializationError("Triple terms are not supported in Jelly-SPARQL.");
+        checkTripleTermsAllowed();
+        final ColumnState col = currentColumn;
+        final TripleTermEncoder tripleEncoder = new TripleTermEncoder(col);
+        final RdfTripleTerm.Mutable term = tripleEncoder.encode(s, p, o, 1);
+        final PolyBuffers poly = col.poly();
+        poly.tripleTerms.add(term);
+        final int iris = tripleEncoder.iriCount;
+        if (iris > poly.maxTripleTermIris) {
+            // Every later row of this frame may need that many IRI lookup entries for this column
+            // too, not just one – reserve the difference now. Later frames reserve it from the
+            // start (see resetUsedIds).
+            final int extra = iris - Math.max(1, poly.maxTripleTermIris);
+            poly.maxTripleTermIris = iris;
+            reserveUsedIds(usedNames, options.getMaxNameTableSize(), extra);
+            reserveUsedIds(usedPrefixes, options.getMaxPrefixTableSize(), extra);
+        }
+        return TRIPLE_MARKER;
+    }
+
+    private static void reserveUsedIds(long[] used, int tableSize, int count) {
+        if (tableSize != 0 && count > 0) {
+            used[0] -= count;
+        }
+    }
+
+    private void checkBaseDirectionsAllowed() {
+        if (options.getRdfVersion() == RdfVersion.RDF_VERSION_1_1) {
+            throw new RdfProtoSerializationError(
+                "The stream declares RDF 1.1, which does not allow literals with a base direction."
+            );
+        }
+    }
+
+    private void checkTripleTermsAllowed() {
+        final RdfVersion version = options.getRdfVersion();
+        if (version == RdfVersion.RDF_VERSION_1_1 || version == RdfVersion.RDF_VERSION_1_2_BASIC) {
+            throw new RdfProtoSerializationError(
+                "The stream declares %s, which does not allow triple terms.".formatted(
+                    version == RdfVersion.RDF_VERSION_1_1 ? "RDF 1.1" : "RDF 1.2 Basic"
+                )
+            );
+        }
+    }
+
+    /**
+     * Encodes one triple term, with its nested triple terms, into an RdfTripleTerm message.
+     * <p>
+     * The IRIs of the term take part in the IRI inference of the column, in the order subject,
+     * predicate, object: the name ids are compressed here, against the column's state, and the
+     * prefix ids when the frame is built (see resolvePrefixes). Created for each triple term,
+     * which is fine, as they are rare and this will pretty much always fit in TLAB.
+     */
+    private final class TripleTermEncoder implements NodeEncoder<TNode> {
+
+        private final ColumnState col;
+        // Nesting depth of the term being encoded, 1 for the top level
+        private int depth;
+        // The message of the term encoded last
+        private Object last;
+        // Number of IRIs in the whole triple term
+        int iriCount = 0;
+
+        TripleTermEncoder(ColumnState col) {
+            this.col = col;
+        }
+
+        RdfTripleTerm.Mutable encode(TNode s, TNode p, TNode o, int depth) {
+            if (depth > MAX_TRIPLE_TERM_DEPTH) {
+                throw new RdfProtoSerializationError(
+                    "Triple terms nested deeper than %d levels are not supported.".formatted(MAX_TRIPLE_TERM_DEPTH)
+                );
+            }
+            final RdfTripleTerm.Mutable term = RdfTripleTerm.newInstance();
+            final Object subject = encodeTerm(s, depth);
+            if (subject instanceof RdfIri iri) {
+                term.setSIri(iri);
+            } else if (subject instanceof String bnode) {
+                term.setSBnode(bnode);
+            } else {
+                throw new RdfProtoSerializationError(
+                    "The subject of a triple term must be an IRI or a blank node, got: %s".formatted(s)
+                );
+            }
+            if (!(encodeTerm(p, depth) instanceof RdfIri predicate)) {
+                throw new RdfProtoSerializationError(
+                    "The predicate of a triple term must be an IRI, got: %s".formatted(p)
+                );
+            }
+            term.setPIri(predicate);
+            final Object object = encodeTerm(o, depth);
+            if (object instanceof RdfIri iri) {
+                term.setOIri(iri);
+            } else if (object instanceof String bnode) {
+                term.setOBnode(bnode);
+            } else if (object instanceof RdfLiteral2 literal) {
+                term.setOLiteral(literal);
+            } else if (object instanceof RdfTripleTerm triple) {
+                term.setOTripleTerm(triple);
+            } else {
+                throw new RdfProtoSerializationError("Unsupported object of a triple term: %s".formatted(o));
+            }
+            return term;
+        }
+
+        private Object encodeTerm(TNode node, int depth) {
+            this.depth = depth;
+            last = null;
+            converter.nodeToProto(this, node);
+            return last;
+        }
+
+        private RdfIri iri(String iri, boolean inference) {
+            final long ids = getLookupEncoder().makeIriIds(iri);
+            final int nameId = (int) (ids >>> 32);
+            final int prefixId = (int) ids;
+            markUsed(usedNames, nameId);
+            if (prefixId != 0) {
+                markUsed(usedPrefixes, prefixId);
+            }
+            final int storedNameId = inference && nameId == col.lastNameId + 1 ? 0 : nameId;
+            col.lastNameId = nameId;
+            iriCount++;
+            // The raw prefix id – resolved when the frame is built
+            final RdfIri.Mutable message = RdfIri.newInstance().setPrefixId(prefixId).setNameId(storedNameId);
+            last = message;
+            return message;
+        }
+
+        @Override
+        public RdfIri makeIri(String iri) {
+            return iri(iri, true);
+        }
+
+        @Override
+        public RdfIri makeIriRaw(String iri) {
+            return iri(iri, false);
+        }
+
+        @Override
+        public String makeBlankNode(String label) {
+            final String bnode = getLookupEncoder().makeBlankNode(label);
+            last = bnode;
+            return bnode;
+        }
+
+        @Override
+        public RdfLiteral makeSimpleLiteral(String lex) {
+            last = RdfLiteral2.newInstance().setLex(lex);
+            return LITERAL_MARKER;
+        }
+
+        @Override
+        public RdfLiteral makeLangLiteral(TNode lit, String lex, String lang) {
+            last = RdfLiteral2.newInstance().setLex(lex).setLangtag(lang);
+            return LITERAL_MARKER;
+        }
+
+        @Override
+        public RdfLiteral makeDirLangLiteral(TNode lit, String lex, String lang, RdfBaseDirection direction) {
+            checkBaseDirectionsAllowed();
+            last = RdfLiteral2.newInstance().setLex(lex).setLangtag(lang).setDirection(direction);
+            return LITERAL_MARKER;
+        }
+
+        @Override
+        public RdfLiteral makeDtLiteral(TNode lit, String lex, String dt) {
+            final int datatype = getLookupEncoder().makeDtLiteral(lit, lex, dt).getDatatype();
+            markUsed(usedDatatypes, datatype);
+            last = RdfLiteral2.newInstance().setLex(lex).setDatatype(datatype);
+            return LITERAL_MARKER;
+        }
+
+        @Override
+        public RdfTriple makeQuotedTriple(TNode s, TNode p, TNode o) {
+            final int outer = depth;
+            final RdfTripleTerm.Mutable nested = encode(s, p, o, outer + 1);
+            depth = outer;
+            last = nested;
+            return TRIPLE_MARKER;
+        }
+
+        @Override
+        public RdfDefaultGraph makeDefaultGraph() {
+            throw new RdfProtoSerializationError("The default graph cannot occur in a triple term.");
+        }
+    }
+
+    /**
+     * Applies the "same prefix as the previous IRI" inference to the IRIs of a triple term.
+     *
+     * @return the raw prefix id of the last IRI
+     */
+    private static int resolvePrefixes(RdfTripleTerm term, int previous) {
+        int prev = previous;
+        if (term.hasSIri()) {
+            prev = resolvePrefix(term.getSIri(), prev);
+        }
+        prev = resolvePrefix(term.getPIri(), prev);
+        if (term.hasOIri()) {
+            prev = resolvePrefix(term.getOIri(), prev);
+        } else if (term.hasOTripleTerm()) {
+            prev = resolvePrefixes(term.getOTripleTerm(), prev);
+        }
+        return prev;
+    }
+
+    private static int resolvePrefix(RdfIri iri, int previous) {
+        final RdfIri.Mutable mutable = (RdfIri.Mutable) iri;
+        final int raw = mutable.getPrefixId();
+        mutable.setPrefixId(raw == previous ? 0 : raw);
+        return raw;
     }
 
     @Override
@@ -267,6 +536,12 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     // True while the buffers still hold the contents of the frame endFrame last returned.
     private boolean framePending = false;
 
+    // Special flags to be used on the rowCount field.
+    // They are only relevant where rowCount is not used – this way we don't need additional
+    // fields in this class, which would take up another cache line.
+    private static final int ROW_COUNT_ROW_FAILED = -1;
+    private static final int ROW_COUNT_STREAM_ENDED = -2;
+
     /**
      * The lookup ids used by the current frame – both the ids assigned by
      * its lookup entries and the ids its columns refer to. One bit per id, starting at
@@ -279,8 +554,13 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
      * lookups evict the least recently used entry and everything this frame touched sits at
      * the recent end, so the frame stays safe exactly as long as it has not touched every id
      * of the table. The budget is set so that one more row of fresh ids still fits: the
-     * table size minus one potential id per variable, floored at zero. Note that this will not
-     * work for triple terms, but that's a future problem...
+     * table size minus one potential id per variable, floored at zero.
+     * <p>
+     * A triple term can need an IRI id for each of its IRIs, so a column that held triple terms
+     * reserves as many IRI ids per row as its largest triple term had (see resetUsedIds and
+     * makeQuotedTriple). This cannot help the first triple term of a column, if it comes in the
+     * last few rows of an almost full frame: such a row can still fail with the "too small to
+     * encode a single row" error.
      */
     private final long[] usedNames;
     private final long[] usedPrefixes;
@@ -410,6 +690,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
      */
     public SparqlEncoderImpl(ProtoEncoderConverter<TNode> converter, SparqlEncoder.Params params) {
         super(converter, params);
+        if (options.getRdfVersion() == null) {
+            throw new RdfProtoSerializationError("Unknown RDF version: %d".formatted(options.getRdfVersionValue()));
+        }
         usedNames = newUsedIds(options.getMaxNameTableSize());
         usedPrefixes = newUsedIds(options.getMaxPrefixTableSize());
         usedDatatypes = newUsedIds(options.getMaxDatatypeTableSize());
@@ -431,8 +714,14 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     /** Clears the used-ids bits and puts each remaining-budget counter back at its budget. */
     private void resetUsedIds() {
         final int n = columns.length;
-        resetUsedIds(usedNames, usedIdsBudget(options.getMaxNameTableSize(), n));
-        resetUsedIds(usedPrefixes, usedIdsBudget(options.getMaxPrefixTableSize(), n));
+        int iris = n;
+        for (final ColumnState col : columns) {
+            if (col.poly != null && col.poly.maxTripleTermIris > 1) {
+                iris += col.poly.maxTripleTermIris - 1;
+            }
+        }
+        resetUsedIds(usedNames, usedIdsBudget(options.getMaxNameTableSize(), iris));
+        resetUsedIds(usedPrefixes, usedIdsBudget(options.getMaxPrefixTableSize(), iris));
         resetUsedIds(usedDatatypes, usedIdsBudget(options.getMaxDatatypeTableSize(), n));
     }
 
@@ -444,7 +733,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     @Override
     public boolean appendRow(TNode[] row) {
         if (columns == null) {
-            throw new RdfProtoSerializationError("Variables must be set before appending rows.");
+            throw notUsable("appending rows");
         }
         if (row.length != columns.length) {
             throw new RdfProtoSerializationError(
@@ -457,11 +746,31 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         if (rowCount > 0 && !hasRoomForAnotherRow()) {
             return false;
         }
-        for (int i = 0; i < row.length; i++) {
-            addCell(columns[i], row[i]);
+        try {
+            for (int i = 0; i < row.length; i++) {
+                addCell(columns[i], row[i]);
+            }
+        } catch (Throwable e) {
+            // The frame is now half-written, and cannot be completed
+            columns = null;
+            rowCount = ROW_COUNT_ROW_FAILED;
+            throw e;
         }
         rowCount++;
         return true;
+    }
+
+    private RdfProtoSerializationError notUsable(String action) {
+        if (variableNames == null) {
+            return new RdfProtoSerializationError("Variables must be set before %s.".formatted(action));
+        }
+        if (rowCount == ROW_COUNT_ROW_FAILED) {
+            return new RdfProtoSerializationError(
+                "A previous row failed to encode, so the current frame cannot be completed. " +
+                    "Use endStream(String) to end the stream with an error."
+            );
+        }
+        return new RdfProtoSerializationError("The stream has already been ended.");
     }
 
     /**
@@ -497,8 +806,71 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     @Override
     public SparqlResultsFrame endFrame() {
         if (columns == null) {
-            throw new RdfProtoSerializationError("Variables must be set before ending a frame.");
+            throw notUsable("ending a frame");
         }
+        return buildFrame(null);
+    }
+
+    @Override
+    public SparqlResultsFrame endStream() {
+        if (columns == null) {
+            throw notUsable("ending the stream");
+        }
+        final SparqlResultsFrame frame = buildFrame(SparqlResultsTrailer.newInstance());
+        endEncoder();
+        return frame;
+    }
+
+    @Override
+    public SparqlResultsFrame endStream(String error) {
+        if (error == null || error.isEmpty()) {
+            throw new RdfProtoSerializationError("The error message of an incomplete result set must not be empty.");
+        }
+        final SparqlResultsTrailer trailer = SparqlResultsTrailer.newInstance().setError(error);
+        if (columns != null) {
+            final SparqlResultsFrame frame = buildFrame(trailer);
+            endEncoder();
+            return frame;
+        }
+        if (variableNames == null || rowCount != ROW_COUNT_ROW_FAILED) {
+            throw notUsable("ending the stream");
+        }
+        endEncoder();
+        return failedRowFrame(trailer);
+    }
+
+    private void endEncoder() {
+        // The returned frame still points at the buffers, which stay untouched from now on
+        columns = null;
+        rowCount = ROW_COUNT_STREAM_ENDED;
+    }
+
+    /**
+     * The last frame of a stream whose last row failed to encode. The frame's content cannot be
+     * encoded consistently anymore, but nothing follows the trailer, so it is fine to drop it,
+     * along with the lookup entries it needed.
+     */
+    private SparqlResultsFrame failedRowFrame(SparqlResultsTrailer trailer) {
+        final SparqlResultsFrame.Mutable frame = SparqlResultsFrame.newInstance();
+        if (firstFrame) {
+            frame.setOptions(options);
+            // The frame has no columns, so any valid column assignment will do
+            for (int i = 0; i < variableNames.length; i++) {
+                frame.addVariables(SparqlVariable.newInstance().setName(variableNames[i]).setColumnIndex(i));
+            }
+            firstFrame = false;
+        }
+        frame.setTrailer(trailer);
+        frame.getSerializedSize();
+        return frame;
+    }
+
+    /**
+     * Builds the frame from the buffers.
+     *
+     * @param trailer the trailer to attach, or null for none
+     */
+    private SparqlResultsFrame buildFrame(SparqlResultsTrailer trailer) {
         beginFrame();
         for (final ColumnState col : columns) {
             if (col.runLength > 0 && col.runNode == null) {
@@ -542,13 +914,32 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             }
         }
 
+        if (trailer != null) {
+            frame.setTrailer(trailer);
+        }
         frame.setRowCount(rowCount);
         frame.setNames(nameEntries);
         frame.setPrefixes(prefixEntries);
         frame.setDatatypes(datatypeEntries);
+        // A frame with no rows may leave out its columns altogether
+        if (rowCount > 0) {
+            addColumns(frame);
+        }
 
-        // Emit the columns grouped by type, in variable order within each group – the same
-        // order in which the column indices were assigned.
+        firstFrame = false;
+        // The frame points at the encoder's buffers, so they stay untouched until the next frame
+        framePending = true;
+
+        // Pre-calculate the serialized size, while all objects are likely still in cache.
+        frame.getSerializedSize();
+        return frame;
+    }
+
+    /**
+     * Emits the columns grouped by type, in variable order within each group – the same
+     * order in which the column indices were assigned.
+     */
+    private void addColumns(SparqlResultsFrame.Mutable frame) {
         for (int i = 0; i < columns.length; i++) {
             final ColumnState col = columns[i];
             if (effectiveType(col) == TYPE_IRI) {
@@ -601,7 +992,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             final ColumnState col = columns[i];
             if (effectiveType(col) == TYPE_LITERAL) {
                 final SparqlLiteralColumn.Mutable column = SparqlLiteralColumn.newInstance();
-                // If every value has the same datatype  the column states it
+                // If every value has the same datatype or language tag, the column states it
                 // once and contains only the lexical forms, already sitting in the buffer.
                 // An empty column counts as simple literals.
                 final int datatype = col.columnDatatype == DATATYPE_NONE ? 0 : col.columnDatatype;
@@ -611,17 +1002,20 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                     final int litCount = col.auxIds.size();
                     int stringIndex = 0;
                     for (int j = 0; j < litCount; j++) {
-                        final RdfLiteral.Mutable literal = literals
+                        final RdfLiteral2.Mutable literal = literals
                             .appendMessage()
                             .setLex(col.strings.get(stringIndex++));
-                        final int dt = col.auxIds.get(j);
-                        if (dt == LANG_LITERAL) {
-                            literal.setLangtag(col.strings.get(stringIndex++));
-                        } else if (dt != 0) {
-                            literal.setDatatype(dt);
-                        }
+                        stringIndex = completeLiteral(literal, col.auxIds.get(j), col, stringIndex);
                     }
                     column.setValues(literals);
+                } else if (datatype == LANG_SAME_TAG) {
+                    // The strings buffer holds only the lexical forms
+                    final PolyBuffers poly = col.poly();
+                    column.setLangtag(poly.langtag);
+                    if (poly.direction != RdfBaseDirection.NONE) {
+                        column.setDirection(poly.direction);
+                    }
+                    column.setLexValues(col.strings);
                 } else {
                     column.setLexValues(col.strings);
                     if (datatype != 0) {
@@ -645,6 +1039,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                 int iriIndex = 0;
                 int auxIndex = 0;
                 int stringIndex = 0;
+                int tripleIndex = 0;
                 // -1 forces the first IRI of the column to carry its prefix id
                 int prevPrefix = -1;
                 for (int v = 0; v < col.valueCount; v++) {
@@ -662,16 +1057,17 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                             }
                         }
                         case TYPE_BNODE -> term.setBnode(col.strings.get(stringIndex++));
+                        case TYPE_TRIPLE -> {
+                            // Its IRIs take part in the prefix inference of the column
+                            final RdfTripleTerm triple = poly.tripleTerms.get(tripleIndex++);
+                            prevPrefix = resolvePrefixes(triple, prevPrefix);
+                            term.setTripleTerm(triple);
+                        }
                         default -> {
-                            final RdfLiteral.Mutable literal = poly.literals
+                            final RdfLiteral2.Mutable literal = poly.literals
                                 .appendMessage()
                                 .setLex(col.strings.get(stringIndex++));
-                            final int dt = col.auxIds.get(auxIndex++);
-                            if (dt == LANG_LITERAL) {
-                                literal.setLangtag(col.strings.get(stringIndex++));
-                            } else if (dt != 0) {
-                                literal.setDatatype(dt);
-                            }
+                            stringIndex = completeLiteral(literal, col.auxIds.get(auxIndex++), col, stringIndex);
                             term.setLiteral(literal);
                         }
                     }
@@ -681,14 +1077,35 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                 frame.addPolyColumns(column);
             }
         }
+    }
 
-        firstFrame = false;
-        // The frame points at the encoder's buffers, so they stay untouched until the next frame
-        framePending = true;
-
-        // Pre-calculate the serialized size, while all objects are likely still in cache.
-        frame.getSerializedSize();
-        return frame;
+    /**
+     * Fills in the language tag, base direction or datatype of a literal, as its aux id says.
+     *
+     * @return the index of the next value in the column's strings buffer
+     */
+    private static int completeLiteral(RdfLiteral2.Mutable literal, int auxId, ColumnState col, int stringIndex) {
+        switch (auxId) {
+            case 0 -> {
+                // Simple literal
+            }
+            case LANG_LITERAL -> literal.setLangtag(col.strings.get(stringIndex++));
+            case LANG_LTR_LITERAL -> literal
+                .setLangtag(col.strings.get(stringIndex++))
+                .setDirection(RdfBaseDirection.LTR);
+            case LANG_RTL_LITERAL -> literal
+                .setLangtag(col.strings.get(stringIndex++))
+                .setDirection(RdfBaseDirection.RTL);
+            case LANG_LITERAL_SAME_TAG -> {
+                final PolyBuffers poly = col.poly();
+                literal.setLangtag(poly.langtag);
+                if (poly.direction != RdfBaseDirection.NONE) {
+                    literal.setDirection(poly.direction);
+                }
+            }
+            default -> literal.setDatatype(auxId);
+        }
+        return stringIndex;
     }
 
     private void addCell(ColumnState col, TNode node) {
@@ -722,6 +1139,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             valueType = TYPE_BNODE;
         } else if (encoded instanceof RdfLiteral) {
             valueType = TYPE_LITERAL;
+        } else if (encoded == TRIPLE_MARKER) {
+            valueType = TYPE_TRIPLE;
         } else {
             throw new RdfProtoSerializationError(
                 "Unsupported term type in SPARQL results: %s".formatted(
@@ -730,7 +1149,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             );
         }
         if (col.type == TYPE_UNSET) {
-            col.type = valueType;
+            // A triple term makes the column polymorphic from the start
+            col.type = valueType == TYPE_TRIPLE ? TYPE_POLY : valueType;
         } else if (col.type != TYPE_POLY && col.type != valueType) {
             // Lazy-switch to a polymorphic column
             col.backfillTags(col.type);
@@ -780,6 +1200,12 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
 
     @Override
     public void appendDatatypeEntry(RdfDatatypeEntry datatypeEntry) {
+        final String value = datatypeEntry.getValue();
+        if (RDF_LANG_STRING.equals(value) || RDF_DIR_LANG_STRING.equals(value)) {
+            throw new RdfProtoSerializationError(
+                "A literal with the datatype %s must have a language tag.".formatted(value)
+            );
+        }
         datatypeEntries.append(usedDatatypes, "datatype", datatypeEntry.getId(), datatypeEntry.getValue());
     }
 

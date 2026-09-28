@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.rdf4j;
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.utils.QuadExtractor;
 import eu.neverblink.jelly.core.utils.TripleExtractor;
 import org.eclipse.rdf4j.model.*;
@@ -22,7 +23,16 @@ public final class Rdf4jEncoderConverter
             final var lex = literal.getLabel();
             final var lang = literal.getLanguage();
             if (lang.isPresent()) {
-                return encoder.makeLangLiteral(literal, lex, lang.get());
+                final Literal.BaseDirection direction = literal.getBaseDirection();
+                if (direction == Literal.BaseDirection.NONE) {
+                    return encoder.makeLangLiteral(literal, lex, lang.get());
+                }
+                return encoder.makeDirLangLiteral(
+                    literal,
+                    lex,
+                    lang.get(),
+                    direction == Literal.BaseDirection.LTR ? RdfBaseDirection.LTR : RdfBaseDirection.RTL
+                );
             } else {
                 final var dt = literal.getDatatype();
                 if (!dt.equals(XSD.STRING)) {

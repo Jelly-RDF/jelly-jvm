@@ -2,7 +2,7 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.{RdfIri, RdfLiteral, RdfLookupEntryPacked}
+import eu.neverblink.jelly.core.proto.v1.{RdfIri, RdfLiteral2, RdfLookupEntryPacked}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
 import eu.neverblink.jelly.core.helpers.ByteFuzzer
 import eu.neverblink.jelly.core.sparql.helpers.*
@@ -90,6 +90,12 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
       val decoder = newDecoder(handler, maxRowsPerFrame = Int.MaxValue)
       expectRejected(
         decoder.ingestFrame(frameWithRowCount(JellySparqlConstants.MAX_ROWS_PER_FRAME + 1)),
+      ).getMessage should include(s"Invalid row count ${1 << 27}")
+    }
+
+    "report an unsigned row count above 2^31 as such" in {
+      expectRejected(newDecoder().ingestFrame(frameWithRowCount(-1))).getMessage should include(
+        "Invalid row count 4294967295",
       )
     }
 
@@ -165,7 +171,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
         .addLiteralColumns(
           SparqlLiteralColumn
             .newInstance()
-            .addValues(RdfLiteral.newInstance().setLex("1").setDatatype(1)),
+            .addValues(RdfLiteral2.newInstance().setLex("1").setDatatype(1)),
         )
       expectRejected(newDecoder().ingestFrame(frame))
     }
@@ -175,7 +181,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
         .addLiteralColumns(
           SparqlLiteralColumn
             .newInstance()
-            .addValues(RdfLiteral.newInstance().setLex("1").setDatatype(0)),
+            .addValues(RdfLiteral2.newInstance().setLex("1").setDatatype(0)),
         )
       expectRejected(newDecoder().ingestFrame(frame))
     }

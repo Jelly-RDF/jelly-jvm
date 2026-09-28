@@ -54,4 +54,16 @@ public interface SparqlResultsHandler<TNode> {
     default void handleAskResult(boolean value) {
         throw new RdfProtoDeserializationError("This handler does not support boolean (ASK) results.");
     }
+
+    /**
+     * Called when a frame contains the stream trailer, after all rows (or the boolean result) of
+     * that frame were passed to the handler.
+     * <p>
+     * The decoder does not act on the error itself, and it cannot tell whether a stream ended
+     * without a trailer – only whoever reads the stream knows where it ends.
+     *
+     * @param error empty if the result set is complete. Otherwise, a human-readable explanation
+     *              of why the producer could not complete it.
+     */
+    default void handleTrailer(String error) {}
 }

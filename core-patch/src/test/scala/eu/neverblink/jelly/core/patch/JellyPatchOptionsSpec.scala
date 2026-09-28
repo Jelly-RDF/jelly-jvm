@@ -49,3 +49,27 @@ class JellyPatchOptionsSpec extends AnyWordSpec, Matchers:
         patchOpt.getStatementType should be(patchType)
       }
   }
+
+  "JellyPatchOptions.checkCompatibility" should {
+    // Unknown enum values, for example from a newer version of the format, are kept by the parser
+    def viaParser(options: RdfPatchOptions) = RdfPatchOptions.parseFrom(options.toByteArray)
+    val base = JellyPatchOptions.SMALL_STRICT
+      .clone()
+      .setStatementType(PatchStatementType.TRIPLES)
+      .setStreamType(PatchStreamType.FLAT)
+
+    "reject an unknown stream type" in {
+      val options = viaParser(base.clone().setStreamTypeValue(9))
+      options.getStreamTypeValue shouldBe 9
+      intercept[eu.neverblink.jelly.core.RdfProtoDeserializationError] {
+        JellyPatchOptions.checkCompatibility(options, JellyPatchOptions.DEFAULT_SUPPORTED_OPTIONS)
+      }.getMessage should include("Unknown patch stream type: 9")
+    }
+
+    "reject an unknown statement type" in {
+      val options = viaParser(base.clone().setStatementTypeValue(9))
+      intercept[eu.neverblink.jelly.core.RdfProtoDeserializationError] {
+        JellyPatchOptions.checkCompatibility(options, JellyPatchOptions.DEFAULT_SUPPORTED_OPTIONS)
+      }.getMessage should include("Unknown patch statement type: 9")
+    }
+  }

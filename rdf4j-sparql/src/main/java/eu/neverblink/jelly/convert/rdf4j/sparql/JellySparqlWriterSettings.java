@@ -4,6 +4,7 @@ import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
+import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BooleanRioSetting;
 import org.eclipse.rdf4j.rio.helpers.IntegerRioSetting;
@@ -36,8 +37,17 @@ public final class JellySparqlWriterSettings extends WriterConfig {
         return this;
     }
 
+    /**
+     * @param version the RDF version label: "1.1", "1.2-basic", "1.2", or "" for none
+     */
+    public JellySparqlWriterSettings setRdfVersion(String version) {
+        this.set(RDF_VERSION, version);
+        return this;
+    }
+
     public JellySparqlWriterSettings setJellyOptions(SparqlResultsOptions options) {
         this.set(STREAM_NAME, options.getStreamName());
+        this.set(RDF_VERSION, RdfVersionUtils.rdfVersionLabel(options.getRdfVersion()));
         this.set(MAX_NAME_TABLE_SIZE, options.getMaxNameTableSize());
         this.set(MAX_PREFIX_TABLE_SIZE, options.getMaxPrefixTableSize());
         this.set(MAX_DATATYPE_TABLE_SIZE, options.getMaxDatatypeTableSize());
@@ -54,16 +64,25 @@ public final class JellySparqlWriterSettings extends WriterConfig {
 
     public static final BooleanRioSetting DELIMITED_OUTPUT = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.sparql.delimitedOutput",
-        "Write the output as delimited frames. Note: files saved to disk are recommended to be delimited, " +
-            "for better interoperability with other implementations. In a non-delimited file you can have " +
-            "ONLY ONE FRAME, so a large result set will not fit – either because it runs out of memory, or " +
-            "because its lookup tables overflow. **Disable this only if you know what you are doing.**",
+        "Write the output as delimited frames. Note: the application/x-jelly-sparql media type and " +
+            ".jellys files are always delimited. Non-delimited output is only meant for embedding a single " +
+            "frame in something else. It can hold ONLY ONE FRAME, so a large result set will not fit – " +
+            "either because it runs out of memory, or because its lookup tables overflow. " +
+            "**Disable this only if you know what you are doing.**",
         true
     );
 
     public static final StringRioSetting STREAM_NAME = new StringRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.sparql.streamName",
         "Stream name",
+        ""
+    );
+
+    public static final StringRioSetting RDF_VERSION = new StringRioSetting(
+        "eu.neverblink.jelly.convert.rdf4j.sparql.rdfVersion",
+        "Version of RDF whose terms the results may contain, as an RDF 1.2 version label: " +
+            "\"1.1\", \"1.2-basic\" or \"1.2\". Empty (the default) declares no version. Writing a " +
+            "term that the declared version does not allow fails.",
         ""
     );
 

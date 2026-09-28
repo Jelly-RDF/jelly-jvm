@@ -15,6 +15,8 @@ class MockProtoEncoderConverter
     case Iri(iri) => encoder.makeIri(iri)
     case SimpleLiteral(lex) => encoder.makeSimpleLiteral(lex)
     case LangLiteral(lex, lang) => encoder.makeLangLiteral(node, lex, lang)
+    case DirLangLiteral(lex, lang, direction) =>
+      encoder.makeDirLangLiteral(node, lex, lang, direction)
     case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt)
     case BlankNode(label) => encoder.makeBlankNode(label)
     case TripleNode(s, p, o) => encoder.makeQuotedTriple(s, p, o)

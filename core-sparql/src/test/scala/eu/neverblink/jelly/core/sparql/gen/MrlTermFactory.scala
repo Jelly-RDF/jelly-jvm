@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core.sparql.gen
 
 import eu.neverblink.jelly.core.helpers.Mrl
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection
 
 /** Materializes generated terms into the mock RDF library, for exercising the core encoder and
   * decoder without any real RDF library in the way.
@@ -13,6 +14,9 @@ object MrlTermFactory extends TermFactory[Mrl.Node & Object]:
     case TermSpec.PlainLiteral(lex) => Mrl.SimpleLiteral(lex)
     case TermSpec.LangLiteral(lex, lang) => Mrl.LangLiteral(lex, lang)
     case TermSpec.DtLiteral(lex, datatype) => Mrl.DtLiteral(lex, Mrl.Datatype(datatype))
+    case TermSpec.DirLangLiteral(lex, lang, ltr) =>
+      Mrl.DirLangLiteral(lex, lang, if ltr then RdfBaseDirection.LTR else RdfBaseDirection.RTL)
+    case TermSpec.TripleTerm(s, p, o) => Mrl.TripleNode(make(s), make(p), make(o))
 
   // The encoder takes a Java TNode[], which Scala sees as Array[Node & Object]
   override def newRow(size: Int): Array[Mrl.Node & Object] =

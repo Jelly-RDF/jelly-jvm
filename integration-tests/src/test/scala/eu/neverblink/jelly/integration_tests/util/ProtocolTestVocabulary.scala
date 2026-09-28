@@ -24,6 +24,20 @@ object ProtocolTestVocabulary:
   val testEntryTestRdfFromJellyProperty: Property =
     ResourceFactory.createProperty(testEntryPrefix, "TestRdfFromJelly")
 
+  val testEntryTestSparqlToJellyProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "TestSparqlToJelly")
+  val testEntryTestSparqlFromJellyProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "TestSparqlFromJelly")
+
+  val testEntryRequirementRdf12BasicProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "requirementRdf12Basic")
+  val testEntryRequirementRdf12Property: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "requirementRdf12")
+
+  val testEntryNotableProperty: Property = ResourceFactory.createProperty(manifestPrefix, "notable")
+  val testEntryFeatureShouldLevelProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "featureShouldLevel")
+
   val testEntryNameProperty: Property = ResourceFactory.createProperty(manifestPrefix, "name")
   val testEntryCommentProperty: Property = ResourceFactory.createProperty(RDFS.uri, "comment")
 
@@ -83,6 +97,16 @@ object ProtocolTestVocabulary:
 
     def isTestRdfFromJelly: Boolean =
       resource.hasProperty(RDF.`type`, testEntryTestRdfFromJellyProperty)
+
+    def isTestSparqlToJelly: Boolean =
+      resource.hasProperty(RDF.`type`, testEntryTestSparqlToJellyProperty)
+
+    def isTestSparqlFromJelly: Boolean =
+      resource.hasProperty(RDF.`type`, testEntryTestSparqlFromJellyProperty)
+
+    /** The test checks a rule that the specification states with SHOULD, not MUST. */
+    def isShouldLevel: Boolean =
+      resource.hasProperty(testEntryNotableProperty, testEntryFeatureShouldLevelProperty)
 
     def hasPhysicalTypeTriplesRequirement: Boolean =
       resource.hasProperty(

@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core.helpers
 
 import eu.neverblink.jelly.core.ProtoDecoderConverter
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.utils.{QuadMaker, TripleMaker}
 
@@ -12,6 +13,8 @@ class MockProtoDecoderConverter
       QuadMaker[Node, Quad]:
   override def makeSimpleLiteral(lex: String): Node = SimpleLiteral(lex)
   override def makeLangLiteral(lex: String, lang: String): Node = LangLiteral(lex, lang)
+  override def makeDirLangLiteral(lex: String, lang: String, direction: RdfBaseDirection): Node =
+    DirLangLiteral(lex, lang, direction)
   override def makeDtLiteral(lex: String, dt: Datatype): Node = DtLiteral(lex, dt)
   override def makeDatatype(dt: String): Datatype = Datatype(dt)
   override def makeBlankNode(label: String): Node = BlankNode(label)

@@ -94,10 +94,10 @@ public final class JellySparqlLanguage {
     /**
      * Symbol for enabling/disabling delimiters between frames in the output. (ENABLED by default)
      * <p>
-     * Note: files saved to disk are recommended to be delimited, for better interoperability with
-     * other implementations. A non-delimited file can hold ONLY ONE FRAME, so a large result set
-     * will not fit in it – either it runs out of memory, or its lookup tables overflow and the
-     * writer gives up.
+     * Note: the application/x-jelly-sparql media type and the .jellys files are always delimited.
+     * Non-delimited output is only meant for embedding a single frame in something else. It can
+     * hold ONLY ONE FRAME, so a large result set will not fit in it – either it runs out of
+     * memory, or its lookup tables overflow and the writer gives up.
      * <p>
      * **Set this option to "false" only if you know what you are doing.**
      */
@@ -119,6 +119,18 @@ public final class JellySparqlLanguage {
      * Set this in Jena's Context to an integer (not long!) value.
      */
     public static final Symbol SYMBOL_MAX_ROWS_PER_FRAME = Symbol.create(SYMBOL_NS + "maxRowsPerFrame");
+
+    /**
+     * Symbol for making the reader throw when a stream ends without a trailer. (DISABLED by
+     * default)
+     * <p>
+     * Without a trailer, a result set that was cut off at a frame boundary looks complete.
+     * Producers should always write one, but they are not required to. A trailer that reports
+     * an error is always turned into an exception, whatever this is set to.
+     * <p>
+     * Set this in Jena's Context to a boolean value.
+     */
+    public static final Symbol SYMBOL_REQUIRE_TRAILER = Symbol.create(SYMBOL_NS + "requireTrailer");
 
     private static volatile boolean isRegistered = false;
 

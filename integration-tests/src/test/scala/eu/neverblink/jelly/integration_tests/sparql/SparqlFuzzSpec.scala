@@ -1,9 +1,9 @@
 package eu.neverblink.jelly.integration_tests.sparql
 
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions
+import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions
 import eu.neverblink.jelly.core.sparql.gen.{ResultSetSpec, SparqlDataGen}
-import org.apache.jena.sys.JenaSystem
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -20,8 +20,7 @@ import scala.util.Random
   * and JELLY_SPARQL_FUZZ_SEED environment variables – bump the iterations for a long soak run.
   */
 @experimental
-class SparqlFuzzSpec extends AnyWordSpec, Matchers:
-  JenaSystem.init()
+class SparqlFuzzSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private val iterations =
     sys.env.get("JELLY_SPARQL_FUZZ_ITERATIONS").map(_.toInt).getOrElse(500)

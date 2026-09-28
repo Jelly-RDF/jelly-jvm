@@ -674,6 +674,10 @@ lazy val integrationTests = (project in file("integration-tests"))
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-trig" % rdf4jV % Test,
+      // Parsers for the W3C SPARQL test suite
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlxml" % rdf4jV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqljson" % rdf4jV % Test,
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-text" % rdf4jV % Test,
       "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV % Test,
       "com.apicatalog" % "titanium-json-ld" % "1.7.0" % Test,
       "com.apicatalog" % "titanium-rdf-primitives" % "1.0.3" % Test,

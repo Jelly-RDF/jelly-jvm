@@ -1,10 +1,13 @@
 package eu.neverblink.jelly.core.sparql.internal;
 
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.proto.v1.RdfIri;
-import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
+import eu.neverblink.jelly.core.proto.v1.RdfLiteral2;
+import eu.neverblink.jelly.core.proto.v1.RdfTripleTerm;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlTerm;
 import eu.neverblink.protoc.java.runtime.MessageCollection;
 import java.util.AbstractCollection;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -76,21 +79,21 @@ final class TermBuffer
  * built (see ColumnState), so messages only get materialized here, at endFrame().
  */
 final class LiteralBuffer
-    extends AbstractCollection<RdfLiteral>
-    implements MessageCollection<RdfLiteral, RdfLiteral.Mutable>
+    extends AbstractCollection<RdfLiteral2>
+    implements MessageCollection<RdfLiteral2, RdfLiteral2.Mutable>
 {
 
-    private RdfLiteral.Mutable[] literals = new RdfLiteral.Mutable[0];
+    private RdfLiteral2.Mutable[] literals = new RdfLiteral2.Mutable[0];
     private int size = 0;
 
     @Override
-    public RdfLiteral.Mutable appendMessage() {
+    public RdfLiteral2.Mutable appendMessage() {
         if (size == literals.length) {
             literals = Arrays.copyOf(literals, Math.max(8, literals.length * 2));
         }
-        RdfLiteral.Mutable literal = literals[size];
+        RdfLiteral2.Mutable literal = literals[size];
         if (literal == null) {
-            literal = RdfLiteral.newInstance();
+            literal = RdfLiteral2.newInstance();
             literals[size] = literal;
         } else {
             literal.clear();
@@ -110,7 +113,7 @@ final class LiteralBuffer
     }
 
     @Override
-    public Iterator<RdfLiteral> iterator() {
+    public Iterator<RdfLiteral2> iterator() {
         return new Iterator<>() {
             private int index = 0;
 
@@ -120,7 +123,7 @@ final class LiteralBuffer
             }
 
             @Override
-            public RdfLiteral next() {
+            public RdfLiteral2 next() {
                 if (index >= size) {
                     throw new NoSuchElementException();
                 }
@@ -171,9 +174,25 @@ final class PolyBuffers {
     final LiteralBuffer literals = new LiteralBuffer();
     final IriBuffer iris = new IriBuffer();
 
+    // The language tag and base direction shared by every literal of the column in the current
+    // frame, while the column's datatype state says so. Kept here rather than in ColumnState,
+    // because it's rarely used and ColumnState is much more performance-sensitive (shouldn't use
+    // more cache lines).
+    String langtag = null;
+    RdfBaseDirection direction = RdfBaseDirection.NONE;
+
+    // The triple terms of the current frame, in value order. Built as messages right away, as
+    // they are rare – only their prefix ids are resolved at endFrame().
+    final ArrayList<RdfTripleTerm.Mutable> tripleTerms = new ArrayList<>();
+    // The largest number of IRIs in one triple term of this column so far, across all frames.
+    // Used to size the lookup budget of a frame, as a triple term can need a lookup entry for
+    // each of its IRIs.
+    int maxTripleTermIris = 0;
+
     void resetFrameState() {
         terms.clear();
         literals.clear();
         iris.clear();
+        tripleTerms.clear();
     }
 }

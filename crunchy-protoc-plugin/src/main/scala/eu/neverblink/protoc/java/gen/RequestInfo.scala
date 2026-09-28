@@ -399,6 +399,15 @@ object RequestInfo:
       .map(_.toUpperCase)
       .mkString("_")
 
+    // Value names lose the enum name prefix (like in scalapb), unless that would leave a name
+    // that is not a Java identifier, as in RDF_VERSION_1_1. Then the whole enum keeps the full
+    // names, so that its values stay consistent.
+    lazy val stripValuePrefix: Boolean = descriptor.getValueList.asScala.forall { value =>
+      val name = value.getName
+      !name.startsWith(nameInSnakeCase + "_") ||
+      Character.isJavaIdentifierStart(name.charAt(nameInSnakeCase.length + 1))
+    }
+
     for (value <- descriptor.getValueList.asScala) {
       if (usedFields.add(value.getNumber)) {
         values.add(new RequestInfo.EnumValueInfo(this, value))
@@ -425,7 +434,11 @@ object RequestInfo:
     val sourceLocation: SourceCodeInfo.Location = parentType.parentFile.getSourceLocation(valueId)
 
     // Simplify names like in scalapb
-    def getName: String = descriptor.getName.replace(parentType.nameInSnakeCase + "_", "")
+    def getName: String =
+      val prefix = parentType.nameInSnakeCase + "_"
+      if parentType.stripValuePrefix && descriptor.getName.startsWith(prefix) then
+        descriptor.getName.substring(prefix.length)
+      else descriptor.getName
 
     def getNumber: Int = descriptor.getNumber
   }

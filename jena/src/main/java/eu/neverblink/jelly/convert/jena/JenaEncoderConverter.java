@@ -3,10 +3,12 @@ package eu.neverblink.jelly.convert.jena;
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfBufferAppender;
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.utils.QuadExtractor;
 import eu.neverblink.jelly.core.utils.TripleExtractor;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.TextDirection;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 
@@ -34,7 +36,16 @@ public final class JenaEncoderConverter
                     return encoder.makeDtLiteral(node, node.getLiteralLexicalForm(), node.getLiteralDatatypeURI());
                 }
             } else {
-                return encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
+                final TextDirection direction = node.getLiteralBaseDirection();
+                if (direction == null) {
+                    return encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
+                }
+                return encoder.makeDirLangLiteral(
+                    node,
+                    node.getLiteralLexicalForm(),
+                    lang,
+                    direction == TextDirection.LTR ? RdfBaseDirection.LTR : RdfBaseDirection.RTL
+                );
             }
         } else if (node.isTripleTerm()) {
             // RDF-star node

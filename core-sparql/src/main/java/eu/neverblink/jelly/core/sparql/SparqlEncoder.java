@@ -7,6 +7,7 @@ import eu.neverblink.jelly.core.internal.NodeEncoderImpl;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlAskResult;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsTrailer;
 import java.util.List;
 
 /**
@@ -14,7 +15,8 @@ import java.util.List;
  * <p>
  * Usage: call {@link #setVariables(List)} once, then {@link #appendRow(Object[])} for every
  * solution, calling {@link #endFrame()} at batch boundaries to obtain the frames to write.
- * The last frame must also be obtained with {@link #endFrame()}.
+ * The last frame must be obtained with {@link #endStream()}, which marks the result set as
+ * complete, or with {@link #endStream(String)} if the result set could not be completed.
  *
  * @param <TNode> type of RDF nodes in the library
  */
@@ -119,8 +121,35 @@ public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
     public abstract SparqlResultsFrame endFrame();
 
     /**
+     * Finish the current frame as the last frame of the stream, with a trailer saying that the
+     * result set is complete.
+     * <p>
+     * If the rows were already written out with {@link #endFrame()}, the returned frame will
+     * contain only the trailer. After this call, the encoder cannot be used anymore.
+     *
+     * @return the last frame of the stream
+     */
+    public abstract SparqlResultsFrame endStream();
+
+    /**
+     * Finish the current frame as the last frame of the stream, with a trailer saying that the
+     * result set is NOT complete – for example, because evaluating the query failed midway.
+     * <p>
+     * This may also be called after {@link #appendRow(Object[])} threw an exception. Such a row
+     * leaves the frame under construction in a state that cannot be encoded, so in that case the
+     * rows of the current frame are dropped, and the returned frame contains only the trailer (plus
+     * the options and the header, if nothing was written before). After this call, the encoder
+     * cannot be used anymore.
+     *
+     * @param error human-readable explanation of why the result set is incomplete. Must not be
+     *              empty – an empty error means that the result set is complete.
+     * @return the last frame of the stream
+     */
+    public abstract SparqlResultsFrame endStream(String error);
+
+    /**
      * Builds the single frame of a boolean (ASK) result stream. Such a stream consists of
-     * exactly this one frame – no encoder instance is needed.
+     * exactly this one frame, which also carries the trailer – no encoder instance is needed.
      *
      * @param options options for the result stream
      * @param value the boolean result
@@ -129,7 +158,8 @@ public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
     public static SparqlResultsFrame askResultFrame(SparqlResultsOptions options, boolean value) {
         final SparqlResultsFrame.Mutable frame = SparqlResultsFrame.newInstance()
             .setOptions(options.clone().setVersion(JellySparqlConstants.PROTO_VERSION))
-            .setAskResult(SparqlAskResult.newInstance().setValue(value));
+            .setAskResult(SparqlAskResult.newInstance().setValue(value))
+            .setTrailer(SparqlResultsTrailer.newInstance());
         // Pre-calculate the serialized size
         frame.getSerializedSize();
         return frame;

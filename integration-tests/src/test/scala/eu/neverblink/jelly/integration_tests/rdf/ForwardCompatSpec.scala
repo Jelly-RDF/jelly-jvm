@@ -119,8 +119,15 @@ class ForwardCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
 
       parsed.getRows.asScala.head.hasOptions should be(true)
       val options: v1.RdfStreamOptions = parsed.getRows.asScala.head.getOptions
-      options.getPhysicalType should be(v1.PhysicalStreamType.UNSPECIFIED)
-      options.getLogicalType should be(v1.LogicalStreamType.UNSPECIFIED)
+      // Unknown enum values are kept as numbers, and their getters return null
+      options.getPhysicalType should be(null)
+      options.getPhysicalTypeValue should be(
+        future.PhysicalStreamType.PHYSICAL_STREAM_TYPE_FUTURE.getNumber,
+      )
+      options.getLogicalType should be(null)
+      options.getLogicalTypeValue should be(
+        future.LogicalStreamType.LOGICAL_STREAM_TYPE_FUTURE.getNumber,
+      )
       options.getRdfStar should be(true)
       options.getGeneralizedStatements should be(false)
       options.getMaxNameTableSize should be(1000)

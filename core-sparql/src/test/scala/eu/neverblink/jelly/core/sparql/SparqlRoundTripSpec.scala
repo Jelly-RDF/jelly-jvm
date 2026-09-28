@@ -155,6 +155,96 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       column.getValues.size shouldBe 2
     }
 
+    "state a shared language tag once" in {
+      val rows = Seq("a", "b", "a", "c").map(lex => Seq[Node | Null](LangLiteral(lex, "en")))
+      val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+      assertResults(collector, Seq("x"), rows)
+      val column = frames.head.getLiteralColumns.asScala.head
+      column.getLangtag shouldBe "en"
+      column.getDatatype shouldBe 0
+      column.getValues.size shouldBe 0
+      lexValues(column) shouldBe Seq("a", "b", "a", "c")
+      frames.head.getDatatypes.size shouldBe 0
+    }
+
+    "state a shared language tag with runs and unbound cells" in {
+      val rows = Seq[Seq[Node | Null]](
+        Seq(LangLiteral("a", "en")),
+        Seq(LangLiteral("a", "en")),
+        Seq(null),
+        Seq(LangLiteral("b", "en")),
+        Seq(null),
+      )
+      val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+      assertResults(collector, Seq("x"), rows)
+      val column = frames.head.getLiteralColumns.asScala.head
+      column.getLangtag shouldBe "en"
+      lexValues(column) shouldBe Seq("a", "b")
+    }
+
+    "fall back to full literals in a column mixing language tags" in {
+      // The tags are compared as they are: "en" and "EN" count as different
+      for other <- Seq("fr", "EN") do
+        val rows = Seq(
+          LangLiteral("a", "en"),
+          LangLiteral("b", "en"),
+          LangLiteral("c", other),
+          LangLiteral("d", "en"),
+        ).map(Seq[Node | Null](_))
+        val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+        withClue(s"with $other: ") {
+          assertResults(collector, Seq("x"), rows)
+          val column = frames.head.getLiteralColumns.asScala.head
+          column.getLangtag shouldBe ""
+          column.getLexValues.size shouldBe 0
+          column.getValues.asScala.map(_.getLangtag) shouldBe Seq("en", "en", other, "en")
+        }
+    }
+
+    "fall back to full literals in a column mixing tagged and other literals" in {
+      val others = Seq[Node](
+        SimpleLiteral("plain"),
+        DtLiteral("1", Datatype("http://www.w3.org/2001/XMLSchema#integer")),
+      )
+      for other <- others do
+        for rows <- Seq(
+            Seq(LangLiteral("a", "en"), LangLiteral("b", "en"), other),
+            Seq(other, LangLiteral("a", "en"), LangLiteral("b", "en")),
+          ).map(_.map(Seq[Node | Null](_)))
+        do
+          val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+          withClue(s"with $rows: ") {
+            assertResults(collector, Seq("x"), rows)
+            val column = frames.head.getLiteralColumns.asScala.head
+            column.getLangtag shouldBe ""
+            column.getLexValues.size shouldBe 0
+            column.getValues.size shouldBe 3
+          }
+    }
+
+    "keep a shared language tag right in a column that turns polymorphic" in {
+      for rows <- Seq(
+          Seq(LangLiteral("a", "en"), LangLiteral("b", "en"), iri(1), LangLiteral("c", "en")),
+          Seq(iri(1), LangLiteral("a", "en"), LangLiteral("b", "en"), LangLiteral("c", "fr")),
+          Seq(BlankNode("b1"), LangLiteral("a", "en"), BlankNode("b2"), LangLiteral("b", "en")),
+        ).map(_.map(Seq[Node | Null](_)))
+      do
+        val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
+        withClue(s"with $rows: ") {
+          assertResults(collector, Seq("x"), rows)
+          frames.head.getPolyColumns.size shouldBe 1
+        }
+    }
+
+    "pick the language tag of each frame" in {
+      val frames = Seq("en", "fr").map(tag =>
+        Seq("a", "b").map(lex => Seq[Node | Null](LangLiteral(lex, tag))),
+      )
+      val (collector, out) = roundTrip(Seq("x"), frames)
+      assertResults(collector, Seq("x"), frames.flatten)
+      out.map(_.getLiteralColumns.asScala.head.getLangtag) shouldBe Seq("en", "fr")
+    }
+
     "pick the literal column form per frame" in {
       // Monomorphism is a property of a frame, not of the whole stream
       val dt = Datatype("https://test.org/xsd#integer")
@@ -359,16 +449,6 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       e.getMessage should include("Expected 2 bindings")
     }
 
-    "throw when encoding an RDF-star quoted triple" in {
-      val encoder =
-        MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(JellySparqlOptions.SMALL))
-      encoder.setVariables(Seq("x").asJava)
-      val e = intercept[RdfProtoSerializationError] {
-        encoder.appendRow(Array[Node](TripleNode(iri(1), iri(2), iri(3))))
-      }
-      e.getMessage should include("Triple terms are not supported")
-    }
-
     "round-trip a result set that outgrows the lookup tables" in {
       // Regression: appending a row that would overwrite a lookup entry the current frame still
       // refers to used to corrupt the encoder – the eviction had already happened by the time it
@@ -407,6 +487,37 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       // The tables really did overflow – otherwise this would not be testing anything
       frames should be > 1
       assertResults(collector, Seq("x", "y"), rows)
+    }
+
+    "decode concatenated streams as one result set" in {
+      // Each part has its own lookup numbering, and the second one uses a different column layout
+      val parts = Seq(
+        (JellySparqlOptions.SMALL, Seq(Seq(iri(1), SimpleLiteral("a")), Seq(iri(2), null))),
+        (
+          JellySparqlOptions.BIG,
+          Seq(Seq(SimpleLiteral("b"), iri(3)), Seq(iri(1), BlankNode("b1")), Seq(null, iri(1))),
+        ),
+      )
+      val bytes = java.io.ByteArrayOutputStream()
+      for (options, rows) <- parts do
+        val encoder = MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(options))
+        encoder.setVariables(Seq("x", "y").asJava)
+        for row <- rows do
+          encoder.appendRow(row.toArray.asInstanceOf[Array[Node]])
+          encoder.endFrame().writeDelimitedTo(bytes)
+        encoder.endStream().writeDelimitedTo(bytes)
+
+      val collector = ResultsCollector()
+      val decoder =
+        MockSparqlConverterFactory.decoder(collector, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
+      val in = java.io.ByteArrayInputStream(bytes.toByteArray)
+      var frame = SparqlResultsFrame.parseDelimitedFrom(in)
+      while frame != null do
+        decoder.ingestFrame(frame)
+        frame = SparqlResultsFrame.parseDelimitedFrom(in)
+
+      assertResults(collector, Seq("x", "y"), parts.flatMap(_._2))
+      collector.trailers.toSeq shouldBe Seq("", "")
     }
 
     "throw when decoding a frame without options" in {
