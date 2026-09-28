@@ -6,7 +6,7 @@ This guide explains a few of the basic functionalities of Jelly-JVM and how to u
 
 ## Quick start – Apache Jena
 
-Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: `jelly-jena`, `jelly-rdf4j`, [`jelly-titanium-rdf-api`](user/titanium.md)[^1]. In our examples we will use Jena, so let's add this to your `build.sbt` file:
+Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you should import one of the dependencies: `jelly-jena`, `jelly-rdf4j`, [`jelly-titanium-rdf-api`](user/titanium.md)[^1]. In our examples we will use Jena, so let's add this to your build file:
 
 === "Maven"
 
@@ -16,6 +16,11 @@ Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you shou
         <artifactId>jelly-jena</artifactId>
         <version>{{ jvm_package_version() }}</version>
     </dependency>
+    <dependency>
+        <groupId>org.apache.jena</groupId>
+        <artifactId>jena-arq</artifactId>
+        <version>${jena.version}</version>
+    </dependency>
     ```
 
 === "Gradle"
@@ -23,6 +28,7 @@ Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you shou
     ```groovy title="build.gradle"
     dependencies {
         implementation "eu.neverblink.jelly:jelly-jena:${jellyVersion}"
+        implementation "org.apache.jena:jena-arq:${jenaVersion}"
     }
     ```
 
@@ -32,8 +38,20 @@ Depending on your RDF library of choice (Apache Jena, RDF4J, Titanium), you shou
     lazy val jellyVersion = "{{ jvm_package_version() }}"
     libraryDependencies ++= Seq(
       "eu.neverblink.jelly" % "jelly-jena" % jellyVersion,
+      "org.apache.jena" % "jena-arq" % jenaVersion,
     )
     ```
+
+!!! note "Jena and RDF4J are provided dependencies"
+
+    Since Jelly-JVM 4.0.0, the `jelly-jena-*` and `jelly-rdf4j-*` modules declare Jena and RDF4J in the `provided` scope, so you need to add the library yourself, in any [supported version](index.md#compatibility). The modules need:
+
+    - `jelly-jena`, `jelly-jena-sparql`: `jena-arq`
+    - `jelly-jena-patch`: `jena-rdfpatch`
+    - `jelly-rdf4j`, `jelly-rdf4j-patch`: `rdf4j-rio-api`
+    - `jelly-rdf4j-sparql`: `rdf4j-queryresultio-api`
+
+    Fuseki integration is optional and is activated only if `jena-fuseki-main` is on the classpath.
 
 Now you can serialize/deserialize Jelly data with Apache Jena. Jelly is fully integrated with Jena, so it should all just magically work. Here is a simple example of reading a `.jelly` file (in this case, a metadata file from [RiverBench](https://w3id.org/riverbench/)) with [RIOT](https://jena.apache.org/documentation/io/):
 

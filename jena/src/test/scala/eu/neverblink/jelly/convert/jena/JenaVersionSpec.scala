@@ -18,6 +18,6 @@ class JenaVersionSpec extends AnyWordSpec, Matchers, JenaTest:
     "correctly report the Jena version" in {
       if jenaVersionCI != null && jenaVersionCI.nonEmpty then
         jenaVersionCI should be(jenaVersionFromClass)
-      else jenaVersionFromClass should be("5.6.0")
+      else jenaVersionFromClass should startWith("6.")
     }
   }

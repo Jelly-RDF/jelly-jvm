@@ -28,7 +28,7 @@ Test / logBuffered := false
 
 lazy val pekkoV = "1.7.0"
 lazy val pekkoGrpcV = "1.2.0"
-lazy val jenaV = "5.6.0"
+lazy val jenaV = "6.2.0"
 // RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
 // targets Java 21 (see javacOptions), but jelly-rdf4j can only *run* on Java 25+, as RDF4J 6 does.
 lazy val rdf4jV = "6.1.0"
@@ -41,6 +41,18 @@ lazy val jmhV = "1.37"
 lazy val grpcV = "1.84.0"
 
 lazy val jellyCliV = "0.8.0"
+
+lazy val jenaDeps = Seq(
+  "org.apache.jena" % "jena-core" % jenaV,
+  "org.apache.jena" % "jena-arq" % jenaV,
+)
+lazy val jenaPatchDeps = Seq("org.apache.jena" % "jena-rdfpatch" % jenaV)
+lazy val fusekiDeps = Seq("org.apache.jena" % "jena-fuseki-main" % jenaV)
+lazy val rdf4jDeps = Seq(
+  "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
+  "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
+)
+lazy val rdf4jSparqlDeps = Seq("org.eclipse.rdf4j" % "rdf4j-queryresultio-api" % rdf4jV)
 
 lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
 
@@ -485,12 +497,7 @@ lazy val jena = (project in file("jena"))
   .settings(
     name := "jelly-jena",
     description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
-    libraryDependencies ++= Seq(
-      "org.apache.jena" % "jena-core" % jenaV,
-      "org.apache.jena" % "jena-arq" % jenaV,
-      // Integration with Fuseki is optional, so include this dep as "provided"
-      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
-    ),
+    libraryDependencies ++= (jenaDeps ++ fusekiDeps).map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -500,9 +507,7 @@ lazy val jenaPatch = (project in file("jena-patch"))
   .settings(
     name := "jelly-jena-patch",
     description := "Jelly-Patch integration for Apache Jena.",
-    libraryDependencies ++= Seq(
-      "org.apache.jena" % "jena-rdfpatch" % jenaV,
-    ),
+    libraryDependencies ++= (jenaDeps ++ jenaPatchDeps).map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -513,10 +518,7 @@ lazy val jenaSparql = (project in file("jena-sparql"))
     name := "jelly-jena-sparql",
     description := "Jelly-SPARQL integration for Apache Jena: reading and writing " +
       "SPARQL query results.",
-    libraryDependencies ++= Seq(
-      // Integration with Fuseki is optional, so include this dep as "provided"
-      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
-    ),
+    libraryDependencies ++= (jenaDeps ++ fusekiDeps).map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -529,15 +531,10 @@ lazy val jenaSparql = (project in file("jena-sparql"))
 lazy val jenaPlugin = (project in file("jena-plugin"))
   .settings(
     name := "jelly-jena-plugin",
-    libraryDependencies ++= Seq(
-      // Use the "provided" scope to not include the Jena dependencies in the plugin JAR
-      "org.apache.jena" % "jena-core" % jenaV % "provided,test",
-      "org.apache.jena" % "jena-arq" % jenaV % "provided,test",
-      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
-    ),
-    // Depending on the jena and jena-sparql projects also puts *their* Jena dependencies on our
-    // runtime classpath, where the "provided" scope above cannot get rid of them, and assembly
-    // would pack them into the JAR. Keep only the class and resource directories of the Jelly
+    libraryDependencies ++= (jenaDeps ++ fusekiDeps).map(_ % Provided),
+    // Depending on the jena and jena-sparql projects also puts *their* compile dependencies (like
+    // protobuf-java, which Jena already ships) on our runtime classpath, and assembly would pack
+    // them into the JAR. Keep only the class and resource directories of the Jelly
     // modules – those are plain directories thanks to exportJars := false at the top of this file,
     // while everything else on this classpath is a JAR.
     assembly / fullClasspath := (Runtime / fullClasspath).value.filterNot(
@@ -560,10 +557,7 @@ lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
     description := "Jelly parsers, serializers, and other utilities for RDF4J.",
-    libraryDependencies ++= Seq(
-      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
-      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
-    ),
+    libraryDependencies ++= rdf4jDeps.map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -573,6 +567,7 @@ lazy val rdf4jPatch = (project in file("rdf4j-patch"))
   .settings(
     name := "jelly-rdf4j-patch",
     description := "Jelly-Patch integration for RDF4J.",
+    libraryDependencies ++= rdf4jDeps.map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -583,10 +578,7 @@ lazy val rdf4jSparql = (project in file("rdf4j-sparql"))
     name := "jelly-rdf4j-sparql",
     description := "Jelly-SPARQL integration for RDF4J: reading and writing " +
       "SPARQL query results.",
-    libraryDependencies ++= Seq(
-      // Brings in rdf4j-query, which the rdf4j module does not need on its own
-      "org.eclipse.rdf4j" % "rdf4j-queryresultio-api" % rdf4jV,
-    ),
+    libraryDependencies ++= (rdf4jDeps ++ rdf4jSparqlDeps).map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -597,12 +589,7 @@ lazy val rdf4jSparql = (project in file("rdf4j-sparql"))
 lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
   .settings(
     name := "jelly-rdf4j-plugin",
-    libraryDependencies ++= Seq(
-      // Use the "provided" scope to not include the RDF4J dependencies in the plugin JAR
-      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV % "provided,test",
-      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV % "provided,test",
-      "org.eclipse.rdf4j" % "rdf4j-queryresultio-api" % rdf4jV % "provided,test",
-    ),
+    libraryDependencies ++= (rdf4jDeps ++ rdf4jSparqlDeps).map(_ % Provided),
     assembly / fullClasspath := (Runtime / fullClasspath).value.filter(entry =>
       !entry.data.name.endsWith(".jar") || entry.data.name.startsWith("protobuf-java"),
     ),
@@ -670,6 +657,8 @@ lazy val integrationTests = (project in file("integration-tests"))
   .settings(
     publishArtifact := false,
     name := "jelly-integration-tests",
+    libraryDependencies ++=
+      (jenaDeps ++ jenaPatchDeps ++ fusekiDeps ++ rdf4jDeps ++ rdf4jSparqlDeps).map(_ % Test),
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
@@ -717,6 +706,7 @@ lazy val examples = (project in file("examples"))
   .settings(
     publishArtifact := false,
     name := "jelly-examples",
+    libraryDependencies ++= jenaDeps ++ rdf4jDeps,
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
@@ -743,7 +733,7 @@ lazy val jmh = (project in file("jmh"))
     libraryDependencies ++= Seq(
       "org.openjdk.jmh" % "jmh-core" % jmhV,
       "org.openjdk.jmh" % "jmh-generator-annprocess" % jmhV,
-    ),
+    ) ++ jenaDeps,
     commonSettings,
   )
   // The benchmarks are compiled in the Compile config, so the shared result set generator (which
