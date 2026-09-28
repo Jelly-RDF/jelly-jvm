@@ -23,20 +23,20 @@ jobs:
       matrix:
         include:
           # RDF4J 6 ships Java 25 bytecode, so JDK 25 (LTS) is the build baseline; we also test on
-          # the latest release (26). Across those we exercise the oldest and newest supported Jena
-          # versions. The dependencies default to Jena 5.6 and RDF4J 6.0.
+          # the latest release (26). build.sbt defaults to the newest Jena and RDF4J (kept up to
+          # date by Scala Steward), and one job pins the oldest supported versions.
           - os: ubuntu-latest
             java: 25
             # Jena 5.4.0 is the oldest supported version - it introduced the RDF 1.2 triple term
             # API that we use, replacing the RDF-star API of 5.3.x and older.
             jena_version: "5.4.0"
-            rdf4j_version: ""
+            rdf4j_version: "6.1.0"
           - os: ubuntu-latest
             java: 25
-            jena_version: "6.2.0"
+            jena_version: ""
             rdf4j_version: ""
           - os: ubuntu-latest
-            java: 26
+            java: 27
             jena_version: ""
             rdf4j_version: ""
     runs-on: ${{ matrix.os }}
