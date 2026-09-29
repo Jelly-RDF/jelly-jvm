@@ -13,14 +13,12 @@ import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 import eu.neverblink.protoc.java.runtime.DelimitedMessageReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.AbstractList;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.RandomAccess;
+import java.util.Set;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -162,6 +160,8 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
     private final class ResultsHandler implements SparqlResultsHandler<Value> {
 
         private List<String> variables = null;
+        // The same, as the set that every binding set returns from getBindingNames()
+        private Set<String> variableSet = null;
         private Boolean askResult = null;
 
         @Override
@@ -176,6 +176,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         @Override
         public void handleVariables(List<String> variables) {
             this.variables = variables;
+            this.variableSet = Collections.unmodifiableSet(new LinkedHashSet<>(variables));
             if (handler != null) {
                 handler.startQueryResult(variables);
             }
@@ -203,14 +204,12 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public void handleRows(Object[][] columns, int rowCount, Value[] row) {
             if (handler == null) {
                 return;
             }
             for (int r = 0; r < rowCount; r++) {
-                final var values = (List<? extends Value>) (List<?>) new ColumnRow(columns, r);
-                handler.handleSolution(new ListBindingSet(variables, values));
+                handler.handleSolution(new ColumnBindingSet(variables, variableSet, columns, r));
             }
         }
 
@@ -218,40 +217,6 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         public boolean keepsColumns() {
             // The binding sets read their values from the columns
             return true;
-        }
-    }
-
-    /**
-     * The values of one row, read from the columns of its frame, which it keeps in memory.
-     * Nothing is copied. Every value is a Value or null; the list is typed Object so that it does
-     * not check that on every read, as ListBindingSet checks it again anyway.
-     * <p>
-     * ListBindingSet is Serializable, so this is too: it is written as a list of its own values,
-     * not with the whole frame.
-     */
-    private static final class ColumnRow extends AbstractList<Object> implements RandomAccess, Serializable {
-
-        private final Object[][] columns;
-        private final int row;
-
-        ColumnRow(Object[][] columns, int row) {
-            this.columns = columns;
-            this.row = row;
-        }
-
-        @Override
-        public Object get(int index) {
-            return columns[index][row];
-        }
-
-        @Override
-        public int size() {
-            return columns.length;
-        }
-
-        @Serial
-        private Object writeReplace() {
-            return new ArrayList<>(this);
         }
     }
 }
