@@ -15,6 +15,7 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import org.apache.jena.graph.Node;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.rowset.RowSetReader;
@@ -230,6 +231,9 @@ public final class RowSetReaderJelly implements RowSetReader {
     private static final class RowCollector implements SparqlResultsHandler<Node> {
 
         private List<Var> vars = null;
+        // The same as an array, if the variables are all different (see JellyBinding). Otherwise
+        // null, and the rows are built by Jena's builder, whose checks report the repeated name.
+        private Var[] distinctVars = null;
         private Boolean askResult = null;
         private String error = null;
         private final ArrayDeque<Binding> queue = new ArrayDeque<>();
@@ -250,6 +254,7 @@ public final class RowSetReaderJelly implements RowSetReader {
         @Override
         public void handleVariables(List<String> variables) {
             vars = variables.stream().map(Var::alloc).toList();
+            distinctVars = Set.copyOf(vars).size() == vars.size() ? vars.toArray(new Var[0]) : null;
         }
 
         @Override
@@ -277,15 +282,29 @@ public final class RowSetReaderJelly implements RowSetReader {
         public void handleRows(Object[][] columns, int rowCount, Node[] row) {
             // Straight from the columns, without copying each row into the buffer first
             final int width = columns.length;
+            final Var[] distinct = distinctVars;
             for (int r = 0; r < rowCount; r++) {
-                final BindingBuilder builder = BindingFactory.builder();
+                if (distinct == null) {
+                    final BindingBuilder builder = BindingFactory.builder();
+                    for (int v = 0; v < width; v++) {
+                        final Node node = (Node) columns[v][r];
+                        if (node != null) {
+                            builder.add(vars.get(v), node);
+                        }
+                    }
+                    queue.add(builder.build());
+                    continue;
+                }
+                final Node[] values = new Node[width];
+                int bound = 0;
                 for (int v = 0; v < width; v++) {
                     final Node node = (Node) columns[v][r];
                     if (node != null) {
-                        builder.add(vars.get(v), node);
+                        values[v] = node;
+                        bound++;
                     }
                 }
-                queue.add(builder.build());
+                queue.add(new JellyBinding(BindingFactory.noParent, distinct, values, bound));
             }
         }
     }
