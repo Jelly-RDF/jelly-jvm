@@ -25,6 +25,11 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         public int lastPrefixSerial;
         // Last IRI encoded with this name
         public Object lastIri;
+        // The IRI of this name with the prefix used before the last one, if it had a prefix:
+        // names used with two prefixes in turn are common. A prefix id of 0 means none.
+        public int otherPrefixId;
+        public int otherPrefixSerial;
+        public Object otherIri;
     }
 
     private static final class PrefixLookupEntry {
@@ -96,6 +101,8 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             entry.lastPrefixId = 0;
             // Set to null is required to avoid a false positive in the decode method for cases without a prefix.
             entry.lastIri = null;
+            entry.otherPrefixId = 0;
+            entry.otherIri = null;
         } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
             throw new RdfProtoDeserializationError(
                 "Name entry with ID %d is out of bounds of the name lookup table.".formatted(id)
@@ -200,6 +207,17 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                 );
             }
             if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
+                if (nameEntry.otherPrefixId == prefixId && nameEntry.otherPrefixSerial == prefixEntry.serial) {
+                    // The IRI with the prefix before the last one: swap the two
+                    final Object iri = nameEntry.otherIri;
+                    nameEntry.otherPrefixId = nameEntry.lastPrefixId;
+                    nameEntry.otherPrefixSerial = nameEntry.lastPrefixSerial;
+                    nameEntry.otherIri = nameEntry.lastIri;
+                    nameEntry.lastPrefixId = prefixId;
+                    nameEntry.lastPrefixSerial = prefixEntry.serial;
+                    nameEntry.lastIri = iri;
+                    return (TIri) iri;
+                }
                 final String iri;
                 try {
                     iri = prefixEntry.prefix.concat(nameEntry.name);
@@ -211,7 +229,10 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                         )
                     );
                 }
-                // Update the last prefix
+                // Keep the IRI with the previous prefix, then update the last prefix
+                nameEntry.otherPrefixId = nameEntry.lastPrefixId;
+                nameEntry.otherPrefixSerial = nameEntry.lastPrefixSerial;
+                nameEntry.otherIri = nameEntry.lastIri;
                 nameEntry.lastPrefixId = prefixId;
                 nameEntry.lastPrefixSerial = prefixEntry.serial;
                 nameEntry.lastIri = iriFactory.apply(iri);
@@ -229,6 +250,12 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                 throw new RdfProtoDeserializationError(
                     "Encountered an invalid IRI reference. No prefix, Name ID: %d".formatted(originalNameId)
                 );
+            }
+            if (nameEntry.lastPrefixId != 0) {
+                // Keep the IRI with the prefix
+                nameEntry.otherPrefixId = nameEntry.lastPrefixId;
+                nameEntry.otherPrefixSerial = nameEntry.lastPrefixSerial;
+                nameEntry.otherIri = nameEntry.lastIri;
             }
             nameEntry.lastPrefixId = 0;
             nameEntry.lastIri = iriFactory.apply(nameEntry.name);
