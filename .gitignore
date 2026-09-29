@@ -28,3 +28,8 @@ target
 
 # Node
 node_modules
+
+# Datasets downloaded for the benchmarks (sbt jmh/riverbenchFetch)
+/jmh/data/
+# Benchmark results and logs (see jmh/README.md)
+/jmh/results/

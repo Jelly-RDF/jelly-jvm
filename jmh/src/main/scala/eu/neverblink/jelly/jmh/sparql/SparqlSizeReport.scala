@@ -1,79 +1,91 @@
 package eu.neverblink.jelly.jmh.sparql
 
-import eu.neverblink.jelly.core.sparql.JellySparqlConstants
-import eu.neverblink.jelly.core.sparql.gen.SparqlDataGen
-import org.apache.jena.riot.Lang
-import org.apache.jena.riot.resultset.ResultSetLang
-import org.apache.jena.riot.rowset.RowSetWriterRegistry
-import org.apache.jena.sys.JenaSystem
+import com.github.luben.zstd.Zstd
+import org.openjdk.jmh.annotations.Param
 
 import java.io.ByteArrayOutputStream
 import java.nio.file.{Files, Path}
 import java.util.zip.GZIPOutputStream
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
-/** Prints the serialized size of every generated preset in Jelly-SPARQL and in the standard SPARQL
-  * result formats, uncompressed and gzipped.
+/** Prints the serialized size of datasets in the methods of [[SparqlMethods]]: uncompressed,
+  * gzipped and zstd-compressed, in total and per cell (rows × variables, the unit the benchmarks
+  * count in).
+  *
+  * By default it covers exactly the combinations that [[SparqlFormatBench]] measures by default –
+  * the defaults are read from the benchmark's own `@Param` lists, so the two cannot drift apart.
   *
   * Size is the headline number for a result set format, and it is not something JMH measures, hence
-  * a plain main. Endpoints serve compressed responses, so the gzipped columns are the ones to argue
-  * from.
+  * a plain main. Endpoints serve compressed responses, so the compressed columns are the ones to
+  * argue from. Both compressors run at their default level – 6 for gzip (Java's Deflater), 3 for
+  * zstd – which is what a server would use unless someone tuned it.
   *
   * With `--dump <dir>` the serialized files are also written out (uncompressed), so they can be
   * inspected with jelly-cli, diffed between revisions, or fed to another implementation.
   *
-  * Run with:
-  * {{{sbt "jmh/runMain eu.neverblink.jelly.jmh.sparql.SparqlSizeReport --dump /tmp/sparql"}}}
+  * Run with (`sparqlSizes` is an alias for this `runMain`):
+  * {{{sbt "sparqlSizes -r 10000 nanopubs wide-5"}}}
   */
 object SparqlSizeReport:
 
-  private val baselines: Seq[(String, Lang)] = Seq(
-    "srj" -> ResultSetLang.RS_JSON,
-    "srx" -> ResultSetLang.RS_XML,
-    "tsv" -> ResultSetLang.RS_TSV,
-  )
+  /** The default value of a parameter of [[SparqlFormatBench]]. */
+  private def benchmarkDefault(field: String): Seq[String] =
+    classOf[SparqlFormatBench.WriteInput]
+      .getDeclaredField(field)
+      .getAnnotation(classOf[Param])
+      .value()
+      .toSeq
 
-  private val jellyExtension = JellySparqlConstants.JELLY_SPARQL_FILE_EXTENSION
+  private val defaultDatasets = benchmarkDefault("dataset")
+  private val defaultMethods = benchmarkDefault("method")
+  private val defaultRows = benchmarkDefault("rows").head.toInt
 
   private val usage =
-    s"""Usage: SparqlSizeReport [options] [preset ...]
+    s"""Usage: SparqlSizeReport [options] [dataset ...]
        |
        |Options:
-       |  -f, --frame-size <n>  rows per Jelly frame (default: 256)
-       |  -d, --dump <dir>      also write the serialized, uncompressed files to <dir>, named
-       |                        <preset>.$jellyExtension / .${baselines.map(_._1).mkString(" / .")}
-       |  -h, --help            show this message
+       |  -r, --rows <n>          rows of each dataset to use (default: $defaultRows)
+       |  -m, --methods <a,b,..>  methods to report (default: the ones SparqlFormatBench measures)
+       |  -d, --dump <dir>        also write the serialized, uncompressed files to <dir>, named
+       |                          <dataset>.<method>
+       |  -h, --help              show this message
        |
-       |With no presets given, all of them are reported. Available presets:
-       |  ${SparqlDataGen.presetNames.mkString(", ")}
+       |With no datasets given, the ones SparqlFormatBench measures are reported:
+       |  ${defaultDatasets.mkString(", ")}
+       |
+       |Available datasets:
+       |  ${SparqlBenchData.datasetNames.mkString(", ")}
+       |
+       |Default methods:
+       |  ${defaultMethods.mkString(", ")}
+       |
+       |Available methods:
+       |  ${SparqlMethods.all.map(_.name).mkString(", ")}
        |""".stripMargin
 
   private final case class Config(
-      maxValuesPerFrame: Int = JellySparqlConstants.DEFAULT_MAX_VALUES_PER_FRAME,
+      rows: Int = defaultRows,
+      methods: Seq[String] = defaultMethods,
       dumpDir: Option[Path] = None,
-      presets: Seq[String] = Seq.empty,
+      datasets: Seq[String] = Seq.empty,
   )
-
-  /** One serialized form of a result set. `bytes` is empty if the writer could not handle the data
-    * (some of the standard formats are lossy or refuse certain terms).
-    */
-  private final case class Output(label: String, extension: String, bytes: Option[Array[Byte]])
 
   private def parseArgs(args: List[String], config: Config): Option[Config] = args match
     case Nil => Some(config)
-    case ("-f" | "--frame-size") :: value :: rest =>
+    case ("-r" | "--rows") :: value :: rest =>
       value.toIntOption match
-        case Some(values) if values > 0 =>
-          parseArgs(rest, config.copy(maxValuesPerFrame = values))
+        case Some(rows) if rows > 0 => parseArgs(rest, config.copy(rows = rows))
         case _ =>
-          Console.err.println(s"Frame size must be a positive integer, got: $value")
+          Console.err.println(s"Row count must be a positive integer, got: $value")
           None
+    case ("-m" | "--methods") :: value :: rest =>
+      parseArgs(rest, config.copy(methods = value.split(",").toSeq))
     case ("-d" | "--dump") :: value :: rest =>
       parseArgs(rest, config.copy(dumpDir = Some(Path.of(value))))
     case arg :: _ if arg.startsWith("-") =>
       Console.err.println(s"Unknown or incomplete option: $arg")
       None
-    case arg :: rest => parseArgs(rest, config.copy(presets = config.presets :+ arg))
+    case arg :: rest => parseArgs(rest, config.copy(datasets = config.datasets :+ arg))
 
   private def gzippedSize(bytes: Array[Byte]): Int =
     val out = ByteArrayOutputStream()
@@ -82,20 +94,8 @@ object SparqlSizeReport:
     gzip.close()
     out.size()
 
-  private def writeBaseline(data: SparqlBenchData.Data, lang: Lang): Array[Byte] =
-    val out = ByteArrayOutputStream()
-    RowSetWriterRegistry.getFactory(lang).create(lang).write(out, data.rowSet(), null)
-    out.toByteArray
-
-  private def serialize(data: SparqlBenchData.Data, maxValuesPerFrame: Int): Seq[Output] =
-    Output(
-      "jelly",
-      jellyExtension,
-      Some(SparqlBenchData.encodeToBytes(data, maxValuesPerFrame)),
-    ) +:
-      baselines.map { (label, lang) =>
-        Output(label, label, Try(writeBaseline(data, lang)).toOption)
-      }
+  private def zstdSize(bytes: Array[Byte]): Int =
+    Zstd.compress(bytes, Zstd.defaultCompressionLevel()).length
 
   private def format(bytes: Int): String = f"$bytes%,d"
 
@@ -105,51 +105,71 @@ object SparqlSizeReport:
       parseArgs(args.toList, Config()) match
         case None => Console.err.println(usage)
         case Some(config) =>
-          // Reject a mistyped preset before spending time generating anything
-          val unknown = config.presets.filterNot(SparqlDataGen.presetNames.contains)
-          if unknown.isEmpty then run(config)
-          else
-            Console.err.println(s"Unknown preset(s): ${unknown.mkString(", ")}")
+          // Reject a mistyped name before spending time loading anything
+          val unknownDatasets = config.datasets.filterNot(SparqlBenchData.datasetNames.contains)
+          val unknownMethods = config.methods.filterNot(SparqlMethods.all.map(_.name).contains)
+          if unknownDatasets.nonEmpty then
+            Console.err.println(s"Unknown dataset(s): ${unknownDatasets.mkString(", ")}")
             Console.err.println(usage)
+          else if unknownMethods.nonEmpty then
+            Console.err.println(s"Unknown method(s): ${unknownMethods.mkString(", ")}")
+            Console.err.println(usage)
+          else run(config)
 
   private def run(config: Config): Unit =
-    JenaSystem.init()
-    val names = if config.presets.nonEmpty then config.presets
-    else SparqlDataGen.presetNames :+ "weather"
+    val datasets =
+      if config.datasets.nonEmpty then config.datasets else defaultDatasets
+    val methods = config.methods.map(SparqlMethods(_))
 
     config.dumpDir.foreach { dir =>
       Files.createDirectories(dir)
       println(s"Writing serialized files to ${dir.toAbsolutePath}")
     }
 
-    val labels =
-      Output("jelly", jellyExtension, None) +: baselines.map((l, _) => Output(l, l, None))
-    val header = Seq("preset", "rows", "vars") ++
-      labels.flatMap(o => Seq(o.label, s"${o.label}.gz")) ++ Seq("B/row")
-    println(s"Jelly-SPARQL size report (frame size: ${config.maxValuesPerFrame} values)")
-    println(header.map(h => f"$h%18s").mkString)
-    println("-" * (header.size * 18))
+    val header = Seq(
+      "dataset",
+      "vars",
+      "method",
+      "bytes",
+      "gzip",
+      "zstd",
+      "B/cell",
+      "gzip B/cell",
+      "zstd B/cell",
+    )
+    val widths = Seq(28, 5, 20, 14, 12, 12, 8, 12, 12)
+    def printRow(cells: Seq[String]): Unit =
+      println(cells.zip(widths).map((c, w) => s"%${w}s".format(c)).mkString(" "))
 
-    var filesWritten = 0
-    for name <- names do
-      val data = if name == "weather" then SparqlBenchData.loadWeather(throughputRows)
-      else SparqlBenchData.load(name)
-      val outputs = serialize(data, config.maxValuesPerFrame)
+    println(
+      s"SPARQL result set size report (${format(config.rows)} rows per dataset, " +
+        s"gzip level 6, zstd level ${Zstd.defaultCompressionLevel()})",
+    )
+    printRow(header)
+    println("-" * (widths.sum + widths.size - 1))
 
-      config.dumpDir.foreach { dir =>
-        for output <- outputs; bytes <- output.bytes do
-          Files.write(dir.resolve(s"$name.${output.extension}"), bytes)
-          filesWritten += 1
-      }
-
-      val jellySize = outputs.head.bytes.fold(0)(_.length)
-      val cells = Seq(
-        name,
-        format(data.rows.size),
-        data.variables.size.toString,
-      ) ++ outputs.flatMap { output =>
-        output.bytes.fold(Seq("n/a", "n/a"))(b => Seq(format(b.length), format(gzippedSize(b))))
-      } ++ Seq(f"${jellySize.toDouble / math.max(1, data.rows.size)}%.1f")
-      println(cells.map(c => f"$c%18s").mkString)
-
-    if filesWritten > 0 then println(s"\nWrote $filesWritten files.")
+    for name <- datasets do
+      val data = SparqlBenchData.load(name, config.rows)
+      for method <- methods do
+        Try(method.writeToBytes(data)) match
+          case Success(bytes) =>
+            val gzipped = gzippedSize(bytes)
+            val zstd = zstdSize(bytes)
+            val cells = config.rows.toDouble * data.variables.size
+            printRow(
+              Seq(
+                name,
+                data.variables.size.toString,
+                method.name,
+                format(bytes.length),
+                format(gzipped),
+                format(zstd),
+                f"${bytes.length / cells}%.2f",
+                f"${gzipped / cells}%.3f",
+                f"${zstd / cells}%.3f",
+              ),
+            )
+            config.dumpDir.foreach(dir => Files.write(dir.resolve(s"$name.${method.name}"), bytes))
+          case Failure(e) =>
+            // Some formats cannot represent some terms
+            printRow(Seq(name, data.variables.size.toString, method.name, s"failed: $e"))

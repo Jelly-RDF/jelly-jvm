@@ -57,6 +57,12 @@ lazy val rdf4jSparqlDeps = Seq("org.eclipse.rdf4j" % "rdf4j-queryresultio-api" %
 lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
 
 addCommandAlias("fixAll", "scalafixAll; scalafmtAll")
+// See jmh/README.md for documentation of these commands.
+addCommandAlias("sparqlSizes", "jmh/runMain eu.neverblink.jelly.jmh.sparql.SparqlSizeReport")
+addCommandAlias(
+  "sparqlRoundTrip",
+  "jmh/runMain eu.neverblink.jelly.jmh.sparql.SparqlRoundTripCheck",
+)
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
@@ -210,6 +216,70 @@ def doDownloadJellyCli(targetDir: File): File = {
 
   targetFile.setExecutable(true)
   targetFile
+}
+
+/** RiverBench datasets used by the SPARQL benchmarks in the jmh module – every dataset in the
+  * latest (dev) RiverBench that has a 100K distribution. politiquices is too small.
+  */
+lazy val riverbenchVersion = "dev"
+lazy val riverbenchDatasets = Seq(
+  "assist-iot-weather",
+  "assist-iot-weather-graphs",
+  "citypulse-traffic",
+  "citypulse-traffic-graphs",
+  "dbpedia-live",
+  "digital-agenda-indicators",
+  "linked-spending",
+  "lod-katrina",
+  "muziekweb",
+  "nanopubs",
+  "officegraph",
+  "openaire-lod",
+  "osm2rdf-denmark",
+  "yago-annotated-facts",
+)
+
+lazy val riverbenchDir =
+  settingKey[File]("Where the RiverBench datasets for the benchmarks are cached")
+lazy val riverbenchFetch = taskKey[Seq[File]](
+  "Downloads the 100K Jelly distribution of every RiverBench dataset used by the benchmarks",
+)
+lazy val riverbenchProperties = taskKey[File](
+  "Writes the location of the RiverBench cache for the benchmarks to read at runtime",
+)
+
+/** Downloads the 100K Jelly distributions that are not cached yet. Files already in the cache are
+  * never re-downloaded – delete the cache directory to refresh it.
+  */
+def doFetchRiverBench(targetDir: File, log: sbt.util.Logger): Seq[File] = {
+  import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+  import java.nio.file.{Files, StandardCopyOption}
+
+  IO.createDirectory(targetDir)
+  val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
+  riverbenchDatasets.map { dataset =>
+    val targetFile = targetDir / s"$dataset.jelly.gz"
+    if (targetFile.exists() && targetFile.length() > 0) {
+      log.info(s"RiverBench $dataset: cached")
+    } else {
+      val url = s"https://w3id.org/riverbench/datasets/$dataset/$riverbenchVersion/files/" +
+        "jelly_100K.jelly.gz"
+      log.info(s"RiverBench $dataset: downloading $url")
+      // Download to a temporary file first, so an interrupted download does not look cached
+      val tmpFile = targetDir / s"$dataset.jelly.gz.part"
+      val response = client.send(
+        HttpRequest.newBuilder(java.net.URI.create(url)).build(),
+        HttpResponse.BodyHandlers.ofFile(tmpFile.toPath),
+      )
+      if (response.statusCode() != 200) {
+        IO.delete(tmpFile)
+        throw new RuntimeException(s"Failed to download $url: HTTP ${response.statusCode()}")
+      }
+      Files.move(tmpFile.toPath, targetFile.toPath, StandardCopyOption.ATOMIC_MOVE)
+      log.info(f"RiverBench $dataset: ${targetFile.length() / 1e6}%.1f MB")
+    }
+    targetFile
+  }
 }
 
 // sbt 2.x's `Test / definedTestDigests` hashes every entry on the test classpath. sbt-jacoco puts
@@ -583,17 +653,77 @@ lazy val jmh = (project in file("jmh"))
     libraryDependencies ++= Seq(
       "org.openjdk.jmh" % "jmh-core" % jmhV,
       "org.openjdk.jmh" % "jmh-generator-annprocess" % jmhV,
-    ) ++ jenaDeps,
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-binary" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqljson" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlxml" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-text" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlxlsx" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlods" % rdf4jV,
+      "com.github.luben" % "zstd-jni" % "1.5.7-20",
+      // The library modules only have Jena and RDF4J as provided dependencies
+    ) ++ jenaDeps ++ rdf4jDeps ++ rdf4jSparqlDeps,
+    excludeDependencies += ExclusionRule("org.apache.jena", "jena-fuseki-main"),
+    // The cache lives outside target/, so that `clean` does not throw away half a gigabyte of
+    // downloads
+    riverbenchDir := baseDirectory.value / "data" / "riverbench",
+    riverbenchFetch := Def.uncached { doFetchRiverBench(riverbenchDir.value, streams.value.log) },
+    riverbenchProperties := Def.uncached {
+      val file = (Compile / resourceManaged).value / "riverbench.properties"
+      IO.write(
+        file,
+        s"""dir=${riverbenchDir.value.getAbsolutePath}
+           |version=$riverbenchVersion
+           |datasets=${riverbenchDatasets.mkString(",")}
+           |""".stripMargin,
+      )
+      file
+    },
+    Compile / resourceGenerators += Def.task(Seq(riverbenchProperties.value)),
+    // sbt-jmh compiles the classes it generates into the same directory as Compile, and sbt 2
+    // caches that whole directory as the output of Compile / compile. Once a @State class is renamed
+    // or removed, every cache hit restores generated classes that refer to it, and the generator –
+    // which loads everything in that directory – fails on them. `clean` does not help, as the cache
+    // puts them right back. So the generated classes get a directory of their own, and the
+    // generator reads Compile's classes. This is the plugin's own task (sbt-jmh 0.4.8) with only
+    // the input directory changed – the plugin hardcodes it to Jmh / classDirectory.
+    Jmh / classDirectory := crossTarget.value / "jmh-classes",
+    Jmh / JmhPlugin.generateJmhSourcesAndResources := Def.uncached {
+      val _ = (Compile / compile).value
+      val log = streams.value.log
+      val bytecodeDir = (Compile / classDirectory).value
+      val sourceDir = (Jmh / sourceManaged).value
+      val resourceDir = (Jmh / resourceManaged).value
+      val converter = fileConverter.value
+      val classpath = (Jmh / dependencyClasspath).value.map(entry => converter.toPath(entry.data))
+      val generate = FileFunction.cached(crossTarget.value / "jmh-cache", FilesInfo.hash) { _ =>
+        IO.delete(sourceDir)
+        IO.createDirectory(sourceDir)
+        IO.delete(resourceDir)
+        IO.createDirectory(resourceDir)
+        new ForkRun(ForkOptions())
+          .run(
+            "org.openjdk.jmh.generators.bytecode.JmhBytecodeGenerator",
+            classpath,
+            Seq(bytecodeDir, sourceDir, resourceDir, (Jmh / generatorType).value).map(_.toString),
+            log,
+          )
+          .get
+        ((sourceDir ** "*").filter(_.isFile) +++ (resourceDir ** "*").filter(_.isFile)).get().toSet
+      }
+      generate((bytecodeDir ** "*").filter(_.isFile).get().toSet).toSeq
+        .partition(file => IO.relativizeFile(sourceDir, file).nonEmpty)
+    },
     commonSettings,
   )
   // The benchmarks are compiled in the Compile config, so the shared result set generator (which
-  // lives in the test sources of the two SPARQL modules) has to be pulled onto the compile
-  // classpath.
+  // lives in the test sources of the SPARQL modules) has to be pulled onto the compile classpath.
   .dependsOn(
     core,
     jena,
+    rdf4j,
     coreSparql % "compile->compile;compile->test",
     jenaSparql % "compile->compile;compile->test",
+    rdf4jSparql % "compile->compile;compile->test",
   )
 
 lazy val grpc = (project in file("pekko-grpc"))

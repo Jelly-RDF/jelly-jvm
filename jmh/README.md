@@ -31,3 +31,24 @@ To see allocation rates:
 ```bash
 sbt "jmh/Jmh/run -f1 -prof gc .*NodeCacheBench.*"
 ```
+
+## SPARQL result set benchmarks
+
+Datasets are synthetic presets (`SparqlDataGen`) or RiverBench datasets, which have to be downloaded once (~500 MB):
+
+```bash
+sbt jmh/riverbenchFetch
+```
+
+Compare Jena, RDF4J and Jelly-SPARQL result set formats (all params are free-form, see `SparqlMethods` for method names):
+
+```bash
+sbt "jmh/Jmh/run -p dataset=nanopubs,wide-5 -p rows=100000 -p method=jena-srj,rdf4j-jelly-big SparqlFormatBench"
+```
+
+Throughput is in cells (rows × variables) per second, in the `:cells` lines. Setup round-trips the data first and prints `ROUND-TRIP WARNING` if a format changes it.
+
+```bash
+sbt sparqlRoundTrip   # check every format against every dataset
+sbt sparqlSizes       # byte sizes (plain, gzip, zstd) of the benchmarked combinations
+```
