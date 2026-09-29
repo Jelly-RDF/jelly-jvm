@@ -44,6 +44,31 @@ public interface SparqlResultsHandler<TNode> {
     void handleRow(TNode[] row);
 
     /**
+     * Called with all rows of one frame, column by column: {@code columns[v][r]} is the value of
+     * variable {@code v} (in the order of {@link #handleVariables(List)}) in row {@code r}, or null
+     * if it is unbound. Only the first {@code rowCount} entries of each column are rows of this
+     * frame. The arrays are REUSED after the call returns.
+     * <p>
+     * The default implementation copies each row into {@code row} and calls {@link #handleRow}.
+     * A handler that builds its own objects for rows can override this to read the columns
+     * directly. That skips the copy, and with it a type check on every value stored into the
+     * typed row array.
+     *
+     * @param columns the decoded values, one array per variable. Every value is a TNode.
+     * @param rowCount the number of rows in the frame
+     * @param row the buffer from {@link #createRowBuffer(int)}
+     */
+    @SuppressWarnings("unchecked")
+    default void handleRows(Object[][] columns, int rowCount, TNode[] row) {
+        for (int r = 0; r < rowCount; r++) {
+            for (int v = 0; v < row.length; v++) {
+                row[v] = (TNode) columns[v][r];
+            }
+            handleRow(row);
+        }
+    }
+
+    /**
      * Called when the stream carries a boolean (ASK) result instead of a solution sequence.
      * In that case, neither {@link #handleVariables} nor {@link #handleRow} is ever called.
      * <p>

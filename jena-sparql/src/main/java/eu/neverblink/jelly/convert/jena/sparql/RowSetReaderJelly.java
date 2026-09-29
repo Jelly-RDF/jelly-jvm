@@ -272,5 +272,21 @@ public final class RowSetReaderJelly implements RowSetReader {
             }
             queue.add(builder.build());
         }
+
+        @Override
+        public void handleRows(Object[][] columns, int rowCount, Node[] row) {
+            // Straight from the columns, without copying each row into the buffer first
+            final int width = columns.length;
+            for (int r = 0; r < rowCount; r++) {
+                final BindingBuilder builder = BindingFactory.builder();
+                for (int v = 0; v < width; v++) {
+                    final Node node = (Node) columns[v][r];
+                    if (node != null) {
+                        builder.add(vars.get(v), node);
+                    }
+                }
+                queue.add(builder.build());
+            }
+        }
     }
 }

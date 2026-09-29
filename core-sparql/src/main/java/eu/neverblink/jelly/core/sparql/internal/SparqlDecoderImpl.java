@@ -236,15 +236,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             }
         }
 
-        // Emit the rows
-        final TNode[] row = rowBuffer;
-        for (int r = 0; r < rows; r++) {
-            for (int v = 0; v < row.length; v++) {
-                //noinspection unchecked
-                row[v] = (TNode) decodedColumns[v][r];
-            }
-            handler.handleRow(row);
-        }
+        handler.handleRows(decodedColumns, rows, rowBuffer);
         handleTrailer(frame);
     }
 

@@ -12,6 +12,7 @@ import eu.neverblink.jelly.core.utils.IoUtils;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -192,6 +193,28 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             if (handler != null) {
                 // The decoder reuses the array between rows, so the binding set gets its own copy
                 handler.handleSolution(new ListBindingSet(variables, row.clone()));
+            }
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void handleRows(Object[][] columns, int rowCount, Value[] row) {
+            if (handler == null) {
+                return;
+            }
+            // Each binding set gets an array of its own, filled straight from the columns. It is
+            // an Object[], not a Value[], so that storing a value does not have to check that it
+            // is a Value (an interface check, which is slow). Every value is one, and whoever
+            // reads it from the binding set checks that anyway.
+            final int width = columns.length;
+            for (int r = 0; r < rowCount; r++) {
+                final Object[] values = new Object[width];
+                for (int v = 0; v < width; v++) {
+                    values[v] = columns[v][r];
+                }
+                handler.handleSolution(
+                    new ListBindingSet(variables, (List<? extends Value>) (List<?>) Arrays.asList(values))
+                );
             }
         }
     }
