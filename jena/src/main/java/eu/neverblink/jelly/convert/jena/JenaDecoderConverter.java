@@ -9,6 +9,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.TextDirection;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.impl.LiteralLabelFactory;
+import org.apache.jena.langtagx.LangTagX;
 import org.apache.jena.sparql.core.Quad;
 
 public final class JenaDecoderConverter
@@ -20,9 +22,27 @@ public final class JenaDecoderConverter
         return NodeFactory.createLiteralString(lex);
     }
 
+    /** A language tag as the decoder passed it, and as Jena formats it. */
+    private record FormattedLangtag(String tag, String formatted) {}
+
+    // The last language tag formatted. Literals with the same tag tend to come one after another,
+    // and Jena parses and formats the tag again for every literal. A single immutable pair keeps
+    // this safe when the converter is shared between threads: a race only formats a tag twice.
+    private FormattedLangtag lastLangtag = new FormattedLangtag("", "");
+
     @Override
     public Node makeLangLiteral(String lex, String lang) {
-        return NodeFactory.createLiteralLang(lex, lang);
+        FormattedLangtag last = lastLangtag;
+        if (!last.tag.equals(lang)) {
+            // An empty tag, or one with a base direction ("en--ltr"), is not a plain language tag
+            if (lang.isEmpty() || lang.contains("--")) {
+                return NodeFactory.createLiteralLang(lex, lang);
+            }
+            last = new FormattedLangtag(lang, LangTagX.formatLanguageTag(lang));
+            lastLangtag = last;
+        }
+        // The same literal as NodeFactory.createLiteralLang(lex, lang) makes
+        return NodeFactory.createLiteral(LiteralLabelFactory.createLang(lex, last.formatted));
     }
 
     @Override
