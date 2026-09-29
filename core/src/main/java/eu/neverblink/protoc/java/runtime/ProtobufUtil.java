@@ -2,6 +2,7 @@ package eu.neverblink.protoc.java.runtime;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -93,6 +94,12 @@ public final class ProtobufUtil {
             values[size++] = input.readUInt32();
         }
         store.size = size;
+        if (input.getBytesUntilLimit() > 0) {
+            // isAtEnd() is also true where a stream ends: there, it ended within the field
+            throw new InvalidProtocolBufferException(
+                "While parsing a protocol message, the input ended unexpectedly in the middle of a field."
+            );
+        }
         input.popLimit(oldLimit);
     }
 

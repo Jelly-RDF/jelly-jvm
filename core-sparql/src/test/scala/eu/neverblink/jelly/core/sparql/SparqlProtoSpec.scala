@@ -229,8 +229,8 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       )
     }
 
-    "round-trip packed fields longer than the parser makes room for up front" in {
-      // The parser reserves room for up to 65536 values of a packed field, then grows the array
+    "round-trip long packed fields" in {
+      // The parser makes room for up to 65536 values of a packed field at once, then grows it
       val column = SparqlIriColumn.newInstance()
       for i <- 0 until 70000 do column.addNameIds(i * 37 % 100000).addPrefixIds(i % 3)
       val parsed = SparqlIriColumn.parseFrom(ByteArrayInputStream(column.toByteArray))
@@ -241,6 +241,30 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         SparqlIriColumn.parseFrom(ByteArrayInputStream(column.toByteArray ++ column.toByteArray))
       twice.getNameIds.size shouldBe 140000
       twice.getNameIds.get(70000 + 12345) shouldBe 12345 * 37 % 100000
+    }
+
+    "read packed varints as CodedInputStream reads them" in {
+      // Field 1 (name_ids) of SparqlIriColumn, packed: tag 0x0a, then the length and the values
+      def packed(values: Int*) = Array[Byte](0x0a, values.size.toByte) ++ values.map(_.toByte)
+      def nameIds(bytes: Array[Byte]) =
+        val ids = SparqlIriColumn.parseFrom(ByteArrayInputStream(bytes)).getNameIds
+        (0 until ids.size).map(ids.get)
+      nameIds(packed(0, 1, 0x7f)) shouldBe Seq(0, 1, 127)
+      nameIds(packed(0x80, 0x01, 0xff, 0x7f)) shouldBe Seq(128, 16383)
+      // 2^32 - 1 in 5 bytes, and -1 as an int64 writer would write it, in 10: the bits past 32
+      // are dropped
+      nameIds(packed(0xff, 0xff, 0xff, 0xff, 0x0f)) shouldBe Seq(-1)
+      nameIds(packed(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, 5)) shouldBe Seq(
+        -1,
+        5,
+      )
+      // A varint cut off by the end of the field, and one of 11 bytes
+      an[InvalidProtocolBufferException] should be thrownBy nameIds(packed(1, 0x80))
+      an[InvalidProtocolBufferException] should be thrownBy nameIds(
+        packed(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01),
+      )
+      // A field longer than the message
+      an[InvalidProtocolBufferException] should be thrownBy nameIds(Array[Byte](0x0a, 5, 1, 2))
     }
 
     "round-trip a trailer" in {
