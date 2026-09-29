@@ -19,7 +19,19 @@ class JenaDecoderConverterSpec extends AnyWordSpec, Matchers, JenaTest:
       val converter = JenaDecoderConverter()
       // Repeated and alternating tags, tags that Jena reformats, and the special cases
       val tags =
-        Seq("en", "en", "EN-us", "en", "en-US", "EN-us", "de-latn-de", "", "en--ltr", "en--rtl", "en")
+        Seq(
+          "en",
+          "en",
+          "EN-us",
+          "en",
+          "en-US",
+          "EN-us",
+          "de-latn-de",
+          "",
+          "en--ltr",
+          "en--rtl",
+          "en",
+        )
       for tag <- tags ++ tags.reverse do
         val expected = NodeFactory.createLiteralLang("text", tag)
         val actual = converter.makeLangLiteral("text", tag)

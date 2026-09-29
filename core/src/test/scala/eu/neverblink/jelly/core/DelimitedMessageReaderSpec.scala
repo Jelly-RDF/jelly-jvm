@@ -13,7 +13,9 @@ class DelimitedMessageReaderSpec extends AnyWordSpec, Matchers:
   private def frame(rows: Int): RdfStreamFrame =
     val f = RdfStreamFrame.newInstance()
     for i <- 0 until rows do
-      f.addRows(RdfStreamRow.newInstance().setName(RdfNameEntry.newInstance().setId(i).setValue(s"name$i")))
+      f.addRows(
+        RdfStreamRow.newInstance().setName(RdfNameEntry.newInstance().setId(i).setValue(s"name$i")),
+      )
     f
 
   private def reader(bytes: Array[Byte]): DelimitedMessageReader[RdfStreamFrame] =
