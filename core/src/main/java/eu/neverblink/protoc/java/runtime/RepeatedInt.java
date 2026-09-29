@@ -60,7 +60,13 @@ public final class RepeatedInt {
         return values;
     }
 
-    private void reserve(int count) {
+    /**
+     * Makes room for {@code count} more values, so that adding them does not grow the backing
+     * array again.
+     *
+     * @param count the number of values that will be added
+     */
+    public void reserve(int count) {
         final int needed = size + count;
         if (needed > values.length) {
             values = Arrays.copyOf(values, Math.max(Math.max(DEFAULT_CAPACITY, needed), values.length * 2));

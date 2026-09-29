@@ -7,6 +7,9 @@ import java.io.OutputStream;
 
 public final class ProtobufUtil {
 
+    // The most values of a packed field that readPackedUInt32 makes room for up front
+    private static final int MAX_PACKED_RESERVE = 1 << 16;
+
     /**
      * Maximum size of the output buffer used when writing messages to an OutputStream.
      * Set to 2x the default buffer size of CodedOutputStream to avoid allocating additional buffers
@@ -74,6 +77,10 @@ public final class ProtobufUtil {
     public static void readPackedUInt32(CodedInputStream input, RepeatedInt store) throws IOException {
         final int length = input.readRawVarint32();
         final int oldLimit = input.pushLimit(length);
+        // Every value takes at least one byte, so this is room for all of them, instead of growing
+        // the array many times. Capped: a stream decoder does not know yet if the input really
+        // has that many bytes.
+        store.reserve(Math.min(length, MAX_PACKED_RESERVE));
         while (input.getBytesUntilLimit() > 0) {
             store.add(input.readUInt32());
         }
