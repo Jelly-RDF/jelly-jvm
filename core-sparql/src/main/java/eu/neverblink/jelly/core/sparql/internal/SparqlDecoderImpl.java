@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.sparql.internal;
 
+import com.google.protobuf.ByteString;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
@@ -223,7 +224,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                     decodeColumn(literalReader(column), column.getLayouts(), rows, out);
                 } else {
                     final SparqlPolyColumn column = get(polyColumns, c - literalEnd);
-                    decodeColumn(new PolyReader(column.getValues().iterator()), column.getLayouts(), rows, out);
+                    decodeColumn(new PolyReader(column), column.getLayouts(), rows, out);
                 }
             } catch (RdfProtoDeserializationError e) {
                 throw e;
@@ -455,49 +456,188 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     }
 
     /**
-     * Picks the reader for a literal column: the lexical forms replace the RdfLiteral values
-     * if present (see the sparql.proto comments).
+     * Picks the reader for a literal column: one kind for the whole column, or one per value
+     * (see the sparql.proto comments).
      */
     private ValueReader<TNode> literalReader(SparqlLiteralColumn column) {
-        final String langtag = column.getLangtag();
-        final int direction = column.getDirectionValue();
-        if (column.getLexValues().isEmpty()) {
-            if (column.getDatatype() != 0) {
-                throw new RdfProtoDeserializationError(
-                    "Corrupt literal column: a datatype is stated for a column with no lexical forms."
-                );
-            }
-            if (!langtag.isEmpty()) {
-                throw new RdfProtoDeserializationError(
-                    "Corrupt literal column: a language tag is stated for a column with no lexical forms."
-                );
-            }
-            if (direction != 0) {
-                throw new RdfProtoDeserializationError(
-                    "Corrupt literal column: a base direction is stated for a column with no lexical forms."
-                );
-            }
-            return new LiteralReader(column.getValues().iterator());
-        }
-        if (!column.getValues().isEmpty()) {
+        final RepeatedString lexValues = column.getLexValues();
+        final RepeatedInt kinds = column.getLiteralKinds();
+        final int kindCount = kinds.size();
+        if (kindCount > 1 && kindCount != lexValues.size()) {
             throw new RdfProtoDeserializationError(
-                "Corrupt literal column: the column has both lexical forms and full literal values."
+                "Corrupt literal column: %d literal kinds for %d lexical forms, expected 0, 1 or %d.".formatted(
+                    kindCount,
+                    lexValues.size(),
+                    lexValues.size()
+                )
             );
         }
-        if (langtag.isEmpty()) {
-            if (direction != 0) {
-                throw new RdfProtoDeserializationError(
-                    "Corrupt literal column: a base direction is stated without a language tag."
-                );
-            }
-            return new LexLiteralReader(column);
-        }
-        if (column.getDatatype() != 0) {
+        final RepeatedString langtags = column.getLangtags();
+        final RepeatedInt directions = column.getLangtagDirections();
+        if (!directions.isEmpty() && directions.size() != langtags.size()) {
             throw new RdfProtoDeserializationError(
-                "Corrupt literal column: the column states both a datatype and a language tag."
+                "Corrupt literal column: %d base directions for %d language tags.".formatted(
+                    directions.size(),
+                    langtags.size()
+                )
             );
         }
-        return new LangLiteralReader(column.getLexValues(), langtag, direction == 0 ? null : baseDirection(direction));
+        if (lexValues.isEmpty()) {
+            // Nothing to resolve: kinds and language tags only matter for the values that use them
+            return new UniformLiteralReader(lexValues, null, 0);
+        }
+        final LiteralKinds resolved = new LiteralKinds(langtags, directions);
+        if (kindCount == 0) {
+            return new UniformLiteralReader(lexValues, resolved, 0);
+        } else if (kindCount == 1) {
+            return new UniformLiteralReader(lexValues, resolved, kinds.get(0));
+        }
+        return new MixedLiteralReader(lexValues, kinds, resolved);
+    }
+
+    /**
+     * Resolves the literal kinds of one literal column: the datatypes from the lookup, and the
+     * column's language tags with their base directions. A base direction is only checked once a
+     * value uses its tag.
+     */
+    private final class LiteralKinds {
+
+        private final RepeatedString langtags;
+        // As read from the stream, parallel to langtags, or empty for no directions at all
+        private final RepeatedInt directionValues;
+        // Resolved on first use, null where the tag has no base direction
+        private final RdfBaseDirection[] directions;
+        private final boolean[] resolved;
+
+        LiteralKinds(RepeatedString langtags, RepeatedInt directionValues) {
+            this.langtags = langtags;
+            this.directionValues = directionValues;
+            this.directions = new RdfBaseDirection[langtags.size()];
+            this.resolved = new boolean[langtags.size()];
+        }
+
+        /** The base direction of a language tag, or null for none. */
+        RdfBaseDirection direction(int index) {
+            if (!resolved[index]) {
+                final int value = directionValues.isEmpty() ? 0 : directionValues.get(index);
+                directions[index] = value == 0 ? null : baseDirection(value);
+                resolved[index] = true;
+            }
+            return directions[index];
+        }
+
+        /** The datatype of a datatype kind (an odd kind). */
+        TDatatype datatype(int kind) {
+            return getDatatypeLookup().get((kind >>> 1) + 1);
+        }
+
+        /** The index in langtags of a language kind (an even kind above 0). */
+        int langtagIndex(int kind) {
+            final int index = (kind >>> 1) - 1;
+            if (index >= langtags.size()) {
+                throw new RdfProtoDeserializationError(
+                    "Corrupt literal column: language tag %d referenced, but the column has %d.".formatted(
+                        index,
+                        langtags.size()
+                    )
+                );
+            }
+            return index;
+        }
+
+        TNode make(String lex, int kind) {
+            if (kind == 0) {
+                return converter.makeSimpleLiteral(lex);
+            }
+            if ((kind & 1) != 0) {
+                return converter.makeDtLiteral(lex, datatype(kind));
+            }
+            final int index = langtagIndex(kind);
+            final RdfBaseDirection direction = direction(index);
+            return direction == null
+                ? converter.makeLangLiteral(lex, langtags.get(index))
+                : converter.makeDirLangLiteral(lex, langtags.get(index), direction);
+        }
+    }
+
+    /**
+     * Reader for a literal column in which every value has the same kind: the datatype or the
+     * language tag is resolved once for the whole column.
+     */
+    private final class UniformLiteralReader extends ValueReader<TNode> {
+
+        private final RepeatedString values;
+        private final int kind;
+        // Resolved once: the datatype of a datatype kind, or null
+        private final TDatatype datatype;
+        // Resolved once: the language tag and base direction of a language kind, or null
+        private final String langtag;
+        private final RdfBaseDirection direction;
+        private int index = 0;
+
+        UniformLiteralReader(RepeatedString values, LiteralKinds kinds, int kind) {
+            this.values = values;
+            this.kind = kind;
+            if (kind != 0 && (kind & 1) != 0) {
+                this.datatype = kinds.datatype(kind);
+                this.langtag = null;
+                this.direction = null;
+            } else if (kind != 0) {
+                final int tag = kinds.langtagIndex(kind);
+                this.datatype = null;
+                this.langtag = kinds.langtags.get(tag);
+                this.direction = kinds.direction(tag);
+            } else {
+                this.datatype = null;
+                this.langtag = null;
+                this.direction = null;
+            }
+        }
+
+        @Override
+        boolean hasNext() {
+            return index < values.size();
+        }
+
+        @Override
+        TNode decodeNext() {
+            final String lex = values.get(index++);
+            if (kind == 0) {
+                return converter.makeSimpleLiteral(lex);
+            }
+            if (datatype != null) {
+                return converter.makeDtLiteral(lex, datatype);
+            }
+            return direction == null
+                ? converter.makeLangLiteral(lex, langtag)
+                : converter.makeDirLangLiteral(lex, langtag, direction);
+        }
+    }
+
+    /** Reader for a literal column with one literal kind per value. */
+    private final class MixedLiteralReader extends ValueReader<TNode> {
+
+        private final RepeatedString values;
+        private final RepeatedInt kinds;
+        private final LiteralKinds resolved;
+        private int index = 0;
+
+        MixedLiteralReader(RepeatedString values, RepeatedInt kinds, LiteralKinds resolved) {
+            this.values = values;
+            this.kinds = kinds;
+            this.resolved = resolved;
+        }
+
+        @Override
+        boolean hasNext() {
+            return index < values.size();
+        }
+
+        @Override
+        TNode decodeNext() {
+            final int i = index++;
+            return resolved.make(values.get(i), kinds.get(i));
+        }
     }
 
     /**
@@ -532,10 +672,10 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         return new RdfProtoDeserializationError("A literal has a base direction, but no language tag.");
     }
 
-    /** Checks a base direction read from the stream (LTR or RTL, never NONE). */
+    /** Checks a base direction read from the stream (LTR or RTL, never UNSPECIFIED). */
     private RdfBaseDirection baseDirection(int value) {
         final RdfBaseDirection direction = RdfBaseDirection.forNumber(value);
-        if (direction == null || direction == RdfBaseDirection.NONE) {
+        if (direction == null || direction == RdfBaseDirection.UNSPECIFIED) {
             throw new RdfProtoDeserializationError("Unknown base direction: %d".formatted(value));
         }
         if (allowedRdfVersion() == RdfVersion.RDF_VERSION_1_1_VALUE) {
@@ -563,120 +703,100 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         );
     }
 
-    private final class LiteralReader extends ValueReader<TNode> {
-
-        private final Iterator<RdfLiteral2> values;
-
-        LiteralReader(Iterator<RdfLiteral2> values) {
-            this.values = values;
-        }
-
-        @Override
-        boolean hasNext() {
-            return values.hasNext();
-        }
-
-        @Override
-        TNode decodeNext() {
-            return convertLiteral(values.next());
-        }
-    }
-
     /**
-     * Reader for a datatype-monomorphic literal column: the values are plain lexical forms and
-     * the datatype (if any) is resolved once for the whole column.
+     * Reader for a polymorphic column: the kinds field says which typed sub-column holds the next
+     * value (see the sparql.proto comments).
      */
-    private final class LexLiteralReader extends ValueReader<TNode> {
-
-        private final RepeatedString values;
-        // Null for a column of simple literals
-        private final TDatatype datatype;
-        private int index = 0;
-
-        LexLiteralReader(SparqlLiteralColumn column) {
-            this.values = column.getLexValues();
-            final int datatypeId = column.getDatatype();
-            this.datatype = datatypeId == 0 ? null : getDatatypeLookup().get(datatypeId);
-        }
-
-        @Override
-        boolean hasNext() {
-            return index < values.size();
-        }
-
-        @Override
-        TNode decodeNext() {
-            final String lex = values.get(index++);
-            return datatype == null ? converter.makeSimpleLiteral(lex) : converter.makeDtLiteral(lex, datatype);
-        }
-    }
-
-    /**
-     * Reader for a literal column in which every value has the same language tag: the values are
-     * plain lexical forms and the tag is stated once for the whole column.
-     */
-    private final class LangLiteralReader extends ValueReader<TNode> {
-
-        private final RepeatedString values;
-        private final String langtag;
-        // Null for no base direction
-        private final RdfBaseDirection direction;
-        private int index = 0;
-
-        LangLiteralReader(RepeatedString values, String langtag, RdfBaseDirection direction) {
-            this.values = values;
-            this.langtag = langtag;
-            this.direction = direction;
-        }
-
-        @Override
-        boolean hasNext() {
-            return index < values.size();
-        }
-
-        @Override
-        TNode decodeNext() {
-            final String lex = values.get(index++);
-            return direction == null
-                ? converter.makeLangLiteral(lex, langtag)
-                : converter.makeDirLangLiteral(lex, langtag, direction);
-        }
-    }
-
     private final class PolyReader extends ValueReader<TNode> {
 
-        private final Iterator<SparqlTerm> values;
-        private final IriState iriState = new IriState();
+        private static final int IRI = 0;
+        private static final int LITERAL = 1;
+        private static final int BNODE = 2;
+        private static final int TRIPLE = 3;
 
-        PolyReader(Iterator<SparqlTerm> values) {
-            this.values = values;
+        private final ByteString kinds;
+        private final int valueCount;
+        private final ValueReader<TNode> iris;
+        private final ValueReader<TNode> literals;
+        private final ValueReader<TNode> bnodes;
+        private final Iterator<RdfTripleTerm> tripleTerms;
+        // The IRIs of the triple terms have an inference state of their own
+        private final IriState tripleIriState = new IriState();
+        private int index = 0;
+
+        PolyReader(SparqlPolyColumn column) {
+            final SparqlIriColumn iriColumn = column.getIris();
+            final SparqlLiteralColumn literalColumn = column.getLiterals();
+            final SparqlBnodeColumn bnodeColumn = column.getBnodes();
+            final int iriCount = iriColumn == null ? 0 : iriColumn.getNameIds().size();
+            final int literalCount = literalColumn == null ? 0 : literalColumn.getLexValues().size();
+            final int bnodeCount = bnodeColumn == null ? 0 : bnodeColumn.getValues().size();
+            final int tripleCount = column.getTripleTerms().size();
+            // The layouts of the sub-columns are ignored
+            this.valueCount = iriCount + literalCount + bnodeCount + tripleCount;
+            this.kinds = column.getKinds();
+            if (kinds.size() != (valueCount + 3) >>> 2) {
+                throw new RdfProtoDeserializationError(
+                    "Corrupt polymorphic column: %d bytes of kinds for %d values.".formatted(kinds.size(), valueCount)
+                );
+            }
+            // Check that the kinds agree with the sub-columns, so that decoding cannot run out of
+            // values in one of them
+            final int[] counts = new int[4];
+            for (int i = 0; i < valueCount; i++) {
+                counts[kindAt(i)]++;
+            }
+            if (
+                counts[IRI] != iriCount ||
+                counts[LITERAL] != literalCount ||
+                counts[BNODE] != bnodeCount ||
+                counts[TRIPLE] != tripleCount
+            ) {
+                throw new RdfProtoDeserializationError(
+                    "Corrupt polymorphic column: the kinds do not match the number of values in the sub-columns."
+                );
+            }
+            final int unusedBits = (valueCount & 3) == 0 ? 0 : 8 - ((valueCount & 3) << 1);
+            if (unusedBits != 0 && (kinds.byteAt(kinds.size() - 1) & 0xff) >>> (8 - unusedBits) != 0) {
+                throw new RdfProtoDeserializationError(
+                    "Corrupt polymorphic column: unused bits of the kinds are not 0."
+                );
+            }
+            this.iris = iriColumn == null ? null : new IriReader(iriColumn);
+            this.literals = literalColumn == null ? null : literalReader(literalColumn);
+            this.bnodes = bnodeColumn == null ? null : new BnodeReader(bnodeColumn.getValues().iterator());
+            this.tripleTerms = column.getTripleTerms().iterator();
+        }
+
+        private int kindAt(int i) {
+            return (kinds.byteAt(i >>> 2) >>> ((i & 3) << 1)) & 3;
         }
 
         @Override
         boolean hasNext() {
-            return values.hasNext();
+            return index < valueCount;
         }
 
         @Override
         TNode decodeNext() {
-            final SparqlTerm term = values.next();
-            return switch (term.getTermFieldNumber()) {
-                case SparqlTerm.IRI -> iriState.decode(term.getIri().getPrefixId(), term.getIri().getNameId());
-                case SparqlTerm.BNODE -> converter.makeBlankNode(term.getBnode());
-                case SparqlTerm.LITERAL -> convertLiteral(term.getLiteral());
-                case SparqlTerm.TRIPLE_TERM -> {
+            // The counts were checked up front, so the sub-column always has the value
+            return switch (kindAt(index++)) {
+                case IRI -> iris.decodeNext();
+                case LITERAL -> literals.decodeNext();
+                case BNODE -> bnodes.decodeNext();
+                default -> {
                     if (allowedRdfVersion() < RdfVersion.RDF_VERSION_1_2_VALUE) {
                         throw notAllowed("triple terms");
                     }
-                    yield decodeTripleTerm(term.getTripleTerm());
+                    yield decodeTripleTerm(tripleTerms.next());
                 }
-                default -> throw new RdfProtoDeserializationError("A term in a polymorphic column has no value set.");
             };
         }
 
         /**
-         * Decodes a triple term. Its IRIs take part in the IRI inference of the column, in the
-         * order subject, predicate, object. The nesting depth is already limited by the parser.
+         * Decodes a triple term. Its IRIs take part in the IRI inference of the column's triple
+         * terms, in the order subject, predicate, object. The nesting depth is already limited by
+         * the parser.
          */
         private TNode decodeTripleTerm(RdfTripleTerm triple) {
             final TNode s = switch (triple.getSubjectFieldNumber()) {
@@ -699,7 +819,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
 
         private TNode decodeIri(RdfIri iri) {
-            return iriState.decode(iri.getPrefixId(), iri.getNameId());
+            return tripleIriState.decode(iri.getPrefixId(), iri.getNameId());
         }
     }
 

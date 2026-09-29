@@ -22,7 +22,7 @@ public interface ProtoDecoderConverter<TNode, TDatatype> {
      *
      * @param lex the lexical form
      * @param lang the language tag
-     * @param direction the base direction – LTR or RTL, never NONE
+     * @param direction the base direction – LTR or RTL, never UNSPECIFIED
      * @return the literal
      */
     default TNode makeDirLangLiteral(String lex, String lang, RdfBaseDirection direction) {

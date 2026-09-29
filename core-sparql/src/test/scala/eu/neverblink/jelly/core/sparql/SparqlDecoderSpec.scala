@@ -2,9 +2,14 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
-import eu.neverblink.jelly.core.proto.v1.{RdfLiteral2, RdfLookupEntryPacked}
+import eu.neverblink.jelly.core.proto.v1.{RdfBaseDirection, RdfLookupEntryPacked}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
-import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
+import eu.neverblink.jelly.core.sparql.helpers.{
+  MockSparqlConverterFactory,
+  ResultsCollector,
+  SparqlColumns,
+}
+import eu.neverblink.jelly.core.sparql.helpers.SparqlColumns.{PolyValue, datatypeKind, langKind}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -520,8 +525,8 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
             .addValues("https://test.org/int")
             .addValues("https://test.org/double"),
         )
-        .addLiteralColumns(SparqlLiteralColumn.newInstance().addLexValues("1").setDatatype(1))
-        .addLiteralColumns(SparqlLiteralColumn.newInstance().addLexValues("2.5").setDatatype(2))
+        .addLiteralColumns(SparqlColumns.uniformLiteralColumn(Seq("1"), datatypeKind(1)))
+        .addLiteralColumns(SparqlColumns.uniformLiteralColumn(Seq("2.5"), datatypeKind(2)))
       val collector = ResultsCollector()
       newDecoder(collector).ingestFrame(frame)
       collector.rows.head shouldBe Seq(
@@ -620,11 +625,7 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
     }
 
     "apply a single datatype to a whole literal column" in {
-      val column = SparqlLiteralColumn
-        .newInstance()
-        .addLexValues("1")
-        .addLexValues("2")
-        .setDatatype(1)
+      val column = SparqlColumns.uniformLiteralColumn(Seq("1", "2"), datatypeKind(1))
       val collector = ResultsCollector()
       val frame = frameWithOneVariable(2)
         .addDatatypes(
@@ -638,29 +639,52 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       )
     }
 
-    "reject a literal column holding both lexical forms and full literal values" in {
-      val column = SparqlLiteralColumn
-        .newInstance()
-        .addLexValues("a")
-        .addValues(RdfLiteral2.newInstance().setLex("b"))
-      val frame = frameWithOneVariable(2).addLiteralColumns(column)
-      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
-      e.getMessage should include("both lexical forms and full literal values")
+    "apply one literal kind per value" in {
+      val column = SparqlColumns.literalColumn(
+        Seq(
+          "plain" -> 0,
+          "1" -> datatypeKind(1),
+          "hello" -> langKind(0),
+          "salut" -> langKind(1),
+          "hi" -> langKind(0),
+        ),
+        Seq("en" -> RdfBaseDirection.UNSPECIFIED, "fr" -> RdfBaseDirection.RTL),
+      )
+      val collector = ResultsCollector()
+      val frame = frameWithOneVariable(5)
+        .addDatatypes(
+          RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/int"),
+        )
+        .addLiteralColumns(column)
+      newDecoder(collector).ingestFrame(frame)
+      collector.rows.map(_.head) shouldBe Seq(
+        SimpleLiteral("plain"),
+        DtLiteral("1", Datatype("https://test.org/int")),
+        LangLiteral("hello", "en"),
+        DirLangLiteral("salut", "fr", RdfBaseDirection.RTL),
+        LangLiteral("hi", "en"),
+      )
     }
 
-    "reject a literal column stating a datatype but holding no lexical forms" in {
-      val column = SparqlLiteralColumn.newInstance().setDatatype(1)
-      val frame = frameWithOneVariable(0).addLiteralColumns(column)
-      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
-      e.getMessage should include("datatype is stated for a column with no lexical forms")
+    "tell apart the same language tag with different base directions" in {
+      val column = SparqlColumns.literalColumn(
+        Seq("a" -> langKind(0), "b" -> langKind(1)),
+        Seq("ar" -> RdfBaseDirection.UNSPECIFIED, "ar" -> RdfBaseDirection.RTL),
+      )
+      val collector = ResultsCollector()
+      newDecoder(collector).ingestFrame(frameWithOneVariable(2).addLiteralColumns(column))
+      collector.rows.map(_.head) shouldBe Seq(
+        LangLiteral("a", "ar"),
+        DirLangLiteral("b", "ar", RdfBaseDirection.RTL),
+      )
     }
 
     "apply a single language tag to a whole literal column" in {
-      val column = SparqlLiteralColumn
-        .newInstance()
-        .addLexValues("hello")
-        .addLexValues("world")
-        .setLangtag("en-GB")
+      val column = SparqlColumns.uniformLiteralColumn(
+        Seq("hello", "world"),
+        langKind(0),
+        Seq("en-GB" -> RdfBaseDirection.UNSPECIFIED),
+      )
       val collector = ResultsCollector()
       newDecoder(collector).ingestFrame(frameWithOneVariable(2).addLiteralColumns(column))
       collector.rows.map(_.head) shouldBe Seq(
@@ -669,41 +693,43 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       )
     }
 
-    "reject a literal column stating a language tag but holding no lexical forms" in {
-      val column = SparqlLiteralColumn.newInstance().setLangtag("en")
-      val frame = frameWithOneVariable(0).addLiteralColumns(column)
-      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
-      e.getMessage should include("language tag is stated for a column with no lexical forms")
+    "decode a polymorphic column in the order its kinds give" in {
+      val column = SparqlColumns.polyColumn(
+        Seq(
+          PolyValue.Literal("one"),
+          PolyValue.Iri(0, 1),
+          PolyValue.Bnode("b1"),
+          PolyValue.Literal("two"),
+          PolyValue.Iri(0, 1),
+        ),
+      )
+      val collector = ResultsCollector()
+      newDecoder(collector).ingestFrame(frameWithOneVariable(5).addPolyColumns(column))
+      collector.rows.map(_.head) shouldBe Seq(
+        SimpleLiteral("one"),
+        Iri("https://test.org/x"),
+        BlankNode("b1"),
+        SimpleLiteral("two"),
+        Iri("https://test.org/x"),
+      )
     }
 
-    "reject a literal column stating a language tag with full literal values" in {
-      val column = SparqlLiteralColumn
-        .newInstance()
-        .addValues(RdfLiteral2.newInstance().setLex("a"))
-        .setLangtag("en")
-      val frame = frameWithOneVariable(1).addLiteralColumns(column)
-      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
-      e.getMessage should include("language tag is stated for a column with no lexical forms")
-    }
-
-    "reject a literal column stating both a datatype and a language tag" in {
-      val column = SparqlLiteralColumn
-        .newInstance()
-        .addLexValues("a")
-        .setDatatype(1)
-        .setLangtag("en")
-      val frame = frameWithOneVariable(1)
-        .addDatatypes(RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/dt"))
-        .addLiteralColumns(column)
-      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
-      e.getMessage should include("both a datatype and a language tag")
-    }
-
-    "reject a polymorphic term with no value set" in {
-      val column = SparqlPolyColumn.newInstance().addValues(SparqlTerm.newInstance())
-      val frame = frameWithOneVariable(1).addPolyColumns(column)
-      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
-      e.getMessage should include("no value set")
+    "keep the IRI inference of a polymorphic column to its IRIs" in {
+      // Name id 0 means "previous + 1": the literal between the two IRIs does not count
+      val frame = frameWithOneVariable(3)
+        .addNames(RdfLookupEntryPacked.newInstance().setId(2).addValues("https://test.org/y"))
+        .addPolyColumns(
+          SparqlColumns.polyColumn(
+            Seq(PolyValue.Iri(0, 1), PolyValue.Literal("x"), PolyValue.Iri(0, 0)),
+          ),
+        )
+      val collector = ResultsCollector()
+      newDecoder(collector).ingestFrame(frame)
+      collector.rows.map(_.head) shouldBe Seq(
+        Iri("https://test.org/x"),
+        SimpleLiteral("x"),
+        Iri("https://test.org/y"),
+      )
     }
   }
 

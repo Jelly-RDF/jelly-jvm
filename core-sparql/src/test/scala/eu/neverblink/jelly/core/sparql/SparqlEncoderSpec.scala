@@ -3,7 +3,12 @@ package eu.neverblink.jelly.core.sparql
 import eu.neverblink.jelly.core.RdfProtoSerializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.proto.v1.sparql.{SparqlResultsFrame, SparqlResultsOptions}
-import eu.neverblink.jelly.core.sparql.helpers.{CustomEncoderConverter, MockSparqlConverterFactory}
+import eu.neverblink.jelly.core.sparql.helpers.{
+  CustomEncoderConverter,
+  MockSparqlConverterFactory,
+  SparqlColumns,
+}
+import eu.neverblink.jelly.core.sparql.helpers.SparqlColumns.langKind
 import eu.neverblink.jelly.core.sparql.internal.SparqlEncoderImpl
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -253,10 +258,8 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
           frame.getRowCount shouldBe 1
           val valueCount = frame.getIriColumns.asScala.map(_.getNameIds.size).sum +
             frame.getBnodeColumns.asScala.map(_.getValues.size).sum +
-            frame.getLiteralColumns.asScala
-              .map(c => math.max(c.getValues.size, c.getLexValues.size))
-              .sum +
-            frame.getPolyColumns.asScala.map(_.getValues.size).sum
+            frame.getLiteralColumns.asScala.map(_.getLexValues.size).sum +
+            frame.getPolyColumns.asScala.map(SparqlColumns.valueCount).sum
           valueCount shouldBe 1
         }
     }
@@ -285,37 +288,33 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       for row <- rows do e.appendRow(Array(row))
       val frame = e.endFrame()
 
-      val terms = frame.getPolyColumns.asScala.head.getValues.asScala.toSeq
-      terms.size shouldBe rows.size
-      terms.head.hasIri shouldBe true
+      val column = frame.getPolyColumns.asScala.head
+      // IRI, five literals, two IRIs
+      SparqlColumns.kindsOf(column) shouldBe Seq(0, 1, 1, 1, 1, 1, 0, 0)
       // The lexical forms must line up with the values – a language tag takes a second slot in
       // the shared string buffer, which is what the cursor gets wrong if it is not accounted for
-      terms.map(t => Option.when(t.hasLiteral)(t.getLiteral.getLex)) shouldBe Seq(
-        None,
-        Some("hello"),
-        Some("1"),
-        Some("plain"),
-        Some("bonjour"),
-        Some("2"),
-        None,
-        None,
-      )
-      terms(1).getLiteral.getLangtag shouldBe "en"
-      terms(4).getLiteral.getLangtag shouldBe "fr"
-      // Datatypes are lookup references, and the two distinct ones must not collapse into one
-      val dt1 = terms(2).getLiteral.getDatatype
-      val dt2 = terms(5).getLiteral.getDatatype
-      dt1 should not be 0
-      dt2 should not be 0
-      dt1 should not be dt2
-      // A simple literal is neither, so its literal kind stays unset
-      terms(3).getLiteral.hasLiteralKind shouldBe false
-      // The trailing IRI repeats the first one's prefix and follows its name id, so both
-      // compress to zero
-      terms(6).getIri.getPrefixId shouldBe 0
-      terms(6).getIri.getNameId shouldBe 0
-      terms(7).getIri.getPrefixId shouldBe 0
-      terms(7).getIri.getNameId should not be 0
+      val literals = column.getLiterals
+      literals.getLexValues.asScala.toSeq shouldBe Seq("hello", "1", "plain", "bonjour", "2")
+      literals.getLangtags.asScala.toSeq shouldBe Seq("en", "fr")
+      literals.getLangtagDirections.size shouldBe 0
+      val kinds = (0 until literals.getLiteralKinds.size).map(literals.getLiteralKinds.get)
+      kinds.size shouldBe 5
+      kinds(0) shouldBe langKind(0)
+      kinds(3) shouldBe langKind(1)
+      // A simple literal has kind 0
+      kinds(2) shouldBe 0
+      // Datatypes are lookup references (odd kinds), and the two distinct ones must not collapse
+      // into one
+      kinds(1) % 2 shouldBe 1
+      kinds(4) % 2 shouldBe 1
+      kinds(1) should not be kinds(4)
+      // The IRIs share one namespace, so the prefix is stated once for the sub-column. The first
+      // IRI gets name id 1 and the second name id 2, each the one after the previous, so both
+      // compress to zero. The third goes back to name 1.
+      val iris = column.getIris
+      iris.getPrefixIds.size shouldBe 1
+      iris.getPrefixIds.get(0) should not be 0
+      (0 until iris.getNameIds.size).map(iris.getNameIds.get) shouldBe Seq(0, 0, 1)
     }
 
     "not carry a column's layout into the next frame" in {
