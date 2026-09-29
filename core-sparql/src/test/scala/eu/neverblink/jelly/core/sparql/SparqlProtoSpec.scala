@@ -229,6 +229,20 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       )
     }
 
+    "round-trip packed fields longer than the parser makes room for up front" in {
+      // The parser reserves room for up to 65536 values of a packed field, then grows the array
+      val column = SparqlIriColumn.newInstance()
+      for i <- 0 until 70000 do column.addNameIds(i * 37 % 100000).addPrefixIds(i % 3)
+      val parsed = SparqlIriColumn.parseFrom(ByteArrayInputStream(column.toByteArray))
+      parsed shouldBe column
+      parsed.getNameIds.get(69999) shouldBe 69999 * 37 % 100000
+      // A second packed run of the same field is added to the first
+      val twice =
+        SparqlIriColumn.parseFrom(ByteArrayInputStream(column.toByteArray ++ column.toByteArray))
+      twice.getNameIds.size shouldBe 140000
+      twice.getNameIds.get(70000 + 12345) shouldBe 12345 * 37 % 100000
+    }
+
     "round-trip a trailer" in {
       checkMessage(
         SparqlResultsTrailer.newInstance().setError("query timed out"),

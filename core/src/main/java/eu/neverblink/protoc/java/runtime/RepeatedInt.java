@@ -11,8 +11,9 @@ public final class RepeatedInt {
     private static final int[] EMPTY_ARRAY = new int[0];
     private static final int DEFAULT_CAPACITY = 8;
 
-    private int[] values = EMPTY_ARRAY;
-    private int size = 0;
+    // Package-private for ProtobufUtil.readPackedUInt32, which fills the array directly
+    int[] values = EMPTY_ARRAY;
+    int size = 0;
 
     private RepeatedInt() {}
 

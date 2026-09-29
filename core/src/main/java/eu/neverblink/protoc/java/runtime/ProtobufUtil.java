@@ -81,9 +81,18 @@ public final class ProtobufUtil {
         // the array many times. Capped: a stream decoder does not know yet if the input really
         // has that many bytes.
         store.reserve(Math.min(length, MAX_PACKED_RESERVE));
-        while (input.getBytesUntilLimit() > 0) {
-            store.add(input.readUInt32());
+        // Straight into the array: the values are read as fast as the varints can be decoded
+        int[] values = store.values;
+        int size = store.size;
+        while (!input.isAtEnd()) {
+            if (size == values.length) {
+                store.size = size;
+                store.reserve(1);
+                values = store.values;
+            }
+            values[size++] = input.readUInt32();
         }
+        store.size = size;
         input.popLimit(oldLimit);
     }
 
