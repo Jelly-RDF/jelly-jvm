@@ -24,6 +24,7 @@ import org.eclipse.rdf4j.query.resultio.{
   TupleQueryResultWriterRegistry,
 }
 import org.eclipse.rdf4j.rio.WriterConfig
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -140,6 +141,33 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       gotVars shouldBe vars
       gotRows shouldBe expected(vars, rows)
+    }
+
+    "parse binding sets that can be serialized with Java serialization" in {
+      val vars = Seq("s", "label")
+      def rows(n: Int) = (1 to n).map { i =>
+        Seq[Value | Null](iri(s"node$i"), if i % 2 == 0 then null else vf.createLiteral(s"l$i"))
+      }
+      def parse(n: Int): Seq[BindingSet] =
+        val collector = QueryResultCollector()
+        val parser = JellySparqlTupleParser()
+        // Otherwise RDF4J wraps each binding set in one that cannot be serialized
+        parser.getParserConfig.set(BasicParserSettings.PROCESS_ENCODED_TRIPLE_TERMS, false)
+        parser.setQueryResultHandler(collector)
+        parser.parseQueryResult(ByteArrayInputStream(write(vars, rows(n))))
+        collector.getBindingSets.asScala.toSeq
+      def serialize(bindingSet: BindingSet): Array[Byte] =
+        val out = ByteArrayOutputStream()
+        val objects = java.io.ObjectOutputStream(out)
+        objects.writeObject(bindingSet)
+        objects.close()
+        out.toByteArray
+      for bindingSet <- parse(10) do
+        val back =
+          java.io.ObjectInputStream(ByteArrayInputStream(serialize(bindingSet))).readObject()
+        back shouldBe bindingSet
+      // A row is written with its own values only, not with the rest of its frame
+      serialize(parse(2000).head).length shouldBe serialize(parse(10).head).length
     }
 
     "round-trip in the non-delimited form" in {

@@ -284,7 +284,7 @@ public final class RowSetReaderJelly implements RowSetReader {
 
         @Override
         public void handleRows(Object[][] columns, int rowCount, Node[] row) {
-            // Straight from the columns, without copying each row into the buffer first
+            // Straight from the columns, without copying each row anywhere
             final int width = columns.length;
             final Var[] distinct = distinctVars;
             for (int r = 0; r < rowCount; r++) {
@@ -299,17 +299,14 @@ public final class RowSetReaderJelly implements RowSetReader {
                     queue.add(builder.build());
                     continue;
                 }
-                final Node[] values = new Node[width];
-                int bound = 0;
-                for (int v = 0; v < width; v++) {
-                    final Node node = (Node) columns[v][r];
-                    if (node != null) {
-                        values[v] = node;
-                        bound++;
-                    }
-                }
-                queue.add(new JellyBinding(BindingFactory.noParent, distinct, values, bound));
+                queue.add(new JellyBinding(BindingFactory.noParent, distinct, columns, r));
             }
+        }
+
+        @Override
+        public boolean keepsColumns() {
+            // JellyBinding reads its values from the columns
+            return true;
         }
     }
 }

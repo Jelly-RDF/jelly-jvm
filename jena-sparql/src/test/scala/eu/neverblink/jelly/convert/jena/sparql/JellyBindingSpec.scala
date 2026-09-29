@@ -14,8 +14,11 @@ class JellyBindingSpec extends AnyWordSpec, Matchers, JenaTest:
   private val vars = Array("a", "b", "c", "d", "e").map(Var.alloc)
   private val nodes = (1 to 5).map(i => NodeFactory.createURI(s"https://test.org/$i")).toArray
 
+  /** A binding of row 1 of a frame whose rows 0 and 2 hold other values. */
   private def jelly(values: Node*): Binding =
-    JellyBinding(BindingFactory.noParent, vars.take(values.size), values.toArray, values.count(_ != null))
+    val other = NodeFactory.createLiteralString("other")
+    val columns = values.map(v => Array[Object](other, v, other)).toArray
+    JellyBinding(BindingFactory.noParent, vars.take(values.size), columns, 1)
 
   private def jena(pairs: (Var, Node)*): Binding =
     val builder = BindingFactory.builder()

@@ -47,7 +47,8 @@ public interface SparqlResultsHandler<TNode> {
      * Called with all rows of one frame, column by column: {@code columns[v][r]} is the value of
      * variable {@code v} (in the order of {@link #handleVariables(List)}) in row {@code r}, or null
      * if it is unbound. Only the first {@code rowCount} entries of each column are rows of this
-     * frame. The arrays are REUSED after the call returns.
+     * frame. The arrays are REUSED after the call returns, unless {@link #keepsColumns()} says
+     * otherwise.
      * <p>
      * The default implementation copies each row into {@code row} and calls {@link #handleRow}.
      * A handler that builds its own objects for rows can override this to read the columns
@@ -66,6 +67,19 @@ public interface SparqlResultsHandler<TNode> {
             }
             handleRow(row);
         }
+    }
+
+    /**
+     * Whether this handler keeps the column arrays that {@link #handleRows} gets after it returns,
+     * for example to build row objects that read their values from them. If so, the decoder
+     * gives it new arrays for every frame, instead of reusing them.
+     * <p>
+     * The default is false.
+     *
+     * @return true to get new column arrays for every frame
+     */
+    default boolean keepsColumns() {
+        return false;
     }
 
     /**

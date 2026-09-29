@@ -41,6 +41,8 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     private static final String RDF_DIR_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#dirLangString";
 
     private final SparqlResultsHandler<TNode> handler;
+    // Whether the handler keeps the columns of a frame (see SparqlResultsHandler.keepsColumns)
+    private final boolean freshColumns;
     private final SparqlResultsOptions supportedOptions;
     private final int maxRowsPerFrame;
 
@@ -50,8 +52,8 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     private String[] variableNames = null;
     private int[] varToColumn = null;
     private TNode[] rowBuffer = null;
-    // Per-variable column decode buffers, reused across frames. The inner arrays grow to the
-    // largest row count seen so far.
+    // Per-variable column decode buffers, reused across frames unless the handler keeps them.
+    // The inner arrays grow to the largest row count seen so far.
     private Object[][] decodedColumns = null;
     // Stream-level flags, packed into one field. Only checked once per frame.
     private static final byte ASK_RESULT_RECEIVED = 1;
@@ -67,6 +69,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     ) {
         super(converter);
         this.handler = handler;
+        this.freshColumns = handler.keepsColumns();
         this.supportedOptions =
             supportedOptions != null ? supportedOptions : JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS;
         this.maxRowsPerFrame = Math.min(maxRowsPerFrame, JellySparqlConstants.MAX_ROWS_PER_FRAME);
@@ -208,7 +211,10 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             );
         }
 
-        // Decode each variable's column into a row-indexed array (reused across frames).
+        // Decode each variable's column into a row-indexed array
+        if (freshColumns) {
+            decodedColumns = new Object[variableNames.length][];
+        }
         for (int v = 0; v < variableNames.length && !noColumns; v++) {
             final int c = varToColumn[v];
             final Object[] out = decodeBufferForVariable(v, rows);

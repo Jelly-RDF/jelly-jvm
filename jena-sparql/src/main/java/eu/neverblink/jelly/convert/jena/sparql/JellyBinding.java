@@ -9,29 +9,36 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingBase;
 
 /**
- * A row of a decoded result set: the variables of the result set, shared by all its rows, and
- * this row's values, null where a variable is unbound.
+ * A row of a decoded result set: the variables of the result set, and the columns of the frame the
+ * row came from, with its index in them. A value is null where a variable is unbound.
  * <p>
  * Jena's own bindings check on creation that no variable is bound twice, by comparing the names
  * of every pair of variables. The variables of a result set are checked once instead, when its
- * header is read (see {@link RowSetReaderJelly}), so building a row is only an allocation.
+ * header is read (see {@link RowSetReaderJelly}). The values are not copied out of the columns,
+ * so building a row is only an allocation. A row keeps the columns of its frame in memory, as
+ * long as it is kept itself.
  */
 final class JellyBinding extends BindingBase {
 
     private final Var[] vars;
-    private final Node[] values;
-    private final int size;
+    private final Object[][] columns;
+    private final int row;
 
     /**
      * @param vars the variables of the result set, all different
-     * @param values the values of the variables, null for unbound, not modified after this call
-     * @param size the number of values that are not null
+     * @param columns the values of the frame, one array per variable, each value a Node or null.
+     *                Not modified after this call.
+     * @param row the index of this row in the columns
      */
-    JellyBinding(Binding parent, Var[] vars, Node[] values, int size) {
+    JellyBinding(Binding parent, Var[] vars, Object[][] columns, int row) {
         super(parent);
         this.vars = vars;
-        this.values = values;
-        this.size = size;
+        this.columns = columns;
+        this.row = row;
+    }
+
+    private Node value(int index) {
+        return (Node) columns[index][row];
     }
 
     @Override
@@ -40,7 +47,7 @@ final class JellyBinding extends BindingBase {
             private int next = advance(0);
 
             private int advance(int from) {
-                while (from < values.length && values[from] == null) {
+                while (from < vars.length && value(from) == null) {
                     from++;
                 }
                 return from;
@@ -48,12 +55,12 @@ final class JellyBinding extends BindingBase {
 
             @Override
             public boolean hasNext() {
-                return next < values.length;
+                return next < vars.length;
             }
 
             @Override
             public Var next() {
-                if (next >= values.length) {
+                if (next >= vars.length) {
                     throw new NoSuchElementException();
                 }
                 final Var var = vars[next];
@@ -65,21 +72,28 @@ final class JellyBinding extends BindingBase {
 
     @Override
     protected void forEach1(BiConsumer<Var, Node> action) {
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] != null) {
-                action.accept(vars[i], values[i]);
+        for (int i = 0; i < vars.length; i++) {
+            final Node node = value(i);
+            if (node != null) {
+                action.accept(vars[i], node);
             }
         }
     }
 
     @Override
     protected int size1() {
+        int size = 0;
+        for (int i = 0; i < vars.length; i++) {
+            if (value(i) != null) {
+                size++;
+            }
+        }
         return size;
     }
 
     @Override
     protected boolean isEmpty1() {
-        return size == 0;
+        return size1() == 0;
     }
 
     @Override
@@ -91,12 +105,12 @@ final class JellyBinding extends BindingBase {
     protected Node get1(Var var) {
         for (int i = 0; i < vars.length; i++) {
             if (vars[i] == var) {
-                return values[i];
+                return value(i);
             }
         }
         for (int i = 0; i < vars.length; i++) {
             if (vars[i].equals(var)) {
-                return values[i];
+                return value(i);
             }
         }
         return null;
@@ -104,6 +118,6 @@ final class JellyBinding extends BindingBase {
 
     @Override
     protected Binding detachWithNewParent(Binding newParent) {
-        return new JellyBinding(newParent, vars, values, size);
+        return new JellyBinding(newParent, vars, columns, row);
     }
 }

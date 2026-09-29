@@ -13,10 +13,14 @@ import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 import eu.neverblink.protoc.java.runtime.DelimitedMessageReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.RandomAccess;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -204,20 +208,50 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             if (handler == null) {
                 return;
             }
-            // Each binding set gets an array of its own, filled straight from the columns. It is
-            // an Object[], not a Value[], so that storing a value does not have to check that it
-            // is a Value (an interface check, which is slow). Every value is one, and whoever
-            // reads it from the binding set checks that anyway.
-            final int width = columns.length;
             for (int r = 0; r < rowCount; r++) {
-                final Object[] values = new Object[width];
-                for (int v = 0; v < width; v++) {
-                    values[v] = columns[v][r];
-                }
-                handler.handleSolution(
-                    new ListBindingSet(variables, (List<? extends Value>) (List<?>) Arrays.asList(values))
-                );
+                final var values = (List<? extends Value>) (List<?>) new ColumnRow(columns, r);
+                handler.handleSolution(new ListBindingSet(variables, values));
             }
+        }
+
+        @Override
+        public boolean keepsColumns() {
+            // The binding sets read their values from the columns
+            return true;
+        }
+    }
+
+    /**
+     * The values of one row, read from the columns of its frame, which it keeps in memory.
+     * Nothing is copied. Every value is a Value or null; the list is typed Object so that it does
+     * not check that on every read, as ListBindingSet checks it again anyway.
+     * <p>
+     * ListBindingSet is Serializable, so this is too: it is written as a list of its own values,
+     * not with the whole frame.
+     */
+    private static final class ColumnRow extends AbstractList<Object> implements RandomAccess, Serializable {
+
+        private final Object[][] columns;
+        private final int row;
+
+        ColumnRow(Object[][] columns, int row) {
+            this.columns = columns;
+            this.row = row;
+        }
+
+        @Override
+        public Object get(int index) {
+            return columns[index][row];
+        }
+
+        @Override
+        public int size() {
+            return columns.length;
+        }
+
+        @Serial
+        private Object writeReplace() {
+            return new ArrayList<>(this);
         }
     }
 }
