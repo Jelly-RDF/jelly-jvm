@@ -243,6 +243,23 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       twice.getNameIds.get(70000 + 12345) shouldBe 12345 * 37 % 100000
     }
 
+    "round-trip packed fields of varints of every length, mixed" in {
+      val random = scala.util.Random(42)
+      for n <- Seq(0, 1, 2, 3, 7, 8, 9, 100, 5000) do
+        // Mostly 1 and 2 bytes, as in Jelly, some longer, and some with the sign bit set
+        val ids = Seq.fill(n) {
+          random.nextInt(10) match
+            case 0 => random.nextInt()
+            case 1 => random.nextInt(1 << 28)
+            case 2 | 3 => 128 + random.nextInt(16384 - 128)
+            case _ => random.nextInt(128)
+        }
+        val column = SparqlIriColumn.newInstance()
+        ids.foreach(column.addNameIds)
+        val parsed = SparqlIriColumn.parseFrom(ByteArrayInputStream(column.toByteArray)).getNameIds
+        (0 until parsed.size).map(parsed.get) shouldBe ids
+    }
+
     "read packed varints as CodedInputStream reads them" in {
       // Field 1 (name_ids) of SparqlIriColumn, packed: tag 0x0a, then the length and the values
       def packed(values: Int*) = Array[Byte](0x0a, values.size.toByte) ++ values.map(_.toByte)
