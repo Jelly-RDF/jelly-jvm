@@ -218,7 +218,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                     decodeColumn(new IriReader(column), column.getLayouts(), rows, out);
                 } else if (c < bnodeEnd) {
                     final SparqlBnodeColumn column = get(bnodeColumns, c - iriEnd);
-                    decodeColumn(new BnodeReader(column.getValues().iterator()), column.getLayouts(), rows, out);
+                    decodeColumn(new BnodeReader(column.getValues()), column.getLayouts(), rows, out);
                 } else if (c < literalEnd) {
                     final SparqlLiteralColumn column = get(literalColumns, c - bnodeEnd);
                     decodeColumn(literalReader(column), column.getLayouts(), rows, out);
@@ -374,13 +374,25 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     }
 
     /**
-     * Decodes the run values of one column, in order. Each call decodes the next value.
+     * Decodes the run values of one column, in order.
      */
     private abstract static class ValueReader<TNode> {
 
-        abstract boolean hasNext();
+        /** The number of values not decoded yet. */
+        abstract int remaining();
 
+        /** Decodes the next value. The caller checks that there is one. */
         abstract TNode decodeNext();
+
+        /**
+         * Decodes the next {@code count} values into {@code out}, from {@code from} on. The caller
+         * checks that there are that many.
+         * <p>
+         * Every reader implements this with the same loop over its own decodeNext(), so that the
+         * call in the loop has one known target and is inlined. A single loop here would call
+         * decodeNext() of whichever reader it is given.
+         */
+        abstract void decodeInto(Object[] out, int from, int count);
     }
 
     private final class IriReader extends ValueReader<TNode> {
@@ -408,8 +420,15 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
 
         @Override
-        boolean hasNext() {
-            return index < nameIds.size();
+        int remaining() {
+            return nameIds.size() - index;
+        }
+
+        @Override
+        void decodeInto(Object[] out, int from, int count) {
+            for (int i = 0; i < count; i++) {
+                out[from + i] = decodeNext();
+            }
         }
 
         @Override
@@ -430,20 +449,28 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
     private final class BnodeReader extends ValueReader<TNode> {
 
-        private final Iterator<String> values;
+        private final RepeatedString values;
+        private int index = 0;
 
-        BnodeReader(Iterator<String> values) {
+        BnodeReader(RepeatedString values) {
             this.values = values;
         }
 
         @Override
-        boolean hasNext() {
-            return values.hasNext();
+        int remaining() {
+            return values.size() - index;
+        }
+
+        @Override
+        void decodeInto(Object[] out, int from, int count) {
+            for (int i = 0; i < count; i++) {
+                out[from + i] = decodeNext();
+            }
         }
 
         @Override
         TNode decodeNext() {
-            return converter.makeBlankNode(values.next());
+            return converter.makeBlankNode(values.get(index++));
         }
     }
 
@@ -587,8 +614,15 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
 
         @Override
-        boolean hasNext() {
-            return index < values.size();
+        int remaining() {
+            return values.size() - index;
+        }
+
+        @Override
+        void decodeInto(Object[] out, int from, int count) {
+            for (int i = 0; i < count; i++) {
+                out[from + i] = decodeNext();
+            }
         }
 
         @Override
@@ -621,8 +655,15 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
 
         @Override
-        boolean hasNext() {
-            return index < values.size();
+        int remaining() {
+            return values.size() - index;
+        }
+
+        @Override
+        void decodeInto(Object[] out, int from, int count) {
+            for (int i = 0; i < count; i++) {
+                out[from + i] = decodeNext();
+            }
         }
 
         @Override
@@ -756,7 +797,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             }
             this.iris = iriColumn == null ? null : new IriReader(iriColumn);
             this.literals = literalColumn == null ? null : literalReader(literalColumn);
-            this.bnodes = bnodeColumn == null ? null : new BnodeReader(bnodeColumn.getValues().iterator());
+            this.bnodes = bnodeColumn == null ? null : new BnodeReader(bnodeColumn.getValues());
             this.tripleTerms = column.getTripleTerms().iterator();
         }
 
@@ -765,8 +806,15 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
 
         @Override
-        boolean hasNext() {
-            return index < valueCount;
+        int remaining() {
+            return valueCount - index;
+        }
+
+        @Override
+        void decodeInto(Object[] out, int from, int count) {
+            for (int i = 0; i < count; i++) {
+                out[from + i] = decodeNext();
+            }
         }
 
         @Override
@@ -840,12 +888,11 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             if (skip > rows - pos) {
                 throw new RdfProtoDeserializationError("Corrupt column layout: more cells than the frame row count.");
             }
-            for (int j = 0; j < skip; j++) {
-                if (!reader.hasNext()) {
-                    throw new RdfProtoDeserializationError("Corrupt column layout: not enough values in the column.");
-                }
-                out[pos++] = reader.decodeNext();
+            if (skip > reader.remaining()) {
+                throw new RdfProtoDeserializationError("Corrupt column layout: not enough values in the column.");
             }
+            reader.decodeInto(out, pos, skip);
+            pos += skip;
             if (kind == 0) {
                 // Repeat run
                 final long count = len + 2;
@@ -854,7 +901,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                         "Corrupt column layout: more cells than the frame row count."
                     );
                 }
-                if (!reader.hasNext()) {
+                if (reader.remaining() == 0) {
                     throw new RdfProtoDeserializationError(
                         "Corrupt column layout: a repeat run points past the last value."
                     );
@@ -875,12 +922,12 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             }
         }
         // Implicit tail: all remaining values, once each
-        while (reader.hasNext()) {
-            if (pos >= rows) {
-                throw new RdfProtoDeserializationError("Corrupt column layout: more cells than the frame row count.");
-            }
-            out[pos++] = reader.decodeNext();
+        final int tail = reader.remaining();
+        if (tail > rows - pos) {
+            throw new RdfProtoDeserializationError("Corrupt column layout: more cells than the frame row count.");
         }
+        reader.decodeInto(out, pos, tail);
+        pos += tail;
         // The rest of the cells, up to the frame row count, are unbound
         Arrays.fill(out, pos, rows, null);
     }
