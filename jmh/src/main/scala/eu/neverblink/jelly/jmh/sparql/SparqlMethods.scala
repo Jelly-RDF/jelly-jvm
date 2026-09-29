@@ -64,11 +64,11 @@ object SparqlMethods:
     def name: String
 
     def canRead: Boolean
-    
+
     def prepare(data: SparqlBenchData.Data): Unit
 
     def write(data: SparqlBenchData.Data, out: OutputStream): Unit
-    
+
     def read(bytes: Array[Byte], sink: AnyRef => Unit): Int
 
     /** The rows that [[write]] writes, in this library's terms. */
@@ -109,7 +109,7 @@ object SparqlMethods:
 
     override def cell(row: AnyRef, variable: String): AnyRef =
       row.asInstanceOf[Binding].get(variable)
-  
+
   private def jena(format: String, lang: Lang, canRead: Boolean = true): Method =
     JenaMethod(
       s"jena-$format",
