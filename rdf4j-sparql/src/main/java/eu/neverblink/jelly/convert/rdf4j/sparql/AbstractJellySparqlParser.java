@@ -10,6 +10,7 @@ import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
 import eu.neverblink.jelly.core.utils.IoUtils;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -96,9 +97,10 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
             final InputStream input = response.newInput();
             if (response.isDelimited()) {
+                final var frames = new DelimitedMessageReader<>(input, SparqlResultsFrame.getFactory());
                 SparqlResultsFrame frame;
                 boolean firstFrame = true;
-                while ((frame = SparqlResultsFrame.parseDelimitedFrom(input)) != null) {
+                while ((frame = frames.read()) != null) {
                     lastFrameHadTrailer = ingestFrame(frame, decoder, firstFrame);
                     firstFrame = false;
                 }

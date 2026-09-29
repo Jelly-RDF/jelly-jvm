@@ -9,6 +9,7 @@ import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
 import eu.neverblink.jelly.core.utils.IoUtils;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
@@ -184,6 +185,8 @@ public final class RowSetReaderJelly implements RowSetReader {
 
         private final InputStream input;
         private final boolean delimited;
+        // Null for a non-delimited stream
+        private final DelimitedMessageReader<SparqlResultsFrame> frames;
         private final SparqlDecoder decoder;
         private final boolean requireTrailer;
         private boolean finished = false;
@@ -192,6 +195,7 @@ public final class RowSetReaderJelly implements RowSetReader {
         FrameReader(InputStream input, boolean delimited, SparqlDecoder decoder, boolean requireTrailer) {
             this.input = input;
             this.delimited = delimited;
+            this.frames = delimited ? new DelimitedMessageReader<>(input, SparqlResultsFrame.getFactory()) : null;
             this.decoder = decoder;
             this.requireTrailer = requireTrailer;
         }
@@ -207,7 +211,7 @@ public final class RowSetReaderJelly implements RowSetReader {
             }
             final SparqlResultsFrame frame;
             if (delimited) {
-                frame = SparqlResultsFrame.parseDelimitedFrom(input);
+                frame = frames.read();
             } else {
                 // Non-delimited: the entire input is a single frame
                 frame = SparqlResultsFrame.parseFrom(input);
