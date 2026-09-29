@@ -28,7 +28,7 @@ Test / logBuffered := false
 
 lazy val pekkoV = "1.7.0"
 lazy val pekkoGrpcV = "1.2.0"
-lazy val jenaV = "5.6.0"
+lazy val jenaV = "6.2.0"
 // RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
 // targets Java 21 (see javacOptions), but jelly-rdf4j can only *run* on Java 25+, as RDF4J 6 does.
 lazy val rdf4jV = "6.1.0"
@@ -38,11 +38,21 @@ lazy val neo4jV = "5.26.0"
 lazy val protobufV = "4.36.2"
 lazy val javapoetV = "0.20.0"
 lazy val jmhV = "1.37"
-// Only for the jmh module – the library itself builds against jenaV, see there
-lazy val jenaBenchV = "6.2.0"
 lazy val grpcV = "1.84.0"
 
 lazy val jellyCliV = "0.8.0"
+
+lazy val jenaDeps = Seq(
+  "org.apache.jena" % "jena-core" % jenaV,
+  "org.apache.jena" % "jena-arq" % jenaV,
+)
+lazy val jenaPatchDeps = Seq("org.apache.jena" % "jena-rdfpatch" % jenaV)
+lazy val fusekiDeps = Seq("org.apache.jena" % "jena-fuseki-main" % jenaV)
+lazy val rdf4jDeps = Seq(
+  "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
+  "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
+)
+lazy val rdf4jSparqlDeps = Seq("org.eclipse.rdf4j" % "rdf4j-queryresultio-api" % rdf4jV)
 
 lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
 
@@ -109,55 +119,9 @@ lazy val commonJavaSettings = Seq(
   ),
 )
 
-lazy val prepareGoogleProtos = taskKey[Seq[File]](
-  "Copies and modifies proto files before Google protoc-java compilation",
-)
 lazy val generatePluginRunScript =
   taskKey[Seq[File]]("Generate the run script for the protoc plugin")
 lazy val downloadJellyCli = taskKey[File]("Downloads Jelly CLI binary file")
-
-/** Used for core*ProtosGoogle modules. Copies the proto files from the protobuf submodule to the
-  * protoc input directory, while applying some options to the proto files.
-  */
-def doPrepareGoogleProtos(baseDir: File): Seq[File] = {
-  val inputDir = (baseDir / ".." / "submodules" / "protobuf" / "proto").getAbsoluteFile
-  val outputDir = (baseDir / "src" / "main" / "protobuf").getAbsoluteFile
-  // Make output dir if not exists
-  IO.createDirectory(outputDir)
-  // Clean the output directory
-  IO.delete(IO.listFiles(outputDir).filterNot(_.getName == ".gitkeep"))
-  val protoFiles = (inputDir ** "*.proto").get()
-  protoFiles
-    .map { file =>
-      // Copy the file to the output directory
-      val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
-      IO.copyFile(file, outputFile)
-      outputFile
-    }
-    .map { file =>
-      // Append java options to the file. The sub-package must match the one the crunchy plugin
-      // uses for the same file, so that the two sets of classes can live side by side.
-      val outPackage = "eu.neverblink.jelly.core.proto.google.v1" + (file.getName match {
-        case "patch.proto" => ".patch"
-        case "sparql.proto" => ".sparql"
-        case _ => ""
-      })
-      val content = IO.read(file)
-      val newContent = content +
-        f"""
-          |option java_multiple_files = true;
-          |option java_package = "$outPackage";
-          |option optimize_for = SPEED;
-          |""".stripMargin
-      IO.write(file, newContent)
-      file
-    }
-  // Return the list of generated files
-  protoFiles.map { file =>
-    val outputFile = outputDir / file.relativeTo(inputDir).get.getPath
-    outputFile
-  }
-}
 
 // .proto -> .java protoc compiler plugin
 lazy val crunchyProtocPlugin = (project in file("crunchy-protoc-plugin"))
@@ -397,44 +361,6 @@ lazy val core = (project in file("core"))
     commonSettings,
     commonJavaSettings,
   )
-  .dependsOn(
-    // Test-time dependency on Google protos for ProtoAuxiliarySpec
-    coreProtosGoogle % "test->compile",
-  )
-
-lazy val coreProtosGoogle = (project in file("core-protos-google"))
-  .enablePlugins(ProtobufPlugin)
-  .settings(
-    name := "jelly-core-protos-google",
-    description := "Optional proto classes for Jelly-RDF (rdf.proto, rdf2.proto) compiled with Google's " +
-      "official Java protoc plugin. This is not needed, unless you need some functionality " +
-      "that is only available with the more heavyweight, Google-style proto classes, like " +
-      "support for the Protobuf Text Format.",
-    libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
-    prepareGoogleProtos := Def.uncached { doPrepareGoogleProtos(baseDirectory.value) },
-    Compile / compile := Def.uncached((Compile / compile).dependsOn(prepareGoogleProtos).value),
-    ProtobufConfig / protobufRunProtoc := Def.uncached(
-      (ProtobufConfig / protobufRunProtoc).dependsOn(
-        prepareGoogleProtos,
-      ).value,
-    ),
-    // The .proto files under src/main/protobuf are produced by prepareGoogleProtos at build time
-    // (only .gitkeep is committed). protobufSources scans that directory to decide what to compile,
-    // but sbt-protobuf does not order that scan after prepareGoogleProtos – only protobufRunProtoc.
-    // On a clean checkout the scan therefore runs against an empty directory and nothing is
-    // generated (0 classes). Make the scan depend on prepareGoogleProtos so the protos exist first.
-    ProtobufConfig / protobufSources := Def.uncached(
-      (ProtobufConfig / protobufSources).dependsOn(prepareGoogleProtos).value,
-    ),
-    ProtobufConfig / protobufIncludeFilters := Seq(
-      Glob(baseDirectory.value.toPath) / "**" / "rdf.proto",
-      Glob(baseDirectory.value.toPath) / "**" / "rdf2.proto",
-    ),
-    // Don't throw errors, because Google's protoc generates code with a lot of warnings
-    javacOptions := javacOptions.value.filterNot(_ == "-Werror"),
-    commonSettings,
-    commonJavaSettings,
-  )
 
 lazy val corePatch = (project in file("core-patch"))
   .settings(
@@ -459,40 +385,7 @@ lazy val corePatch = (project in file("core-patch"))
   )
   .dependsOn(
     core % "compile->compile;test->test",
-    // Test-time dependency on Google protos for PatchProtoSpec
-    corePatchProtosGoogle % "test->compile",
   )
-
-lazy val corePatchProtosGoogle = (project in file("core-patch-protos-google"))
-  .enablePlugins(ProtobufPlugin)
-  .settings(
-    name := "jelly-core-patch-protos-google",
-    description := "Optional proto classes for Jelly-Patch (patch.proto) compiled with Google's " +
-      "official Java protoc plugin. This is not needed, unless you need some functionality " +
-      "that is only available with the more heavyweight, Google-style proto classes, like " +
-      "support for the Protobuf Text Format.",
-    libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
-    prepareGoogleProtos := Def.uncached { doPrepareGoogleProtos(baseDirectory.value) },
-    Compile / compile := Def.uncached((Compile / compile).dependsOn(prepareGoogleProtos).value),
-    ProtobufConfig / protobufRunProtoc := Def.uncached(
-      (ProtobufConfig / protobufRunProtoc).dependsOn(
-        prepareGoogleProtos,
-      ).value,
-    ),
-    // The .proto files under src/main/protobuf are produced by prepareGoogleProtos at build time
-    // (only .gitkeep is committed). protobufSources scans that directory to decide what to compile,
-    // but sbt-protobuf does not order that scan after prepareGoogleProtos – only protobufRunProtoc.
-    // On a clean checkout the scan therefore runs against an empty directory and nothing is
-    // generated (0 classes). Make the scan depend on prepareGoogleProtos so the protos exist first.
-    ProtobufConfig / protobufSources := Def.uncached(
-      (ProtobufConfig / protobufSources).dependsOn(prepareGoogleProtos).value,
-    ),
-    ProtobufConfig / protobufIncludeFilters := Seq(
-      Glob(baseDirectory.value.toPath) / "**" / "patch.proto",
-    ),
-    commonSettings,
-    commonJavaSettings,
-  ).dependsOn(coreProtosGoogle)
 
 lazy val coreSparql = (project in file("core-sparql"))
   .settings(
@@ -518,51 +411,13 @@ lazy val coreSparql = (project in file("core-sparql"))
   )
   .dependsOn(
     core % "compile->compile;test->test",
-    // Test-time dependency on Google protos for SparqlProtoSpec
-    coreSparqlProtosGoogle % "test->compile",
   )
-
-lazy val coreSparqlProtosGoogle = (project in file("core-sparql-protos-google"))
-  .enablePlugins(ProtobufPlugin)
-  .settings(
-    name := "jelly-core-sparql-protos-google",
-    description := "Optional proto classes for Jelly-SPARQL (sparql.proto) compiled with Google's " +
-      "official Java protoc plugin. This is not needed, unless you need some functionality " +
-      "that is only available with the more heavyweight, Google-style proto classes, like " +
-      "support for the Protobuf Text Format.",
-    libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
-    prepareGoogleProtos := Def.uncached { doPrepareGoogleProtos(baseDirectory.value) },
-    Compile / compile := Def.uncached((Compile / compile).dependsOn(prepareGoogleProtos).value),
-    ProtobufConfig / protobufRunProtoc := Def.uncached(
-      (ProtobufConfig / protobufRunProtoc).dependsOn(
-        prepareGoogleProtos,
-      ).value,
-    ),
-    // See the comment in corePatchProtosGoogle: the scan of src/main/protobuf has to be ordered
-    // after prepareGoogleProtos, or a clean checkout generates nothing.
-    ProtobufConfig / protobufSources := Def.uncached(
-      (ProtobufConfig / protobufSources).dependsOn(prepareGoogleProtos).value,
-    ),
-    ProtobufConfig / protobufIncludeFilters := Seq(
-      Glob(baseDirectory.value.toPath) / "**" / "sparql.proto",
-    ),
-    // Don't throw errors, because Google's protoc generates code with a lot of warnings
-    javacOptions := javacOptions.value.filterNot(_ == "-Werror"),
-    commonSettings,
-    commonJavaSettings,
-    // sparql.proto imports rdf.proto and rdf2.proto, whose Google classes live in coreProtosGoogle
-  ).dependsOn(coreProtosGoogle)
 
 lazy val jena = (project in file("jena"))
   .settings(
     name := "jelly-jena",
     description := "Jelly parsers, serializers, and other utilities for Apache Jena.",
-    libraryDependencies ++= Seq(
-      "org.apache.jena" % "jena-core" % jenaV,
-      "org.apache.jena" % "jena-arq" % jenaV,
-      // Integration with Fuseki is optional, so include this dep as "provided"
-      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
-    ),
+    libraryDependencies ++= (jenaDeps ++ fusekiDeps).map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -572,9 +427,7 @@ lazy val jenaPatch = (project in file("jena-patch"))
   .settings(
     name := "jelly-jena-patch",
     description := "Jelly-Patch integration for Apache Jena.",
-    libraryDependencies ++= Seq(
-      "org.apache.jena" % "jena-rdfpatch" % jenaV,
-    ),
+    libraryDependencies ++= (jenaDeps ++ jenaPatchDeps).map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -585,10 +438,7 @@ lazy val jenaSparql = (project in file("jena-sparql"))
     name := "jelly-jena-sparql",
     description := "Jelly-SPARQL integration for Apache Jena: reading and writing " +
       "SPARQL query results.",
-    libraryDependencies ++= Seq(
-      // Integration with Fuseki is optional, so include this dep as "provided"
-      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
-    ),
+    libraryDependencies ++= (jenaDeps ++ fusekiDeps).map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -601,15 +451,10 @@ lazy val jenaSparql = (project in file("jena-sparql"))
 lazy val jenaPlugin = (project in file("jena-plugin"))
   .settings(
     name := "jelly-jena-plugin",
-    libraryDependencies ++= Seq(
-      // Use the "provided" scope to not include the Jena dependencies in the plugin JAR
-      "org.apache.jena" % "jena-core" % jenaV % "provided,test",
-      "org.apache.jena" % "jena-arq" % jenaV % "provided,test",
-      "org.apache.jena" % "jena-fuseki-main" % jenaV % "provided,test",
-    ),
-    // Depending on the jena and jena-sparql projects also puts *their* Jena dependencies on our
-    // runtime classpath, where the "provided" scope above cannot get rid of them, and assembly
-    // would pack them into the JAR. Keep only the class and resource directories of the Jelly
+    libraryDependencies ++= (jenaDeps ++ fusekiDeps).map(_ % Provided),
+    // Depending on the jena and jena-sparql projects also puts *their* compile dependencies (like
+    // protobuf-java, which Jena already ships) on our runtime classpath, and assembly would pack
+    // them into the JAR. Keep only the class and resource directories of the Jelly
     // modules – those are plain directories thanks to exportJars := false at the top of this file,
     // while everything else on this classpath is a JAR.
     assembly / fullClasspath := (Runtime / fullClasspath).value.filterNot(
@@ -632,10 +477,7 @@ lazy val rdf4j = (project in file("rdf4j"))
   .settings(
     name := "jelly-rdf4j",
     description := "Jelly parsers, serializers, and other utilities for RDF4J.",
-    libraryDependencies ++= Seq(
-      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV,
-      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV,
-    ),
+    libraryDependencies ++= rdf4jDeps.map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -645,6 +487,7 @@ lazy val rdf4jPatch = (project in file("rdf4j-patch"))
   .settings(
     name := "jelly-rdf4j-patch",
     description := "Jelly-Patch integration for RDF4J.",
+    libraryDependencies ++= rdf4jDeps.map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -655,10 +498,7 @@ lazy val rdf4jSparql = (project in file("rdf4j-sparql"))
     name := "jelly-rdf4j-sparql",
     description := "Jelly-SPARQL integration for RDF4J: reading and writing " +
       "SPARQL query results.",
-    libraryDependencies ++= Seq(
-      // Brings in rdf4j-query, which the rdf4j module does not need on its own
-      "org.eclipse.rdf4j" % "rdf4j-queryresultio-api" % rdf4jV,
-    ),
+    libraryDependencies ++= (rdf4jDeps ++ rdf4jSparqlDeps).map(_ % Provided),
     commonSettings,
     commonJavaSettings,
   )
@@ -669,12 +509,7 @@ lazy val rdf4jSparql = (project in file("rdf4j-sparql"))
 lazy val rdf4jPlugin = (project in file("rdf4j-plugin"))
   .settings(
     name := "jelly-rdf4j-plugin",
-    libraryDependencies ++= Seq(
-      // Use the "provided" scope to not include the RDF4J dependencies in the plugin JAR
-      "org.eclipse.rdf4j" % "rdf4j-model" % rdf4jV % "provided,test",
-      "org.eclipse.rdf4j" % "rdf4j-rio-api" % rdf4jV % "provided,test",
-      "org.eclipse.rdf4j" % "rdf4j-queryresultio-api" % rdf4jV % "provided,test",
-    ),
+    libraryDependencies ++= (rdf4jDeps ++ rdf4jSparqlDeps).map(_ % Provided),
     assembly / fullClasspath := (Runtime / fullClasspath).value.filter(entry =>
       !entry.data.name.endsWith(".jar") || entry.data.name.startsWith("protobuf-java"),
     ),
@@ -742,6 +577,8 @@ lazy val integrationTests = (project in file("integration-tests"))
   .settings(
     publishArtifact := false,
     name := "jelly-integration-tests",
+    libraryDependencies ++=
+      (jenaDeps ++ jenaPatchDeps ++ fusekiDeps ++ rdf4jDeps ++ rdf4jSparqlDeps).map(_ % Test),
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV % Test,
@@ -789,6 +626,7 @@ lazy val examples = (project in file("examples"))
   .settings(
     publishArtifact := false,
     name := "jelly-examples",
+    libraryDependencies ++= jenaDeps ++ rdf4jDeps,
     libraryDependencies ++= Seq(
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
@@ -822,8 +660,8 @@ lazy val jmh = (project in file("jmh"))
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlxlsx" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlods" % rdf4jV,
       "com.github.luben" % "zstd-jni" % "1.5.7-20",
-      "org.apache.jena" % "jena-arq" % jenaBenchV,
-    ),
+      // The library modules only have Jena and RDF4J as provided dependencies
+    ) ++ jenaDeps ++ rdf4jDeps ++ rdf4jSparqlDeps,
     excludeDependencies += ExclusionRule("org.apache.jena", "jena-fuseki-main"),
     // The cache lives outside target/, so that `clean` does not throw away half a gigabyte of
     // downloads
@@ -934,11 +772,8 @@ lazy val root = (project in file("."))
     crunchyProtocPlugin,
     rdfProtos,
     core,
-    coreProtosGoogle,
     corePatch,
-    corePatchProtosGoogle,
     coreSparql,
-    coreSparqlProtosGoogle,
     jena,
     jenaPatch,
     jenaSparql,

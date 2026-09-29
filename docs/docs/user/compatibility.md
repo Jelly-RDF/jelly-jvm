@@ -14,6 +14,8 @@ Jelly-JVM 2.x.x was written entirely in Scala 3, using [Scala LTS releases](http
 
 Major-version upgrades of RDF4J and Apache Jena (e.g., updating from 4.0.x to 5.0.x) are done in Jelly-JVM MINOR releases. Jelly-JVM generally does not use any complex features of these libraries, so it should work with multiple versions without any problems.
 
+Since Jelly-JVM 4.0.0, Jena and RDF4J are `provided` dependencies – you choose the version by adding them to your project yourself ([more details](../getting-started-devs.md#quick-start-apache-jena)). Jelly-JVM is built with the latest supported releases of both, and CI also tests the oldest supported Jena version.
+
 If you do encounter any compatibility issues, please report them on the [issue tracker](https://github.com/Jelly-RDF/jelly-jvm/issues).
 
 ## Neo4j
