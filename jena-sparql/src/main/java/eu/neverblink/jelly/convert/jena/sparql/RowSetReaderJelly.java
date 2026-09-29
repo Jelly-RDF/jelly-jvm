@@ -13,7 +13,6 @@ import eu.neverblink.protoc.java.runtime.DelimitedMessageReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -27,7 +26,6 @@ import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.exec.QueryExecResult;
 import org.apache.jena.sparql.exec.RowSet;
-import org.apache.jena.sparql.exec.RowSetStream;
 import org.apache.jena.sparql.util.Context;
 
 /**
@@ -149,32 +147,61 @@ public final class RowSetReaderJelly implements RowSetReader {
             throw new RiotException("No result set header found in the input.");
         }
         // Stream the rest of the frames lazily
-        final Iterator<Binding> iterator = new Iterator<>() {
-            @Override
-            public boolean hasNext() {
-                while (!handler.hasRow()) {
-                    // The rows before an error are still returned, the error comes after them
-                    handler.checkError();
-                    try {
-                        if (!reader.readFrame()) {
-                            return false;
-                        }
-                    } catch (IOException e) {
-                        throw new RiotException(e);
-                    }
-                }
-                return true;
-            }
+        return new JellyRowSet(handler, reader);
+    }
 
-            @Override
-            public Binding next() {
-                if (!hasNext()) {
-                    throw new NoSuchElementException();
+    /**
+     * The rows of a result set, read frame by frame as they are asked for. The same as Jena's
+     * RowSetStream over an iterator, minus a layer.
+     */
+    private static final class JellyRowSet implements RowSet {
+
+        private final RowCollector handler;
+        private final FrameReader reader;
+        private long rowNumber = 0;
+
+        JellyRowSet(RowCollector handler, FrameReader reader) {
+            this.handler = handler;
+            this.reader = reader;
+        }
+
+        @Override
+        public boolean hasNext() {
+            while (!handler.hasRow()) {
+                // The rows before an error are still returned, the error comes after them
+                handler.checkError();
+                try {
+                    if (!reader.readFrame()) {
+                        return false;
+                    }
+                } catch (IOException e) {
+                    throw new RiotException(e);
                 }
-                return handler.nextRow();
             }
-        };
-        return RowSetStream.create(handler.vars, iterator);
+            return true;
+        }
+
+        @Override
+        public Binding next() {
+            if (!handler.hasRow() && !hasNext()) {
+                throw new NoSuchElementException();
+            }
+            rowNumber++;
+            return handler.nextRow();
+        }
+
+        @Override
+        public List<Var> getResultVars() {
+            return handler.vars;
+        }
+
+        @Override
+        public long getRowNumber() {
+            return rowNumber;
+        }
+
+        @Override
+        public void close() {}
     }
 
     /**
