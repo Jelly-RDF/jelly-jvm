@@ -152,7 +152,7 @@ public final class RowSetReaderJelly implements RowSetReader {
         final Iterator<Binding> iterator = new Iterator<>() {
             @Override
             public boolean hasNext() {
-                while (handler.queue.isEmpty()) {
+                while (!handler.hasRow()) {
                     // The rows before an error are still returned, the error comes after them
                     handler.checkError();
                     try {
@@ -171,7 +171,7 @@ public final class RowSetReaderJelly implements RowSetReader {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
-                return handler.queue.poll();
+                return handler.nextRow();
             }
         };
         return RowSetStream.create(handler.vars, iterator);
@@ -240,7 +240,14 @@ public final class RowSetReaderJelly implements RowSetReader {
         private Var[] distinctVars = null;
         private Boolean askResult = null;
         private String error = null;
-        private final ArrayDeque<Binding> queue = new ArrayDeque<>();
+        // The frames decoded but not read yet: their columns and row counts. Bindings are made
+        // from them only when they are read.
+        private final ArrayDeque<Object[][]> frames = new ArrayDeque<>();
+        private final ArrayDeque<Integer> frameRows = new ArrayDeque<>();
+        // The frame being read, and the index of its next row
+        private Object[][] current = null;
+        private int currentRows = 0;
+        private int next = 0;
 
         @Override
         public void handleTrailer(String error) {
@@ -273,34 +280,51 @@ public final class RowSetReaderJelly implements RowSetReader {
 
         @Override
         public void handleRow(Node[] row) {
-            final BindingBuilder builder = BindingFactory.builder();
-            for (int i = 0; i < row.length; i++) {
-                if (row[i] != null) {
-                    builder.add(vars.get(i), row[i]);
-                }
+            // Not called, as handleRows is overridden. A row is a frame of one row.
+            final Object[][] columns = new Object[row.length][];
+            for (int v = 0; v < row.length; v++) {
+                columns[v] = new Object[] { row[v] };
             }
-            queue.add(builder.build());
+            handleRows(columns, 1, row);
         }
 
         @Override
         public void handleRows(Object[][] columns, int rowCount, Node[] row) {
-            // Straight from the columns, without copying each row anywhere
-            final int width = columns.length;
-            final Var[] distinct = distinctVars;
-            for (int r = 0; r < rowCount; r++) {
-                if (distinct == null) {
-                    final BindingBuilder builder = BindingFactory.builder();
-                    for (int v = 0; v < width; v++) {
-                        final Node node = (Node) columns[v][r];
-                        if (node != null) {
-                            builder.add(vars.get(v), node);
-                        }
-                    }
-                    queue.add(builder.build());
-                    continue;
-                }
-                queue.add(new JellyBinding(BindingFactory.noParent, distinct, columns, r));
+            if (rowCount > 0) {
+                frames.add(columns);
+                frameRows.add(rowCount);
             }
+        }
+
+        /** Whether a row is decoded, but not read yet. */
+        boolean hasRow() {
+            while (next >= currentRows) {
+                final Object[][] columns = frames.poll();
+                if (columns == null) {
+                    return false;
+                }
+                current = columns;
+                currentRows = frameRows.poll();
+                next = 0;
+            }
+            return true;
+        }
+
+        /** The next row, if {@link #hasRow()}. Straight from the columns: nothing is copied. */
+        Binding nextRow() {
+            final int r = next++;
+            final Var[] distinct = distinctVars;
+            if (distinct != null) {
+                return new JellyBinding(BindingFactory.noParent, distinct, current, r);
+            }
+            final BindingBuilder builder = BindingFactory.builder();
+            for (int v = 0; v < current.length; v++) {
+                final Node node = (Node) current[v][r];
+                if (node != null) {
+                    builder.add(vars.get(v), node);
+                }
+            }
+            return builder.build();
         }
 
         @Override
