@@ -3,6 +3,7 @@ package eu.neverblink.jelly.core.sparql.internal;
 import com.google.protobuf.ByteString;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.InternalApi;
+import eu.neverblink.jelly.core.NameDecoder;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.internal.DecoderBase;
@@ -362,6 +363,8 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
      */
     private final class IriState {
 
+        // The lookup tables exist by the time a column is decoded
+        private final NameDecoder<TNode> names = getNameDecoder();
         private int lastPrefixId = 0;
         private int lastNameId = 0;
 
@@ -375,7 +378,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 nameId = lastNameId + 1;
             }
             lastNameId = nameId;
-            return getNameDecoder().decodeRaw(prefixId, nameId);
+            return names.decodeRaw(prefixId, nameId);
         }
     }
 
@@ -753,7 +756,21 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         private static final int BNODE = 2;
         private static final int TRIPLE = 3;
 
-        private final ByteString kinds;
+        // For each byte of the kinds field, how many of its 4 values are of each kind, in 16-bit
+        // lanes: IRIs in the lowest, then literals, blank nodes and triple terms
+        private static final long[] KIND_COUNTS = new long[256];
+
+        static {
+            for (int b = 0; b < 256; b++) {
+                long counts = 0;
+                for (int i = 0; i < 4; i++) {
+                    counts += 1L << (((b >>> (i << 1)) & 3) << 4);
+                }
+                KIND_COUNTS[b] = counts;
+            }
+        }
+
+        private final byte[] kinds;
         private final int valueCount;
         private final ValueReader<TNode> iris;
         private final ValueReader<TNode> literals;
@@ -773,16 +790,33 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             final int tripleCount = column.getTripleTerms().size();
             // The layouts of the sub-columns are ignored
             this.valueCount = iriCount + literalCount + bnodeCount + tripleCount;
-            this.kinds = column.getKinds();
-            if (kinds.size() != (valueCount + 3) >>> 2) {
+            final ByteString kindsField = column.getKinds();
+            if (kindsField.size() != (valueCount + 3) >>> 2) {
                 throw new RdfProtoDeserializationError(
-                    "Corrupt polymorphic column: %d bytes of kinds for %d values.".formatted(kinds.size(), valueCount)
+                    "Corrupt polymorphic column: %d bytes of kinds for %d values.".formatted(
+                        kindsField.size(),
+                        valueCount
+                    )
                 );
             }
+            // A copy, which is read faster than the ByteString, and a quarter of the value count long
+            this.kinds = kindsField.toByteArray();
             // Check that the kinds agree with the sub-columns, so that decoding cannot run out of
-            // values in one of them
+            // values in one of them. The bytes that hold 4 values are counted by the table, 16383
+            // at most at a time, so that no 16-bit lane overflows.
             final int[] counts = new int[4];
-            for (int i = 0; i < valueCount; i++) {
+            final int fullBytes = valueCount >>> 2;
+            for (int start = 0; start < fullBytes; start += 16383) {
+                final int end = Math.min(fullBytes, start + 16383);
+                long lanes = 0;
+                for (int b = start; b < end; b++) {
+                    lanes += KIND_COUNTS[kinds[b] & 0xff];
+                }
+                for (int k = 0; k < 4; k++) {
+                    counts[k] += (int) (lanes >>> (k << 4)) & 0xffff;
+                }
+            }
+            for (int i = fullBytes << 2; i < valueCount; i++) {
                 counts[kindAt(i)]++;
             }
             if (
@@ -796,7 +830,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 );
             }
             final int unusedBits = (valueCount & 3) == 0 ? 0 : 8 - ((valueCount & 3) << 1);
-            if (unusedBits != 0 && (kinds.byteAt(kinds.size() - 1) & 0xff) >>> (8 - unusedBits) != 0) {
+            if (unusedBits != 0 && (kinds[kinds.length - 1] & 0xff) >>> (8 - unusedBits) != 0) {
                 throw new RdfProtoDeserializationError(
                     "Corrupt polymorphic column: unused bits of the kinds are not 0."
                 );
@@ -808,7 +842,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
 
         private int kindAt(int i) {
-            return (kinds.byteAt(i >>> 2) >>> ((i & 3) << 1)) & 3;
+            return (kinds[i >>> 2] >>> ((i & 3) << 1)) & 3;
         }
 
         @Override

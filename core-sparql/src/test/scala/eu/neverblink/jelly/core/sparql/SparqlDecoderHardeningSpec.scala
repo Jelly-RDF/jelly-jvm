@@ -237,6 +237,35 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
         .getMessage should include("do not match the number of values")
     }
 
+    // The kinds are counted 65532 values at a time
+    val longPolyValues = (0 until 70001).map { i =>
+      if i % 3 == 0 then PolyValue.Bnode(s"b$i") else PolyValue.Literal(s"l$i")
+    }
+
+    "decode a polymorphic column longer than one count of its kinds" in {
+      val collector = ResultsCollector()
+      newDecoder(collector).ingestFrame(
+        oneVariableFrame(longPolyValues.size).addPolyColumns(
+          SparqlColumns.polyColumn(longPolyValues),
+        ),
+      )
+      collector.rows.size shouldBe longPolyValues.size
+      for i <- Seq(0, 1, 65531, 65532, 65533, 70000) do
+        collector.rows(i).head shouldBe (
+          if i % 3 == 0 then BlankNode(s"b$i") else SimpleLiteral(s"l$i")
+        )
+    }
+
+    "reject polymorphic kinds that do not match the sub-columns, past the first count" in {
+      val column = SparqlColumns.polyColumn(longPolyValues)
+      // Value 69998 is a literal, the kinds say it is a blank node
+      val kinds = SparqlColumns.kindsOf(column).updated(69998, 2)
+      column.setKinds(SparqlColumns.kindsBytes(kinds))
+      expectRejected(
+        newDecoder().ingestFrame(oneVariableFrame(longPolyValues.size).addPolyColumns(column)),
+      ).getMessage should include("do not match the number of values")
+    }
+
     "reject polymorphic kinds with unused bits set" in {
       val column = SparqlColumns.polyColumn(Seq(PolyValue.Bnode("a"), PolyValue.Literal("x")))
       // Values 0 and 1 in the low four bits, and a stray bit above them
