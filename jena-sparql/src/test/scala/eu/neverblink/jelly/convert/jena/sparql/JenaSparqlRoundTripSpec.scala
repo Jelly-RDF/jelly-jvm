@@ -84,6 +84,39 @@ class JenaSparqlRoundTripSpec extends AnyWordSpec, Matchers, JenaTest:
       gotRows shouldBe expected(vars, rows)
     }
 
+    "take each value that binding.get gives, however the binding holds its variables" in {
+      val vars = Seq("x", "y", "z")
+      val resultVars = vars.map(Var.alloc)
+      // Variables equal to the result variables, but not the same objects
+      def v(name: String) = Var.alloc(name)
+      val parent = BindingFactory.builder().add(v("y"), iri("py")).add(v("w"), iri("pw")).build()
+      val bindings = Seq(
+        // Another order, and a variable that is not a result variable
+        BindingFactory.builder().add(v("z"), iri("z1")).add(v("w"), iri("w1"))
+          .add(v("x"), iri("x1")).build(),
+        // Some values in the parent binding
+        BindingFactory.binding(parent, v("x"), iri("x2")),
+        // Bound in both: the binding's own value comes first
+        BindingFactory.binding(BindingFactory.binding(v("x"), iri("parent")), v("x"), iri("own")),
+        // The result variables themselves, all of them
+        BindingFactory.builder().add(resultVars(0), iri("x4")).add(resultVars(1), iri("y4"))
+          .add(resultVars(2), iri("z4")).build(),
+        BindingFactory.empty(),
+      )
+      val out = ByteArrayOutputStream()
+      RowSetWriterJelly(RowSetWriterJelly.Options(), JenaSparqlConverterFactory.getInstance())
+        .write(out, RowSetStream.create(resultVars.asJava, bindings.iterator.asJava), null)
+      val (gotVars, gotRows) = materialize(
+        RowSetReaderJelly(RowSetReaderJelly.Options(), JenaSparqlConverterFactory.getInstance())
+          .read(ByteArrayInputStream(out.toByteArray), null),
+      )
+      gotVars shouldBe vars
+      gotRows shouldBe bindings.map(b =>
+        resultVars.flatMap(rv => Option(b.get(rv)).map(rv.getVarName -> _)).toMap,
+      )
+      gotRows(2)("x") shouldBe iri("own")
+    }
+
     "round-trip across multiple frames" in {
       val vars = Seq("x")
       val rows = (1 to 25).map(i => Seq[Node | Null](iri(s"node$i")))

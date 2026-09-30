@@ -11,7 +11,9 @@ import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
 import org.apache.jena.graph.Node;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.rowset.RowSetWriter;
@@ -104,6 +106,7 @@ public final class RowSetWriterJelly implements RowSetWriter {
         // Repeatedly iterating over an array copy is faster than over a List.
         final Var[] varArray = vars.toArray(new Var[0]);
         final Node[] row = new Node[varArray.length];
+        final RowFiller filler = new RowFiller(varArray, row);
         // Frames are budgeted in values, so the row limit depends on how wide the result set is.
         // A zero-variable result set carries no values at all, hence the lower bound of one row.
         final int rowsPerFrame = Math.max(1, options.maxValuesPerFrame() / Math.max(1, row.length));
@@ -112,10 +115,7 @@ public final class RowSetWriterJelly implements RowSetWriter {
             try {
                 int rowsInFrame = 0;
                 while (rowSet.hasNext()) {
-                    final Binding binding = rowSet.next();
-                    for (int i = 0; i < varArray.length; i++) {
-                        row[i] = binding.get(varArray[i]);
-                    }
+                    filler.fill(rowSet.next());
                     if (!encoder.appendRow(row)) {
                         // The frame filled up its lookup tables before reaching the row limit
                         if (!options.delimited()) {
@@ -150,6 +150,66 @@ public final class RowSetWriterJelly implements RowSetWriter {
             frames.flush();
         } catch (IOException e) {
             throw new RiotException(e);
+        }
+    }
+
+    /**
+     * Copies the values of a binding into the row, in the order of the result variables.
+     * <p>
+     * {@code binding.get(var)} finds a variable by comparing it with each variable of the binding
+     * in turn, and two different variables with names of the same length are compared as strings.
+     * Going through the binding with {@code forEach} instead gives each variable with its value.
+     * They mostly come in the order of the result variables, so the next column is checked first,
+     * by identity.
+     */
+    private static final class RowFiller implements BiConsumer<Var, Node> {
+
+        private final Var[] vars;
+        private final Node[] row;
+        // The column after the last one filled
+        private int next;
+
+        RowFiller(Var[] vars, Node[] row) {
+            this.vars = vars;
+            this.row = row;
+        }
+
+        void fill(Binding binding) {
+            Arrays.fill(row, null);
+            next = 0;
+            binding.forEach(this);
+        }
+
+        @Override
+        public void accept(Var var, Node node) {
+            int i = next;
+            if (i >= vars.length || vars[i] != var) {
+                i = indexOf(var);
+                if (i < 0) {
+                    // Not a result variable
+                    return;
+                }
+            }
+            // A binding lists its own variables before its parent's: the first value is the one
+            // that binding.get(var) would give
+            if (row[i] == null) {
+                row[i] = node;
+            }
+            next = i + 1;
+        }
+
+        private int indexOf(Var var) {
+            for (int i = 0; i < vars.length; i++) {
+                if (vars[i] == var) {
+                    return i;
+                }
+            }
+            for (int i = 0; i < vars.length; i++) {
+                if (vars[i].equals(var)) {
+                    return i;
+                }
+            }
+            return -1;
         }
     }
 
