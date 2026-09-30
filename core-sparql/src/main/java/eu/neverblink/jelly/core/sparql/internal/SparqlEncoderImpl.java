@@ -114,6 +114,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         // a run of unbound cells. Whenever runLength is 0, runNode is null too.
         Object runNode = null;
         int runLength = 0;
+        // runNode's hashCode(), while a bound run is active
+        int runHash = 0;
         // Number of values emitted exactly once since the last layout exception
         int skip = 0;
 
@@ -1173,14 +1175,19 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
             col.runLength = 1;
             return;
         }
-        // runNode != null means an active bound run
-        if (node.equals(col.runNode)) {
+        // runNode != null means an active bound run. Most cells differ from the one before, and
+        // their hash codes (cached by the nodes or their strings) tell them apart without
+        // comparing two strings of the same length byte by byte.
+        final int hash = node.hashCode();
+        final Object runNode = col.runNode;
+        if (runNode != null && hash == col.runHash && node.equals(runNode)) {
             col.runLength++;
             return;
         }
         finalizeRun(col);
         col.runLength = 1;
         col.runNode = node;
+        col.runHash = hash;
         encodeValue(col, node);
     }
 
