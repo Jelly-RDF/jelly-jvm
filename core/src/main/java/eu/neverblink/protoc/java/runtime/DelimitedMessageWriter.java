@@ -13,14 +13,6 @@ import java.util.Arrays;
  * protobuf's array encoder, which does not have to check for the end of a buffer on every write,
  * as the stream encoder does. The array collects messages until the next one does not fit, and is
  * then written to the stream in one call.
- * <p>
- * Made with a {@link CodedOutputStream} instead of an {@link OutputStream}, it hands each message
- * to that stream as soon as it is serialized, in one {@link CodedOutputStream#writeRawBytes} call.
- * That costs one more copy of the message, but keeps its bytes in order with anything else written
- * to the same {@link CodedOutputStream}.
- * <p>
- * The array is as large as the largest message written so far, and at least
- * {@link #INITIAL_BUFFER_SIZE}.
  */
 public final class DelimitedMessageWriter {
 

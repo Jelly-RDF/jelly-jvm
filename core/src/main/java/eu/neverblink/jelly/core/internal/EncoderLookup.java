@@ -8,12 +8,7 @@ import java.util.Arrays;
  * A lookup table for NodeEncoder, used for indexing datatypes, IRI prefixes, and IRI names.
  * <p>
  * When the table is full, it evicts entries in id order, skipping those used recently. This way
- * new entries mostly take the previous id + 1, which the stream can write as 0 (Jelly-RDF) or as
- * a run of consecutive ids (Jelly-SPARQL), and the stream compresses much better than with LRU,
- * which hands out ids all over the table. See
- * <a href="https://github.com/Jelly-RDF/jelly-jvm/issues/442">jelly-jvm#442</a>.
- * <p>
- * All the bookkeeping is one number per entry: when it was last used ({@link #LAST_USE}).
+ * new entries mostly take the previous id + 1, which leads to smaller file sizes.
  */
 @InternalApi
 final class EncoderLookup {
@@ -87,13 +82,8 @@ final class EncoderLookup {
     static final int MAX_TABLE_SIZE = ID_MASK;
 
     /**
-     * What the table keeps for each id, {@link #STRIDE} ints from {@code id * STRIDE}: the
-     * {@link #LAST_USE}, {@link #SERIAL} and {@link #HOME_SLOT} of its entry. In one array, so
-     * that the encoder checking an entry's serial and then marking it as used touches one cache
-     * line, not two.
-     * <p>
-     * Replaced by a longer array when the lookup grows, so a caller must not hold on to it across
-     * a call that can add an entry.
+     * ID data: {@link #STRIDE} ints from {@code id * STRIDE}: the
+     * {@link #LAST_USE}, {@link #SERIAL} and {@link #HOME_SLOT} of its entry.
      */
     private int[] entries;
 
@@ -110,7 +100,6 @@ final class EncoderLookup {
 
     /**
      * The serial number of the entry, incremented each time the entry is replaced in the table.
-     * Only kept if the lookup was made with serials.
      * This could theoretically overflow and cause bogus cache hits, but it's enormously
      * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that
      * causes this to happen.
@@ -123,11 +112,7 @@ final class EncoderLookup {
     /** How many times the table was used (see {@link #LAST_USE}). */
     private int now;
 
-    /**
-     * An entry is cold if it was not used in this many uses: half of the table. Measured on the
-     * RiverBench datasets, this gives the smallest streams (after compression); at a quarter of the
-     * table, the streams of some datasets got much bigger.
-     */
+    /** An entry is cold if it was not used in this many uses: half of the table. */
     private final int coldAge;
 
     /** How many ids {@link #victim} looks at when the next id in order is not cold. */
@@ -418,10 +403,6 @@ final class EncoderLookup {
      * the least recently used one that is not pinned among {@link #SAMPLES} ids spread evenly over
      * the table, starting with that next id. The search for a cold entry then goes on from the id
      * picked, which is usually among a run of other old entries.
-     * <p>
-     * This comes close enough to LRU where it matters. Looking at the ids after the next one
-     * instead of ids spread over the table does not: they were mostly added at about the same
-     * time, so they are mostly used just as recently.
      */
     private int victim() {
         final int size = this.size;

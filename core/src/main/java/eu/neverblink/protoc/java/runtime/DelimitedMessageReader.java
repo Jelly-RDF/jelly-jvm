@@ -13,9 +13,6 @@ import java.util.Arrays;
  * message, but faster: each message is read into a buffer that is reused, and parsed from there.
  * Parsing from an array does not have to check for the end of a buffer or of a limit on every
  * read, as parsing from a stream does.
- * <p>
- * The buffer grows only as the bytes of a message arrive, so a corrupt length prefix cannot make
- * it allocate more than the input really holds.
  *
  * @param <T> the type of the messages
  */

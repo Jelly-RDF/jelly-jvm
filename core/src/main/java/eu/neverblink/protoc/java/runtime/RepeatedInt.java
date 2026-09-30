@@ -16,9 +16,7 @@ public final class RepeatedInt {
     int[] values = EMPTY_ARRAY;
     int size = 0;
 
-    // The size of the values as packed uint32 varints, and how many values that was for: the last
-    // computeSerializedSize measured them, and writing them needs the same number again. Adding a
-    // value changes size, so it is not stored on every add; clear() resets it.
+    // The size of the values as packed uint32 varints, and how many values that was for.
     private int uint32Size;
     private int uint32SizeCount = -1;
 

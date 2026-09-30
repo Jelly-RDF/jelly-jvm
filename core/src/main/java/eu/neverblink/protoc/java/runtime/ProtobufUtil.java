@@ -75,7 +75,7 @@ public final class ProtobufUtil {
     public static void readPackedUInt32(CodedInputStream input, RepeatedInt store) throws IOException {
         final int length = input.readRawVarint32();
         final int oldLimit = input.pushLimit(length);
-        // Every value takes at least one byte, so this is room for all of them, instead of growing
+        // Every value takes at least one byte, so we make room for all of them, instead of growing
         // the array many times. Capped: a stream decoder does not know yet if the input really
         // has that many bytes.
         store.reserve(Math.min(length, MAX_PACKED_RESERVE));
