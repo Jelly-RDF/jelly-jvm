@@ -1,165 +1,81 @@
 package eu.neverblink.jelly.core.sparql.internal;
 
 import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
-import eu.neverblink.jelly.core.proto.v1.RdfIri;
-import eu.neverblink.jelly.core.proto.v1.RdfLiteral2;
 import eu.neverblink.jelly.core.proto.v1.RdfTripleTerm;
-import eu.neverblink.jelly.core.proto.v1.sparql.SparqlTerm;
-import eu.neverblink.protoc.java.runtime.MessageCollection;
-import java.util.AbstractCollection;
+import eu.neverblink.protoc.java.runtime.RepeatedInt;
+import eu.neverblink.protoc.java.runtime.RepeatedString;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
- * Reusable store for the SparqlTerm wrappers of a polymorphic column.
+ * Buffers for fields of a SparqlLiteralColumn.
+ * Used for literal columns that mix kinds, and for the literals of polymorphic columns.
  */
-final class TermBuffer
-    extends AbstractCollection<SparqlTerm>
-    implements MessageCollection<SparqlTerm, SparqlTerm.Mutable>
-{
+final class LiteralOut {
 
-    private SparqlTerm.Mutable[] terms = new SparqlTerm.Mutable[0];
-    private int size = 0;
+    final RepeatedString lexValues = RepeatedString.newEmptyInstance();
+    final RepeatedInt literalKinds = RepeatedInt.newEmptyInstance();
+    final RepeatedString langtags = RepeatedString.newEmptyInstance();
+    // Parallel to langtags, always filled in while the column is built
+    final RepeatedInt langtagDirections = RepeatedInt.newEmptyInstance();
 
-    @Override
-    public SparqlTerm.Mutable appendMessage() {
-        if (size == terms.length) {
-            terms = Arrays.copyOf(terms, Math.max(8, terms.length * 2));
+    /**
+     * The index of a language tag with a base direction in the langtags lookup, added if it is new.
+     * Linear: a column has very few distinct tags.
+     */
+    int langtagIndex(String langtag, RdfBaseDirection direction) {
+        final int dir = direction.getNumber();
+        final int size = langtags.size();
+        for (int i = 0; i < size; i++) {
+            if (langtagDirections.get(i) == dir && langtag.equals(langtags.get(i))) {
+                return i;
+            }
         }
-        SparqlTerm.Mutable term = terms[size];
-        if (term == null) {
-            term = SparqlTerm.newInstance();
-            terms[size] = term;
-        } else {
-            // The setters leave the cached serialized size alone, so a reused wrapper has to be
-            // cleared - otherwise the frame would be written with the previous value's length.
-            term.clear();
-        }
-        size++;
-        return term;
-    }
-
-    @Override
-    public int size() {
+        langtags.add(langtag);
+        langtagDirections.add(dir);
         return size;
     }
 
-    @Override
-    public void clear() {
-        // Keeps the wrappers around for the next frame
-        size = 0;
-    }
-
-    @Override
-    public Iterator<SparqlTerm> iterator() {
-        return new Iterator<>() {
-            private int index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return index < size;
-            }
-
-            @Override
-            public SparqlTerm next() {
-                if (index >= size) {
-                    throw new NoSuchElementException();
+    /**
+     * Rewrites the kinds and directions into their short forms: an empty kinds list when every
+     * literal is simple, one entry when every literal has the same kind, and an empty directions
+     * list when no tag has a base direction.
+     */
+    void compact() {
+        final int count = literalKinds.size();
+        if (count > 0) {
+            final int first = literalKinds.get(0);
+            boolean same = true;
+            for (int i = 1; i < count; i++) {
+                if (literalKinds.get(i) != first) {
+                    same = false;
+                    break;
                 }
-                return terms[index++];
             }
-        };
-    }
-}
-
-/**
- * Reusable store for RdfLiteral messages of a mixed-datatype literal column
- * or a polymorphic column. Literal values are kept as buffer entries while the frame is
- * built (see ColumnState), so messages only get materialized here, at endFrame().
- */
-final class LiteralBuffer
-    extends AbstractCollection<RdfLiteral2>
-    implements MessageCollection<RdfLiteral2, RdfLiteral2.Mutable>
-{
-
-    private RdfLiteral2.Mutable[] literals = new RdfLiteral2.Mutable[0];
-    private int size = 0;
-
-    @Override
-    public RdfLiteral2.Mutable appendMessage() {
-        if (size == literals.length) {
-            literals = Arrays.copyOf(literals, Math.max(8, literals.length * 2));
-        }
-        RdfLiteral2.Mutable literal = literals[size];
-        if (literal == null) {
-            literal = RdfLiteral2.newInstance();
-            literals[size] = literal;
-        } else {
-            literal.clear();
-        }
-        size++;
-        return literal;
-    }
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public void clear() {
-        size = 0;
-    }
-
-    @Override
-    public Iterator<RdfLiteral2> iterator() {
-        return new Iterator<>() {
-            private int index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return index < size;
-            }
-
-            @Override
-            public RdfLiteral2 next() {
-                if (index >= size) {
-                    throw new NoSuchElementException();
+            if (same) {
+                literalKinds.clear();
+                if (first != 0) {
+                    literalKinds.add(first);
                 }
-                return literals[index++];
             }
-        };
-    }
-}
-
-/**
- * Reusable store for the RdfIri messages to be used in polymorphic columns.
- * IRI values are kept as plain ints while the frame is built (see ColumnState), so the
- * messages only get materialized here, at endFrame(), and only for polymorphic columns.
- */
-final class IriBuffer {
-
-    private RdfIri.Mutable[] iris = new RdfIri.Mutable[0];
-    private int size = 0;
-
-    RdfIri.Mutable append() {
-        if (size == iris.length) {
-            iris = Arrays.copyOf(iris, Math.max(8, iris.length * 2));
         }
-        RdfIri.Mutable iri = iris[size];
-        if (iri == null) {
-            iri = RdfIri.newInstance();
-            iris[size] = iri;
-        } else {
-            iri.clear();
+        boolean anyDirection = false;
+        for (int i = 0; i < langtagDirections.size(); i++) {
+            if (langtagDirections.get(i) != 0) {
+                anyDirection = true;
+                break;
+            }
         }
-        size++;
-        return iri;
+        if (!anyDirection) {
+            langtagDirections.clear();
+        }
     }
 
     void clear() {
-        size = 0;
+        lexValues.clear();
+        literalKinds.clear();
+        langtags.clear();
+        langtagDirections.clear();
     }
 }
 
@@ -170,29 +86,41 @@ final class IriBuffer {
  */
 final class PolyBuffers {
 
-    final TermBuffer terms = new TermBuffer();
-    final LiteralBuffer literals = new LiteralBuffer();
-    final IriBuffer iris = new IriBuffer();
+    // Literals of a mixed-kind literal column, or of a polymorphic column
+    final LiteralOut literals = new LiteralOut();
+    // IRIs of a polymorphic column: name ids (with the next-name inference applied) and raw
+    // prefix ids, rewritten into their final form when the frame is built
+    final RepeatedInt iriNameIds = RepeatedInt.newEmptyInstance();
+    final RepeatedInt iriPrefixIds = RepeatedInt.newEmptyInstance();
+    // Blank node labels of a polymorphic column
+    final RepeatedString bnodes = RepeatedString.newEmptyInstance();
+    // Term types of a polymorphic column, 2 bits per value
+    byte[] kinds = new byte[16];
 
     // The language tag and base direction shared by every literal of the column in the current
     // frame, while the column's datatype state says so. Kept here rather than in ColumnState,
     // because it's rarely used and ColumnState is much more performance-sensitive (shouldn't use
     // more cache lines).
     String langtag = null;
-    RdfBaseDirection direction = RdfBaseDirection.NONE;
+    RdfBaseDirection direction = RdfBaseDirection.UNSPECIFIED;
 
     // The triple terms of the current frame, in value order. Built as messages right away, as
     // they are rare – only their prefix ids are resolved at endFrame().
     final ArrayList<RdfTripleTerm.Mutable> tripleTerms = new ArrayList<>();
+    // IRI name inference state of the triple terms of the column, separate from that of its
+    // IRI values
+    int tripleLastNameId = 0;
     // The largest number of IRIs in one triple term of this column so far, across all frames.
     // Used to size the lookup budget of a frame, as a triple term can need a lookup entry for
     // each of its IRIs.
     int maxTripleTermIris = 0;
 
     void resetFrameState() {
-        terms.clear();
         literals.clear();
-        iris.clear();
+        iriNameIds.clear();
+        iriPrefixIds.clear();
+        bnodes.clear();
         tripleTerms.clear();
+        tripleLastNameId = 0;
     }
 }

@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql;
 
-import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
@@ -8,7 +7,7 @@ import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlMetadata;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
-import eu.neverblink.protoc.java.runtime.ProtobufUtil;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -40,12 +39,15 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
 
     private final Rdf4jSparqlConverterFactory converterFactory;
     private final OutputStream outputStream;
-    private final CodedOutputStream codedOutput;
+    private final DelimitedMessageWriter frames;
 
     // Initialized in startQueryResult()
     private SparqlEncoder<Value> encoder = null;
+    // The same encoder, casted to take rows as Object[].
+    // Storing into a Value[] adds an interface check for Value, which is very slow.
+    private SparqlEncoder<Object> rowEncoder = null;
     private String[] variables = null;
-    private Value[] row = null;
+    private Object[] row = null;
     private int rowsPerFrame;
     private int rowsInFrame;
     private boolean delimited;
@@ -59,7 +61,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     protected AbstractJellySparqlWriter(Rdf4jSparqlConverterFactory converterFactory, OutputStream out) {
         this.converterFactory = converterFactory;
         this.outputStream = out;
-        this.codedOutput = ProtobufUtil.createCodedOutputStream(out);
+        this.frames = new DelimitedMessageWriter(out);
     }
 
     @Override
@@ -81,14 +83,17 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void startQueryResult(List<String> bindingNames) throws TupleQueryResultHandlerException {
         super.startQueryResult(bindingNames);
         delimited = getWriterConfig().get(JellySparqlWriterSettings.DELIMITED_OUTPUT);
         encoder = converterFactory.encoder(SparqlEncoder.Params.of(readOptions()));
         encoder.setVariables(bindingNames);
+        // Only Values go into the row
+        rowEncoder = (SparqlEncoder<Object>) (SparqlEncoder<?>) encoder;
         // Repeatedly iterating over an array copy is faster than over a List.
         variables = bindingNames.toArray(new String[0]);
-        row = new Value[variables.length];
+        row = new Object[variables.length];
         // Frames are budgeted in values, so the row limit depends on how wide the result set is.
         // A zero-variable result set carries no values at all, hence the lower bound of one row.
         final int maxValues = getWriterConfig().get(JellySparqlWriterSettings.MAX_VALUES_PER_FRAME);
@@ -103,7 +108,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
             row[i] = bindings.getValue(variables[i]);
         }
         try {
-            if (!encoder.appendRow(row)) {
+            if (!rowEncoder.appendRow(row)) {
                 // The frame filled up its lookup tables before reaching the row limit
                 if (!delimited) {
                     throw new RdfProtoSerializationError(
@@ -114,7 +119,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
                 }
                 endFrame();
                 // An empty frame always takes the row
-                encoder.appendRow(row);
+                rowEncoder.appendRow(row);
             }
             if (delimited && ++rowsInFrame >= rowsPerFrame) {
                 endFrame();
@@ -151,9 +156,10 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         attachLinks(frame);
         try {
             if (delimited) {
-                frame.writeDelimitedTo(codedOutput);
+                frames.write(frame);
             } else {
-                frame.writeTo(codedOutput);
+                // The only frame of the stream
+                frame.writeTo(outputStream);
             }
             flush();
         } catch (IOException e) {
@@ -167,9 +173,9 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         attachLinks(frame);
         try {
             if (getWriterConfig().get(JellySparqlWriterSettings.DELIMITED_OUTPUT)) {
-                frame.writeDelimitedTo(codedOutput);
+                frames.write(frame);
             } else {
-                frame.writeTo(codedOutput);
+                frame.writeTo(outputStream);
             }
             flush();
         } catch (IOException e) {
@@ -236,7 +242,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     private void endFrame() throws IOException {
         final SparqlResultsFrame frame = encoder.endFrame();
         attachLinks(frame);
-        frame.writeDelimitedTo(codedOutput);
+        frames.write(frame);
         rowsInFrame = 0;
     }
 
@@ -247,9 +253,6 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     }
 
     private void flush() throws IOException {
-        // CodedOutputStream.flush() does not flush the underlying OutputStream,
-        // so we need to do it explicitly.
-        codedOutput.flush();
-        outputStream.flush();
+        frames.flush();
     }
 }

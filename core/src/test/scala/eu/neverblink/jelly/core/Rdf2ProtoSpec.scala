@@ -81,7 +81,7 @@ class Rdf2ProtoSpec extends AnyWordSpec, Matchers:
       )
       for literal <- literals do
         val literal2 = RdfLiteral2.parseFrom(literal.toByteArray)
-        literal2.getDirection shouldBe RdfBaseDirection.NONE
+        literal2.getDirection shouldBe RdfBaseDirection.UNSPECIFIED
         literal2.toByteArray shouldBe literal.toByteArray
     }
   }
@@ -126,7 +126,7 @@ class Rdf2ProtoSpec extends AnyWordSpec, Matchers:
       )
       RdfVersion.forNumber(2) shouldBe RdfVersion.RDF_VERSION_1_2_BASIC
       // ... while the other enums still lose it
-      RdfBaseDirection.values.map(_.getName).toSeq shouldBe Seq("NONE", "LTR", "RTL")
+      RdfBaseDirection.values.map(_.getName).toSeq shouldBe Seq("UNSPECIFIED", "LTR", "RTL")
     }
   }
 

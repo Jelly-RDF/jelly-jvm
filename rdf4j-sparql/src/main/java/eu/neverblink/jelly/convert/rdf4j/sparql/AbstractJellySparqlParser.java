@@ -10,11 +10,15 @@ import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
 import eu.neverblink.jelly.core.utils.IoUtils;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -95,9 +99,10 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
             final InputStream input = response.newInput();
             if (response.isDelimited()) {
+                final var frames = new DelimitedMessageReader<>(input, SparqlResultsFrame.getFactory());
                 SparqlResultsFrame frame;
                 boolean firstFrame = true;
-                while ((frame = SparqlResultsFrame.parseDelimitedFrom(input)) != null) {
+                while ((frame = frames.read()) != null) {
                     lastFrameHadTrailer = ingestFrame(frame, decoder, firstFrame);
                     firstFrame = false;
                 }
@@ -155,6 +160,8 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
     private final class ResultsHandler implements SparqlResultsHandler<Value> {
 
         private List<String> variables = null;
+        // The same, as the set that every binding set returns from getBindingNames()
+        private Set<String> variableSet = null;
         private Boolean askResult = null;
 
         @Override
@@ -169,6 +176,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         @Override
         public void handleVariables(List<String> variables) {
             this.variables = variables;
+            this.variableSet = Collections.unmodifiableSet(new LinkedHashSet<>(variables));
             if (handler != null) {
                 handler.startQueryResult(variables);
             }
@@ -193,6 +201,22 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
                 // The decoder reuses the array between rows, so the binding set gets its own copy
                 handler.handleSolution(new ListBindingSet(variables, row.clone()));
             }
+        }
+
+        @Override
+        public void handleRows(Object[][] columns, int rowCount, Value[] row) {
+            if (handler == null) {
+                return;
+            }
+            for (int r = 0; r < rowCount; r++) {
+                handler.handleSolution(new ColumnBindingSet(variables, variableSet, columns, r));
+            }
+        }
+
+        @Override
+        public boolean keepsColumns() {
+            // The binding sets read their values from the columns
+            return true;
         }
     }
 }

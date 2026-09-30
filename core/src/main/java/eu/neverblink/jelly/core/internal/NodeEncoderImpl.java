@@ -299,14 +299,12 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      */
     private DependentNode<RdfIri> encodeIriWithPrefix(String iri) {
         final var prefixLookup = Objects.requireNonNull(this.prefixLookup);
-        final var prefixSerials = Objects.requireNonNull(prefixLookup.serials);
-        final var nameSerials = Objects.requireNonNull(nameLookup.serials);
         // Slow path, with splitting out the prefix
         final var cachedNode = Objects.requireNonNull(iriNodeCache).get(iri);
         if (
             cachedNode.encoded != null &&
-            cachedNode.lookupSerial1 == nameSerials[cachedNode.lookupPointer1] &&
-            cachedNode.lookupSerial2 == prefixSerials[cachedNode.lookupPointer2]
+            cachedNode.lookupSerial1 == nameLookup.serial(cachedNode.lookupPointer1) &&
+            cachedNode.lookupSerial2 == prefixLookup.serial(cachedNode.lookupPointer2)
         ) {
             nameLookup.onAccess(cachedNode.lookupPointer1);
             prefixLookup.onAccess(cachedNode.lookupPointer2);
@@ -318,34 +316,42 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             i = iri.lastIndexOf('/');
         }
         final int prefixLen = i + 1;
+        final int nameLen = iri.length() - prefixLen;
         final int prefixId;
-        final String prefix;
+        final int nameHash;
         final String lastPrefix = prefixLookup.names[lastPrefixId];
         if (lastPrefix != null && lastPrefix.length() == prefixLen && iri.startsWith(lastPrefix)) {
-            // Same namespace as the previous IRI, so its id can be reused as it is. Only the LRU
-            // order has to be updated.
-            prefix = lastPrefix;
+            // Same namespace as the previous IRI, so its id can be reused as it is. Only the
+            // entry's last use has to be updated.
             prefixId = lastPrefixId;
             prefixLookup.onAccess(prefixId);
+            // The stored prefix has its hash cached already
+            nameHash = EncoderLookup.hashOfSuffix(iri.hashCode(), lastPrefix.hashCode(), nameLen);
         } else {
-            prefix = iri.substring(0, prefixLen);
-            final var prefixEntry = prefixLookup.getOrAddEntry(prefix);
+            // Neither the prefix nor the name is cut out of the IRI unless it is new. Only the
+            // shorter of the two is hashed: the other one's hash follows from the IRI's own
+            // hash, which the node cache has just computed.
+            final int prefixHash;
+            if (nameLen <= prefixLen) {
+                nameHash = EncoderLookup.hashOfRange(iri, prefixLen, iri.length());
+                prefixHash = EncoderLookup.hashOfPrefix(iri.hashCode(), nameHash, nameLen);
+            } else {
+                prefixHash = EncoderLookup.hashOfRange(iri, 0, prefixLen);
+                nameHash = EncoderLookup.hashOfSuffix(iri.hashCode(), prefixHash, nameLen);
+            }
+            final var prefixEntry = prefixLookup.getOrAddEntry(iri, 0, prefixLen, prefixHash);
             if (prefixEntry.newEntry) {
                 bufferAppender.appendPrefixEntry(
-                    RdfPrefixEntry.newInstance().setId(prefixEntry.setId).setValue(prefix)
+                    RdfPrefixEntry.newInstance()
+                        .setId(prefixEntry.setId)
+                        .setValue(prefixLookup.names[prefixEntry.getId])
                 );
             }
             prefixId = prefixEntry.getId;
             this.lastPrefixId = prefixId;
         }
 
-        // Name's (suffix's) hashcode is calculated without looking at the string itself,
-        // based on the prefix hashcode. See EncoderLookup.hashOfSuffix
-        final var nameEntry = nameLookup.getOrAddEntry(
-            iri,
-            prefixLen,
-            EncoderLookup.hashOfSuffix(iri.hashCode(), prefix.hashCode(), iri.length() - prefixLen)
-        );
+        final var nameEntry = nameLookup.getOrAddEntry(iri, prefixLen, nameHash);
         if (nameEntry.newEntry) {
             bufferAppender.appendNameEntry(
                 RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(nameLookup.names[nameEntry.getId])
@@ -353,9 +359,9 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
         int nameId = nameEntry.getId;
         cachedNode.lookupPointer1 = nameId;
-        cachedNode.lookupSerial1 = Objects.requireNonNull(nameLookup.serials)[nameId];
+        cachedNode.lookupSerial1 = nameLookup.serial(nameId);
         cachedNode.lookupPointer2 = prefixId;
-        cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
+        cachedNode.lookupSerial2 = prefixLookup.serial(prefixId);
         cachedNode.encoded = IDS_ONLY;
         return cachedNode;
     }
@@ -432,8 +438,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         final var cachedNode = dtLiteralNodeCache.get(key);
         // Check if the value is still valid
         if (
-            cachedNode.encoded != null &&
-            cachedNode.lookupSerial1 == Objects.requireNonNull(datatypeLookup.serials)[cachedNode.lookupPointer1]
+            cachedNode.encoded != null && cachedNode.lookupSerial1 == datatypeLookup.serial(cachedNode.lookupPointer1)
         ) {
             datatypeLookup.onAccess(cachedNode.lookupPointer1);
             return cachedNode.encoded;
@@ -448,7 +453,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
         int dtId = dtEntry.getId;
         cachedNode.lookupPointer1 = dtId;
-        cachedNode.lookupSerial1 = Objects.requireNonNull(datatypeLookup.serials)[dtId];
+        cachedNode.lookupSerial1 = datatypeLookup.serial(dtId);
         cachedNode.encoded = RdfLiteral.newInstance().setLex(lex).setDatatype(dtId);
         return cachedNode.encoded;
     }
@@ -461,6 +466,15 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     @Override
     public RdfDefaultGraph makeDefaultGraph() {
         return RdfDefaultGraph.EMPTY;
+    }
+
+    @Override
+    public void newEpoch() {
+        nameLookup.newEpoch();
+        if (prefixLookup != null) {
+            prefixLookup.newEpoch();
+        }
+        datatypeLookup.newEpoch();
     }
 
     /**

@@ -3,6 +3,8 @@ package eu.neverblink.jelly.core.sparql
 import com.google.protobuf.{ByteString, DynamicMessage, InvalidProtocolBufferException, TextFormat}
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.proto.v1.sparql.*
+import eu.neverblink.jelly.core.sparql.helpers.SparqlColumns
+import eu.neverblink.jelly.core.sparql.helpers.SparqlColumns.{PolyValue, datatypeKind, langKind}
 import eu.neverblink.protoc.java.runtime.ProtoMessage
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -87,28 +89,22 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
   private def bnodeColumn =
     SparqlBnodeColumn.newInstance().addValues("b1").addValues("b2").addLayouts(8)
 
-  private def literalColumn = SparqlLiteralColumn
-    .newInstance()
-    .addValues(RdfLiteral2.newInstance().setLex("hello"))
-    .addValues(RdfLiteral2.newInstance().setLex("bonjour").setLangtag("fr"))
-    .addValues(RdfLiteral2.newInstance().setLex("42").setDatatype(1))
+  /** A literal column with one kind per value. */
+  private def literalColumn = SparqlColumns
+    .literalColumn(
+      Seq("hello" -> 0, "bonjour" -> langKind(0), "42" -> datatypeKind(1)),
+      Seq("fr" -> RdfBaseDirection.UNSPECIFIED),
+    )
     .addLayouts(1)
 
-  /** The language-tagged form of a literal column: bare lexical forms plus one language tag. */
-  private def langLiteralColumn = SparqlLiteralColumn
-    .newInstance()
-    .addLexValues("hello")
-    .addLexValues("world")
-    .setLangtag("en")
-    .setDirection(RdfBaseDirection.LTR)
+  /** A literal column in which every value has the same language tag and base direction. */
+  private def langLiteralColumn = SparqlColumns
+    .uniformLiteralColumn(Seq("hello", "world"), langKind(0), Seq("en" -> RdfBaseDirection.LTR))
     .addLayouts(1)
 
-  /** The datatype-monomorphic form of a literal column: bare lexical forms plus one datatype. */
-  private def lexLiteralColumn = SparqlLiteralColumn
-    .newInstance()
-    .addLexValues("1")
-    .addLexValues("2")
-    .setDatatype(1)
+  /** A literal column in which every value has the same datatype. */
+  private def lexLiteralColumn = SparqlColumns
+    .uniformLiteralColumn(Seq("1", "2"), datatypeKind(1))
     .addLayouts(1)
 
   private def tripleTerm = RdfTripleTerm
@@ -125,12 +121,15 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         ),
     )
 
-  private def polyColumn = SparqlPolyColumn
-    .newInstance()
-    .addValues(SparqlTerm.newInstance().setIri(iri(1, 2)))
-    .addValues(SparqlTerm.newInstance().setBnode("b1"))
-    .addValues(SparqlTerm.newInstance().setLiteral(RdfLiteral2.newInstance().setLex("x")))
-    .addValues(SparqlTerm.newInstance().setTripleTerm(tripleTerm))
+  private def polyColumn = SparqlColumns
+    .polyColumn(
+      Seq(
+        PolyValue.Iri(1, 2),
+        PolyValue.Bnode("b1"),
+        PolyValue.Literal("x"),
+        PolyValue.Triple(tripleTerm),
+      ),
+    )
     .addLayouts(16)
 
   /** A frame with every field set – not a semantically valid frame, but it exercises the whole
@@ -188,28 +187,14 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       )
     }
 
-    "round-trip each kind of term" in {
-      val terms = Seq(
-        SparqlTerm.newInstance().setIri(iri(2, 3)),
-        SparqlTerm.newInstance().setBnode("b1"),
-        SparqlTerm.newInstance().setLiteral(
-          RdfLiteral2.newInstance().setLex("lex").setLangtag("en"),
-        ),
-        SparqlTerm.newInstance().setLiteral(
-          RdfLiteral2.newInstance().setLex("lex").setLangtag("en").setDirection(
-            RdfBaseDirection.LTR,
-          ),
-        ),
-        SparqlTerm.newInstance().setTripleTerm(tripleTerm),
+    "round-trip a triple term" in {
+      checkMessage(
+        tripleTerm,
+        () => RdfTripleTerm.newInstance(),
+        RdfTripleTerm.parseFrom,
+        RdfTripleTerm.parseFrom,
+        RdfTripleTerm.parseDelimitedFrom,
       )
-      for term <- terms do
-        checkMessage(
-          term,
-          () => SparqlTerm.newInstance(),
-          SparqlTerm.parseFrom,
-          SparqlTerm.parseFrom,
-          SparqlTerm.parseDelimitedFrom,
-        )
     }
 
     "round-trip each kind of column" in {
@@ -242,6 +227,61 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         SparqlPolyColumn.parseFrom,
         SparqlPolyColumn.parseDelimitedFrom,
       )
+    }
+
+    "round-trip long packed fields" in {
+      // The parser makes room for up to 65536 values of a packed field at once, then grows it
+      val column = SparqlIriColumn.newInstance()
+      for i <- 0 until 70000 do column.addNameIds(i * 37 % 100000).addPrefixIds(i % 3)
+      val parsed = SparqlIriColumn.parseFrom(ByteArrayInputStream(column.toByteArray))
+      parsed shouldBe column
+      parsed.getNameIds.get(69999) shouldBe 69999 * 37 % 100000
+      // A second packed run of the same field is added to the first
+      val twice =
+        SparqlIriColumn.parseFrom(ByteArrayInputStream(column.toByteArray ++ column.toByteArray))
+      twice.getNameIds.size shouldBe 140000
+      twice.getNameIds.get(70000 + 12345) shouldBe 12345 * 37 % 100000
+    }
+
+    "round-trip packed fields of varints of every length, mixed" in {
+      val random = scala.util.Random(42)
+      for n <- Seq(0, 1, 2, 3, 7, 8, 9, 100, 5000) do
+        // Mostly 1 and 2 bytes, as in Jelly, some longer, and some with the sign bit set
+        val ids = Seq.fill(n) {
+          random.nextInt(10) match
+            case 0 => random.nextInt()
+            case 1 => random.nextInt(1 << 28)
+            case 2 | 3 => 128 + random.nextInt(16384 - 128)
+            case _ => random.nextInt(128)
+        }
+        val column = SparqlIriColumn.newInstance()
+        ids.foreach(column.addNameIds)
+        val parsed = SparqlIriColumn.parseFrom(ByteArrayInputStream(column.toByteArray)).getNameIds
+        (0 until parsed.size).map(parsed.get) shouldBe ids
+    }
+
+    "read packed varints as CodedInputStream reads them" in {
+      // Field 1 (name_ids) of SparqlIriColumn, packed: tag 0x0a, then the length and the values
+      def packed(values: Int*) = Array[Byte](0x0a, values.size.toByte) ++ values.map(_.toByte)
+      def nameIds(bytes: Array[Byte]) =
+        val ids = SparqlIriColumn.parseFrom(ByteArrayInputStream(bytes)).getNameIds
+        (0 until ids.size).map(ids.get)
+      nameIds(packed(0, 1, 0x7f)) shouldBe Seq(0, 1, 127)
+      nameIds(packed(0x80, 0x01, 0xff, 0x7f)) shouldBe Seq(128, 16383)
+      // 2^32 - 1 in 5 bytes, and -1 as an int64 writer would write it, in 10: the bits past 32
+      // are dropped
+      nameIds(packed(0xff, 0xff, 0xff, 0xff, 0x0f)) shouldBe Seq(-1)
+      nameIds(packed(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, 5)) shouldBe Seq(
+        -1,
+        5,
+      )
+      // A varint cut off by the end of the field, and one of 11 bytes
+      an[InvalidProtocolBufferException] should be thrownBy nameIds(packed(1, 0x80))
+      an[InvalidProtocolBufferException] should be thrownBy nameIds(
+        packed(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01),
+      )
+      // A field longer than the message
+      an[InvalidProtocolBufferException] should be thrownBy nameIds(Array[Byte](0x0a, 5, 1, 2))
     }
 
     "round-trip a trailer" in {
@@ -343,24 +383,21 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         .newInstance()
         .setValues(bnodeColumn.getValues)
         .setLayouts(bnodeColumn.getLayouts) shouldBe bnodeColumn
-      SparqlLiteralColumn
-        .newInstance()
-        .setValues(literalColumn.getValues)
-        .setLayouts(literalColumn.getLayouts) shouldBe literalColumn
-      SparqlLiteralColumn
-        .newInstance()
-        .setLexValues(lexLiteralColumn.getLexValues)
-        .setDatatype(lexLiteralColumn.getDatatype)
-        .setLayouts(lexLiteralColumn.getLayouts) shouldBe lexLiteralColumn
-      SparqlLiteralColumn
-        .newInstance()
-        .setLexValues(langLiteralColumn.getLexValues)
-        .setLangtag(langLiteralColumn.getLangtag)
-        .setDirection(langLiteralColumn.getDirection)
-        .setLayouts(langLiteralColumn.getLayouts) shouldBe langLiteralColumn
+      for column <- Seq(literalColumn, lexLiteralColumn, langLiteralColumn) do
+        SparqlLiteralColumn
+          .newInstance()
+          .setLexValues(column.getLexValues)
+          .setLiteralKinds(column.getLiteralKinds)
+          .setLangtags(column.getLangtags)
+          .setLangtagDirections(column.getLangtagDirections)
+          .setLayouts(column.getLayouts) shouldBe column
       SparqlPolyColumn
         .newInstance()
-        .setValues(polyColumn.getValues)
+        .setKinds(polyColumn.getKinds)
+        .setIris(polyColumn.getIris)
+        .setLiterals(polyColumn.getLiterals)
+        .setBnodes(polyColumn.getBnodes)
+        .setTripleTerms(polyColumn.getTripleTerms)
         .setLayouts(polyColumn.getLayouts) shouldBe polyColumn
     }
   }
@@ -384,7 +421,6 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
       SparqlResultsOptions.getFactory.create() shouldBe SparqlResultsOptions.EMPTY
       SparqlVariable.getFactory.create() shouldBe SparqlVariable.EMPTY
       SparqlAskResult.getFactory.create() shouldBe SparqlAskResult.EMPTY
-      SparqlTerm.getFactory.create() shouldBe SparqlTerm.EMPTY
       SparqlIriColumn.getFactory.create() shouldBe SparqlIriColumn.EMPTY
       SparqlBnodeColumn.getFactory.create() shouldBe SparqlBnodeColumn.EMPTY
       SparqlLiteralColumn.getFactory.create() shouldBe SparqlLiteralColumn.EMPTY
@@ -402,7 +438,6 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         SparqlResultsOptions.getDescriptor,
         SparqlVariable.getDescriptor,
         SparqlAskResult.getDescriptor,
-        SparqlTerm.getDescriptor,
         SparqlIriColumn.getDescriptor,
         SparqlBnodeColumn.getDescriptor,
         SparqlLiteralColumn.getDescriptor,
@@ -415,61 +450,39 @@ class SparqlProtoSpec extends AnyWordSpec, Matchers:
         "SparqlResultsOptions",
         "SparqlVariable",
         "SparqlAskResult",
-        "SparqlTerm",
         "SparqlIriColumn",
         "SparqlBnodeColumn",
         "SparqlLiteralColumn",
         "SparqlPolyColumn",
         "SparqlResultsTrailer",
       )
-      Sparql.getDescriptor.getMessageTypes should have size 10
+      Sparql.getDescriptor.getMessageTypes should have size 9
     }
   }
 
-  "the term oneof" should {
-    "report which field is set" in {
-      val term = SparqlTerm.newInstance()
-      term.hasTerm shouldBe false
-      term.getTermFieldNumber shouldBe 0
-
-      term.setIri(iri(1, 1))
-      term.hasTerm shouldBe true
-      term.hasIri shouldBe true
-      term.hasBnode shouldBe false
-      term.hasLiteral shouldBe false
-      term.getTermFieldNumber shouldBe SparqlTerm.IRI
-
-      term.setBnode("b1")
-      term.hasIri shouldBe false
-      term.hasBnode shouldBe true
-      term.getBnode shouldBe "b1"
-
-      term.setLiteral(RdfLiteral2.newInstance().setLex("x"))
-      term.hasBnode shouldBe false
-      term.hasLiteral shouldBe true
-      term.getLiteral.getLex shouldBe "x"
-
-      // Low-level setter, used when copying a term without inspecting it
-      val copy = SparqlTerm.newInstance().setTerm(term.getTerm, term.getTermFieldNumber)
-      copy shouldBe term
-      copy.asImmutable should be theSameInstanceAs copy
+  "the polymorphic column" should {
+    "merge a sub-column that occurs twice on the wire" in {
+      // Protobuf merges repeated occurrences of the same singular sub-message field
+      val partial = SparqlPolyColumn
+        .newInstance()
+        .setIris(SparqlIriColumn.newInstance().addNameIds(1))
+        .setLiterals(SparqlLiteralColumn.newInstance().addLexValues("a"))
+      val rest = SparqlPolyColumn
+        .newInstance()
+        .setIris(SparqlIriColumn.newInstance().addNameIds(2).addPrefixIds(3))
+        .setLiterals(SparqlLiteralColumn.newInstance().addLexValues("b").addLangtags("en"))
+      val merged = SparqlPolyColumn.parseFrom(partial.toByteArray ++ rest.toByteArray)
+      merged.getIris.getNameIds.size shouldBe 2
+      merged.getIris.getNameIds.get(1) shouldBe 2
+      merged.getIris.getPrefixIds.get(0) shouldBe 3
+      merged.getLiterals.getLexValues.size shouldBe 2
+      merged.getLiterals.getLangtags.get(0) shouldBe "en"
     }
 
-    "merge a sub-message that occurs twice on the wire" in {
-      // Protobuf merges repeated occurrences of the same singular sub-message field
-      val partialIri = SparqlTerm.newInstance().setIri(RdfIri.newInstance().setPrefixId(1))
-      val restIri = SparqlTerm.newInstance().setIri(RdfIri.newInstance().setNameId(2))
-      val mergedIri = SparqlTerm.parseFrom(partialIri.toByteArray ++ restIri.toByteArray)
-      mergedIri.getIri shouldBe iri(1, 2)
-
-      val partialLiteral =
-        SparqlTerm.newInstance().setLiteral(RdfLiteral2.newInstance().setLex("lex"))
-      val restLiteral =
-        SparqlTerm.newInstance().setLiteral(RdfLiteral2.newInstance().setLangtag("en"))
-      val mergedLiteral =
-        SparqlTerm.parseFrom(partialLiteral.toByteArray ++ restLiteral.toByteArray)
-      mergedLiteral.getLiteral.getLex shouldBe "lex"
-      mergedLiteral.getLiteral.getLangtag shouldBe "en"
+    "keep the kinds as they are on the wire" in {
+      val column = SparqlPolyColumn.parseFrom(polyColumn.toByteArray)
+      // IRI, blank node, literal, triple term: 0, 2, 1, 3, from the least significant bits
+      column.getKinds.toByteArray shouldBe Array[Byte](0xd8.toByte)
     }
   }
 

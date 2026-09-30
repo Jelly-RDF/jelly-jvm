@@ -1,4 +1,4 @@
-package eu.neverblink.jelly.jmh.sparql
+package eu.neverblink.jelly.jmh.rdf
 
 import eu.neverblink.jelly.jmh.TermMatcher
 import eu.neverblink.jelly.jmh.TermMatcher.show
@@ -6,17 +6,21 @@ import eu.neverblink.jelly.jmh.TermMatcher.show
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-/** Writes datasets with every method that can read, reads them back, and compares every value with
-  * the original. This ensures that the format's encoding is lossless and the benchmark is fair.
+/** Writes datasets with every method, reads them back, and compares every term with the original,
+  * in order. This ensures that the format's encoding is lossless and the benchmark is fair.
   *
   * Blank nodes labels may be renamed.
   *
-  * Run with:
-  * {{{sbt "jmh/runMain eu.neverblink.jelly.jmh.sparql.SparqlRoundTripCheck -r 100000 nanopubs"}}}
-  * With no datasets or methods given, checks every dataset with every method that can read.
+  * With no datasets or methods given, checks every dataset with every method. Run with
+  * (`rdfRoundTrip` is an alias for this `runMain`):
+  * {{{
+  * sbt "rdfRoundTrip -r 100000 nanopubs"
+  * }}}
   */
-object SparqlRoundTripCheck:
-  private final case class Mismatch(row: Int, variable: String, expected: AnyRef, actual: AnyRef)
+object RdfRoundTripCheck:
+  private final case class Mismatch(statement: Int, position: Int, expected: AnyRef, actual: AnyRef)
+
+  private val positions = IndexedSeq("subject", "predicate", "object", "graph")
 
   enum Result:
     case Ok
@@ -24,38 +28,36 @@ object SparqlRoundTripCheck:
     /** Writing or reading threw. */
     case Failed(error: Throwable)
 
-    /** The result set came back, but not as it was written. */
+    /** The statements came back, but not as they were written. */
     case Differs(summary: String)
 
   /** Round-trips one dataset through one method. */
-  def check(data: SparqlBenchData.Data, method: SparqlMethods.Method): Result =
-    val original = method.original(data)
-    val variables = data.variables
+  def check(data: RdfBenchData.Data, method: RdfMethods.Method): Result =
     Try {
-      method.readAll(method.writeToBytes(data))
+      val original = method.original(data)
+      (original, method.readAll(method.writeToBytes(data), data.quads))
     } match
       case Failure(e) => Result.Failed(e)
-      case Success(read) =>
+      case Success((original, read)) =>
         val matcher = TermMatcher()
         val mismatches = mutable.ArrayBuffer.empty[Mismatch]
         var mismatchCount = 0
         for i <- 0 until math.min(original.size, read.size) do
-          for v <- 0 until variables.size do
-            val expected = original(i)(v)
-            val actual = method.cell(read(i), variables.get(v))
-            if !matcher.same(expected, actual) then
+          val expected = method.terms(original(i))
+          val actual = method.terms(read(i))
+          for p <- positions.indices do
+            if !matcher.same(expected(p), actual(p)) then
               mismatchCount += 1
-              if mismatches.size < 3 then
-                mismatches += Mismatch(i, variables.get(v), expected, actual)
+              if mismatches.size < 3 then mismatches += Mismatch(i, p, expected(p), actual(p))
         if mismatchCount == 0 && read.size == original.size then Result.Ok
         else
           val header =
             if read.size != original.size then
-              s"read ${read.size} rows, wrote ${original.size}; $mismatchCount differing values"
-            else s"$mismatchCount of ${original.size * variables.size} values differ"
+              s"read ${read.size} statements, wrote ${original.size}; $mismatchCount differing terms"
+            else s"$mismatchCount terms of ${original.size} statements differ"
           Result.Differs(
             (header +: mismatches.toSeq.map { m =>
-              s"    row ${m.row} ?${m.variable}:\n" +
+              s"    statement ${m.statement} ${positions(m.position)}:\n" +
                 s"      expected ${show(m.expected)}\n" +
                 s"      actual   ${show(m.actual)}"
             }).mkString("\n"),
@@ -63,7 +65,7 @@ object SparqlRoundTripCheck:
 
   def main(args: Array[String]): Unit =
     var rows = 100_000
-    var methods = SparqlMethods.all.filter(_.canRead)
+    var methods = RdfMethods.all
     val datasets = mutable.ArrayBuffer.empty[String]
     var rest = args.toList
     while rest.nonEmpty do
@@ -72,17 +74,17 @@ object SparqlRoundTripCheck:
           rows = value.toInt
           rest = tail
         case ("-m" | "--methods") :: value :: tail =>
-          methods = value.split(",").toIndexedSeq.map(SparqlMethods(_))
+          methods = value.split(",").toIndexedSeq.map(RdfMethods(_))
           rest = tail
         case name :: tail =>
           datasets += name
           rest = tail
         case Nil => ()
 
-    val names = if datasets.nonEmpty then datasets.toSeq else SparqlBenchData.datasetNames
+    val names = if datasets.nonEmpty then datasets.toSeq else RdfBenchData.datasetNames
     var failures = 0
     for name <- names do
-      val data = SparqlBenchData.load(name, rows)
+      val data = RdfBenchData.load(name, rows)
       for method <- methods do
         check(data, method) match
           case Result.Ok => println(f"OK    $name%-28s ${method.name}")

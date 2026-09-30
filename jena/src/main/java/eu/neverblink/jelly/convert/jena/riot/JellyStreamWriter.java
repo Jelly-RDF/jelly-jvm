@@ -8,6 +8,7 @@ import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -25,11 +26,12 @@ import org.apache.jena.sparql.core.Quad;
  * <p>
  * It will output the statements as in a TRIPLES/QUADS stream.
  */
-public sealed class JellyStreamWriter implements StreamRDF {
+public abstract sealed class JellyStreamWriter implements StreamRDF {
 
     protected final JellyFormatVariant formatVariant;
     protected final OutputStream outputStream;
     protected final CodedOutputStream codedOutput;
+    private final DelimitedMessageWriter frames;
 
     protected final ReusableRowBuffer buffer;
     protected final EncoderAllocator allocator;
@@ -48,15 +50,7 @@ public sealed class JellyStreamWriter implements StreamRDF {
         }
     }
 
-    /**
-     * Deprecated for public use. Use instead the
-     * {@link #create(JenaConverterFactory, JellyFormatVariant, OutputStream)} factory method,
-     * which will return the correct writer type based on the format variant.
-     * <p>
-     * After removal, make this class abstract and remove the virtual method overrides in the subclasses.
-     */
-    @Deprecated(since = "3.7.1", forRemoval = true)
-    public JellyStreamWriter(
+    private JellyStreamWriter(
         JenaConverterFactory converterFactory,
         JellyFormatVariant formatVariant,
         OutputStream outputStream
@@ -64,6 +58,7 @@ public sealed class JellyStreamWriter implements StreamRDF {
         this.formatVariant = formatVariant;
         this.outputStream = outputStream;
         this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
+        this.frames = new DelimitedMessageWriter(codedOutput);
         this.buffer = RowBuffer.newReusableForEncoder(formatVariant.getFrameSize() + 8);
         this.allocator = EncoderAllocator.newArenaAllocator(formatVariant.getFrameSize() + 8);
         this.reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
@@ -86,6 +81,14 @@ public sealed class JellyStreamWriter implements StreamRDF {
             OutputStream outputStream
         ) {
             super(converterFactory, formatVariant, outputStream);
+        }
+
+        @Override
+        public void triple(Triple triple) {
+            encoder.handleTriple(triple.getSubject(), triple.getPredicate(), triple.getObject());
+            if (formatVariant.isDelimited() && buffer.size() >= formatVariant.getFrameSize()) {
+                flushBuffer();
+            }
         }
 
         @Override
@@ -117,27 +120,19 @@ public sealed class JellyStreamWriter implements StreamRDF {
                 flushBuffer();
             }
         }
+
+        @Override
+        public void quad(Quad quad) {
+            encoder.handleQuad(quad.getSubject(), quad.getPredicate(), quad.getObject(), quad.getGraph());
+            if (formatVariant.isDelimited() && buffer.size() >= formatVariant.getFrameSize()) {
+                flushBuffer();
+            }
+        }
     }
 
     @Override
     public void start() {
         // No-op
-    }
-
-    @Override
-    public void triple(Triple triple) {
-        encoder.handleTriple(triple.getSubject(), triple.getPredicate(), triple.getObject());
-        if (formatVariant.isDelimited() && buffer.size() >= formatVariant.getFrameSize()) {
-            flushBuffer();
-        }
-    }
-
-    @Override
-    public void quad(Quad quad) {
-        encoder.handleQuad(quad.getSubject(), quad.getPredicate(), quad.getObject(), quad.getGraph());
-        if (formatVariant.isDelimited() && buffer.size() >= formatVariant.getFrameSize()) {
-            flushBuffer();
-        }
     }
 
     @Override
@@ -195,7 +190,7 @@ public sealed class JellyStreamWriter implements StreamRDF {
     protected void flushBuffer() {
         reusableFrame.resetCachedSize();
         try {
-            reusableFrame.writeDelimitedTo(codedOutput);
+            frames.write(reusableFrame);
         } catch (IOException e) {
             throw new RiotException(e);
         } finally {

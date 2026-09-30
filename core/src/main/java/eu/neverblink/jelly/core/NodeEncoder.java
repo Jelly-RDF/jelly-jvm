@@ -62,7 +62,7 @@ public interface NodeEncoder<TNode> {
      * @param lit The literal node. This is used for caching and deduplication.
      * @param lex The lexical form of the literal.
      * @param lang The language tag.
-     * @param direction The base direction – LTR or RTL, never NONE.
+     * @param direction The base direction – LTR or RTL, never UNSPECIFIED.
      */
     default RdfLiteral makeDirLangLiteral(TNode lit, String lex, String lang, RdfBaseDirection direction) {
         return makeLangLiteral(lit, lex, lang);
@@ -89,4 +89,10 @@ public interface NodeEncoder<TNode> {
      * Encode a default graph node.
      */
     RdfDefaultGraph makeDefaultGraph();
+
+    /**
+     * Signal that a new RDF statement (or other stream row) or SPARQL results frame starts.
+     * Until the next call, the lookup entries it uses are not evicted.
+     */
+    default void newEpoch() {}
 }

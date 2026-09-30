@@ -15,10 +15,13 @@ public final class Rdf4jEncoderConverter
 
     @Override
     public Object nodeToProto(NodeEncoder<Value> encoder, Value value) {
-        if (value instanceof IRI iri) {
-            return encoder.makeIri(iri.stringValue());
-        } else if (value instanceof BNode bNode) {
-            return encoder.makeBlankNode(bNode.getID());
+        // Value's own methods, not instanceof: a class caches only the last interface it passed a
+        // type check against, and the generic bridge in front of this method checks Value, so an
+        // instanceof IRI here missed that cache every time.
+        if (value.isIRI()) {
+            return encoder.makeIri(value.stringValue());
+        } else if (value.isBNode()) {
+            return encoder.makeBlankNode(((BNode) value).getID());
         } else if (value instanceof Literal literal) {
             final var lex = literal.getLabel();
             final var lang = literal.getLanguage();

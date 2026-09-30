@@ -9,12 +9,13 @@ import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
 import eu.neverblink.jelly.core.utils.IoUtils;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import org.apache.jena.graph.Node;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.rowset.RowSetReader;
@@ -25,7 +26,6 @@ import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.exec.QueryExecResult;
 import org.apache.jena.sparql.exec.RowSet;
-import org.apache.jena.sparql.exec.RowSetStream;
 import org.apache.jena.sparql.util.Context;
 
 /**
@@ -147,32 +147,61 @@ public final class RowSetReaderJelly implements RowSetReader {
             throw new RiotException("No result set header found in the input.");
         }
         // Stream the rest of the frames lazily
-        final Iterator<Binding> iterator = new Iterator<>() {
-            @Override
-            public boolean hasNext() {
-                while (handler.queue.isEmpty()) {
-                    // The rows before an error are still returned, the error comes after them
-                    handler.checkError();
-                    try {
-                        if (!reader.readFrame()) {
-                            return false;
-                        }
-                    } catch (IOException e) {
-                        throw new RiotException(e);
-                    }
-                }
-                return true;
-            }
+        return new JellyRowSet(handler, reader);
+    }
 
-            @Override
-            public Binding next() {
-                if (!hasNext()) {
-                    throw new NoSuchElementException();
+    /**
+     * The rows of a result set, read frame by frame as they are asked for. The same as Jena's
+     * RowSetStream over an iterator, minus a layer.
+     */
+    private static final class JellyRowSet implements RowSet {
+
+        private final RowCollector handler;
+        private final FrameReader reader;
+        private long rowNumber = 0;
+
+        JellyRowSet(RowCollector handler, FrameReader reader) {
+            this.handler = handler;
+            this.reader = reader;
+        }
+
+        @Override
+        public boolean hasNext() {
+            while (!handler.hasRow()) {
+                // The rows before an error are still returned, the error comes after them
+                handler.checkError();
+                try {
+                    if (!reader.readFrame()) {
+                        return false;
+                    }
+                } catch (IOException e) {
+                    throw new RiotException(e);
                 }
-                return handler.queue.poll();
             }
-        };
-        return RowSetStream.create(handler.vars, iterator);
+            return true;
+        }
+
+        @Override
+        public Binding next() {
+            if (!handler.hasRow() && !hasNext()) {
+                throw new NoSuchElementException();
+            }
+            rowNumber++;
+            return handler.nextRow();
+        }
+
+        @Override
+        public List<Var> getResultVars() {
+            return handler.vars;
+        }
+
+        @Override
+        public long getRowNumber() {
+            return rowNumber;
+        }
+
+        @Override
+        public void close() {}
     }
 
     /**
@@ -183,6 +212,8 @@ public final class RowSetReaderJelly implements RowSetReader {
 
         private final InputStream input;
         private final boolean delimited;
+        // Null for a non-delimited stream
+        private final DelimitedMessageReader<SparqlResultsFrame> frames;
         private final SparqlDecoder decoder;
         private final boolean requireTrailer;
         private boolean finished = false;
@@ -191,6 +222,7 @@ public final class RowSetReaderJelly implements RowSetReader {
         FrameReader(InputStream input, boolean delimited, SparqlDecoder decoder, boolean requireTrailer) {
             this.input = input;
             this.delimited = delimited;
+            this.frames = delimited ? new DelimitedMessageReader<>(input, SparqlResultsFrame.getFactory()) : null;
             this.decoder = decoder;
             this.requireTrailer = requireTrailer;
         }
@@ -206,7 +238,7 @@ public final class RowSetReaderJelly implements RowSetReader {
             }
             final SparqlResultsFrame frame;
             if (delimited) {
-                frame = SparqlResultsFrame.parseDelimitedFrom(input);
+                frame = frames.read();
             } else {
                 // Non-delimited: the entire input is a single frame
                 frame = SparqlResultsFrame.parseFrom(input);
@@ -230,9 +262,17 @@ public final class RowSetReaderJelly implements RowSetReader {
     private static final class RowCollector implements SparqlResultsHandler<Node> {
 
         private List<Var> vars = null;
+        private Var[] distinctVars = null;
         private Boolean askResult = null;
         private String error = null;
-        private final ArrayDeque<Binding> queue = new ArrayDeque<>();
+        // The frames decoded but not read yet: their columns and row counts. Bindings are made
+        // from them only when they are read.
+        private final ArrayDeque<Object[][]> frames = new ArrayDeque<>();
+        private final ArrayDeque<Integer> frameRows = new ArrayDeque<>();
+        // The frame being read, and the index of its next row
+        private Object[][] current = null;
+        private int currentRows = 0;
+        private int next = 0;
 
         @Override
         public void handleTrailer(String error) {
@@ -250,6 +290,7 @@ public final class RowSetReaderJelly implements RowSetReader {
         @Override
         public void handleVariables(List<String> variables) {
             vars = variables.stream().map(Var::alloc).toList();
+            distinctVars = Set.copyOf(vars).size() == vars.size() ? vars.toArray(new Var[0]) : null;
         }
 
         @Override
@@ -264,13 +305,57 @@ public final class RowSetReaderJelly implements RowSetReader {
 
         @Override
         public void handleRow(Node[] row) {
+            // Not called, as handleRows is overridden. A row is a frame of one row.
+            final Object[][] columns = new Object[row.length][];
+            for (int v = 0; v < row.length; v++) {
+                columns[v] = new Object[] { row[v] };
+            }
+            handleRows(columns, 1, row);
+        }
+
+        @Override
+        public void handleRows(Object[][] columns, int rowCount, Node[] row) {
+            if (rowCount > 0) {
+                frames.add(columns);
+                frameRows.add(rowCount);
+            }
+        }
+
+        /** Whether a row is decoded, but not read yet. */
+        boolean hasRow() {
+            while (next >= currentRows) {
+                final Object[][] columns = frames.poll();
+                if (columns == null) {
+                    return false;
+                }
+                current = columns;
+                currentRows = frameRows.poll();
+                next = 0;
+            }
+            return true;
+        }
+
+        /** The next row, if {@link #hasRow()}. Straight from the columns: nothing is copied. */
+        Binding nextRow() {
+            final int r = next++;
+            final Var[] distinct = distinctVars;
+            if (distinct != null) {
+                return new JellyBinding(BindingFactory.noParent, distinct, current, r);
+            }
             final BindingBuilder builder = BindingFactory.builder();
-            for (int i = 0; i < row.length; i++) {
-                if (row[i] != null) {
-                    builder.add(vars.get(i), row[i]);
+            for (int v = 0; v < current.length; v++) {
+                final Node node = (Node) current[v][r];
+                if (node != null) {
+                    builder.add(vars.get(v), node);
                 }
             }
-            queue.add(builder.build());
+            return builder.build();
+        }
+
+        @Override
+        public boolean keepsColumns() {
+            // JellyBinding reads its values from the columns
+            return true;
         }
     }
 }

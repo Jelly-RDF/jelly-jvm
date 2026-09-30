@@ -67,40 +67,6 @@ public final class IoUtils {
     }
 
     /**
-     * Functional interface for processing frames from an input stream.
-     * @param <TFrame> the type of the frame
-     */
-    @FunctionalInterface
-    @Deprecated(since = "3.4.0", forRemoval = true)
-    public interface FrameProcessor<TFrame> {
-        TFrame apply(InputStream inputStream) throws IOException;
-    }
-
-    /**
-     * Reads a stream of frames from an input stream and processes each frame using the provided frame processor.
-     * @param inputStream the input stream to read from
-     * @param frameProcessor the function to process each frame
-     * @param frameConsumer the consumer to handle each processed frame
-     * @param <TFrame> the type of the frame
-     */
-    @Deprecated(since = "3.4.0", forRemoval = true)
-    public static <TFrame> void readStream(
-        InputStream inputStream,
-        FrameProcessor<TFrame> frameProcessor,
-        Consumer<TFrame> frameConsumer
-    ) throws IOException {
-        while (true) {
-            final var maybeFrame = frameProcessor.apply(inputStream);
-            if (maybeFrame == null) {
-                // No more frames available, break the loop
-                break;
-            }
-
-            frameConsumer.accept(maybeFrame);
-        }
-    }
-
-    /**
      * Reads a stream of delimited protobuf messages (frames) from an input stream. Each frame
      * is passed to the provided consumer for processing.
      * <p>

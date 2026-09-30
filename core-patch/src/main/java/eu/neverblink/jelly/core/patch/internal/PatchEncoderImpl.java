@@ -132,6 +132,7 @@ public final class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     private RdfPatchNamespace encodeNamespace(String name, TNode iriValue, TNode graph) {
         emitOptions();
         final var namespace = RdfPatchNamespace.newInstance().setName(name);
+        getNodeEncoder().newEpoch();
         if (iriValue != null) {
             final var encoded = converter.nodeToProto(getNodeEncoder(), iriValue);
             namespace.setValue((RdfIri) encoded);
@@ -146,6 +147,7 @@ public final class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
     public void header(String key, TNode value) {
         emitOptions();
         final var header = RdfPatchHeader.newInstance().setKey(key);
+        getNodeEncoder().newEpoch();
         final var encoded = converter.nodeToProto(getNodeEncoder(), value);
         header.setValue(encoded);
         rowBuffer.appendMessage().setHeader(header).getSerializedSize();

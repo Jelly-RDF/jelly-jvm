@@ -2,10 +2,14 @@ package eu.neverblink.protoc.java.runtime;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.io.OutputStream;
 
 public final class ProtobufUtil {
+
+    // The most values of a packed field that readPackedUInt32 makes room for up front
+    private static final int MAX_PACKED_RESERVE = 1 << 16;
 
     /**
      * Maximum size of the output buffer used when writing messages to an OutputStream.
@@ -54,11 +58,8 @@ public final class ProtobufUtil {
     public static void writePackedUInt32(CodedOutputStream output, RepeatedInt values) throws IOException {
         final int[] array = values.array();
         final int size = values.size();
-        int dataSize = 0;
-        for (int i = 0; i < size; i++) {
-            dataSize += CodedOutputStream.computeUInt32SizeNoTag(array[i]);
-        }
-        output.writeUInt32NoTag(dataSize);
+        // Measured by computeSerializedSize already, as a rule
+        output.writeUInt32NoTag(values.uint32SizeNoTag());
         for (int i = 0; i < size; i++) {
             output.writeUInt32NoTag(array[i]);
         }
@@ -74,8 +75,27 @@ public final class ProtobufUtil {
     public static void readPackedUInt32(CodedInputStream input, RepeatedInt store) throws IOException {
         final int length = input.readRawVarint32();
         final int oldLimit = input.pushLimit(length);
-        while (input.getBytesUntilLimit() > 0) {
-            store.add(input.readUInt32());
+        // Every value takes at least one byte, so we make room for all of them, instead of growing
+        // the array many times. Capped: a stream decoder does not know yet if the input really
+        // has that many bytes.
+        store.reserve(Math.min(length, MAX_PACKED_RESERVE));
+        // Straight into the array: the values are read as fast as the varints can be decoded
+        int[] values = store.values;
+        int size = store.size;
+        while (!input.isAtEnd()) {
+            if (size == values.length) {
+                store.size = size;
+                store.reserve(1);
+                values = store.values;
+            }
+            values[size++] = input.readUInt32();
+        }
+        store.size = size;
+        if (input.getBytesUntilLimit() > 0) {
+            // isAtEnd() is also true where a stream ends: there, it ended within the field
+            throw new InvalidProtocolBufferException(
+                "While parsing a protocol message, the input ended unexpectedly in the middle of a field."
+            );
         }
         input.popLimit(oldLimit);
     }

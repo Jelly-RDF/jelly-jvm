@@ -187,5 +187,5 @@ class SparqlFormatBench extends CommonParams:
   /** Bytes -> bindings. */
   @Benchmark
   def deserialize(blackhole: Blackhole, input: ReadInput, counter: CellCounter): Unit =
-    input.impl.read(input.bytes, blackhole.consume)
+    input.impl.read(input.bytes, blackhole)
     counter.cells += input.cells

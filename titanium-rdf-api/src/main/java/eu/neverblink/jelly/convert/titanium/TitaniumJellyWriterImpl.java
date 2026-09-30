@@ -6,6 +6,7 @@ import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.Closeable;
 import java.io.IOException;
@@ -16,6 +17,7 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
 
     private final OutputStream outputStream;
     private final CodedOutputStream codedOutput;
+    private final DelimitedMessageWriter frames;
     private final int frameSize;
 
     private final TitaniumJellyEncoder encoder;
@@ -24,6 +26,7 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
     TitaniumJellyWriterImpl(OutputStream outputStream, RdfStreamOptions options, int frameSize) {
         this.outputStream = outputStream;
         this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
+        this.frames = new DelimitedMessageWriter(codedOutput);
         this.frameSize = frameSize;
 
         this.encoder = new TitaniumJellyEncoderImpl(options, frameSize);
@@ -60,7 +63,7 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
             reusableFrame.resetCachedSize();
             reusableFrame.setRows(encoder.getRows());
             try {
-                reusableFrame.writeDelimitedTo(codedOutput);
+                frames.write(reusableFrame);
             } catch (IOException e) {
                 throw new RdfConsumerException(e);
             }
@@ -76,7 +79,7 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
         if (encoder.getRowCount() > 0) {
             reusableFrame.resetCachedSize();
             reusableFrame.setRows(encoder.getRows());
-            reusableFrame.writeDelimitedTo(codedOutput);
+            frames.write(reusableFrame);
 
             encoder.clearRows();
         }

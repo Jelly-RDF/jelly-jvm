@@ -52,3 +52,18 @@ Throughput is in cells (rows × variables) per second, in the `:cells` lines. Se
 sbt sparqlRoundTrip   # check every format against every dataset
 sbt sparqlSizes       # byte sizes (plain, gzip, zstd) of the benchmarked combinations
 ```
+
+## RDF benchmarks
+
+Compare Jena, RDF4J and Jelly-RDF formats on the same RiverBench datasets (all params are free-form, see `RdfMethods` for method names):
+
+```bash
+sbt "jmh/Jmh/run -p dataset=nanopubs -p method=jena-nt,rdf4j-jelly-big RdfFormatBench"
+```
+
+Throughput is in statements per second, in the `:cells` lines. As for SPARQL, setup round-trips the data first and prints `ROUND-TRIP WARNING` if a format changes it.
+
+```bash
+sbt rdfRoundTrip   # check every format against every dataset
+sbt rdfSizes       # byte sizes (plain, gzip, zstd) of the benchmarked combinations
+```

@@ -2,7 +2,7 @@ package eu.neverblink.jelly.convert.rdf4j.sparql
 
 import eu.neverblink.jelly.core.RdfProtoSerializationError
 import eu.neverblink.jelly.core.proto.v1.RdfVersion
-import eu.neverblink.jelly.core.proto.v1.sparql.{SparqlResultsFrame, SparqlTerm}
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions
 import org.eclipse.rdf4j.model.{Literal, Value}
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
@@ -54,8 +54,10 @@ class Rdf4jSparqlRdf12Spec extends AnyWordSpec, Matchers:
       val frame = SparqlResultsFrame.parseDelimitedFrom(
         ByteArrayInputStream(write(Seq(tripleTerm), JellySparqlWriterSettings.empty())),
       )
-      val term = frame.getPolyColumns.asScala.head.getValues.asScala.head
-      term.getTermFieldNumber shouldBe SparqlTerm.TRIPLE_TERM
+      val column = frame.getPolyColumns.asScala.head
+      column.getTripleTerms.size shouldBe 1
+      // kind 3 -> triple term
+      column.getKinds.byteAt(0) shouldBe 3
     }
 
     "declare the RDF version given in the settings" in {

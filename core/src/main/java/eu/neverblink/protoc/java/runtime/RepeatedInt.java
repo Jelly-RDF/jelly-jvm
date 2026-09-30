@@ -1,5 +1,7 @@
 package eu.neverblink.protoc.java.runtime;
 
+import com.google.protobuf.CodedOutputStream;
+import eu.neverblink.jelly.core.InternalApi;
 import java.util.Arrays;
 
 /**
@@ -11,8 +13,13 @@ public final class RepeatedInt {
     private static final int[] EMPTY_ARRAY = new int[0];
     private static final int DEFAULT_CAPACITY = 8;
 
-    private int[] values = EMPTY_ARRAY;
-    private int size = 0;
+    // Package-private for ProtobufUtil.readPackedUInt32, which fills the array directly
+    int[] values = EMPTY_ARRAY;
+    int size = 0;
+
+    // The size of the values as packed uint32 varints, and how many values that was for.
+    private int uint32Size;
+    private int uint32SizeCount = -1;
 
     private RepeatedInt() {}
 
@@ -48,11 +55,37 @@ public final class RepeatedInt {
 
     public void clear() {
         size = 0;
+        uint32SizeCount = -1;
+    }
+
+    /**
+     * The size of the values as uint32 varints, without a tag or a length. Kept for
+     * {@link #uint32SizeNoTag()}.
+     */
+    @InternalApi
+    public int computeUInt32SizeNoTag() {
+        final int[] array = values;
+        final int size = this.size;
+        int dataSize = 0;
+        for (int i = 0; i < size; i++) {
+            dataSize += CodedOutputStream.computeUInt32SizeNoTag(array[i]);
+        }
+        uint32Size = dataSize;
+        uint32SizeCount = size;
+        return dataSize;
+    }
+
+    /** The same as {@link #computeUInt32SizeNoTag()}, measured again only if values were added. */
+    int uint32SizeNoTag() {
+        return uint32SizeCount == size ? uint32Size : computeUInt32SizeNoTag();
     }
 
     /**
      * Returns the backing array. It may be longer than {@link #size()}; the values past the
      * current size are undefined. The returned array is invalidated by the next {@code add} call.
+     * <p>
+     * Values changed through it after the message was measured are written with the packed size
+     * measured before, as the message itself is written with its cached size.
      *
      * @return the backing array
      */
@@ -60,7 +93,13 @@ public final class RepeatedInt {
         return values;
     }
 
-    private void reserve(int count) {
+    /**
+     * Makes room for {@code count} more values, so that adding them does not grow the backing
+     * array again.
+     *
+     * @param count the number of values that will be added
+     */
+    public void reserve(int count) {
         final int needed = size + count;
         if (needed > values.length) {
             values = Arrays.copyOf(values, Math.max(Math.max(DEFAULT_CAPACITY, needed), values.length * 2));

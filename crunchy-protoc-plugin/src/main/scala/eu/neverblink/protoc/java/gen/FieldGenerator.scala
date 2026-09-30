@@ -113,11 +113,32 @@ class FieldGenerator(val info: FieldInfo):
   m.put("abstractMessage", RuntimeClasses.AbstractMessage)
   m.put("protoSource", RuntimeClasses.CodedInputStream)
   m.put("protoSink", RuntimeClasses.CodedOutputStream)
+  m.put("utf8", classOf[java.nio.charset.StandardCharsets])
   m.put("protoUtil", RuntimeClasses.ProtoUtil)
   // Common configuration-dependent code blocks
   private val ensureFieldNotNull = lazyFieldInit
 
+  /** A string field outside a oneof keeps the UTF-8 bytes it was measured from (see
+    * [[generateComputeSerializedSizeCode]]), for writing.
+    */
+  private def keepsUtf8 =
+    info.isString && !info.isRepeated && !info.descriptor.hasOneofIndex
+
   def generateMemberFields(t: TypeSpec.Builder): Unit =
+    if keepsUtf8 then
+      t.addField(
+        FieldSpec.builder(classOf[String], info.fieldName + "Utf8Of", Modifier.PRIVATE)
+          .addJavadoc(
+            "The value of $L that $LUtf8 was made from, when the size was last computed.\n" +
+              "Strings do not change, so the bytes are valid while the field holds this very object.\n",
+            info.fieldName,
+            info.fieldName,
+          )
+          .build,
+      )
+      t.addField(
+        FieldSpec.builder(classOf[Array[Byte]], info.fieldName + "Utf8", Modifier.PRIVATE).build,
+      )
     val field = FieldSpec.builder(storeType, info.fieldName)
       .addJavadoc(Javadoc.forMessageField(info).build)
       .addModifiers(Modifier.PROTECTED)
@@ -290,8 +311,18 @@ class FieldGenerator(val info: FieldInfo):
           "$<}\n",
         m,
       )
+    else if (info.isRepeated && info.isString)
+      // The UTF-8 bytes that computeSerializedSize made (see RepeatedString.utf8)
+      method.addNamedCode(
+        "" +
+          "for (int _i = 0; _i < $field:N.size(); _i++) {$>\n" +
+          "$writeTagToOutput:L" +
+          "output.writeByteArrayNoTag($field:N.utf8(_i));\n" +
+          "$<}\n",
+        m,
+      )
     else if (info.isRepeated)
-      // Non-packable repeated field (e.g., repeated string)
+      // Non-packable repeated field (e.g., repeated bytes)
       method.addNamedCode(
         "" +
           "for (int _i = 0; _i < $field:N.size(); _i++) {$>\n" +
@@ -315,6 +346,19 @@ class FieldGenerator(val info: FieldInfo):
           "output.writeUInt32NoTag($field:N.getCachedSize());\n" +
           "$field:N.writeTo(output);\n" +
           "$writeEndGroupTagToOutput:L",
+        m,
+      )
+    else if (keepsUtf8)
+      method.addNamedCode(
+        "" + // non-repeated string, with the bytes from computeSerializedSize
+          "$writeTagToOutput:L" +
+          // Checked for null too: a message that threads share without changing it may be measured
+          // by one while another writes it, and see the new string before the new bytes
+          "if ($field:NUtf8Of == $field:N && $field:NUtf8 != null) {$>\n" +
+          "output.writeByteArrayNoTag($field:NUtf8);\n" +
+          "$<} else {$>\n" +
+          "output.writeStringNoTag($field:N);\n" +
+          "$<}\n",
         m,
       )
     else {
@@ -341,7 +385,7 @@ class FieldGenerator(val info: FieldInfo):
     } else if (info.isPacked)
       method.addNamedCode(
         "" +
-          "final int dataSize = $abstractMessage:T.computeRepeated$capitalizedType:LSizeNoTag($field:N);\n" +
+          "final int dataSize = $field:N.compute$capitalizedType:LSizeNoTag();\n" +
           "size += $bytesPerTag:L + $abstractMessage:T.computeDelimitedSize(dataSize);\n",
         m,
       )
@@ -352,7 +396,11 @@ class FieldGenerator(val info: FieldInfo):
           // if 1 byte per tag, we can skip the multiplication
           (if info.bytesPerTag > 1 then "($bytesPerTag:L * $field:N.size())"
            else "$field:N.size()") +
-          " + $abstractMessage:T.computeRepeated$capitalizedType:LSizeNoTag($field:N);\n",
+          " + " +
+          (if info.isMessageOrGroup then
+             "$abstractMessage:T.computeRepeated$capitalizedType:LSizeNoTag($field:N)"
+           else "$field:N.compute$capitalizedType:LSizeNoTag()") +
+          ";\n",
         m,
       )
     } else if (info.isFixedWidth)
@@ -365,7 +413,15 @@ class FieldGenerator(val info: FieldInfo):
           "size += $bytesPerTag:L + $protoSink:T.computeUInt32SizeNoTag(dataSize) + dataSize;\n",
         m,
       )
-    } else
+    } else if (keepsUtf8)
+      method.addNamedCode(
+        "" + // non-repeated string: keep the bytes for writeTo
+          "$field:NUtf8 = $field:N.getBytes($utf8:T.UTF_8);\n" +
+          "$field:NUtf8Of = $field:N;\n" +
+          "size += $bytesPerTag:L + $protoSink:T.computeUInt32SizeNoTag($field:NUtf8.length) + $field:NUtf8.length;\n",
+        m,
+      )
+    else
       method.addStatement(
         named(
           "size += $bytesPerTag:L + $protoSink:T.compute$capitalizedType:LSizeNoTag($field:N)",

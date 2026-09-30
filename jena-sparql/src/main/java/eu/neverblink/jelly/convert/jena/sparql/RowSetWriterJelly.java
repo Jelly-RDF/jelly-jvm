@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.jena.sparql;
 
-import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
@@ -8,11 +7,13 @@ import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
-import eu.neverblink.protoc.java.runtime.ProtobufUtil;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
 import org.apache.jena.graph.Node;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.rowset.RowSetWriter;
@@ -105,18 +106,16 @@ public final class RowSetWriterJelly implements RowSetWriter {
         // Repeatedly iterating over an array copy is faster than over a List.
         final Var[] varArray = vars.toArray(new Var[0]);
         final Node[] row = new Node[varArray.length];
+        final RowFiller filler = new RowFiller(varArray, row);
         // Frames are budgeted in values, so the row limit depends on how wide the result set is.
         // A zero-variable result set carries no values at all, hence the lower bound of one row.
         final int rowsPerFrame = Math.max(1, options.maxValuesPerFrame() / Math.max(1, row.length));
-        final CodedOutputStream codedOutput = ProtobufUtil.createCodedOutputStream(out);
+        final DelimitedMessageWriter frames = new DelimitedMessageWriter(out);
         try {
             try {
                 int rowsInFrame = 0;
                 while (rowSet.hasNext()) {
-                    final Binding binding = rowSet.next();
-                    for (int i = 0; i < varArray.length; i++) {
-                        row[i] = binding.get(varArray[i]);
-                    }
+                    filler.fill(rowSet.next());
                     if (!encoder.appendRow(row)) {
                         // The frame filled up its lookup tables before reaching the row limit
                         if (!options.delimited()) {
@@ -126,42 +125,97 @@ public final class RowSetWriterJelly implements RowSetWriter {
                                     "Write delimited output, or increase the max lookup table sizes."
                             );
                         }
-                        encoder.endFrame().writeDelimitedTo(codedOutput);
+                        frames.write(encoder.endFrame());
                         rowsInFrame = 0;
                         // An empty frame always takes the row
                         encoder.appendRow(row);
                     }
                     if (options.delimited() && ++rowsInFrame >= rowsPerFrame) {
-                        encoder.endFrame().writeDelimitedTo(codedOutput);
+                        frames.write(encoder.endFrame());
                         rowsInFrame = 0;
                     }
                 }
             } catch (RuntimeException e) {
                 // Tell the reader that the result set is incomplete, then pass the error on
                 try {
-                    writeFrame(encoder.endStream(errorMessage(e)), codedOutput, options.delimited());
-                    codedOutput.flush();
-                    out.flush();
+                    writeFrame(encoder.endStream(errorMessage(e)), frames, out, options.delimited());
+                    frames.flush();
                 } catch (IOException | RuntimeException suppressed) {
                     e.addSuppressed(suppressed);
                 }
                 throw e;
             }
             // If the rows ended exactly at a frame boundary, this frame holds only the trailer
-            writeFrame(encoder.endStream(), codedOutput, options.delimited());
-            codedOutput.flush();
-            out.flush();
+            writeFrame(encoder.endStream(), frames, out, options.delimited());
+            frames.flush();
         } catch (IOException e) {
             throw new RiotException(e);
         }
     }
 
-    private static void writeFrame(SparqlResultsFrame frame, CodedOutputStream output, boolean delimited)
-        throws IOException {
+    /** Copies the values of a binding into the row, in the order of the result variables. */
+    private static final class RowFiller implements BiConsumer<Var, Node> {
+
+        private final Var[] vars;
+        private final Node[] row;
+        // The column after the last one that was filled
+        private int next;
+
+        RowFiller(Var[] vars, Node[] row) {
+            this.vars = vars;
+            this.row = row;
+        }
+
+        void fill(Binding binding) {
+            Arrays.fill(row, null);
+            next = 0;
+            binding.forEach(this);
+        }
+
+        @Override
+        public void accept(Var var, Node node) {
+            int i = next;
+            if (i >= vars.length || vars[i] != var) {
+                i = indexOf(var);
+                if (i < 0) {
+                    // Not a result variable
+                    return;
+                }
+            }
+            // A binding lists its own variables before its parent's: the first value is the one
+            // that binding.get(var) would give
+            if (row[i] == null) {
+                row[i] = node;
+            }
+            next = i + 1;
+        }
+
+        private int indexOf(Var var) {
+            for (int i = 0; i < vars.length; i++) {
+                if (vars[i] == var) {
+                    return i;
+                }
+            }
+            for (int i = 0; i < vars.length; i++) {
+                if (vars[i].equals(var)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+    }
+
+    private static void writeFrame(
+        SparqlResultsFrame frame,
+        DelimitedMessageWriter frames,
+        OutputStream out,
+        boolean delimited
+    ) throws IOException {
         if (delimited) {
-            frame.writeDelimitedTo(output);
+            frames.write(frame);
         } else {
-            frame.writeTo(output);
+            // The only frame of the stream
+            frame.writeTo(out);
         }
     }
 

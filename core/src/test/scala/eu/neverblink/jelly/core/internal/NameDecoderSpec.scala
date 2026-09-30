@@ -105,6 +105,54 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         dec.decode(8, 16) should be("https://test.org/Pie")
       }
 
+      "make the IRIs of a name used with two prefixes in turn only once" in {
+        var made = 0
+        val dec = NameDecoderImpl[String](8, 16, iri => { made += 1; iri })
+        dec.updatePrefixes(rdfPrefixEntry(1, "https://a.org/"))
+        dec.updatePrefixes(rdfPrefixEntry(2, "https://b.org/"))
+        dec.updateNames(rdfNameEntry(1, "x"))
+        for _ <- 1 to 3 do
+          dec.decodeRaw(1, 1) should be("https://a.org/x")
+          dec.decodeRaw(2, 1) should be("https://b.org/x")
+        made should be(2)
+      }
+
+      "decode a name used with three prefixes in turn" in {
+        val dec = makeDecoder(smallOptions)
+        for (p, i) <- Seq("https://a.org/", "https://b.org/", "https://c.org/").zipWithIndex do
+          dec.updatePrefixes(rdfPrefixEntry(i + 1, p))
+        dec.updateNames(rdfNameEntry(1, "x"))
+        for _ <- 1 to 3; (p, i) <- Seq("a", "b", "c").zipWithIndex do
+          dec.decodeRaw(i + 1, 1) should be(s"https://$p.org/x")
+      }
+
+      "not return the IRI of a replaced prefix or name, from either of its two IRIs" in {
+        val dec = makeDecoder(smallOptions)
+        dec.updatePrefixes(rdfPrefixEntry(1, "https://a.org/"))
+        dec.updatePrefixes(rdfPrefixEntry(2, "https://b.org/"))
+        dec.updateNames(rdfNameEntry(1, "x"))
+        dec.decodeRaw(1, 1) should be("https://a.org/x")
+        dec.decodeRaw(2, 1) should be("https://b.org/x")
+        // The IRI with prefix 1 is now the other one: its prefix is replaced
+        dec.updatePrefixes(rdfPrefixEntry(1, "https://c.org/"))
+        dec.decodeRaw(1, 1) should be("https://c.org/x")
+        dec.decodeRaw(2, 1) should be("https://b.org/x")
+        // Both IRIs of the name are dropped when the name is replaced
+        dec.updateNames(rdfNameEntry(1, "y"))
+        dec.decodeRaw(1, 1) should be("https://c.org/y")
+        dec.decodeRaw(2, 1) should be("https://b.org/y")
+        dec.decodeRaw(0, 1) should be("y")
+      }
+
+      "decode a name used with and without a prefix in turn" in {
+        val dec = makeDecoder(smallOptions)
+        dec.updatePrefixes(rdfPrefixEntry(1, "https://a.org/"))
+        dec.updateNames(rdfNameEntry(1, "x"))
+        for _ <- 1 to 3 do
+          dec.decodeRaw(1, 1) should be("https://a.org/x")
+          dec.decodeRaw(0, 1) should be("x")
+      }
+
       "not accept a new prefix ID larger than table size" in {
         val dec = makeDecoder(smallOptions)
         intercept[RdfProtoDeserializationError] {
