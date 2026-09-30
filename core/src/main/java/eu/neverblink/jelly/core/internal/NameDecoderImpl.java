@@ -27,8 +27,8 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
         public Object lastIri;
         // The IRI of this name with the prefix used before the last one, if it had a prefix:
         // names used with two prefixes in turn are common. A prefix id of 0 means none.
-        public int otherPrefixId;
-        public int otherPrefixSerial;
+        public int beforeLastPrefixId;
+        public int beforeLastPrefixSerial;
         public Object otherIri;
     }
 
@@ -101,7 +101,7 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             entry.lastPrefixId = 0;
             // Set to null is required to avoid a false positive in the decode method for cases without a prefix.
             entry.lastIri = null;
-            entry.otherPrefixId = 0;
+            entry.beforeLastPrefixId = 0;
             entry.otherIri = null;
         } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
             throw new RdfProtoDeserializationError(
@@ -207,11 +207,13 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                 );
             }
             if (nameEntry.lastPrefixId != prefixId || nameEntry.lastPrefixSerial != prefixEntry.serial) {
-                if (nameEntry.otherPrefixId == prefixId && nameEntry.otherPrefixSerial == prefixEntry.serial) {
+                if (
+                    nameEntry.beforeLastPrefixId == prefixId && nameEntry.beforeLastPrefixSerial == prefixEntry.serial
+                ) {
                     // The IRI with the prefix before the last one: swap the two
                     final Object iri = nameEntry.otherIri;
-                    nameEntry.otherPrefixId = nameEntry.lastPrefixId;
-                    nameEntry.otherPrefixSerial = nameEntry.lastPrefixSerial;
+                    nameEntry.beforeLastPrefixId = nameEntry.lastPrefixId;
+                    nameEntry.beforeLastPrefixSerial = nameEntry.lastPrefixSerial;
                     nameEntry.otherIri = nameEntry.lastIri;
                     nameEntry.lastPrefixId = prefixId;
                     nameEntry.lastPrefixSerial = prefixEntry.serial;
@@ -230,8 +232,8 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                     );
                 }
                 // Keep the IRI with the previous prefix, then update the last prefix
-                nameEntry.otherPrefixId = nameEntry.lastPrefixId;
-                nameEntry.otherPrefixSerial = nameEntry.lastPrefixSerial;
+                nameEntry.beforeLastPrefixId = nameEntry.lastPrefixId;
+                nameEntry.beforeLastPrefixSerial = nameEntry.lastPrefixSerial;
                 nameEntry.otherIri = nameEntry.lastIri;
                 nameEntry.lastPrefixId = prefixId;
                 nameEntry.lastPrefixSerial = prefixEntry.serial;
@@ -253,8 +255,8 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
             }
             if (nameEntry.lastPrefixId != 0) {
                 // Keep the IRI with the prefix
-                nameEntry.otherPrefixId = nameEntry.lastPrefixId;
-                nameEntry.otherPrefixSerial = nameEntry.lastPrefixSerial;
+                nameEntry.beforeLastPrefixId = nameEntry.lastPrefixId;
+                nameEntry.beforeLastPrefixSerial = nameEntry.lastPrefixSerial;
                 nameEntry.otherIri = nameEntry.lastIri;
             }
             nameEntry.lastPrefixId = 0;
