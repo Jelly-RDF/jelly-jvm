@@ -1,5 +1,7 @@
 package eu.neverblink.protoc.java.runtime;
 
+import com.google.protobuf.CodedOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -14,6 +16,13 @@ public final class RepeatedString implements Iterable<String> {
 
     private String[] values = EMPTY_ARRAY;
     private int size = 0;
+
+    /**
+     * The values in UTF-8, as {@link #computeSizeNoTag} made them for {@link #utf8}: measuring a
+     * string and writing it then take one vectorised {@link String#getBytes} instead of two or
+     * three passes over its characters. Null where a value was added since.
+     */
+    private byte[][] utf8 = null;
 
     private RepeatedString() {}
 
@@ -38,11 +47,13 @@ public final class RepeatedString implements Iterable<String> {
 
     public void add(CharSequence value) {
         reserve(1);
+        forgetUtf8(size, size + 1);
         values[size++] = value.toString();
     }
 
     public void addAll(RepeatedString other) {
         reserve(other.size);
+        forgetUtf8(size, size + other.size);
         System.arraycopy(other.values, 0, values, size, other.size);
         size += other.size;
     }
@@ -50,7 +61,43 @@ public final class RepeatedString implements Iterable<String> {
     public void clear() {
         // Null out the references to allow garbage collection
         Arrays.fill(values, 0, size, null);
+        forgetUtf8(0, size);
         size = 0;
+    }
+
+    /**
+     * The size of the values in the wire format, without their tags: each one's length and its
+     * UTF-8 bytes. Keeps the bytes for {@link #utf8}.
+     */
+    int computeSizeNoTag() {
+        if (utf8 == null || utf8.length < size) {
+            utf8 = new byte[values.length][];
+        }
+        int dataSize = 0;
+        for (int i = 0; i < size; i++) {
+            final byte[] bytes = values[i].getBytes(StandardCharsets.UTF_8);
+            utf8[i] = bytes;
+            dataSize += CodedOutputStream.computeUInt32SizeNoTag(bytes.length) + bytes.length;
+        }
+        return dataSize;
+    }
+
+    /**
+     * A value in UTF-8, the same bytes as {@link CodedOutputStream#writeStringNoTag} writes. Taken
+     * from the last {@link #computeSizeNoTag} if it covered this value.
+     */
+    public byte[] utf8(int index) {
+        if (index >= size) {
+            throw new IndexOutOfBoundsException("Index %d out of bounds for size %d".formatted(index, size));
+        }
+        final byte[] bytes = utf8 == null || index >= utf8.length ? null : utf8[index];
+        return bytes != null ? bytes : values[index].getBytes(StandardCharsets.UTF_8);
+    }
+
+    private void forgetUtf8(int from, int to) {
+        if (utf8 != null && from < utf8.length) {
+            Arrays.fill(utf8, from, Math.min(to, utf8.length), null);
+        }
     }
 
     private void reserve(int count) {

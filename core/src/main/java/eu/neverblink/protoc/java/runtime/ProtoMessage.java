@@ -310,12 +310,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
 
     @InternalApi
     protected static int computeRepeatedStringSizeNoTag(final RepeatedString values) {
-        final int size = values.size();
-        int dataSize = 0;
-        for (int i = 0; i < size; i++) {
-            dataSize += CodedOutputStream.computeStringSizeNoTag(values.get(i));
-        }
-        return dataSize;
+        return values.computeSizeNoTag();
     }
 
     @InternalApi
