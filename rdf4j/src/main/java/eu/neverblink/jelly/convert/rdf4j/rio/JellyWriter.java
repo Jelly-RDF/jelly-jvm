@@ -12,6 +12,7 @@ import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,6 +40,8 @@ public final class JellyWriter extends AbstractRDFWriter {
     private final ValueFactory valueFactory;
     private final OutputStream outputStream;
     private final CodedOutputStream codedOutput;
+    // Frames are serialized with the array encoder, then go out through codedOutput
+    private final DelimitedMessageWriter frames;
     // Initialized in startRDF()
     private ReusableRowBuffer buffer = null;
     private EncoderAllocator allocator = null;
@@ -62,6 +65,7 @@ public final class JellyWriter extends AbstractRDFWriter {
         this.valueFactory = valueFactory;
         this.outputStream = outputStream;
         this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
+        this.frames = new DelimitedMessageWriter(codedOutput);
         this.reusableFrame = RdfStreamFrame.newInstance();
     }
 
@@ -183,7 +187,7 @@ public final class JellyWriter extends AbstractRDFWriter {
     private void flushBuffer() {
         reusableFrame.resetCachedSize();
         try {
-            reusableFrame.writeDelimitedTo(codedOutput);
+            frames.write(reusableFrame);
         } catch (Exception e) {
             throw new RDFHandlerException("Error writing frame", e);
         } finally {

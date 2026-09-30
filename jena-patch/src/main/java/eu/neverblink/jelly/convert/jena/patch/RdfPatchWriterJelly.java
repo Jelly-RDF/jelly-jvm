@@ -11,6 +11,7 @@ import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchFrame;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchRow;
 import eu.neverblink.protoc.java.runtime.ArrayListMessageCollection;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import eu.neverblink.protoc.java.runtime.MessageCollection;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
@@ -50,6 +51,8 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     private final Options options;
     private final OutputStream outputStream;
     private final CodedOutputStream codedOutput;
+    // Frames are serialized with the array encoder, then go out through codedOutput
+    private final DelimitedMessageWriter frames;
 
     private final RdfPatchOptions patchOptions;
     private final MessageCollection<RdfPatchRow, RdfPatchRow.Mutable> buffer = new ArrayListMessageCollection<>(
@@ -68,6 +71,7 @@ public final class RdfPatchWriterJelly implements RDFChanges {
         this.options = options;
         this.outputStream = outputStream;
         this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
+        this.frames = new DelimitedMessageWriter(codedOutput);
 
         this.patchOptions =
             options
@@ -199,7 +203,7 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     private void flushBuffer() {
         reusableFrame.resetCachedSize();
         try {
-            reusableFrame.writeDelimitedTo(codedOutput);
+            frames.write(reusableFrame);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to write frame to output stream", e);
         } finally {

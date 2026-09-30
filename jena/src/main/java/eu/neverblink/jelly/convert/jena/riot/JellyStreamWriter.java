@@ -8,6 +8,7 @@ import eu.neverblink.jelly.core.memory.ReusableRowBuffer;
 import eu.neverblink.jelly.core.memory.RowBuffer;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,6 +31,8 @@ public sealed class JellyStreamWriter implements StreamRDF {
     protected final JellyFormatVariant formatVariant;
     protected final OutputStream outputStream;
     protected final CodedOutputStream codedOutput;
+    // Frames are serialized with the array encoder, then go out through codedOutput
+    private final DelimitedMessageWriter frames;
 
     protected final ReusableRowBuffer buffer;
     protected final EncoderAllocator allocator;
@@ -64,6 +67,7 @@ public sealed class JellyStreamWriter implements StreamRDF {
         this.formatVariant = formatVariant;
         this.outputStream = outputStream;
         this.codedOutput = ProtobufUtil.createCodedOutputStream(outputStream);
+        this.frames = new DelimitedMessageWriter(codedOutput);
         this.buffer = RowBuffer.newReusableForEncoder(formatVariant.getFrameSize() + 8);
         this.allocator = EncoderAllocator.newArenaAllocator(formatVariant.getFrameSize() + 8);
         this.reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
@@ -195,7 +199,7 @@ public sealed class JellyStreamWriter implements StreamRDF {
     protected void flushBuffer() {
         reusableFrame.resetCachedSize();
         try {
-            reusableFrame.writeDelimitedTo(codedOutput);
+            frames.write(reusableFrame);
         } catch (IOException e) {
             throw new RiotException(e);
         } finally {

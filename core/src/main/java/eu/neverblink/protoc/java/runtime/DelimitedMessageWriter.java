@@ -14,6 +14,11 @@ import java.util.Arrays;
  * as the stream encoder does. The array collects messages until the next one does not fit, and is
  * then written to the stream in one call.
  * <p>
+ * Made with a {@link CodedOutputStream} instead of an {@link OutputStream}, it hands each message
+ * to that stream as soon as it is serialized, in one {@link CodedOutputStream#writeRawBytes} call.
+ * That costs one more copy of the message, but keeps its bytes in order with anything else written
+ * to the same {@link CodedOutputStream}.
+ * <p>
  * The array is as large as the largest message written so far, and at least
  * {@link #INITIAL_BUFFER_SIZE}.
  */
@@ -21,12 +26,20 @@ public final class DelimitedMessageWriter {
 
     private static final int INITIAL_BUFFER_SIZE = 8192;
 
+    // One of the two is null
     private final OutputStream output;
+    private final CodedOutputStream codedOutput;
     private byte[] buffer = new byte[INITIAL_BUFFER_SIZE];
     private int position = 0;
 
     public DelimitedMessageWriter(OutputStream output) {
         this.output = output;
+        this.codedOutput = null;
+    }
+
+    public DelimitedMessageWriter(CodedOutputStream codedOutput) {
+        this.output = null;
+        this.codedOutput = codedOutput;
     }
 
     /**
@@ -49,21 +62,33 @@ public final class DelimitedMessageWriter {
         message.writeTo(coded);
         coded.checkNoSpaceLeft();
         position += total;
+        if (codedOutput != null) {
+            writeBuffer();
+        }
     }
 
     /**
-     * Writes out the messages that are still in the array, and flushes the stream.
+     * Writes out the messages that are still in the array, and flushes the stream. A
+     * {@link CodedOutputStream} is flushed into its own stream, which is not flushed.
      *
      * @throws IOException if writing to the stream fails
      */
     public void flush() throws IOException {
         writeBuffer();
-        output.flush();
+        if (codedOutput != null) {
+            codedOutput.flush();
+        } else {
+            output.flush();
+        }
     }
 
     private void writeBuffer() throws IOException {
         if (position > 0) {
-            output.write(buffer, 0, position);
+            if (codedOutput != null) {
+                codedOutput.writeRawBytes(buffer, 0, position);
+            } else {
+                output.write(buffer, 0, position);
+            }
             position = 0;
         }
     }

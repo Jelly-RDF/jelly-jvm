@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core
 
 import eu.neverblink.jelly.core.proto.v1.*
+import com.google.protobuf.CodedOutputStream
 import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -67,6 +68,24 @@ class DelimitedMessageWriterSpec extends AnyWordSpec, Matchers:
       out.writes.toSeq shouldBe Seq(small.length)
       writer.flush()
       out.bytes.toByteArray shouldBe small ++ big
+    }
+
+    "write through a CodedOutputStream in order with the stream's other bytes" in {
+      val out = Recording()
+      val coded = CodedOutputStream.newInstance(out, 64)
+      val writer = DelimitedMessageWriter(coded)
+      val expected = ByteArrayOutputStream()
+      val expectedCoded = CodedOutputStream.newInstance(expected)
+      for f <- Seq(frame(1), frame(3000), frame(2)) do
+        coded.writeRawByte(42)
+        writer.write(f)
+        expectedCoded.writeRawByte(42)
+        f.writeDelimitedTo(expectedCoded)
+      writer.flush()
+      expectedCoded.flush()
+      out.bytes.toByteArray shouldBe expected.toByteArray
+      // A CodedOutputStream does not flush its own stream
+      out.flushed shouldBe false
     }
 
     "flush the stream even when it holds nothing" in {
