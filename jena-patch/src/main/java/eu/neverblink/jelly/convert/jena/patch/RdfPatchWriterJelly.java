@@ -51,7 +51,6 @@ public final class RdfPatchWriterJelly implements RDFChanges {
     private final Options options;
     private final OutputStream outputStream;
     private final CodedOutputStream codedOutput;
-    // Frames are serialized with the array encoder, then go out through codedOutput
     private final DelimitedMessageWriter frames;
 
     private final RdfPatchOptions patchOptions;

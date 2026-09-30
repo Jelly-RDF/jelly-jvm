@@ -46,24 +46,24 @@ class RepeatedStringSpec extends AnyWordSpec, Matchers:
           val expected = protobufBytes(s)
           // Before and after the size has been computed
           r.utf8(i) shouldBe expected
-          r.computeSizeNoTag()
+          r.computeStringSizeNoTag()
           r.utf8(i) shouldBe expected
         }
     }
 
     "compute the same size as protobuf" in {
       val r = repeated(strings)
-      r.computeSizeNoTag() shouldBe strings.map(CodedOutputStream.computeStringSizeNoTag).sum
+      r.computeStringSizeNoTag() shouldBe strings.map(CodedOutputStream.computeStringSizeNoTag).sum
     }
 
     "not give the bytes of a value that is no longer there" in {
       val r = repeated(Seq("first", "second"))
-      r.computeSizeNoTag()
+      r.computeStringSizeNoTag()
       r.clear()
       r.add("other")
       r.utf8(0) shouldBe "other".getBytes("UTF-8")
       // Values added after the size was computed, also beyond what it covered
-      r.computeSizeNoTag()
+      r.computeStringSizeNoTag()
       for i <- 1 to 20 do r.add(s"v$i")
       for i <- 1 to 20 do r.utf8(i) shouldBe s"v$i".getBytes("UTF-8")
       val copy = RepeatedString.newEmptyInstance()

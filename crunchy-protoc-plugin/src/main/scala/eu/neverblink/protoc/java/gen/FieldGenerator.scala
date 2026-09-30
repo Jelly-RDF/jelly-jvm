@@ -385,7 +385,7 @@ class FieldGenerator(val info: FieldInfo):
     } else if (info.isPacked)
       method.addNamedCode(
         "" +
-          "final int dataSize = $abstractMessage:T.computeRepeated$capitalizedType:LSizeNoTag($field:N);\n" +
+          "final int dataSize = $field:N.compute$capitalizedType:LSizeNoTag();\n" +
           "size += $bytesPerTag:L + $abstractMessage:T.computeDelimitedSize(dataSize);\n",
         m,
       )
@@ -396,7 +396,11 @@ class FieldGenerator(val info: FieldInfo):
           // if 1 byte per tag, we can skip the multiplication
           (if info.bytesPerTag > 1 then "($bytesPerTag:L * $field:N.size())"
            else "$field:N.size()") +
-          " + $abstractMessage:T.computeRepeated$capitalizedType:LSizeNoTag($field:N);\n",
+          " + " +
+          (if info.isMessageOrGroup then
+             "$abstractMessage:T.computeRepeated$capitalizedType:LSizeNoTag($field:N)"
+           else "$field:N.compute$capitalizedType:LSizeNoTag()") +
+          ";\n",
         m,
       )
     } else if (info.isFixedWidth)

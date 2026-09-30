@@ -153,20 +153,12 @@ public final class RowSetWriterJelly implements RowSetWriter {
         }
     }
 
-    /**
-     * Copies the values of a binding into the row, in the order of the result variables.
-     * <p>
-     * {@code binding.get(var)} finds a variable by comparing it with each variable of the binding
-     * in turn, and two different variables with names of the same length are compared as strings.
-     * Going through the binding with {@code forEach} instead gives each variable with its value.
-     * They mostly come in the order of the result variables, so the next column is checked first,
-     * by identity.
-     */
+    /** Copies the values of a binding into the row, in the order of the result variables. */
     private static final class RowFiller implements BiConsumer<Var, Node> {
 
         private final Var[] vars;
         private final Node[] row;
-        // The column after the last one filled
+        // The column after the last one that was filled
         private int next;
 
         RowFiller(Var[] vars, Node[] row) {

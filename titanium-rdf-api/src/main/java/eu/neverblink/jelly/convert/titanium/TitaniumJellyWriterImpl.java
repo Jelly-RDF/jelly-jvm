@@ -17,7 +17,6 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
 
     private final OutputStream outputStream;
     private final CodedOutputStream codedOutput;
-    // Frames are serialized with the array encoder, then go out through codedOutput
     private final DelimitedMessageWriter frames;
     private final int frameSize;
 

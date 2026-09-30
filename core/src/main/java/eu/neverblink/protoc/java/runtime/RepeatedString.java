@@ -1,6 +1,7 @@
 package eu.neverblink.protoc.java.runtime;
 
 import com.google.protobuf.CodedOutputStream;
+import eu.neverblink.jelly.core.InternalApi;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -18,7 +19,7 @@ public final class RepeatedString implements Iterable<String> {
     private int size = 0;
 
     /**
-     * The values in UTF-8, as {@link #computeSizeNoTag} made them for {@link #utf8}: measuring a
+     * The values in UTF-8, as {@link #computeStringSizeNoTag} made them for {@link #utf8}: measuring a
      * string and writing it then take one vectorised {@link String#getBytes} instead of two or
      * three passes over its characters. Null where a value was added since.
      */
@@ -69,7 +70,8 @@ public final class RepeatedString implements Iterable<String> {
      * The size of the values in the wire format, without their tags: each one's length and its
      * UTF-8 bytes. Keeps the bytes for {@link #utf8}.
      */
-    int computeSizeNoTag() {
+    @InternalApi
+    public int computeStringSizeNoTag() {
         if (utf8 == null || utf8.length < size) {
             utf8 = new byte[values.length][];
         }
@@ -84,7 +86,7 @@ public final class RepeatedString implements Iterable<String> {
 
     /**
      * A value in UTF-8, the same bytes as {@link CodedOutputStream#writeStringNoTag} writes. Taken
-     * from the last {@link #computeSizeNoTag} if it covered this value.
+     * from the last {@link #computeStringSizeNoTag} if it covered this value.
      */
     public byte[] utf8(int index) {
         if (index >= size) {

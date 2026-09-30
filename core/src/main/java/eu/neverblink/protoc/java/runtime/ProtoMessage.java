@@ -298,16 +298,6 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
     }
 
     @InternalApi
-    protected static int computeRepeatedUInt32SizeNoTag(final RepeatedInt values) {
-        return values.computeUInt32SizeNoTag();
-    }
-
-    @InternalApi
-    protected static int computeRepeatedStringSizeNoTag(final RepeatedString values) {
-        return values.computeSizeNoTag();
-    }
-
-    @InternalApi
     protected static <T extends ProtoMessage<T>> int computeRepeatedMessageSizeNoTag(final Collection<T> values) {
         int dataSize = 0;
         for (final ProtoMessage<?> value : values) {

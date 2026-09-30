@@ -40,7 +40,6 @@ public final class JellyWriter extends AbstractRDFWriter {
     private final ValueFactory valueFactory;
     private final OutputStream outputStream;
     private final CodedOutputStream codedOutput;
-    // Frames are serialized with the array encoder, then go out through codedOutput
     private final DelimitedMessageWriter frames;
     // Initialized in startRDF()
     private ReusableRowBuffer buffer = null;

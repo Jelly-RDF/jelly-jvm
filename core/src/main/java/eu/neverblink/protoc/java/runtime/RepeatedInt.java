@@ -1,6 +1,7 @@
 package eu.neverblink.protoc.java.runtime;
 
 import com.google.protobuf.CodedOutputStream;
+import eu.neverblink.jelly.core.InternalApi;
 import java.util.Arrays;
 
 /**
@@ -61,7 +62,8 @@ public final class RepeatedInt {
      * The size of the values as uint32 varints, without a tag or a length. Kept for
      * {@link #uint32SizeNoTag()}.
      */
-    int computeUInt32SizeNoTag() {
+    @InternalApi
+    public int computeUInt32SizeNoTag() {
         final int[] array = values;
         final int size = this.size;
         int dataSize = 0;

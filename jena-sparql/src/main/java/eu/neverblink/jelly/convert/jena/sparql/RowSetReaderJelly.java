@@ -262,8 +262,6 @@ public final class RowSetReaderJelly implements RowSetReader {
     private static final class RowCollector implements SparqlResultsHandler<Node> {
 
         private List<Var> vars = null;
-        // The same as an array, if the variables are all different (see JellyBinding). Otherwise
-        // null, and the rows are built by Jena's builder, whose checks report the repeated name.
         private Var[] distinctVars = null;
         private Boolean askResult = null;
         private String error = null;
