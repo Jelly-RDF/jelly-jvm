@@ -48,15 +48,22 @@ sbt "jmh/Jmh/run -p dataset=nanopubs,wide-5 -p rows=100000 -p method=jena-srj,rd
 
 Throughput is in cells (rows × variables) per second, in the `:cells` lines. Setup round-trips the data first and prints `ROUND-TRIP WARNING` if a format changes it.
 
-`JellyDecodeBench` reads Jelly BIG into Jena or RDF4J (`-p library=jena,rdf4j`) without passing rows through a Scala function, so its results move less between runs. Use it for work on the decoder.
-
-`JellyEncodeBench` writes Jena bindings or RDF4J binding sets as Jelly BIG (`-p library=jena,rdf4j`), with nothing but the library's writer between the benchmark and the rows. Use it for work on the encoder.
-
-`JellyBigBench` writes and reads Jelly BIG in both formats (`-p format=rdf,sparql`) with both libraries (`-p library=jena,rdf4j`), through each library's own writer and reader, in terms per second. `JellyBigSizes` (`sbt "jmh/runMain eu.neverblink.jelly.jmh.JellyBigSizes 100000 nanopubs"`) prints the sizes of what it writes. Use them to compare versions.
-
-`RdfCodecBench` encodes and decodes the same RiverBench datasets as Jelly-RDF with Jena (`-p preset=small,big`), in statements per second (the `:cells` lines). Use it for work on the RDF encoder, decoder and lookups.
-
 ```bash
 sbt sparqlRoundTrip   # check every format against every dataset
 sbt sparqlSizes       # byte sizes (plain, gzip, zstd) of the benchmarked combinations
+```
+
+## RDF benchmarks
+
+Compare Jena, RDF4J and Jelly-RDF formats on the same RiverBench datasets (all params are free-form, see `RdfMethods` for method names):
+
+```bash
+sbt "jmh/Jmh/run -p dataset=nanopubs -p method=jena-nt,rdf4j-jelly-big RdfFormatBench"
+```
+
+Throughput is in statements per second, in the `:cells` lines. As for SPARQL, setup round-trips the data first and prints `ROUND-TRIP WARNING` if a format changes it.
+
+```bash
+sbt rdfRoundTrip   # check every format against every dataset
+sbt rdfSizes       # byte sizes (plain, gzip, zstd) of the benchmarked combinations
 ```

@@ -43,8 +43,8 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
 
     // Initialized in startQueryResult()
     private SparqlEncoder<Value> encoder = null;
-    // The same encoder, taking rows as Object[]. Storing into a Value[] checks that the value is
-    // a Value, an interface: that check cost more than the rest of copying the row.
+    // The same encoder, casted to take rows as Object[].
+    // Storing into a Value[] adds an interface check for Value, which is very slow.
     private SparqlEncoder<Object> rowEncoder = null;
     private String[] variables = null;
     private Object[] row = null;

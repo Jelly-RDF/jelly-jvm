@@ -49,10 +49,13 @@ import org.eclipse.rdf4j.query.resultio.{
 }
 import org.eclipse.rdf4j.query.{AbstractTupleQueryResultHandler, BindingSet}
 import org.eclipse.rdf4j.rio.WriterConfig
+import org.openjdk.jmh.infra.Blackhole
 
 import eu.neverblink.jelly.jmh.UnsyncByteArrayInputStream
 
 import java.io.{ByteArrayOutputStream, OutputStream}
+import scala.annotation.nowarn
+import scala.collection.mutable
 
 /** Every way of reading and writing a SPARQL result set used in benchmarks.
   *
@@ -69,12 +72,20 @@ object SparqlMethods:
 
     def write(data: SparqlBenchData.Data, out: OutputStream): Unit
 
-    def read(bytes: Array[Byte], sink: AnyRef => Unit): Int
+    /** Reads the rows into the blackhole, and returns how many there were. */
+    def read(bytes: Array[Byte], blackhole: Blackhole): Int
+
+    /** Reads all the rows.
+      *
+      * Not [[read]] with another sink: the benchmark's read loop would then have seen two sinks by
+      * the time it is measured, and the JIT may compile it differently from run to run.
+      */
+    def readAll(bytes: Array[Byte]): collection.IndexedSeq[AnyRef]
 
     /** The rows that [[write]] writes, in this library's terms. */
     def original(data: SparqlBenchData.Data): IndexedSeq[Array[? <: AnyRef]]
 
-    /** The value of a variable in a row passed to the sink of [[read]], or null if unbound. */
+    /** The value of a variable in a row from [[readAll]], or null if unbound. */
     def cell(row: AnyRef, variable: String): AnyRef
 
     final def writeToBytes(data: SparqlBenchData.Data): Array[Byte] =
@@ -95,7 +106,16 @@ object SparqlMethods:
     override def write(data: SparqlBenchData.Data, out: OutputStream): Unit =
       newWriter().write(out, data.jena.rowSet(), null)
 
-    override def read(bytes: Array[Byte], sink: AnyRef => Unit): Int =
+    override def read(bytes: Array[Byte], blackhole: Blackhole): Int =
+      readInto(bytes)(blackhole.consume)
+
+    override def readAll(bytes: Array[Byte]): collection.IndexedSeq[AnyRef] =
+      val rows = mutable.ArrayBuffer.empty[AnyRef]
+      readInto(bytes)(rows += _)
+      rows
+
+    // Inlined, so that read and readAll each have their own copy of the loop
+    private inline def readInto(bytes: Array[Byte])(inline sink: AnyRef => Unit): Int =
       val reader = newReader.getOrElse(throw UnsupportedOperationException(s"$name cannot read"))
       val rowSet = reader().read(UnsyncByteArrayInputStream(bytes), null)
       var rows = 0
@@ -159,7 +179,17 @@ object SparqlMethods:
         i += 1
       writer.endQueryResult()
 
-    override def read(bytes: Array[Byte], sink: AnyRef => Unit): Int =
+    override def read(bytes: Array[Byte], blackhole: Blackhole): Int =
+      readInto(bytes)(blackhole.consume)
+
+    override def readAll(bytes: Array[Byte]): collection.IndexedSeq[AnyRef] =
+      val rows = mutable.ArrayBuffer.empty[AnyRef]
+      readInto(bytes)(rows += _)
+      rows
+
+    // Inlined, so that read and readAll each have their own copy of the loop
+    @nowarn("id=E197") // the copies of the handler class are the point
+    private inline def readInto(bytes: Array[Byte])(inline sink: AnyRef => Unit): Int =
       val factory =
         parserFactory.getOrElse(throw UnsupportedOperationException(s"$name cannot read"))
       val parser = factory.getParser

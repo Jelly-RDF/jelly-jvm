@@ -63,6 +63,8 @@ addCommandAlias(
   "sparqlRoundTrip",
   "jmh/runMain eu.neverblink.jelly.jmh.sparql.SparqlRoundTripCheck",
 )
+addCommandAlias("rdfSizes", "jmh/runMain eu.neverblink.jelly.jmh.rdf.RdfSizeReport")
+addCommandAlias("rdfRoundTrip", "jmh/runMain eu.neverblink.jelly.jmh.rdf.RdfRoundTripCheck")
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
@@ -659,6 +661,11 @@ lazy val jmh = (project in file("jmh"))
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-text" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlxlsx" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlods" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-binary" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-ntriples" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-trig" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
       "com.github.luben" % "zstd-jni" % "1.5.7-20",
       // The library modules only have Jena and RDF4J as provided dependencies
     ) ++ jenaDeps ++ rdf4jDeps ++ rdf4jSparqlDeps,
