@@ -40,6 +40,29 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     frame.toByteArrayDelimited
   }
 
+  // A triple with the same blank node in the subject and the object
+  private val sameBNodeTwice = {
+    val frame = RdfStreamFrame.newInstance()
+    frame.addRows(row1)
+    frame.addRows(row2)
+    frame.addRows(
+      RdfStreamRow.newInstance().setTriple(
+        RdfTriple.newInstance()
+          .setSubject("b1234")
+          .setPredicate(RdfIri.newInstance().setNameId(1))
+          .setObject("b1234"),
+      ),
+    )
+    frame.toByteArrayDelimited
+  }
+
+  private def parseOne(parser: org.eclipse.rdf4j.rio.RDFParser, data: Array[Byte]) =
+    val collector = new StatementCollector()
+    parser.setRDFHandler(collector)
+    parser.parse(ByteArrayInputStream(data), "")
+    collector.getStatements.size should be(1)
+    collector.getStatements.asScala.head
+
   private val invalidLanguage = {
     val frame = RdfStreamFrame.newInstance()
     frame.addRows(row1)
@@ -97,8 +120,60 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       st.getObject.asInstanceOf[Literal].getLabel shouldEqual "TEST LITERAL IMPLEMENTATION"
     }
 
-    "not respect the SKOLEMIZE_ORIGIN setting" in {
+    "not preserve blank node IDs by default" in {
       val parser = JellyParserFactory().getParser()
+      val st = parseOne(parser, sameBNodeTwice)
+      st.getSubject.isBNode shouldBe true
+      st.getSubject.stringValue() should not equal "b1234"
+      st.getSubject.stringValue() should endWith("b1234")
+      // The same label within one file is still the same blank node
+      st.getObject shouldEqual st.getSubject
+    }
+
+    "give different blank nodes for the same label in different files" in {
+      val parser = JellyParserFactory().getParser()
+      val st1 = parseOne(parser, validData)
+      val st2 = parseOne(parser, validData)
+      st1.getSubject should not equal st2.getSubject
+    }
+
+    "preserve blank node IDs when PRESERVE_BNODE_IDS=true" in {
+      val parser = JellyParserFactory().getParser()
+      parser.set(BasicParserSettings.PRESERVE_BNODE_IDS, true)
+      val st1 = parseOne(parser, sameBNodeTwice)
+      st1.getSubject.isBNode shouldBe true
+      st1.getSubject.stringValue() shouldEqual "b1234"
+      st1.getObject shouldEqual st1.getSubject
+      val st2 = parseOne(parser, validData)
+      st2.getSubject shouldEqual st1.getSubject
+    }
+
+    "preserve blank node IDs when PRESERVE_BNODE_IDS=true, with a custom converter factory" in {
+      val parser = JellyParserFactory().getParser(Rdf4jConverterFactory.getInstance())
+      parser.set(BasicParserSettings.PRESERVE_BNODE_IDS, true)
+      parseOne(parser, validData).getSubject.stringValue() shouldEqual "b1234"
+    }
+
+    "not preserve blank node IDs by default, with a custom converter factory" in {
+      val parser = JellyParserFactory().getParser(Rdf4jConverterFactory.getInstance(customFactory))
+      val st = parseOne(parser, validData)
+      st.getSubject.isBNode shouldBe true
+      st.getSubject.stringValue() should not equal "b1234"
+      // The custom value factory is still used for other terms
+      st.getObject.asInstanceOf[Literal].getLabel shouldEqual "TEST LITERAL IMPLEMENTATION"
+    }
+
+    "respect the SKOLEMIZE_ORIGIN setting when not preserving blank node IDs" in {
+      val parser = JellyParserFactory().getParser()
+      parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
+      val st = parseOne(parser, validData)
+      st.getSubject.isIRI shouldBe true
+      st.getSubject.stringValue() should startWith("https://test.org/.well-known/genid/")
+    }
+
+    "not respect the SKOLEMIZE_ORIGIN setting when preserving blank node IDs" in {
+      val parser = JellyParserFactory().getParser()
+      parser.set(BasicParserSettings.PRESERVE_BNODE_IDS, true)
       parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
       val collector = new StatementCollector()
       parser.setRDFHandler(collector)
@@ -112,16 +187,12 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     "switch to checking mode when CHECKING=true" in {
       val parser = JellyParserFactory().getParser()
       parser.set(JellyParserSettings.CHECKING, true)
-      parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
-      val collector = new StatementCollector()
-      parser.setRDFHandler(collector)
-      parser.parse(ByteArrayInputStream(validData), "")
-      collector.getStatements.size should be(1)
-      val st = collector.getStatements.asScala.head
-      st.getSubject.isIRI shouldBe true
-      val iri = st.getSubject.stringValue()
-      iri should startWith("https://test.org/.well-known/genid/")
-      iri should endWith("b1234")
+      parser.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true)
+      parser.setRDFHandler(new StatementCollector())
+      // Only the checking parser validates language tags
+      intercept[RDFParseException] {
+        parser.parse(ByteArrayInputStream(invalidLanguage), "")
+      }
     }
   }
 
@@ -155,17 +226,26 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       st.getSubject.isBNode shouldBe false
     }
 
+    "not preserve blank node IDs by default" in {
+      val parser = JellyParserFactory().setChecking(true).getParser()
+      val st = parseOne(parser, sameBNodeTwice)
+      st.getSubject.isBNode shouldBe true
+      st.getSubject.stringValue() should not equal "b1234"
+      st.getObject shouldEqual st.getSubject
+    }
+
+    "preserve blank node IDs when PRESERVE_BNODE_IDS=true" in {
+      val parser = JellyParserFactory().setChecking(true).getParser()
+      parser.set(BasicParserSettings.PRESERVE_BNODE_IDS, true)
+      parseOne(parser, validData).getSubject.stringValue() shouldEqual "b1234"
+    }
+
     "switch to non-checking mode when CHECKING=false" in {
       val parser = JellyParserFactory().setChecking(true).getParser()
       parser.set(JellyParserSettings.CHECKING, false)
-      parser.set(BasicParserSettings.SKOLEMIZE_ORIGIN, "https://test.org/")
-      val collector = new StatementCollector()
-      parser.setRDFHandler(collector)
-      parser.parse(ByteArrayInputStream(validData), "")
-      collector.getStatements.size should be(1)
-      val st = collector.getStatements.asScala.head
-      st.getSubject.isBNode shouldBe true
-      st.getSubject.stringValue() shouldEqual "b1234"
+      parser.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true)
+      // The non-checking parser does not validate language tags
+      parseOne(parser, invalidLanguage).getObject.isLiteral shouldBe true
     }
 
     "report supported settings" in {

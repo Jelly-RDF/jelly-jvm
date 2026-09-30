@@ -24,6 +24,7 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RioSetting;
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFParser;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 
 public final class JellyParser extends AbstractRDFParser {
 
@@ -48,8 +49,9 @@ public final class JellyParser extends AbstractRDFParser {
 
     /**
      * Creates a new JellyParser instance with the specified converter factory. This parser will NOT
-     * respect BasicParserSettings, as it does not use RDF4J's parsing stack. It will never validate
-     * IRIs, language tags, or datatypes.
+     * respect most of BasicParserSettings, as it does not use RDF4J's parsing stack. It will never validate
+     * IRIs, language tags, or datatypes. It does respect {@link BasicParserSettings#PRESERVE_BNODE_IDS}
+     * and {@link BasicParserSettings#SKOLEMIZE_ORIGIN}.
      * <p>
      * If you want to use RDF4J's full parsing stack, use the parameterless constructor.
      *
@@ -140,6 +142,13 @@ public final class JellyParser extends AbstractRDFParser {
             .setVersion(config.get(JellyParserSettings.PROTO_VERSION));
 
         readCheckingSetting();
+        final BaseRdf4jDecoderConverter converter;
+        if (!this.checking && !preserveBNodeIDs()) {
+            // Give blank nodes fresh IDs, unique to this parse, like RDF4J's own parsers do
+            converter = new Rdf4jFreshBNodeDecoderConverter(decoderConverter.getValueFactory());
+        } else {
+            converter = decoderConverter;
+        }
 
         final var handler = new RdfHandler.AnyStatementHandler<Value>() {
             @Override
@@ -149,16 +158,16 @@ public final class JellyParser extends AbstractRDFParser {
 
             @Override
             public void handleQuad(Value subject, Value predicate, Value object, Value graph) {
-                rdfHandler.handleStatement(decoderConverter.makeQuad(subject, predicate, object, graph));
+                rdfHandler.handleStatement(converter.makeQuad(subject, predicate, object, graph));
             }
 
             @Override
             public void handleTriple(Value subject, Value predicate, Value object) {
-                rdfHandler.handleStatement(decoderConverter.makeTriple(subject, predicate, object));
+                rdfHandler.handleStatement(converter.makeTriple(subject, predicate, object));
             }
         };
 
-        final var decoder = new ProtoDecoderImpl.AnyStatementDecoder<>(decoderConverter, handler, options);
+        final var decoder = new ProtoDecoderImpl.AnyStatementDecoder<>(converter, handler, options);
         // Single row buffer -- rows are passed to the decoder immediately after being read
         final RowBuffer buffer = RowBuffer.newSingle(decoder::ingestRow);
         final RdfStreamFrame.Mutable reusableFrame = RdfStreamFrame.newInstance().setRows(buffer);
@@ -195,6 +204,22 @@ public final class JellyParser extends AbstractRDFParser {
     @Override
     public void parse(Reader reader, String baseURI) throws IOException, RDFParseException, RDFHandlerException {
         throw new UnsupportedOperationException("Parsing from Reader is not supported.");
+    }
+
+    /**
+     * Non-checking converter that allocates blank nodes with RDF4J's {@link #createNode(String)},
+     * so that blank node IDs from different files do not clash.
+     */
+    private final class Rdf4jFreshBNodeDecoderConverter extends Rdf4jDecoderConverter {
+
+        public Rdf4jFreshBNodeDecoderConverter(ValueFactory vf) {
+            super(vf);
+        }
+
+        @Override
+        public Value makeBlankNode(String label) {
+            return JellyParser.this.createNode(label);
+        }
     }
 
     private class Rdf4jRioDecoderConverter extends BaseRdf4jDecoderConverter {
