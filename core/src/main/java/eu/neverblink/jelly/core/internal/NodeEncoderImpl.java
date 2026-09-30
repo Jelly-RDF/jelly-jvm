@@ -316,34 +316,42 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
             i = iri.lastIndexOf('/');
         }
         final int prefixLen = i + 1;
+        final int nameLen = iri.length() - prefixLen;
         final int prefixId;
-        final String prefix;
+        final int nameHash;
         final String lastPrefix = prefixLookup.names[lastPrefixId];
         if (lastPrefix != null && lastPrefix.length() == prefixLen && iri.startsWith(lastPrefix)) {
             // Same namespace as the previous IRI, so its id can be reused as it is. Only the
             // entry's last use has to be updated.
-            prefix = lastPrefix;
             prefixId = lastPrefixId;
             prefixLookup.onAccess(prefixId);
+            // The stored prefix has its hash cached already
+            nameHash = EncoderLookup.hashOfSuffix(iri.hashCode(), lastPrefix.hashCode(), nameLen);
         } else {
-            prefix = iri.substring(0, prefixLen);
-            final var prefixEntry = prefixLookup.getOrAddEntry(prefix);
+            // Neither the prefix nor the name is cut out of the IRI unless it is new. Only the
+            // shorter of the two is hashed: the other one's hash follows from the IRI's own
+            // hash, which the node cache has just computed.
+            final int prefixHash;
+            if (nameLen <= prefixLen) {
+                nameHash = EncoderLookup.hashOfRange(iri, prefixLen, iri.length());
+                prefixHash = EncoderLookup.hashOfPrefix(iri.hashCode(), nameHash, nameLen);
+            } else {
+                prefixHash = EncoderLookup.hashOfRange(iri, 0, prefixLen);
+                nameHash = EncoderLookup.hashOfSuffix(iri.hashCode(), prefixHash, nameLen);
+            }
+            final var prefixEntry = prefixLookup.getOrAddEntry(iri, 0, prefixLen, prefixHash);
             if (prefixEntry.newEntry) {
                 bufferAppender.appendPrefixEntry(
-                    RdfPrefixEntry.newInstance().setId(prefixEntry.setId).setValue(prefix)
+                    RdfPrefixEntry.newInstance()
+                        .setId(prefixEntry.setId)
+                        .setValue(prefixLookup.names[prefixEntry.getId])
                 );
             }
             prefixId = prefixEntry.getId;
             this.lastPrefixId = prefixId;
         }
 
-        // Name's (suffix's) hashcode is calculated without looking at the string itself,
-        // based on the prefix hashcode. See EncoderLookup.hashOfSuffix
-        final var nameEntry = nameLookup.getOrAddEntry(
-            iri,
-            prefixLen,
-            EncoderLookup.hashOfSuffix(iri.hashCode(), prefix.hashCode(), iri.length() - prefixLen)
-        );
+        final var nameEntry = nameLookup.getOrAddEntry(iri, prefixLen, nameHash);
         if (nameEntry.newEntry) {
             bufferAppender.appendNameEntry(
                 RdfNameEntry.newInstance().setId(nameEntry.setId).setValue(nameLookup.names[nameEntry.getId])

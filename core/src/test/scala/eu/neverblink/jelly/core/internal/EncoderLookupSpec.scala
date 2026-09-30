@@ -250,9 +250,9 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         lookup.getOrAddEntry(name).getId should be(id)
     }
 
-    // The encoder never scans an IRI's local name to hash it – it subtracts the prefix's hash out
-    // of the whole IRI's. If that arithmetic is off by anything at all, the same name gets filed
-    // under two different slots and the lookup silently stops finding entries that are there.
+    // The encoder hashes only the shorter of an IRI's prefix and name, and works the other one's
+    // hash out of the whole IRI's. If that arithmetic is off by anything at all, the same key gets
+    // filed under two different slots and the lookup silently stops finding entries that are there.
     "derive a suffix's hash from the whole string's and the prefix's" in {
       val strings = Seq(
         "",
@@ -271,7 +271,37 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
           EncoderLookup.hashOfSuffix(s.hashCode, prefix.hashCode, suffix.length) should be(
             suffix.hashCode,
           )
+          // And the other way round
+          EncoderLookup.hashOfPrefix(s.hashCode, suffix.hashCode, suffix.length) should be(
+            prefix.hashCode,
+          )
         }
+    }
+
+    "hash any part of a string as the substring would be hashed" in {
+      val s = "https://example.org/é中😀/" + "x" * 300
+      for from <- 0 to 40; to <- from to s.length by 7 do
+        withClue(s"[$from, $to): ") {
+          EncoderLookup.hashOfRange(s, from, to) should be(s.substring(from, to).hashCode)
+        }
+    }
+
+    "look up keys given as any part of a longer string" in {
+      val lookup = EncoderLookup(8, true)
+      def part(source: String, from: Int, to: Int) =
+        lookup.getOrAddEntry(source, from, to - from, EncoderLookup.hashOfRange(source, from, to))
+
+      val iri = "https://example.org/ns#name"
+      val prefix = part(iri, 0, 23)
+      prefix.newEntry should be(true)
+      lookup.names(prefix.getId) should be("https://example.org/ns#")
+      // The same key, from another string and as a whole string
+      part("https://example.org/ns#other", 0, 23).getId should be(prefix.getId)
+      lookup.getOrAddEntry("https://example.org/ns#").newEntry should be(false)
+      // A shorter part of the same string is another key
+      part(iri, 0, 20).newEntry should be(true)
+      part(iri, 23, iri.length).newEntry should be(true)
+      lookup.getOrAddEntry("name").newEntry should be(false)
     }
 
     "not update the serials if not needed" in {

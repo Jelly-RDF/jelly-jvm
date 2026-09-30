@@ -191,11 +191,22 @@ final class EncoderLookup {
     /** Powers of 31, for {@link #hashOfSuffix}. Long enough to cover any sane IRI prefix. */
     private static final int[] POW31 = new int[256];
 
+    /**
+     * The inverse of 31 in int arithmetic: {@code 31 * INV31 == 1}. There is one because 31 is odd.
+     */
+    private static final int INV31 = 0xBDEF7BDF;
+
+    /** Powers of {@link #INV31}, for {@link #hashOfPrefix}. */
+    private static final int[] INV_POW31 = new int[256];
+
     static {
         int p = 1;
+        int q = 1;
         for (int i = 0; i < POW31.length; i++) {
             POW31[i] = p;
+            INV_POW31[i] = q;
             p *= 31;
+            q *= INV31;
         }
     }
 
@@ -212,13 +223,53 @@ final class EncoderLookup {
         return wholeHash - prefixHash * pow31(suffixLength);
     }
 
+    /**
+     * The hash of a prefix, worked out from the hash of the whole string and the hash of the
+     * suffix after it: the other way round from {@link #hashOfSuffix}.
+     *
+     * @param wholeHash {@code source.hashCode()}
+     * @param suffixHash hash of the last {@code suffixLength} characters
+     * @param suffixLength length of the suffix
+     * @return the hash the prefix would have
+     */
+    static int hashOfPrefix(int wholeHash, int suffixHash, int suffixLength) {
+        return (
+            (wholeHash - suffixHash) *
+            (suffixLength < INV_POW31.length ? INV_POW31[suffixLength] : pow(INV31, suffixLength))
+        );
+    }
+
+    /**
+     * The hash {@code source.substring(from, to)} would have, without making the substring.
+     * Four characters at a time, so that the multiplications do not wait on each other.
+     */
+    static int hashOfRange(String source, int from, int to) {
+        int h = 0;
+        int i = from;
+        for (; i + 4 <= to; i += 4) {
+            h =
+                h * 923521 + // 31^4
+                source.charAt(i) * 29791 + // 31^3
+                source.charAt(i + 1) * 961 + // 31^2
+                source.charAt(i + 2) * 31 +
+                source.charAt(i + 3);
+        }
+        for (; i < to; i++) {
+            h = 31 * h + source.charAt(i);
+        }
+        return h;
+    }
+
     /** 31 to the n. Tabulated for the lengths that occur in practice. */
     private static int pow31(int n) {
         if (n < POW31.length) {
             return POW31[n];
         }
+        return pow(31, n);
+    }
+
+    private static int pow(int base, int n) {
         int result = 1;
-        int base = 31;
         while (n > 0) {
             if ((n & 1) != 0) {
                 result *= base;
@@ -230,13 +281,12 @@ final class EncoderLookup {
     }
 
     /**
-     * Finds the entry whose name is the suffix of source starting at from.
+     * Finds the entry whose name is the part of source starting at from, keyLength long.
      * @param spread The spread hash of the key.
      * @return The id of the entry, or 0 if there is none.
      */
-    private int findId(int spread, String source, int from) {
+    private int findId(int spread, String source, int from, int keyLength) {
         final int tag = spread & ~ID_MASK;
-        final int keyLength = source.length() - from;
         int slot = spread & indexMask;
         while (true) {
             final int value = index[slot];
@@ -447,9 +497,25 @@ final class EncoderLookup {
      * @return The entry.
      */
     public LookupEntry getOrAddEntry(String source, int from, int hash) {
+        return getOrAddEntry(source, from, source.length() - from, hash);
+    }
+
+    /**
+     * The same as {@link #getOrAddEntry(String, int, int)}, with the key given as any part of an
+     * existing string.
+     * <p>
+     * The hash must be exactly what {@code source.substring(from, from + length).hashCode()} would
+     * return: see {@link #hashOfRange}, {@link #hashOfPrefix} and {@link #hashOfSuffix}.
+     * @param source The string the key is a part of.
+     * @param from Index at which the key starts.
+     * @param length Length of the key.
+     * @param hash Hash of the key.
+     * @return The entry.
+     */
+    public LookupEntry getOrAddEntry(String source, int from, int length, int hash) {
         final int spread = spread(hash);
         final var entry = entryForReturns;
-        final int existing = findId(spread, source, from);
+        final int existing = findId(spread, source, from, length);
         if (existing != 0) {
             // The entry is already in the table, just update the access order
             onAccess(existing);
@@ -458,7 +524,7 @@ final class EncoderLookup {
             entry.newEntry = false;
             return entry;
         }
-        final String key = source.substring(from);
+        final String key = source.substring(from, from + length);
         int id;
         if (used < size) {
             // We still have space in the table, add a new entry to the end of the table.
@@ -493,7 +559,7 @@ final class EncoderLookup {
     public LookupEntry getOrAddEntryTranscoder(String key, int evictHint) {
         final int spread = spread(key.hashCode());
         final var entry = entryForReturns;
-        final int existing = findId(spread, key, 0);
+        final int existing = findId(spread, key, 0, key.length());
         if (existing != 0) {
             onAccess(existing);
             entry.getId = existing;
