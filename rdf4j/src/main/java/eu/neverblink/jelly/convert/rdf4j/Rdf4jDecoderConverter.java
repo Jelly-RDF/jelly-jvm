@@ -4,7 +4,7 @@ import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
-public final class Rdf4jDecoderConverter extends BaseRdf4jDecoderConverter {
+public class Rdf4jDecoderConverter extends BaseRdf4jDecoderConverter {
 
     /**
      * Creates a new Rdf4jDecoderConverter.

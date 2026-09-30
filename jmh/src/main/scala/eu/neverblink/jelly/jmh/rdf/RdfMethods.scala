@@ -10,7 +10,7 @@ import org.apache.jena.riot.system.{StreamRDFBase, StreamRDFWriter}
 import org.apache.jena.riot.{RDFFormat, RDFParser}
 import org.apache.jena.sparql.core.Quad
 import org.eclipse.rdf4j.model.Statement
-import org.eclipse.rdf4j.rio.helpers.{AbstractRDFHandler, BasicWriterSettings}
+import org.eclipse.rdf4j.rio.helpers.{AbstractRDFHandler, BasicParserSettings, BasicWriterSettings}
 import org.eclipse.rdf4j.rio.{Rio, WriterConfig, RDFFormat as Rdf4jFormat}
 import org.openjdk.jmh.infra.Blackhole
 
@@ -160,6 +160,8 @@ object RdfMethods:
     ): Int =
       var statements = 0
       val parser = Rio.createParser(if quads then quadsFormat else triplesFormat)
+      // Keep blank node labels as they are, so that no parser spends time making fresh ones
+      parser.set(BasicParserSettings.PRESERVE_BNODE_IDS, true)
       parser.setRDFHandler(new AbstractRDFHandler:
         override def handleStatement(st: Statement): Unit =
           sink(st)
