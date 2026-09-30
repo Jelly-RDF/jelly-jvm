@@ -14,10 +14,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.util
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
-@experimental
 class SparqlDecoderSpec extends AnyWordSpec, Matchers:
 
   private def newDecoder(handler: SparqlResultsHandler[Node] = ResultsCollector()) =

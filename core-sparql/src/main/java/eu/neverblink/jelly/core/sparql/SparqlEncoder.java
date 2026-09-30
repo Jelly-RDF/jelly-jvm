@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.internal.NodeEncoderImpl;
@@ -20,7 +19,6 @@ import java.util.List;
  *
  * @param <TNode> type of RDF nodes in the library
  */
-@ExperimentalApi
 public abstract class SparqlEncoder<TNode> implements RdfBufferAppender<TNode> {
 
     /**

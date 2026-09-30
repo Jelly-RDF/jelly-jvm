@@ -13,10 +13,8 @@ import eu.neverblink.jelly.core.sparql.internal.SparqlEncoderImpl
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
-@experimental
 class SparqlEncoderSpec extends AnyWordSpec, Matchers:
 
   private def encoder(options: SparqlResultsOptions = JellySparqlOptions.SMALL) =

@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 
@@ -9,7 +8,6 @@ import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
  * <p>
  * The decoded variables and rows are pushed to a {@link SparqlResultsHandler}.
  */
-@ExperimentalApi
 public interface SparqlDecoder {
     /**
      * Ingest a single frame of the result stream. Frames must be ingested in stream order.

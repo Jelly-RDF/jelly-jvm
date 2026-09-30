@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.patch;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyConverterFactory;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
@@ -19,7 +18,6 @@ import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
  * @param <TEncoderConverter> Implementation of ProtoEncoderConverter for a given RDF library.
  * @param <TDecoderConverter> Implementation of ProtoDecoderConverter for a given RDF library.
  */
-@ExperimentalApi
 public abstract class JellyPatchConverterFactory<
     TNode,
     TDatatype,

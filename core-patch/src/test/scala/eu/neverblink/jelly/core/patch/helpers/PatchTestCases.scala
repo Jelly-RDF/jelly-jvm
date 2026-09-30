@@ -6,9 +6,6 @@ import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.patch.helpers.Mpl.*
 import eu.neverblink.jelly.core.proto.v1.patch.*
 
-import scala.annotation.experimental
-
-@experimental
 object PatchTestCases:
 
   val testCases: Seq[(String, PatchTestCase, PatchStatementType)] = Seq(

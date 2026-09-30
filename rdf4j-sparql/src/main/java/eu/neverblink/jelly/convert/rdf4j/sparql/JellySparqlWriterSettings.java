@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
@@ -13,7 +12,6 @@ import org.eclipse.rdf4j.rio.helpers.StringRioSetting;
 /**
  * Settings for the Jelly-SPARQL query result writers.
  */
-@ExperimentalApi
 public final class JellySparqlWriterSettings extends WriterConfig {
 
     private JellySparqlWriterSettings() {}

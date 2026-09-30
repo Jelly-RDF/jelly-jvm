@@ -7,10 +7,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
-@experimental
 class JellySparqlIoUtilsSpec extends AnyWordSpec, Matchers:
 
   private def frameFor(options: SparqlResultsOptions): SparqlResultsFrame =

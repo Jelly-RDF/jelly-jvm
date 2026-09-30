@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import java.util.List;
 
@@ -9,7 +8,6 @@ import java.util.List;
  *
  * @param <TNode> type of RDF nodes in the library
  */
-@ExperimentalApi
 public interface SparqlResultsHandler<TNode> {
     /**
      * Called once, when the result set header is received, before any rows.

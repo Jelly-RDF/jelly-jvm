@@ -3,7 +3,6 @@ package eu.neverblink.jelly.convert.jena.patch;
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory;
 import eu.neverblink.jelly.convert.jena.JenaDecoderConverter;
 import eu.neverblink.jelly.convert.jena.JenaEncoderConverter;
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyConverterFactory;
 import eu.neverblink.jelly.core.patch.JellyPatchConverterFactory;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -14,7 +13,6 @@ import org.apache.jena.graph.Node;
  * <p>
  * This class is a singleton and should be accessed via the {@link #getInstance()} method.
  */
-@ExperimentalApi
 public final class JenaPatchConverterFactory
     extends JellyPatchConverterFactory<Node, RDFDatatype, JenaEncoderConverter, JenaDecoderConverter>
 {

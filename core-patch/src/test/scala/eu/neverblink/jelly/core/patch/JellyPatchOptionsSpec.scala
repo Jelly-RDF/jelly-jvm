@@ -6,9 +6,6 @@ import eu.neverblink.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.annotation.experimental
-
-@experimental
 class JellyPatchOptionsSpec extends AnyWordSpec, Matchers:
   "JellyPatchOptions" should {
     val optionCases = Seq(

@@ -6,9 +6,6 @@ import eu.neverblink.jelly.core.helpers.MockProtoEncoderConverter
 import eu.neverblink.jelly.core.helpers.Mrl.{Datatype, Node}
 import eu.neverblink.jelly.core.sparql.JellySparqlConverterFactory
 
-import scala.annotation.experimental
-
-@experimental
 object MockSparqlConverterFactory
     extends JellySparqlConverterFactory[
       Node,

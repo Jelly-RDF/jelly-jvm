@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import java.io.IOException;
 import java.io.InputStream;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -13,7 +12,6 @@ import org.eclipse.rdf4j.query.resultio.TupleQueryResultParser;
 /**
  * RDF4J parser of solution sequences (SELECT results) in the Jelly-SPARQL format.
  */
-@ExperimentalApi
 public final class JellySparqlTupleParser extends AbstractJellySparqlParser implements TupleQueryResultParser {
 
     public JellySparqlTupleParser() {

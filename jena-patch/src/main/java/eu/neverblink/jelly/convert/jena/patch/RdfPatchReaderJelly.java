@@ -2,7 +2,6 @@ package eu.neverblink.jelly.convert.jena.patch;
 
 import static eu.neverblink.jelly.core.utils.IoUtils.readStream;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchFrame;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
@@ -18,7 +17,6 @@ import org.apache.jena.rdfpatch.RDFChanges;
  * <p>
  * You can also use the convenience methods in `JellyPatchOps` to create readers more easily.
  */
-@ExperimentalApi
 public final class RdfPatchReaderJelly implements PatchProcessor {
 
     /**

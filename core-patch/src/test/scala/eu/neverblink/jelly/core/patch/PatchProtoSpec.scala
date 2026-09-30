@@ -8,7 +8,6 @@ import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.patch.helpers.PatchAdapter.*
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
 /** Tests for some auxiliary methods (e.g., Text Format serialization) of the generated Protobuf
@@ -17,7 +16,6 @@ import scala.jdk.CollectionConverters.*
   * This also checks that the descriptors we ship are enough to handle the messages with
   * DynamicMessage (e.g., for the Protobuf Text Format).
   */
-@experimental
 class PatchProtoSpec extends AnyWordSpec, Matchers:
   import helpers.Assertions.*
   import eu.neverblink.jelly.core.patch.helpers.PatchTestCases.*

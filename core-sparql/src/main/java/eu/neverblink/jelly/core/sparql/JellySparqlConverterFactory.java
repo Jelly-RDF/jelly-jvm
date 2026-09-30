@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyConverterFactory;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
@@ -19,7 +18,6 @@ import eu.neverblink.jelly.core.sparql.internal.SparqlEncoderImpl;
  * @param <TEncoderConverter> Implementation of ProtoEncoderConverter for a given RDF library.
  * @param <TDecoderConverter> Implementation of ProtoDecoderConverter for a given RDF library.
  */
-@ExperimentalApi
 public abstract class JellySparqlConverterFactory<
     TNode,
     TDatatype,

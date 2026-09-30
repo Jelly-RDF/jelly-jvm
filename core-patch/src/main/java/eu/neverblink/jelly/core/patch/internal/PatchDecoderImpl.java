@@ -11,7 +11,6 @@ import eu.neverblink.jelly.core.proto.v1.*;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.patch.*;
 
-@ExperimentalApi
 @InternalApi
 public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
     extends DecoderBase<TNode, TDatatype>
@@ -192,7 +191,6 @@ public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
         return getNameDecoder().decode(iri.getPrefixId(), iri.getNameId());
     }
 
-    @ExperimentalApi
     public static final class TriplesDecoder<TNode, TDatatype> extends PatchDecoderImpl<TNode, TDatatype> {
 
         private final PatchHandler.TriplePatchHandler<TNode> patchHandler;
@@ -237,7 +235,6 @@ public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
         }
     }
 
-    @ExperimentalApi
     public static final class QuadsDecoder<TNode, TDatatype> extends PatchDecoderImpl<TNode, TDatatype> {
 
         private final PatchHandler.QuadPatchHandler<TNode> patchHandler;
@@ -284,7 +281,6 @@ public abstract sealed class PatchDecoderImpl<TNode, TDatatype>
         }
     }
 
-    @ExperimentalApi
     public static final class AnyStatementDecoder<TNode, TDatatype> extends PatchDecoderImpl<TNode, TDatatype> {
 
         private final PatchHandler.AnyPatchHandler<TNode> patchHandler;

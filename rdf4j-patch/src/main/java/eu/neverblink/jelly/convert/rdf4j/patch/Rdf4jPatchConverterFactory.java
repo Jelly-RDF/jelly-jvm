@@ -4,7 +4,6 @@ import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jDatatype;
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jDecoderConverter;
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jEncoderConverter;
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyConverterFactory;
 import eu.neverblink.jelly.core.patch.JellyPatchConverterFactory;
 import org.eclipse.rdf4j.model.Value;
@@ -14,7 +13,6 @@ import org.eclipse.rdf4j.model.Value;
  * <p>
  * This class is a singleton and should be accessed via the {@link #getInstance()} method.
  */
-@ExperimentalApi
 public final class Rdf4jPatchConverterFactory
     extends JellyPatchConverterFactory<Value, Rdf4jDatatype, Rdf4jEncoderConverter, Rdf4jDecoderConverter>
 {

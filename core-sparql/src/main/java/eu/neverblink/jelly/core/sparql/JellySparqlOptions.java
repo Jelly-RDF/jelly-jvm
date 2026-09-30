@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfVersion;
@@ -15,7 +14,6 @@ import eu.neverblink.jelly.core.utils.RdfVersionUtils;
  * distinct terms per row than one RDF statement does. The working set of a frame must fit in the
  * tables (see the notes in sparql.proto).
  */
-@ExperimentalApi
 public final class JellySparqlOptions {
 
     private JellySparqlOptions() {}

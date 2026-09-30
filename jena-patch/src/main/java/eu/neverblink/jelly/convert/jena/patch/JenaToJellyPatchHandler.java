@@ -2,7 +2,6 @@ package eu.neverblink.jelly.convert.jena.patch;
 
 import static eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.*;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.PatchHandler;
 import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
 import org.apache.jena.graph.Node;
@@ -14,7 +13,6 @@ import org.apache.jena.rdfpatch.RDFChanges;
  * <p>
  * This class provides a handler in Jena terms that relays all operations to a Jelly-Patch stream.
  */
-@ExperimentalApi
 final class JenaToJellyPatchHandler implements RDFChanges {
 
     private final PatchHandler.AnyPatchHandler<Node> jellyStream;

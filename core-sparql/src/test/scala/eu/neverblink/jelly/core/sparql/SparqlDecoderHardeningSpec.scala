@@ -13,14 +13,12 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.IOException
 import java.util
-import scala.annotation.experimental
 
 /** Tests for decoding hostile input: frames that parse as valid protobuf, but whose contents are
   * chosen to make the decoder allocate without bound or dereference something it never checked.
   *
   * Everything a decoder rejects must be rejected as [[RdfProtoDeserializationError]].
   */
-@experimental
 class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
 
   private def newDecoder(handler: SparqlResultsHandler[Node] = ResultsCollector()) =

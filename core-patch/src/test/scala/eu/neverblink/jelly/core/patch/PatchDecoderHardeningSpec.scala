@@ -12,14 +12,12 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.IOException
-import scala.annotation.experimental
 
 /** Tests for decoding hostile input: rows that parse as valid protobuf, but whose contents are
   * chosen to make the decoder dereference or index something it never checked.
   *
   * Everything a decoder rejects must be rejected as [[RdfProtoDeserializationError]].
   */
-@experimental
 class PatchDecoderHardeningSpec extends AnyWordSpec, Matchers:
 
   private val smallDtTableSize = JellyPatchOptions.SMALL_STRICT.getMaxDatatypeTableSize

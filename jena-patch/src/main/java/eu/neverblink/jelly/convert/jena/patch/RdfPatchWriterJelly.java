@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.convert.jena.patch;
 
 import com.google.protobuf.CodedOutputStream;
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.memory.EncoderAllocator;
 import eu.neverblink.jelly.core.patch.JellyPatchOptions;
 import eu.neverblink.jelly.core.patch.PatchEncoder;
@@ -27,7 +26,6 @@ import org.apache.jena.rdfpatch.RDFChanges;
  * <p>
  * You MUST call `finish()` at the end of the stream to ensure that all data is written.
  */
-@ExperimentalApi
 public final class RdfPatchWriterJelly implements RDFChanges {
 
     /**

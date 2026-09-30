@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.utils.IoUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -10,7 +9,6 @@ import java.io.SequenceInputStream;
 /**
  * IO utilities specific to Jelly-SPARQL.
  */
-@ExperimentalApi
 public final class JellySparqlIoUtils {
 
     private JellySparqlIoUtils() {}
