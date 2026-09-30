@@ -69,6 +69,7 @@ public final class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
         emitOptions();
 
         final var ns = RdfNamespaceDeclaration.newInstance().setName(prefix);
+        getNodeEncoder().newEpoch();
         final var encoded = converter.nodeToProto(getNodeEncoder(), namespace);
         ns.setValue((RdfIri) encoded);
         rowBuffer.appendMessage().setNamespace(ns).getSerializedSize();

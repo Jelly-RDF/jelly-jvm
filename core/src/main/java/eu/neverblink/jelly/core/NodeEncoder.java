@@ -89,4 +89,10 @@ public interface NodeEncoder<TNode> {
      * Encode a default graph node.
      */
     RdfDefaultGraph makeDefaultGraph();
+
+    /**
+     * Signal that a new RDF statement (or other stream row) or SPARQL results frame starts.
+     * Until the next call, the lookup entries it uses are not evicted.
+     */
+    default void newEpoch() {}
 }

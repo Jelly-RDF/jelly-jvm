@@ -485,6 +485,26 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       assertResults(collector, Seq("x", "y"), rows)
     }
 
+    "round-trip a frame that uses an old lookup entry, then many new ones" in {
+      // The lookups must not evict an entry that the frame refers to, even when the frame has
+      // used the table so many times since that the entry is no longer recent
+      val options = SparqlResultsOptions
+        .newInstance()
+        .setMaxNameTableSize(JellySparqlOptions.MIN_NAME_TABLE_SIZE)
+        .setMaxPrefixTableSize(4)
+        .setMaxDatatypeTableSize(4)
+      val size = JellySparqlOptions.MIN_NAME_TABLE_SIZE
+      val name = (n: String) => Seq[Node | Null](Iri(s"https://test.org/$n"))
+      val frames = Seq(
+        // Fills the name table
+        (1 to size).map(i => name(s"n$i")),
+        // Uses n1 again, then so many new names that the eviction order comes back to it
+        name("n1") +: (1 until size).map(i => name(s"m$i")),
+      )
+      val (collector, _) = roundTrip(Seq("x"), frames, options)
+      assertResults(collector, Seq("x"), frames.flatten)
+    }
+
     "decode concatenated streams as one result set" in {
       // Each part has its own lookup numbering, and the second one uses a different column layout
       val parts = Seq(

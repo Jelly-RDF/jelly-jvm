@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.sparql.internal;
 
+import com.google.protobuf.ByteString;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.NodeEncoder;
@@ -20,7 +21,6 @@ import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
-import com.google.protobuf.ByteString;
 import eu.neverblink.protoc.java.runtime.MessageCollection;
 import eu.neverblink.protoc.java.runtime.RepeatedInt;
 import eu.neverblink.protoc.java.runtime.RepeatedString;
@@ -560,11 +560,11 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
      * for another row.
      * <p>
      * A frame's lookup entries are all applied before any of its columns, so an entry that
-     * the frame overwrites while still referring to the old value cannot be represented. The
-     * lookups evict the least recently used entry and everything this frame touched sits at
-     * the recent end, so the frame stays safe exactly as long as it has not touched every id
-     * of the table. The budget is set so that one more row of fresh ids still fits: the
-     * table size minus one potential id per variable, floored at zero.
+     * the frame overwrites while still referring to the old value cannot be represented. Each
+     * frame is an epoch of the lookups (see resetUsedIds), which never evict an entry used in the
+     * current epoch, so the frame stays safe exactly as long as it has not touched every id of
+     * the table. The budget is set so that one more row of fresh ids still fits: the table size
+     * minus one potential id per variable, floored at zero.
      * <p>
      * A triple term can need an IRI id for each of its IRIs, so a column that held triple terms
      * reserves as many IRI ids per row as its largest triple term had (see resetUsedIds and
@@ -723,6 +723,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
 
     /** Clears the used-ids bits and puts each remaining-budget counter back at its budget. */
     private void resetUsedIds() {
+        getLookupEncoder().newEpoch();
         final int n = columns.length;
         int iris = n;
         for (final ColumnState col : columns) {
@@ -1133,7 +1134,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         literals.lexValues.add(col.strings.get(stringIndex++));
         final int kind = switch (auxId) {
             case 0 -> 0;
-            case LANG_LITERAL -> langKind(literals.langtagIndex(col.strings.get(stringIndex++), RdfBaseDirection.UNSPECIFIED));
+            case LANG_LITERAL -> langKind(
+                literals.langtagIndex(col.strings.get(stringIndex++), RdfBaseDirection.UNSPECIFIED)
+            );
             case LANG_LTR_LITERAL -> langKind(
                 literals.langtagIndex(col.strings.get(stringIndex++), RdfBaseDirection.LTR)
             );

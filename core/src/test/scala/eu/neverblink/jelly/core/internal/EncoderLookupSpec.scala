@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.core.internal
 
+import eu.neverblink.jelly.core.RdfProtoSerializationError
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -79,11 +80,13 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
     }
 
     "pass random stress test (1)" in {
+      // Entries used in the current epoch are never evicted, however many others come and go
       val lookup = EncoderLookup(100, true)
       val frequentSet = (1 to 10).map(i => s"v$i")
       frequentSet.foreach(lookup.getOrAddEntry)
 
       for i <- 1 to 50 do
+        lookup.newEpoch()
         for fIndex <- 1 to 10 do
           val v = lookup.getOrAddEntry(frequentSet(fIndex - 1))
           v.getId should be(fIndex)
@@ -95,6 +98,74 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
           val v = lookup.getOrAddEntry(s"r${Random.nextInt(200) + 1}")
           v.getId should be > 10
           if v.setId != 0 then v.setId should be > 10
+    }
+
+    // Table of 8: an entry is cold if it was not used in the last 4 uses, and the samples are
+    // 2 ids apart
+    "evict entries in id order, skipping those used recently" in {
+      val lookup = EncoderLookup(8, true)
+      for i <- 1 to 8 do lookup.getOrAddEntry(s"v$i")
+      lookup.getOrAddEntry("v3").newEntry should be(false)
+
+      def add(key: String, id: Int, setId: Int) =
+        val v = lookup.getOrAddEntry(key)
+        v.newEntry should be(true)
+        v.getId should be(id)
+        v.setId should be(setId)
+
+      add("w1", 1, 1)
+      add("w2", 2, 0)
+      // v3 was used 2 uses ago: the oldest of ids 3, 5, 7, 1 goes instead
+      add("w3", 5, 5)
+      add("w4", 6, 0)
+      lookup.getOrAddEntry("v3").getId should be(3)
+      lookup.getOrAddEntry("v4").getId should be(4)
+    }
+
+    "not evict entries used in the current epoch" in {
+      for epochs <- Seq(false, true) do
+        withClue(s"epochs: $epochs") {
+          val lookup = EncoderLookup(8, true)
+          for i <- 1 to 8 do lookup.getOrAddEntry(s"v$i")
+          if epochs then lookup.newEpoch()
+          // v1 is cold after 4 more uses, but still in use by the epoch
+          for i <- Seq(1, 5, 6, 7, 8) do lookup.getOrAddEntry(s"v$i")
+          val v = lookup.getOrAddEntry("w1")
+          v.getId should be(if epochs then 3 else 1)
+          if epochs then
+            lookup.getOrAddEntry("v1").getId should be(1)
+            // In the next epoch, the order goes on
+            lookup.newEpoch()
+            lookup.getOrAddEntry("w2").getId should be(4)
+        }
+    }
+
+    "fail if every entry is in use by the current epoch" in {
+      val lookup = EncoderLookup(8, true)
+      for i <- 1 to 8 do lookup.getOrAddEntry(s"v$i")
+      lookup.newEpoch()
+      for i <- 1 to 8 do lookup.getOrAddEntry(s"v$i")
+      val error = intercept[RdfProtoSerializationError] {
+        lookup.getOrAddEntry("w1")
+      }
+      error.getMessage should include("too small to encode a single row")
+    }
+
+    "keep which entries are cold and which are pinned when the use counter is moved back" in {
+      val lookup = EncoderLookup(8, true)
+      for i <- 1 to 8 do lookup.getOrAddEntry(s"v$i")
+      lookup.newEpoch()
+      lookup.getOrAddEntry("v3")
+      // An epoch longer than the counter can take: uses of v1 up to the point where it moves back
+      var uses = 9
+      while uses < EncoderLookup.REBASE_AT do
+        lookup.onAccess(1)
+        uses += 1
+      // v1 and v3 are pinned (v3 is also cold), the rest are cold
+      lookup.getOrAddEntry("w1").getId should be(5)
+      lookup.getOrAddEntry("w2").getId should be(6)
+      lookup.getOrAddEntry("v1").getId should be(1)
+      lookup.getOrAddEntry("v3").getId should be(3)
     }
 
     "pass random stress test (2)" in {
@@ -168,7 +239,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         lookup.names(v.getId) should be(key)
         if v.newEntry then seen(key) = v.getId
         else seen(key) should be(v.getId)
-        // Everything the LRU still holds must be findable, and nothing else may be.
+        // Everything the lookup still holds must be findable, and nothing else may be.
         for (k, id) <- seen.toSeq do
           if lookup.names(id) == k then lookup.getOrAddEntry(k).newEntry should be(false)
           else seen -= k

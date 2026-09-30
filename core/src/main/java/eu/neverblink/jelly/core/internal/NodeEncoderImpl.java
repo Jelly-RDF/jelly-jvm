@@ -322,8 +322,8 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         final String prefix;
         final String lastPrefix = prefixLookup.names[lastPrefixId];
         if (lastPrefix != null && lastPrefix.length() == prefixLen && iri.startsWith(lastPrefix)) {
-            // Same namespace as the previous IRI, so its id can be reused as it is. Only the LRU
-            // order has to be updated.
+            // Same namespace as the previous IRI, so its id can be reused as it is. Only the
+            // entry's last use has to be updated.
             prefix = lastPrefix;
             prefixId = lastPrefixId;
             prefixLookup.onAccess(prefixId);
@@ -461,6 +461,15 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
     @Override
     public RdfDefaultGraph makeDefaultGraph() {
         return RdfDefaultGraph.EMPTY;
+    }
+
+    @Override
+    public void newEpoch() {
+        nameLookup.newEpoch();
+        if (prefixLookup != null) {
+            prefixLookup.newEpoch();
+        }
+        datatypeLookup.newEpoch();
     }
 
     /**

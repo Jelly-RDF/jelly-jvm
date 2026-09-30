@@ -1,13 +1,20 @@
 package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.InternalApi;
+import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * A lookup table for NodeEncoder, used for indexing datatypes, IRI prefixes, and IRI names.
- * This is a very efficient implementation of an LRU cache that uses as few allocations as possible.
- * The table is implemented as a doubly linked list in an array.
+ * <p>
+ * When the table is full, it evicts entries in id order, skipping those used recently. This way
+ * new entries mostly take the previous id + 1, which the stream can write as 0 (Jelly-RDF) or as
+ * a run of consecutive ids (Jelly-SPARQL), and the stream compresses much better than with LRU,
+ * which hands out ids all over the table. See
+ * <a href="https://github.com/Jelly-RDF/jelly-jvm/issues/442">jelly-jvm#442</a>.
+ * <p>
+ * All the bookkeeping is one number per entry: when it was last used ({@link #lastUse}).
  */
 @InternalApi
 final class EncoderLookup {
@@ -75,12 +82,38 @@ final class EncoderLookup {
     private int[] homeSlots;
 
     /**
-     * The doubly-linked list of entries, with 1-based indexing.
-     * Each entry is represented by two integers: left and right.
-     * The head pointer is in table[1].
-     * The first valid entry is in table[2] – table[3].
+     * For each id, when its entry was last used or added, counted in uses of this table
+     * ({@link #now}).
+     * <p>
+     * An entry is <i>cold</i> if it was not used in the last {@link #coldAge} uses. An entry is
+     * <i>pinned</i> if it was used in the current epoch ({@link #newEpoch}): what is being encoded
+     * still refers to it, so it must not be evicted.
      */
-    private int[] table;
+    private int[] lastUse;
+
+    /** How many times the table was used (see {@link #lastUse}). */
+    private int now;
+
+    /**
+     * An entry is cold if it was not used in this many uses: half of the table. Measured on the
+     * RiverBench datasets, this gives the smallest streams (after compression); at a quarter of the
+     * table, the streams of some datasets got much bigger.
+     */
+    private final int coldAge;
+
+    /** How many ids {@link #victim} looks at when the next id in order is not cold. */
+    private static final int SAMPLES = 4;
+
+    /** {@link #now} at the start of the current epoch, or {@link #NO_EPOCH}. */
+    private int epochStart = NO_EPOCH;
+
+    /** {@link #epochStart} until the first epoch starts: nothing is pinned. */
+    private static final int NO_EPOCH = Integer.MAX_VALUE;
+
+    /** When {@link #now} gets here, all the times are moved back by {@link #REBASE_BY}. */
+    static final int REBASE_AT = 1 << 30;
+
+    private static final int REBASE_BY = 1 << 29;
 
     /**
      * The serial numbers of the entries, incremented each time the entry is replaced in the table.
@@ -93,8 +126,6 @@ final class EncoderLookup {
      */
     int[] serials;
 
-    // Tail pointer for the table.
-    private int tail;
     // Maximum size of the lookup.
     final int size;
     // Current size of the lookup (how many entries are used).
@@ -118,8 +149,9 @@ final class EncoderLookup {
             );
         }
         this.size = size;
+        coldAge = size >> 1;
         capacity = Math.min(size, INITIAL_CAPACITY);
-        table = new int[(capacity + 1) * 2];
+        lastUse = new int[capacity + 1];
         names = new String[capacity + 1];
         homeSlots = new int[capacity + 1];
         // Two slots per entry: linear probing degrades badly above a half-full table.
@@ -138,7 +170,7 @@ final class EncoderLookup {
 
     private void grow() {
         capacity = Math.min(size, capacity * GROWTH_FACTOR);
-        table = Arrays.copyOf(table, (capacity + 1) * 2);
+        lastUse = Arrays.copyOf(lastUse, capacity + 1);
         names = Arrays.copyOf(names, capacity + 1);
         homeSlots = Arrays.copyOf(homeSlots, capacity + 1);
         if (useSerials) {
@@ -265,27 +297,97 @@ final class EncoderLookup {
     }
 
     /**
-     * To be called after an entry is accessed (used).
-     * This moves the entry to the front of the list to prevent it from being evicted.
+     * To be called after an entry is accessed (used), so that it is not evicted soon.
      * @param id The ID of the entry that was accessed.
      */
     public void onAccess(int id) {
-        int base = id * 2;
-        if (base == tail) {
-            return;
+        final int t = now + 1;
+        now = t;
+        lastUse[id] = t;
+        if (t == REBASE_AT) {
+            rebase();
         }
-        int left = table[base];
-        int right = table[base + 1];
-        // Set our left to the tail
-        table[base] = tail;
-        // Set left's right to our right
-        table[left + 1] = right;
-        // Set right's left to our left
-        table[right] = left;
-        // Set the tail's right to us
-        table[tail + 1] = base;
-        // Update the tail
-        tail = base;
+    }
+
+    /**
+     * Starts a new epoch: from now on, only the entries used from here on are pinned. Encoders
+     * call this at the start of every RDF statement (or other stream row that has nodes) and every
+     * SPARQL results frame.
+     */
+    public void newEpoch() {
+        epochStart = now;
+    }
+
+    /**
+     * Moves all the times back, before {@link #now} overflows. Keeps which entries are cold and
+     * which are pinned.
+     */
+    private void rebase() {
+        final int by = REBASE_BY;
+        final int oldEpochStart = epochStart;
+        final int newEpochStart = oldEpochStart == NO_EPOCH ? NO_EPOCH : Math.max(0, oldEpochStart - by);
+        final int[] lastUse = this.lastUse;
+        for (int id = 1; id < lastUse.length; id++) {
+            final int last = lastUse[id];
+            // A time cut off at the bottom is still more than coldAge ago. A pinned entry must
+            // stay after the epoch's start, however long ago that was.
+            lastUse[id] = Math.max(last - by, last > oldEpochStart ? newEpochStart + 1 : 0);
+        }
+        now -= by;
+        epochStart = newEpochStart;
+    }
+
+    /**
+     * The entry to evict from the full table.
+     * <p>
+     * That is the next id in order (after the last id set), if it is cold and not pinned. Else,
+     * the least recently used one that is not pinned among {@link #SAMPLES} ids spread evenly over
+     * the table, starting with that next id. The search for a cold entry then goes on from the id
+     * picked, which is usually among a run of other old entries.
+     * <p>
+     * This comes close enough to LRU where it matters. Looking at the ids after the next one
+     * instead of ids spread over the table does not: they were mostly added at about the same
+     * time, so they are mostly used just as recently.
+     */
+    private int victim() {
+        final int size = this.size;
+        final int[] lastUse = this.lastUse;
+        final int epochStart = this.epochStart;
+        int id = lastSetId >= 1 && lastSetId < size ? lastSetId + 1 : 1;
+        final int next = lastUse[id];
+        if (now - next >= coldAge && next <= epochStart) {
+            return id;
+        }
+        int best = 0;
+        int bestLast = Integer.MAX_VALUE;
+        final int step = Math.max(1, size / SAMPLES);
+        for (int n = Math.min(SAMPLES, size); n > 0; n--) {
+            final int last = lastUse[id];
+            if (last < bestLast && last <= epochStart) {
+                best = id;
+                bestLast = last;
+            }
+            id += step;
+            if (id > size) {
+                id -= size;
+            }
+        }
+        if (best != 0) {
+            return best;
+        }
+        // The epoch pins every id sampled (a big SPARQL frame): the first id that it does not pin
+        for (int n = size; n > 0; n--) {
+            if (lastUse[id] <= epochStart) {
+                return id;
+            }
+            id = id == size ? 1 : id + 1;
+        }
+        throw new RdfProtoSerializationError(
+            (
+                "A lookup table of size %d is too small to encode a single row: the row uses " +
+                "every one of its entries."
+            ).formatted(size)
+        );
     }
 
     /**
@@ -295,16 +397,9 @@ final class EncoderLookup {
      * @param spread The spread hash of the key.
      */
     private void addEntrySequential(String key, int id, int spread) {
-        int base = id * 2;
-        // Set the left to the tail
-        table[base] = tail;
-        // Right is already 0
-        // table[base + 1] = 0;
-        // Set the tail's right to us
-        table[tail + 1] = base;
-        tail = base;
         names[id] = key;
         insertId(id, spread);
+        onAccess(id);
         entryForReturns.setId = 0;
     }
 
@@ -319,7 +414,6 @@ final class EncoderLookup {
         removeId(id);
         names[id] = key;
         insertId(id, spread);
-        // Update the table
         onAccess(id);
         entryForReturns.setId = lastSetId + 1 == id ? 0 : id;
         // We only update lastSetId in this case, because in the sequential case we don't check it anyway
@@ -369,8 +463,8 @@ final class EncoderLookup {
             }
             addEntrySequential(key, id, spread);
         } else {
-            // The table is full, evict the least recently used entry.
-            id = table[1] / 2;
+            // The table is full, evict an entry
+            id = victim();
             addEntryEvicting(key, id, spread);
         }
         if (this.useSerials) {
@@ -388,7 +482,7 @@ final class EncoderLookup {
      * A variant of getOrAddEntry that is used for transcoders.
      * This method does not update the serial number of the entry because serials are not used by transcoders.
      * @param key The key of the entry.
-     * @param evictHint A hint for the entry to evict. If 0, the least recently used entry is evicted.
+     * @param evictHint A hint for the entry to evict. If 0, the lookup picks one itself.
      * @return The entry.
      */
     public LookupEntry getOrAddEntryTranscoder(String key, int evictHint) {
@@ -415,8 +509,7 @@ final class EncoderLookup {
                 // We have a hint for the entry to evict
                 id = evictHint;
             } else {
-                // Evict the least recently used entry.
-                id = table[1] / 2;
+                id = victim();
             }
             addEntryEvicting(key, id, spread);
         }

@@ -56,6 +56,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     protected abstract RdfQuad.Mutable newQuad();
 
     protected final RdfTriple tripleToProto(TNode subject, TNode predicate, TNode object) {
+        getNodeEncoder().newEpoch();
         final RdfTriple.Mutable triple = newTriple();
         subjectNodeToProtoWrapped(triple, subject);
         predicateNodeToProtoWrapped(triple, predicate);
@@ -64,6 +65,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     }
 
     protected final RdfQuad quadToProto(TNode subject, TNode predicate, TNode object, TNode graph) {
+        getNodeEncoder().newEpoch();
         final RdfQuad.Mutable quad = newQuad();
         subjectNodeToProtoWrapped(quad, subject);
         predicateNodeToProtoWrapped(quad, predicate);
@@ -78,6 +80,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
      * Used in RDF-Patch for triple add/delete operations.
      */
     protected final RdfQuad tripleInQuadToProto(TNode subject, TNode predicate, TNode object) {
+        getNodeEncoder().newEpoch();
         final RdfQuad.Mutable quad = newQuad();
         subjectNodeToProtoWrapped(quad, subject);
         predicateNodeToProtoWrapped(quad, predicate);
@@ -89,6 +92,7 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
      * Converts a graph term to an RdfGraphStart object.
      */
     protected final RdfGraphStart graphStartToProto(TNode graph) {
+        getNodeEncoder().newEpoch();
         final RdfGraphStart.Mutable graphStart = RdfGraphStart.newInstance();
         final var encoded = converter.graphNodeToProto(getNodeEncoder(), graph);
         graphStart.setGraph(encoded);

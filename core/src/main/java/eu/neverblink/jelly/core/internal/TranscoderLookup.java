@@ -111,6 +111,10 @@ final class TranscoderLookup {
             lastSetId = 0;
             lastInputGetId = 0;
         }
+        // The whole input stream is one epoch: the output lookup must not evict an entry this
+        // stream has set, as the stream can refer to it at any time. When the stream sets an entry
+        // of its own and the output lookup is full, it has an entry left from earlier streams.
+        lookup.newEpoch();
         if (table == null || table.length < size + 1) {
             table = new int[size + 1];
         } else {

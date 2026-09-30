@@ -129,7 +129,8 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           "dt9",
         )
         node2.getLex should be("v9")
-        node2.getDatatype should be(2)
+        // dt1 was used last, so it stays; the oldest of the ids sampled (1, 3, 5, 7) goes
+        node2.getDatatype should be(3)
       }
 
       "encode datatype literals while evicting old datatypes" in {
@@ -355,7 +356,8 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           ("https://test.org/test/Cake1", 3, 1),
           ("https://test.org/Cake2", 1, 0),
           ("https://test.org#Cake2", 2, 2),
-          ("https://test.org/other/Cake1", 3, 1),
+          // A prefix is cold if it was not the last one used: the next id in order, #1, goes
+          ("https://test.org/other/Cake1", 1, 1),
           ("https://test.org/other/Cake2", 0, 0),
           ("https://test.org/other/Cake3", 0, 0),
           ("https://test.org/other/Cake4", 0, 0),
@@ -371,8 +373,8 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           ("https://test.org/other/Cake9", 0, 1),
           ("https://test.org#Cake2", 2, 0),
           ("https://test.org#Cake9", 0, 1),
-          // prefix "" evicts the previous number #1
-          ("Cake2", 1, 0),
+          // #2 was used last, so prefix "" evicts the oldest one, #3
+          ("Cake2", 3, 0),
         )
 
         for (sIri, ePrefix, eName) <- data do
@@ -387,7 +389,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           (true, 0, "https://test.org#"),
           (true, 0, "https://test.org/test/"),
           (false, 0, "Cake2"),
-          (true, 3, "https://test.org/other/"),
+          (true, 1, "https://test.org/other/"),
           (false, 0, "Cake3"),
           (false, 0, "Cake4"),
           (false, 0, "Cake5"),
@@ -395,7 +397,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
           (false, 0, "Cake7"),
           (false, 0, "Cake8"),
           (false, 1, "Cake9"),
-          (true, 1, ""),
+          (true, 3, ""),
         )
 
         entryBuffer.size should be(expectedBuffer.size)

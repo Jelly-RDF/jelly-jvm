@@ -222,4 +222,44 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
 
       error.getMessage should include("Namespace declarations are not enabled in this stream")
     }
+
+    // The lookups must not evict an entry that the statement being encoded refers to, even when
+    // the statement has used the table so many times since that the entry is no longer recent.
+    "encode a statement that uses the whole datatype table" in {
+      val buffer = RowBuffer.newLazyImmutable()
+      val options = JellyOptions.SMALL_ALL_FEATURES.clone
+        .setPhysicalType(PhysicalStreamType.TRIPLES)
+        .setMaxDatatypeTableSize(8)
+      val encoder = MockConverterFactory.encoder(
+        Pep(
+          options,
+          enableNamespaceDeclarations = false,
+          rowBuffer = buffer,
+          allocator = EncoderAllocator.newHeapAllocator(),
+        ),
+      )
+      val p = Iri("https://example.org/p")
+      def literal(dt: Int) = DtLiteral(s"v$dt", Datatype(s"https://example.org/dt$dt"))
+      // Quoted triples nested in the subject, so that the literals are encoded in this order
+      def statement(dts: Seq[Int]) = Triple(
+        dts.foldLeft[Node](Iri("https://example.org/s"))((s, dt) => TripleNode(s, p, literal(dt))),
+        p,
+        Iri("https://example.org/o"),
+      )
+      val statements = Seq(
+        // Fills the table
+        statement(1 to 8),
+        // Uses datatype 1 again, then so many new ones that the eviction order comes back to it
+        statement(1 +: (9 to 15)),
+      )
+      statements.foreach(t => encoder.handleTriple(t.s, t.p, t.o))
+
+      val collector = ProtoCollector()
+      val decoder = MockConverterFactory.triplesDecoder(
+        collector,
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
+      )
+      buffer.getRows.asScala.foreach(decoder.ingestRow)
+      collector.statements.toSeq should be(statements)
+    }
   }
