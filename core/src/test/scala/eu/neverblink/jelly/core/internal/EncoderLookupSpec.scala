@@ -250,6 +250,24 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         lookup.getOrAddEntry(name).getId should be(id)
     }
 
+    // Keys in the index record how far they are from their home slot, up to 15; beyond that, the
+    // lookup works it out from the home slot. Keys that all share one home slot make both happen.
+    "keep keys reachable when their probe chains are long" in {
+      val lookup = EncoderLookup(64, true)
+      // The index has 128 slots: these keys all have slot 0 as their home
+      val keys =
+        Iterator.from(0).map(i => s"k$i").filter(k => (EncoderLookup.spread(k.hashCode) & 127) == 0)
+          .take(40).toIndexedSeq
+      val filler = (0 until 24).map(i => s"f$i")
+      (keys ++ filler).foreach(lookup.getOrAddEntry)
+      for round <- 0 until 500 do
+        // Evict an entry now and then, and check that every key still in the table is found
+        val key = if round % 3 == 0 then s"new$round" else keys(Random.nextInt(keys.size))
+        val v = lookup.getOrAddEntry(key)
+        lookup.names(v.getId) should be(key)
+        for id <- 1 to 64 do lookup.getOrAddEntry(lookup.names(id)).getId should be(id)
+    }
+
     // The encoder hashes only the shorter of an IRI's prefix and name, and works the other one's
     // hash out of the whole IRI's. If that arithmetic is off by anything at all, the same key gets
     // filed under two different slots and the lookup silently stops finding entries that are there.

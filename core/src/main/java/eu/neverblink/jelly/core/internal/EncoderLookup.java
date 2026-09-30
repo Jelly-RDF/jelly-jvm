@@ -53,8 +53,9 @@ final class EncoderLookup {
      * Index from a key's hash to the id of the entry holding it, with linear probing.
      * <p>
      * The keys themselves are already stored in {@link #names}, so a slot only has to hold an id.
-     * The bits above the id hold a tag taken from the key's hash, which lets a probe walk past a
-     * colliding slot without dereferencing any string. A slot value of 0 means "empty".
+     * Above the id, a slot holds how far it is from the key's home slot ({@link #DIST_BITS}), and
+     * a tag taken from the key's hash ({@link #TAG_MASK}), which lets a probe walk past a colliding
+     * slot without dereferencing any string. A slot value of 0 means "empty".
      * <p>
      * Unlike the entry arrays, this one is built at full size right away: growing it would mean
      * rehashing every key in it.
@@ -64,13 +65,23 @@ final class EncoderLookup {
     /** Slot mask for {@link #index}, which is always a power of two long. */
     private final int indexMask;
 
-    /**
-     * How many low bits of an index slot hold the entry id. The rest are the hash tag.
-     */
+    /** How many low bits of an index slot hold the entry id. */
     private static final int ID_BITS = 18;
 
     /** Mask of the low bits of an index slot that hold the entry id. */
     private static final int ID_MASK = (1 << ID_BITS) - 1;
+
+    /**
+     * How many bits of an index slot, above the id, hold its distance from the key's home slot, up
+     * to {@link #DIST_MAX}. {@link #removeId} needs it for every key it looks at.
+     */
+    private static final int DIST_BITS = 4;
+
+    /** A distance of this much or more: the real one is worked out from {@link #HOME_SLOT}. */
+    private static final int DIST_MAX = (1 << DIST_BITS) - 1;
+
+    /** Mask of the bits of an index slot above the id and the distance: the hash tag. */
+    private static final int TAG_MASK = -1 << (ID_BITS + DIST_BITS);
 
     /** The largest lookup table that fits in {@link #ID_BITS}. */
     static final int MAX_TABLE_SIZE = ID_MASK;
@@ -183,7 +194,7 @@ final class EncoderLookup {
     }
 
     /** Mixes a hash so that both the slot bits (low) and the tag bits (high) depend on all of it. */
-    private static int spread(int hash) {
+    static int spread(int hash) {
         final int h = hash * 0x9E3779B1;
         return h ^ (h >>> 16);
     }
@@ -286,14 +297,14 @@ final class EncoderLookup {
      * @return The id of the entry, or 0 if there is none.
      */
     private int findId(int spread, String source, int from, int keyLength) {
-        final int tag = spread & ~ID_MASK;
+        final int tag = spread & TAG_MASK;
         int slot = spread & indexMask;
         while (true) {
             final int value = index[slot];
             if (value == 0) {
                 return 0;
             }
-            if ((value & ~ID_MASK) == tag) {
+            if ((value & TAG_MASK) == tag) {
                 final int id = value & ID_MASK;
                 final String name = names[id];
                 if (name.length() == keyLength && source.startsWith(name, from)) {
@@ -311,10 +322,12 @@ final class EncoderLookup {
     private void insertId(int id, int spread) {
         final int home = spread & indexMask;
         int slot = home;
+        int dist = 0;
         while (index[slot] != 0) {
             slot = (slot + 1) & indexMask;
+            dist++;
         }
-        index[slot] = id | (spread & ~ID_MASK);
+        index[slot] = id | (Math.min(dist, DIST_MAX) << ID_BITS) | (spread & TAG_MASK);
         entries[id * STRIDE + HOME_SLOT] = home;
     }
 
@@ -324,30 +337,36 @@ final class EncoderLookup {
      * We use linear probing. So, entries that are in the array after a freed slot would become
      * invisible (the linear probe would stop at the hole). To prevent this, we shift them back.
      * This is Knuth's backward-shift deletion.
+     * <p>
+     * An entry moves into the hole unless its home lies after the hole, where it is still
+     * reachable from. That is, it moves if it is at least as far from its home as from the hole.
+     * Whether it moves is not predictable, so there is no branch on it: the entry is always
+     * written to the hole, and the hole only moves on if the entry did. Until the end, the hole
+     * holds nothing that anyone reads.
      */
     private void removeId(int id) {
-        final int[] entries = this.entries;
+        final int[] index = this.index;
+        final int mask = indexMask;
         int hole = entries[id * STRIDE + HOME_SLOT];
         while ((index[hole] & ID_MASK) != id) {
-            hole = (hole + 1) & indexMask;
+            hole = (hole + 1) & mask;
         }
-        index[hole] = 0;
         int slot = hole;
         while (true) {
-            slot = (slot + 1) & indexMask;
+            slot = (slot + 1) & mask;
             final int value = index[slot];
             if (value == 0) {
+                index[hole] = 0;
                 return;
             }
-            final int home = entries[(value & ID_MASK) * STRIDE + HOME_SLOT];
-            // Leave the entry alone if its home lies in (hole, slot] – then it is still reachable
-            // from its home without passing through the hole.
-            final boolean reachable = hole <= slot ? hole < home && home <= slot : hole < home || home <= slot;
-            if (!reachable) {
-                index[hole] = value;
-                index[slot] = 0;
-                hole = slot;
+            int dist = (value >>> ID_BITS) & DIST_MAX;
+            if (dist == DIST_MAX) {
+                dist = (slot - entries[(value & ID_MASK) * STRIDE + HOME_SLOT]) & mask;
             }
+            final int gap = (slot - hole) & mask;
+            final int newDist = Math.min(dist - gap, DIST_MAX);
+            index[hole] = (value & ~(DIST_MAX << ID_BITS)) | (newDist << ID_BITS);
+            hole = dist >= gap ? slot : hole;
         }
     }
 
