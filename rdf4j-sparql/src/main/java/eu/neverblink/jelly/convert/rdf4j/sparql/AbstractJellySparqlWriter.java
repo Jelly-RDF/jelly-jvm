@@ -43,8 +43,11 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
 
     // Initialized in startQueryResult()
     private SparqlEncoder<Value> encoder = null;
+    // The same encoder, taking rows as Object[]. Storing into a Value[] checks that the value is
+    // a Value, an interface: that check cost more than the rest of copying the row.
+    private SparqlEncoder<Object> rowEncoder = null;
     private String[] variables = null;
-    private Value[] row = null;
+    private Object[] row = null;
     private int rowsPerFrame;
     private int rowsInFrame;
     private boolean delimited;
@@ -80,14 +83,17 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void startQueryResult(List<String> bindingNames) throws TupleQueryResultHandlerException {
         super.startQueryResult(bindingNames);
         delimited = getWriterConfig().get(JellySparqlWriterSettings.DELIMITED_OUTPUT);
         encoder = converterFactory.encoder(SparqlEncoder.Params.of(readOptions()));
         encoder.setVariables(bindingNames);
+        // Only Values go into the row
+        rowEncoder = (SparqlEncoder<Object>) (SparqlEncoder<?>) encoder;
         // Repeatedly iterating over an array copy is faster than over a List.
         variables = bindingNames.toArray(new String[0]);
-        row = new Value[variables.length];
+        row = new Object[variables.length];
         // Frames are budgeted in values, so the row limit depends on how wide the result set is.
         // A zero-variable result set carries no values at all, hence the lower bound of one row.
         final int maxValues = getWriterConfig().get(JellySparqlWriterSettings.MAX_VALUES_PER_FRAME);
@@ -102,7 +108,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
             row[i] = bindings.getValue(variables[i]);
         }
         try {
-            if (!encoder.appendRow(row)) {
+            if (!rowEncoder.appendRow(row)) {
                 // The frame filled up its lookup tables before reaching the row limit
                 if (!delimited) {
                     throw new RdfProtoSerializationError(
@@ -113,7 +119,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
                 }
                 endFrame();
                 // An empty frame always takes the row
-                encoder.appendRow(row);
+                rowEncoder.appendRow(row);
             }
             if (delimited && ++rowsInFrame >= rowsPerFrame) {
                 endFrame();
