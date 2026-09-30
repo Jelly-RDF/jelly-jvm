@@ -367,8 +367,8 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
      * The IRIs of the term take part in the IRI inference of the column's triple terms, which is
      * separate from that of its IRI values, in the order subject, predicate, object: the name ids
      * are compressed here, and the prefix ids when the frame is built (see resolvePrefixes).
-     * Created for each triple term,
-     * which is fine, as they are rare and this will pretty much always fit in TLAB.
+     * Created for each triple term, which is fine, as they are rare and this will pretty much
+     * always fit in TLAB.
      */
     private final class TripleTermEncoder implements NodeEncoder<TNode> {
 

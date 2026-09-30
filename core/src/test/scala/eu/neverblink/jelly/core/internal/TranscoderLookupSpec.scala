@@ -188,6 +188,21 @@ class TranscoderLookupSpec extends AnyWordSpec, Matchers:
       }
     }
 
+    "not evict an entry the current input stream uses, to make room for one it adds" in {
+      val tl = TranscoderLookup(false, 4)
+      tl.newInputStream(4)
+      for v <- Seq("a", "b", "c", "d") do tl.addEntry(0, v)
+
+      // The output table is full. This stream uses "c", then adds entries of its own, which evict
+      // those of the first stream – but not "c", although it is no longer among the latest used.
+      tl.newInputStream(4)
+      tl.addEntry(0, "c").getId shouldBe 3
+      val added = Seq("x1", "x2", "x3").map(tl.addEntry(0, _).getId)
+      added should not contain 3
+      added.distinct.size shouldBe 3
+      tl.remap(1) shouldBe 3
+    }
+
     "resize the internal remapping table" in {
       val tl = TranscoderLookup(false, 100)
 

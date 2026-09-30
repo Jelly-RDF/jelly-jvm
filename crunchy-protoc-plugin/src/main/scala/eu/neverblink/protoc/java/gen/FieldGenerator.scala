@@ -352,7 +352,9 @@ class FieldGenerator(val info: FieldInfo):
       method.addNamedCode(
         "" + // non-repeated string, with the bytes from computeSerializedSize
           "$writeTagToOutput:L" +
-          "if ($field:NUtf8Of == $field:N) {$>\n" +
+          // Checked for null too: a message that threads share without changing it may be measured
+          // by one while another writes it, and see the new string before the new bytes
+          "if ($field:NUtf8Of == $field:N && $field:NUtf8 != null) {$>\n" +
           "output.writeByteArrayNoTag($field:NUtf8);\n" +
           "$<} else {$>\n" +
           "output.writeStringNoTag($field:N);\n" +

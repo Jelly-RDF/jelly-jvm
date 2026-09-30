@@ -52,6 +52,8 @@ Throughput is in cells (rows × variables) per second, in the `:cells` lines. Se
 
 `JellyEncodeBench` writes Jena bindings or RDF4J binding sets as Jelly BIG (`-p library=jena,rdf4j`), with nothing but the library's writer between the benchmark and the rows. Use it for work on the encoder.
 
+`JellyBigBench` writes and reads Jelly BIG in both formats (`-p format=rdf,sparql`) with both libraries (`-p library=jena,rdf4j`), through each library's own writer and reader, in terms per second. `JellyBigSizes` (`sbt "jmh/runMain eu.neverblink.jelly.jmh.JellyBigSizes 100000 nanopubs"`) prints the sizes of what it writes. Use them to compare versions.
+
 `RdfCodecBench` encodes and decodes the same RiverBench datasets as Jelly-RDF with Jena (`-p preset=small,big`), in statements per second (the `:cells` lines). Use it for work on the RDF encoder, decoder and lookups.
 
 ```bash

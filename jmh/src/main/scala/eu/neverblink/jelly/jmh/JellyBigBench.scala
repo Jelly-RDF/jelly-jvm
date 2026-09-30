@@ -22,7 +22,7 @@ import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.core.sparql.{JellySparqlConstants, JellySparqlOptions}
 import eu.neverblink.jelly.jmh.sparql.{SparqlBenchData, SparqlMethods, SparqlRoundTripCheck}
-import org.apache.jena.graph.{Node, Triple}
+import org.apache.jena.graph.Triple
 import org.apache.jena.riot.RDFParser
 import org.apache.jena.riot.system.StreamRDFBase
 import org.apache.jena.sparql.core.Quad

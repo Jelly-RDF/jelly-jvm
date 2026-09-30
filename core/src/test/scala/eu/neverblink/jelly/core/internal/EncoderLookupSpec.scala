@@ -140,6 +140,16 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         }
     }
 
+    "evict the first unpinned id when the epoch pins every id sampled" in {
+      val lookup = EncoderLookup(8, true)
+      for i <- 1 to 8 do lookup.getOrAddEntry(s"v$i")
+      lookup.newEpoch()
+      // The next id in order (1) and the ids sampled after it (3, 5, 7)
+      for i <- Seq(1, 3, 5, 7) do lookup.getOrAddEntry(s"v$i")
+      lookup.getOrAddEntry("w1").getId should be(2)
+      for i <- Seq(1, 3, 5, 7) do lookup.getOrAddEntry(s"v$i").getId should be(i)
+    }
+
     "fail if every entry is in use by the current epoch" in {
       val lookup = EncoderLookup(8, true)
       for i <- 1 to 8 do lookup.getOrAddEntry(s"v$i")

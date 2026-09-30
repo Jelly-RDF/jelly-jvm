@@ -15,9 +15,9 @@ public final class Rdf4jEncoderConverter
 
     @Override
     public Object nodeToProto(NodeEncoder<Value> encoder, Value value) {
-        // Value's own methods, not instanceof: a class remembers the one interface it was last
-        // checked against, so checking a SimpleIRI against IRI here and against Value in the
-        // generic bridge method before this one made each check miss that memory.
+        // Value's own methods, not instanceof: a class caches only the last interface it passed a
+        // type check against, and the generic bridge in front of this method checks Value, so an
+        // instanceof IRI here missed that cache every time.
         if (value.isIRI()) {
             return encoder.makeIri(value.stringValue());
         } else if (value.isBNode()) {

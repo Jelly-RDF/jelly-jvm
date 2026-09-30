@@ -47,7 +47,7 @@ public interface SparqlResultsHandler<TNode> {
      * Called with all rows of one frame, column by column: {@code columns[v][r]} is the value of
      * variable {@code v} (in the order of {@link #handleVariables(List)}) in row {@code r}, or null
      * if it is unbound. Only the first {@code rowCount} entries of each column are rows of this
-     * frame. The arrays are REUSED after the call returns, unless {@link #keepsColumns()} says
+     * frame. The arrays are reused after the call returns, unless {@link #keepsColumns()} says
      * otherwise.
      * <p>
      * The default implementation copies each row into {@code row} and calls {@link #handleRow}.

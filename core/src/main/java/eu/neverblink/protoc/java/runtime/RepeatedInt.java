@@ -83,6 +83,9 @@ public final class RepeatedInt {
     /**
      * Returns the backing array. It may be longer than {@link #size()}; the values past the
      * current size are undefined. The returned array is invalidated by the next {@code add} call.
+     * <p>
+     * Values changed through it after the message was measured are written with the packed size
+     * measured before, as the message itself is written with its cached size.
      *
      * @return the backing array
      */

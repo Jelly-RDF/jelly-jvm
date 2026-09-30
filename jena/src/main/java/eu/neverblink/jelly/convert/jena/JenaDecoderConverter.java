@@ -28,12 +28,12 @@ public final class JenaDecoderConverter
     // The last language tag formatted. Literals with the same tag tend to come one after another,
     // and Jena parses and formats the tag again for every literal. A single immutable pair keeps
     // this safe when the converter is shared between threads: a race only formats a tag twice.
-    private FormattedLangtag lastLangtag = new FormattedLangtag("", "");
+    private FormattedLangtag lastLangtag = new FormattedLangtag(null, null);
 
     @Override
     public Node makeLangLiteral(String lex, String lang) {
         FormattedLangtag last = lastLangtag;
-        if (!last.tag.equals(lang)) {
+        if (!lang.equals(last.tag)) {
             // An empty tag, or one with a base direction ("en--ltr"), is not a plain language tag
             if (lang.isEmpty() || lang.contains("--")) {
                 return NodeFactory.createLiteralLang(lex, lang);

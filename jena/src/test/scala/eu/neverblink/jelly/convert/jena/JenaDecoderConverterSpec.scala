@@ -40,6 +40,13 @@ class JenaDecoderConverterSpec extends AnyWordSpec, Matchers, JenaTest:
         actual.getLiteralDatatype shouldBe expected.getLiteralDatatype
     }
 
+    "make the same literal as NodeFactory.createLiteralLang for an empty tag as the first one" in {
+      // The converter remembers the last tag: nothing may count as remembered before the first
+      JenaDecoderConverter().makeLangLiteral("x", "") should be(
+        NodeFactory.createLiteralLang("x", ""),
+      )
+    }
+
     "reject the language tags that NodeFactory.createLiteralLang rejects" in {
       val converter = JenaDecoderConverter()
       converter.makeLangLiteral("text", "en")

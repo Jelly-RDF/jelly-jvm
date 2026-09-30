@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Buffers for fields of a SparqlLiteralColumn. 
+ * Buffers for fields of a SparqlLiteralColumn.
  * Used for literal columns that mix kinds, and for the literals of polymorphic columns.
  */
 final class LiteralOut {
@@ -20,7 +20,7 @@ final class LiteralOut {
     final RepeatedInt langtagDirections = RepeatedInt.newEmptyInstance();
 
     /**
-     * Return the index of a language tag with a base direction in the langtags lookup, adding it if it is new.
+     * The index of a language tag with a base direction in the langtags lookup, added if it is new.
      * Linear: a column has very few distinct tags.
      */
     int langtagIndex(String langtag, RdfBaseDirection direction) {

@@ -95,9 +95,9 @@ final class EncoderLookup {
      * Replaced by a longer array when the lookup grows, so a caller must not hold on to it across
      * a call that can add an entry.
      */
-    int[] entries;
+    private int[] entries;
 
-    static final int STRIDE = 3;
+    private static final int STRIDE = 3;
 
     /**
      * When the entry was last used or added, counted in uses of this table ({@link #now}).
@@ -106,7 +106,7 @@ final class EncoderLookup {
      * <i>pinned</i> if it was used in the current epoch ({@link #newEpoch}): what is being encoded
      * still refers to it, so it must not be evicted.
      */
-    static final int LAST_USE = 0;
+    private static final int LAST_USE = 0;
 
     /**
      * The serial number of the entry, incremented each time the entry is replaced in the table.
@@ -115,10 +115,10 @@ final class EncoderLookup {
      * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that
      * causes this to happen.
      */
-    static final int SERIAL = 1;
+    private static final int SERIAL = 1;
 
     /** The slot in {@link #index} that the entry's key hashes to. Only read when it is evicted. */
-    static final int HOME_SLOT = 2;
+    private static final int HOME_SLOT = 2;
 
     /** How many times the table was used (see {@link #LAST_USE}). */
     private int now;
@@ -536,7 +536,7 @@ final class EncoderLookup {
         final var entry = entryForReturns;
         final int existing = findId(spread, source, from, length);
         if (existing != 0) {
-            // The entry is already in the table, just update the access order
+            // The entry is already in the table, just mark it as used
             onAccess(existing);
             entry.getId = existing;
             entry.setId = existing;

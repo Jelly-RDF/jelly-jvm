@@ -606,7 +606,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         UniformLiteralReader(RepeatedString values, LiteralKinds kinds, int kind) {
             this.values = values;
             this.kind = kind;
-            if (kind != 0 && (kind & 1) != 0) {
+            if ((kind & 1) != 0) {
                 this.datatype = kinds.datatype(kind);
                 this.langtag = null;
                 this.direction = null;
