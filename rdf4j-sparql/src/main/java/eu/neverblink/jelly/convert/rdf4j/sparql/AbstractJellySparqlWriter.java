@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql;
 
-import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
@@ -8,7 +7,7 @@ import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlMetadata;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
-import eu.neverblink.protoc.java.runtime.ProtobufUtil;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -40,7 +39,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
 
     private final Rdf4jSparqlConverterFactory converterFactory;
     private final OutputStream outputStream;
-    private final CodedOutputStream codedOutput;
+    private final DelimitedMessageWriter frames;
 
     // Initialized in startQueryResult()
     private SparqlEncoder<Value> encoder = null;
@@ -59,7 +58,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     protected AbstractJellySparqlWriter(Rdf4jSparqlConverterFactory converterFactory, OutputStream out) {
         this.converterFactory = converterFactory;
         this.outputStream = out;
-        this.codedOutput = ProtobufUtil.createCodedOutputStream(out);
+        this.frames = new DelimitedMessageWriter(out);
     }
 
     @Override
@@ -151,9 +150,10 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         attachLinks(frame);
         try {
             if (delimited) {
-                frame.writeDelimitedTo(codedOutput);
+                frames.write(frame);
             } else {
-                frame.writeTo(codedOutput);
+                // The only frame of the stream
+                frame.writeTo(outputStream);
             }
             flush();
         } catch (IOException e) {
@@ -167,9 +167,9 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         attachLinks(frame);
         try {
             if (getWriterConfig().get(JellySparqlWriterSettings.DELIMITED_OUTPUT)) {
-                frame.writeDelimitedTo(codedOutput);
+                frames.write(frame);
             } else {
-                frame.writeTo(codedOutput);
+                frame.writeTo(outputStream);
             }
             flush();
         } catch (IOException e) {
@@ -236,7 +236,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     private void endFrame() throws IOException {
         final SparqlResultsFrame frame = encoder.endFrame();
         attachLinks(frame);
-        frame.writeDelimitedTo(codedOutput);
+        frames.write(frame);
         rowsInFrame = 0;
     }
 
@@ -247,9 +247,6 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     }
 
     private void flush() throws IOException {
-        // CodedOutputStream.flush() does not flush the underlying OutputStream,
-        // so we need to do it explicitly.
-        codedOutput.flush();
-        outputStream.flush();
+        frames.flush();
     }
 }

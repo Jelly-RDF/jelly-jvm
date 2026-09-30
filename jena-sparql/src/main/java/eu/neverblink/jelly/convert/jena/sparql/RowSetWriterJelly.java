@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.jena.sparql;
 
-import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
@@ -8,7 +7,7 @@ import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
-import eu.neverblink.protoc.java.runtime.ProtobufUtil;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -108,7 +107,7 @@ public final class RowSetWriterJelly implements RowSetWriter {
         // Frames are budgeted in values, so the row limit depends on how wide the result set is.
         // A zero-variable result set carries no values at all, hence the lower bound of one row.
         final int rowsPerFrame = Math.max(1, options.maxValuesPerFrame() / Math.max(1, row.length));
-        final CodedOutputStream codedOutput = ProtobufUtil.createCodedOutputStream(out);
+        final DelimitedMessageWriter frames = new DelimitedMessageWriter(out);
         try {
             try {
                 int rowsInFrame = 0;
@@ -126,42 +125,45 @@ public final class RowSetWriterJelly implements RowSetWriter {
                                     "Write delimited output, or increase the max lookup table sizes."
                             );
                         }
-                        encoder.endFrame().writeDelimitedTo(codedOutput);
+                        frames.write(encoder.endFrame());
                         rowsInFrame = 0;
                         // An empty frame always takes the row
                         encoder.appendRow(row);
                     }
                     if (options.delimited() && ++rowsInFrame >= rowsPerFrame) {
-                        encoder.endFrame().writeDelimitedTo(codedOutput);
+                        frames.write(encoder.endFrame());
                         rowsInFrame = 0;
                     }
                 }
             } catch (RuntimeException e) {
                 // Tell the reader that the result set is incomplete, then pass the error on
                 try {
-                    writeFrame(encoder.endStream(errorMessage(e)), codedOutput, options.delimited());
-                    codedOutput.flush();
-                    out.flush();
+                    writeFrame(encoder.endStream(errorMessage(e)), frames, out, options.delimited());
+                    frames.flush();
                 } catch (IOException | RuntimeException suppressed) {
                     e.addSuppressed(suppressed);
                 }
                 throw e;
             }
             // If the rows ended exactly at a frame boundary, this frame holds only the trailer
-            writeFrame(encoder.endStream(), codedOutput, options.delimited());
-            codedOutput.flush();
-            out.flush();
+            writeFrame(encoder.endStream(), frames, out, options.delimited());
+            frames.flush();
         } catch (IOException e) {
             throw new RiotException(e);
         }
     }
 
-    private static void writeFrame(SparqlResultsFrame frame, CodedOutputStream output, boolean delimited)
-        throws IOException {
+    private static void writeFrame(
+        SparqlResultsFrame frame,
+        DelimitedMessageWriter frames,
+        OutputStream out,
+        boolean delimited
+    ) throws IOException {
         if (delimited) {
-            frame.writeDelimitedTo(output);
+            frames.write(frame);
         } else {
-            frame.writeTo(output);
+            // The only frame of the stream
+            frame.writeTo(out);
         }
     }
 
