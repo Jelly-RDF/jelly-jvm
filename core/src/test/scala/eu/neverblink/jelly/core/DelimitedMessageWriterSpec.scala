@@ -21,8 +21,8 @@ class DelimitedMessageWriterSpec extends AnyWordSpec, Matchers:
 
   /** Remembers the size of every write and whether the stream was flushed. */
   private final class Recording extends OutputStream:
-    val bytes = ByteArrayOutputStream()
-    val writes = ArrayBuffer.empty[Int]
+    val bytes: ByteArrayOutputStream = ByteArrayOutputStream()
+    val writes: ArrayBuffer[Int] = ArrayBuffer.empty[Int]
     var flushed = false
     override def write(b: Int): Unit = throw UnsupportedOperationException("one byte at a time")
     override def write(b: Array[Byte], off: Int, len: Int): Unit =
