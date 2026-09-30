@@ -1,5 +1,6 @@
 package eu.neverblink.protoc.java.runtime;
 
+import com.google.protobuf.CodedOutputStream;
 import java.util.Arrays;
 
 /**
@@ -14,6 +15,12 @@ public final class RepeatedInt {
     // Package-private for ProtobufUtil.readPackedUInt32, which fills the array directly
     int[] values = EMPTY_ARRAY;
     int size = 0;
+
+    // The size of the values as packed uint32 varints, and how many values that was for: the last
+    // computeSerializedSize measured them, and writing them needs the same number again. Adding a
+    // value changes size, so it is not stored on every add; clear() resets it.
+    private int uint32Size;
+    private int uint32SizeCount = -1;
 
     private RepeatedInt() {}
 
@@ -49,6 +56,28 @@ public final class RepeatedInt {
 
     public void clear() {
         size = 0;
+        uint32SizeCount = -1;
+    }
+
+    /**
+     * The size of the values as uint32 varints, without a tag or a length. Kept for
+     * {@link #uint32SizeNoTag()}.
+     */
+    int computeUInt32SizeNoTag() {
+        final int[] array = values;
+        final int size = this.size;
+        int dataSize = 0;
+        for (int i = 0; i < size; i++) {
+            dataSize += CodedOutputStream.computeUInt32SizeNoTag(array[i]);
+        }
+        uint32Size = dataSize;
+        uint32SizeCount = size;
+        return dataSize;
+    }
+
+    /** The same as {@link #computeUInt32SizeNoTag()}, measured again only if values were added. */
+    int uint32SizeNoTag() {
+        return uint32SizeCount == size ? uint32Size : computeUInt32SizeNoTag();
     }
 
     /**

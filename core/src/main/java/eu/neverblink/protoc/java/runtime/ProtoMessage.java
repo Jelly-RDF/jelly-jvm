@@ -299,13 +299,7 @@ public abstract class ProtoMessage<MessageType extends ProtoMessage<?>> {
 
     @InternalApi
     protected static int computeRepeatedUInt32SizeNoTag(final RepeatedInt values) {
-        final int[] array = values.array();
-        final int size = values.size();
-        int dataSize = 0;
-        for (int i = 0; i < size; i++) {
-            dataSize += CodedOutputStream.computeUInt32SizeNoTag(array[i]);
-        }
-        return dataSize;
+        return values.computeUInt32SizeNoTag();
     }
 
     @InternalApi
