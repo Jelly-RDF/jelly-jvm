@@ -3,7 +3,6 @@ package eu.neverblink.jelly.core.internal;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * A lookup table for NodeEncoder, used for indexing datatypes, IRI prefixes, and IRI names.
@@ -14,7 +13,7 @@ import java.util.Objects;
  * which hands out ids all over the table. See
  * <a href="https://github.com/Jelly-RDF/jelly-jvm/issues/442">jelly-jvm#442</a>.
  * <p>
- * All the bookkeeping is one number per entry: when it was last used ({@link #lastUse}).
+ * All the bookkeeping is one number per entry: when it was last used ({@link #LAST_USE}).
  */
 @InternalApi
 final class EncoderLookup {
@@ -77,21 +76,40 @@ final class EncoderLookup {
     static final int MAX_TABLE_SIZE = ID_MASK;
 
     /**
-     * For each id, the slot its key hashes to. Only read when an entry is evicted.
+     * What the table keeps for each id, {@link #STRIDE} ints from {@code id * STRIDE}: the
+     * {@link #LAST_USE}, {@link #SERIAL} and {@link #HOME_SLOT} of its entry. In one array, so
+     * that the encoder checking an entry's serial and then marking it as used touches one cache
+     * line, not two.
+     * <p>
+     * Replaced by a longer array when the lookup grows, so a caller must not hold on to it across
+     * a call that can add an entry.
      */
-    private int[] homeSlots;
+    int[] entries;
+
+    static final int STRIDE = 3;
 
     /**
-     * For each id, when its entry was last used or added, counted in uses of this table
-     * ({@link #now}).
+     * When the entry was last used or added, counted in uses of this table ({@link #now}).
      * <p>
      * An entry is <i>cold</i> if it was not used in the last {@link #coldAge} uses. An entry is
      * <i>pinned</i> if it was used in the current epoch ({@link #newEpoch}): what is being encoded
      * still refers to it, so it must not be evicted.
      */
-    private int[] lastUse;
+    static final int LAST_USE = 0;
 
-    /** How many times the table was used (see {@link #lastUse}). */
+    /**
+     * The serial number of the entry, incremented each time the entry is replaced in the table.
+     * Only kept if the lookup was made with serials.
+     * This could theoretically overflow and cause bogus cache hits, but it's enormously
+     * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that
+     * causes this to happen.
+     */
+    static final int SERIAL = 1;
+
+    /** The slot in {@link #index} that the entry's key hashes to. Only read when it is evicted. */
+    static final int HOME_SLOT = 2;
+
+    /** How many times the table was used (see {@link #LAST_USE}). */
     private int now;
 
     /**
@@ -114,17 +132,6 @@ final class EncoderLookup {
     static final int REBASE_AT = 1 << 30;
 
     private static final int REBASE_BY = 1 << 29;
-
-    /**
-     * The serial numbers of the entries, incremented each time the entry is replaced in the table.
-     * This could theoretically overflow and cause bogus cache hits, but it's enormously
-     * unlikely to happen in practice. I can buy a beer for anyone who can construct an RDF dataset that
-     * causes this to happen.
-     * <p>
-     * Replaced by a longer array when the lookup grows, so a caller must not hold on to it across
-     * a call that can add an entry.
-     */
-    int[] serials;
 
     // Maximum size of the lookup.
     final int size;
@@ -151,31 +158,28 @@ final class EncoderLookup {
         this.size = size;
         coldAge = size >> 1;
         capacity = Math.min(size, INITIAL_CAPACITY);
-        lastUse = new int[capacity + 1];
+        entries = new int[(capacity + 1) * STRIDE];
         names = new String[capacity + 1];
-        homeSlots = new int[capacity + 1];
         // Two slots per entry: linear probing degrades badly above a half-full table.
         index = new int[Integer.highestOneBit(Math.max(size * 2 - 1, 1)) << 1];
         indexMask = index.length - 1;
         this.useSerials = useSerials;
-        if (useSerials) {
-            serials = new int[capacity + 1];
-            // Set the head's serial to non-zero value, so that default-initialized DependentNodes are not
-            // accidentally considered as valid entries.
-            serials[0] = -1;
-        } else {
-            serials = null;
-        }
+        // Set the serial of id 0 to non-zero value, so that default-initialized DependentNodes are
+        // not accidentally considered as valid entries.
+        entries[SERIAL] = -1;
+    }
+
+    /**
+     * The serial number of the entry at an id (see {@link #SERIAL}).
+     */
+    int serial(int id) {
+        return entries[id * STRIDE + SERIAL];
     }
 
     private void grow() {
         capacity = Math.min(size, capacity * GROWTH_FACTOR);
-        lastUse = Arrays.copyOf(lastUse, capacity + 1);
+        entries = Arrays.copyOf(entries, (capacity + 1) * STRIDE);
         names = Arrays.copyOf(names, capacity + 1);
-        homeSlots = Arrays.copyOf(homeSlots, capacity + 1);
-        if (useSerials) {
-            serials = Arrays.copyOf(Objects.requireNonNull(serials), capacity + 1);
-        }
     }
 
     /** Mixes a hash so that both the slot bits (low) and the tag bits (high) depend on all of it. */
@@ -261,7 +265,7 @@ final class EncoderLookup {
             slot = (slot + 1) & indexMask;
         }
         index[slot] = id | (spread & ~ID_MASK);
-        homeSlots[id] = home;
+        entries[id * STRIDE + HOME_SLOT] = home;
     }
 
     /**
@@ -272,7 +276,8 @@ final class EncoderLookup {
      * This is Knuth's backward-shift deletion.
      */
     private void removeId(int id) {
-        int hole = homeSlots[id];
+        final int[] entries = this.entries;
+        int hole = entries[id * STRIDE + HOME_SLOT];
         while ((index[hole] & ID_MASK) != id) {
             hole = (hole + 1) & indexMask;
         }
@@ -284,7 +289,7 @@ final class EncoderLookup {
             if (value == 0) {
                 return;
             }
-            final int home = homeSlots[value & ID_MASK];
+            final int home = entries[(value & ID_MASK) * STRIDE + HOME_SLOT];
             // Leave the entry alone if its home lies in (hole, slot] – then it is still reachable
             // from its home without passing through the hole.
             final boolean reachable = hole <= slot ? hole < home && home <= slot : hole < home || home <= slot;
@@ -303,7 +308,7 @@ final class EncoderLookup {
     public void onAccess(int id) {
         final int t = now + 1;
         now = t;
-        lastUse[id] = t;
+        entries[id * STRIDE + LAST_USE] = t;
         if (t == REBASE_AT) {
             rebase();
         }
@@ -326,12 +331,12 @@ final class EncoderLookup {
         final int by = REBASE_BY;
         final int oldEpochStart = epochStart;
         final int newEpochStart = oldEpochStart == NO_EPOCH ? NO_EPOCH : Math.max(0, oldEpochStart - by);
-        final int[] lastUse = this.lastUse;
-        for (int id = 1; id < lastUse.length; id++) {
-            final int last = lastUse[id];
+        final int[] entries = this.entries;
+        for (int i = STRIDE + LAST_USE; i < entries.length; i += STRIDE) {
+            final int last = entries[i];
             // A time cut off at the bottom is still more than coldAge ago. A pinned entry must
             // stay after the epoch's start, however long ago that was.
-            lastUse[id] = Math.max(last - by, last > oldEpochStart ? newEpochStart + 1 : 0);
+            entries[i] = Math.max(last - by, last > oldEpochStart ? newEpochStart + 1 : 0);
         }
         now -= by;
         epochStart = newEpochStart;
@@ -351,10 +356,10 @@ final class EncoderLookup {
      */
     private int victim() {
         final int size = this.size;
-        final int[] lastUse = this.lastUse;
+        final int[] entries = this.entries;
         final int epochStart = this.epochStart;
         int id = lastSetId >= 1 && lastSetId < size ? lastSetId + 1 : 1;
-        final int next = lastUse[id];
+        final int next = entries[id * STRIDE + LAST_USE];
         if (now - next >= coldAge && next <= epochStart) {
             return id;
         }
@@ -362,7 +367,7 @@ final class EncoderLookup {
         int bestLast = Integer.MAX_VALUE;
         final int step = Math.max(1, size / SAMPLES);
         for (int n = Math.min(SAMPLES, size); n > 0; n--) {
-            final int last = lastUse[id];
+            final int last = entries[id * STRIDE + LAST_USE];
             if (last < bestLast && last <= epochStart) {
                 best = id;
                 bestLast = last;
@@ -377,7 +382,7 @@ final class EncoderLookup {
         }
         // The epoch pins every id sampled (a big SPARQL frame): the first id that it does not pin
         for (int n = size; n > 0; n--) {
-            if (lastUse[id] <= epochStart) {
+            if (entries[id * STRIDE + LAST_USE] <= epochStart) {
                 return id;
             }
             id = id == size ? 1 : id + 1;
@@ -471,7 +476,7 @@ final class EncoderLookup {
             // Increment the serial number
             // We save some memory accesses by not doing this if the serials are not used.
             // The if should be very predictable and have no negative performance impact.
-            ++Objects.requireNonNull(serials)[id];
+            ++entries[id * STRIDE + SERIAL];
         }
         entry.getId = id;
         entry.newEntry = true;

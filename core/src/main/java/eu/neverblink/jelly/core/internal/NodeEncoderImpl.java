@@ -299,14 +299,12 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
      */
     private DependentNode<RdfIri> encodeIriWithPrefix(String iri) {
         final var prefixLookup = Objects.requireNonNull(this.prefixLookup);
-        final var prefixSerials = Objects.requireNonNull(prefixLookup.serials);
-        final var nameSerials = Objects.requireNonNull(nameLookup.serials);
         // Slow path, with splitting out the prefix
         final var cachedNode = Objects.requireNonNull(iriNodeCache).get(iri);
         if (
             cachedNode.encoded != null &&
-            cachedNode.lookupSerial1 == nameSerials[cachedNode.lookupPointer1] &&
-            cachedNode.lookupSerial2 == prefixSerials[cachedNode.lookupPointer2]
+            cachedNode.lookupSerial1 == nameLookup.serial(cachedNode.lookupPointer1) &&
+            cachedNode.lookupSerial2 == prefixLookup.serial(cachedNode.lookupPointer2)
         ) {
             nameLookup.onAccess(cachedNode.lookupPointer1);
             prefixLookup.onAccess(cachedNode.lookupPointer2);
@@ -353,9 +351,9 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
         int nameId = nameEntry.getId;
         cachedNode.lookupPointer1 = nameId;
-        cachedNode.lookupSerial1 = Objects.requireNonNull(nameLookup.serials)[nameId];
+        cachedNode.lookupSerial1 = nameLookup.serial(nameId);
         cachedNode.lookupPointer2 = prefixId;
-        cachedNode.lookupSerial2 = Objects.requireNonNull(prefixLookup.serials)[prefixId];
+        cachedNode.lookupSerial2 = prefixLookup.serial(prefixId);
         cachedNode.encoded = IDS_ONLY;
         return cachedNode;
     }
@@ -432,8 +430,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         final var cachedNode = dtLiteralNodeCache.get(key);
         // Check if the value is still valid
         if (
-            cachedNode.encoded != null &&
-            cachedNode.lookupSerial1 == Objects.requireNonNull(datatypeLookup.serials)[cachedNode.lookupPointer1]
+            cachedNode.encoded != null && cachedNode.lookupSerial1 == datatypeLookup.serial(cachedNode.lookupPointer1)
         ) {
             datatypeLookup.onAccess(cachedNode.lookupPointer1);
             return cachedNode.encoded;
@@ -448,7 +445,7 @@ public final class NodeEncoderImpl<TNode> implements NodeEncoder<TNode> {
         }
         int dtId = dtEntry.getId;
         cachedNode.lookupPointer1 = dtId;
-        cachedNode.lookupSerial1 = Objects.requireNonNull(datatypeLookup.serials)[dtId];
+        cachedNode.lookupSerial1 = datatypeLookup.serial(dtId);
         cachedNode.encoded = RdfLiteral.newInstance().setLex(lex).setDatatype(dtId);
         return cachedNode.encoded;
     }

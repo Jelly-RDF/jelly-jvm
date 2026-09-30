@@ -17,7 +17,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         v.getId should be(i)
         v.setId should be(0)
         v.newEntry should be(true)
-        lookup.serials(v.getId) should be(1)
+        lookup.serial(v.getId) should be(1)
     }
 
     "retrieve entries" in {
@@ -28,7 +28,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         v.getId should be(i)
         v.setId should be(i)
         v.newEntry should be(false)
-        lookup.serials(v.getId) should be(1)
+        lookup.serial(v.getId) should be(1)
     }
 
     "retrieve entries many times, in random order" in {
@@ -40,7 +40,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
           v.getId should be(i)
           v.setId should be(i)
           v.newEntry should be(false)
-          lookup.serials(v.getId) should be(1)
+          lookup.serial(v.getId) should be(1)
     }
 
     "overwrite existing entries, from oldest to newest" in {
@@ -51,14 +51,14 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
       v.getId should be(1)
       v.setId should be(1)
       v.newEntry should be(true)
-      lookup.serials(v.getId) should be(2)
+      lookup.serial(v.getId) should be(2)
 
       for i <- 6 to 8 do
         val v = lookup.getOrAddEntry(s"v$i")
         v.getId should be(i - 4)
         v.setId should be(0)
         v.newEntry should be(true)
-        lookup.serials(v.getId) should be(2)
+        lookup.serial(v.getId) should be(2)
     }
 
     "overwrite existing entries in order, many times" in {
@@ -70,13 +70,13 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         v.getId should be(1)
         v.setId should be(1)
         v.newEntry should be(true)
-        lookup.serials(v.getId) should be(k)
+        lookup.serial(v.getId) should be(k)
         for i <- 2 to 17 do
           val v = lookup.getOrAddEntry(s"v$i $k")
           v.getId should be(i)
           v.setId should be(0)
           v.newEntry should be(true)
-          lookup.serials(v.getId) should be(k)
+          lookup.serial(v.getId) should be(k)
     }
 
     "pass random stress test (1)" in {
@@ -92,7 +92,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
           v.getId should be(fIndex)
           v.setId should be(fIndex)
           v.newEntry should be(false)
-          lookup.serials(v.getId) should be(1)
+          lookup.serial(v.getId) should be(1)
 
         for _ <- 1 to 80 do
           val v = lookup.getOrAddEntry(s"r${Random.nextInt(200) + 1}")
@@ -179,7 +179,7 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
           v.setId should be(id)
           v.newEntry should be(false)
         else v.newEntry should be(true)
-        lookup.serials(v.getId) should be(1)
+        lookup.serial(v.getId) should be(1)
     }
 
     "pass random stress test (3)" in {
@@ -274,11 +274,11 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
         }
     }
 
-    "not use the serials table if not needed" in {
+    "not update the serials if not needed" in {
       val lookup = EncoderLookup(16, false)
       for _ <- 1 to 2000 do
         val v = lookup.getOrAddEntry(s"v${Random.nextInt(1000) + 1}")
         v.getId should be > 0
-      lookup.serials should be(null)
+      for id <- 1 to 16 do lookup.serial(id) should be(0)
     }
   }
