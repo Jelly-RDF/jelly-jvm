@@ -50,6 +50,8 @@ Throughput is in cells (rows × variables) per second, in the `:cells` lines. Se
 
 `JellyDecodeBench` reads Jelly BIG into Jena or RDF4J (`-p library=jena,rdf4j`) without passing rows through a Scala function, so its results move less between runs. Use it for work on the decoder.
 
+`RdfCodecBench` encodes and decodes the same RiverBench datasets as Jelly-RDF with Jena (`-p preset=small,big`), in statements per second (the `:cells` lines). Use it for work on the RDF encoder, decoder and lookups.
+
 ```bash
 sbt sparqlRoundTrip   # check every format against every dataset
 sbt sparqlSizes       # byte sizes (plain, gzip, zstd) of the benchmarked combinations
