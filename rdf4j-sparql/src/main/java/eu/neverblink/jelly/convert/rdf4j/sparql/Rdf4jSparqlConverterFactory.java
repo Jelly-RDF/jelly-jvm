@@ -4,7 +4,6 @@ import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory;
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jDatatype;
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jDecoderConverter;
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jEncoderConverter;
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyConverterFactory;
 import eu.neverblink.jelly.core.sparql.JellySparqlConverterFactory;
 import org.eclipse.rdf4j.model.Value;
@@ -14,7 +13,6 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 /**
  * A factory for creating Jelly-SPARQL encoders and decoders for RDF4J.
  */
-@ExperimentalApi
 public final class Rdf4jSparqlConverterFactory
     extends JellySparqlConverterFactory<Value, Rdf4jDatatype, Rdf4jEncoderConverter, Rdf4jDecoderConverter>
 {

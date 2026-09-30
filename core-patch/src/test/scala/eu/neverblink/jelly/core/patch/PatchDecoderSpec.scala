@@ -11,9 +11,6 @@ import eu.neverblink.jelly.core.proto.v1.patch.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.annotation.experimental
-
-@experimental
 class PatchDecoderSpec extends AnyWordSpec, Matchers:
   val decoders: Seq[
     (

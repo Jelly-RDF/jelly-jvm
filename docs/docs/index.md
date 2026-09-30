@@ -43,9 +43,9 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-pekko-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}). **[:octicons-arrow-right-24: Learn more](user/grpc.md)**
     - {{ scala_module_badges('pekko-grpc') }}
 
-### Jelly-Patch (experimental)
+### Jelly-Patch
 
-[Jelly-Patch]({{ proto_link('specification/patch') }}) is an efficient format for recording changes to RDF datasets. Jelly-JVM has an experimental implementation of Jelly-Patch:
+[Jelly-Patch]({{ proto_link('specification/patch') }}) is an efficient format for recording changes to RDF datasets. Jelly-JVM implements Jelly-Patch:
 
 - `jelly-core-patch` – core generic code for serializing/deserializing Jelly-Patch data. You need an additional module (like `jelly-jena-patch`) to integrate it with a specific RDF library.
     - {{ java_module_badges('core-patch') }}
@@ -54,9 +54,9 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-rdf4j-patch` – partial integration with [Eclipse RDF4J](https://rdf4j.org/). RDF4J does not support RDF Patch, so this module only provides low-level Jelly-Patch support.
     - {{ java_module_badges('rdf4j-patch') }}
 
-### Jelly-SPARQL (experimental)
+### Jelly-SPARQL
 
-Jelly-SPARQL is an efficient columnar format for SPARQL query results (solution sequences and boolean ASK results). Jelly-JVM has an experimental implementation of Jelly-SPARQL:
+Jelly-SPARQL is an efficient columnar format for SPARQL query results (solution sequences and boolean ASK results). Jelly-JVM implements Jelly-SPARQL:
 
 - `jelly-core-sparql` – core generic code for serializing/deserializing Jelly-SPARQL data. You need an additional module (like `jelly-jena-sparql`) to integrate it with a specific RDF library.
     - {{ java_module_badges('core-sparql') }}

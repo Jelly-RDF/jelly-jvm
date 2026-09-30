@@ -13,7 +13,6 @@ import eu.neverblink.jelly.core.proto.v1.patch.*;
  *
  * @param <TNode> the type of RDF nodes in the library
  */
-@ExperimentalApi
 @InternalApi
 public final class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
 

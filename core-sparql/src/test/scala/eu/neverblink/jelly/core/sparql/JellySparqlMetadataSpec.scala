@@ -7,10 +7,8 @@ import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
-@experimental
 class JellySparqlMetadataSpec extends AnyWordSpec, Matchers:
 
   private def entry(key: String, value: String) =

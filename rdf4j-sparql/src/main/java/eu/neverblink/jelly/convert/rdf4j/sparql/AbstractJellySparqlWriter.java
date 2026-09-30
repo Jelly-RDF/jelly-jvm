@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
@@ -34,7 +33,6 @@ import org.eclipse.rdf4j.rio.RioSetting;
  * Links given to {@link #handleLinks(List)} are written in the first frame, under the "link"
  * metadata key. They must be given before the first solution.
  */
-@ExperimentalApi
 public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWriter implements ByteSink {
 
     private final Rdf4jSparqlConverterFactory converterFactory;

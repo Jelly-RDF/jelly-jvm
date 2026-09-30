@@ -9,7 +9,6 @@ import org.apache.jena.rdfpatch.text.RDFPatchReaderText
 import org.scalatest.matchers.should.Matchers.*
 
 import java.io.{File, FileInputStream, InputStream, OutputStream}
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
 given TestComparable[JenaChangesCollector] = new TestComparable[JenaChangesCollector]:
@@ -21,7 +20,6 @@ given TestComparable[JenaChangesCollector] = new TestComparable[JenaChangesColle
       }
   override def size(a: JenaChangesCollector): Long = a.size
 
-@experimental
 object JenaImplementation extends RdfPatchImplementation[JenaChangesCollector]:
 
   override def name: String = "Jena"

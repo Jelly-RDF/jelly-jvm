@@ -2,7 +2,6 @@ package eu.neverblink.jelly.core.patch;
 
 import static eu.neverblink.jelly.core.internal.BaseJellyOptions.checkBaseCompatibility;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.JellyOptions;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
@@ -14,7 +13,6 @@ import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
 /**
  * Utilities for working with RdfPatchOptions.
  */
-@ExperimentalApi
 public final class JellyPatchOptions {
 
     private JellyPatchOptions() {}

@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.jena.patch;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.patch.PatchHandler;
 import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
 import org.apache.jena.graph.Node;
@@ -9,7 +8,6 @@ import org.apache.jena.rdfpatch.RDFChanges;
 /**
  * Jelly-based operations on RDFChanges streams and RDFPatch objects from Jena.
  */
-@ExperimentalApi
 public final class JellyPatchOps {
 
     private JellyPatchOps() {}

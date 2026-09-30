@@ -8,10 +8,8 @@ import eu.neverblink.jelly.core.{RdfProtoDeserializationError, RdfProtoSerializa
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
-@experimental
 class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
 
   private def iri(i: Int) = Iri(f"https://test.org/ns#term$i")

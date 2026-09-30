@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
@@ -44,7 +43,6 @@ import org.eclipse.rdf4j.rio.RioSetting;
  * Links under the "link" metadata key of the first frame are passed to handleLinks(), before
  * anything else. Producers should set them only there, so links in later frames are ignored.
  */
-@ExperimentalApi
 public abstract class AbstractJellySparqlParser extends AbstractQueryResultParser {
 
     private Rdf4jSparqlConverterFactory converterFactory;

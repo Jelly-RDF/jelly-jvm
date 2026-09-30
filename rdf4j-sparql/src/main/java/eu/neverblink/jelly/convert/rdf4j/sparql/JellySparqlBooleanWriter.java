@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.eclipse.rdf4j.query.QueryResultHandlerException;
@@ -10,7 +9,6 @@ import org.eclipse.rdf4j.query.resultio.BooleanQueryResultWriter;
 /**
  * RDF4J writer of boolean (ASK) results in the Jelly-SPARQL format.
  */
-@ExperimentalApi
 public final class JellySparqlBooleanWriter extends AbstractJellySparqlWriter implements BooleanQueryResultWriter {
 
     public JellySparqlBooleanWriter(Rdf4jSparqlConverterFactory converterFactory, OutputStream out) {

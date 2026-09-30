@@ -1,11 +1,8 @@
 package eu.neverblink.jelly.core.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
-
 /**
  * Constants for the Jelly-SPARQL extension.
  */
-@ExperimentalApi
 public final class JellySparqlConstants {
 
     private JellySparqlConstants() {}

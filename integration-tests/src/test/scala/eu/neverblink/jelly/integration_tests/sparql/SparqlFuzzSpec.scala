@@ -7,7 +7,6 @@ import eu.neverblink.jelly.core.sparql.gen.{ResultSetSpec, SparqlDataGen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.annotation.experimental
 import scala.util.Random
 
 /** Fuzzing for Jelly-SPARQL, driven by the shared result set generator
@@ -19,7 +18,6 @@ import scala.util.Random
   * The number of random cases and the seed can be overridden with the JELLY_SPARQL_FUZZ_ITERATIONS
   * and JELLY_SPARQL_FUZZ_SEED environment variables – bump the iterations for a long soak run.
   */
-@experimental
 class SparqlFuzzSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private val iterations =

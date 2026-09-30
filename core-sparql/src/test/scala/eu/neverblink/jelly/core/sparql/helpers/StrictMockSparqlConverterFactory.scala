@@ -8,12 +8,9 @@ import eu.neverblink.jelly.core.helpers.{
 }
 import eu.neverblink.jelly.core.sparql.JellySparqlConverterFactory
 
-import scala.annotation.experimental
-
 /** Same as [[MockSparqlConverterFactory]], but its decoder converter refuses IRIs that are not
   * absolute.
   */
-@experimental
 object StrictMockSparqlConverterFactory
     extends JellySparqlConverterFactory[
       Node,

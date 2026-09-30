@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.patch;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchFrame;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchOptions;
 import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchRow;
@@ -10,7 +9,6 @@ import eu.neverblink.jelly.core.proto.v1.patch.RdfPatchRow;
  * <p>
  * Converts RdfPatchRow and RdfPatchFrame to callbacks on the given PatchHandler.
  */
-@ExperimentalApi
 public interface PatchDecoder {
     /**
      * RdfPatchOptions for this decoder.

@@ -15,7 +15,6 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, File, FileInputStream}
 import java.nio.file.Files
-import scala.annotation.experimental
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import scala.util.Using
@@ -25,7 +24,6 @@ import scala.util.Using
   *
   * We test against the SHOULD conformance level (strict).
   */
-@experimental
 class SparqlConformanceSpec extends AnyWordSpec, Matchers, JenaTest:
   private val impls: Seq[SparqlImplementation] = Seq(JenaImplementation, Rdf4jImplementation)
 

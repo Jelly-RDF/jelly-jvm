@@ -54,7 +54,7 @@ The Jelly format is registered under the name `jelly` in the RDF libraries, so y
 
 ### Jelly-SPARQL support
 
-Both plugin JARs also bundle [Jelly-SPARQL](index.md#jelly-sparql-experimental), the columnar format for SPARQL query results. Dropping a JAR in your classpath registers the format under the name `Jelly-SPARQL`, with the media type `application/x-jelly-sparql` and the `.jellys` file extension.
+Both plugin JARs also bundle [Jelly-SPARQL](index.md#jelly-sparql), the columnar format for SPARQL query results. Dropping a JAR in your classpath registers the format under the name `Jelly-SPARQL`, with the media type `application/x-jelly-sparql` and the `.jellys` file extension.
 
 In Apache Jena and RDF4J, this covers the result set readers and writers, for both SELECT and ASK results.
 

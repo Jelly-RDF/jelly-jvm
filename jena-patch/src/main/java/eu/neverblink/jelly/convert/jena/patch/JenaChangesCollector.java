@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.jena.patch;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType;
 import java.util.ArrayList;
@@ -15,7 +14,6 @@ import org.apache.jena.sparql.core.Quad;
  * This class collects changes in a list and allows them to be replayed to a destination RDFChanges instance.
  * It supports both triples and quads based on the specified PatchStatementType.
  */
-@ExperimentalApi
 public final class JenaChangesCollector implements RDFChanges {
 
     private final List<JenaChangesItem> items = new ArrayList<>();

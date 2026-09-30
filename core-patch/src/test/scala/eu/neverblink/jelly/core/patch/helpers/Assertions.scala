@@ -4,10 +4,8 @@ import eu.neverblink.jelly.core.proto.v1.patch.{RdfPatchFrame, RdfPatchRow}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
-@experimental
 object Assertions extends AnyWordSpec, Matchers:
   def assertEncoded(observed: Seq[RdfPatchRow], expected: Seq[RdfPatchRow]): Unit =
     for ix <- 0 until observed.size.min(expected.size) do

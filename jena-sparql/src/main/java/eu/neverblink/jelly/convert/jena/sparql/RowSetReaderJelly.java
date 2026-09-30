@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.jena.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
@@ -38,7 +37,6 @@ import org.apache.jena.sparql.util.Context;
  * received, and then throws a RiotException. A stream that ends without a trailer is accepted,
  * unless {@link Options#requireTrailer()} is set.
  */
-@ExperimentalApi
 public final class RowSetReaderJelly implements RowSetReader {
 
     /**

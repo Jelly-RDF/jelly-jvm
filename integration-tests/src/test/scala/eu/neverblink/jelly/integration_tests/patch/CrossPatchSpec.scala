@@ -10,12 +10,10 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.ByteArrayInputStream
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
 /** Cross-testing Jelly-Patch implementations in end-to-end test cases.
   */
-@experimental
 class CrossPatchSpec extends AnyWordSpec, Matchers:
   import eu.neverblink.jelly.core.proto.v1.patch.PatchStatementType.{QUADS, TRIPLES}
   import eu.neverblink.jelly.core.proto.v1.patch.PatchStreamType.{FLAT, FRAME, PUNCTUATED}

@@ -10,10 +10,8 @@ import eu.neverblink.jelly.core.memory.EncoderAllocator
 import eu.neverblink.jelly.core.patch.helpers.PatchAdapter.*
 import eu.neverblink.protoc.java.runtime.{ArrayListMessageCollection, MessageFactory}
 
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
-@experimental
 class PatchEncoderSpec extends AnyWordSpec, Matchers:
   import helpers.Assertions.*
   import eu.neverblink.jelly.core.patch.helpers.PatchTestCases.*

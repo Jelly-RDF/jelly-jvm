@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.jena.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
@@ -32,7 +31,6 @@ import org.apache.jena.sparql.util.Symbol;
  * The registration is done automatically when the module is on the classpath
  * (via {@link JellySparqlSubsystemLifecycle}). You can also call {@link #register()} manually.
  */
-@ExperimentalApi
 public final class JellySparqlLanguage {
 
     private JellySparqlLanguage() {}

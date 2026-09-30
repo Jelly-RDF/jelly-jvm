@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.core.sparql.internal;
 
 import com.google.protobuf.ByteString;
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.NameDecoder;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
@@ -31,7 +30,6 @@ import java.util.List;
  * @param <TNode> the type of RDF nodes in the library
  * @param <TDatatype> the type of RDF datatypes in the library
  */
-@ExperimentalApi
 @InternalApi
 public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode, TDatatype> implements SparqlDecoder {
 

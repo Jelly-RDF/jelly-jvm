@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.core.sparql.internal;
 
 import com.google.protobuf.ByteString;
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
@@ -39,7 +38,6 @@ import java.util.NoSuchElementException;
  *
  * @param <TNode> the type of RDF nodes in the library
  */
-@ExperimentalApi
 @InternalApi
 public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> implements NodeEncoder<TNode> {
 

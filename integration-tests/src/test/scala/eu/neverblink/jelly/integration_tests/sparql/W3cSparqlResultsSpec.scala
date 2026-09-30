@@ -29,7 +29,6 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileInputStream}
 import java.net.URI
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 import scala.util.Using
 
@@ -46,7 +45,6 @@ import scala.util.Using
   * The files are vendored from https://github.com/w3c/rdf-tests into the `w3c-sparql` test
   * resources, see the README there.
   */
-@experimental
 class W3cSparqlResultsSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private val suites = Seq("sparql11" -> "SPARQL 1.1", "sparql12" -> "SPARQL 1.2")

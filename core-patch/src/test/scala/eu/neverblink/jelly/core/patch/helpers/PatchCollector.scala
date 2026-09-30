@@ -3,10 +3,8 @@ package eu.neverblink.jelly.core.patch.helpers
 import eu.neverblink.jelly.core.helpers.Mrl
 import eu.neverblink.jelly.core.patch.PatchHandler.AnyPatchHandler
 
-import scala.annotation.experimental
 import scala.collection.mutable
 
-@experimental
 final class PatchCollector extends AnyPatchHandler[Mrl.Node]:
   val statements: mutable.ListBuffer[Mpl.PatchStatement] = mutable.ListBuffer.empty
 

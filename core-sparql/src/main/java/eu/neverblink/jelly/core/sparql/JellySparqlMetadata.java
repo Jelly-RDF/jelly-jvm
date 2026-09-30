@@ -1,7 +1,6 @@
 package eu.neverblink.jelly.core.sparql;
 
 import com.google.protobuf.ByteString;
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
@@ -10,7 +9,6 @@ import java.util.List;
 /**
  * Utilities for the metadata of SparqlResultsFrame, and its well-known keys.
  */
-@ExperimentalApi
 public final class JellySparqlMetadata {
 
     private JellySparqlMetadata() {}

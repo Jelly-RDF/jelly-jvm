@@ -30,12 +30,10 @@ import org.eclipse.rdf4j.query.impl.ListBindingSet
 import org.eclipse.rdf4j.query.resultio.helpers.QueryResultCollector
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
 /** One Jelly-SPARQL implementation, as seen by the cross-implementation tests.
   */
-@experimental
 trait SparqlImplementation:
   type TNode
 
@@ -77,7 +75,6 @@ trait SparqlImplementation:
   final def expected(generated: SparqlDataGen.Rows): Seq[Seq[Any]] =
     termFactory.materializeRows(generated).map(_.toSeq)
 
-@experimental
 object CoreImplementation extends SparqlImplementation:
   type TNode = Mrl.Node & Object
 
@@ -160,7 +157,6 @@ object CoreImplementation extends SparqlImplementation:
     collector
 
 /** Apache Jena, through the RowSet reader and writer. */
-@experimental
 object JenaImplementation extends SparqlImplementation:
   type TNode = Node
 
@@ -236,7 +232,6 @@ object JenaImplementation extends SparqlImplementation:
     RowSetReaderJelly(RowSetReaderJelly.Options(), JenaSparqlConverterFactory.getInstance())
 
 /** RDF4J, through the query result writers and parsers. */
-@experimental
 object Rdf4jImplementation extends SparqlImplementation:
   type TNode = Value
 
@@ -323,7 +318,6 @@ object Rdf4jImplementation extends SparqlImplementation:
       val rows = collector.getBindingSets.asScala.map(bs => toSpecRow(names.map(bs.getValue))).toSeq
       Right((names, rows))
 
-@experimental
 object SparqlImplementation:
   /** A whole result: a boolean, or the variables and the rows. Unbound cells are nulls. */
   type Result = Either[Boolean, (Seq[String], Seq[IndexedSeq[TermSpec | Null]])]

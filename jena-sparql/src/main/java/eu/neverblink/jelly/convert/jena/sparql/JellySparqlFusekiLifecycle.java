@@ -2,7 +2,6 @@ package eu.neverblink.jelly.convert.jena.sparql;
 
 import static eu.neverblink.jelly.core.sparql.JellySparqlConstants.JELLY_SPARQL_CONTENT_TYPE;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import java.util.ArrayList;
 import java.util.Optional;
 import org.apache.jena.atlas.web.AcceptList;
@@ -19,7 +18,6 @@ import org.apache.jena.sys.JenaSubsystemLifecycle;
  * This allows users to use the Accept header set to application/x-jelly-sparql to request
  * Jelly-SPARQL responses. It works for SPARQL SELECT and ASK queries.
  */
-@ExperimentalApi
 public final class JellySparqlFusekiLifecycle implements JenaSubsystemLifecycle {
 
     public static final MediaRange JELLY_SPARQL_MEDIA_RANGE = new MediaRange(JELLY_SPARQL_CONTENT_TYPE);

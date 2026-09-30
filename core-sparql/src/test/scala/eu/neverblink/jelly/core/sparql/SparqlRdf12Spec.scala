@@ -13,13 +13,11 @@ import eu.neverblink.jelly.core.{RdfProtoDeserializationError, RdfProtoSerializa
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.annotation.experimental
 import scala.jdk.CollectionConverters.*
 
 /** Tests for the RDF 1.2 terms in Jelly-SPARQL: literals with a base direction, triple terms, and
   * the RDF version declared in the stream options.
   */
-@experimental
 class SparqlRdf12Spec extends AnyWordSpec, Matchers:
 
   private def iri(i: Int) = Iri(f"https://test.org/ns#term$i")

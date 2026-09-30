@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.convert.jena.sparql;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
@@ -30,7 +29,6 @@ import org.apache.jena.sparql.util.Context;
  * If reading the RowSet throws (for example, because the query timed out), the writer ends the
  * stream with a trailer carrying the error message, and then rethrows the exception.
  */
-@ExperimentalApi
 public final class RowSetWriterJelly implements RowSetWriter {
 
     /**

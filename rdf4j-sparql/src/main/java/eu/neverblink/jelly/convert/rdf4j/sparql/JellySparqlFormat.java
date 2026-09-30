@@ -2,7 +2,6 @@ package eu.neverblink.jelly.convert.rdf4j.sparql;
 
 import static eu.neverblink.jelly.core.sparql.JellySparqlConstants.*;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import java.nio.charset.Charset;
 import org.eclipse.rdf4j.query.resultio.BooleanQueryResultFormat;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
@@ -13,7 +12,6 @@ import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
  * RDF4J keeps solution sequences and boolean (ASK) results in separate registries, so the same
  * format has to be declared twice.
  */
-@ExperimentalApi
 public final class JellySparqlFormat {
 
     private JellySparqlFormat() {}

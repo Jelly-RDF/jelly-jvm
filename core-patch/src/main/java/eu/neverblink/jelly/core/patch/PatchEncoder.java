@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.core.patch;
 
-import eu.neverblink.jelly.core.ExperimentalApi;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
 import eu.neverblink.jelly.core.RdfBufferAppender;
 import eu.neverblink.jelly.core.internal.EncoderBase;
@@ -20,7 +19,6 @@ import java.util.Collection;
  * @see PatchHandler
  * @param <TNode> type of RDF nodes in the library
  */
-@ExperimentalApi
 public abstract class PatchEncoder<TNode>
     extends EncoderBase<TNode>
     implements PatchHandler.AnyPatchHandler<TNode>, RdfBufferAppender<TNode>
