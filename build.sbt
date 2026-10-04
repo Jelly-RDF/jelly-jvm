@@ -26,7 +26,7 @@ ThisBuild / exportJars := false
 // Allow scalatest to control the logging output
 Test / logBuffered := false
 
-lazy val pekkoV = "1.7.0"
+lazy val pekkoV = "1.7.1"
 lazy val pekkoGrpcV = "1.2.0"
 lazy val jenaV = "6.2.0"
 // RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
