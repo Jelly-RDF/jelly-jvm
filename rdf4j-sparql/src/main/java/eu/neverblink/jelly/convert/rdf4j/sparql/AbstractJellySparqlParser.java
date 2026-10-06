@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.rdf4j.sparql;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlStreamType;
 import eu.neverblink.jelly.core.sparql.JellySparqlIoUtils;
 import eu.neverblink.jelly.core.sparql.JellySparqlMetadata;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
@@ -42,6 +43,11 @@ import org.eclipse.rdf4j.rio.RioSetting;
  * <p>
  * Links under the "link" metadata key of the first frame are passed to handleLinks(), before
  * anything else. Producers should set them only there, so links in later frames are ignored.
+ * <p>
+ * With {@link JellySparqlParserSettings#PUNCTUATED} set, the parser also accepts streams with a
+ * sequence of result sets. Each of them is passed to the handler in turn, as either
+ * startQueryResult() ... endQueryResult(), or handleBoolean(), preceded by its links. A result set
+ * that ends with an error makes the parser throw, and the result sets after it are not read.
  */
 public abstract class AbstractJellySparqlParser extends AbstractQueryResultParser {
 
@@ -65,6 +71,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         settings.add(JellySparqlParserSettings.MAX_DATATYPE_TABLE_SIZE);
         settings.add(JellySparqlParserSettings.MAX_ROWS_PER_FRAME);
         settings.add(JellySparqlParserSettings.REQUIRE_TRAILER);
+        settings.add(JellySparqlParserSettings.PUNCTUATED);
         return settings;
     }
 
@@ -92,6 +99,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             readSupportedOptions(),
             getParserConfig().get(JellySparqlParserSettings.MAX_ROWS_PER_FRAME)
         );
+        resultsHandler.decoder = decoder;
         boolean lastFrameHadTrailer = false;
         try {
             final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
@@ -99,10 +107,10 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             if (response.isDelimited()) {
                 final var frames = new DelimitedMessageReader<>(input, SparqlResultsFrame.getFactory());
                 SparqlResultsFrame frame;
-                boolean firstFrame = true;
+                boolean resultSetStart = true;
                 while ((frame = frames.read()) != null) {
-                    lastFrameHadTrailer = ingestFrame(frame, decoder, firstFrame);
-                    firstFrame = false;
+                    lastFrameHadTrailer = ingestFrame(frame, decoder, resultSetStart);
+                    resultSetStart = lastFrameHadTrailer && resultsHandler.isPunctuated();
                 }
             } else {
                 // Non-delimited: the entire input is a single frame
@@ -117,6 +125,13 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             );
         }
 
+        if (resultsHandler.isPunctuated()) {
+            // The last result set may have ended without a trailer
+            if (resultsHandler.variables != null) {
+                resultsHandler.endResultSet();
+            }
+            return false;
+        }
         if (resultsHandler.askResult != null) {
             return resultsHandler.askResult;
         }
@@ -130,12 +145,13 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
     }
 
     /**
-     * Decodes one frame, passing on the links of the first frame before anything else.
+     * Decodes one frame, passing on the links of the first frame of a result set before anything
+     * else.
      *
      * @return whether the frame carried a trailer
      */
-    private boolean ingestFrame(SparqlResultsFrame frame, SparqlDecoder decoder, boolean firstFrame) {
-        if (firstFrame && handler != null) {
+    private boolean ingestFrame(SparqlResultsFrame frame, SparqlDecoder decoder, boolean resultSetStart) {
+        if (resultSetStart && handler != null) {
             final List<String> links = JellySparqlMetadata.getLinks(frame);
             if (links != null) {
                 handler.handleLinks(links);
@@ -149,6 +165,9 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         final var config = getParserConfig();
         return SparqlResultsOptions.newInstance()
             .setVersion(config.get(JellySparqlParserSettings.PROTO_VERSION))
+            .setStreamType(
+                config.get(JellySparqlParserSettings.PUNCTUATED) ? SparqlStreamType.PUNCTUATED : SparqlStreamType.FLAT
+            )
             .setRdfVersion(RdfVersionUtils.rdfVersionFromLabel(config.get(JellySparqlParserSettings.RDF_VERSION)))
             .setMaxNameTableSize(config.get(JellySparqlParserSettings.MAX_NAME_TABLE_SIZE))
             .setMaxPrefixTableSize(config.get(JellySparqlParserSettings.MAX_PREFIX_TABLE_SIZE))
@@ -157,6 +176,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
 
     private final class ResultsHandler implements SparqlResultsHandler<Value> {
 
+        private SparqlDecoder decoder;
         private List<String> variables = null;
         // The same, as the set that every binding set returns from getBindingNames()
         private Set<String> variableSet = null;
@@ -169,6 +189,23 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             if (!error.isEmpty()) {
                 throw new QueryResultParseException("The producer could not complete the result set: " + error);
             }
+            if (isPunctuated()) {
+                endResultSet();
+            }
+        }
+
+        boolean isPunctuated() {
+            final SparqlResultsOptions options = decoder.getSparqlOptions();
+            return options != null && options.getStreamType() == SparqlStreamType.PUNCTUATED;
+        }
+
+        /** Ends the result set of a PUNCTUATED stream. A boolean result needs no ending. */
+        void endResultSet() {
+            if (variables != null && handler != null) {
+                handler.endQueryResult();
+            }
+            variables = null;
+            variableSet = null;
         }
 
         @Override

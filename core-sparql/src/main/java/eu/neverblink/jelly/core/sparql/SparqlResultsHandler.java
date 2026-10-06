@@ -10,7 +10,7 @@ import java.util.List;
  */
 public interface SparqlResultsHandler<TNode> {
     /**
-     * Called once, when the result set header is received, before any rows.
+     * Called once per result set, when the result set header is received, before any rows.
      *
      * @param variables names of the result variables (without the leading "?"), in projection order
      */
@@ -22,6 +22,8 @@ public interface SparqlResultsHandler<TNode> {
      * This must be implemented by the handler, because only the handler knows the concrete
      * node class – a generic Object[] array cannot be passed where a typed array is expected.
      * The typical implementation is just {@code new MyNode[size]}.
+     * <p>
+     * Called once per result set, before {@link #handleVariables}.
      *
      * @param size the number of variables in the result set
      * @return a new array of the concrete node type, of the given size
@@ -81,8 +83,9 @@ public interface SparqlResultsHandler<TNode> {
     }
 
     /**
-     * Called when the stream carries a boolean (ASK) result instead of a solution sequence.
-     * In that case, neither {@link #handleVariables} nor {@link #handleRow} is ever called.
+     * Called when the result set is a boolean (ASK) result instead of a solution sequence.
+     * In that case, neither {@link #handleVariables} nor {@link #handleRow} is called for this
+     * result set.
      * <p>
      * The default implementation throws, for handlers that only expect bindings.
      *
@@ -93,11 +96,15 @@ public interface SparqlResultsHandler<TNode> {
     }
 
     /**
-     * Called when a frame contains the stream trailer, after all rows (or the boolean result) of
-     * that frame were passed to the handler.
+     * Called when a frame contains a trailer, after all rows (or the boolean result) of that
+     * frame were passed to the handler. The trailer ends the result set.
      * <p>
      * The decoder does not act on the error itself, and it cannot tell whether a stream ended
      * without a trailer – only whoever reads the stream knows where it ends.
+     * <p>
+     * In a FLAT stream, a trailer may be followed by repeated stream options (stream
+     * concatenation), and then by more rows of the same result set and another trailer. An error
+     * in an earlier trailer still applies then: the result set stays incomplete.
      *
      * @param error empty if the result set is complete. Otherwise, a human-readable explanation
      *              of why the producer could not complete it.

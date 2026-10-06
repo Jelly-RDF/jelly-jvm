@@ -587,7 +587,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val e = intercept[RdfProtoDeserializationError] {
         decoder.ingestFrame(SparqlResultsFrame.parseFrom(askFrame.toByteArray))
       }
-      e.getMessage should include("Unexpected boolean")
+      e.getMessage should include("first frame of a result set")
     }
 
     "throw when a restated header changes the variables" in {

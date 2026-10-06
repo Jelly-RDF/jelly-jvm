@@ -539,7 +539,10 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
     private String[] variableNames = null;
     private ColumnState[] columns = null;
     private int rowCount = 0;
+    // Whether the next frame is the first frame of the stream, which contains the stream options
     private boolean firstFrame = true;
+    // Whether the next frame is the first frame of a result set, which contains the header
+    private boolean resultSetStart = true;
 
     private ColumnState currentColumn = null;
 
@@ -703,6 +706,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         if (options.getRdfVersion() == null) {
             throw new RdfProtoSerializationError("Unknown RDF version: %d".formatted(options.getRdfVersionValue()));
         }
+        if (options.getStreamType() == null) {
+            throw new RdfProtoSerializationError("Unknown stream type: %d".formatted(options.getStreamTypeValue()));
+        }
         usedNames = newUsedIds(options.getMaxNameTableSize());
         usedPrefixes = newUsedIds(options.getMaxPrefixTableSize());
         usedDatatypes = newUsedIds(options.getMaxDatatypeTableSize());
@@ -710,10 +716,19 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
 
     @Override
     public void setVariables(List<String> variables) {
+        if (rowCount < 0) {
+            throw notUsable("setting the variables");
+        }
         if (variableNames != null) {
             throw new RdfProtoSerializationError("Variables have already been set.");
         }
-        variableNames = variables.toArray(String[]::new);
+        final String[] names = variables.toArray(String[]::new);
+        for (final String name : names) {
+            if (name == null || name.isEmpty()) {
+                throw new RdfProtoSerializationError("Variable names must not be empty.");
+            }
+        }
+        variableNames = names;
         columns = new ColumnState[variableNames.length];
         for (int i = 0; i < columns.length; i++) {
             columns[i] = new ColumnState();
@@ -850,6 +865,71 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         return failedRowFrame(trailer);
     }
 
+    @Override
+    public SparqlResultsFrame endResultSet() {
+        requirePunctuated("endResultSet");
+        if (columns == null) {
+            throw notUsable("ending the result set");
+        }
+        final SparqlResultsFrame frame = buildFrame(SparqlResultsTrailer.newInstance());
+        nextResultSet();
+        return frame;
+    }
+
+    @Override
+    public SparqlResultsFrame endResultSet(String error) {
+        requirePunctuated("endResultSet");
+        if (columns == null) {
+            // Either a row failed to encode, which ends the encoder, or the call is invalid
+            return endStream(error);
+        }
+        if (error == null || error.isEmpty()) {
+            throw new RdfProtoSerializationError("The error message of an incomplete result set must not be empty.");
+        }
+        final SparqlResultsFrame frame = buildFrame(SparqlResultsTrailer.newInstance().setError(error));
+        nextResultSet();
+        return frame;
+    }
+
+    @Override
+    public SparqlResultsFrame askResult(boolean value) {
+        requirePunctuated("askResult");
+        if (variableNames != null || rowCount < 0) {
+            throw new RdfProtoSerializationError(
+                "A boolean result can only be written at the start of the stream or after the previous result set was ended."
+            );
+        }
+        // The frame does not use the encoder's buffers, so a pending frame stays readable
+        final SparqlResultsFrame.Mutable frame = SparqlResultsFrame.newInstance()
+            .setAskResult(SparqlAskResult.newInstance().setValue(value))
+            .setTrailer(SparqlResultsTrailer.newInstance());
+        if (firstFrame) {
+            frame.setOptions(options);
+            firstFrame = false;
+        }
+        frame.getSerializedSize();
+        return frame;
+    }
+
+    private void requirePunctuated(String method) {
+        if (options.getStreamType() != SparqlStreamType.PUNCTUATED) {
+            throw new RdfProtoSerializationError(
+                "%s can only be used in PUNCTUATED streams. Use endStream or askResultFrame instead.".formatted(method)
+            );
+        }
+    }
+
+    /**
+     * Gets ready for the next result set of a PUNCTUATED stream. The lookups are kept, and the
+     * frame just built stays readable: the next result set gets new column buffers, and the
+     * shared lookup entry buffers are only cleared when it starts writing.
+     */
+    private void nextResultSet() {
+        variableNames = null;
+        columns = null;
+        resultSetStart = true;
+    }
+
     private void endEncoder() {
         // The returned frame still points at the buffers, which stay untouched from now on
         columns = null;
@@ -865,11 +945,14 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         final SparqlResultsFrame.Mutable frame = SparqlResultsFrame.newInstance();
         if (firstFrame) {
             frame.setOptions(options);
+            firstFrame = false;
+        }
+        if (resultSetStart) {
             // The frame has no columns, so any valid column assignment will do
             for (int i = 0; i < variableNames.length; i++) {
                 frame.addVariables(SparqlVariable.newInstance().setName(variableNames[i]).setColumnIndex(i));
             }
-            firstFrame = false;
+            resultSetStart = false;
         }
         frame.setTrailer(trailer);
         frame.getSerializedSize();
@@ -906,7 +989,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
                 break;
             }
         }
-        if (firstFrame || typesChanged) {
+        if (resultSetStart || typesChanged) {
             // Emit (or restate) the header
             final int[] columnIndices = new int[columns.length];
             int nextIndex = 0;
@@ -938,6 +1021,7 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> impleme
         }
 
         firstFrame = false;
+        resultSetStart = false;
         // The frame points at the encoder's buffers, so they stay untouched until the next frame
         framePending = true;
 

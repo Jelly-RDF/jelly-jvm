@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.rdf4j.sparql;
 import static eu.neverblink.jelly.core.sparql.JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS;
 
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlStreamType;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 import org.eclipse.rdf4j.rio.ParserConfig;
@@ -26,6 +27,7 @@ public final class JellySparqlParserSettings {
     public static ParserConfig from(SparqlResultsOptions options) {
         final ParserConfig config = new ParserConfig();
         config.set(PROTO_VERSION, options.getVersion());
+        config.set(PUNCTUATED, options.getStreamType() == SparqlStreamType.PUNCTUATED);
         config.set(RDF_VERSION, RdfVersionUtils.rdfVersionLabel(options.getRdfVersion()));
         config.set(MAX_NAME_TABLE_SIZE, options.getMaxNameTableSize());
         config.set(MAX_PREFIX_TABLE_SIZE, options.getMaxPrefixTableSize());
@@ -62,6 +64,12 @@ public final class JellySparqlParserSettings {
         "eu.neverblink.jelly.convert.rdf4j.sparql.maxDatatypeTableSize",
         "Maximum supported size of the datatype table",
         DEFAULT_SUPPORTED_OPTIONS.getMaxDatatypeTableSize()
+    );
+
+    public static final BooleanRioSetting PUNCTUATED = new BooleanRioSetting(
+        "eu.neverblink.jelly.convert.rdf4j.sparql.punctuated",
+        "Accept PUNCTUATED streams, with a sequence of result sets",
+        false
     );
 
     /**

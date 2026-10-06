@@ -30,7 +30,11 @@ class SparqlConformanceSpec extends AnyWordSpec, Matchers, JenaTest:
   private val supportedRequirements = Set(
     testEntryRequirementRdf12BasicProperty,
     testEntryRequirementRdf12Property,
+    testEntryRequirementPunctuatedProperty,
   )
+
+  private def isPunctuated(test: Resource): Boolean =
+    test.extractTestRequirements.contains(testEntryRequirementPunctuatedProperty)
 
   private def entries(collection: String, filter: Resource => Boolean): Seq[Resource] =
     val manifestFile = TestCases.sparqlCollections.toMap.apply(collection)
@@ -106,14 +110,27 @@ class SparqlConformanceSpec extends AnyWordSpec, Matchers, JenaTest:
   // From Jelly
   // -----------------------------------------------------------------------------------------
 
+  /** The result sets are equivalent pairwise, in order. */
+  private def assertAllEquivalent(
+      expected: Seq[SparqlImplementation.Result],
+      actual: Seq[SparqlImplementation.Result],
+  ): Unit =
+    actual.size shouldBe expected.size
+    for i <- expected.indices do
+      withClue(s"Result set $i: ") {
+        assertEquivalent(expected(i), actual(i))
+      }
+
   private def fromJellyTest(impl: SparqlImplementation, test: Resource): Unit =
     val input = Files.readAllBytes(file(test.extractTestActions.head).toPath)
+    val punctuated = isPunctuated(test)
     if test.isTestPositive then
-      val expected = readSrj(file(test.extractTestResults.head))
-      assertEquivalent(expected, impl.read(input))
+      val expected = test.extractTestResults.map(r => readSrj(file(r)))
+      if punctuated then assertAllEquivalent(expected, impl.readAll(input))
+      else assertEquivalent(expected.head, impl.read(input))
     else
       val outcome =
-        try Right(impl.read(input))
+        try Right(if punctuated then impl.readAll(input) else impl.read(input))
         catch case e: Exception => Left(e)
       outcome.isLeft shouldBe true
 
@@ -133,34 +150,53 @@ class SparqlConformanceSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private def write(
       impl: SparqlImplementation,
-      input: SparqlImplementation.Result,
+      inputs: Seq[SparqlImplementation.Result],
       options: SparqlResultsOptions,
-  ): Array[Byte] = input match
-    case Left(value) => impl.encodeAsk(value, options)
-    case Right((vars, rows)) =>
-      impl.encode(
-        vars,
-        rows.toIndexedSeq,
-        JellySparqlConstants.DEFAULT_MAX_VALUES_PER_FRAME,
-        options,
-      )
+      punctuated: Boolean,
+  ): Array[Byte] =
+    if punctuated then
+      impl.writeAll(inputs, JellySparqlConstants.DEFAULT_MAX_VALUES_PER_FRAME, options)
+    else
+      inputs.head match
+        case Left(value) => impl.encodeAsk(value, options)
+        case Right((vars, rows)) =>
+          impl.encode(
+            vars,
+            rows.toIndexedSeq,
+            JellySparqlConstants.DEFAULT_MAX_VALUES_PER_FRAME,
+            options,
+          )
+
+  private def readFrames(bytes: Array[Byte]): Seq[SparqlResultsFrame] =
+    val in = ByteArrayInputStream(bytes)
+    Iterator
+      .continually(SparqlResultsFrame.parseDelimitedFrom(in))
+      .takeWhile(_ != null)
+      .toSeq
 
   private def toJellyTest(impl: SparqlImplementation, test: Resource): Unit =
     val actions = test.extractTestActions.map(file)
-    val options = readStreamOptions(actions.find(_.getName == "stream_options.jellys").get)
-    val input = readSrj(actions.find(_.getName.endsWith(".srj")).get)
+    // The first action holds the options, the rest are the result sets, in order
+    val options = readStreamOptions(actions.head)
+    val inputs = actions.tail.map(readSrj)
+    val punctuated = isPunctuated(test)
     if test.isTestPositive then
-      val output = write(impl, input, options)
+      val output = write(impl, inputs, options, punctuated)
+      val frames = readFrames(output)
       withClue("The first frame must carry the given stream options: ") {
-        SparqlResultsFrame.parseDelimitedFrom(ByteArrayInputStream(output)).getOptions shouldBe
-          options
+        frames.head.getOptions shouldBe options
+      }
+      withClue("The last frame must have a trailer without an error: ") {
+        frames.last.getTrailer should not be null
+        frames.last.getTrailer.getError shouldBe ""
       }
       withClue("Reading the output back: ") {
-        assertEquivalent(input, impl.read(output))
+        if punctuated then assertAllEquivalent(inputs, impl.readAll(output))
+        else assertEquivalent(inputs.head, impl.read(output))
       }
     else
       val outcome =
-        try Right(write(impl, input, options))
+        try Right(write(impl, inputs, options, punctuated))
         catch case e: Exception => Left(e)
       outcome.isLeft shouldBe true
 

@@ -10,6 +10,7 @@ import eu.neverblink.jelly.convert.rdf4j.sparql.gen.Rdf4jTermFactory
 import eu.neverblink.jelly.convert.rdf4j.sparql.{
   JellySparqlBooleanParser,
   JellySparqlBooleanWriter,
+  JellySparqlParserSettings,
   JellySparqlTupleParser,
   JellySparqlTupleWriter,
   JellySparqlWriterSettings,
@@ -24,12 +25,14 @@ import eu.neverblink.jelly.core.sparql.{JellySparqlOptions, SparqlEncoder}
 import org.apache.jena.graph.{Node, TextDirection}
 import org.apache.jena.sparql.core.Var
 import org.apache.jena.sparql.engine.binding.BindingFactory
-import org.apache.jena.sparql.exec.RowSetStream
+import org.apache.jena.sparql.exec.{QueryExecResult, RowSet, RowSetStream}
 import org.eclipse.rdf4j.model.{BNode, IRI, Literal, TripleTerm, Value}
+import org.eclipse.rdf4j.query.{BindingSet, QueryResultHandler}
 import org.eclipse.rdf4j.query.impl.ListBindingSet
 import org.eclipse.rdf4j.query.resultio.helpers.QueryResultCollector
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters.*
 
 /** One Jelly-SPARQL implementation, as seen by the cross-implementation tests.
@@ -60,6 +63,18 @@ trait SparqlImplementation:
     * the stream is invalid – including errors that only show up once all rows are read.
     */
   def read(bytes: Array[Byte]): SparqlImplementation.Result
+
+  /** Reads a whole stream that may have a sequence of result sets (PUNCTUATED). */
+  def readAll(bytes: Array[Byte]): Seq[SparqlImplementation.Result] =
+    throw UnsupportedOperationException(s"$name does not read sequences of result sets")
+
+  /** Writes the results as the result sets of a PUNCTUATED stream. */
+  def writeAll(
+      results: Seq[SparqlImplementation.Result],
+      maxValuesPerFrame: Int,
+      options: SparqlResultsOptions,
+  ): Array[Byte] =
+    throw UnsupportedOperationException(s"$name does not write sequences of result sets")
 
   protected final def toSpecRow(row: Seq[TNode | Null]): IndexedSeq[TermSpec | Null] =
     row.map(n => if n == null then null else toSpec(n.asInstanceOf[TNode])).toIndexedSeq
@@ -169,16 +184,37 @@ object JenaImplementation extends SparqlImplementation:
       maxValuesPerFrame: Int,
       options: SparqlResultsOptions,
   ): Array[Byte] =
+    val out = ByteArrayOutputStream()
+    writer(maxValuesPerFrame, options).write(out, rowSet(vars, rows), null)
+    out.toByteArray
+
+  private def rowSet(vars: Seq[String], rows: IndexedSeq[Array[Node]]): RowSet =
     val jenaVars = vars.map(Var.alloc)
     val bindings = rows.map { row =>
       val builder = BindingFactory.builder()
       for i <- row.indices if row(i) != null do builder.add(jenaVars(i), row(i))
       builder.build()
     }
+    RowSetStream.create(jenaVars.asJava, bindings.iterator.asJava)
+
+  override def writeAll(
+      results: Seq[SparqlImplementation.Result],
+      maxValuesPerFrame: Int,
+      options: SparqlResultsOptions,
+  ): Array[Byte] =
     val out = ByteArrayOutputStream()
-    writer(maxValuesPerFrame, options)
-      .write(out, RowSetStream.create(jenaVars.asJava, bindings.iterator.asJava), null)
+    val resultSets = writer(maxValuesPerFrame, options).resultSetsWriter(out, null)
+    for result <- results do
+      result match
+        case Left(value) => resultSets.write(value)
+        case Right((vars, rows)) =>
+          resultSets.write(rowSet(vars, termFactory.materializeRows(rows.toIndexedSeq)))
     out.toByteArray
+
+  override def readAll(bytes: Array[Byte]): Seq[SparqlImplementation.Result] =
+    val results = ListBuffer[SparqlImplementation.Result]()
+    reader().readAll(ByteArrayInputStream(bytes), null, result => results += toResult(result))
+    results.toSeq
 
   override def decode(bytes: Array[Byte]): (Seq[String], Seq[Seq[Any]]) =
     val rowSet = reader().read(ByteArrayInputStream(bytes), null)
@@ -213,7 +249,9 @@ object JenaImplementation extends SparqlImplementation:
     else TermSpec.DtLiteral(node.getLiteralLexicalForm, node.getLiteralDatatypeURI)
 
   override def read(bytes: Array[Byte]): SparqlImplementation.Result =
-    val result = reader().readAny(ByteArrayInputStream(bytes), null)
+    toResult(reader().readAny(ByteArrayInputStream(bytes), null))
+
+  private def toResult(result: QueryExecResult): SparqlImplementation.Result =
     if result.isBoolean then Left(result.booleanResult())
     else
       val rowSet = result.rowSet()
@@ -258,6 +296,54 @@ object Rdf4jImplementation extends SparqlImplementation:
     for row <- rows do writer.handleSolution(ListBindingSet(javaVars, row.toSeq.asJava))
     writer.endQueryResult()
     out.toByteArray
+
+  override def writeAll(
+      results: Seq[SparqlImplementation.Result],
+      maxValuesPerFrame: Int,
+      options: SparqlResultsOptions,
+  ): Array[Byte] =
+    val out = ByteArrayOutputStream()
+    val writer = JellySparqlTupleWriter(Rdf4jSparqlConverterFactory.getInstance(), out)
+    writer.setWriterConfig(
+      JellySparqlWriterSettings
+        .empty()
+        .setJellyOptions(options)
+        .setPunctuated(true)
+        .setMaxValuesPerFrame(maxValuesPerFrame),
+    )
+    for result <- results do
+      result match
+        case Left(value) => writer.handleBoolean(value)
+        case Right((vars, rows)) =>
+          val javaVars = vars.asJava
+          writer.startQueryResult(javaVars)
+          for row <- termFactory.materializeRows(rows.toIndexedSeq) do
+            writer.handleSolution(ListBindingSet(javaVars, row.toSeq.asJava))
+          writer.endQueryResult()
+    out.toByteArray
+
+  override def readAll(bytes: Array[Byte]): Seq[SparqlImplementation.Result] =
+    val collector = ResultSetsCollector()
+    val parser = JellySparqlTupleParser()
+    parser.getParserConfig.set(JellySparqlParserSettings.PUNCTUATED, true)
+    parser.setQueryResultHandler(collector)
+    parser.parseQueryResult(ByteArrayInputStream(bytes))
+    collector.results.toSeq
+
+  /** Collects every result set that the parser passes on. */
+  private final class ResultSetsCollector extends QueryResultHandler:
+    val results: ListBuffer[SparqlImplementation.Result] = ListBuffer()
+    private var names: Seq[String] = Nil
+    private val rows = ListBuffer[IndexedSeq[TermSpec | Null]]()
+
+    override def handleBoolean(value: Boolean): Unit = results += Left(value)
+    override def handleLinks(linkUrls: java.util.List[String]): Unit = ()
+    override def startQueryResult(bindingNames: java.util.List[String]): Unit =
+      names = bindingNames.asScala.toSeq
+      rows.clear()
+    override def endQueryResult(): Unit = results += Right((names, rows.toSeq))
+    override def handleSolution(bindingSet: BindingSet): Unit =
+      rows += toSpecRow(names.map(bindingSet.getValue))
 
   override def decode(bytes: Array[Byte]): (Seq[String], Seq[Seq[Any]]) =
     val collector = QueryResultCollector()
