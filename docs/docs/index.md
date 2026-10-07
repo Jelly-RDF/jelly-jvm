@@ -118,7 +118,7 @@ Community support is available on the **[Jelly Discord chat](https://discord.gg/
 
 ----
 
-The development of the Jelly protocol, its implementations, and supporting tooling was co-funded by the European Union. **[More details]({{ proto_link( 'licensing/projects' ) }})**.
+The development of the Jelly protocol, its implementations, and supporting tooling was funded by commercial sponsors and the European Union. **[More details]({{ proto_link( 'licensing/projects' ) }})**.
 
 ![European Funds for Smart Economy, Republic of Poland, Co-funded by the European Union](assets/featured/feng_rp_eu.png)
 
