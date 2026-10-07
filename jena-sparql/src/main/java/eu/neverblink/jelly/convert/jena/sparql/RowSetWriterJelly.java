@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.jena.sparql;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlStreamType;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
@@ -28,6 +29,9 @@ import org.apache.jena.sparql.util.Context;
  * The last frame includes a trailer, which tells the reader whether the result set is complete.
  * If reading the RowSet throws (for example, because the query timed out), the writer ends the
  * stream with a trailer carrying the error message, and then rethrows the exception.
+ * <p>
+ * To write a PUNCTUATED stream, with a sequence of result sets, use
+ * {@link #resultSetsWriter(OutputStream, Context)}.
  */
 public final class RowSetWriterJelly implements RowSetWriter {
 
@@ -98,8 +102,92 @@ public final class RowSetWriterJelly implements RowSetWriter {
     @Override
     public void write(OutputStream out, RowSet rowSet, Context context) {
         final Options options = this.options.withContext(context);
-        final List<Var> vars = rowSet.getResultVars();
         final SparqlEncoder<Node> encoder = converterFactory.encoder(SparqlEncoder.Params.of(options.options()));
+        try {
+            writeResultSet(encoder, rowSet, options, new DelimitedMessageWriter(out), out, false);
+        } catch (IOException e) {
+            throw new RiotException(e);
+        }
+    }
+
+    /**
+     * Starts a PUNCTUATED stream: a sequence of result sets, written one by one. The stream type
+     * in the options is overridden, and the output is always delimited.
+     *
+     * @param out the stream to write to
+     * @param context Jena context with the writer settings, may be null
+     * @return the writer of the result sets
+     */
+    public ResultSetsWriter resultSetsWriter(OutputStream out, Context context) {
+        final Options options = this.options.withContext(context);
+        final Options punctuated = new Options(
+            options.options().clone().setStreamType(SparqlStreamType.PUNCTUATED),
+            options.maxValuesPerFrame(),
+            true
+        );
+        return new ResultSetsWriter(
+            converterFactory.encoder(SparqlEncoder.Params.of(punctuated.options())),
+            punctuated,
+            out
+        );
+    }
+
+    /**
+     * Writes the result sets of a PUNCTUATED stream. The lookups are kept from one result set to the
+     * next. Each result set is flushed to the output once it is written.
+     */
+    public static final class ResultSetsWriter {
+
+        private final SparqlEncoder<Node> encoder;
+        private final Options options;
+        private final OutputStream out;
+        private final DelimitedMessageWriter frames;
+
+        private ResultSetsWriter(SparqlEncoder<Node> encoder, Options options, OutputStream out) {
+            this.encoder = encoder;
+            this.options = options;
+            this.out = out;
+            this.frames = new DelimitedMessageWriter(out);
+        }
+
+        /**
+         * Writes a solution sequence as the next result set. If reading the RowSet throws, the result
+         * set is ended with an error trailer and the exception is rethrown.
+         */
+        public void write(RowSet rowSet) {
+            try {
+                writeResultSet(encoder, rowSet, options, frames, out, true);
+            } catch (IOException e) {
+                throw new RiotException(e);
+            }
+        }
+
+        /** Writes a boolean result as the next result set. */
+        public void write(boolean result) {
+            try {
+                frames.write(encoder.askResult(result));
+                frames.flush();
+            } catch (IOException e) {
+                throw new RiotException(e);
+            }
+        }
+    }
+
+    /**
+     * Writes one result set, ending it with a trailer.
+     *
+     * @param punctuated whether the result set is one of a PUNCTUATED stream, so that the encoder
+     *                   stays usable for the next one
+     */
+    private static void writeResultSet(
+        SparqlEncoder<Node> encoder,
+        RowSet rowSet,
+        Options options,
+        DelimitedMessageWriter frames,
+        OutputStream out,
+        boolean punctuated
+    ) throws IOException {
+        final List<Var> vars = rowSet.getResultVars();
         encoder.setVariables(vars.stream().map(Var::getVarName).toList());
         // Repeatedly iterating over an array copy is faster than over a List.
         final Var[] varArray = vars.toArray(new Var[0]);
@@ -108,47 +196,48 @@ public final class RowSetWriterJelly implements RowSetWriter {
         // Frames are budgeted in values, so the row limit depends on how wide the result set is.
         // A zero-variable result set carries no values at all, hence the lower bound of one row.
         final int rowsPerFrame = Math.max(1, options.maxValuesPerFrame() / Math.max(1, row.length));
-        final DelimitedMessageWriter frames = new DelimitedMessageWriter(out);
         try {
-            try {
-                int rowsInFrame = 0;
-                while (rowSet.hasNext()) {
-                    filler.fill(rowSet.next());
-                    if (!encoder.appendRow(row)) {
-                        // The frame filled up its lookup tables before reaching the row limit
-                        if (!options.delimited()) {
-                            throw new RdfProtoSerializationError(
-                                "This result set is too large to be written as a single " +
-                                    "non-delimited frame: its lookup tables cannot hold all the terms. " +
-                                    "Write delimited output, or increase the max lookup table sizes."
-                            );
-                        }
-                        frames.write(encoder.endFrame());
-                        rowsInFrame = 0;
-                        // An empty frame always takes the row
-                        encoder.appendRow(row);
+            int rowsInFrame = 0;
+            while (rowSet.hasNext()) {
+                filler.fill(rowSet.next());
+                if (!encoder.appendRow(row)) {
+                    // The frame filled up its lookup tables before reaching the row limit
+                    if (!options.delimited()) {
+                        throw new RdfProtoSerializationError(
+                            "This result set is too large to be written as a single " +
+                                "non-delimited frame: its lookup tables cannot hold all the terms. " +
+                                "Write delimited output, or increase the max lookup table sizes."
+                        );
                     }
-                    if (options.delimited() && ++rowsInFrame >= rowsPerFrame) {
-                        frames.write(encoder.endFrame());
-                        rowsInFrame = 0;
-                    }
+                    frames.write(encoder.endFrame());
+                    rowsInFrame = 0;
+                    // An empty frame always takes the row
+                    encoder.appendRow(row);
                 }
-            } catch (RuntimeException e) {
-                // Tell the reader that the result set is incomplete, then pass the error on
-                try {
-                    writeFrame(encoder.endStream(errorMessage(e)), frames, out, options.delimited());
-                    frames.flush();
-                } catch (IOException | RuntimeException suppressed) {
-                    e.addSuppressed(suppressed);
+                if (options.delimited() && ++rowsInFrame >= rowsPerFrame) {
+                    frames.write(encoder.endFrame());
+                    rowsInFrame = 0;
                 }
-                throw e;
             }
-            // If the rows ended exactly at a frame boundary, this frame holds only the trailer
-            writeFrame(encoder.endStream(), frames, out, options.delimited());
-            frames.flush();
-        } catch (IOException e) {
-            throw new RiotException(e);
+        } catch (RuntimeException e) {
+            // Tell the reader that the result set is incomplete, then pass the error on
+            try {
+                final String error = errorMessage(e);
+                writeFrame(
+                    punctuated ? encoder.endResultSet(error) : encoder.endStream(error),
+                    frames,
+                    out,
+                    options.delimited()
+                );
+                frames.flush();
+            } catch (IOException | RuntimeException suppressed) {
+                e.addSuppressed(suppressed);
+            }
+            throw e;
         }
+        // If the rows ended exactly at a frame boundary, this frame holds only the trailer
+        writeFrame(punctuated ? encoder.endResultSet() : encoder.endStream(), frames, out, options.delimited());
+        frames.flush();
     }
 
     /** Copies the values of a binding into the row, in the order of the result variables. */

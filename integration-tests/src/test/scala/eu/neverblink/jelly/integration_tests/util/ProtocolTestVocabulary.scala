@@ -33,6 +33,8 @@ object ProtocolTestVocabulary:
     ResourceFactory.createProperty(testEntryPrefix, "requirementRdf12Basic")
   val testEntryRequirementRdf12Property: Property =
     ResourceFactory.createProperty(testEntryPrefix, "requirementRdf12")
+  val testEntryRequirementPunctuatedProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "requirementPunctuated")
 
   val testEntryNotableProperty: Property = ResourceFactory.createProperty(manifestPrefix, "notable")
   val testEntryFeatureShouldLevelProperty: Property =

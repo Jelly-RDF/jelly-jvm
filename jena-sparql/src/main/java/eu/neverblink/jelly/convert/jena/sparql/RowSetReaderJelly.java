@@ -2,6 +2,7 @@ package eu.neverblink.jelly.convert.jena.sparql;
 
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlStreamType;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlIoUtils;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
@@ -15,6 +16,7 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.Consumer;
 import org.apache.jena.graph.Node;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.rowset.RowSetReader;
@@ -36,6 +38,9 @@ import org.apache.jena.sparql.util.Context;
  * If the stream ends with a trailer containing an error, the RowSet returns all rows that were
  * received, and then throws a RiotException. A stream that ends without a trailer is accepted,
  * unless {@link Options#requireTrailer()} is set.
+ * <p>
+ * To read a PUNCTUATED stream, with a sequence of result sets, use
+ * {@link #readAll(InputStream, Context, Consumer)}.
  */
 public final class RowSetReaderJelly implements RowSetReader {
 
@@ -114,6 +119,50 @@ public final class RowSetReaderJelly implements RowSetReader {
     }
 
     /**
+     * Reads a stream of any type, passing each of its result sets to the consumer in turn. A FLAT
+     * stream has one result set, a PUNCTUATED stream may have many.
+     * <p>
+     * The rows of a result set are read from the stream as the consumer asks for them, so they
+     * must be read before the consumer returns. The rows it does not read are skipped. A result
+     * set that ends with an error makes this throw after its rows, and the ones after it are not
+     * read.
+     *
+     * @param in the stream to read
+     * @param context Jena context with the reader settings, may be null
+     * @param consumer receives the result sets, in stream order
+     */
+    public void readAll(InputStream in, Context context, Consumer<QueryExecResult> consumer) {
+        final Options options = this.options.withContext(context);
+        final RowCollector handler = new RowCollector();
+        final SparqlDecoder decoder = converterFactory.decoder(
+            handler,
+            options.supportedOptions().clone().setStreamType(SparqlStreamType.PUNCTUATED),
+            options.maxRowsPerFrame()
+        );
+        try {
+            final FrameReader reader = openReader(in, decoder, options);
+            Object result = nextResult(handler, reader, decoder);
+            if (result == null) {
+                throw new RiotException("No result set found in the input.");
+            }
+            while (result != null) {
+                if (result instanceof Boolean askResult) {
+                    consumer.accept(new QueryExecResult(askResult));
+                } else {
+                    final RowSet rowSet = (RowSet) result;
+                    consumer.accept(new QueryExecResult(rowSet));
+                    while (rowSet.hasNext()) {
+                        rowSet.next();
+                    }
+                }
+                result = nextResult(handler, reader, decoder);
+            }
+        } catch (IOException e) {
+            throw new RiotException(e);
+        }
+    }
+
+    /**
      * Reads the stream, returning either a RowSet (bindings) or a Boolean (ASK result).
      */
     private Object readInternal(InputStream in, Options options) {
@@ -123,29 +172,51 @@ public final class RowSetReaderJelly implements RowSetReader {
             options.supportedOptions(),
             options.maxRowsPerFrame()
         );
-        final FrameReader reader;
         try {
-            final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
-            reader = new FrameReader(response.newInput(), response.isDelimited(), decoder, options.requireTrailer());
-            // Read frames until the header (or an ASK result) is known.
-            while (handler.vars == null && handler.askResult == null && reader.readFrame()) {
-                // Errors are reported by the iterator, after the rows received before them
+            final FrameReader reader = openReader(in, decoder, options);
+            final Object result = nextResult(handler, reader, decoder);
+            if (result == null) {
+                throw new RiotException("No result set header found in the input.");
             }
-            if (handler.askResult != null) {
+            if (result instanceof Boolean) {
                 // Read to the end of the stream: the decoder rejects any frame after this one
-                do {
+                while (reader.readFrame()) {
                     handler.checkError();
-                } while (reader.readFrame());
-                return handler.askResult;
+                }
             }
+            return result;
         } catch (IOException e) {
             throw new RiotException(e);
         }
-        if (handler.vars == null) {
-            throw new RiotException("No result set header found in the input.");
+    }
+
+    private static FrameReader openReader(InputStream in, SparqlDecoder decoder, Options options) throws IOException {
+        final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
+        return new FrameReader(response.newInput(), response.isDelimited(), decoder, options.requireTrailer());
+    }
+
+    /**
+     * Reads frames until the next result set starts.
+     *
+     * @return the boolean result, a RowSet that streams the rows of the result set, or null if
+     *         the stream has ended
+     */
+    private static Object nextResult(RowCollector handler, FrameReader reader, SparqlDecoder decoder)
+        throws IOException {
+        handler.startResultSet();
+        while (handler.vars == null && handler.askResult == null && reader.readFrame()) {
+            // Errors are reported by the iterator, after the rows received before them
         }
-        // Stream the rest of the frames lazily
-        return new JellyRowSet(handler, reader);
+        if (handler.askResult != null) {
+            handler.checkError();
+            return handler.askResult;
+        }
+        if (handler.vars == null) {
+            return null;
+        }
+        // In a FLAT stream, more rows of the same result set may follow a trailer
+        final boolean punctuated = decoder.getSparqlOptions().getStreamType() == SparqlStreamType.PUNCTUATED;
+        return new JellyRowSet(handler, reader, punctuated);
     }
 
     /**
@@ -156,20 +227,32 @@ public final class RowSetReaderJelly implements RowSetReader {
 
         private final RowCollector handler;
         private final FrameReader reader;
+        // The collector moves on to the next result set once this one is read
+        private final List<Var> vars;
+        // Whether a trailer ends the result set (PUNCTUATED stream)
+        private final boolean stopAtTrailer;
+        private boolean done = false;
         private long rowNumber = 0;
 
-        JellyRowSet(RowCollector handler, FrameReader reader) {
+        JellyRowSet(RowCollector handler, FrameReader reader, boolean stopAtTrailer) {
             this.handler = handler;
             this.reader = reader;
+            this.vars = handler.vars;
+            this.stopAtTrailer = stopAtTrailer;
         }
 
         @Override
         public boolean hasNext() {
+            if (done) {
+                // Do not read into the next result set
+                return false;
+            }
             while (!handler.hasRow()) {
                 // The rows before an error are still returned, the error comes after them
                 handler.checkError();
                 try {
-                    if (!reader.readFrame()) {
+                    if ((stopAtTrailer && reader.lastFrameHadTrailer) || !reader.readFrame()) {
+                        done = true;
                         return false;
                     }
                 } catch (IOException e) {
@@ -190,7 +273,7 @@ public final class RowSetReaderJelly implements RowSetReader {
 
         @Override
         public List<Var> getResultVars() {
-            return handler.vars;
+            return vars;
         }
 
         @Override
@@ -277,6 +360,13 @@ public final class RowSetReaderJelly implements RowSetReader {
             if (!error.isEmpty() && this.error == null) {
                 this.error = error;
             }
+        }
+
+        /** Forgets the previous result set. Its rows must all be read by now. */
+        void startResultSet() {
+            vars = null;
+            distinctVars = null;
+            askResult = null;
         }
 
         void checkError() {

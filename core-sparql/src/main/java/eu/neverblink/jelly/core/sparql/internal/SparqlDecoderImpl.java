@@ -46,19 +46,24 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     private final int maxRowsPerFrame;
 
     private SparqlResultsOptions currentOptions = null;
-    // Variables of the stream, as declared by the first header. Kept across options resets, as
-    // every header must declare the same ones.
+    // Variables of the result set, as declared by its first header. Kept across options resets, as
+    // every header of a FLAT stream must declare the same ones.
     private String[] variableNames = null;
     private int[] varToColumn = null;
     private TNode[] rowBuffer = null;
     // Per-variable column decode buffers, reused across frames unless the handler keeps them.
     // The inner arrays grow to the largest row count seen so far.
     private Object[][] decodedColumns = null;
-    // Stream-level flags, packed into one field. Only checked once per frame.
+    // Stream and result set flags, packed into one field. Only checked once per frame.
     private static final byte ASK_RESULT_RECEIVED = 1;
-    // Set by a trailer, cleared by the next options message
+    // Set by a trailer, cleared by the next options message (FLAT) or result set (PUNCTUATED)
     private static final byte TRAILER_RECEIVED = 2;
-    private byte flags = 0;
+    // Whether the next frame is the first frame of a result set: the first frame of the stream,
+    // or in a PUNCTUATED stream, a frame that directly follows a trailer
+    private static final byte RESULT_SET_START = 4;
+    // Whether the stream is a sequence of result sets (PUNCTUATED), set by the first options
+    private static final byte PUNCTUATED = 8;
+    private byte flags = RESULT_SET_START;
 
     public SparqlDecoderImpl(
         ProtoDecoderConverter<TNode, TDatatype> converter,
@@ -102,13 +107,15 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     public void ingestFrame(SparqlResultsFrame frame) {
         if (frame.getOptions() != null) {
             handleOptions(frame.getOptions());
-        } else if ((flags & TRAILER_RECEIVED) != 0) {
+        } else if (currentOptions == null) {
+            throw new RdfProtoDeserializationError("Stream options were not received before the first frame content.");
+        } else if ((flags & (PUNCTUATED | TRAILER_RECEIVED)) == TRAILER_RECEIVED) {
             throw new RdfProtoDeserializationError(
                 "Received a frame after the stream trailer that does not contain stream options."
             );
         }
-        if (currentOptions == null) {
-            throw new RdfProtoDeserializationError("Stream options were not received before the first frame content.");
+        if ((flags & (PUNCTUATED | RESULT_SET_START)) == (PUNCTUATED | RESULT_SET_START)) {
+            startResultSet();
         }
         if ((flags & ASK_RESULT_RECEIVED) != 0) {
             handleFrameAfterAskResult(frame);
@@ -116,19 +123,21 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
         if (frame.getAskResult() != null) {
             handleAskResult(frame);
-            handleTrailer(frame);
+            // The next result set of a PUNCTUATED stream may use these
+            applyLookupEntries(frame);
+            endFrame(frame);
             return;
         }
         if (!frame.getVariables().isEmpty()) {
             handleHeader(frame.getVariables());
-        } else if (varToColumn == null && frame.getOptions() != null) {
+        } else if (varToColumn == null && (frame.getOptions() != null || (flags & RESULT_SET_START) != 0)) {
             if (variableNames != null && variableNames.length > 0) {
                 throw new RdfProtoDeserializationError(
                     "A frame that repeats the stream options must restate the result set header."
                 );
             }
-            // A frame containing options but no header in effect and no variables:
-            // a zero-variable result set.
+            // The first frame of a result set, or a frame containing options, with no header in
+            // effect and no variables: a zero-variable result set.
             handleHeader(List.of());
         }
         if (varToColumn == null) {
@@ -150,46 +159,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             );
         }
 
-        // Apply all lookup entries before decoding any column. In a packed entry only the first
-        // value states its id, the rest are sequential.
-        for (final RdfLookupEntryPacked entry : frame.getNames()) {
-            int id = entry.getId();
-            for (final String value : entry.getValues()) {
-                getNameDecoder().updateNames(id, value);
-                id = 0;
-            }
-        }
-        for (final RdfLookupEntryPacked entry : frame.getPrefixes()) {
-            int id = entry.getId();
-            for (final String value : entry.getValues()) {
-                getNameDecoder().updatePrefixes(id, value);
-                id = 0;
-            }
-        }
-        for (final RdfLookupEntryPacked entry : frame.getDatatypes()) {
-            int id = entry.getId();
-            for (final String value : entry.getValues()) {
-                if (RDF_LANG_STRING.equals(value) || RDF_DIR_LANG_STRING.equals(value)) {
-                    // A literal with this datatype must have a language tag, which the datatype
-                    // form cannot carry
-                    throw new RdfProtoDeserializationError("The datatype lookup must not contain %s.".formatted(value));
-                }
-                final TDatatype datatype;
-                try {
-                    datatype = converter.makeDatatype(value);
-                } catch (RdfProtoDeserializationError e) {
-                    throw e;
-                } catch (Exception e) {
-                    // Most likely the RDF library rejected the IRI
-                    throw new RdfProtoDeserializationError(
-                        "Error while decoding datatype '%s': %s".formatted(value, e),
-                        e
-                    );
-                }
-                getDatatypeLookup().update(id, datatype);
-                id = 0;
-            }
-        }
+        applyLookupEntries(frame);
 
         final var iriColumns = frame.getIriColumns();
         final var bnodeColumns = frame.getBnodeColumns();
@@ -242,15 +212,81 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         }
 
         handler.handleRows(decodedColumns, rows, rowBuffer);
-        handleTrailer(frame);
+        endFrame(frame);
     }
 
-    private void handleTrailer(SparqlResultsFrame frame) {
+    /**
+     * Applies all lookup entries of the frame. This happens before any column is decoded. In a
+     * packed entry only the first value states its id, the rest are sequential.
+     */
+    private void applyLookupEntries(SparqlResultsFrame frame) {
+        for (final RdfLookupEntryPacked entry : frame.getNames()) {
+            int id = entry.getId();
+            for (final String value : entry.getValues()) {
+                getNameDecoder().updateNames(id, value);
+                id = 0;
+            }
+        }
+        for (final RdfLookupEntryPacked entry : frame.getPrefixes()) {
+            int id = entry.getId();
+            for (final String value : entry.getValues()) {
+                getNameDecoder().updatePrefixes(id, value);
+                id = 0;
+            }
+        }
+        for (final RdfLookupEntryPacked entry : frame.getDatatypes()) {
+            int id = entry.getId();
+            for (final String value : entry.getValues()) {
+                if (RDF_LANG_STRING.equals(value) || RDF_DIR_LANG_STRING.equals(value)) {
+                    // A literal with this datatype must have a language tag, which the datatype
+                    // form cannot carry
+                    throw new RdfProtoDeserializationError("The datatype lookup must not contain %s.".formatted(value));
+                }
+                final TDatatype datatype;
+                try {
+                    datatype = converter.makeDatatype(value);
+                } catch (RdfProtoDeserializationError e) {
+                    throw e;
+                } catch (Exception e) {
+                    // Most likely the RDF library rejected the IRI
+                    throw new RdfProtoDeserializationError(
+                        "Error while decoding datatype '%s': %s".formatted(value, e),
+                        e
+                    );
+                }
+                getDatatypeLookup().update(id, datatype);
+                id = 0;
+            }
+        }
+    }
+
+    /**
+     * Passes on the trailer of the frame, if any. In a PUNCTUATED stream, the trailer also ends
+     * the result set, so the next frame starts a new one.
+     */
+    private void endFrame(SparqlResultsFrame frame) {
         final SparqlResultsTrailer trailer = frame.getTrailer();
         if (trailer != null) {
             flags |= TRAILER_RECEIVED;
             handler.handleTrailer(trailer.getError());
         }
+        if (trailer != null && (flags & PUNCTUATED) != 0) {
+            flags |= RESULT_SET_START;
+        } else {
+            flags &= ~RESULT_SET_START;
+        }
+    }
+
+    /**
+     * Forgets the previous result set of a PUNCTUATED stream. The lookups are kept.
+     */
+    private void startResultSet() {
+        variableNames = null;
+        varToColumn = null;
+        rowBuffer = null;
+        decodedColumns = null;
+        // The result set starts with the frame being ingested, so RESULT_SET_START stays set
+        flags &= PUNCTUATED | RESULT_SET_START;
     }
 
     private Object[] decodeBufferForVariable(int variable, int rows) {
@@ -270,28 +306,46 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     private void handleOptions(SparqlResultsOptions options) {
         JellySparqlOptions.checkCompatibility(options, supportedOptions);
         if (currentOptions != null) {
+            if (options.getStreamTypeValue() != currentOptions.getStreamTypeValue()) {
+                throw new RdfProtoDeserializationError(
+                    "The stream type must be the same in all stream options of a stream."
+                );
+            }
+            if ((flags & (PUNCTUATED | RESULT_SET_START)) == PUNCTUATED) {
+                throw new RdfProtoDeserializationError(
+                    "In a PUNCTUATED stream, the stream options may only be repeated in the first frame of a result set."
+                );
+            }
             // Repeated options (e.g., in concatenated streams) reset the stream state.
             resetLookups();
             varToColumn = null;
         }
         currentOptions = options;
-        flags &= ~TRAILER_RECEIVED;
+        if (options.getStreamTypeValue() == SparqlStreamType.PUNCTUATED_VALUE) {
+            flags |= PUNCTUATED;
+        } else {
+            flags &= ~(PUNCTUATED | TRAILER_RECEIVED);
+        }
     }
 
     /**
-     * A boolean result stream is a single frame: nothing may follow it, not even a trailer, and it
-     * cannot be concatenated with another one.
+     * A boolean result is a single frame: nothing may follow it in a FLAT stream, and in a
+     * PUNCTUATED stream, it must have a trailer to end its result set.
      */
     private void handleFrameAfterAskResult(SparqlResultsFrame frame) {
         if (frame.getAskResult() != null) {
             throw new RdfProtoDeserializationError("Received more than one boolean (ASK) result.");
         }
-        throw new RdfProtoDeserializationError("No frame may follow the frame containing the boolean (ASK) result.");
+        throw new RdfProtoDeserializationError(
+            "No frame may follow the frame containing the boolean (ASK) result in the same result set."
+        );
     }
 
     private void handleAskResult(SparqlResultsFrame frame) {
-        if (variableNames != null) {
-            throw new RdfProtoDeserializationError("Unexpected boolean (ASK) result in a stream of bindings.");
+        if ((flags & RESULT_SET_START) == 0) {
+            throw new RdfProtoDeserializationError(
+                "A boolean (ASK) result may only be in the first frame of a result set."
+            );
         }
         if (
             frame.getRowCount() != 0 ||

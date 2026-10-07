@@ -4,6 +4,7 @@ import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlStreamType;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 
 /**
@@ -63,7 +64,9 @@ public final class JellySparqlOptions {
         .setVersion(JellySparqlConstants.PROTO_VERSION);
 
     /**
-     * What a decoder accepts unless told otherwise. This includes all terms of RDF 1.2.
+     * What a decoder accepts unless told otherwise. This includes all terms of RDF 1.2, but only
+     * FLAT streams. A reader that can handle a sequence of result sets accepts PUNCTUATED streams
+     * by setting the stream type of its supported options to PUNCTUATED.
      * <p>
      * This is deliberately more generous than the BIG writer preset, so that streams written
      * with slightly larger tables are still readable.
@@ -124,6 +127,7 @@ public final class JellySparqlOptions {
             );
         }
 
+        checkStreamType(requestedOptions.getStreamTypeValue(), supportedOptions.getStreamTypeValue());
         RdfVersionUtils.checkRdfVersion(requestedOptions.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
         checkTableSize(
             "name",
@@ -138,6 +142,21 @@ public final class JellySparqlOptions {
             supportedOptions.getMaxDatatypeTableSize(),
             0
         );
+    }
+
+    /**
+     * A reader that supports PUNCTUATED streams also reads FLAT ones, so the stream type of the
+     * supported options is the most that the reader accepts.
+     */
+    private static void checkStreamType(int requested, int supported) {
+        if (SparqlStreamType.forNumber(requested) == null) {
+            throw new RdfProtoDeserializationError("Unknown stream type: %d.".formatted(requested));
+        }
+        if (requested == SparqlStreamType.PUNCTUATED_VALUE && supported != SparqlStreamType.PUNCTUATED_VALUE) {
+            throw new RdfProtoDeserializationError(
+                "The stream is a PUNCTUATED stream (a sequence of result sets), which this reader does not support."
+            );
+        }
     }
 
     private static void checkTableSize(String name, int size, int supportedSize, int minSize) {

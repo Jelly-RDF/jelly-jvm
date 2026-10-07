@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.convert.rdf4j.sparql;
 
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlStreamType;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
@@ -30,6 +31,11 @@ public final class JellySparqlWriterSettings extends WriterConfig {
         return this;
     }
 
+    public JellySparqlWriterSettings setPunctuated(boolean punctuated) {
+        this.set(PUNCTUATED, punctuated);
+        return this;
+    }
+
     public JellySparqlWriterSettings setStreamName(String streamName) {
         this.set(STREAM_NAME, streamName);
         return this;
@@ -45,6 +51,7 @@ public final class JellySparqlWriterSettings extends WriterConfig {
 
     public JellySparqlWriterSettings setJellyOptions(SparqlResultsOptions options) {
         this.set(STREAM_NAME, options.getStreamName());
+        this.set(PUNCTUATED, options.getStreamType() == SparqlStreamType.PUNCTUATED);
         this.set(RDF_VERSION, RdfVersionUtils.rdfVersionLabel(options.getRdfVersion()));
         this.set(MAX_NAME_TABLE_SIZE, options.getMaxNameTableSize());
         this.set(MAX_PREFIX_TABLE_SIZE, options.getMaxPrefixTableSize());
@@ -68,6 +75,14 @@ public final class JellySparqlWriterSettings extends WriterConfig {
             "either because it runs out of memory, or because its lookup tables overflow. " +
             "**Disable this only if you know what you are doing.**",
         true
+    );
+
+    public static final BooleanRioSetting PUNCTUATED = new BooleanRioSetting(
+        "eu.neverblink.jelly.convert.rdf4j.sparql.punctuated",
+        "Write a PUNCTUATED stream: a sequence of result sets in one stream. Every " +
+            "startQueryResult() ... endQueryResult() and every handleBoolean() is then one result " +
+            "set, and the writer may be given any number of them. Requires delimited output.",
+        false
     );
 
     public static final StringRioSetting STREAM_NAME = new StringRioSetting(

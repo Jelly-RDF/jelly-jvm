@@ -3,6 +3,7 @@ package eu.neverblink.jelly.convert.rdf4j.sparql;
 import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
+import eu.neverblink.jelly.core.proto.v1.sparql.SparqlStreamType;
 import eu.neverblink.jelly.core.sparql.JellySparqlMetadata;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
@@ -32,6 +33,10 @@ import org.eclipse.rdf4j.rio.RioSetting;
  * <p>
  * Links given to {@link #handleLinks(List)} are written in the first frame, under the "link"
  * metadata key. They must be given before the first solution.
+ * <p>
+ * With {@link JellySparqlWriterSettings#PUNCTUATED} set, the writer writes a sequence of result
+ * sets into one stream: each startQueryResult() ... endQueryResult() and each handleBoolean() is
+ * one result set. Links then apply to the next result set.
  */
 public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWriter implements ByteSink {
 
@@ -49,6 +54,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     private int rowsPerFrame;
     private int rowsInFrame;
     private boolean delimited;
+    private boolean punctuated;
     // Links from handleLinks, waiting for the first frame. FIRST_FRAME_WRITTEN once that frame is
     // written. Only looked at once per frame, never per solution.
     private List<String> links = null;
@@ -72,6 +78,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         final var settings = new HashSet<>(super.getSupportedSettings());
         settings.add(JellySparqlWriterSettings.MAX_VALUES_PER_FRAME);
         settings.add(JellySparqlWriterSettings.DELIMITED_OUTPUT);
+        settings.add(JellySparqlWriterSettings.PUNCTUATED);
         settings.add(JellySparqlWriterSettings.STREAM_NAME);
         settings.add(JellySparqlWriterSettings.RDF_VERSION);
         settings.add(JellySparqlWriterSettings.MAX_NAME_TABLE_SIZE);
@@ -81,14 +88,12 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void startQueryResult(List<String> bindingNames) throws TupleQueryResultHandlerException {
         super.startQueryResult(bindingNames);
-        delimited = getWriterConfig().get(JellySparqlWriterSettings.DELIMITED_OUTPUT);
-        encoder = converterFactory.encoder(SparqlEncoder.Params.of(readOptions()));
+        if (encoder == null || !punctuated) {
+            startEncoder();
+        }
         encoder.setVariables(bindingNames);
-        // Only Values go into the row
-        rowEncoder = (SparqlEncoder<Object>) (SparqlEncoder<?>) encoder;
         // Repeatedly iterating over an array copy is faster than over a List.
         variables = bindingNames.toArray(new String[0]);
         row = new Object[variables.length];
@@ -131,7 +136,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     public void endQueryResult() throws TupleQueryResultHandlerException {
         checkStarted();
         // If the rows ended exactly at a frame boundary, this frame holds only the trailer
-        writeLastFrame(encoder.endStream());
+        writeLastFrame(punctuated ? encoder.endResultSet() : encoder.endStream());
     }
 
     /**
@@ -147,7 +152,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
      */
     public void endQueryResultWithError(String error) throws TupleQueryResultHandlerException {
         checkStarted();
-        writeLastFrame(encoder.endStream(error));
+        writeLastFrame(punctuated ? encoder.endResultSet(error) : encoder.endStream(error));
     }
 
     private void writeLastFrame(SparqlResultsFrame frame) throws TupleQueryResultHandlerException {
@@ -163,12 +168,28 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
         } catch (IOException e) {
             throw new TupleQueryResultHandlerException(e);
         }
+        if (punctuated) {
+            // The next result set may have links of its own
+            links = null;
+            rowsInFrame = 0;
+        }
     }
 
     @Override
     public void handleBoolean(boolean value) throws QueryResultHandlerException {
-        final SparqlResultsFrame frame = SparqlEncoder.askResultFrame(readOptions(), value);
+        final SparqlResultsFrame frame;
+        if (getWriterConfig().get(JellySparqlWriterSettings.PUNCTUATED)) {
+            if (encoder == null) {
+                startEncoder();
+            }
+            frame = encoder.askResult(value);
+        } else {
+            frame = SparqlEncoder.askResultFrame(readOptions(), value);
+        }
         attachLinks(frame);
+        if (punctuated) {
+            links = null;
+        }
         try {
             if (getWriterConfig().get(JellySparqlWriterSettings.DELIMITED_OUTPUT)) {
                 frames.write(frame);
@@ -227,10 +248,25 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     @Override
     public void endHeader() {}
 
+    @SuppressWarnings("unchecked")
+    private void startEncoder() {
+        delimited = getWriterConfig().get(JellySparqlWriterSettings.DELIMITED_OUTPUT);
+        punctuated = getWriterConfig().get(JellySparqlWriterSettings.PUNCTUATED);
+        if (punctuated && !delimited) {
+            throw new QueryResultHandlerException("A PUNCTUATED stream must be written as delimited output.");
+        }
+        encoder = converterFactory.encoder(SparqlEncoder.Params.of(readOptions()));
+        // Only Values go into the row
+        rowEncoder = (SparqlEncoder<Object>) (SparqlEncoder<?>) encoder;
+    }
+
     private SparqlResultsOptions readOptions() {
         final var config = getWriterConfig();
         return SparqlResultsOptions.newInstance()
             .setStreamName(config.get(JellySparqlWriterSettings.STREAM_NAME))
+            .setStreamType(
+                config.get(JellySparqlWriterSettings.PUNCTUATED) ? SparqlStreamType.PUNCTUATED : SparqlStreamType.FLAT
+            )
             .setRdfVersion(RdfVersionUtils.rdfVersionFromLabel(config.get(JellySparqlWriterSettings.RDF_VERSION)))
             .setMaxNameTableSize(config.get(JellySparqlWriterSettings.MAX_NAME_TABLE_SIZE))
             .setMaxPrefixTableSize(config.get(JellySparqlWriterSettings.MAX_PREFIX_TABLE_SIZE))
