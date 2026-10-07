@@ -23,6 +23,11 @@ import scala.util.Using
   * against the Jena and RDF4J integrations.
   *
   * We test against the SHOULD conformance level (strict).
+  *
+  * To generate EARL conformance reports, run this with the conformance reporter:
+  * `sbt "integrationTests/testOnly *SparqlConformanceSpec -- -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"`
+  * This writes a SPARQL report for each integration to the `integration-tests/target/reports`
+  * directory. See also ProtocolConformanceSpec.
   */
 class SparqlConformanceSpec extends AnyWordSpec, Matchers, JenaTest:
   private val impls: Seq[SparqlImplementation] = Seq(JenaImplementation, Rdf4jImplementation)
