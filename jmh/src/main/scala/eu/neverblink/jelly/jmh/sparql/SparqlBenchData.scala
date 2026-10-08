@@ -109,8 +109,8 @@ object SparqlBenchData:
     )
 
   /** Changes the row count of a preset, keeping its shape: pools, sparsity and runs stay the same,
-    * and the row at which a polymorphic column starts mixing term types moves along with the row
-    * count, so it still switches at the same point, relatively.
+    * and the row at which a column starts mixing term types moves along with the row count, so it
+    * still switches at the same point, relatively.
     */
   private def resize(spec: ResultSetSpec, rows: Int): ResultSetSpec =
     val factor = rows.toDouble / spec.rows

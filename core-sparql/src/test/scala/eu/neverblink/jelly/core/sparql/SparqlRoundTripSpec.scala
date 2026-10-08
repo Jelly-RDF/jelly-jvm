@@ -1,8 +1,13 @@
 package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.helpers.Mrl.*
+import eu.neverblink.jelly.core.proto.v1.RdfColumn
 import eu.neverblink.jelly.core.proto.v1.sparql.*
-import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
+import eu.neverblink.jelly.core.sparql.helpers.{
+  MockSparqlConverterFactory,
+  ResultsCollector,
+  SparqlColumns,
+}
 import eu.neverblink.jelly.core.sparql.helpers.SparqlColumns.{datatypeKind, langKind}
 import eu.neverblink.jelly.core.{RdfProtoDeserializationError, RdfProtoSerializationError}
 import org.scalatest.matchers.should.Matchers
@@ -14,10 +19,10 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
 
   private def iri(i: Int) = Iri(f"https://test.org/ns#term$i")
 
-  private def lexValues(column: SparqlLiteralColumn) =
+  private def lexValues(column: RdfColumn) =
     (0 until column.getLexValues.size).map(column.getLexValues.get)
 
-  private def literalKinds(column: SparqlLiteralColumn) =
+  private def literalKinds(column: RdfColumn) =
     (0 until column.getLiteralKinds.size).map(column.getLiteralKinds.get)
 
   /** Encode the row batches (one batch = one frame), round-trip each frame through its serialized
@@ -77,7 +82,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      val column = frames.head.getIriColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       (0 until column.getPrefixIds.size).map(column.getPrefixIds.get) shouldBe Seq(1, 2, 0, 1)
     }
 
@@ -86,12 +91,12 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
       // The whole column shares one prefix, so it is stated exactly once
-      val column = frames.head.getIriColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       column.getNameIds.size shouldBe 4
       (0 until column.getPrefixIds.size).map(column.getPrefixIds.get) shouldBe Seq(1)
     }
 
-    "round-trip mixed column types" in {
+    "round-trip columns of different term types" in {
       val rows = Seq(
         Seq(iri(1), BlankNode("b1"), SimpleLiteral("hello")),
         Seq(iri(2), BlankNode("b2"), LangLiteral("bonjour", "fr")),
@@ -99,17 +104,16 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       val (collector, frames) = roundTrip(Seq("a", "b", "c"), Seq(rows))
       assertResults(collector, Seq("a", "b", "c"), rows)
-      frames.head.getIriColumns.size() shouldBe 1
-      frames.head.getBnodeColumns.size() shouldBe 1
-      frames.head.getLiteralColumns.size() shouldBe 1
-      frames.head.getPolyColumns.size() shouldBe 0
+      // Every column has one term type, so none needs the kinds
+      frames.head.getColumns.size() shouldBe 3
+      frames.head.getColumns.asScala.map(_.getKinds.isEmpty) shouldBe Seq(true, true, true)
     }
 
     "round-trip a column of simple literals" in {
       val rows = Seq("one", "two", "three").map(s => Seq[Node | Null](SimpleLiteral(s)))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      val column = frames.head.getLiteralColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       lexValues(column) shouldBe Seq("one", "two", "three")
       literalKinds(column) shouldBe Seq()
       frames.head.getDatatypes.size shouldBe 0
@@ -120,7 +124,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val rows = Seq("1", "2", "3").map(s => Seq[Node | Null](DtLiteral(s, dt)))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      val column = frames.head.getLiteralColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       // The datatype is stated once for the column instead of once per value
       lexValues(column) shouldBe Seq("1", "2", "3")
       literalKinds(column) shouldBe Seq(datatypeKind(1))
@@ -134,7 +138,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      val column = frames.head.getLiteralColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       lexValues(column) shouldBe Seq("1", "2.5", "plain")
       literalKinds(column) shouldBe Seq(datatypeKind(1), datatypeKind(2), 0)
     }
@@ -146,7 +150,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      val column = frames.head.getLiteralColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       literalKinds(column) shouldBe Seq(0, langKind(0))
       column.getLangtags.asScala.toSeq shouldBe Seq("fr")
     }
@@ -155,7 +159,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val rows = Seq("a", "b", "a", "c").map(lex => Seq[Node | Null](LangLiteral(lex, "en")))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      val column = frames.head.getLiteralColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       column.getLangtags.asScala.toSeq shouldBe Seq("en")
       literalKinds(column) shouldBe Seq(langKind(0))
       lexValues(column) shouldBe Seq("a", "b", "a", "c")
@@ -172,7 +176,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      val column = frames.head.getLiteralColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       column.getLangtags.asScala.toSeq shouldBe Seq("en")
       lexValues(column) shouldBe Seq("a", "b")
     }
@@ -189,7 +193,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
         val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
         withClue(s"with $other: ") {
           assertResults(collector, Seq("x"), rows)
-          val column = frames.head.getLiteralColumns.asScala.head
+          val column = frames.head.getColumns.asScala.head
           column.getLangtags.asScala.toSeq shouldBe Seq("en", other)
           literalKinds(column) shouldBe Seq(langKind(0), langKind(0), langKind(1), langKind(0))
         }
@@ -209,14 +213,14 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
           val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
           withClue(s"with $rows: ") {
             assertResults(collector, Seq("x"), rows)
-            val column = frames.head.getLiteralColumns.asScala.head
+            val column = frames.head.getColumns.asScala.head
             column.getLangtags.asScala.toSeq shouldBe Seq("en")
             lexValues(column).size shouldBe 3
             literalKinds(column).size shouldBe 3
           }
     }
 
-    "keep a shared language tag right in a column that turns polymorphic" in {
+    "keep a shared language tag right in a column that mixes term types" in {
       for rows <- Seq(
           Seq(LangLiteral("a", "en"), LangLiteral("b", "en"), iri(1), LangLiteral("c", "en")),
           Seq(iri(1), LangLiteral("a", "en"), LangLiteral("b", "en"), LangLiteral("c", "fr")),
@@ -226,7 +230,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
         val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
         withClue(s"with $rows: ") {
           assertResults(collector, Seq("x"), rows)
-          frames.head.getPolyColumns.size shouldBe 1
+          frames.head.getColumns.asScala.head.getKinds.isEmpty shouldBe false
         }
     }
 
@@ -236,19 +240,19 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       val (collector, out) = roundTrip(Seq("x"), frames)
       assertResults(collector, Seq("x"), frames.flatten)
-      out.map(_.getLiteralColumns.asScala.head.getLangtags.asScala.toSeq) shouldBe
+      out.map(_.getColumns.asScala.head.getLangtags.asScala.toSeq) shouldBe
         Seq(Seq("en"), Seq("fr"))
     }
 
     "pick the literal column form per frame" in {
-      // Monomorphism is a property of a frame, not of the whole stream
+      // The literal kinds are picked for each frame, not for the whole stream
       val dt = Datatype("https://test.org/xsd#integer")
       val batch1 = Seq(Seq[Node | Null](DtLiteral("1", dt)))
       val batch2 = Seq(Seq[Node | Null](DtLiteral("2", dt)), Seq[Node | Null](SimpleLiteral("x")))
       val batch3 = Seq(Seq[Node | Null](SimpleLiteral("y")))
       val (collector, frames) = roundTrip(Seq("x"), Seq(batch1, batch2, batch3))
       assertResults(collector, Seq("x"), batch1 ++ batch2 ++ batch3)
-      val columns = frames.map(_.getLiteralColumns.asScala.head)
+      val columns = frames.map(_.getColumns.asScala.head)
       // The datatype id survives from the first frame, but the third frame states none
       columns.map(literalKinds) shouldBe Seq(Seq(datatypeKind(1)), Seq(datatypeKind(1), 0), Seq())
     }
@@ -259,7 +263,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val batch2 = Seq(Seq[Node | Null](null))
       val (collector, frames) = roundTrip(Seq("x"), Seq(batch1, batch2))
       assertResults(collector, Seq("x"), batch1 ++ batch2)
-      val column = frames(1).getLiteralColumns.asScala.head
+      val column = frames(1).getColumns.asScala.head
       column.getLexValues.size shouldBe 0
       column.getLiteralKinds.size shouldBe 0
     }
@@ -273,12 +277,9 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       val (collector, frames) = roundTrip(Seq("a", "b", "empty"), Seq(rows))
       assertResults(collector, Seq("a", "b", "empty"), rows)
-      // The never-bound column is emitted as an empty IRI column
-      frames.head.getIriColumns.size() shouldBe 2
-      val emptyColumn = frames.head.getIriColumns.asScala.find(_.getNameIds.isEmpty)
-      emptyColumn should not be empty
-      // Trailing unbound cells cost nothing: the all-unbound column has an empty layout too
-      emptyColumn.get.getLayouts.size() shouldBe 0
+      // Trailing unbound cells cost nothing: the never-bound column is an empty message
+      frames.head.getColumns.size() shouldBe 3
+      frames.head.getColumns.asScala.last.getSerializedSize shouldBe 0
     }
 
     "round-trip consecutive repeated values" in {
@@ -291,7 +292,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
       // 8 logical cells, but only 3 run values: a, b, a
-      frames.head.getIriColumns.asScala.head.getNameIds.size shouldBe 3
+      frames.head.getColumns.asScala.head.getNameIds.size shouldBe 3
     }
 
     "round-trip long runs (with escaped run lengths)" in {
@@ -302,7 +303,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
         Seq(Seq[Node | Null](b))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      frames.head.getIriColumns.asScala.head.getNameIds.size shouldBe 2
+      frames.head.getColumns.asScala.head.getNameIds.size shouldBe 2
     }
 
     "reproduce the layout from the design example" in {
@@ -315,7 +316,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val rows = Seq[Node | Null](a, a, b, c, null, null, d, d, d, null, e).map(Seq(_))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      val column = frames.head.getIriColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       column.getNameIds.size shouldBe 5
       val layout = (0 until column.getLayouts.size()).map(column.getLayouts.get)
       layout shouldBe Seq(0, 81, 1, 16)
@@ -325,7 +326,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       // len_code is 4 bits: a repeat run of 16 (len 14) is the longest that fits in one token,
       // and 15 unbound cells (len 14) likewise. One more of either needs an extension varint.
       def layoutOf(rows: Seq[Seq[Node | Null]]) =
-        val column = roundTrip(Seq("x"), Seq(rows))._2.head.getIriColumns.asScala.head
+        val column = roundTrip(Seq("x"), Seq(rows))._2.head.getColumns.asScala.head
         (0 until column.getLayouts.size()).map(column.getLayouts.get)
 
       val a = iri(1)
@@ -337,7 +338,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       layoutOf(Seq.fill(16)(Seq[Node | Null](null)) :+ Seq[Node | Null](b)) shouldBe Seq(16 | 15, 0)
     }
 
-    "round-trip a polymorphic column" in {
+    "round-trip a column that mixes term types" in {
       val rows = Seq(
         Seq[Node | Null](iri(1)),
         Seq[Node | Null](SimpleLiteral("mixed in!")),
@@ -346,14 +347,14 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       assertResults(collector, Seq("x"), rows)
-      frames.head.getPolyColumns.size() shouldBe 1
-      frames.head.getIriColumns.size() shouldBe 0
+      // IRI, literal, IRI, blank node
+      SparqlColumns.kindsOf(frames.head.getColumns.asScala.head) shouldBe Seq(0, 1, 0, 2)
     }
 
-    "round-trip a polymorphic column across frames whose terms differ in encoded length" in {
-      // The encoder reuses the SparqlTerm wrappers of a poly column between frames. A wrapper
-      // caches its serialized size, so refilling one with a value of a different length has to
-      // invalidate that – otherwise the second frame is written with the first frame's lengths.
+    "round-trip a column that mixes term types across frames whose values differ in length" in {
+      // The encoder reuses the lists of a column between frames. A message caches its serialized
+      // size, so refilling the lists with values of a different length has to invalidate that –
+      // otherwise the second frame is written with the first frame's lengths.
       val batch1 = Seq(
         Seq[Node | Null](iri(1)),
         Seq[Node | Null](SimpleLiteral("a lexical form long enough to need a different length")),
@@ -364,8 +365,8 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       )
       val (collector, frames) = roundTrip(Seq("x"), Seq(batch1, batch2))
       assertResults(collector, Seq("x"), batch1 ++ batch2)
-      frames.head.getPolyColumns.size() shouldBe 1
-      frames(1).getPolyColumns.size() shouldBe 1
+      SparqlColumns.kindsOf(frames.head.getColumns.asScala.head) shouldBe Seq(0, 1)
+      SparqlColumns.kindsOf(frames(1).getColumns.asScala.head) shouldBe Seq(1, 0)
     }
 
     "round-trip multiple frames" in {
@@ -382,17 +383,18 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       frames(2).getVariables.size() shouldBe 0
     }
 
-    "restate the header when a column changes type between frames" in {
+    "change the term type of a column between frames" in {
       val batch1 = Seq(Seq[Node | Null](iri(1)))
       val batch2 = Seq(Seq[Node | Null](SimpleLiteral("now a literal")))
       val (collector, frames) = roundTrip(Seq("x"), Seq(batch1, batch2))
       assertResults(collector, Seq("x"), batch1 ++ batch2)
-      frames.head.getIriColumns.size() shouldBe 1
-      frames.head.getPolyColumns.size() shouldBe 0
-      // The second frame restates the header and moves the variable to a poly column
-      frames(1).getVariables.size() shouldBe 1
-      frames(1).getIriColumns.size() shouldBe 0
-      frames(1).getPolyColumns.size() shouldBe 1
+      // Each frame has one term type in the column, so neither needs the kinds or a new header
+      val Seq(first, second) = frames.map(_.getColumns.asScala.head)
+      first.getNameIds.size() shouldBe 1
+      first.getKinds.isEmpty shouldBe true
+      frames(1).getVariables.size() shouldBe 0
+      second.getLexValues.size() shouldBe 1
+      second.getKinds.isEmpty shouldBe true
     }
 
     "round-trip an empty result set" in {
@@ -590,7 +592,7 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
       e.getMessage should include("first frame of a result set")
     }
 
-    "throw when a restated header changes the variables" in {
+    "throw when a frame repeating the options changes the variables" in {
       val encoder =
         MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(JellySparqlOptions.SMALL))
       encoder.setVariables(Seq("x").asJava)
@@ -602,11 +604,9 @@ class SparqlRoundTripSpec extends AnyWordSpec, Matchers:
         MockSparqlConverterFactory.decoder(collector, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
       decoder.ingestFrame(frame1)
 
-      val frame2 = frame1
-        .clone()
-        .setOptions(null)
+      val frame2 = frame1.clone()
       frame2.getVariables.clear()
-      frame2.addVariables(SparqlVariable.newInstance().setName("other").setColumnIndex(0))
+      frame2.addVariables("other")
       val e = intercept[RdfProtoDeserializationError] {
         decoder.ingestFrame(frame2)
       }

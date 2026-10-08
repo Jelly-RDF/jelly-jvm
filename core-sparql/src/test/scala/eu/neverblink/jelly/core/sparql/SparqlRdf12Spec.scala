@@ -8,7 +8,7 @@ import eu.neverblink.jelly.core.sparql.helpers.{
   ResultsCollector,
   SparqlColumns,
 }
-import eu.neverblink.jelly.core.sparql.helpers.SparqlColumns.{PolyValue, langKind}
+import eu.neverblink.jelly.core.sparql.helpers.SparqlColumns.{ColumnValue, langKind}
 import eu.neverblink.jelly.core.{RdfProtoDeserializationError, RdfProtoSerializationError}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -72,15 +72,16 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
       .newInstance()
       .setOptions(options(version))
       .setRowCount(rows)
-      .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
+      .addVariables("x")
       .addNames(
         RdfLookupEntryPacked.newInstance().setId(1).addValues("https://a/").addValues("https://b/")
           .addValues("https://c/"),
       )
 
-  private def polyFrame(values: PolyValue*) = SparqlColumns.polyColumn(values)
+  /** A column of triple terms only, which has no kinds. */
+  private def tripleColumn(term: RdfTripleTerm) = RdfColumn.newInstance().addTripleTerms(term)
 
-  private def literalKinds(column: SparqlLiteralColumn) =
+  private def literalKinds(column: RdfColumn) =
     (0 until column.getLiteralKinds.size).map(column.getLiteralKinds.get)
 
   private def rdfIri(prefix: Int, name: Int) =
@@ -95,7 +96,7 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
       val rows = Seq(ltr("a"), ltr("b"), ltr("a")).map(Seq[Node | Null](_))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       rowsOf(collector) shouldBe rows
-      val column = frames.head.getLiteralColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       column.getLangtags.asScala.toSeq shouldBe Seq("en")
       column.getLangtagDirections.size shouldBe 1
       column.getLangtagDirections.get(0) shouldBe RdfBaseDirection.LTR.getNumber
@@ -115,19 +116,19 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
         withClue(s"$rows: ") {
           val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
           rowsOf(collector) shouldBe rows
-          val column = frames.head.getLiteralColumns.asScala.head
+          val column = frames.head.getColumns.asScala.head
           literalKinds(column).size shouldBe rows.size
           // The same tag with two directions is two language tags of the column
           column.getLangtags.size should be > 1
         }
     }
 
-    "round-trip in a polymorphic column" in {
+    "round-trip in a column that mixes term types" in {
       val rows = Seq[Node](ltr("a"), iri(1), rtl("b"), ltr("c"), BlankNode("b1"))
         .map(Seq[Node | Null](_))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       rowsOf(collector) shouldBe rows
-      frames.head.getPolyColumns.size shouldBe 1
+      frames.head.getColumns.asScala.head.getKinds.isEmpty shouldBe false
     }
 
     "be refused by the encoder in a stream that declares RDF 1.1" in {
@@ -150,13 +151,13 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
 
   "the decoder" should {
     "reject a base direction in a stream that declares RDF 1.1" in {
-      val perValue = oneVariableFrame(2, RdfVersion.RDF_VERSION_1_1).addLiteralColumns(
+      val perValue = oneVariableFrame(2, RdfVersion.RDF_VERSION_1_1).addColumns(
         SparqlColumns.literalColumn(
           Seq("a" -> langKind(0), "b" -> 0),
           Seq("en" -> RdfBaseDirection.LTR),
         ),
       )
-      val uniform = oneVariableFrame(1, RdfVersion.RDF_VERSION_1_1).addLiteralColumns(
+      val uniform = oneVariableFrame(1, RdfVersion.RDF_VERSION_1_1).addColumns(
         SparqlColumns.uniformLiteralColumn(Seq("a"), langKind(0), Seq("en" -> RdfBaseDirection.RTL)),
       )
       for frame <- Seq(perValue, uniform) do
@@ -166,7 +167,7 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
     }
 
     "reject a base direction that this reader does not support, when none is declared" in {
-      val frame = oneVariableFrame(1).addLiteralColumns(
+      val frame = oneVariableFrame(1).addColumns(
         SparqlColumns.uniformLiteralColumn(Seq("a"), langKind(0), Seq("en" -> RdfBaseDirection.RTL)),
       )
       val supported =
@@ -181,11 +182,11 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
     }
 
     "reject an unknown base direction, as read from the wire" in {
-      def withDirection7(column: SparqlLiteralColumn.Mutable) =
+      def withDirection7(column: RdfColumn.Mutable) =
         column.getLangtagDirections.clear()
         column.addLangtagDirections(7)
         column
-      val perValue = oneVariableFrame(2).addLiteralColumns(
+      val perValue = oneVariableFrame(2).addColumns(
         withDirection7(
           SparqlColumns.literalColumn(
             Seq("a" -> langKind(0), "b" -> 0),
@@ -193,7 +194,7 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
           ),
         ),
       )
-      val uniform = oneVariableFrame(1).addLiteralColumns(
+      val uniform = oneVariableFrame(1).addColumns(
         withDirection7(
           SparqlColumns.uniformLiteralColumn(
             Seq("a"),
@@ -202,18 +203,15 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
           ),
         ),
       )
-      val polyColumn = polyFrame(PolyValue.Literal("a", langKind(0)))
-      polyColumn.setLiterals(
+      val mixed = oneVariableFrame(2).addColumns(
         withDirection7(
-          SparqlColumns.uniformLiteralColumn(
-            Seq("a"),
-            langKind(0),
+          SparqlColumns.mixedColumn(
+            Seq(ColumnValue.Literal("a", langKind(0)), ColumnValue.Bnode("b")),
             Seq("en" -> RdfBaseDirection.LTR),
           ),
         ),
       )
-      val poly = oneVariableFrame(1).addPolyColumns(polyColumn)
-      for frame <- Seq(perValue, uniform, poly) do
+      for frame <- Seq(perValue, uniform, mixed) do
         val parsed = SparqlResultsFrame.parseFrom(frame.toByteArray)
         intercept[RdfProtoDeserializationError] { decode(parsed) }.getMessage should include(
           "Unknown base direction: 7",
@@ -221,10 +219,10 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
     }
 
     "reject base directions without language tags" in {
-      val column = SparqlLiteralColumn.newInstance().addLexValues("a")
+      val column = RdfColumn.newInstance().addLexValues("a")
         .addLangtagDirections(RdfBaseDirection.LTR.getNumber)
       intercept[RdfProtoDeserializationError] {
-        decode(oneVariableFrame(1).addLiteralColumns(column))
+        decode(oneVariableFrame(1).addColumns(column))
       }.getMessage should include("1 base directions for 0 language tags")
     }
 
@@ -272,13 +270,15 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
     val withDirection = TripleNode(iri(1), iri(2), rtl("x"))
     val nested = TripleNode(iri(1), iri(2), TripleNode(BlankNode("b1"), other(3), withDirection))
 
-    "round-trip in a polymorphic column, with every kind of subject and object" in {
+    "round-trip in a column of their own, with every kind of subject and object" in {
       val rows = Seq[Node](simple, withBnode, withLiteral, withDirection, nested)
         .map(Seq[Node | Null](_))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       rowsOf(collector) shouldBe rows
-      val column = frames.head.getPolyColumns.asScala.head
-      SparqlColumns.kindsOf(column).toSet shouldBe Set(3)
+      val column = frames.head.getColumns.asScala.head
+      // One term type, so no kinds
+      column.getTripleTerms.size shouldBe 5
+      column.getKinds.isEmpty shouldBe true
     }
 
     "round-trip mixed with other terms, runs and unbound cells" in {
@@ -313,9 +313,9 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
       val rows = Seq[Node](iri(1), TripleNode(iri(2), iri(3), iri(4))).map(Seq[Node | Null](_))
       val (collector, frames) = roundTrip(Seq("x"), Seq(rows))
       rowsOf(collector) shouldBe rows
-      val column = frames.head.getPolyColumns.asScala.head
+      val column = frames.head.getColumns.asScala.head
       // The column's one IRI has name id 1, the next after 0, so it compresses to zero
-      column.getIris.getNameIds.get(0) shouldBe 0
+      column.getNameIds.get(0) shouldBe 0
       // The triple term starts from scratch: its subject states its name and prefix, and the
       // predicate and object follow on from it
       val triple = column.getTripleTerms.asScala.head
@@ -327,16 +327,16 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
       }
     }
 
-    "make a column polymorphic from the first triple term, and restate the header" in {
+    "take over a column in a later frame, with no new header" in {
       val frames = Seq(
         Seq(Seq[Node | Null](iri(1))),
         Seq(Seq[Node | Null](simple)),
       )
       val (collector, out) = roundTrip(Seq("x"), frames)
       rowsOf(collector) shouldBe frames.flatten
-      out(0).getIriColumns.size shouldBe 1
-      out(1).getVariables.size shouldBe 1
-      out(1).getPolyColumns.size shouldBe 1
+      out(0).getColumns.asScala.head.getNameIds.size shouldBe 1
+      out(1).getVariables.size shouldBe 0
+      out(1).getColumns.asScala.head.getTripleTerms.size shouldBe 1
     }
 
     "fit in the lookup tables, however many IRIs they bring" in {
@@ -418,12 +418,14 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
     "follow the IRI inference of the triple terms, separate from that of the column's IRIs" in {
       // Name id 0 is "the next one". The triple term's state starts from 0, so its subject is
       // name 1, not the name after the column's IRI.
-      val frame = oneVariableFrame(2).addPolyColumns(
-        polyFrame(
-          PolyValue.Iri(0, 1),
-          PolyValue.Triple(
-            RdfTripleTerm.newInstance().setSIri(rdfIri(0, 0)).setPIri(rdfIri(0, 1))
-              .setOIri(rdfIri(0, 0)),
+      val frame = oneVariableFrame(2).addColumns(
+        SparqlColumns.mixedColumn(
+          Seq(
+            ColumnValue.Iri(0, 1),
+            ColumnValue.Triple(
+              RdfTripleTerm.newInstance().setSIri(rdfIri(0, 0)).setPIri(rdfIri(0, 1))
+                .setOIri(rdfIri(0, 0)),
+            ),
           ),
         ),
       )
@@ -441,7 +443,7 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
       )
       for (term, message) <- broken do
         val frame = oneVariableFrame(1)
-          .addPolyColumns(polyFrame(PolyValue.Triple(term)))
+          .addColumns(tripleColumn(term))
         intercept[RdfProtoDeserializationError] { decode(frame) }.getMessage should include(
           s"triple term has $message",
         )
@@ -454,7 +456,7 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
         )
       do
         val frame = oneVariableFrame(1, version)
-          .addPolyColumns(polyFrame(PolyValue.Triple(complete)))
+          .addColumns(tripleColumn(complete))
         intercept[RdfProtoDeserializationError] { decode(frame) }.getMessage should include(
           s"declares $name, but contains triple terms",
         )
@@ -462,7 +464,7 @@ class SparqlRdf12Spec extends AnyWordSpec, Matchers:
 
     "reject a triple term that this reader does not support, when none is declared" in {
       val frame = oneVariableFrame(1)
-        .addPolyColumns(polyFrame(PolyValue.Triple(complete)))
+        .addColumns(tripleColumn(complete))
       val supported = JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS.clone()
         .setRdfVersion(RdfVersion.RDF_VERSION_1_2_BASIC)
       intercept[RdfProtoDeserializationError] {

@@ -3,11 +3,16 @@ package eu.neverblink.jelly.core.sparql
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import com.google.protobuf.ByteString
-import eu.neverblink.jelly.core.proto.v1.{RdfBaseDirection, RdfLookupEntryPacked}
+import eu.neverblink.jelly.core.proto.v1.{RdfBaseDirection, RdfColumn, RdfLookupEntryPacked}
 import eu.neverblink.jelly.core.proto.v1.sparql.*
 import eu.neverblink.jelly.core.helpers.ByteFuzzer
 import eu.neverblink.jelly.core.sparql.helpers.*
-import eu.neverblink.jelly.core.sparql.helpers.SparqlColumns.{PolyValue, datatypeKind, langKind}
+import eu.neverblink.jelly.core.sparql.helpers.SparqlColumns.{
+  ColumnValue,
+  datatypeKind,
+  iriColumn,
+  langKind,
+}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -64,7 +69,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
 
   private def oneVariableFrame(rowCount: Int) =
     frameWithRowCount(rowCount)
-      .addVariables(SparqlVariable.newInstance().setName("x").setColumnIndex(0))
+      .addVariables("x")
 
   "frame row count" should {
     "reject very large row counts" in {
@@ -74,7 +79,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
 
     "not size a column buffer from the row count alone" in {
       val frame = oneVariableFrame(Int.MaxValue)
-        .addIriColumns(SparqlIriColumn.newInstance())
+        .addColumns(RdfColumn.newInstance())
       expectRejected(newDecoder().ingestFrame(frame))
     }
 
@@ -103,7 +108,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
       val collector = ResultsCollector()
       val frame = oneVariableFrame(5)
         .addNames(RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/x"))
-        .addIriColumns(SparqlIriColumn.newInstance().addNameIds(1))
+        .addColumns(iriColumn(Seq(1)))
       newDecoder(collector, maxRowsPerFrame = 5).ingestFrame(frame)
       collector.rows.map(_.head) shouldBe Seq(Iri("https://test.org/x"), null, null, null, null)
     }
@@ -126,7 +131,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
             .setId(JellySparqlOptions.SMALL.getMaxDatatypeTableSize + 1)
             .addValues("https://test.org/int"),
         )
-        .addIriColumns(SparqlIriColumn.newInstance())
+        .addColumns(RdfColumn.newInstance())
       expectRejected(newDecoder().ingestFrame(frame))
     }
 
@@ -135,7 +140,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
         .addDatatypes(
           RdfLookupEntryPacked.newInstance().setId(-1).addValues("https://test.org/int"),
         )
-        .addIriColumns(SparqlIriColumn.newInstance())
+        .addColumns(RdfColumn.newInstance())
       expectRejected(newDecoder().ingestFrame(frame))
     }
 
@@ -145,13 +150,13 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
         entry.addValues(s"https://test.org/dt$i")
       val frame = oneVariableFrame(0)
         .addDatatypes(entry)
-        .addIriColumns(SparqlIriColumn.newInstance())
+        .addColumns(RdfColumn.newInstance())
       expectRejected(newDecoder().ingestFrame(frame))
     }
 
     "reject a literal column referring to a datatype past the end of the table" in {
       val frame = oneVariableFrame(1)
-        .addLiteralColumns(
+        .addColumns(
           SparqlColumns.uniformLiteralColumn(
             Seq("1"),
             datatypeKind(JellySparqlOptions.SMALL.getMaxDatatypeTableSize + 1),
@@ -162,19 +167,19 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
 
     "reject a literal column referring to a datatype slot that was never set" in {
       val frame = oneVariableFrame(1)
-        .addLiteralColumns(SparqlColumns.uniformLiteralColumn(Seq("1"), datatypeKind(1)))
+        .addColumns(SparqlColumns.uniformLiteralColumn(Seq("1"), datatypeKind(1)))
       expectRejected(newDecoder().ingestFrame(frame))
     }
 
     "reject a per-value literal kind referring to a datatype slot that was never set" in {
       val frame = oneVariableFrame(2)
-        .addLiteralColumns(SparqlColumns.literalColumn(Seq("1" -> 0, "2" -> datatypeKind(1))))
+        .addColumns(SparqlColumns.literalColumn(Seq("1" -> 0, "2" -> datatypeKind(1))))
       expectRejected(newDecoder().ingestFrame(frame))
     }
 
     "reject a literal kind referring to a language tag the column does not have" in {
       val frame = oneVariableFrame(2)
-        .addLiteralColumns(
+        .addColumns(
           SparqlColumns.literalColumn(
             Seq("a" -> langKind(0), "b" -> langKind(1)),
             Seq("en" -> RdfBaseDirection.UNSPECIFIED),
@@ -185,21 +190,21 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
 
     "reject a uniform literal kind referring to a language tag the column does not have" in {
       val frame = oneVariableFrame(1)
-        .addLiteralColumns(SparqlColumns.uniformLiteralColumn(Seq("a"), langKind(0)))
+        .addColumns(SparqlColumns.uniformLiteralColumn(Seq("a"), langKind(0)))
       expectRejected(newDecoder().ingestFrame(frame)).getMessage should include("language tag 0")
     }
   }
 
-  "the structure of literal and polymorphic columns" should {
-    "reject a literal column with more than one, but not one per value, literal kinds" in {
+  "the structure of columns" should {
+    "reject a column with more than one, but not one per literal, literal kinds" in {
       val column = SparqlColumns.literalColumn(Seq("a" -> 0, "b" -> 0, "c" -> 0))
       column.getLiteralKinds.clear()
       column.addLiteralKinds(0).addLiteralKinds(0)
-      expectRejected(newDecoder().ingestFrame(oneVariableFrame(3).addLiteralColumns(column)))
+      expectRejected(newDecoder().ingestFrame(oneVariableFrame(3).addColumns(column)))
         .getMessage should include("2 literal kinds for 3 lexical forms")
     }
 
-    "reject a literal column with base directions for only some of its language tags" in {
+    "reject a column with base directions for only some of its language tags" in {
       val column = SparqlColumns
         .literalColumn(
           Seq("a" -> langKind(0), "b" -> langKind(1)),
@@ -207,7 +212,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
         )
       column.getLangtagDirections.clear()
       column.addLangtagDirections(RdfBaseDirection.LTR.getNumber)
-      expectRejected(newDecoder().ingestFrame(oneVariableFrame(2).addLiteralColumns(column)))
+      expectRejected(newDecoder().ingestFrame(oneVariableFrame(2).addColumns(column)))
         .getMessage should include("1 base directions for 2 language tags")
     }
 
@@ -216,69 +221,67 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
         SparqlColumns.uniformLiteralColumn(Seq("a"), langKind(0), Seq("en" -> RdfBaseDirection.LTR))
       column.getLangtagDirections.clear()
       column.addLangtagDirections(7)
-      expectRejected(newDecoder().ingestFrame(oneVariableFrame(1).addLiteralColumns(column)))
+      expectRejected(newDecoder().ingestFrame(oneVariableFrame(1).addColumns(column)))
         .getMessage should include("Unknown base direction: 7")
     }
 
-    "reject polymorphic kinds of the wrong length" in {
-      val column = SparqlColumns.polyColumn(Seq(PolyValue.Bnode("a"), PolyValue.Literal("x")))
+    "reject kinds of the wrong length" in {
+      val column = SparqlColumns.mixedColumn(Seq(ColumnValue.Bnode("a"), ColumnValue.Literal("x")))
       column.setKinds(ByteString.copyFrom(Array[Byte](0x06, 0)))
-      expectRejected(newDecoder().ingestFrame(oneVariableFrame(2).addPolyColumns(column)))
+      expectRejected(newDecoder().ingestFrame(oneVariableFrame(2).addColumns(column)))
         .getMessage should include("2 bytes of kinds for 2 values")
     }
 
-    "reject polymorphic kinds that do not match the sub-columns" in {
+    "reject kinds that do not match the values of each type" in {
       // Two blank nodes by the kinds, but the column has one blank node and one literal
-      val column = SparqlColumns.polyColumn(Seq(PolyValue.Bnode("a"), PolyValue.Literal("x")))
+      val column = SparqlColumns.mixedColumn(Seq(ColumnValue.Bnode("a"), ColumnValue.Literal("x")))
       column.setKinds(SparqlColumns.kindsBytes(Seq(2, 2)))
-      expectRejected(newDecoder().ingestFrame(oneVariableFrame(2).addPolyColumns(column)))
+      expectRejected(newDecoder().ingestFrame(oneVariableFrame(2).addColumns(column)))
         .getMessage should include("do not match the number of values")
     }
 
     // The kinds are counted 65532 values at a time
-    val longPolyValues = (0 until 70001).map { i =>
-      if i % 3 == 0 then PolyValue.Bnode(s"b$i") else PolyValue.Literal(s"l$i")
+    val longMixedValues = (0 until 70001).map { i =>
+      if i % 3 == 0 then ColumnValue.Bnode(s"b$i") else ColumnValue.Literal(s"l$i")
     }
 
-    "decode a polymorphic column longer than one count of its kinds" in {
+    "decode a column longer than one count of its kinds" in {
       val collector = ResultsCollector()
       newDecoder(collector).ingestFrame(
-        oneVariableFrame(longPolyValues.size).addPolyColumns(
-          SparqlColumns.polyColumn(longPolyValues),
+        oneVariableFrame(longMixedValues.size).addColumns(
+          SparqlColumns.mixedColumn(longMixedValues),
         ),
       )
-      collector.rows.size shouldBe longPolyValues.size
+      collector.rows.size shouldBe longMixedValues.size
       for i <- Seq(0, 1, 65531, 65532, 65533, 70000) do
         collector.rows(i).head shouldBe (
           if i % 3 == 0 then BlankNode(s"b$i") else SimpleLiteral(s"l$i")
         )
     }
 
-    "reject polymorphic kinds that do not match the sub-columns, past the first count" in {
-      val column = SparqlColumns.polyColumn(longPolyValues)
+    "reject kinds that do not match the values of each type, past the first count" in {
+      val column = SparqlColumns.mixedColumn(longMixedValues)
       // Value 69998 is a literal, the kinds say it is a blank node
       val kinds = SparqlColumns.kindsOf(column).updated(69998, 2)
       column.setKinds(SparqlColumns.kindsBytes(kinds))
       expectRejected(
-        newDecoder().ingestFrame(oneVariableFrame(longPolyValues.size).addPolyColumns(column)),
+        newDecoder().ingestFrame(oneVariableFrame(longMixedValues.size).addColumns(column)),
       ).getMessage should include("do not match the number of values")
     }
 
-    "reject polymorphic kinds with unused bits set" in {
-      val column = SparqlColumns.polyColumn(Seq(PolyValue.Bnode("a"), PolyValue.Literal("x")))
+    "reject kinds with unused bits set" in {
+      val column = SparqlColumns.mixedColumn(Seq(ColumnValue.Bnode("a"), ColumnValue.Literal("x")))
       // Values 0 and 1 in the low four bits, and a stray bit above them
       column.setKinds(ByteString.copyFrom(Array[Byte]((0x06 | 0x40).toByte)))
-      expectRejected(newDecoder().ingestFrame(oneVariableFrame(2).addPolyColumns(column)))
+      expectRejected(newDecoder().ingestFrame(oneVariableFrame(2).addColumns(column)))
         .getMessage should include("unused bits")
     }
 
-    "ignore the layout of a polymorphic sub-column" in {
-      val column = SparqlColumns.polyColumn(Seq(PolyValue.Bnode("a"), PolyValue.Literal("x")))
-      // A repeat run, which would give three cells if it applied
-      column.getBnodes.asInstanceOf[SparqlBnodeColumn.Mutable].addLayouts(0)
+    "accept kinds on a column whose values are all of one type" in {
+      val column = SparqlColumns.mixedColumn(Seq(ColumnValue.Bnode("a"), ColumnValue.Bnode("b")))
       val collector = ResultsCollector()
-      newDecoder(collector).ingestFrame(oneVariableFrame(2).addPolyColumns(column))
-      collector.rows.map(_.head) shouldBe Seq(BlankNode("a"), SimpleLiteral("x"))
+      newDecoder(collector).ingestFrame(oneVariableFrame(2).addColumns(column))
+      collector.rows.map(_.head) shouldBe Seq(BlankNode("a"), BlankNode("b"))
     }
 
     "check the base direction only of language tags that are used" in {
@@ -291,56 +294,56 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
       column.getLangtagDirections.clear()
       column.addLangtagDirections(0).addLangtagDirections(7)
       val collector = ResultsCollector()
-      newDecoder(collector).ingestFrame(oneVariableFrame(1).addLiteralColumns(column))
+      newDecoder(collector).ingestFrame(oneVariableFrame(1).addColumns(column))
       collector.rows.map(_.head) shouldBe Seq(LangLiteral("a", "en"))
     }
 
-    "accept a polymorphic column whose sub-columns are all absent, if it has no values" in {
+    "accept a column with no values at all" in {
       val collector = ResultsCollector()
       newDecoder(collector).ingestFrame(
-        oneVariableFrame(1).addPolyColumns(SparqlPolyColumn.newInstance()),
+        oneVariableFrame(1).addColumns(RdfColumn.newInstance()),
       )
       collector.rows.map(_.toSeq) shouldBe Seq(Seq(null))
     }
   }
 
   "the name and prefix lookups" should {
-    "reject an IRI column referring to a name slot that was never set" in {
+    "reject an IRI referring to a name slot that was never set" in {
       val frame = oneVariableFrame(1)
         .addPrefixes(RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/"))
-        .addIriColumns(SparqlIriColumn.newInstance().addNameIds(1).addPrefixIds(1))
+        .addColumns(iriColumn(Seq(1), prefixIds = Seq(1)))
       expectRejected(newDecoder().ingestFrame(frame))
     }
 
-    "reject an IRI column referring to a prefix slot that was never set" in {
+    "reject an IRI referring to a prefix slot that was never set" in {
       val frame = oneVariableFrame(1)
         .addNames(RdfLookupEntryPacked.newInstance().setId(1).addValues("x"))
-        .addIriColumns(SparqlIriColumn.newInstance().addNameIds(1).addPrefixIds(1))
+        .addColumns(iriColumn(Seq(1), prefixIds = Seq(1)))
       expectRejected(newDecoder().ingestFrame(frame))
     }
 
-    "reject a polymorphic column referring to a name slot that was never set" in {
+    "reject an IRI in a column with kinds referring to a name slot that was never set" in {
       val frame = oneVariableFrame(1)
         .addPrefixes(RdfLookupEntryPacked.newInstance().setId(1).addValues("https://test.org/"))
-        .addPolyColumns(SparqlColumns.polyColumn(Seq(PolyValue.Iri(1, 1))))
+        .addColumns(SparqlColumns.mixedColumn(Seq(ColumnValue.Iri(1, 1))))
       expectRejected(newDecoder().ingestFrame(frame))
     }
   }
 
   "an IRI refused by the RDF library" should {
-    "be rejected in an IRI column" in {
+    "be rejected in a column" in {
       val frame = oneVariableFrame(1)
         .addNames(RdfLookupEntryPacked.newInstance().setId(1).addValues("relative/x"))
-        .addIriColumns(SparqlIriColumn.newInstance().addNameIds(1))
+        .addColumns(iriColumn(Seq(1)))
       expectRejected(newStrictDecoder().ingestFrame(frame)).getMessage should include(
         "column for variable 'x'",
       )
     }
 
-    "be rejected in a polymorphic column" in {
+    "be rejected in a column with kinds" in {
       val frame = oneVariableFrame(1)
         .addNames(RdfLookupEntryPacked.newInstance().setId(1).addValues("relative/x"))
-        .addPolyColumns(SparqlColumns.polyColumn(Seq(PolyValue.Iri(0, 1))))
+        .addColumns(SparqlColumns.mixedColumn(Seq(ColumnValue.Iri(0, 1))))
       expectRejected(newStrictDecoder().ingestFrame(frame)).getMessage should include(
         "column for variable 'x'",
       )
@@ -349,7 +352,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
     "be rejected in a datatype lookup entry" in {
       val frame = oneVariableFrame(0)
         .addDatatypes(RdfLookupEntryPacked.newInstance().setId(1).addValues("relative/dt"))
-        .addIriColumns(SparqlIriColumn.newInstance())
+        .addColumns(RdfColumn.newInstance())
       expectRejected(newStrictDecoder().ingestFrame(frame)).getMessage should include(
         "datatype 'relative/dt'",
       )
@@ -384,8 +387,9 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
     case _: IOException => true
     case _ => false
 
-  /** Valid frames from the encoder, as the starting examples. Between them these cover every column
-    * type, the lookup tables, repeated and unbound runs, and a boolean result.
+  /** Valid frames from the encoder, as the starting examples. Between them these cover every term
+    * type, columns with and without kinds, the lookup tables, repeated and unbound runs, and a
+    * boolean result.
     */
   private lazy val corpus: Seq[Array[Byte]] =
     val encoder = MockSparqlConverterFactory.encoder(
@@ -397,7 +401,7 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
       // Repeats the row before it, so the encoder emits a repeat run
       Array(Iri("https://test.org/a"), SimpleLiteral("plain"), BlankNode("b1")),
       Array(Iri("https://test.org/b"), DtLiteral("1", Datatype("https://test.org/int")), null),
-      // Mixes term types in a column, which moves it to a polymorphic one
+      // Mixes term types in the columns, so that they get kinds
       Array(BlankNode("b2"), LangLiteral("hello", "en"), Iri("https://test.org/c")),
       Array(null, null, null),
       Array(Iri("https://test.org/d"), SimpleLiteral("x"), BlankNode("b3")),

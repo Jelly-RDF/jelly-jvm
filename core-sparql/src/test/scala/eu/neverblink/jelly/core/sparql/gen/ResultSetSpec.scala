@@ -48,11 +48,11 @@ enum Sparsity:
   * @param sorted
   *   draw values from the pool in order (simulates ORDER BY) instead of at random
   * @param mixFraction
-  *   fraction of bound cells that use a term type other than `kind`, which forces the column into a
-  *   polymorphic one
+  *   fraction of bound cells that use a term type other than `kind`, which makes the frames of the
+  *   column mix term types (and so have kinds)
   * @param mixStartRow
-  *   first row at which off-type values may appear – set this past a frame boundary to force a
-  *   mid-stream header restatement
+  *   first row at which off-type values may appear – set this past a frame boundary to have a
+  *   column switch to mixed term types mid-stream
   */
 final case class ColumnSpec(
     kind: ColumnKind = ColumnKind.Iri,

@@ -51,13 +51,10 @@ class SparqlPunctuatedSpec extends AnyWordSpec, Matchers:
   private def serialized(frame: SparqlResultsFrame): SparqlResultsFrame =
     SparqlResultsFrame.parseFrom(frame.toByteArray)
 
-  private def header(names: String*): Seq[SparqlVariable] =
-    names.zipWithIndex.map((n, i) => SparqlVariable.newInstance().setName(n).setColumnIndex(i))
-
   /** A frame of the given variables with no rows (and so, no columns). */
   private def emptyFrame(names: String*): SparqlResultsFrame.Mutable =
     val frame = SparqlResultsFrame.newInstance()
-    header(names*).foreach(frame.addVariables)
+    names.foreach(frame.addVariables)
     frame
 
   private def trailer = SparqlResultsTrailer.newInstance()
@@ -81,7 +78,7 @@ class SparqlPunctuatedSpec extends AnyWordSpec, Matchers:
       frames.map(_.getTrailer != null) shouldBe Seq(true, true, false, true)
       frames(0).getOptions.getStreamType shouldBe SparqlStreamType.PUNCTUATED
       // The first frame of each solution sequence has its header
-      frames(2).getVariables.asScala.map(_.getName) shouldBe Seq("y", "z")
+      frames(2).getVariables.asScala.toSeq shouldBe Seq("y", "z")
       // term1 is still in the name lookup from the first result set
       frames(2).getNames.asScala shouldBe empty
 
@@ -109,7 +106,7 @@ class SparqlPunctuatedSpec extends AnyWordSpec, Matchers:
       encoder.appendRow(Array[Node](iri(1)))
       val second = serialized(encoder.endStream())
       second.getOptions shouldBe null
-      second.getVariables.asScala.map(_.getName) shouldBe Seq("x")
+      second.getVariables.asScala.toSeq shouldBe Seq("x")
 
       val (collector, dec) = decoder()
       ingestAll(dec, Seq(first, second))
@@ -271,13 +268,13 @@ class SparqlPunctuatedSpec extends AnyWordSpec, Matchers:
       collector.events shouldBe Seq("vars(x)", "trailer()", "vars()", "trailer()")
     }
 
-    "check a restated header against the header of its own result set" in {
+    "reject a header in a later frame of a result set that is not the first" in {
       val (_, dec) = decoder()
       dec.ingestFrame(emptyFrame("x").setOptions(punctuatedOptions).setTrailer(trailer))
       dec.ingestFrame(emptyFrame("y"))
-      // Restating the header of the first result set is not allowed in the second one
+      // Only the first frame of the second result set may have a header
       intercept[RdfProtoDeserializationError] {
         dec.ingestFrame(emptyFrame("x"))
-      }
+      }.getMessage should include("may only be set in the first frame of a result set")
     }
   }

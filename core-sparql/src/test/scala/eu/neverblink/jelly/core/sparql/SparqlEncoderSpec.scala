@@ -80,7 +80,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.appendRow(Array[Node](Iri("https://a.org/x1")))
       val frame = e.endStream()
       frame.getRowCount shouldBe 1
-      frame.getIriColumns.size shouldBe 1
+      frame.getColumns.size shouldBe 1
       frame.getTrailer should not be null
       frame.getTrailer.getError shouldBe ""
     }
@@ -99,7 +99,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       frame.getOptions should not be null
       frame.getVariables.size shouldBe 2
       frame.getRowCount shouldBe 0
-      frame.getIriColumns.size shouldBe 0
+      frame.getColumns.size shouldBe 0
       frame.getTrailer.getError shouldBe ""
     }
 
@@ -112,7 +112,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       frame.getOptions shouldBe null
       frame.getVariables.size shouldBe 0
       frame.getRowCount shouldBe 0
-      frame.getIriColumns.size shouldBe 0
+      frame.getColumns.size shouldBe 0
       frame.getNames.size shouldBe 0
       frame.getTrailer.getError shouldBe ""
     }
@@ -124,7 +124,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       val frame = e.endStream("query timed out")
       // The rows appended so far are kept
       frame.getRowCount shouldBe 1
-      frame.getIriColumns.size shouldBe 1
+      frame.getColumns.size shouldBe 1
       frame.getTrailer.getError shouldBe "query timed out"
     }
 
@@ -199,8 +199,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       frame.getRowCount shouldBe 0
       frame.getNames.size shouldBe 0
       frame.getPrefixes.size shouldBe 0
-      frame.getIriColumns.size shouldBe 0
-      frame.getPolyColumns.size shouldBe 0
+      frame.getColumns.size shouldBe 0
       frame.getTrailer.getError shouldBe "could not encode a row"
 
       // And it decodes cleanly
@@ -224,16 +223,16 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.appendRow(Array[Node](Iri("https://a.org/x1")))
       val first = e.endFrame()
       first.getRowCount shouldBe 1
-      first.getIriColumns.asScala.head.getNameIds.size shouldBe 1
+      first.getColumns.asScala.head.getNameIds.size shouldBe 1
       val second = e.endFrame()
       second.getRowCount shouldBe 0
       // A frame with no rows leaves out its columns
-      second.getIriColumns.size shouldBe 0
+      second.getColumns.size shouldBe 0
       second.getNames.size shouldBe 0
     }
 
     "not carry a column's values into the next frame" in {
-      // One case per column type, since each has its own buffer
+      // One case per term type, since each has its own list in the column
       val cases = Seq(
         "iri" -> Seq[Node](Iri("https://a.org/x1"), Iri("https://a.org/x2")),
         "bnode" -> Seq[Node](BlankNode("b1"), BlankNode("b2")),
@@ -242,7 +241,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
           DtLiteral("1", Datatype("https://a.org/d1")),
           LangLiteral("hi", "en"),
         ),
-        "poly" -> Seq[Node](Iri("https://a.org/x1"), SimpleLiteral("one")),
+        "mixed" -> Seq[Node](Iri("https://a.org/x1"), SimpleLiteral("one")),
       )
       for (name, rows) <- cases do
         withClue(s"$name: ") {
@@ -254,18 +253,16 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
           e.appendRow(Array(rows.head))
           val frame = e.endFrame()
           frame.getRowCount shouldBe 1
-          val valueCount = frame.getIriColumns.asScala.map(_.getNameIds.size).sum +
-            frame.getBnodeColumns.asScala.map(_.getValues.size).sum +
-            frame.getLiteralColumns.asScala.map(_.getLexValues.size).sum +
-            frame.getPolyColumns.asScala.map(SparqlColumns.valueCount).sum
-          valueCount shouldBe 1
+          val column = frame.getColumns.asScala.head
+          SparqlColumns.valueCount(column) shouldBe 1
+          // One value is of one type, so no kinds either
+          column.getKinds.isEmpty shouldBe true
         }
     }
 
-    // A polymorphic column reads its literals back out of the shared buffers at frame end, where
-    // language tags and datatypes take their own branches. Every mixed-type preset in
-    // SparqlDataGen pairs its column with plain literals, so nothing else reaches those branches.
-    "encode language-tagged and datatype literals in a polymorphic column" in {
+    // Every mixed-type preset in SparqlDataGen pairs its column with plain literals, so this is
+    // what checks language tags and datatypes in a column that also has IRIs.
+    "encode language-tagged and datatype literals in a column with mixed term types" in {
       val e = encoder()
       e.setVariables(Seq("x").asJava)
       val rows = Seq[Node](
@@ -273,7 +270,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
         LangLiteral("hello", "en"),
         DtLiteral("1", Datatype("https://a.org/d1")),
         SimpleLiteral("plain"),
-        // A second language tag and datatype, so the buffer cursors have to keep advancing
+        // A second language tag and datatype
         LangLiteral("bonjour", "fr"),
         DtLiteral("2", Datatype("https://a.org/d2")),
         // A second IRI in the same namespace and with the next name id, so both are inferred away
@@ -286,16 +283,14 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       for row <- rows do e.appendRow(Array(row))
       val frame = e.endFrame()
 
-      val column = frame.getPolyColumns.asScala.head
+      val column = frame.getColumns.asScala.head
       // IRI, five literals, two IRIs
       SparqlColumns.kindsOf(column) shouldBe Seq(0, 1, 1, 1, 1, 1, 0, 0)
-      // The lexical forms must line up with the values – a language tag takes a second slot in
-      // the shared string buffer, which is what the cursor gets wrong if it is not accounted for
-      val literals = column.getLiterals
-      literals.getLexValues.asScala.toSeq shouldBe Seq("hello", "1", "plain", "bonjour", "2")
-      literals.getLangtags.asScala.toSeq shouldBe Seq("en", "fr")
-      literals.getLangtagDirections.size shouldBe 0
-      val kinds = (0 until literals.getLiteralKinds.size).map(literals.getLiteralKinds.get)
+      // The lexical forms must line up with the values
+      column.getLexValues.asScala.toSeq shouldBe Seq("hello", "1", "plain", "bonjour", "2")
+      column.getLangtags.asScala.toSeq shouldBe Seq("en", "fr")
+      column.getLangtagDirections.size shouldBe 0
+      val kinds = (0 until column.getLiteralKinds.size).map(column.getLiteralKinds.get)
       kinds.size shouldBe 5
       kinds(0) shouldBe langKind(0)
       kinds(3) shouldBe langKind(1)
@@ -306,13 +301,52 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       kinds(1) % 2 shouldBe 1
       kinds(4) % 2 shouldBe 1
       kinds(1) should not be kinds(4)
-      // The IRIs share one namespace, so the prefix is stated once for the sub-column. The first
-      // IRI gets name id 1 and the second name id 2, each the one after the previous, so both
+      // The IRIs share one namespace, so the prefix is stated once for the column. The first IRI
+      // gets name id 1 and the second name id 2, each the one after the previous, so both
       // compress to zero. The third goes back to name 1.
-      val iris = column.getIris
-      iris.getPrefixIds.size shouldBe 1
-      iris.getPrefixIds.get(0) should not be 0
-      (0 until iris.getNameIds.size).map(iris.getNameIds.get) shouldBe Seq(0, 0, 1)
+      column.getPrefixIds.size shouldBe 1
+      column.getPrefixIds.get(0) should not be 0
+      (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(0, 0, 1)
+    }
+
+    "write the kinds only for a column that mixes term types in the frame" in {
+      val e = encoder()
+      e.setVariables(Seq("x", "y").asJava)
+      e.appendRow(Array[Node](Iri("https://a.org/x1"), Iri("https://a.org/y1")))
+      e.appendRow(Array[Node](Iri("https://a.org/x2"), BlankNode("b1")))
+      val columns = e.endFrame().getColumns.asScala.toSeq
+      columns(0).getKinds.isEmpty shouldBe true
+      SparqlColumns.kindsOf(columns(1)) shouldBe Seq(0, 2)
+      // The next frame has one type in the second column again
+      e.appendRow(Array[Node](Iri("https://a.org/x3"), BlankNode("b2")))
+      e.endFrame().getColumns.asScala.toSeq(1).getKinds.isEmpty shouldBe true
+    }
+
+    "not carry a column's kinds into the next frame" in {
+      val e = encoder()
+      e.setVariables(Seq("x").asJava)
+      def kindsOf(rows: Node*) =
+        for row <- rows do e.appendRow(Array(row))
+        SparqlColumns.kindsOf(e.endFrame().getColumns.asScala.head)
+      // Each frame writes its kinds over those of the frame before, which have other bits set
+      kindsOf(
+        BlankNode("b1"),
+        BlankNode("b2"),
+        BlankNode("b3"),
+        BlankNode("b4"),
+        BlankNode("b5"),
+        SimpleLiteral("one"),
+      ) shouldBe Seq(2, 2, 2, 2, 2, 1)
+      kindsOf(
+        Iri("https://a.org/x1"),
+        SimpleLiteral("two"),
+        Iri("https://a.org/x2"),
+        Iri("https://a.org/x3"),
+        Iri("https://a.org/x4"),
+        SimpleLiteral("three"),
+      ) shouldBe Seq(0, 1, 0, 0, 0, 1)
+      kindsOf(Iri("https://a.org/x5"), Iri("https://a.org/x6"), SimpleLiteral("four")) shouldBe
+        Seq(0, 0, 1)
     }
 
     "not carry a column's layout into the next frame" in {
@@ -321,10 +355,10 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       // A run of three plus an unbound cell, so the layout is non-empty
       for _ <- 1 to 3 do e.appendRow(Array[Node](Iri("https://a.org/x1")))
       e.appendRow(Array[Node](null))
-      e.endFrame().getIriColumns.asScala.head.getLayouts.size should be > 0
+      e.endFrame().getColumns.asScala.head.getLayouts.size should be > 0
       // A single distinct value emits no layout tokens at all
       e.appendRow(Array[Node](Iri("https://a.org/x2")))
-      e.endFrame().getIriColumns.asScala.head.getLayouts.size shouldBe 0
+      e.endFrame().getColumns.asScala.head.getLayouts.size shouldBe 0
     }
   }
 
@@ -335,7 +369,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.setVariables(Seq("x").asJava)
       for iri <- Seq("https://a.org/x1", "https://a.org/x2", "https://a.org/x1", "https://b.org/z")
       do e.appendRow(Array[Node](Iri(iri)))
-      val column = e.endFrame().getIriColumns.asScala.head
+      val column = e.endFrame().getColumns.asScala.head
 
       // Names: 0 means "the next one", so only the two that break the sequence are stated
       (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(0, 0, 1, 3)
@@ -353,7 +387,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.setVariables(Seq("x").asJava)
       e.appendRow(Array[Node](Iri("https://a.org/x1")))
       e.appendRow(Array[Node](Iri("https://a.org/x2")))
-      val column = e.endFrame().getIriColumns.asScala.head
+      val column = e.endFrame().getColumns.asScala.head
       column.getNameIds.size shouldBe 2
       // With the prefix table disabled every prefix id is 0, so the array is dropped entirely
       column.getPrefixIds.size shouldBe 0
@@ -364,7 +398,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
         val e = encoder()
         e.setVariables(Seq("x").asJava)
         for i <- iris do e.appendRow(Array[Node](Iri(i)))
-        val column = e.endFrame().getIriColumns.asScala.head
+        val column = e.endFrame().getColumns.asScala.head
         (0 until column.getPrefixIds.size).map(column.getPrefixIds.get)
 
       // One namespace for the whole column: a single entry covers every value
@@ -386,7 +420,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.endFrame()
       // Same IRI again, in a new frame: it must state its prefix, as the decoder resets per column
       e.appendRow(Array[Node](Iri("https://a.org/x1")))
-      e.endFrame().getIriColumns.asScala.head.getPrefixIds.get(0) shouldBe 1
+      e.endFrame().getColumns.asScala.head.getPrefixIds.get(0) shouldBe 1
     }
 
     "expose uncompressed IRIs to converters that ask for them" in {
@@ -398,7 +432,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.setVariables(Seq("x").asJava)
       e.appendRow(Array[Node](Iri("https://a.org/x1")))
       e.appendRow(Array[Node](Iri("https://a.org/x2")))
-      val column = e.endFrame().getIriColumns.asScala.head
+      val column = e.endFrame().getColumns.asScala.head
       // Raw IRIs always carry their real name ids – no "next one" compression
       (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(1, 2)
       (0 until column.getPrefixIds.size).map(column.getPrefixIds.get) shouldBe Seq(1)
@@ -420,7 +454,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.setVariables(Seq("x").asJava)
       e.appendRow(Array[Node](Iri("https://a.org/x1")))
       e.appendRow(Array[Node](Iri("https://a.org/x2")))
-      val column = e.endFrame().getIriColumns.asScala.head
+      val column = e.endFrame().getColumns.asScala.head
       // The whole IRI goes in the name table, so there is no prefix id to track
       (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(1, 2)
       column.getPrefixIds.size shouldBe 0
@@ -441,8 +475,10 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       val error = intercept[RdfProtoSerializationError] {
         e.appendRow(Array[Node](Iri("https://test.org/a")))
       }
-      error.getMessage should include("Unsupported term type")
-      error.getMessage should include("java.lang.Integer")
+      // The converter did not encode the node as any term, so the node itself is reported
+      error.getMessage should include(
+        "Unsupported term type in SPARQL results: Iri(https://test.org/a)",
+      )
     }
 
     "reject a converter that encodes nothing" in {
@@ -451,7 +487,9 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       val error = intercept[RdfProtoSerializationError] {
         e.appendRow(Array[Node](Iri("https://test.org/a")))
       }
-      error.getMessage should include("Unsupported term type in SPARQL results: null")
+      error.getMessage should include(
+        "Unsupported term type in SPARQL results: Iri(https://test.org/a)",
+      )
     }
   }
 
