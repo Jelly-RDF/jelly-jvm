@@ -56,7 +56,7 @@ jobs:
           if [ $JELLY_VERSION = "refs/heads/main" ]; then
             JELLY_VERSION="dev"
           fi
-          sbt "integrationTests/testOnly *ProtocolConformanceSpec -- -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"
+          sbt "integrationTests/testOnly *ProtocolConformanceSpec *SparqlConformanceSpec -- -C eu.neverblink.jelly.integration_tests.util.ConformanceReporter"
           cd integration-tests/target
           tar -czf conformance_reports.tar.gz reports/
           cd ../..

@@ -1,6 +1,5 @@
 package eu.neverblink.jelly.integration_tests.util
 
-import eu.neverblink.jelly.integration_tests.rdf.io.*
 import org.apache.jena.Jena
 import org.scalatest.Reporter
 import org.scalatest.events.*
@@ -16,16 +15,13 @@ class ConformanceReporter extends Reporter {
     Instant.now().atZone(ZoneOffset.UTC).toLocalDate.toString,
   )
 
-  lazy val results: Map[String, mutable.StringBuilder] = Map(
-    JenaStreamSerDes.name -> initStringBuilder(JenaStreamSerDes.name),
-    Rdf4jSerDes.name -> initStringBuilder(Rdf4jSerDes.name),
-    "Reactive (RDF4J)" -> initStringBuilder("Reactive (RDF4J)"),
-    "Reactive writes (Apache Jena)" -> initStringBuilder("Reactive writes (Apache Jena)"),
-    TitaniumSerDes.name -> initStringBuilder(TitaniumSerDes.name),
-  )
+  /** The report being built for each (report file suffix, integration), in order of first use. */
+  val results: mutable.LinkedHashMap[(String, String), mutable.StringBuilder] =
+    mutable.LinkedHashMap()
 
   def renameIntegrations(name: String): String = name match {
-    case "Jena (StreamRDF)" => s"Jena ${Jena.VERSION}"
+    case "Jena (StreamRDF)" | "jena" => s"Jena ${Jena.VERSION}"
+    case "rdf4j" => "RDF4J"
     case "Reactive (RDF4J)" => "Pekko Streams (RDF4J)"
     case "Reactive writes (Apache Jena)" => s"Pekko Streams (Jena ${Jena.VERSION})"
     case s => s
@@ -97,31 +93,38 @@ class ConformanceReporter extends Reporter {
     sb
   }
 
-  val testPattern: Regex = "^.*?erializer (.*?) when Protocol test (.*?) ".r
+  // Test names of ProtocolConformanceSpec and SparqlConformanceSpec, and the suffix of the
+  // report file name for each
+  val testPatterns: Seq[(Regex, String)] = Seq(
+    "^.*?erializer (.*?) when Protocol test (.*?) ".r -> "",
+    "^Jelly-SPARQL (?:reader|writer) (.*?) when conformance test (.*?) ".r -> " SPARQL",
+  )
+
+  private def record(testName: String, timeStamp: Long, outcome: String): Unit =
+    for
+      (pattern, suffix) <- testPatterns
+      m <- pattern.findFirstMatchIn(testName)
+    do
+      results
+        .getOrElseUpdate((suffix, m.group(1)), initStringBuilder(m.group(1)))
+        .append(formatResult(m.group(2), timeStamp, outcome))
 
   override def apply(event: Event): Unit = {
     event match {
-      case s: TestSucceeded =>
-        val x = testPattern.findFirstMatchIn(s.testName).get
-        if x.group(1) == "Jena" then println(x.group(1))
-        results(x.group(1)).append(formatResult(x.group(2), s.timeStamp, "passed"))
-      case s: TestCanceled =>
-        val x = testPattern.findFirstMatchIn(s.testName).get
-        results(x.group(1)).append(formatResult(x.group(2), s.timeStamp, "inapplicable"))
-      case s: TestFailed =>
-        val x = testPattern.findFirstMatchIn(s.testName).get
-        results(x.group(1)).append(formatResult(x.group(2), s.timeStamp, "failed"))
+      case s: TestSucceeded => record(s.testName, s.timeStamp, "passed")
+      case s: TestCanceled => record(s.testName, s.timeStamp, "inapplicable")
+      case s: TestFailed => record(s.testName, s.timeStamp, "failed")
       case _: SuiteCompleted =>
-        results.foreach((name, sb) => {
-          println(s"Writing report for $name")
+        results.foreach { case ((suffix, name), sb) =>
+          println(s"Writing$suffix report for $name")
           Files.createDirectories(Paths.get("integration-tests/target/reports/"))
           Files.writeString(
             Paths.get(
-              s"integration-tests/target/reports/Jelly-JVM_${renameIntegrations(name)} conformance report.ttl",
+              s"integration-tests/target/reports/Jelly-JVM_${renameIntegrations(name)}$suffix conformance report.ttl",
             ),
             prefixes + metadata + sb.toString(),
           )
-        })
+        }
       case _ =>
     }
   }
