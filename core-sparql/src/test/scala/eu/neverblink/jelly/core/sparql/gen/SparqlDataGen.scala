@@ -237,23 +237,22 @@ object SparqlDataGen:
       2_000,
     ),
     ResultSetSpec("bnodes", Seq(ColumnSpec(ColumnKind.BNode, distinctValues = 2048)), N),
-    // --- Polymorphic columns ---
+    // --- Columns that mix term types ---
     ResultSetSpec(
       "poly-half",
       Seq(ColumnSpec(distinctValues = 2048, mixFraction = 0.5)),
       N,
     ),
-    // Almost all IRIs, with the first literal appearing well past the first frame boundary: forces
-    // a mid-stream header restatement and a switch to a polymorphic column.
+    // Almost all IRIs, with the first literal appearing well past the first frame boundary: the
+    // column only gets kinds from then on.
     ResultSetSpec(
       "poly-late-switch",
       Seq(ColumnSpec(distinctValues = 2048, mixFraction = 0.0005, mixStartRow = 5_000)),
       N,
     ),
     // A mixed column pairs its kind with IRIs (see altKind), so these two are the only way a
-    // preset puts a language-tagged or a datatype literal in a polymorphic column. Those take
-    // their own branches when the column is written out, and the IRI-based poly presets above
-    // never reach them.
+    // preset puts a language-tagged or a datatype literal in a column that mixes term types. The
+    // IRI-based poly presets above only mix IRIs with simple literals.
     // --- RDF 1.2 terms ---
     // One tag and direction for the whole column (the lexical form), then all four combinations
     // of two tags and two directions (the full form).
@@ -306,7 +305,7 @@ object SparqlDataGen:
     ResultSetSpec("single-row", Seq.fill(3)(ColumnSpec(distinctValues = 8)), 1),
     // Zero variables: row_count is the only payload.
     ResultSetSpec("zero-vars", Seq.empty, N),
-    // --- A realistic mix: entity, property, label, optional value, polymorphic object ---
+    // --- A realistic mix: entity, property, label, optional value, object of mixed types ---
     ResultSetSpec(
       "realistic-mixed",
       Seq(
@@ -330,8 +329,8 @@ object SparqlDataGen:
   val presetNames: IndexedSeq[String] = presets.map(_.name)
 
   /** Shrinks a spec to at most `maxRows` rows, keeping its shape intact – in particular, the row at
-    * which a polymorphic column starts mixing term types is scaled along with the row count, so
-    * that a shrunk 'poly-late-switch' still switches somewhere in the middle.
+    * which a column starts mixing term types is scaled along with the row count, so that a shrunk
+    * 'poly-late-switch' still switches somewhere in the middle.
     */
   def scaled(spec: ResultSetSpec, maxRows: Int): ResultSetSpec =
     if spec.rows <= maxRows then spec
@@ -381,7 +380,7 @@ object SparqlDataGen:
       runLength = 1.0 + rnd.nextInt(10),
       jitterRuns = rnd.nextBoolean(),
       sorted = rnd.nextBoolean(),
-      // Most columns stay monomorphic – polymorphic ones are the exception in practice
+      // Most columns have one term type – mixed ones are the exception in practice
       mixFraction = if rnd.nextInt(3) == 0 then rnd.nextDouble() * 0.5 else 0.0,
       mixStartRow = rnd.nextInt(50),
     )

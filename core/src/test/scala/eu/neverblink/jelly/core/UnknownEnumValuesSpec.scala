@@ -30,8 +30,8 @@ class UnknownEnumValuesSpec extends AnyWordSpec, Matchers:
     }
 
     "keep an unknown base direction" in {
-      val literal = RdfLiteral2.parseFrom(
-        RdfLiteral2.newInstance().setLex("a").setLangtag("en").setDirectionValue(7).toByteArray,
+      val literal = RdfLiteral.parseFrom(
+        RdfLiteral.newInstance().setLex("a").setLangtag("en").setDirectionValue(7).toByteArray,
       )
       literal.getDirectionValue shouldBe 7
       literal.getDirection shouldBe null

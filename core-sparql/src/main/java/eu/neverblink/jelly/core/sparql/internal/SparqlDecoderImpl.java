@@ -7,8 +7,9 @@ import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.internal.DecoderBase;
 import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
+import eu.neverblink.jelly.core.proto.v1.RdfColumn;
 import eu.neverblink.jelly.core.proto.v1.RdfIri;
-import eu.neverblink.jelly.core.proto.v1.RdfLiteral2;
+import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
 import eu.neverblink.jelly.core.proto.v1.RdfLookupEntryPacked;
 import eu.neverblink.jelly.core.proto.v1.RdfTripleTerm;
 import eu.neverblink.jelly.core.proto.v1.RdfVersion;
@@ -18,8 +19,10 @@ import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
 import eu.neverblink.jelly.core.utils.RdfVersionUtils;
+import eu.neverblink.protoc.java.runtime.MessageCollection;
 import eu.neverblink.protoc.java.runtime.RepeatedInt;
 import eu.neverblink.protoc.java.runtime.RepeatedString;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -49,7 +52,8 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     // Variables of the result set, as declared by its first header. Kept across options resets, as
     // every header of a FLAT stream must declare the same ones.
     private String[] variableNames = null;
-    private int[] varToColumn = null;
+    // Whether a header is in effect: column i of a frame holds variable i
+    private boolean headerInEffect = false;
     private TNode[] rowBuffer = null;
     // Per-variable column decode buffers, reused across frames unless the handler keeps them.
     // The inner arrays grow to the largest row count seen so far.
@@ -129,18 +133,23 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             return;
         }
         if (!frame.getVariables().isEmpty()) {
+            if (frame.getOptions() == null && (flags & RESULT_SET_START) == 0) {
+                throw new RdfProtoDeserializationError(
+                    "The variables may only be set in the first frame of a result set, or with the stream options."
+                );
+            }
             handleHeader(frame.getVariables());
-        } else if (varToColumn == null && (frame.getOptions() != null || (flags & RESULT_SET_START) != 0)) {
+        } else if (!headerInEffect && (frame.getOptions() != null || (flags & RESULT_SET_START) != 0)) {
             if (variableNames != null && variableNames.length > 0) {
                 throw new RdfProtoDeserializationError(
-                    "A frame that repeats the stream options must restate the result set header."
+                    "A frame that repeats the stream options must repeat the result set header."
                 );
             }
             // The first frame of a result set, or a frame containing options, with no header in
             // effect and no variables: a zero-variable result set.
             handleHeader(List.of());
         }
-        if (varToColumn == null) {
+        if (!headerInEffect) {
             throw new RdfProtoDeserializationError("The result set header (variables) was not received.");
         }
 
@@ -161,14 +170,8 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
         applyLookupEntries(frame);
 
-        final var iriColumns = frame.getIriColumns();
-        final var bnodeColumns = frame.getBnodeColumns();
-        final var literalColumns = frame.getLiteralColumns();
-        final var polyColumns = frame.getPolyColumns();
-        final int iriEnd = iriColumns.size();
-        final int bnodeEnd = iriEnd + bnodeColumns.size();
-        final int literalEnd = bnodeEnd + literalColumns.size();
-        final int totalColumns = literalEnd + polyColumns.size();
+        final var columns = frame.getColumns();
+        final int totalColumns = columns.size();
         // A frame with no rows may skip serializing columns
         final boolean noColumns = totalColumns == 0 && rows == 0;
         if (totalColumns != variableNames.length && !noColumns) {
@@ -185,22 +188,10 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             decodedColumns = new Object[variableNames.length][];
         }
         for (int v = 0; v < variableNames.length && !noColumns; v++) {
-            final int c = varToColumn[v];
             final Object[] out = decodeBufferForVariable(v, rows);
+            final RdfColumn column = get(columns, v);
             try {
-                if (c < iriEnd) {
-                    final SparqlIriColumn column = get(iriColumns, c);
-                    decodeColumn(new IriReader(column), column.getLayouts(), rows, out);
-                } else if (c < bnodeEnd) {
-                    final SparqlBnodeColumn column = get(bnodeColumns, c - iriEnd);
-                    decodeColumn(new BnodeReader(column.getValues()), column.getLayouts(), rows, out);
-                } else if (c < literalEnd) {
-                    final SparqlLiteralColumn column = get(literalColumns, c - bnodeEnd);
-                    decodeColumn(literalReader(column), column.getLayouts(), rows, out);
-                } else {
-                    final SparqlPolyColumn column = get(polyColumns, c - literalEnd);
-                    decodeColumn(new PolyReader(column), column.getLayouts(), rows, out);
-                }
+                decodeColumn(columnReader(column), column.getLayouts(), rows, out);
             } catch (RdfProtoDeserializationError e) {
                 throw e;
             } catch (Exception e) {
@@ -282,7 +273,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
      */
     private void startResultSet() {
         variableNames = null;
-        varToColumn = null;
+        headerInEffect = false;
         rowBuffer = null;
         decodedColumns = null;
         // The result set starts with the frame being ingested, so RESULT_SET_START stays set
@@ -318,7 +309,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             }
             // Repeated options (e.g., in concatenated streams) reset the stream state.
             resetLookups();
-            varToColumn = null;
+            headerInEffect = false;
         }
         currentOptions = options;
         if (options.getStreamTypeValue() == SparqlStreamType.PUNCTUATED_VALUE) {
@@ -347,14 +338,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 "A boolean (ASK) result may only be in the first frame of a result set."
             );
         }
-        if (
-            frame.getRowCount() != 0 ||
-            !frame.getVariables().isEmpty() ||
-            !frame.getIriColumns().isEmpty() ||
-            !frame.getBnodeColumns().isEmpty() ||
-            !frame.getLiteralColumns().isEmpty() ||
-            !frame.getPolyColumns().isEmpty()
-        ) {
+        if (frame.getRowCount() != 0 || !frame.getVariables().isEmpty() || !frame.getColumns().isEmpty()) {
             throw new RdfProtoDeserializationError(
                 "A frame with a boolean (ASK) result must not carry any bindings content."
             );
@@ -363,50 +347,59 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         handler.handleAskResult(frame.getAskResult().getValue());
     }
 
-    private void handleHeader(Iterable<SparqlVariable> variables) {
-        int count = 0;
-        for (final var ignored : variables) {
-            count++;
-        }
-        if (variableNames != null && count != variableNames.length) {
-            throw new RdfProtoDeserializationError(
-                "A restated header must declare the same variables as the original header."
-            );
-        }
-        final String[] names = new String[count];
-        final int[] columnIndices = new int[count];
-        final boolean[] seen = new boolean[count];
-        int i = 0;
-        for (final SparqlVariable variable : variables) {
-            names[i] = variable.getName();
-            final int c = variable.getColumnIndex();
-            if (c < 0 || c >= count || seen[c]) {
-                throw new RdfProtoDeserializationError(
-                    "Invalid column index %d for variable %s: the column indices must form a permutation of [0, %d).".formatted(
-                        c,
-                        names[i],
-                        count
-                    )
-                );
+    private void handleHeader(Iterable<String> variables) {
+        final ArrayList<String> list = new ArrayList<>();
+        variables.forEach(list::add);
+        final String[] names = list.toArray(String[]::new);
+        for (final String name : names) {
+            if (name.isEmpty()) {
+                throw new RdfProtoDeserializationError("Variable names must not be empty.");
             }
-            seen[c] = true;
-            columnIndices[i] = c;
-            i++;
         }
         if (variableNames == null) {
             variableNames = names;
-            rowBuffer = handler.createRowBuffer(count);
-            if (rowBuffer == null || rowBuffer.length != count) {
+            rowBuffer = handler.createRowBuffer(names.length);
+            if (rowBuffer == null || rowBuffer.length != names.length) {
                 throw new RdfProtoDeserializationError("The handler's createRowBuffer returned an invalid buffer.");
             }
-            decodedColumns = new Object[count][];
+            decodedColumns = new Object[names.length][];
             handler.handleVariables(List.of(names));
         } else if (!Arrays.equals(variableNames, names)) {
             throw new RdfProtoDeserializationError(
-                "A restated header must declare the same variables in the same order as the original header."
+                "A repeated header must declare the same variables in the same order as the original header."
             );
         }
-        varToColumn = columnIndices;
+        headerInEffect = true;
+    }
+
+    /**
+     * Picks the reader for a column: the reader for one term type if the column has no kinds, or
+     * the reader for a column that mixes term types.
+     */
+    private ValueReader<TNode> columnReader(RdfColumn column) {
+        if (!column.getKinds().isEmpty()) {
+            return new MixedReader(column);
+        }
+        final int iriCount = column.getNameIds().size();
+        final int literalCount = column.getLexValues().size();
+        final int bnodeCount = column.getBnodes().size();
+        final int tripleCount = column.getTripleTerms().size();
+        final int nonEmpty =
+            (iriCount > 0 ? 1 : 0) + (literalCount > 0 ? 1 : 0) + (bnodeCount > 0 ? 1 : 0) + (tripleCount > 0 ? 1 : 0);
+        if (nonEmpty > 1) {
+            throw new RdfProtoDeserializationError(
+                "Corrupt column: the values are of more than one type, but the column has no kinds."
+            );
+        }
+        if (literalCount > 0) {
+            return literalReader(column);
+        } else if (bnodeCount > 0) {
+            return new BnodeReader(column.getBnodes());
+        } else if (tripleCount > 0) {
+            return new TripleTermReader(column.getTripleTerms());
+        }
+        // IRIs, or no values at all
+        return new IriReader(column);
     }
 
     /**
@@ -465,13 +458,13 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         private final IriState iriState = new IriState();
         private int index = 0;
 
-        IriReader(SparqlIriColumn column) {
+        IriReader(RdfColumn column) {
             this.nameIds = column.getNameIds();
             this.prefixIds = column.getPrefixIds();
             final int prefixCount = prefixIds.size();
             if (prefixCount > 1 && prefixCount != nameIds.size()) {
                 throw new RdfProtoDeserializationError(
-                    "Corrupt IRI column: %d prefix ids for %d name ids, expected 0, 1 or %d.".formatted(
+                    "Corrupt column: %d prefix ids for %d name ids, expected 0, 1 or %d.".formatted(
                         prefixCount,
                         nameIds.size(),
                         nameIds.size()
@@ -536,16 +529,16 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     }
 
     /**
-     * Picks the reader for a literal column: one kind for the whole column, or one per value
+     * Picks the reader for the literals of a column: one kind for all of them, or one per literal
      * (see the sparql.proto comments).
      */
-    private ValueReader<TNode> literalReader(SparqlLiteralColumn column) {
+    private ValueReader<TNode> literalReader(RdfColumn column) {
         final RepeatedString lexValues = column.getLexValues();
         final RepeatedInt kinds = column.getLiteralKinds();
         final int kindCount = kinds.size();
         if (kindCount > 1 && kindCount != lexValues.size()) {
             throw new RdfProtoDeserializationError(
-                "Corrupt literal column: %d literal kinds for %d lexical forms, expected 0, 1 or %d.".formatted(
+                "Corrupt column: %d literal kinds for %d lexical forms, expected 0, 1 or %d.".formatted(
                     kindCount,
                     lexValues.size(),
                     lexValues.size()
@@ -556,10 +549,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         final RepeatedInt directions = column.getLangtagDirections();
         if (!directions.isEmpty() && directions.size() != langtags.size()) {
             throw new RdfProtoDeserializationError(
-                "Corrupt literal column: %d base directions for %d language tags.".formatted(
-                    directions.size(),
-                    langtags.size()
-                )
+                "Corrupt column: %d base directions for %d language tags.".formatted(directions.size(), langtags.size())
             );
         }
         if (lexValues.isEmpty()) {
@@ -616,7 +606,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             final int index = (kind >>> 1) - 1;
             if (index >= langtags.size()) {
                 throw new RdfProtoDeserializationError(
-                    "Corrupt literal column: language tag %d referenced, but the column has %d.".formatted(
+                    "Corrupt column: language tag %d referenced, but the column has %d.".formatted(
                         index,
                         langtags.size()
                     )
@@ -735,19 +725,20 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     }
 
     /**
-     * Converts a literal in the full form. Every literal of the stream that is not in the lexical
-     * form of a literal column goes through here.
+     * Converts a literal of a triple term, which is in the full form, with its base direction. This
+     * is not the convertLiteral of the base class, which converts the literals of the row layout of
+     * Jelly-RDF, which have no base direction.
      */
-    private TNode convertLiteral(RdfLiteral2 literal) {
+    private TNode convertTripleTermLiteral(RdfLiteral literal) {
         final int direction = literal.getDirectionValue();
         switch (literal.getLiteralKindFieldNumber()) {
-            case RdfLiteral2.LANGTAG -> {
+            case RdfLiteral.LANGTAG -> {
                 if (direction == 0) {
                     return converter.makeLangLiteral(literal.getLex(), literal.getLangtag());
                 }
                 return converter.makeDirLangLiteral(literal.getLex(), literal.getLangtag(), baseDirection(direction));
             }
-            case RdfLiteral2.DATATYPE -> {
+            case RdfLiteral.DATATYPE -> {
                 if (direction != 0) {
                     throw directionWithoutLangtag();
                 }
@@ -798,10 +789,73 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     }
 
     /**
-     * Reader for a polymorphic column: the kinds field says which typed sub-column holds the next
-     * value (see the sparql.proto comments).
+     * Reader for the triple terms of a column. Their IRIs take part in an IRI inference of their
+     * own, separate from that of the column's IRIs, in the order subject, predicate, object (see
+     * the sparql.proto comments).
      */
-    private final class PolyReader extends ValueReader<TNode> {
+    private final class TripleTermReader extends ValueReader<TNode> {
+
+        private final Iterator<RdfTripleTerm> terms;
+        private final IriState iriState = new IriState();
+        private int remaining;
+
+        TripleTermReader(MessageCollection<RdfTripleTerm, ?> terms) {
+            this.terms = terms.iterator();
+            this.remaining = terms.size();
+        }
+
+        @Override
+        int remaining() {
+            return remaining;
+        }
+
+        @Override
+        void decodeInto(Object[] out, int from, int count) {
+            for (int i = 0; i < count; i++) {
+                out[from + i] = decodeNext();
+            }
+        }
+
+        @Override
+        TNode decodeNext() {
+            if (allowedRdfVersion() < RdfVersion.RDF_VERSION_1_2_VALUE) {
+                throw notAllowed("triple terms");
+            }
+            remaining--;
+            return decodeTripleTerm(terms.next());
+        }
+
+        /** Decodes a triple term. The nesting depth is already limited by the parser. */
+        private TNode decodeTripleTerm(RdfTripleTerm triple) {
+            final TNode s = switch (triple.getSubjectFieldNumber()) {
+                case RdfTripleTerm.S_IRI -> decodeIri(triple.getSIri());
+                case RdfTripleTerm.S_BNODE -> converter.makeBlankNode(triple.getSBnode());
+                default -> throw new RdfProtoDeserializationError("A triple term has no subject.");
+            };
+            if (triple.getPIri() == null) {
+                throw new RdfProtoDeserializationError("A triple term has no predicate.");
+            }
+            final TNode p = decodeIri(triple.getPIri());
+            final TNode o = switch (triple.getObjectFieldNumber()) {
+                case RdfTripleTerm.O_IRI -> decodeIri(triple.getOIri());
+                case RdfTripleTerm.O_BNODE -> converter.makeBlankNode(triple.getOBnode());
+                case RdfTripleTerm.O_LITERAL -> convertTripleTermLiteral(triple.getOLiteral());
+                case RdfTripleTerm.O_TRIPLE_TERM -> decodeTripleTerm(triple.getOTripleTerm());
+                default -> throw new RdfProtoDeserializationError("A triple term has no object.");
+            };
+            return converter.makeTripleNode(s, p, o);
+        }
+
+        private TNode decodeIri(RdfIri iri) {
+            return iriState.decode(iri.getPrefixId(), iri.getNameId());
+        }
+    }
+
+    /**
+     * Reader for a column whose values mix term types: the kinds field says which list holds the
+     * next value (see the sparql.proto comments).
+     */
+    private final class MixedReader extends ValueReader<TNode> {
 
         private static final int IRI = 0;
         private static final int LITERAL = 1;
@@ -824,38 +878,30 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
         private final byte[] kinds;
         private final int valueCount;
+        // Readers of the values of each type, null where the column has none
         private final ValueReader<TNode> iris;
         private final ValueReader<TNode> literals;
         private final ValueReader<TNode> bnodes;
-        private final Iterator<RdfTripleTerm> tripleTerms;
-        // The IRIs of the triple terms have an inference state of their own
-        private final IriState tripleIriState = new IriState();
+        private final ValueReader<TNode> tripleTerms;
         private int index = 0;
 
-        PolyReader(SparqlPolyColumn column) {
-            final SparqlIriColumn iriColumn = column.getIris();
-            final SparqlLiteralColumn literalColumn = column.getLiterals();
-            final SparqlBnodeColumn bnodeColumn = column.getBnodes();
-            final int iriCount = iriColumn == null ? 0 : iriColumn.getNameIds().size();
-            final int literalCount = literalColumn == null ? 0 : literalColumn.getLexValues().size();
-            final int bnodeCount = bnodeColumn == null ? 0 : bnodeColumn.getValues().size();
+        MixedReader(RdfColumn column) {
+            final int iriCount = column.getNameIds().size();
+            final int literalCount = column.getLexValues().size();
+            final int bnodeCount = column.getBnodes().size();
             final int tripleCount = column.getTripleTerms().size();
-            // The layouts of the sub-columns are ignored
             this.valueCount = iriCount + literalCount + bnodeCount + tripleCount;
             final ByteString kindsField = column.getKinds();
             if (kindsField.size() != (valueCount + 3) >>> 2) {
                 throw new RdfProtoDeserializationError(
-                    "Corrupt polymorphic column: %d bytes of kinds for %d values.".formatted(
-                        kindsField.size(),
-                        valueCount
-                    )
+                    "Corrupt column: %d bytes of kinds for %d values.".formatted(kindsField.size(), valueCount)
                 );
             }
             // A copy, which is read faster than the ByteString, and a quarter of the value count long
             this.kinds = kindsField.toByteArray();
-            // Check that the kinds agree with the sub-columns, so that decoding cannot run out of
-            // values in one of them. The bytes that hold 4 values are counted by the table, 16383
-            // at most at a time, so that no 16-bit lane overflows.
+            // Check that the kinds agree with the lists of values, so that decoding cannot run out
+            // of values in one of them. The bytes that hold 4 values are counted by the table,
+            // 16383 at most at a time, so that no 16-bit lane overflows.
             final int[] counts = new int[4];
             final int fullBytes = valueCount >>> 2;
             for (int start = 0; start < fullBytes; start += 16383) {
@@ -878,19 +924,17 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 counts[TRIPLE] != tripleCount
             ) {
                 throw new RdfProtoDeserializationError(
-                    "Corrupt polymorphic column: the kinds do not match the number of values in the sub-columns."
+                    "Corrupt column: the kinds do not match the number of values of each type."
                 );
             }
             final int unusedBits = (valueCount & 3) == 0 ? 0 : 8 - ((valueCount & 3) << 1);
             if (unusedBits != 0 && (kinds[kinds.length - 1] & 0xff) >>> (8 - unusedBits) != 0) {
-                throw new RdfProtoDeserializationError(
-                    "Corrupt polymorphic column: unused bits of the kinds are not 0."
-                );
+                throw new RdfProtoDeserializationError("Corrupt column: unused bits of the kinds are not 0.");
             }
-            this.iris = iriColumn == null ? null : new IriReader(iriColumn);
-            this.literals = literalColumn == null ? null : literalReader(literalColumn);
-            this.bnodes = bnodeColumn == null ? null : new BnodeReader(bnodeColumn.getValues());
-            this.tripleTerms = column.getTripleTerms().iterator();
+            this.iris = iriCount == 0 ? null : new IriReader(column);
+            this.literals = literalCount == 0 ? null : literalReader(column);
+            this.bnodes = bnodeCount == 0 ? null : new BnodeReader(column.getBnodes());
+            this.tripleTerms = tripleCount == 0 ? null : new TripleTermReader(column.getTripleTerms());
         }
 
         private int kindAt(int i) {
@@ -911,47 +955,13 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
 
         @Override
         TNode decodeNext() {
-            // The counts were checked up front, so the sub-column always has the value
+            // The counts were checked up front, so the reader always has the value
             return switch (kindAt(index++)) {
                 case IRI -> iris.decodeNext();
                 case LITERAL -> literals.decodeNext();
                 case BNODE -> bnodes.decodeNext();
-                default -> {
-                    if (allowedRdfVersion() < RdfVersion.RDF_VERSION_1_2_VALUE) {
-                        throw notAllowed("triple terms");
-                    }
-                    yield decodeTripleTerm(tripleTerms.next());
-                }
+                default -> tripleTerms.decodeNext();
             };
-        }
-
-        /**
-         * Decodes a triple term. Its IRIs take part in the IRI inference of the column's triple
-         * terms, in the order subject, predicate, object. The nesting depth is already limited by
-         * the parser.
-         */
-        private TNode decodeTripleTerm(RdfTripleTerm triple) {
-            final TNode s = switch (triple.getSubjectFieldNumber()) {
-                case RdfTripleTerm.S_IRI -> decodeIri(triple.getSIri());
-                case RdfTripleTerm.S_BNODE -> converter.makeBlankNode(triple.getSBnode());
-                default -> throw new RdfProtoDeserializationError("A triple term has no subject.");
-            };
-            if (triple.getPIri() == null) {
-                throw new RdfProtoDeserializationError("A triple term has no predicate.");
-            }
-            final TNode p = decodeIri(triple.getPIri());
-            final TNode o = switch (triple.getObjectFieldNumber()) {
-                case RdfTripleTerm.O_IRI -> decodeIri(triple.getOIri());
-                case RdfTripleTerm.O_BNODE -> converter.makeBlankNode(triple.getOBnode());
-                case RdfTripleTerm.O_LITERAL -> convertLiteral(triple.getOLiteral());
-                case RdfTripleTerm.O_TRIPLE_TERM -> decodeTripleTerm(triple.getOTripleTerm());
-                default -> throw new RdfProtoDeserializationError("A triple term has no object.");
-            };
-            return converter.makeTripleNode(s, p, o);
-        }
-
-        private TNode decodeIri(RdfIri iri) {
-            return tripleIriState.decode(iri.getPrefixId(), iri.getNameId());
         }
     }
 

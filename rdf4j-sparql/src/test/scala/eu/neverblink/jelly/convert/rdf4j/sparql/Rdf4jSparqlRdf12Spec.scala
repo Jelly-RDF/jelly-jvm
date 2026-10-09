@@ -54,10 +54,9 @@ class Rdf4jSparqlRdf12Spec extends AnyWordSpec, Matchers:
       val frame = SparqlResultsFrame.parseDelimitedFrom(
         ByteArrayInputStream(write(Seq(tripleTerm), JellySparqlWriterSettings.empty())),
       )
-      val column = frame.getPolyColumns.asScala.head
+      val column = frame.getColumns.asScala.head
       column.getTripleTerms.size shouldBe 1
-      // kind 3 -> triple term
-      column.getKinds.byteAt(0) shouldBe 3
+      column.getNameIds.size shouldBe 0
     }
 
     "declare the RDF version given in the settings" in {
