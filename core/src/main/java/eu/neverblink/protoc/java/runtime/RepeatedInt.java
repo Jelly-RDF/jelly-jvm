@@ -61,6 +61,24 @@ public final class RepeatedInt {
         size += other.size;
     }
 
+    /**
+     * Makes the list hold the first size values of an array, without copying them. The array
+     * becomes the list's own until it is cleared: whoever filled it must not change it while the
+     * list is in use.
+     *
+     * @param values the array
+     * @param size how many of its values the list holds
+     */
+    @InternalApi
+    public void wrap(int[] values, int size) {
+        if (size > values.length) {
+            throw new IndexOutOfBoundsException("Size %d is larger than the array (%d)".formatted(size, values.length));
+        }
+        this.values = values;
+        this.size = size;
+        uint32SizeCount = -1;
+    }
+
     public void clear() {
         size = 0;
         uint32SizeCount = -1;

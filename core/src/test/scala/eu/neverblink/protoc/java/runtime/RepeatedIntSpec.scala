@@ -69,6 +69,17 @@ class RepeatedIntSpec extends AnyWordSpec, Matchers:
       writtenBack(r) shouldBe Seq(5, 6)
     }
 
+    "hold the values of a wrapped array and write them" in {
+      val r = repeated(Seq(1, 2, 3))
+      r.computeUInt32SizeNoTag()
+      r.wrap(Array(7, 300, 9, 99), 3)
+      r.size shouldBe 3
+      r.get(1) shouldBe 300
+      r.uint32SizeNoTag() shouldBe 4
+      writtenBack(r) shouldBe Seq(7, 300, 9)
+      an[IndexOutOfBoundsException] should be thrownBy r.wrap(Array(1), 2)
+    }
+
     "write packed values with the size that was measured" in {
       val values = (0 until 1000).map(i => i * 997)
       val r = repeated(values)

@@ -47,6 +47,8 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
 
     private static final int MAX_TRIPLE_TERM_DEPTH = 32;
 
+    private static final int[] EMPTY_IDS = new int[0];
+
     /**
      * Column state of the current frame, filled in from resetFrame() through to buildColumn().
      *
@@ -79,7 +81,11 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
         // Sequence layout
         final RepeatedInt layout = RepeatedInt.newEmptyInstance();
         // IRIs: name ids with the next-name inference already applied (0 means "previous + 1"),
-        // and the raw prefix ids, compressed at frame end
+        // and the raw prefix ids, compressed at frame end. Filled together, so they share one
+        // count and one capacity check, and handed to the lists below when the frame ends.
+        int[] iriNameIds = EMPTY_IDS;
+        int[] iriPrefixIds = EMPTY_IDS;
+        int iriCount = 0;
         final RepeatedInt nameIds = RepeatedInt.newEmptyInstance();
         final RepeatedInt prefixIds = RepeatedInt.newEmptyInstance();
         // Literals: lexical forms and one kind per literal, compressed at frame end
@@ -163,6 +169,7 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
             valueCount = 0;
             termsUsed = 0;
             layout.clear();
+            iriCount = 0;
             nameIds.clear();
             prefixIds.clear();
             lexValues.clear();
@@ -190,10 +197,21 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
             final long ids = encoder.lookupEncoder.makeIriIds(iri);
             final int nameId = (int) (ids >>> 32);
             final int prefixId = (int) ids;
-            nameIds.add(nameId == lastNameId + 1 ? 0 : nameId);
-            prefixIds.add(prefixId);
+            final int n = iriCount;
+            if (n == iriNameIds.length) {
+                growIris();
+            }
+            iriNameIds[n] = nameId == lastNameId + 1 ? 0 : nameId;
+            iriPrefixIds[n] = prefixId;
+            iriCount = n + 1;
             lastNameId = nameId;
             addTerm(TERM_IRI);
+        }
+
+        private void growIris() {
+            final int length = Math.max(16, iriNameIds.length * 2);
+            iriNameIds = Arrays.copyOf(iriNameIds, length);
+            iriPrefixIds = Arrays.copyOf(iriPrefixIds, length);
         }
 
         @Override
@@ -384,6 +402,8 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
      * compressed in place here. Call {@link #endRuns(Column[])} first.
      */
     public RdfColumn.Mutable buildColumn(Column<TNode> col) {
+        col.nameIds.wrap(col.iriNameIds, col.iriCount);
+        col.prefixIds.wrap(col.iriPrefixIds, col.iriCount);
         final RdfColumn.Mutable column = RdfColumn.newInstance()
             .setLayouts(col.layout)
             .setNameIds(col.nameIds)
