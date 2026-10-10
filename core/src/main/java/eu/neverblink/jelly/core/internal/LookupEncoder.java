@@ -355,4 +355,39 @@ public final class LookupEncoder {
         }
         datatypeLookup.newEpoch();
     }
+
+    /**
+     * Starts a new epoch, as {@link #newEpoch()}, in which each table may use at most a budget of
+     * ids: see {@link #hasRoom()}. A table with no entries has no budget to keep.
+     *
+     * @param nameBudget ids of the name table
+     * @param prefixBudget ids of the prefix table
+     * @param datatypeBudget ids of the datatype table
+     */
+    public void newEpoch(int nameBudget, int prefixBudget, int datatypeBudget) {
+        nameLookup.newEpoch(nameBudget);
+        if (prefixLookup != null) {
+            prefixLookup.newEpoch(prefixBudget);
+        }
+        datatypeLookup.newEpoch(datatypeLookup.size == 0 ? Integer.MAX_VALUE : datatypeBudget);
+    }
+
+    /** Whether no table has used more ids in this epoch than its budget. */
+    public boolean hasRoom() {
+        final int prefixes = prefixLookup == null ? 0 : prefixLookup.remaining;
+        return (nameLookup.remaining | prefixes | datatypeLookup.remaining) >= 0;
+    }
+
+    /**
+     * Takes ids off the budgets of the name and prefix tables in this epoch, for IRIs that may
+     * come later.
+     *
+     * @param count how many ids of each
+     */
+    public void reserveIriIds(int count) {
+        nameLookup.remaining -= count;
+        if (prefixLookup != null) {
+            prefixLookup.remaining -= count;
+        }
+    }
 }

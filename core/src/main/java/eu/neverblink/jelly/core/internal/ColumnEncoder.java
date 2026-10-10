@@ -190,7 +190,6 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
             final long ids = encoder.lookupEncoder.makeIriIds(iri);
             final int nameId = (int) (ids >>> 32);
             final int prefixId = (int) ids;
-            encoder.markIriUsed(nameId, prefixId);
             nameIds.add(nameId == lastNameId + 1 ? 0 : nameId);
             prefixIds.add(prefixId);
             lastNameId = nameId;
@@ -253,29 +252,20 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
     private final int maxPrefixTableSize;
     private final int maxDatatypeTableSize;
 
-    /**
-     * The lookup ids used by the current frame – both the ids assigned by
-     * its lookup entries and the ids its columns refer to. One bit per id, starting at
-     * slot 1. Slot 0 is the remaining-budget counter: it starts at the table's budget,
-     * every fresh mark decrements it, and a negative value means the frame has no room
-     * for another row.
-     * <p>
-     * A frame's lookup entries are all applied before any of its columns, so an entry that
-     * the frame overwrites while still referring to the old value cannot be represented. Each
-     * frame is an epoch of the lookups (see resetUsedIds), which never evict an entry used in the
-     * current epoch, so the frame stays safe exactly as long as it has not touched every id of
-     * the table. The budget is set so that one more row of fresh ids still fits: the table size
-     * minus one potential id per column, floored at zero.
-     * <p>
+    /*
+     * A frame's lookup entries are all applied before any of its columns, so an entry that the
+     * frame overwrites while still referring to the old value cannot be represented. Each frame is
+     * an epoch of the lookups (see resetUsedIds), which never evict an entry used in the current
+     * epoch, and count the ids it uses against a budget. The frame stays safe exactly as long as
+     * it has not touched every id of a table: the budget is set so that one more row of fresh ids
+     * still fits, the table size minus one potential id per column, floored at zero.
+     *
      * A triple term can need an IRI id for each of its IRIs, so a column that held triple terms
      * reserves as many IRI ids per row as its largest triple term had (see resetUsedIds and
      * addTripleTerm). This cannot help the first triple term of a column, if it comes in the
      * last few rows of an almost full frame: such a row can still fail with the "too small to
      * encode a single row" error.
      */
-    private final long[] usedNames;
-    private final long[] usedPrefixes;
-    private final long[] usedDatatypes;
 
     // Lookup entries collected for the current frame, packed into runs of consecutive ids
     private final PackedEntries nameEntries = new PackedEntries();
@@ -309,9 +299,6 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
         // Safe to pass `this` here: the lookup encoder only stores it as the receiver of the
         // lookup entries it emits later, during encoding.
         this.lookupEncoder = LookupEncoder.create(this, maxPrefixTableSize, maxNameTableSize, maxDatatypeTableSize);
-        usedNames = newUsedIds(maxNameTableSize);
-        usedPrefixes = newUsedIds(maxPrefixTableSize);
-        usedDatatypes = newUsedIds(maxDatatypeTableSize);
     }
 
     /**
@@ -356,21 +343,17 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
      * @param datatypeColumns how many of the columns can hold literals
      */
     public void resetUsedIds(Column<TNode>[] columns, int datatypeColumns) {
-        lookupEncoder.newEpoch();
         int iris = columns.length;
         for (final Column<TNode> col : columns) {
             if (col.extras != null && col.extras.maxTripleTermIris > 1) {
                 iris += col.extras.maxTripleTermIris - 1;
             }
         }
-        resetUsedIds(usedNames, usedIdsBudget(maxNameTableSize, iris));
-        resetUsedIds(usedPrefixes, usedIdsBudget(maxPrefixTableSize, iris));
-        resetUsedIds(usedDatatypes, usedIdsBudget(maxDatatypeTableSize, datatypeColumns));
-    }
-
-    private static void resetUsedIds(long[] used, long budget) {
-        Arrays.fill(used, 0L);
-        used[0] = budget;
+        lookupEncoder.newEpoch(
+            usedIdsBudget(maxNameTableSize, iris),
+            usedIdsBudget(maxPrefixTableSize, iris),
+            usedIdsBudget(maxDatatypeTableSize, datatypeColumns)
+        );
     }
 
     /**
@@ -379,7 +362,7 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
      * retried.
      */
     public boolean hasRoom() {
-        return usedNames[0] >= 0 && usedPrefixes[0] >= 0 && usedDatatypes[0] >= 0;
+        return lookupEncoder.hasRoom();
     }
 
     /**
@@ -658,23 +641,8 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
 
     // *** Lookup ids of the values ***
 
-    private void markIriUsed(int nameId, int prefixId) {
-        markUsed(usedNames, nameId);
-        if (prefixId != 0) {
-            markUsed(usedPrefixes, prefixId);
-        }
-    }
-
     private int makeDatatypeId(String datatype) {
-        final int id = lookupEncoder.makeDatatypeId(datatype);
-        markUsed(usedDatatypes, id);
-        return id;
-    }
-
-    private static void reserveUsedIds(long[] used, int tableSize, int count) {
-        if (tableSize != 0 && count > 0) {
-            used[0] -= count;
-        }
+        return lookupEncoder.makeDatatypeId(datatype);
     }
 
     private void checkBaseDirectionsAllowed() {
@@ -716,8 +684,9 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
             // start (see resetUsedIds).
             final int extra = iris - Math.max(1, extras.maxTripleTermIris);
             extras.maxTripleTermIris = iris;
-            reserveUsedIds(usedNames, maxNameTableSize, extra);
-            reserveUsedIds(usedPrefixes, maxPrefixTableSize, extra);
+            if (extra > 0) {
+                lookupEncoder.reserveIriIds(extra);
+            }
         }
     }
 
@@ -795,7 +764,6 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
             final long ids = lookupEncoder.makeIriIds(iri);
             final int nameId = (int) (ids >>> 32);
             final int prefixId = (int) ids;
-            markIriUsed(nameId, prefixId);
             // The IRIs of the column's triple terms have an inference state of their own
             final ColumnExtras extras = col.extras();
             final int storedNameId = nameId == extras.tripleLastNameId + 1 ? 0 : nameId;
@@ -884,7 +852,6 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
             final long ids = lookupEncoder.makeIriIds(value);
             final int nameId = (int) (ids >>> 32);
             final int prefixId = (int) ids;
-            markIriUsed(nameId, prefixId);
             final int storedNameId = nameId == namespaceLastNameId + 1 ? 0 : nameId;
             final int storedPrefixId = prefixId == namespaceLastPrefixId ? 0 : prefixId;
             namespaceLastNameId = nameId;
@@ -932,12 +899,12 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
 
     @Override
     public void appendNameEntry(RdfNameEntry nameEntry) {
-        nameEntries.append(usedNames, "name", nameEntry.getId(), nameEntry.getValue());
+        nameEntries.append(nameEntry.getId(), nameEntry.getValue());
     }
 
     @Override
     public void appendPrefixEntry(RdfPrefixEntry prefixEntry) {
-        prefixEntries.append(usedPrefixes, "prefix", prefixEntry.getId(), prefixEntry.getValue());
+        prefixEntries.append(prefixEntry.getId(), prefixEntry.getValue());
     }
 
     @Override
@@ -948,60 +915,20 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
                 "A literal with the datatype %s must have a language tag.".formatted(value)
             );
         }
-        datatypeEntries.append(usedDatatypes, "datatype", datatypeEntry.getId(), datatypeEntry.getValue());
+        datatypeEntries.append(datatypeEntry.getId(), datatypeEntry.getValue());
     }
 
-    // *** Used lookup ids ***
+    // *** Lookup budget ***
 
-    // Bit words for 1-based ids up to tableSize, plus the counter slot at index 0
-    private static long[] newUsedIds(int tableSize) {
-        return new long[1 + ((tableSize + 64) >> 6)];
-    }
-
-    /**
-     * Marks an id as used by this frame. Branchless.
-     */
-    private static void markUsed(long[] used, int id) {
-        final int word = 1 + (id >> 6);
-        final int bit = id & 63;
-        final long old = used[word];
-        used[word] = old | (1L << bit);
-        used[0] -= (~old >>> bit) & 1L;
-    }
-
-    private static boolean isUsed(long[] used, int id) {
-        return (used[1 + (id >> 6)] & (1L << (id & 63))) != 0;
-    }
-
-    private static long usedIdsBudget(int tableSize, int columns) {
+    private static int usedIdsBudget(int tableSize, int columns) {
         // If table size is 0, then it's not used (does not constrain us)
         if (tableSize == 0) {
-            return Long.MAX_VALUE;
+            return Integer.MAX_VALUE;
         }
         // Floor at 0 to avoid a situation where there are more columns than slots
         // in e.g., datatype table, which causes the budget to be exhausted on the
         // first row.
         return Math.max(tableSize - columns, 0);
-    }
-
-    /**
-     * Registers a lookup entry assigned by the current frame. Assigning an id that the frame
-     * already touched means the entry would be overwritten while the frame still refers to it.
-     * <p>
-     * The owner ends a frame before it can get that far (see hasRoom), so this can only fire for a
-     * single row that does not fit in the lookup tables at all – no framing decision can help there.
-     */
-    private static void checkAndMarkUsed(long[] used, int id, String kind) {
-        if (isUsed(used, id)) {
-            throw new RdfProtoSerializationError(
-                (
-                    "The %s lookup table is too small to encode a single row: " +
-                    "entry %d would be overwritten while still referenced in the current frame. " +
-                    "Increase the max %s table size."
-                ).formatted(kind, id, kind)
-            );
-        }
-        markUsed(used, id);
     }
 
     /**
@@ -1023,9 +950,8 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
         // State for resolving 0-compressed lookup entry identifiers
         private int lastAssignedId = 0;
 
-        void append(long[] used, String kind, int entryId, String value) {
+        void append(int entryId, String value) {
             final int id = entryId == 0 ? lastAssignedId + 1 : entryId;
-            checkAndMarkUsed(used, id, kind);
             if (current != null && id == lastAssignedId + 1) {
                 current.addValues(value);
             } else {
