@@ -15,8 +15,6 @@ The {{ javadoc_link_pretty('core', 'JellyOptions') }} object provides a few comm
     
     RdfStreamOptions options = JellyOptions.SMALL_STRICT;
     
-    RdfStreamOptions optionsWithRdfStarSupport = JellyOptions.SMALL_RDF_STAR;
-    
     RdfStreamOptions bigWithCustomDictionarySize = JellyOptions.BIG_STRICT
       .clone()
       .setMaxNameTableSize(2000);
@@ -29,12 +27,12 @@ The {{ javadoc_link_pretty('core', 'JellyOptions') }} object provides a few comm
     
     val options = JellyOptions.SMALL_STRICT
     
-    val optionsWithRdfStarSupport = JellyOptions.SMALL_RDF_STAR
-      
     val bigWithCustomDictionarySize = JellyOptions.BIG_STRICT
       .clone()
       .setMaxNameTableSize(2000)  
     ```
+
+The `GENERALIZED`, `RDF_STAR` and `ALL_FEATURES` presets differ from the `STRICT` ones only in the generalized RDF and RDF-star flags, which apply to Jelly-RDF 1.0 and 1.1 streams and to Jelly-Patch. Jelly-RDF 1.2 output ignores them.
 
 !!! warning 
     

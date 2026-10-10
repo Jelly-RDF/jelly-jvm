@@ -1,6 +1,6 @@
 package eu.neverblink.jelly.core.internal
 
-import eu.neverblink.jelly.core.helpers.Mrl
+import eu.neverblink.jelly.core.helpers.{MockProtoEncoderConverter, Mrl}
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.{RdfBufferAppender, RdfProtoSerializationError}
@@ -11,45 +11,34 @@ import org.scalatest.wordspec.AnyWordSpec
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
+class RowNodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
   def smallOptions(prefixTableSize: Int): RdfStreamOptions = rdfStreamOptions(
     maxNameTableSize = 8,
     maxPrefixTableSize = prefixTableSize,
     maxDatatypeTableSize = 8,
   )
 
-  type RdfTerm = RdfIri | String | RdfLiteral | (Mrl.Node, Mrl.Node, Mrl.Node) | RdfDefaultGraph
-
   private def getEncoder(
       prefixTableSize: Int = 8,
-  ): (NodeEncoderImpl[Mrl.Node], ListBuffer[RdfStreamRow]) =
+  ): (RowNodeEncoder[Mrl.Node], ListBuffer[RdfStreamRow]) =
     val entryBuffer = new ListBuffer[RdfStreamRow]()
-    val appender: RdfBufferAppender[Mrl.Node] = new RdfBufferAppender {
+    val appender: RdfBufferAppender = new RdfBufferAppender {
       def appendNameEntry(entry: RdfNameEntry): Unit = entryBuffer += rdfStreamRow(entry)
       def appendPrefixEntry(entry: RdfPrefixEntry): Unit = entryBuffer += rdfStreamRow(entry)
       def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit = entryBuffer += rdfStreamRow(entry)
-
-      override def appendQuotedTriple(
-          subject: Mrl.Node,
-          predicate: Mrl.Node,
-          `object`: Mrl.Node,
-      ): Null =
-        null
     }
     (
-      NodeEncoderImpl[Mrl.Node](
-        prefixTableSize,
-        8,
-        8,
-        16,
-        16,
-        16,
-        appender,
-      ),
+      RowNodeEncoder[Mrl.Node](MockProtoEncoderConverter(), appender, prefixTableSize, 8, 8),
       entryBuffer,
     )
 
-  "A NodeEncoder" when {
+  extension (encoder: RowNodeEncoder[Mrl.Node])
+    private def makeDtLiteral(node: Mrl.Node, lex: String, dt: String): RdfLiteral =
+      encoder.encodeAny(node).asInstanceOf[RdfLiteral]
+
+    private def makeIri(iri: String): RdfIri = encoder.encodeAny(Mrl.Iri(iri)).asInstanceOf[RdfIri]
+
+  "A RowNodeEncoder" when {
     "encoding datatype literals" should {
       "encode a datatype literal" in {
         val (encoder, entryBuffer) = getEncoder()
@@ -256,9 +245,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
       }
 
       "throw exception if datatype table size = 0" in {
-        val encoder = NodeEncoderImpl[Mrl.Node](
-          16, 16, 0, 16, 16, 16, null,
-        )
+        val encoder = RowNodeEncoder[Mrl.Node](MockProtoEncoderConverter(), null, 16, 16, 0)
         val e = intercept[RdfProtoSerializationError] {
           val node = encoder.makeDtLiteral(
             Mrl.DtLiteral("v1", Mrl.Datatype("dt1")),
@@ -518,9 +505,7 @@ class NodeEncoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
       "throw exception if name table size = 1" in {
         val e = intercept[RdfProtoSerializationError] {
-          NodeEncoderImpl[Mrl.Node](
-            16, 1, 16, 16, 16, 16, null,
-          )
+          RowNodeEncoder[Mrl.Node](MockProtoEncoderConverter(), null, 16, 1, 16)
         }
         e.getMessage should include(
           "Requested name table size of 1 is too small. The minimum is 8.",

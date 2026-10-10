@@ -19,6 +19,9 @@ class Rdf4jReactiveSerDes(using Materializer)
 
   override def name: String = "Reactive (RDF4J)"
 
+  // The reactive encoder flows still write Jelly-RDF 1.1
+  override def writesColumnLayout(opt: Option[RdfStreamOptions]): Boolean = false
+
   override def supportsRdf12: Boolean = true
 
   // RDF4J dropped RDF-star in 6.0.0, in favor of RDF 1.2.

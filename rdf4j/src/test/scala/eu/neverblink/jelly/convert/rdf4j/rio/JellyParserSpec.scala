@@ -19,7 +19,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     JellyOptions.SMALL_STRICT.clone()
       .setPhysicalType(PhysicalStreamType.TRIPLES)
       .setMaxPrefixTableSize(0)
-      .setVersion(JellyConstants.PROTO_VERSION),
+      .setVersion(JellyConstants.PROTO_VERSION_1_1_X),
   )
   private val row2 = RdfStreamRow.newInstance().setName(
     RdfNameEntry.newInstance().setValue("http://example.org/s"),

@@ -1,30 +1,18 @@
 package eu.neverblink.jelly.core.sparql.internal;
 
-import com.google.protobuf.ByteString;
 import eu.neverblink.jelly.core.InternalApi;
-import eu.neverblink.jelly.core.NameDecoder;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
+import eu.neverblink.jelly.core.internal.ColumnDecoder;
 import eu.neverblink.jelly.core.internal.DecoderBase;
-import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.proto.v1.RdfColumn;
-import eu.neverblink.jelly.core.proto.v1.RdfIri;
-import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
-import eu.neverblink.jelly.core.proto.v1.RdfLookupEntryPacked;
-import eu.neverblink.jelly.core.proto.v1.RdfTripleTerm;
-import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
-import eu.neverblink.jelly.core.utils.RdfVersionUtils;
-import eu.neverblink.protoc.java.runtime.MessageCollection;
-import eu.neverblink.protoc.java.runtime.RepeatedInt;
-import eu.neverblink.protoc.java.runtime.RepeatedString;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -36,17 +24,13 @@ import java.util.List;
 @InternalApi
 public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode, TDatatype> implements SparqlDecoder {
 
-    // Run lengths of 0–14 are inlined in the layout token. 15 needs an extension varint.
-    private static final int MAX_INLINE_LEN = 15;
-
-    private static final String RDF_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString";
-    private static final String RDF_DIR_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#dirLangString";
-
     private final SparqlResultsHandler<TNode> handler;
     // Whether the handler keeps the columns of a frame (see SparqlResultsHandler.keepsColumns)
     private final boolean freshColumns;
     private final SparqlResultsOptions supportedOptions;
     private final int maxRowsPerFrame;
+    private final int maxValuesPerFrame;
+    private final ColumnDecoder<TNode, TDatatype> columnDecoder = new ColumnDecoder<>(this);
 
     private SparqlResultsOptions currentOptions = null;
     // Variables of the result set, as declared by its first header. Kept across options resets, as
@@ -73,7 +57,8 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         ProtoDecoderConverter<TNode, TDatatype> converter,
         SparqlResultsHandler<TNode> handler,
         SparqlResultsOptions supportedOptions,
-        int maxRowsPerFrame
+        int maxRowsPerFrame,
+        int maxValuesPerFrame
     ) {
         super(converter);
         this.handler = handler;
@@ -81,6 +66,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         this.supportedOptions =
             supportedOptions != null ? supportedOptions : JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS;
         this.maxRowsPerFrame = Math.min(maxRowsPerFrame, JellySparqlConstants.MAX_ROWS_PER_FRAME);
+        this.maxValuesPerFrame = maxValuesPerFrame;
     }
 
     // The lookup tables are sized from the stream options, and the sizes are baked in when the
@@ -167,6 +153,18 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
                 "The frame declares %d rows, more than the %d this reader accepts.".formatted(rows, maxRowsPerFrame)
             );
         }
+        // Checked before anything is allocated: the decoder makes room for every value at once
+        final long values = (long) rows * variableNames.length;
+        if (values > maxValuesPerFrame) {
+            throw new RdfProtoDeserializationError(
+                "The frame declares %d rows of %d variables, %d values, more than the %d this reader accepts.".formatted(
+                    rows,
+                    variableNames.length,
+                    values,
+                    maxValuesPerFrame
+                )
+            );
+        }
 
         applyLookupEntries(frame);
 
@@ -191,7 +189,14 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             final Object[] out = decodeBufferForVariable(v, rows);
             final RdfColumn column = get(columns, v);
             try {
-                decodeColumn(columnReader(column), column.getLayouts(), rows, out);
+                final ColumnDecoder<TNode, TDatatype>.Cursor cursor = columnDecoder.cursor(
+                    column,
+                    rows,
+                    true,
+                    "variable"
+                );
+                cursor.fill(out, 0, rows);
+                cursor.finish();
             } catch (RdfProtoDeserializationError e) {
                 throw e;
             } catch (Exception e) {
@@ -211,44 +216,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
      * packed entry only the first value states its id, the rest are sequential.
      */
     private void applyLookupEntries(SparqlResultsFrame frame) {
-        for (final RdfLookupEntryPacked entry : frame.getNames()) {
-            int id = entry.getId();
-            for (final String value : entry.getValues()) {
-                getNameDecoder().updateNames(id, value);
-                id = 0;
-            }
-        }
-        for (final RdfLookupEntryPacked entry : frame.getPrefixes()) {
-            int id = entry.getId();
-            for (final String value : entry.getValues()) {
-                getNameDecoder().updatePrefixes(id, value);
-                id = 0;
-            }
-        }
-        for (final RdfLookupEntryPacked entry : frame.getDatatypes()) {
-            int id = entry.getId();
-            for (final String value : entry.getValues()) {
-                if (RDF_LANG_STRING.equals(value) || RDF_DIR_LANG_STRING.equals(value)) {
-                    // A literal with this datatype must have a language tag, which the datatype
-                    // form cannot carry
-                    throw new RdfProtoDeserializationError("The datatype lookup must not contain %s.".formatted(value));
-                }
-                final TDatatype datatype;
-                try {
-                    datatype = converter.makeDatatype(value);
-                } catch (RdfProtoDeserializationError e) {
-                    throw e;
-                } catch (Exception e) {
-                    // Most likely the RDF library rejected the IRI
-                    throw new RdfProtoDeserializationError(
-                        "Error while decoding datatype '%s': %s".formatted(value, e),
-                        e
-                    );
-                }
-                getDatatypeLookup().update(id, datatype);
-                id = 0;
-            }
-        }
+        columnDecoder.applyLookupEntries(frame.getNames(), frame.getPrefixes(), frame.getDatatypes());
     }
 
     /**
@@ -312,6 +280,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             headerInEffect = false;
         }
         currentOptions = options;
+        columnDecoder.setRdfVersions(options.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
         if (options.getStreamTypeValue() == SparqlStreamType.PUNCTUATED_VALUE) {
             flags |= PUNCTUATED;
         } else {
@@ -370,667 +339,5 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             );
         }
         headerInEffect = true;
-    }
-
-    /**
-     * Picks the reader for a column: the reader for one term type if the column has no kinds, or
-     * the reader for a column that mixes term types.
-     */
-    private ValueReader<TNode> columnReader(RdfColumn column) {
-        if (!column.getKinds().isEmpty()) {
-            return new MixedReader(column);
-        }
-        final int iriCount = column.getNameIds().size();
-        final int literalCount = column.getLexValues().size();
-        final int bnodeCount = column.getBnodes().size();
-        final int tripleCount = column.getTripleTerms().size();
-        final int nonEmpty =
-            (iriCount > 0 ? 1 : 0) + (literalCount > 0 ? 1 : 0) + (bnodeCount > 0 ? 1 : 0) + (tripleCount > 0 ? 1 : 0);
-        if (nonEmpty > 1) {
-            throw new RdfProtoDeserializationError(
-                "Corrupt column: the values are of more than one type, but the column has no kinds."
-            );
-        }
-        if (literalCount > 0) {
-            return literalReader(column);
-        } else if (bnodeCount > 0) {
-            return new BnodeReader(column.getBnodes());
-        } else if (tripleCount > 0) {
-            return new TripleTermReader(column.getTripleTerms());
-        }
-        // IRIs, or no values at all
-        return new IriReader(column);
-    }
-
-    /**
-     * Per-column state for resolving the prefix_id / name_id inference of RdfIri values,
-     * in column order (see the sparql.proto comments).
-     */
-    private final class IriState {
-
-        // The lookup tables exist by the time a column is decoded
-        private final NameDecoder<TNode> names = getNameDecoder();
-        private int lastPrefixId = 0;
-        private int lastNameId = 0;
-
-        TNode decode(int prefixId, int nameId) {
-            if (prefixId == 0) {
-                prefixId = lastPrefixId;
-            } else {
-                lastPrefixId = prefixId;
-            }
-            if (nameId == 0) {
-                nameId = lastNameId + 1;
-            }
-            lastNameId = nameId;
-            return names.decodeRaw(prefixId, nameId);
-        }
-    }
-
-    /**
-     * Decodes the run values of one column, in order.
-     */
-    private abstract static class ValueReader<TNode> {
-
-        /** The number of values not decoded yet. */
-        abstract int remaining();
-
-        /** Decodes the next value. The caller checks that there is one. */
-        abstract TNode decodeNext();
-
-        /**
-         * Decodes the next {@code count} values into {@code out}, from {@code from} on. The caller
-         * checks that there are that many.
-         * <p>
-         * Every reader implements this with the same loop over its own decodeNext(), so that the
-         * call in the loop has one known target and is inlined. A single loop here would call
-         * decodeNext() of whichever reader it is given.
-         */
-        abstract void decodeInto(Object[] out, int from, int count);
-    }
-
-    private final class IriReader extends ValueReader<TNode> {
-
-        private final RepeatedInt nameIds;
-        // Empty (every value has prefix id 0), one prefix for the whole column, or one entry
-        // per value – in which case the RdfIri prefix inference applies along the list
-        private final RepeatedInt prefixIds;
-        private final IriState iriState = new IriState();
-        private int index = 0;
-
-        IriReader(RdfColumn column) {
-            this.nameIds = column.getNameIds();
-            this.prefixIds = column.getPrefixIds();
-            final int prefixCount = prefixIds.size();
-            if (prefixCount > 1 && prefixCount != nameIds.size()) {
-                throw new RdfProtoDeserializationError(
-                    "Corrupt column: %d prefix ids for %d name ids, expected 0, 1 or %d.".formatted(
-                        prefixCount,
-                        nameIds.size(),
-                        nameIds.size()
-                    )
-                );
-            }
-        }
-
-        @Override
-        int remaining() {
-            return nameIds.size() - index;
-        }
-
-        @Override
-        void decodeInto(Object[] out, int from, int count) {
-            for (int i = 0; i < count; i++) {
-                out[from + i] = decodeNext();
-            }
-        }
-
-        @Override
-        TNode decodeNext() {
-            final int i = index++;
-            final int prefixCount = prefixIds.size();
-            final int prefixId;
-            if (prefixCount == 0) {
-                prefixId = 0;
-            } else if (prefixCount == 1) {
-                prefixId = prefixIds.get(0);
-            } else {
-                prefixId = prefixIds.get(i);
-            }
-            return iriState.decode(prefixId, nameIds.get(i));
-        }
-    }
-
-    private final class BnodeReader extends ValueReader<TNode> {
-
-        private final RepeatedString values;
-        private int index = 0;
-
-        BnodeReader(RepeatedString values) {
-            this.values = values;
-        }
-
-        @Override
-        int remaining() {
-            return values.size() - index;
-        }
-
-        @Override
-        void decodeInto(Object[] out, int from, int count) {
-            for (int i = 0; i < count; i++) {
-                out[from + i] = decodeNext();
-            }
-        }
-
-        @Override
-        TNode decodeNext() {
-            return converter.makeBlankNode(values.get(index++));
-        }
-    }
-
-    /**
-     * Picks the reader for the literals of a column: one kind for all of them, or one per literal
-     * (see the sparql.proto comments).
-     */
-    private ValueReader<TNode> literalReader(RdfColumn column) {
-        final RepeatedString lexValues = column.getLexValues();
-        final RepeatedInt kinds = column.getLiteralKinds();
-        final int kindCount = kinds.size();
-        if (kindCount > 1 && kindCount != lexValues.size()) {
-            throw new RdfProtoDeserializationError(
-                "Corrupt column: %d literal kinds for %d lexical forms, expected 0, 1 or %d.".formatted(
-                    kindCount,
-                    lexValues.size(),
-                    lexValues.size()
-                )
-            );
-        }
-        final RepeatedString langtags = column.getLangtags();
-        final RepeatedInt directions = column.getLangtagDirections();
-        if (!directions.isEmpty() && directions.size() != langtags.size()) {
-            throw new RdfProtoDeserializationError(
-                "Corrupt column: %d base directions for %d language tags.".formatted(directions.size(), langtags.size())
-            );
-        }
-        if (lexValues.isEmpty()) {
-            // Nothing to resolve: kinds and language tags only matter for the values that use them
-            return new UniformLiteralReader(lexValues, null, 0);
-        }
-        final LiteralKinds resolved = new LiteralKinds(langtags, directions);
-        if (kindCount == 0) {
-            return new UniformLiteralReader(lexValues, resolved, 0);
-        } else if (kindCount == 1) {
-            return new UniformLiteralReader(lexValues, resolved, kinds.get(0));
-        }
-        return new MixedLiteralReader(lexValues, kinds, resolved);
-    }
-
-    /**
-     * Resolves the literal kinds of one literal column: the datatypes from the lookup, and the
-     * column's language tags with their base directions. A base direction is only checked once a
-     * value uses its tag.
-     */
-    private final class LiteralKinds {
-
-        private final RepeatedString langtags;
-        // As read from the stream, parallel to langtags, or empty for no directions at all
-        private final RepeatedInt directionValues;
-        // Resolved on first use, null where the tag has no base direction
-        private final RdfBaseDirection[] directions;
-        private final boolean[] resolved;
-
-        LiteralKinds(RepeatedString langtags, RepeatedInt directionValues) {
-            this.langtags = langtags;
-            this.directionValues = directionValues;
-            this.directions = new RdfBaseDirection[langtags.size()];
-            this.resolved = new boolean[langtags.size()];
-        }
-
-        /** The base direction of a language tag, or null for none. */
-        RdfBaseDirection direction(int index) {
-            if (!resolved[index]) {
-                final int value = directionValues.isEmpty() ? 0 : directionValues.get(index);
-                directions[index] = value == 0 ? null : baseDirection(value);
-                resolved[index] = true;
-            }
-            return directions[index];
-        }
-
-        /** The datatype of a datatype kind (an odd kind). */
-        TDatatype datatype(int kind) {
-            return getDatatypeLookup().get((kind >>> 1) + 1);
-        }
-
-        /** The index in langtags of a language kind (an even kind above 0). */
-        int langtagIndex(int kind) {
-            final int index = (kind >>> 1) - 1;
-            if (index >= langtags.size()) {
-                throw new RdfProtoDeserializationError(
-                    "Corrupt column: language tag %d referenced, but the column has %d.".formatted(
-                        index,
-                        langtags.size()
-                    )
-                );
-            }
-            return index;
-        }
-
-        TNode make(String lex, int kind) {
-            if (kind == 0) {
-                return converter.makeSimpleLiteral(lex);
-            }
-            if ((kind & 1) != 0) {
-                return converter.makeDtLiteral(lex, datatype(kind));
-            }
-            final int index = langtagIndex(kind);
-            final RdfBaseDirection direction = direction(index);
-            return direction == null
-                ? converter.makeLangLiteral(lex, langtags.get(index))
-                : converter.makeDirLangLiteral(lex, langtags.get(index), direction);
-        }
-    }
-
-    /**
-     * Reader for a literal column in which every value has the same kind: the datatype or the
-     * language tag is resolved once for the whole column.
-     */
-    private final class UniformLiteralReader extends ValueReader<TNode> {
-
-        private final RepeatedString values;
-        private final int kind;
-        // Resolved once: the datatype of a datatype kind, or null
-        private final TDatatype datatype;
-        // Resolved once: the language tag and base direction of a language kind, or null
-        private final String langtag;
-        private final RdfBaseDirection direction;
-        private int index = 0;
-
-        UniformLiteralReader(RepeatedString values, LiteralKinds kinds, int kind) {
-            this.values = values;
-            this.kind = kind;
-            if ((kind & 1) != 0) {
-                this.datatype = kinds.datatype(kind);
-                this.langtag = null;
-                this.direction = null;
-            } else if (kind != 0) {
-                final int tag = kinds.langtagIndex(kind);
-                this.datatype = null;
-                this.langtag = kinds.langtags.get(tag);
-                this.direction = kinds.direction(tag);
-            } else {
-                this.datatype = null;
-                this.langtag = null;
-                this.direction = null;
-            }
-        }
-
-        @Override
-        int remaining() {
-            return values.size() - index;
-        }
-
-        @Override
-        void decodeInto(Object[] out, int from, int count) {
-            for (int i = 0; i < count; i++) {
-                out[from + i] = decodeNext();
-            }
-        }
-
-        @Override
-        TNode decodeNext() {
-            final String lex = values.get(index++);
-            if (kind == 0) {
-                return converter.makeSimpleLiteral(lex);
-            }
-            if (datatype != null) {
-                return converter.makeDtLiteral(lex, datatype);
-            }
-            return direction == null
-                ? converter.makeLangLiteral(lex, langtag)
-                : converter.makeDirLangLiteral(lex, langtag, direction);
-        }
-    }
-
-    /** Reader for a literal column with one literal kind per value. */
-    private final class MixedLiteralReader extends ValueReader<TNode> {
-
-        private final RepeatedString values;
-        private final RepeatedInt kinds;
-        private final LiteralKinds resolved;
-        private int index = 0;
-
-        MixedLiteralReader(RepeatedString values, RepeatedInt kinds, LiteralKinds resolved) {
-            this.values = values;
-            this.kinds = kinds;
-            this.resolved = resolved;
-        }
-
-        @Override
-        int remaining() {
-            return values.size() - index;
-        }
-
-        @Override
-        void decodeInto(Object[] out, int from, int count) {
-            for (int i = 0; i < count; i++) {
-                out[from + i] = decodeNext();
-            }
-        }
-
-        @Override
-        TNode decodeNext() {
-            final int i = index++;
-            return resolved.make(values.get(i), kinds.get(i));
-        }
-    }
-
-    /**
-     * Converts a literal of a triple term, which is in the full form, with its base direction. This
-     * is not the convertLiteral of the base class, which converts the literals of the row layout of
-     * Jelly-RDF, which have no base direction.
-     */
-    private TNode convertTripleTermLiteral(RdfLiteral literal) {
-        final int direction = literal.getDirectionValue();
-        switch (literal.getLiteralKindFieldNumber()) {
-            case RdfLiteral.LANGTAG -> {
-                if (direction == 0) {
-                    return converter.makeLangLiteral(literal.getLex(), literal.getLangtag());
-                }
-                return converter.makeDirLangLiteral(literal.getLex(), literal.getLangtag(), baseDirection(direction));
-            }
-            case RdfLiteral.DATATYPE -> {
-                if (direction != 0) {
-                    throw directionWithoutLangtag();
-                }
-                return converter.makeDtLiteral(literal.getLex(), getDatatypeLookup().get(literal.getDatatype()));
-            }
-            default -> {
-                if (direction != 0) {
-                    throw directionWithoutLangtag();
-                }
-                return converter.makeSimpleLiteral(literal.getLex());
-            }
-        }
-    }
-
-    private static RdfProtoDeserializationError directionWithoutLangtag() {
-        return new RdfProtoDeserializationError("A literal has a base direction, but no language tag.");
-    }
-
-    /** Checks a base direction read from the stream (LTR or RTL, never UNSPECIFIED). */
-    private RdfBaseDirection baseDirection(int value) {
-        final RdfBaseDirection direction = RdfBaseDirection.forNumber(value);
-        if (direction == null || direction == RdfBaseDirection.UNSPECIFIED) {
-            throw new RdfProtoDeserializationError("Unknown base direction: %d".formatted(value));
-        }
-        if (allowedRdfVersion() == RdfVersion.RDF_VERSION_1_1_VALUE) {
-            throw notAllowed("literals with a base direction");
-        }
-        return direction;
-    }
-
-    /**
-     * The RDF version the terms of the stream must conform to: the one the stream declares, or,
-     * if it declares none, the one this reader supports. 0 (unspecified) allows all terms.
-     */
-    private int allowedRdfVersion() {
-        final int declared = currentOptions.getRdfVersionValue();
-        return declared != RdfVersion.RDF_VERSION_UNSPECIFIED_VALUE ? declared : supportedOptions.getRdfVersionValue();
-    }
-
-    private RdfProtoDeserializationError notAllowed(String what) {
-        final int declared = currentOptions.getRdfVersionValue();
-        final String version = RdfVersionUtils.rdfVersionName(allowedRdfVersion());
-        return new RdfProtoDeserializationError(
-            declared != RdfVersion.RDF_VERSION_UNSPECIFIED_VALUE
-                ? "The stream declares %s, but contains %s.".formatted(version, what)
-                : "The stream contains %s, but this reader only supports %s.".formatted(what, version)
-        );
-    }
-
-    /**
-     * Reader for the triple terms of a column. Their IRIs take part in an IRI inference of their
-     * own, separate from that of the column's IRIs, in the order subject, predicate, object (see
-     * the sparql.proto comments).
-     */
-    private final class TripleTermReader extends ValueReader<TNode> {
-
-        private final Iterator<RdfTripleTerm> terms;
-        private final IriState iriState = new IriState();
-        private int remaining;
-
-        TripleTermReader(MessageCollection<RdfTripleTerm, ?> terms) {
-            this.terms = terms.iterator();
-            this.remaining = terms.size();
-        }
-
-        @Override
-        int remaining() {
-            return remaining;
-        }
-
-        @Override
-        void decodeInto(Object[] out, int from, int count) {
-            for (int i = 0; i < count; i++) {
-                out[from + i] = decodeNext();
-            }
-        }
-
-        @Override
-        TNode decodeNext() {
-            if (allowedRdfVersion() < RdfVersion.RDF_VERSION_1_2_VALUE) {
-                throw notAllowed("triple terms");
-            }
-            remaining--;
-            return decodeTripleTerm(terms.next());
-        }
-
-        /** Decodes a triple term. The nesting depth is already limited by the parser. */
-        private TNode decodeTripleTerm(RdfTripleTerm triple) {
-            final TNode s = switch (triple.getSubjectFieldNumber()) {
-                case RdfTripleTerm.S_IRI -> decodeIri(triple.getSIri());
-                case RdfTripleTerm.S_BNODE -> converter.makeBlankNode(triple.getSBnode());
-                default -> throw new RdfProtoDeserializationError("A triple term has no subject.");
-            };
-            if (triple.getPIri() == null) {
-                throw new RdfProtoDeserializationError("A triple term has no predicate.");
-            }
-            final TNode p = decodeIri(triple.getPIri());
-            final TNode o = switch (triple.getObjectFieldNumber()) {
-                case RdfTripleTerm.O_IRI -> decodeIri(triple.getOIri());
-                case RdfTripleTerm.O_BNODE -> converter.makeBlankNode(triple.getOBnode());
-                case RdfTripleTerm.O_LITERAL -> convertTripleTermLiteral(triple.getOLiteral());
-                case RdfTripleTerm.O_TRIPLE_TERM -> decodeTripleTerm(triple.getOTripleTerm());
-                default -> throw new RdfProtoDeserializationError("A triple term has no object.");
-            };
-            return converter.makeTripleNode(s, p, o);
-        }
-
-        private TNode decodeIri(RdfIri iri) {
-            return iriState.decode(iri.getPrefixId(), iri.getNameId());
-        }
-    }
-
-    /**
-     * Reader for a column whose values mix term types: the kinds field says which list holds the
-     * next value (see the sparql.proto comments).
-     */
-    private final class MixedReader extends ValueReader<TNode> {
-
-        private static final int IRI = 0;
-        private static final int LITERAL = 1;
-        private static final int BNODE = 2;
-        private static final int TRIPLE = 3;
-
-        // For each byte of the kinds field, how many of its 4 values are of each kind, in 16-bit
-        // lanes: IRIs in the lowest, then literals, blank nodes and triple terms
-        private static final long[] KIND_COUNTS = new long[256];
-
-        static {
-            for (int b = 0; b < 256; b++) {
-                long counts = 0;
-                for (int i = 0; i < 4; i++) {
-                    counts += 1L << (((b >>> (i << 1)) & 3) << 4);
-                }
-                KIND_COUNTS[b] = counts;
-            }
-        }
-
-        private final byte[] kinds;
-        private final int valueCount;
-        // Readers of the values of each type, null where the column has none
-        private final ValueReader<TNode> iris;
-        private final ValueReader<TNode> literals;
-        private final ValueReader<TNode> bnodes;
-        private final ValueReader<TNode> tripleTerms;
-        private int index = 0;
-
-        MixedReader(RdfColumn column) {
-            final int iriCount = column.getNameIds().size();
-            final int literalCount = column.getLexValues().size();
-            final int bnodeCount = column.getBnodes().size();
-            final int tripleCount = column.getTripleTerms().size();
-            this.valueCount = iriCount + literalCount + bnodeCount + tripleCount;
-            final ByteString kindsField = column.getKinds();
-            if (kindsField.size() != (valueCount + 3) >>> 2) {
-                throw new RdfProtoDeserializationError(
-                    "Corrupt column: %d bytes of kinds for %d values.".formatted(kindsField.size(), valueCount)
-                );
-            }
-            // A copy, which is read faster than the ByteString, and a quarter of the value count long
-            this.kinds = kindsField.toByteArray();
-            // Check that the kinds agree with the lists of values, so that decoding cannot run out
-            // of values in one of them. The bytes that hold 4 values are counted by the table,
-            // 16383 at most at a time, so that no 16-bit lane overflows.
-            final int[] counts = new int[4];
-            final int fullBytes = valueCount >>> 2;
-            for (int start = 0; start < fullBytes; start += 16383) {
-                final int end = Math.min(fullBytes, start + 16383);
-                long lanes = 0;
-                for (int b = start; b < end; b++) {
-                    lanes += KIND_COUNTS[kinds[b] & 0xff];
-                }
-                for (int k = 0; k < 4; k++) {
-                    counts[k] += (int) (lanes >>> (k << 4)) & 0xffff;
-                }
-            }
-            for (int i = fullBytes << 2; i < valueCount; i++) {
-                counts[kindAt(i)]++;
-            }
-            if (
-                counts[IRI] != iriCount ||
-                counts[LITERAL] != literalCount ||
-                counts[BNODE] != bnodeCount ||
-                counts[TRIPLE] != tripleCount
-            ) {
-                throw new RdfProtoDeserializationError(
-                    "Corrupt column: the kinds do not match the number of values of each type."
-                );
-            }
-            final int unusedBits = (valueCount & 3) == 0 ? 0 : 8 - ((valueCount & 3) << 1);
-            if (unusedBits != 0 && (kinds[kinds.length - 1] & 0xff) >>> (8 - unusedBits) != 0) {
-                throw new RdfProtoDeserializationError("Corrupt column: unused bits of the kinds are not 0.");
-            }
-            this.iris = iriCount == 0 ? null : new IriReader(column);
-            this.literals = literalCount == 0 ? null : literalReader(column);
-            this.bnodes = bnodeCount == 0 ? null : new BnodeReader(column.getBnodes());
-            this.tripleTerms = tripleCount == 0 ? null : new TripleTermReader(column.getTripleTerms());
-        }
-
-        private int kindAt(int i) {
-            return (kinds[i >>> 2] >>> ((i & 3) << 1)) & 3;
-        }
-
-        @Override
-        int remaining() {
-            return valueCount - index;
-        }
-
-        @Override
-        void decodeInto(Object[] out, int from, int count) {
-            for (int i = 0; i < count; i++) {
-                out[from + i] = decodeNext();
-            }
-        }
-
-        @Override
-        TNode decodeNext() {
-            // The counts were checked up front, so the reader always has the value
-            return switch (kindAt(index++)) {
-                case IRI -> iris.decodeNext();
-                case LITERAL -> literals.decodeNext();
-                case BNODE -> bnodes.decodeNext();
-                default -> tripleTerms.decodeNext();
-            };
-        }
-    }
-
-    /**
-     * Decodes one column: walks the sequence layout, materializing the cells of the column into
-     * {@code out}. Cells past the encoded sequence, up to the frame row count, are unbound
-     * (nulls). The buffer may be longer than {@code rows}. Cells past it are left untouched.
-     */
-    private void decodeColumn(ValueReader<TNode> reader, RepeatedInt layout, int rows, Object[] out) {
-        int pos = 0;
-        final int layoutSize = layout.size();
-        for (int k = 0; k < layoutSize; k++) {
-            final int token = layout.get(k);
-            final int skip = token >>> 5;
-            final int kind = token & 0b10000;
-            long len = token & MAX_INLINE_LEN;
-            if (len == MAX_INLINE_LEN) {
-                k++;
-                if (k >= layoutSize) {
-                    throw new RdfProtoDeserializationError(
-                        "Corrupt column layout: an escaped length token is not followed by an extension."
-                    );
-                }
-                len = MAX_INLINE_LEN + Integer.toUnsignedLong(layout.get(k));
-            }
-            if (skip > rows - pos) {
-                throw new RdfProtoDeserializationError("Corrupt column layout: more cells than the frame row count.");
-            }
-            if (skip > reader.remaining()) {
-                throw new RdfProtoDeserializationError("Corrupt column layout: not enough values in the column.");
-            }
-            reader.decodeInto(out, pos, skip);
-            pos += skip;
-            if (kind == 0) {
-                // Repeat run
-                final long count = len + 2;
-                if (count > rows - pos) {
-                    throw new RdfProtoDeserializationError(
-                        "Corrupt column layout: more cells than the frame row count."
-                    );
-                }
-                if (reader.remaining() == 0) {
-                    throw new RdfProtoDeserializationError(
-                        "Corrupt column layout: a repeat run points past the last value."
-                    );
-                }
-                final Object node = reader.decodeNext();
-                Arrays.fill(out, pos, pos + (int) count, node);
-                pos += (int) count;
-            } else {
-                // Unbound run
-                final long count = len + 1;
-                if (count > rows - pos) {
-                    throw new RdfProtoDeserializationError(
-                        "Corrupt column layout: more cells than the frame row count."
-                    );
-                }
-                Arrays.fill(out, pos, pos + (int) count, null);
-                pos += (int) count;
-            }
-        }
-        // Implicit tail: all remaining values, once each
-        final int tail = reader.remaining();
-        if (tail > rows - pos) {
-            throw new RdfProtoDeserializationError("Corrupt column layout: more cells than the frame row count.");
-        }
-        reader.decodeInto(out, pos, tail);
-        pos += tail;
-        // The rest of the cells, up to the frame row count, are unbound
-        Arrays.fill(out, pos, rows, null);
     }
 }

@@ -30,7 +30,16 @@ public final class JellyWriterSettings extends WriterConfig {
         return this;
     }
 
+    /**
+     * Sets the stream name, the stream type and the lookup table sizes from the options. The protocol
+     * version, the logical stream type and the RDF-star flag are copied too, but only matter for
+     * Jelly-RDF 1.0 and 1.1 output, which is deprecated.
+     *
+     * @param options the options
+     * @return this
+     */
     public JellyWriterSettings setJellyOptions(RdfStreamOptions options) {
+        this.set(PROTO_VERSION, options.getVersion());
         this.set(STREAM_NAME, options.getStreamName());
         this.set(PHYSICAL_TYPE, options.getPhysicalType());
         this.set(LOGICAL_TYPE, options.getLogicalType());
@@ -43,9 +52,10 @@ public final class JellyWriterSettings extends WriterConfig {
 
     public static final IntegerRioSetting FRAME_SIZE = new IntegerRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.frameSize",
-        "Target RDF stream frame size. Frame size may be slightly larger than this value, " +
-            "to fit the entire statement and its lookup entries in one frame.",
-        256
+        "Target RDF stream frame size. In Jelly-RDF 1.2, the largest number of statements in a frame " +
+            "(a frame may end earlier, when its lookup tables fill up). In Jelly-RDF 1.1, the number of rows " +
+            "(a frame may be slightly larger, to fit the entire statement and its lookup entries).",
+        1024
     );
 
     public static final BooleanRioSetting ENABLE_NAMESPACE_DECLARATIONS = new BooleanRioSetting(
@@ -54,8 +64,25 @@ public final class JellyWriterSettings extends WriterConfig {
             "Enabled by default since Jelly-JVM 3.6.0, to ensure consistent behavior with RDF4J's writers. " +
             "When your only concern is performance, it's recommended to disable this option. " +
             "It is only useful when you want to preserve the namespace declarations in the output. " +
-            "Enabling this causes the stream to be written in protocol version 2 (Jelly 1.1.0) instead of 1.",
+            "If the stream is written in Jelly-RDF 1.0/1.1 (see PROTO_VERSION), enabling this causes the stream " +
+            "to be written in protocol version 2 (Jelly 1.1.0) instead of 1.",
         true
+    );
+
+    /**
+     * Protocol version to write. 0 (the default) means the current version: Jelly-RDF 1.2.
+     * Set it to 1 or 2 to write Jelly-RDF 1.0 or 1.1 (row layout), for example for readers that do
+     * not support Jelly-RDF 1.2 yet.
+     *
+     * @deprecated Writing Jelly-RDF 1.0 and 1.1 will be removed in Jelly-JVM 5.0.0, and with it
+     * this setting.
+     */
+    @Deprecated(forRemoval = true)
+    public static final IntegerRioSetting PROTO_VERSION = new IntegerRioSetting(
+        "eu.neverblink.jelly.convert.rdf4j.rio.protoVersion",
+        "Protocol version to write: 0 for the current one (Jelly-RDF 1.2), or 1 or 2 for Jelly-RDF 1.0 or 1.1 " +
+            "(deprecated).",
+        0
     );
 
     public static final BooleanRioSetting DELIMITED_OUTPUT = new BooleanRioSetting(
@@ -79,16 +106,31 @@ public final class JellyWriterSettings extends WriterConfig {
         PhysicalStreamType.QUADS
     );
 
+    /**
+     * Logical stream type. Only used in Jelly-RDF 1.0 and 1.1 output.
+     *
+     * @deprecated Jelly-RDF 1.2 has no logical stream types. Writing Jelly-RDF 1.0 and 1.1 will be
+     * removed in Jelly-JVM 5.0.0, and with it this setting.
+     */
+    @Deprecated(forRemoval = true)
     public static final ClassRioSetting<LogicalStreamType> LOGICAL_TYPE = new ClassRioSetting<>(
         "eu.neverblink.jelly.convert.rdf4j.rio.logicalType",
-        "Logical stream type",
+        "Logical stream type. Only used in Jelly-RDF 1.0 and 1.1 output.",
         LogicalStreamType.UNSPECIFIED
     );
 
+    /**
+     * Allow RDF-star statements. Only used in Jelly-RDF 1.0 and 1.1 output.
+     *
+     * @deprecated In Jelly-RDF 1.2, triple terms are always allowed. Writing Jelly-RDF 1.0 and 1.1
+     * will be removed in Jelly-JVM 5.0.0, and with it this setting.
+     */
+    @Deprecated(forRemoval = true)
     public static final BooleanRioSetting ALLOW_RDF_STAR = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.allowRdfStar",
         "Allow RDF-star statements. Enabled by default, because we cannot know this in advance. " +
-            "If your data does not contain RDF-star statements, it is recommended that you set this to false.",
+            "If your data does not contain RDF-star statements, it is recommended that you set this to false. " +
+            "Only used in Jelly-RDF 1.0 and 1.1 output – in Jelly-RDF 1.2, triple terms are always allowed.",
         true
     );
 

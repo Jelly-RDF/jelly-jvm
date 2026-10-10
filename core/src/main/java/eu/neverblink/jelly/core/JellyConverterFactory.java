@@ -2,6 +2,7 @@ package eu.neverblink.jelly.core;
 
 import eu.neverblink.jelly.core.internal.ProtoDecoderImpl;
 import eu.neverblink.jelly.core.internal.ProtoEncoderImpl;
+import eu.neverblink.jelly.core.internal.RdfEncoderImpl;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 
 /**
@@ -34,10 +35,23 @@ public abstract class JellyConverterFactory<
     public abstract TDecoderConverter decoderConverter();
 
     /**
-     * Create a new ProtoEncoder.
+     * Create a new encoder of Jelly-RDF 1.2 streams (column layout).
      * @param params Parameters for the encoder.
      * @return encoder
      */
+    public final RdfEncoder<TNode> encoder(RdfEncoder.Params params) {
+        return new RdfEncoderImpl<>(encoderConverter(), params);
+    }
+
+    /**
+     * Create a new ProtoEncoder, which writes Jelly-RDF 1.0 or 1.1 streams (row layout).
+     * @param params Parameters for the encoder.
+     * @return encoder
+     * @deprecated Jelly-RDF 1.1 output will be removed in Jelly-JVM 5.0.0. Use
+     * {@link #encoder(RdfEncoder.Params)}, which writes Jelly-RDF 1.2.
+     */
+    @Deprecated(forRemoval = true)
+    @SuppressWarnings("removal")
     public final ProtoEncoder<TNode> encoder(ProtoEncoder.Params params) {
         return new ProtoEncoderImpl<>(encoderConverter(), params);
     }

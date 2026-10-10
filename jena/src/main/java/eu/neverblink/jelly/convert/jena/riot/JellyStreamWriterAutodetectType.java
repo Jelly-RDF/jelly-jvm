@@ -25,6 +25,8 @@ public final class JellyStreamWriterAutodetectType implements StreamRDF {
 
     // If we start receiving prefix() calls before the first triple/quad, we need to store them
     private final Collection<NamespaceDeclaration> prefixBacklog = new ArrayList<>();
+    // Same for the RDF version
+    private String pendingVersion = null;
 
     private JellyStreamWriter delegatedWriter;
 
@@ -98,7 +100,11 @@ public final class JellyStreamWriterAutodetectType implements StreamRDF {
      * support Jena 5.4.x.
      */
     public void version(String version) {
-        // Not supported
+        if (delegatedWriter != null) {
+            delegatedWriter.version(version);
+        } else {
+            pendingVersion = version;
+        }
     }
 
     @Override
@@ -118,6 +124,10 @@ public final class JellyStreamWriterAutodetectType implements StreamRDF {
     }
 
     private void clearPrefixBacklog() {
+        if (pendingVersion != null) {
+            delegatedWriter.version(pendingVersion);
+            pendingVersion = null;
+        }
         for (final var backlog : prefixBacklog) {
             delegatedWriter.prefix(backlog.prefix(), backlog.iri());
         }

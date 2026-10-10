@@ -314,14 +314,26 @@ class MessageGenerator(val info: MessageInfo):
       .returns(classOf[Unit])
       .addParameter(RuntimeClasses.CodedOutputStream, "output", Modifier.FINAL)
       .addException(classOf[IOException])
-    fields.foreach(f => {
-      val checker = CodeBlock.builder().add("if (")
-      f.generateHasChecker(checker)
-      writeTo.beginControlFlow(checker.add(")").build())
-      f.generateSerializationCode(writeTo)
-      writeTo.endControlFlow
-    })
-    oneOfGenerators.foreach(_.generateWriteToCode(writeTo))
+    // Fields are written in field number order, as protobuf recommends. This helps
+    // legacy readers which expect a row to come first in a Jelly-RDF 1.0/1.1 stream. They use
+    // it for detecting whether the stream is delimited.
+    val writers: Seq[(Int, () => Unit)] =
+      fields.map(f =>
+        (
+          f.info.number,
+          () => {
+            val checker = CodeBlock.builder().add("if (")
+            f.generateHasChecker(checker)
+            writeTo.beginControlFlow(checker.add(")").build())
+            f.generateSerializationCode(writeTo)
+            writeTo.endControlFlow
+            ()
+          },
+        ),
+      ) ++ oneOfGenerators.map(o =>
+        (o.fields.map(_.number).min, () => o.generateWriteToCode(writeTo)),
+      )
+    writers.sortBy(_._1).foreach(_._2())
     t.addMethod(writeTo.build)
 
   private def generateSerializedSize(t: TypeSpec.Builder): Unit =

@@ -13,67 +13,74 @@ public final class Rdf4jEncoderConverter
     implements ProtoEncoderConverter<Value>, TripleExtractor<Value, Statement>, QuadExtractor<Value, Statement>
 {
 
+    // isIRI, isBNode etc. were found to be faster than instanceof checks. instanceof over interfaces
+    // is very slow if you use it with multiple interfaces – only the last interface check is cached.
+
     @Override
-    public Object nodeToProto(NodeEncoder<Value> encoder, Value value) {
-        // Value's own methods, not instanceof: a class caches only the last interface it passed a
-        // type check against, and the generic bridge in front of this method checks Value, so an
-        // instanceof IRI here missed that cache every time.
+    public void encodeIri(NodeEncoder<Value> encoder, Value value) {
         if (value.isIRI()) {
-            return encoder.makeIri(value.stringValue());
+            encoder.iri(value.stringValue());
+        } else {
+            encodeAny(encoder, value);
+        }
+    }
+
+    @Override
+    public void encodeResource(NodeEncoder<Value> encoder, Value value) {
+        if (value.isIRI()) {
+            encoder.iri(value.stringValue());
         } else if (value.isBNode()) {
-            return encoder.makeBlankNode(((BNode) value).getID());
+            encoder.blankNode(((BNode) value).getID());
+        } else {
+            encodeAny(encoder, value);
+        }
+    }
+
+    @Override
+    public void encodeGraph(NodeEncoder<Value> encoder, Value value) {
+        if (value == null) {
+            encoder.defaultGraph();
+        } else {
+            encodeResource(encoder, value);
+        }
+    }
+
+    @Override
+    public void encodeAny(NodeEncoder<Value> encoder, Value value) {
+        if (value.isIRI()) {
+            encoder.iri(value.stringValue());
+        } else if (value.isBNode()) {
+            encoder.blankNode(((BNode) value).getID());
         } else if (value instanceof Literal literal) {
-            final var lex = literal.getLabel();
-            final var lang = literal.getLanguage();
-            if (lang.isPresent()) {
-                final Literal.BaseDirection direction = literal.getBaseDirection();
-                if (direction == Literal.BaseDirection.NONE) {
-                    return encoder.makeLangLiteral(literal, lex, lang.get());
-                }
-                return encoder.makeDirLangLiteral(
-                    literal,
-                    lex,
-                    lang.get(),
-                    direction == Literal.BaseDirection.LTR ? RdfBaseDirection.LTR : RdfBaseDirection.RTL
-                );
-            } else {
-                final var dt = literal.getDatatype();
-                if (!dt.equals(XSD.STRING)) {
-                    return encoder.makeDtLiteral(literal, lex, dt.stringValue());
-                } else {
-                    return encoder.makeSimpleLiteral(lex);
-                }
-            }
+            encodeLiteral(encoder, literal);
         } else if (value instanceof TripleTerm tripleTerm) {
-            return encoder.makeQuotedTriple(tripleTerm.getSubject(), tripleTerm.getPredicate(), tripleTerm.getObject());
+            encoder.tripleTerm(tripleTerm.getSubject(), tripleTerm.getPredicate(), tripleTerm.getObject());
         } else {
             throw new RdfProtoSerializationError("Cannot encode node: %s".formatted(value));
         }
     }
 
-    @Override
-    public Object graphNodeToProto(NodeEncoder<Value> encoder, Value value) {
-        if (value instanceof IRI iri) {
-            return encoder.makeIri(iri.stringValue());
-        } else if (value instanceof BNode bNode) {
-            return encoder.makeBlankNode(bNode.getID());
-        } else if (value instanceof Literal literal) {
-            final var lex = literal.getLabel();
-            final var lang = literal.getLanguage();
-            if (lang.isPresent()) {
-                return encoder.makeLangLiteral(literal, lex, lang.get());
+    private static void encodeLiteral(NodeEncoder<Value> encoder, Literal literal) {
+        final var lex = literal.getLabel();
+        final var lang = literal.getLanguage();
+        if (lang.isPresent()) {
+            final Literal.BaseDirection direction = literal.getBaseDirection();
+            if (direction == Literal.BaseDirection.NONE) {
+                encoder.langLiteral(lex, lang.get());
             } else {
-                final var dt = literal.getDatatype();
-                if (!dt.equals(XSD.STRING)) {
-                    return encoder.makeDtLiteral(literal, lex, dt.stringValue());
-                } else {
-                    return encoder.makeSimpleLiteral(lex);
-                }
+                encoder.dirLangLiteral(
+                    lex,
+                    lang.get(),
+                    direction == Literal.BaseDirection.LTR ? RdfBaseDirection.LTR : RdfBaseDirection.RTL
+                );
             }
-        } else if (value == null) {
-            return encoder.makeDefaultGraph();
         } else {
-            throw new RdfProtoSerializationError("Cannot encode graph node: %s".formatted(value));
+            final var dt = literal.getDatatype();
+            if (dt.equals(XSD.STRING)) {
+                encoder.simpleLiteral(lex);
+            } else {
+                encoder.dtLiteral(lex, dt.stringValue());
+            }
         }
     }
 

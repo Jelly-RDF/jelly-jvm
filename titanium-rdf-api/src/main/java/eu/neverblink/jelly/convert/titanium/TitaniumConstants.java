@@ -4,7 +4,8 @@ public final class TitaniumConstants {
 
     private TitaniumConstants() {}
 
-    // https://www.w3.org/TR/rdf11-concepts/#section-Graph-Literal
+    // https://www.w3.org/TR/rdf12-concepts/#section-Graph-Literal
     public static final String DT_STRING = "http://www.w3.org/2001/XMLSchema#string";
     public static final String DT_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString";
+    public static final String DT_DIR_LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#dirLangString";
 }

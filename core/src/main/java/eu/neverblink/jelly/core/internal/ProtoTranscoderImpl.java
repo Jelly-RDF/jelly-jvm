@@ -10,6 +10,8 @@ import java.util.List;
  * <p>
  * It does not in perfect compression (like you would get with full decoding and re-encoding), but it should be
  * good enough for the vast majority of cases.
+ * <p>
+ * Only supports Jelly-RDF 1.0 and 1.1 streams (row layout), and writes Jelly-RDF 1.1.
  */
 @InternalApi
 public final class ProtoTranscoderImpl implements ProtoTranscoder {
@@ -52,6 +54,9 @@ public final class ProtoTranscoderImpl implements ProtoTranscoder {
     @Override
     public RdfStreamFrame ingestFrame(RdfStreamFrame frame) {
         rowBuffer.clear();
+        if (frame.getColumns() != null) {
+            throw unsupportedColumnLayout();
+        }
         for (final var row : frame.getRows()) {
             processRow(row);
         }
@@ -265,7 +270,16 @@ public final class ProtoTranscoderImpl implements ProtoTranscoder {
         return triple;
     }
 
+    private static RdfProtoTranscodingError unsupportedColumnLayout() {
+        return new RdfProtoTranscodingError(
+            "The transcoder only supports Jelly-RDF 1.0 and 1.1 streams (row layout), not Jelly-RDF 1.2."
+        );
+    }
+
     private void handleOptions(RdfStreamOptions options) {
+        if (!JellyConstants.isRowLayout(options.getVersion())) {
+            throw unsupportedColumnLayout();
+        }
         if (supportedInputOptions != null) {
             if (outputOptions.getPhysicalType() != options.getPhysicalType()) {
                 throw new RdfProtoTranscodingError(
@@ -301,7 +315,7 @@ public final class ProtoTranscoderImpl implements ProtoTranscoder {
         var version =
             inputOptions.getVersion() == JellyConstants.PROTO_VERSION_1_0_X
                 ? JellyConstants.PROTO_VERSION_1_0_X
-                : JellyConstants.PROTO_VERSION;
+                : JellyConstants.PROTO_VERSION_1_1_X;
 
         var newOptions = outputOptions.clone().setVersion(version);
         rowBuffer.add(RdfStreamRow.newInstance().setOptions(newOptions));

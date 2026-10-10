@@ -4,7 +4,6 @@ import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlStreamType;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
-import eu.neverblink.jelly.core.sparql.JellySparqlIoUtils;
 import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
@@ -191,7 +190,10 @@ public final class RowSetReaderJelly implements RowSetReader {
     }
 
     private static FrameReader openReader(InputStream in, SparqlDecoder decoder, Options options) throws IOException {
-        final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
+        final IoUtils.AutodetectDelimitingResponse response = IoUtils.autodetectDelimiting(
+            in,
+            SparqlResultsFrame.getDescriptor()
+        );
         return new FrameReader(response.newInput(), response.isDelimited(), decoder, options.requireTrailer());
     }
 

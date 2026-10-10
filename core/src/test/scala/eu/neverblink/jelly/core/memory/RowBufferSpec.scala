@@ -6,7 +6,10 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.*
+import scala.annotation.nowarn
 
+// Covers the deprecated Jelly-RDF 1.1 (row layout) encoder
+@nowarn("cat=deprecation")
 class RowBufferSpec extends AnyWordSpec, Matchers:
   "LazyImmutableRowBuffer" should {
     "work for an empty buffer" in {

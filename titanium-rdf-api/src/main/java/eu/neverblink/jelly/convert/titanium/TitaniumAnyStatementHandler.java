@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.convert.titanium;
 
+import static eu.neverblink.jelly.convert.titanium.TitaniumConstants.DT_DIR_LANG_STRING;
 import static eu.neverblink.jelly.convert.titanium.TitaniumConstants.DT_LANG_STRING;
 import static eu.neverblink.jelly.convert.titanium.TitaniumConstants.DT_STRING;
 
@@ -36,6 +37,18 @@ final class TitaniumAnyStatementHandler implements RdfHandler.AnyStatementHandle
                         DT_LANG_STRING,
                         langLiteral.lang(),
                         null,
+                        TitaniumNode.iriLikeOf(g)
+                    );
+                }
+                case DIR_LANG_LITERAL -> {
+                    final var dirLangLiteral = TitaniumNode.dirLangLiteralOf(o);
+                    consumer.quad(
+                        TitaniumNode.iriLikeOf(s),
+                        TitaniumNode.iriLikeOf(p),
+                        dirLangLiteral.lex(),
+                        DT_DIR_LANG_STRING,
+                        dirLangLiteral.lang(),
+                        dirLangLiteral.direction(),
                         TitaniumNode.iriLikeOf(g)
                     );
                 }
@@ -91,6 +104,18 @@ final class TitaniumAnyStatementHandler implements RdfHandler.AnyStatementHandle
                         DT_LANG_STRING,
                         langLiteral.lang(),
                         null,
+                        null
+                    );
+                }
+                case DIR_LANG_LITERAL -> {
+                    final var dirLangLiteral = TitaniumNode.dirLangLiteralOf(o);
+                    consumer.quad(
+                        TitaniumNode.iriLikeOf(s),
+                        TitaniumNode.iriLikeOf(p),
+                        dirLangLiteral.lex(),
+                        DT_DIR_LANG_STRING,
+                        dirLangLiteral.lang(),
+                        dirLangLiteral.direction(),
                         null
                     );
                 }

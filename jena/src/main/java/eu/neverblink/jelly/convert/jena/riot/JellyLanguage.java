@@ -32,18 +32,19 @@ public final class JellyLanguage {
     /**
      * The Jelly language constant for use in Apache Jena RIOT.
      * <p>
-     * This uses by default JellyFormat.JELLY_BIG_ALL_FEATURES for serialization, assuming pessimistically
-     * that the user may want to use all features of the protocol.
-     * <p>
-     * If you are not intending to use generalized RDF or RDF-star, you may want to use
-     * JellyFormat.JELLY_SMALL_STRICT.
+     * This uses by default JellyFormat.JELLY_BIG_STRICT for serialization, which writes Jelly-RDF 1.2.
+     * Jelly-RDF 1.2 never has generalized statements and always allows triple terms as objects.
      */
     public static final Lang JELLY;
 
     private static final String SYMBOL_NS = "https://neverblink.eu/jelly/riot/symbols#";
 
     /**
-     * Pre-defined serialization format variants for Jelly.
+     * Pre-defined serialization format variants for Jelly, by name, for {@link #SYMBOL_PRESET}.
+     * <p>
+     * The names with GENERALIZED, RDF_STAR and ALL_FEATURES are deprecated and will be removed in
+     * Jelly-JVM 5.0.0: in Jelly-RDF 1.2 output they are the same as SMALL_STRICT and BIG_STRICT. Their
+     * flags only apply to Jelly-RDF 1.0 and 1.1 output, which is deprecated.
      */
     public static final Map<String, RdfStreamOptions> PRESETS = Map.of(
         "SMALL_STRICT",
@@ -84,7 +85,8 @@ public final class JellyLanguage {
 
     /**
      * Symbol for the maximum supported options of the Jelly parser. Use this to for example allow for decoding Jelly
-     * files with very large lookup tables or to disable RDF-star support.
+     * files with very large lookup tables, or to limit the RDF version or the features of Jelly-RDF 1.1
+     * streams (RDF-star, generalized statements) that the parser accepts.
      * <p>
      * Set this in Jena's Context to instances of RdfStreamOptions.
      * <p>
@@ -95,7 +97,9 @@ public final class JellyLanguage {
 
     /**
      * Symbol for the target stream frame size to be used when writing RDF data.
-     * Frame size may be slightly larger than this value, to fit the entire statement and its lookup entries in one frame.
+     * In Jelly-RDF 1.2, this is the largest number of statements in a frame (a frame may end earlier, when its
+     * lookup tables fill up). In Jelly-RDF 1.1, it is the number of rows, and a frame may be slightly larger, to fit
+     * the entire statement and its lookup entries in one frame.
      * <p>
      * Set this in Jena's Context to an integer (not long!) value.
      */
@@ -135,6 +139,7 @@ public final class JellyLanguage {
      * See: <a href="https://jena.apache.org/documentation/notes/system-initialization.html">Jena Documentation</a>
      * However, you may also want to call this manually if Jena doesn't load the language automatically.
      */
+    @SuppressWarnings("removal")
     public static synchronized void register() {
         if (isRegistered) {
             return;
@@ -146,10 +151,10 @@ public final class JellyLanguage {
         RDFLanguages.register(JELLY);
 
         // Default serialization format
-        RDFWriterRegistry.register(JELLY, JELLY_BIG_ALL_FEATURES);
+        RDFWriterRegistry.register(JELLY, JELLY_BIG_STRICT);
 
         // Register also the streaming writer
-        StreamRDFWriter.register(JELLY, JELLY_BIG_ALL_FEATURES);
+        StreamRDFWriter.register(JELLY, JELLY_BIG_STRICT);
 
         // Register the writers
         final var allFormats = List.of(

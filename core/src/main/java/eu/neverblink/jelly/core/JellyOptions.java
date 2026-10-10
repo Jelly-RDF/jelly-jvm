@@ -3,12 +3,19 @@ package eu.neverblink.jelly.core;
 import static eu.neverblink.jelly.core.internal.BaseJellyOptions.*;
 
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
+import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
+import eu.neverblink.jelly.core.proto.v1.RdfStreamType;
+import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils;
+import eu.neverblink.jelly.core.utils.RdfVersionUtils;
 
 /**
  * A collection of convenient streaming option presets.
  * None of the presets specifies the stream type – do that with the .clone().setPhysicalType() method.
+ * <p>
+ * The generalized RDF and RDF-star flags of the GENERALIZED, RDF_STAR and ALL_FEATURES presets apply
+ * to Jelly-RDF 1.0 and 1.1 streams and to Jelly-Patch. Jelly-RDF 1.2 output ignores them.
  */
 public final class JellyOptions {
 
@@ -105,8 +112,12 @@ public final class JellyOptions {
      * <code>
      * final var myOptions = JellyOptions.DEFAULT_SUPPORTED_OPTIONS
      *      .clone()
-     *      .setRdfStar(false);
+     *      .setRdfStar(false)
+     *      .setRdfVersion(RdfVersion.RDF_VERSION_1_2_BASIC);
      * </code>
+     * <p>
+     * The RDF version of the supported options limits the terms of Jelly-RDF 1.2 streams.
+     * Unspecified (the default) means no limit.
      * <p>
      * If you were to pass a default RdfStreamOptions object to the decoder, it would simply refuse to read any stream
      * as (by default) it will have all max table sizes set to 0. So, you should always use this method as the base.
@@ -132,6 +143,11 @@ public final class JellyOptions {
      * <p>
      * We check:
      * - version (must be &lt;= Constants.protoVersion and &lt;= supportedOptions.version)
+     * - the fields that are only valid in one layout (row layout: versions 1 and 2, column
+     *   layout: version 3) are not set in the other
+     * - physical stream type (column layout: must be TRIPLES or QUADS)
+     * - stream type and RDF version (column layout: must be known, and the RDF version must be
+     *   &lt;= supportedOptions.rdfVersion, unless that is unspecified)
      * - generalized statements (must be &lt;= supportedOptions.generalizedStatements)
      * - RDF star (must be &lt;= supportedOptions.rdfStar)
      * - max name table size (must be &lt;= supportedOptions.maxNameTableSize and &gt;= 16).
@@ -155,6 +171,12 @@ public final class JellyOptions {
      */
     public static void checkCompatibility(RdfStreamOptions requestedOptions, RdfStreamOptions supportedOptions) {
         checkBaseCompatibility(requestedOptions, supportedOptions, JellyConstants.PROTO_VERSION);
+        if (!JellyConstants.isRowLayout(requestedOptions.getVersion())) {
+            // Logical stream types do not exist in the column layout
+            checkColumnLayoutOptions(requestedOptions, supportedOptions);
+            return;
+        }
+        checkRowLayoutOptions(requestedOptions);
         // Check for unknown enum values in the input
         if (requestedOptions.getPhysicalType() == null) {
             throw new RdfProtoDeserializationError(
@@ -167,6 +189,55 @@ public final class JellyOptions {
             );
         }
         checkLogicalStreamType(requestedOptions, supportedOptions.getLogicalType());
+    }
+
+    /**
+     * Checks that the stream options of a row layout stream (Jelly-RDF 1.0.x and 1.1.x) do not
+     * use the fields of the column layout.
+     */
+    private static void checkRowLayoutOptions(RdfStreamOptions options) {
+        if (options.getStreamTypeValue() != RdfStreamType.FLAT_VALUE) {
+            throw new RdfProtoDeserializationError(
+                "The stream type field is only valid in Jelly-RDF 1.2 streams (protocol version 3 and up)."
+            );
+        }
+        if (options.getRdfVersionValue() != RdfVersion.RDF_VERSION_UNSPECIFIED_VALUE) {
+            throw new RdfProtoDeserializationError(
+                "The RDF version field is only valid in Jelly-RDF 1.2 streams (protocol version 3 and up)."
+            );
+        }
+    }
+
+    /**
+     * Checks the stream options of a column layout stream (Jelly-RDF 1.2.x).
+     */
+    private static void checkColumnLayoutOptions(RdfStreamOptions options, RdfStreamOptions supportedOptions) {
+        if (options.getGeneralizedStatements() || options.getRdfStar() || options.getLogicalTypeValue() != 0) {
+            throw new RdfProtoDeserializationError(
+                "The generalized statements, RDF-star, and logical stream type fields are only valid " +
+                    "in Jelly-RDF 1.0 and 1.1 streams (protocol versions 1 and 2)."
+            );
+        }
+        final PhysicalStreamType physicalType = options.getPhysicalType();
+        if (physicalType != PhysicalStreamType.TRIPLES && physicalType != PhysicalStreamType.QUADS) {
+            throw new RdfProtoDeserializationError(
+                "Jelly-RDF 1.2 streams must be of physical type TRIPLES or QUADS, got: %s".formatted(
+                    physicalType == null ? Integer.toString(options.getPhysicalTypeValue()) : physicalType
+                )
+            );
+        }
+        if (options.getStreamType() == null) {
+            throw new RdfProtoDeserializationError("Unknown stream type: %d".formatted(options.getStreamTypeValue()));
+        }
+        RdfVersionUtils.checkRdfVersion(options.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
+        if (options.getMaxNameTableSize() < MIN_COLUMN_NAME_TABLE_SIZE) {
+            throw new RdfProtoDeserializationError(
+                "The stream uses a name table size of %s, which is smaller than the minimum supported size of %s.".formatted(
+                    options.getMaxNameTableSize(),
+                    MIN_COLUMN_NAME_TABLE_SIZE
+                )
+            );
+        }
     }
 
     /**

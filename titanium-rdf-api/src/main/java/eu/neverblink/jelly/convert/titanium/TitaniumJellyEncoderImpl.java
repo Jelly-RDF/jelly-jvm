@@ -1,7 +1,5 @@
 package eu.neverblink.jelly.convert.titanium;
 
-import static eu.neverblink.jelly.convert.titanium.TitaniumConstants.DT_STRING;
-
 import com.apicatalog.rdf.api.RdfConsumerException;
 import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.convert.titanium.internal.TitaniumConverterFactory;
@@ -15,7 +13,11 @@ import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 
+/**
+ * Encoder of Jelly-RDF 1.0 streams (row layout). Deprecated together with the row layout encoder.
+ */
 @InternalApi
+@SuppressWarnings("removal")
 final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
 
     private final ProtoEncoder<Object> encoder;
@@ -79,23 +81,14 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
         String direction,
         String graph
     ) throws RdfConsumerException {
-        // IRIs and bnodes don't need further processing. For literals, we must allocate
-        // intermediate objects.
+        // For literals, we must allocate intermediate objects.
         try {
-            if (RdfQuadConsumer.isLiteral(datatype, language, direction)) {
-                final TitaniumLiteral literal;
-                if (RdfQuadConsumer.isLangString(datatype, language, direction)) {
-                    literal = new TitaniumLiteral.LangLiteral(object, language);
-                } else if (datatype.equals(DT_STRING)) {
-                    literal = new TitaniumLiteral.SimpleLiteral(object);
-                } else {
-                    literal = new TitaniumLiteral.DtLiteral(object, datatype);
-                }
-
-                encoder.handleQuad(subject, predicate, literal, graph);
-            } else {
-                encoder.handleQuad(subject, predicate, object, graph);
-            }
+            encoder.handleQuad(
+                subject,
+                predicate,
+                TitaniumLiteral.objectOf(object, datatype, language, direction),
+                graph
+            );
         } catch (RdfProtoSerializationError e) {
             throw new RdfConsumerException(e.getMessage(), e);
         }

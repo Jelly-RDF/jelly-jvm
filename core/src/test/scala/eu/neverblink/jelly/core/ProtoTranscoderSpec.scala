@@ -157,7 +157,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
       val options = JellyOptions.SMALL_STRICT.clone
         .setMaxPrefixTableSize(0)
         .setPhysicalType(PhysicalStreamType.GRAPHS)
-        .setVersion(JellyConstants.PROTO_VERSION)
+        .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
 
       val input: Seq[RdfStreamRow] = Seq[RdfStreamRow](
         rdfStreamRow(options),
@@ -183,7 +183,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
 
     "remap prefix, name, and datatype IDs" in {
       val options = JellyOptions.SMALL_STRICT.clone
-        .setVersion(JellyConstants.PROTO_VERSION)
+        .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
 
       val input: Seq[RdfStreamRow] = Seq(
         rdfStreamRow(options),
@@ -251,7 +251,7 @@ class ProtoTranscoderSpec extends AnyWordSpec, Inspectors, Matchers:
       val transcoder = new ProtoTranscoderImpl(
         null,
         options.clone
-          .setVersion(JellyConstants.PROTO_VERSION),
+          .setVersion(JellyConstants.PROTO_VERSION_1_1_X),
       )
 
       val output = transcoder.ingestRow(input).asScala

@@ -7,6 +7,8 @@ import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
  * Transcoder for Jelly streams.
  * <p>
  * It turns one or more input streams into one output stream.
+ * <p>
+ * Currently only supports Jelly-RDF 1.0 and 1.1 streams (row layout).
  */
 public interface ProtoTranscoder {
     /**

@@ -8,12 +8,15 @@ import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 
 /**
- * Base interface for RDF stream encoders.
+ * Base interface for encoders of Jelly-RDF 1.0 and 1.1 streams (row layout).
  * @param <TNode> type of RDF nodes in the library
+ * @deprecated Jelly-RDF 1.1 output will be removed in Jelly-JVM 5.0.0. Use {@link RdfEncoder},
+ * which writes Jelly-RDF 1.2. Reading Jelly-RDF 1.0 and 1.1 stays supported.
  */
+@Deprecated(forRemoval = true)
 public abstract class ProtoEncoder<TNode>
     extends EncoderBase<TNode>
-    implements RdfBufferAppender<TNode>, RdfHandler.AnyRdfHandler<TNode>
+    implements RdfBufferAppender, RdfHandler.AnyRdfHandler<TNode>
 {
 
     /**

@@ -4,7 +4,6 @@ import eu.neverblink.jelly.core.RdfProtoDeserializationError;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlStreamType;
-import eu.neverblink.jelly.core.sparql.JellySparqlIoUtils;
 import eu.neverblink.jelly.core.sparql.JellySparqlMetadata;
 import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
@@ -102,7 +101,10 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         resultsHandler.decoder = decoder;
         boolean lastFrameHadTrailer = false;
         try {
-            final IoUtils.AutodetectDelimitingResponse response = JellySparqlIoUtils.autodetectDelimiting(in);
+            final IoUtils.AutodetectDelimitingResponse response = IoUtils.autodetectDelimiting(
+                in,
+                SparqlResultsFrame.getDescriptor()
+            );
             final InputStream input = response.newInput();
             if (response.isDelimited()) {
                 final var frames = new DelimitedMessageReader<>(input, SparqlResultsFrame.getFactory());

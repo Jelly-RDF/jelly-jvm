@@ -228,7 +228,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
       do
         s"demanded output is $outputOptName, supported input is $sInputOptName" should {
           val compatibleCases = testCases.filter(tc => checkCompat(tc.options, sInputOpt))
-          val sInputOpt2 = sInputOpt.clone().setVersion(JellyConstants.PROTO_VERSION)
+          val sInputOpt2 = sInputOpt.clone().setVersion(JellyConstants.PROTO_VERSION_1_1_X)
 
           "transcode an empty stream" in {
             val transcoder = transFactory(Some(sInputOpt2), outputOpt)

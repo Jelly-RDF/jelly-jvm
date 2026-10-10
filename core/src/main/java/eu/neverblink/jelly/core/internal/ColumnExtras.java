@@ -1,4 +1,4 @@
-package eu.neverblink.jelly.core.sparql.internal;
+package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.proto.v1.RdfTripleTerm;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * The rarely used parts of a column of the SPARQL encoder: language tags, triple terms, and the
+ * The rarely used parts of a column of the column encoder: language tags, triple terms, and the
  * kinds of a column that mixes term types. Separated from the column state and created lazily,
  * so that most columns never allocate any of this, and the column state stays small.
  */
