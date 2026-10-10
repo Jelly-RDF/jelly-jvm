@@ -93,6 +93,11 @@ public final class LookupEncoder {
             if (holds(first, key, hash)) {
                 return first;
             }
+            return getSecond(key, hash, slot, first);
+        }
+
+        /** The rest of get(), when the key is not in the first line. */
+        private IriIds getSecond(Object key, int hash, int slot, IriIds first) {
             // The item is not in the first cache line.
             // Whatever is in the first line is moved to the second line, and the key we
             // are looking for takes the first – either promoted from the second line, or reusing the
@@ -258,9 +263,8 @@ public final class LookupEncoder {
      * @return the cached ids, valid until the next call
      */
     private IriIds encodeIriWithPrefix(String iri) {
-        final var prefixLookup = Objects.requireNonNull(this.prefixLookup);
-        // Slow path, with splitting out the prefix
-        final var cached = Objects.requireNonNull(iriCache).get(iri);
+        // Kept small, so that it is inlined where IRIs are encoded: most IRIs end here.
+        final var cached = iriCache.get(iri);
         if (cached.epoch == epoch) {
             // Already used in this epoch, so its entries are pinned: still valid, and already
             // counted against the epoch's budget. Only their last use moves on.
@@ -268,6 +272,18 @@ public final class LookupEncoder {
             prefixLookup.onRepeatAccess(cached.prefixId);
             return cached;
         }
+        return checkIriIds(iri, cached);
+    }
+
+    /**
+     * The rest of {@link #encodeIriWithPrefix}: checks the cached ids of an IRI not used in this
+     * epoch yet, or finds them in the lookups.
+     * @param iri The IRI to encode
+     * @param cached its entry in the IRI cache
+     * @return the cached ids, valid until the next call
+     */
+    private IriIds checkIriIds(String iri, IriIds cached) {
+        final var prefixLookup = Objects.requireNonNull(this.prefixLookup);
         if (
             cached.filled &&
             cached.nameSerial == nameLookup.serial(cached.nameId) &&
