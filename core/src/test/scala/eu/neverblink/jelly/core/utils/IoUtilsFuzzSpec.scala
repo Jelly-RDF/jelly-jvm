@@ -18,7 +18,8 @@ class IoUtilsFuzzSpec extends AnyWordSpec, Matchers:
       // delimited stream (see the autodetectDelimiting docs). That is rare and accepted. Anything
       // else is not.
       result.failures.filterNot(_.what == "non-delimited taken as delimited").take(5) shouldBe empty
-      result.failures.size should be <= iterations / 1000
+      // Measured: about 1 in 100,000 for Jelly-RDF, 6 in 100,000 for Jelly-SPARQL
+      result.failures.size should be <= iterations / 10_000
       // Most cases start with a byte that could also be the size of a delimited frame
       result.ambiguous should be > iterations / 2
     }

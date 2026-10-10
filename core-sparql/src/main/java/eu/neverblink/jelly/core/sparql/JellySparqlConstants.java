@@ -37,6 +37,15 @@ public final class JellySparqlConstants {
      */
     public static final int DEFAULT_MAX_ROWS_PER_FRAME = 1 << 20;
 
+    /**
+     * How many values (rows × variables) a reader accepts in one frame unless told otherwise.
+     * <p>
+     * A reader makes room for every value of a frame before it decodes the frame.
+     * Without this limit, a frame of a few kilobytes declaring a
+     * thousand variables and a million rows would make it allocate gigabytes.
+     */
+    public static final int DEFAULT_MAX_VALUES_PER_FRAME_READ = 1 << 24;
+
     public static final int PROTO_VERSION_1_0_X = 1;
     public static final int PROTO_VERSION = PROTO_VERSION_1_0_X;
 

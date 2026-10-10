@@ -177,16 +177,22 @@ class RdfColumnLayoutSpec extends AnyWordSpec, Matchers:
     }
 
     "compress repeated terms into layout runs" in {
+      val triples = (1 to 10).map(i => Triple(iri("s"), iri("p"), iri(s"o$i")))
       val enc = Encoded(options())
-      for i <- 1 to 10 do enc.encoder.handleTriple(iri("s"), iri("p"), iri(s"o$i"))
+      write(enc.encoder, triples)
       enc.encoder.flush()
       val batch = enc.frames.head.getColumns
       batch.getRowCount shouldBe 10
-      batch.getSubjects.getNameIds.size shouldBe 1
-      batch.getPredicates.getNameIds.size shouldBe 1
+      // One value repeated in all 10 rows: a single run token, skip 0 and length code 10 - 2
+      for column <- Seq(batch.getSubjects, batch.getPredicates) do
+        column.getNameIds.size shouldBe 1
+        column.getLayouts.size shouldBe 1
+        column.getLayouts.get(0) shouldBe 8
+      // Ten values that each occur once: no tokens at all
       batch.getObjects.getNameIds.size shouldBe 10
       batch.getObjects.getLayouts.size shouldBe 0
       batch.getObjects.getKinds.isEmpty shouldBe true
+      enc.decode().statements shouldBe triples
     }
 
     "leave out the graph column if every quad is in the default graph" in {
@@ -535,6 +541,39 @@ class RdfColumnLayoutSpec extends AnyWordSpec, Matchers:
         .setObjects(iriColumn(2))
       decodeError(frameOf(options(), batch)) should include("predicate column may only have IRIs")
     }
+
+    "reject a literal whose kind points past the language tags of its column" in {
+      // Kind 4 is the language tag at index 1, but the column has only one language tag
+      val batch = batchWithNames(1, "s", "p")
+        .setSubjects(iriColumn(1))
+        .setPredicates(iriColumn(2))
+        .setObjects(
+          RdfColumn.newInstance().addLexValues("x").addLiteralKinds(4).addLangtags("en"),
+        )
+      decodeError(frameOf(options(), batch)) should include(
+        "language tag 1 referenced, but the column has 1",
+      )
+    }
+
+    for (name, literal) <- Seq(
+        "a datatype" -> RdfLiteral.newInstance().setLex("x").setDatatype(1),
+        "neither a datatype nor a language tag" -> RdfLiteral.newInstance().setLex("x"),
+      )
+    do
+      s"reject a literal in a triple term with a base direction and $name" in {
+        val term = RdfTripleTerm.newInstance()
+          .setSIri(RdfIri.newInstance().setNameId(1))
+          .setPIri(RdfIri.newInstance().setNameId(2))
+          .setOLiteral(literal.clone().setDirection(RdfBaseDirection.LTR))
+        val batch = batchWithNames(1, "s", "p")
+          .addDatatypes(RdfLookupEntryPacked.newInstance().addValues("https://test.org/dt"))
+          .setSubjects(iriColumn(1))
+          .setPredicates(iriColumn(2))
+          .setObjects(RdfColumn.newInstance().addTripleTerms(term))
+        decodeError(frameOf(options(prefixes = 0), batch)) should include(
+          "A literal has a base direction, but no language tag",
+        )
+      }
 
     "reject a graph column in a TRIPLES stream" in {
       val batch = batchWithNames(1, "s", "p", "o")

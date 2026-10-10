@@ -29,6 +29,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
     private final boolean freshColumns;
     private final SparqlResultsOptions supportedOptions;
     private final int maxRowsPerFrame;
+    private final int maxValuesPerFrame;
     private final ColumnDecoder<TNode, TDatatype> columnDecoder = new ColumnDecoder<>(this);
 
     private SparqlResultsOptions currentOptions = null;
@@ -56,7 +57,8 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         ProtoDecoderConverter<TNode, TDatatype> converter,
         SparqlResultsHandler<TNode> handler,
         SparqlResultsOptions supportedOptions,
-        int maxRowsPerFrame
+        int maxRowsPerFrame,
+        int maxValuesPerFrame
     ) {
         super(converter);
         this.handler = handler;
@@ -64,6 +66,7 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         this.supportedOptions =
             supportedOptions != null ? supportedOptions : JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS;
         this.maxRowsPerFrame = Math.min(maxRowsPerFrame, JellySparqlConstants.MAX_ROWS_PER_FRAME);
+        this.maxValuesPerFrame = maxValuesPerFrame;
     }
 
     // The lookup tables are sized from the stream options, and the sizes are baked in when the
@@ -148,6 +151,18 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
         if (rows > maxRowsPerFrame) {
             throw new RdfProtoDeserializationError(
                 "The frame declares %d rows, more than the %d this reader accepts.".formatted(rows, maxRowsPerFrame)
+            );
+        }
+        // Checked before anything is allocated: the decoder makes room for every value at once
+        final long values = (long) rows * variableNames.length;
+        if (values > maxValuesPerFrame) {
+            throw new RdfProtoDeserializationError(
+                "The frame declares %d rows of %d variables, %d values, more than the %d this reader accepts.".formatted(
+                    rows,
+                    variableNames.length,
+                    values,
+                    maxValuesPerFrame
+                )
             );
         }
 
