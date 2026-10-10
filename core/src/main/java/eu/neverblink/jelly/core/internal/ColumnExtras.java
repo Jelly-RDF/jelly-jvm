@@ -77,12 +77,11 @@ final class ColumnExtras {
     void setKind(int index, int term) {
         ensureKinds(index + 1);
         final int shift = (index & 3) << 1;
-        if (shift == 0) {
-            // The first value of a new byte, which may still hold the bits of an earlier frame
-            kinds[index >> 2] = (byte) term;
-        } else {
-            kinds[index >> 2] |= (byte) (term << shift);
-        }
+        final int i = index >> 2;
+        // Keeps only the bits of the values before this one in the byte: the first value of a byte
+        // clears it, as it may still hold the bits of an earlier frame. Without a branch, which
+        // mispredicts once every four values.
+        kinds[i] = (byte) ((kinds[i] & ((1 << shift) - 1)) | (term << shift));
     }
 
     private void ensureKinds(int values) {
