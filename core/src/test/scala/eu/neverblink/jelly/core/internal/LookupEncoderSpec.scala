@@ -12,8 +12,12 @@ class LookupEncoderSpec extends AnyWordSpec, Matchers:
   private class Entries extends RdfBufferAppender:
     val datatypes = mutable.ArrayBuffer.empty[(Int, String)]
     val names = mutable.ArrayBuffer.empty[(Int, String)]
-    override def appendNameEntry(entry: RdfNameEntry): Unit = names += ((entry.getId, entry.getValue))
-    override def appendPrefixEntry(entry: RdfPrefixEntry): Unit = ()
+    // New prefix ("p") and name ("n") entries, in order
+    val iriParts = mutable.ArrayBuffer.empty[(String, String)]
+    override def appendNameEntry(entry: RdfNameEntry): Unit =
+      names += ((entry.getId, entry.getValue))
+      iriParts += (("n", entry.getValue))
+    override def appendPrefixEntry(entry: RdfPrefixEntry): Unit = iriParts += (("p", entry.getValue))
     override def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit =
       datatypes += ((entry.getId, entry.getValue))
 
@@ -53,5 +57,46 @@ class LookupEncoderSpec extends AnyWordSpec, Matchers:
       encoder.hasRoom() should be(true)
       encoder.makeDatatypeId("http://example.com/b")
       encoder.hasRoom() should be(false)
+    }
+
+    "split IRIs after the first '#' from index 8, or else after the last '/'" in {
+      val iris = Seq(
+        "http://ex.org/a/b",
+        "http://ex.org/a/c",
+        // Same start as the previous prefix, but more of it is the prefix
+        "http://ex.org/a/c/d",
+        "http://ex.org/a/c#x",
+        "http://ex.org/a/c/e",
+        "http://ex.org/ns#a",
+        // A '/' after the '#' does not move the split
+        "http://ex.org/ns#a/b",
+        "http://ex.org/ns#b",
+        "http://ex.org/a/",
+        "http://ex.org/a/f",
+        "urn:x",
+        "urn:y",
+        "urn:y/z",
+        "ab#c",
+        "ab#d",
+        "ab/c#d",
+        "http://ex.org/a/g",
+      )
+      def split(iri: String): (String, String) =
+        val i = iri.indexOf('#', 8) match
+          case -1 => iri.lastIndexOf('/')
+          case i => i
+        (iri.substring(0, i + 1), iri.substring(i + 1))
+      val expected = mutable.ArrayBuffer.empty[(String, String)]
+      val seen = mutable.Set.empty[(String, String)]
+      for iri <- iris do
+        val (prefix, name) = split(iri)
+        if seen.add(("p", prefix)) then expected += (("p", prefix))
+        if seen.add(("n", name)) then expected += (("n", name))
+
+      val entries = Entries()
+      val encoder = LookupEncoder.create(entries, 64, 64, 2)
+      encoder.newEpoch(64, 64, 2)
+      iris.foreach(encoder.makeIriIds)
+      entries.iriParts should be(expected)
     }
   }
