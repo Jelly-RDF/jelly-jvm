@@ -44,6 +44,10 @@ public final class LookupEncoder {
         // The row layout's RdfIri with both ids, built on first use. It depends only on the ids,
         // so it is valid as long as they are.
         RdfIri rowIri;
+        // The lookups' epoch in which the ids were last checked and their entries counted against
+        // its budget, or 0 if none. Entries used in the current epoch cannot be replaced, so in
+        // that epoch the ids need neither again.
+        int epoch;
     }
 
     /** Rounds up to a power of two, so the caches can mask instead of divide. */
@@ -101,15 +105,30 @@ public final class LookupEncoder {
             } else {
                 node = other == null ? new IriIds() : other;
                 node.filled = false;
+                node.epoch = 0;
                 node.key = key;
                 node.keyHash = hash;
             }
             nodes[slot + 1] = first;
             return (nodes[slot] = node);
         }
+
+        /** Clears the epochs of all entries, before the epoch counter starts over. */
+        void clearEpochs() {
+            for (final IriIds node : nodes) {
+                if (node != null) {
+                    node.epoch = 0;
+                }
+            }
+        }
     }
 
     private final int maxPrefixTableSize;
+    // The current epoch of the lookups, counted from 1 (see IriIds.epoch), and what the IRI
+    // cache entries checked in it are stamped with. Before the first epoch, nothing is pinned, so
+    // the stamp (0) never matches the epoch (-1).
+    private int epoch = -1;
+    private int epochStamp = 0;
     // Lookup id of the prefix of the previous IRI.
     private int lastPrefixId;
 
@@ -242,6 +261,13 @@ public final class LookupEncoder {
         final var prefixLookup = Objects.requireNonNull(this.prefixLookup);
         // Slow path, with splitting out the prefix
         final var cached = Objects.requireNonNull(iriCache).get(iri);
+        if (cached.epoch == epoch) {
+            // Already used in this epoch, so its entries are pinned: still valid, and already
+            // counted against the epoch's budget. Only their last use moves on.
+            nameLookup.onRepeatAccess(cached.nameId);
+            prefixLookup.onRepeatAccess(cached.prefixId);
+            return cached;
+        }
         if (
             cached.filled &&
             cached.nameSerial == nameLookup.serial(cached.nameId) &&
@@ -249,6 +275,7 @@ public final class LookupEncoder {
         ) {
             nameLookup.onAccess(cached.nameId);
             prefixLookup.onAccess(cached.prefixId);
+            cached.epoch = epochStamp;
             return cached;
         }
 
@@ -305,6 +332,7 @@ public final class LookupEncoder {
         cached.prefixSerial = prefixLookup.serial(prefixId);
         cached.rowIri = null;
         cached.filled = true;
+        cached.epoch = epochStamp;
         return cached;
     }
 
@@ -354,6 +382,19 @@ public final class LookupEncoder {
             prefixLookup.newEpoch();
         }
         datatypeLookup.newEpoch();
+        nextEpoch();
+    }
+
+    private void nextEpoch() {
+        if (epoch == Integer.MAX_VALUE || epoch < 0) {
+            // Starting over: an entry stamped this many epochs ago would look current again
+            if (iriCache != null) {
+                iriCache.clearEpochs();
+            }
+            epoch = 0;
+        }
+        epoch++;
+        epochStamp = epoch;
     }
 
     /**
@@ -370,6 +411,7 @@ public final class LookupEncoder {
             prefixLookup.newEpoch(prefixBudget);
         }
         datatypeLookup.newEpoch(datatypeLookup.size == 0 ? Integer.MAX_VALUE : datatypeBudget);
+        nextEpoch();
     }
 
     /** Whether no table has used more ids in this epoch than its budget. */

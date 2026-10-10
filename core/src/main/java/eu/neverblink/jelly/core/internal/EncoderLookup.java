@@ -383,6 +383,20 @@ final class EncoderLookup {
     }
 
     /**
+     * The same as {@link #onAccess}, for an entry already used in the current epoch: it is not
+     * counted against the epoch's budget again.
+     * @param id The ID of the entry that was accessed.
+     */
+    void onRepeatAccess(int id) {
+        final int t = now + 1;
+        now = t;
+        entries[id * STRIDE + LAST_USE] = t;
+        if (t == REBASE_AT) {
+            rebase();
+        }
+    }
+
+    /**
      * Starts a new epoch: from now on, only the entries used from here on are pinned. Encoders
      * call this at the start of every RDF statement (or other stream row that has nodes) and every
      * SPARQL results frame.
