@@ -9,6 +9,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -145,6 +146,15 @@ public final class LookupEncoder {
 
     // Only with a prefix table: without one, the name lookup alone is as fast as this cache
     private final IriIdsCache iriCache;
+
+    // Datatype ids used in the current epoch, by the identity of the datatype's name: a
+    // direct-mapped memo. The name is usually the same String object every time, so a repeat
+    // skips the table's search and its comparison of the whole name. The epochs work as in
+    // IriIds.epoch.
+    private static final int DATATYPE_MEMO_SIZE = 8;
+    private final String[] datatypeMemoKeys = new String[DATATYPE_MEMO_SIZE];
+    private final int[] datatypeMemoIds = new int[DATATYPE_MEMO_SIZE];
+    private final int[] datatypeMemoEpochs = new int[DATATYPE_MEMO_SIZE];
 
     /**
      * Creates a new LookupEncoder.
@@ -358,6 +368,21 @@ public final class LookupEncoder {
      * @param datatypeName The name of the datatype
      */
     public int makeDatatypeId(String datatypeName) {
+        final int slot = datatypeName.hashCode() & (DATATYPE_MEMO_SIZE - 1);
+        if (datatypeMemoKeys[slot] == datatypeName && datatypeMemoEpochs[slot] == epoch) {
+            // Used in this epoch already: pinned, and counted against the budget
+            final int id = datatypeMemoIds[slot];
+            datatypeLookup.onRepeatAccess(id);
+            return id;
+        }
+        final int id = lookUpDatatype(datatypeName);
+        datatypeMemoKeys[slot] = datatypeName;
+        datatypeMemoIds[slot] = id;
+        datatypeMemoEpochs[slot] = epochStamp;
+        return id;
+    }
+
+    private int lookUpDatatype(String datatypeName) {
         if (datatypeLookup.size == 0) {
             throw new RdfProtoSerializationError(
                 "Datatype literals cannot be " +
@@ -407,6 +432,7 @@ public final class LookupEncoder {
             if (iriCache != null) {
                 iriCache.clearEpochs();
             }
+            Arrays.fill(datatypeMemoEpochs, 0);
             epoch = 0;
         }
         epoch++;
