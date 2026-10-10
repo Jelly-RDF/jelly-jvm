@@ -431,17 +431,37 @@ class FieldGenerator(val info: FieldInfo):
 
   private def generateInitializedMethod(t: TypeSpec.Builder): Unit =
     if !info.isRepeated && info.isMessage then
+      val code = CodeBlock.builder.beginControlFlow("if ($N == null)", info.fieldName)
+      if info.descriptor.hasOneofIndex then code.add(named("$field:N = ")).addStatement(initializer)
+      else
+        // A message parsed again and again into the same object after clear() (as the RDF
+        // parsers do with their frames) would otherwise allocate its nested messages, and all
+        // their arrays, again for every parse.
+        val spare = info.fieldName + "Spare"
+        t.addField(
+          FieldSpec.builder(info.getTypeName.asInstanceOf[ClassName].nestedClass("Mutable"), spare)
+            .addModifiers(Modifier.PRIVATE)
+            .addJavadoc(
+              "The message last created for $L. Once $L is unset by clear(), parsing or copying into\n" +
+                "this message reuses it, cleared, instead of a new one.\n",
+              info.fieldName,
+              info.fieldName,
+            )
+            .build,
+        )
+        code
+          .beginControlFlow("if ($N == null)", spare)
+          .add("$N = ", spare)
+          .addStatement(initializer)
+          .nextControlFlow("else")
+          .addStatement("$N.clear()", spare)
+          .endControlFlow
+          .addStatement("$N = $N", info.fieldName, spare)
       t.addMethod(
         MethodSpec.methodBuilder(info.lazyInitName)
           .addModifiers(Modifier.PRIVATE)
-          .addCode(
-            CodeBlock.builder
-              .beginControlFlow("if ($N == null)", info.fieldName)
-              .add(named("$field:N = "))
-              .addStatement(initializer)
-              .endControlFlow
-              .build,
-          ).build,
+          .addCode(code.endControlFlow.build)
+          .build,
       )
 
   private def lazyFieldInit = if !info.isRepeated && info.isMessageOrGroup then
