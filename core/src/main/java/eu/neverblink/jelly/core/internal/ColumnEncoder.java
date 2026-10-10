@@ -120,9 +120,17 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
 
         /** Records the term type of the next run value. */
         void addTerm(int term) {
+            final int bit = 1 << term;
+            final int used = termsUsed;
             // Almost always the same single type as the values before
-            if (termsUsed != 1 << term) {
-                addTermSlow(term);
+            if (used != bit) {
+                if ((used & bit) != 0) {
+                    // A column of mixed types, which has had this type already: its kinds are
+                    // being written (see addTermSlow)
+                    extras.setKind(valueCount, term);
+                } else {
+                    addTermSlow(term);
+                }
             }
             valueCount++;
         }
