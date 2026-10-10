@@ -246,7 +246,16 @@ public final class LookupEncoder {
      * @return the cached ids, valid until the next call
      */
     IriIds makeIriIdsEntry(String iri) {
-        return encodeIriWithPrefix(iri);
+        // In the row layout an epoch is one statement, which rarely has an IRI twice, so the
+        // same-epoch check of encodeIriWithPrefix would only cost a call into checkIriIds for
+        // nearly every IRI. The serial check is done here instead, inline.
+        final var cached = iriCache.get(iri);
+        if (hasValidIds(cached)) {
+            nameLookup.onAccess(cached.nameId);
+            prefixLookup.onAccess(cached.prefixId);
+            return cached;
+        }
+        return checkIriIds(iri, cached);
     }
 
     /** Whether the encoder has a prefix table. */
@@ -294,11 +303,7 @@ public final class LookupEncoder {
      */
     private IriIds checkIriIds(String iri, IriIds cached) {
         final var prefixLookup = Objects.requireNonNull(this.prefixLookup);
-        if (
-            cached.filled &&
-            cached.nameSerial == nameLookup.serial(cached.nameId) &&
-            cached.prefixSerial == prefixLookup.serial(cached.prefixId)
-        ) {
+        if (hasValidIds(cached)) {
             nameLookup.onAccess(cached.nameId);
             prefixLookup.onAccess(cached.prefixId);
             cached.epoch = epochStamp;
@@ -360,6 +365,15 @@ public final class LookupEncoder {
         cached.filled = true;
         cached.epoch = epochStamp;
         return cached;
+    }
+
+    /** Whether a cache entry has ids, and their entries were not replaced since. */
+    private boolean hasValidIds(IriIds cached) {
+        return (
+            cached.filled &&
+            cached.nameSerial == nameLookup.serial(cached.nameId) &&
+            cached.prefixSerial == prefixLookup.serial(cached.prefixId)
+        );
     }
 
     /**
