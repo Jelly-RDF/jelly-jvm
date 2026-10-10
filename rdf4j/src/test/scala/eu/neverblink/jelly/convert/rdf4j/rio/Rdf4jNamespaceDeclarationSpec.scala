@@ -14,13 +14,14 @@ import org.eclipse.rdf4j.model.Statement
   */
 class Rdf4jNamespaceDeclarationSpec extends AnyWordSpec, Matchers:
   private def checkDeclarations(out: ByteArrayOutputStream, shouldBeThere: Boolean) =
-    val rows: Seq[RdfStreamRow] =
-      RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray))
-        .getRows
-        .asScala
-        .toSeq
-
-    val nsDecls = rows.filter(_.hasNamespace).map(_.getNamespace)
+    val in = ByteArrayInputStream(out.toByteArray)
+    val frames =
+      Iterator.continually(RdfStreamFrame.parseDelimitedFrom(in)).takeWhile(_ != null).toSeq
+    // Jelly-RDF 1.1 has the declarations in rows, Jelly-RDF 1.2 in the column batch
+    val nsDecls = frames.flatMap(f =>
+      f.getRows.asScala.filter(_.hasNamespace).map(_.getNamespace) ++
+        Option(f.getColumns).toSeq.flatMap(_.getNamespaces.asScala),
+    )
 
     val parser = JellyParserFactory().getParser()
     val namespaces = new collection.mutable.HashMap[String, String]()

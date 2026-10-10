@@ -7,9 +7,9 @@ import eu.neverblink.jelly.core.{NodeEncoder, ProtoEncoderConverter}
   * encoder that the well-behaved [[eu.neverblink.jelly.core.helpers.MockProtoEncoderConverter]]
   * never exercises.
   */
-final class CustomEncoderConverter(f: (NodeEncoder[Node], Node) => Object)
+final class CustomEncoderConverter(f: (NodeEncoder[Node], Node) => Unit)
     extends ProtoEncoderConverter[Node]:
 
-  override def nodeToProto(encoder: NodeEncoder[Node], node: Node): Object = f(encoder, node)
+  override def encodeAny(encoder: NodeEncoder[Node], node: Node): Unit = f(encoder, node)
 
-  override def graphNodeToProto(encoder: NodeEncoder[Node], node: Node): Object = f(encoder, node)
+  override def encodeGraph(encoder: NodeEncoder[Node], node: Node): Unit = f(encoder, node)

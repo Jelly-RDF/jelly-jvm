@@ -179,12 +179,14 @@ public final class JellyParser extends AbstractRDFParser {
             if (delimitingResponse.isDelimited()) {
                 // Delimited Jelly file
                 // In this case, we can read multiple frames
-                readStream(delimitingResponse.newInput(), getReusableFrame, frame -> buffer.clear());
+                readStream(delimitingResponse.newInput(), getReusableFrame, frame ->
+                    decoder.endParsedFrame(reusableFrame)
+                );
             } else {
                 // Non-delimited Jelly file
                 // In this case, we can only read one frame
                 ProtoMessage.parseFrom(delimitingResponse.newInput(), getReusableFrame);
-                buffer.clear();
+                decoder.endParsedFrame(reusableFrame);
             }
         } catch (RdfProtoDeserializationError e) {
             // Rewrap exceptions

@@ -44,7 +44,7 @@ Titanium RDF API does not implement types for RDF primitives, so the Jelly integ
 
 But, you can still access a part of the low-level API directly. This would be useful if you wanted to integrate Titanium with Kafka or some other custom serialization pipeline.
 
-To do this, use the {{ javadoc_link_pretty('titanium-rdf-api', 'TitaniumJellyDecoder') }} and {{ javadoc_link_pretty('titanium-rdf-api', 'TitaniumJellyEncoder') }} classes directly.
+To do this, use the {{ javadoc_link_pretty('titanium-rdf-api', 'TitaniumJellyDecoder') }} and {{ javadoc_link_pretty('titanium-rdf-api', 'TitaniumJellyEncoder') }} classes directly. Create the encoder with `TitaniumJellyEncoder.factory(options, frameSize, frameSink)`: it writes Jelly-RDF 1.2 and passes each finished frame to the frame sink. Call `flush()` at the end of the stream. The other factory methods create a deprecated encoder of Jelly-RDF 1.0 stream rows.
 
 ## Integrations
 

@@ -13,7 +13,7 @@ object ProtoTestCases:
           // If the version is not set, set it to the current version
           case 0 =>
             v.clone
-              .setVersion(JellyConstants.PROTO_VERSION)
+              .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
           // Otherwise assume we are checking version compatibility
           case _ => v
       case v => v

@@ -1,5 +1,7 @@
 package eu.neverblink.jelly.core.sparql;
 
+import eu.neverblink.jelly.core.internal.ColumnLayout;
+
 /**
  * Constants for the Jelly-SPARQL extension.
  */
@@ -24,7 +26,7 @@ public final class JellySparqlConstants {
     /**
      * Largest row count a frame may physically declare, whatever a reader is configured to accept.
      */
-    public static final int MAX_ROWS_PER_FRAME = (1 << 27) - 1;
+    public static final int MAX_ROWS_PER_FRAME = ColumnLayout.MAX_ROWS;
 
     /**
      * How many rows a writer puts in one frame by default, and how many a reader accepts in one

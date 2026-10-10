@@ -11,25 +11,19 @@ class MockProtoEncoderConverter
       TripleExtractor[Node, Triple],
       QuadExtractor[Node, Quad]:
 
-  override def nodeToProto(encoder: NodeEncoder[Node], node: Node): Object = node match
-    case Iri(iri) => encoder.makeIri(iri)
-    case SimpleLiteral(lex) => encoder.makeSimpleLiteral(lex)
-    case LangLiteral(lex, lang) => encoder.makeLangLiteral(node, lex, lang)
-    case DirLangLiteral(lex, lang, direction) =>
-      encoder.makeDirLangLiteral(node, lex, lang, direction)
-    case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt)
-    case BlankNode(label) => encoder.makeBlankNode(label)
-    case TripleNode(s, p, o) => encoder.makeQuotedTriple(s, p, o)
+  override def encodeAny(encoder: NodeEncoder[Node], node: Node): Unit = node match
+    case Iri(iri) => encoder.iri(iri)
+    case SimpleLiteral(lex) => encoder.simpleLiteral(lex)
+    case LangLiteral(lex, lang) => encoder.langLiteral(lex, lang)
+    case DirLangLiteral(lex, lang, direction) => encoder.dirLangLiteral(lex, lang, direction)
+    case DtLiteral(lex, dt) => encoder.dtLiteral(lex, dt.dt)
+    case BlankNode(label) => encoder.blankNode(label)
+    case TripleNode(s, p, o) => encoder.tripleTerm(s, p, o)
     case _ => throw RdfProtoSerializationError(s"Cannot encode node: $node")
 
-  override def graphNodeToProto(encoder: NodeEncoder[Node], node: Node): Object = node match
-    case Iri(iri) => encoder.makeIri(iri)
-    case SimpleLiteral(lex) => encoder.makeSimpleLiteral(lex)
-    case LangLiteral(lex, lang) => encoder.makeLangLiteral(node, lex, lang)
-    case DtLiteral(lex, dt) => encoder.makeDtLiteral(node, lex, dt.dt)
-    case BlankNode(label) => encoder.makeBlankNode(label)
-    case DefaultGraphNode() => encoder.makeDefaultGraph()
-    case _ => throw RdfProtoSerializationError(s"Cannot encode graph node: $node")
+  override def encodeGraph(encoder: NodeEncoder[Node], node: Node): Unit = node match
+    case DefaultGraphNode() => encoder.defaultGraph()
+    case _ => encodeAny(encoder, node)
 
   override def getQuadSubject(quad: Quad): Node = quad.s
 

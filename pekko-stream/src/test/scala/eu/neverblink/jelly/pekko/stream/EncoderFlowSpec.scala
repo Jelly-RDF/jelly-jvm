@@ -110,7 +110,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           JellyOptions.SMALL_GENERALIZED.clone()
             .setPhysicalType(PhysicalStreamType.TRIPLES)
             .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
-            .setVersion(JellyConstants.PROTO_VERSION),
+            .setVersion(JellyConstants.PROTO_VERSION_1_1_X),
         ),
       )
       encoded.size should be(3)

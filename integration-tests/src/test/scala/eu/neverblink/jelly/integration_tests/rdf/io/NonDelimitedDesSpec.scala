@@ -14,12 +14,15 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.ByteArrayInputStream
 import scala.jdk.CollectionConverters.*
+import scala.annotation.nowarn
 
 /** Test checking if the delimited/non-delimited auto-detection works correctly.
   *
   * This test only contains non-delimited tests. For the delimited ones, see: [[IoSerDesSpec]]. More
   * fine-grained tests for delimited/non-delimited detection can be found in the jelly-core module.
   */
+// Covers the deprecated Jelly-RDF 1.1 (row layout) encoder
+@nowarn("cat=deprecation")
 class NonDelimitedDesSpec extends AnyWordSpec, Matchers, JenaTest:
   val presets: Seq[(RdfStreamOptions, String)] = Seq(
     (JellyOptions.SMALL_GENERALIZED, "small generalized"),

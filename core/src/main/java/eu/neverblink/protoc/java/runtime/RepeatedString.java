@@ -48,7 +48,10 @@ public final class RepeatedString implements Iterable<String> {
 
     public void add(CharSequence value) {
         reserve(1);
-        forgetUtf8(size, size + 1);
+        final byte[][] utf8 = this.utf8;
+        if (utf8 != null && size < utf8.length) {
+            utf8[size] = null;
+        }
         values[size++] = value.toString();
     }
 

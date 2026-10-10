@@ -9,6 +9,9 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import org.apache.jena.graph.{NodeFactory, Triple}
+
+import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 
 /** Tests checking forward compatibility of Jelly with future versions of the protocol.
@@ -103,12 +106,12 @@ class ForwardCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   private val futureFrameBytes3: Array[Byte] = futureFrame3.toByteArray
 
   "current Jelly version" should {
-    "be 2" in {
+    "be 3" in {
       // If this test is failing, it means that you have to update this spec :)
       // Go to integration-tests/src/main/protobuf and update the proto file to what you are using now.
       // Then, reintroduce the "future" changes that are tested here.
       // You can then update this test to the version number you are using.
-      JellyConstants.PROTO_VERSION should be(2)
+      JellyConstants.PROTO_VERSION should be(3)
     }
   }
 
@@ -198,5 +201,95 @@ class ForwardCompatSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       val parsed = v1.RdfStreamFrame.parseFrom(futureFrameBytes3)
       parsed.getRows.asScala.size should be(1)
       parsed.getRows.asScala.head.hasOptions should be(true)
+    }
+  }
+
+  // Jelly-RDF 1.2 (column layout)
+
+  private val triples12 = Seq(
+    Triple.create(
+      NodeFactory.createURI("https://example.org/s"),
+      NodeFactory.createURI("https://example.org/p"),
+      NodeFactory.createLiteralString("o"),
+    ),
+    Triple.create(
+      NodeFactory.createURI("https://example.org/s"),
+      NodeFactory.createURI("https://example.org/p"),
+      NodeFactory.createBlankNode("b"),
+    ),
+  )
+
+  /** A Jelly-RDF 1.2 frame written by the current version, parsed with the future proto. */
+  private def currentFrame12: future.RdfStreamFrame =
+    var bytes: Array[Byte] = null
+    val encoder = JenaConverterFactory.getInstance().encoder(
+      RdfEncoder.Params.of(
+        JellyOptions.SMALL_STRICT.clone().setPhysicalType(v1.PhysicalStreamType.TRIPLES),
+        100,
+        frame => bytes = frame.toByteArray,
+      ),
+    )
+    triples12.foreach(t => encoder.handleTriple(t.getSubject, t.getPredicate, t.getObject))
+    encoder.flush()
+    future.RdfStreamFrame.parseFrom(bytes)
+
+  private def decode12(frame: future.RdfStreamFrame): Seq[Triple] =
+    val decoded = mutable.ListBuffer[Triple]()
+    val decoder = JenaConverterFactory.getInstance().triplesDecoder(
+      (s, p, o) => decoded += Triple.create(s, p, o),
+      JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
+    )
+    decoder.ingestFrame(v1.RdfStreamFrame.parseFrom(frame.toByteArray))
+    decoded.toSeq
+
+  private def withOptions(
+      frame: future.RdfStreamFrame,
+      f: future.RdfStreamOptions.Builder => Unit,
+  ): future.RdfStreamFrame =
+    val options = frame.getRows(0).getOptions.toBuilder
+    f(options)
+    frame.toBuilder
+      .setRows(0, future.RdfStreamRow.newBuilder().setOptions(options))
+      .build()
+
+  "ProtoDecoder (Jelly-RDF 1.2)" should {
+    "decode a frame with unknown fields in the options, the batch, and the columns" in {
+      val frame = currentFrame12
+      val withFuture = withOptions(frame, _.setUsesFutureFeatures(true)).toBuilder
+        .setColumns(
+          frame.getColumns.toBuilder
+            .setFutureColumn(future.RdfColumn.newBuilder().addFutureValues("x"))
+            .setSubjects(frame.getColumns.getSubjects.toBuilder.addFutureValues("y")),
+        )
+        .putFutureMetadata("key", ByteString.copyFromUtf8("value"))
+        .build()
+      decode12(withFuture) should be(triples12)
+    }
+
+    "reject an unknown RDF version" in {
+      val frame = withOptions(
+        currentFrame12,
+        _.setRdfVersion(future.RdfVersion.RDF_VERSION_FUTURE),
+      )
+      intercept[RdfProtoDeserializationError] {
+        decode12(frame)
+      }.getMessage should include("Unknown RDF version: 4")
+    }
+
+    "reject an unknown stream type" in {
+      val frame = withOptions(
+        currentFrame12,
+        _.setStreamType(future.RdfStreamType.RDF_STREAM_TYPE_FUTURE),
+      )
+      intercept[RdfProtoDeserializationError] {
+        decode12(frame)
+      }.getMessage should include("Unknown stream type: 2")
+    }
+
+    "reject a future protocol version" in {
+      val frame = withOptions(currentFrame12, _.setVersion(4))
+      intercept[RdfProtoDeserializationError] {
+        decode12(frame)
+      }.getMessage should include("Unsupported proto version: 4")
     }
   }

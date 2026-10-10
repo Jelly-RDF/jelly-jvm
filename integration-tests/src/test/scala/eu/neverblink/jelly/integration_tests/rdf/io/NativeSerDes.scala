@@ -1,5 +1,6 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
+import eu.neverblink.jelly.core.JellyConstants
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions
 import eu.neverblink.jelly.integration_tests.util.Measure
 
@@ -23,6 +24,16 @@ trait NativeSerDes[TModel: Measure, TDataset: Measure]:
       opt: Option[RdfStreamOptions],
       frameSize: Int,
   ): Unit
+
+  /** Whether the serializer writes Jelly-RDF 1.2 (column layout) with these options. By default,
+    * all serializers do, unless the options ask for version 1 or 2.
+    */
+  def writesColumnLayout(opt: Option[RdfStreamOptions]): Boolean =
+    opt.forall(o =>
+      o.getVersion != JellyConstants.PROTO_VERSION_1_0_X &&
+        o.getVersion != JellyConstants.PROTO_VERSION_1_1_X,
+    )
+
   def supportsRdfStar: Boolean = true
   def supportsGeneralizedStatements: Boolean = true
 

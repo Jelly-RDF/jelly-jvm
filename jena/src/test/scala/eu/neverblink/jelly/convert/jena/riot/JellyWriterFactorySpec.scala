@@ -23,7 +23,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
   private val triple = Triple.create(
     NodeFactory.createBlankNode(),
-    NodeFactory.createBlankNode(),
+    NodeFactory.createURI("http://example.com/p"),
     NodeFactory.createBlankNode(),
   )
   private val factories: Seq[(String, String, (RDFFormat, Context, OutputStream) => Unit)] = Seq(
@@ -67,27 +67,55 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
     ),
   )
 
+  private def writeAndReadOptions(
+      factory: (RDFFormat, Context, OutputStream) => Unit,
+      ctx: Context,
+  ): RdfStreamOptions =
+    val os = new ByteArrayOutputStream()
+    factory(RDFFormat(JellyLanguage.JELLY), ctx, os)
+    val bytes = os.toByteArray
+    bytes should not be empty
+    val frame: RdfStreamFrame = RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(bytes))
+    frame.getRows.size should be > 0
+    frame.getRows.asScala.head.hasOptions should be(true)
+    frame.getRows.asScala.head.getOptions
+
   for (factoryName, streamType, factory) <- factories do
     f"$factoryName ($streamType)" should {
       for
         presetName <- JellyLanguage.PRESETS.keySet().asScala.toSeq
         enableNsDecls <- Seq(Some(true), Some(false), None)
       do
-        f"write a header with the $presetName preset set in the context, NS declarations $enableNsDecls" in {
-          val os = new ByteArrayOutputStream()
-          val format = RDFFormat(JellyLanguage.JELLY)
+        f"write a Jelly-RDF 1.2 header with the $presetName preset set in the context, NS declarations $enableNsDecls" in {
           val ctx = new Context()
           ctx.set(JellyLanguage.SYMBOL_PRESET, presetName)
           enableNsDecls.foreach(ctx.set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, _))
-          factory(format, ctx, os)
-          val bytes = os.toByteArray
-          bytes should not be empty
-          val is = new ByteArrayInputStream(bytes)
+          val options = writeAndReadOptions(factory, ctx)
+          val expOpt = JellyLanguage.PRESETS.get(presetName)
+          if streamType == "triples" then
+            options.getPhysicalType should be(PhysicalStreamType.TRIPLES)
+          else if streamType == "quads" then
+            options.getPhysicalType should be(PhysicalStreamType.QUADS)
+          // The fields of the row layout are not used in Jelly-RDF 1.2
+          options.getLogicalType should be(LogicalStreamType.UNSPECIFIED)
+          options.getGeneralizedStatements should be(false)
+          options.getRdfStar should be(false)
+          options.getRdfVersion should be(RdfVersion.RDF_VERSION_UNSPECIFIED)
+          options.getMaxNameTableSize should be(expOpt.getMaxNameTableSize)
+          options.getMaxPrefixTableSize should be(expOpt.getMaxPrefixTableSize)
+          options.getMaxDatatypeTableSize should be(expOpt.getMaxDatatypeTableSize)
+          options.getVersion should be(JellyConstants.PROTO_VERSION_1_2_X)
+        }
 
-          val frame: RdfStreamFrame = RdfStreamFrame.parseDelimitedFrom(is)
-          frame.getRows.size should be > 0
-          frame.getRows.asScala.head.hasOptions should be(true)
-          val options = frame.getRows.asScala.head.getOptions
+        f"write a Jelly-RDF 1.1 header with the $presetName preset and version 2, NS declarations $enableNsDecls" in {
+          val ctx = new Context()
+          ctx.set(
+            JellyLanguage.SYMBOL_STREAM_OPTIONS,
+            JellyLanguage.PRESETS.get(presetName).clone()
+              .setVersion(JellyConstants.PROTO_VERSION_1_1_X),
+          )
+          enableNsDecls.foreach(ctx.set(JellyLanguage.SYMBOL_ENABLE_NAMESPACE_DECLARATIONS, _))
+          val options = writeAndReadOptions(factory, ctx)
           val expOpt = JellyLanguage.PRESETS.get(presetName)
           if streamType == "triples" then
             options.getPhysicalType should be(PhysicalStreamType.TRIPLES)
@@ -101,7 +129,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
           options.getMaxPrefixTableSize should be(expOpt.getMaxPrefixTableSize)
           options.getMaxDatatypeTableSize should be(expOpt.getMaxDatatypeTableSize)
           if enableNsDecls.isDefined && enableNsDecls.get then
-            options.getVersion should be(JellyConstants.PROTO_VERSION)
+            options.getVersion should be(JellyConstants.PROTO_VERSION_1_1_X)
           else options.getVersion should be(JellyConstants.PROTO_VERSION_1_0_X)
         }
 
@@ -118,7 +146,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
       }
     }
 
-  "retain `logicalType` if it is set in options in JellyStreamWriterFactory for triples" in {
+  "retain `logicalType` if it is set in options in JellyStreamWriterFactory for triples (Jelly-RDF 1.1)" in {
     val factory = (f: RDFFormat, ctx: Context, out: OutputStream) => {
       val w = JellyStreamWriterFactory().create(out, f, ctx)
       w.triple(triple)
@@ -131,6 +159,8 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
     val options = JellyLanguage.PRESETS.get("SMALL_ALL_FEATURES")
       .clone
       .setLogicalType(LogicalStreamType.GRAPHS)
+      // Logical stream types only exist in Jelly-RDF 1.1
+      .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
 
     ctx.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, options)
     factory(format, ctx, os)
@@ -144,7 +174,7 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
     optionsWritten.getLogicalType should be(LogicalStreamType.GRAPHS)
   }
 
-  "retain `logicalType` if it is set in options in JellyStreamWriterFactory for quads" in {
+  "retain `logicalType` if it is set in options in JellyStreamWriterFactory for quads (Jelly-RDF 1.1)" in {
     val factory = (f: RDFFormat, ctx: Context, out: OutputStream) => {
       val w = JellyStreamWriterFactory().create(out, f, ctx)
       w.quad(Quad.create(null, triple))
@@ -157,6 +187,8 @@ class JellyWriterFactorySpec extends AnyWordSpec, Matchers, JenaTest:
     val options = JellyLanguage.PRESETS.get("SMALL_ALL_FEATURES")
       .clone
       .setLogicalType(LogicalStreamType.DATASETS)
+      // Logical stream types only exist in Jelly-RDF 1.1
+      .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
 
     ctx.set(JellyLanguage.SYMBOL_STREAM_OPTIONS, options)
     factory(format, ctx, os)

@@ -12,8 +12,12 @@ import eu.neverblink.jelly.core.proto.v1.*;
  * This class supports all stream types and options, but usually does not check if the user is conforming to them.
  * It will, for example, allow the user to send generalized triples in a stream that should not have them.
  * Take care to ensure the correctness of the transmitted data, or use the specialized wrappers from the stream package.
+ *
+ * @deprecated Jelly-RDF 1.1 output will be removed in Jelly-JVM 5.0.0. See {@link RdfEncoderImpl}.
  */
 @InternalApi
+@Deprecated(forRemoval = true)
+@SuppressWarnings("removal")
 public final class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
     private boolean hasEmittedOptions = false;
@@ -70,8 +74,7 @@ public final class ProtoEncoderImpl<TNode> extends ProtoEncoder<TNode> {
 
         final var ns = RdfNamespaceDeclaration.newInstance().setName(prefix);
         getNodeEncoder().newEpoch();
-        final var encoded = converter.nodeToProto(getNodeEncoder(), namespace);
-        ns.setValue((RdfIri) encoded);
+        ns.setValue((RdfIri) getNodeEncoder().encodeIri(namespace));
         rowBuffer.appendMessage().setNamespace(ns).getSerializedSize();
     }
 

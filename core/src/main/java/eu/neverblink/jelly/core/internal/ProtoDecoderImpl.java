@@ -6,13 +6,17 @@ import static eu.neverblink.jelly.core.internal.BaseJellyOptions.*;
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
+import eu.neverblink.jelly.core.proto.v1.RdfColumn;
+import eu.neverblink.jelly.core.proto.v1.RdfColumnBatch;
 import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfGraphStart;
 import eu.neverblink.jelly.core.proto.v1.RdfNamespaceDeclaration;
 import eu.neverblink.jelly.core.proto.v1.RdfQuad;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamRow;
+import eu.neverblink.jelly.core.proto.v1.RdfStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfTriple;
+import eu.neverblink.protoc.java.runtime.RepeatedInt;
 
 /**
  * Base class for stateful decoders of protobuf RDF streams.
@@ -29,6 +33,19 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
     protected final RdfStreamOptions supportedOptions;
 
     private RdfStreamOptions currentOptions = null;
+
+    // Column layout (Jelly-RDF 1.2) state.
+    // Statements of a batch are decoded in chunks of this many rows, so that the memory needed
+    // does not depend on the row count declared by the batch.
+    private static final int CHUNK_ROWS = 1024;
+    private ColumnDecoder<TNode, TDatatype> columnDecoder = null;
+    private Object[] chunkSubjects = null;
+    private Object[] chunkPredicates = null;
+    private Object[] chunkObjects = null;
+    private Object[] chunkGraphs = null;
+    private TNode defaultGraphNode = null;
+    // Rows of the current RDF message that were not assigned to a finished message yet
+    private long rowsInCurrentMessage = 0;
 
     public ProtoDecoderImpl(
         ProtoDecoderConverter<TNode, TDatatype> converter,
@@ -93,11 +110,40 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
     }
 
     private void setStreamOptions(RdfStreamOptions options) {
-        if (currentOptions != null) {
+        if (currentOptions == null) {
+            this.currentOptions = options;
             return;
         }
-
+        if (JellyConstants.isRowLayout(currentOptions.getVersion())) {
+            // Row layout: the options must be the same as at the start, and do not change anything
+            return;
+        }
+        // Column layout: restated options, as in a concatenated stream
+        if (
+            options.getVersion() != currentOptions.getVersion() ||
+            options.getPhysicalTypeValue() != currentOptions.getPhysicalTypeValue() ||
+            options.getStreamTypeValue() != currentOptions.getStreamTypeValue()
+        ) {
+            throw new RdfProtoDeserializationError(
+                "The protocol version, physical stream type, and stream type must be the same in all stream options of a stream."
+            );
+        }
+        // In a stream of RDF Messages, the current message ends here, as at the end of the stream
+        if (rowsInCurrentMessage > 0 && currentOptions.getStreamTypeValue() == RdfStreamType.MESSAGES_VALUE) {
+            rowsInCurrentMessage = 0;
+            protoHandler.handleMessageEnd();
+        }
         this.currentOptions = options;
+        // Recreated on next use, with the new table sizes
+        resetLookups();
+        if (columnDecoder != null) {
+            columnDecoder.setRdfVersions(options.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
+        }
+    }
+
+    /** Whether the stream uses the column layout (Jelly-RDF 1.2). Only valid once the options are known. */
+    private boolean isColumnLayout() {
+        return currentOptions != null && !JellyConstants.isRowLayout(currentOptions.getVersion());
     }
 
     /**
@@ -109,7 +155,13 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
             throw new RdfProtoDeserializationError("Row kind is not set.");
         }
 
-        switch (row.getRowFieldNumber()) {
+        final int kind = row.getRowFieldNumber();
+        if (kind != RdfStreamRow.OPTIONS && isColumnLayout()) {
+            throw new RdfProtoDeserializationError(
+                "Jelly-RDF 1.2 streams (column layout) may only have the stream options in their rows."
+            );
+        }
+        switch (kind) {
             case RdfStreamRow.OPTIONS -> handleOptions(row.getOptions());
             case RdfStreamRow.NAME -> getNameDecoder().updateNames(row.getName());
             case RdfStreamRow.PREFIX -> getNameDecoder().updatePrefixes(row.getPrefix());
@@ -166,6 +218,216 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
         protoHandler.handleNamespace(namespace.getName(), node);
     }
 
+    /**
+     * Internal implementation of ingestColumns that does not allow overriding.
+     * @param batch the column batch to ingest
+     */
+    protected final void ingestColumnsInternal(RdfColumnBatch batch) {
+        if (currentOptions == null) {
+            throw new RdfProtoDeserializationError("Stream options were not received before the first frame content.");
+        }
+        if (!isColumnLayout()) {
+            throw new RdfProtoDeserializationError(
+                "Jelly-RDF 1.0 and 1.1 streams (row layout) cannot have column batches."
+            );
+        }
+        if (columnDecoder == null) {
+            columnDecoder = new ColumnDecoder<>(this);
+            columnDecoder.setRdfVersions(currentOptions.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
+        }
+        final int rows = batch.getRowCount();
+        if (rows < 0 || rows > ColumnLayout.MAX_ROWS) {
+            throw new RdfProtoDeserializationError(
+                "Invalid row count %s: a batch may have at most %d rows.".formatted(
+                    Integer.toUnsignedString(rows),
+                    ColumnLayout.MAX_ROWS
+                )
+            );
+        }
+        final RepeatedInt messageLengths = batch.getMessageLengths();
+        checkMessageLengths(messageLengths, rows);
+
+        columnDecoder.applyLookupEntries(batch.getNames(), batch.getPrefixes(), batch.getDatatypes());
+        if (!batch.getNamespaces().isEmpty()) {
+            handleColumnNamespaces(batch);
+        }
+
+        final boolean quads = currentOptions.getPhysicalType() == PhysicalStreamType.QUADS;
+        final RdfColumn graphColumn = batch.getGraphs();
+        if (!quads && graphColumn != null) {
+            throw new RdfProtoDeserializationError("A TRIPLES stream cannot have a graph column.");
+        }
+        int nextBoundary = 0;
+        if (rows > 0) {
+            final ColumnDecoder<TNode, TDatatype>.Cursor subjects = cursor(batch.getSubjects(), rows, "subject");
+            final ColumnDecoder<TNode, TDatatype>.Cursor predicates = cursor(batch.getPredicates(), rows, "predicate");
+            final ColumnDecoder<TNode, TDatatype>.Cursor objects = cursor(batch.getObjects(), rows, "object");
+            final ColumnDecoder<TNode, TDatatype>.Cursor graphs =
+                graphColumn == null ? null : cursor(graphColumn, rows, "graph");
+            final int chunk = Math.min(rows, CHUNK_ROWS);
+            if (chunkSubjects == null || chunkSubjects.length < chunk) {
+                chunkSubjects = new Object[chunk];
+                chunkPredicates = new Object[chunk];
+                chunkObjects = new Object[chunk];
+                chunkGraphs = new Object[chunk];
+            }
+            // The position of the next message boundary, in rows of this batch
+            long boundaryAt = nextBoundary < messageLengths.size() ? messageLengths.get(0) : -1;
+            for (int start = 0; start < rows; start += CHUNK_ROWS) {
+                final int n = Math.min(CHUNK_ROWS, rows - start);
+                fillChunk(subjects, chunkSubjects, n, "subject");
+                fillChunk(predicates, chunkPredicates, n, "predicate");
+                fillChunk(objects, chunkObjects, n, "object");
+                if (graphs != null) {
+                    fillChunk(graphs, chunkGraphs, n, "graph");
+                }
+                for (int i = 0; i < n; i++) {
+                    while (boundaryAt == start + i) {
+                        endMessage();
+                        nextBoundary++;
+                        boundaryAt =
+                            nextBoundary < messageLengths.size() ? boundaryAt + messageLengths.get(nextBoundary) : -1;
+                    }
+                    rowsInCurrentMessage++;
+                    handleColumnRow(
+                        chunkSubjects[i],
+                        chunkPredicates[i],
+                        chunkObjects[i],
+                        graphs == null ? null : chunkGraphs[i]
+                    );
+                }
+            }
+            finishColumn(subjects, "subject");
+            finishColumn(predicates, "predicate");
+            finishColumn(objects, "object");
+            if (graphs != null) {
+                finishColumn(graphs, "graph");
+            }
+        }
+        // Boundaries after the last row of the batch
+        while (nextBoundary < messageLengths.size()) {
+            endMessage();
+            nextBoundary++;
+        }
+    }
+
+    private void checkMessageLengths(RepeatedInt messageLengths, int rows) {
+        if (messageLengths.isEmpty()) {
+            return;
+        }
+        if (currentOptions.getStreamTypeValue() != RdfStreamType.MESSAGES_VALUE) {
+            throw new RdfProtoDeserializationError("Message boundaries are only valid in streams of type MESSAGES.");
+        }
+        long sum = 0;
+        for (int i = 0; i < messageLengths.size(); i++) {
+            sum += Integer.toUnsignedLong(messageLengths.get(i));
+        }
+        if (sum > rows) {
+            throw new RdfProtoDeserializationError(
+                "The message lengths add up to %d, more than the %d rows of the batch.".formatted(sum, rows)
+            );
+        }
+    }
+
+    private void endMessage() {
+        rowsInCurrentMessage = 0;
+        protoHandler.handleMessageEnd();
+    }
+
+    private void handleColumnNamespaces(RdfColumnBatch batch) {
+        // The IRIs of the declarations of a batch have their own inference state
+        final ColumnDecoder<TNode, TDatatype>.IriState iris = columnDecoder.newIriState();
+        for (final RdfNamespaceDeclaration namespace : batch.getNamespaces()) {
+            final var iri = namespace.getValue();
+            if (iri == null) {
+                throw new RdfProtoDeserializationError(
+                    "Namespace declaration '%s' has no IRI.".formatted(namespace.getName())
+                );
+            }
+            final TNode node;
+            try {
+                node = iris.decode(iri);
+            } catch (RdfProtoDeserializationError e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RdfProtoDeserializationError(
+                    "Error while decoding the IRI of namespace declaration '%s': %s".formatted(namespace.getName(), e),
+                    e
+                );
+            }
+            protoHandler.handleNamespace(namespace.getName(), node);
+        }
+    }
+
+    private ColumnDecoder<TNode, TDatatype>.Cursor cursor(RdfColumn column, int rows, String position) {
+        if (column == null) {
+            throw new RdfProtoDeserializationError(
+                "The batch has %d rows, but no %s column.".formatted(rows, position)
+            );
+        }
+        // Only the object may be a literal or a triple term, and only the predicate must be an IRI
+        final boolean object = position.equals("object");
+        if (!object && (!column.getLexValues().isEmpty() || !column.getTripleTerms().isEmpty())) {
+            throw new RdfProtoDeserializationError(
+                "The %s column may only have IRIs and blank nodes.".formatted(position)
+            );
+        }
+        if (position.equals("predicate") && !column.getBnodes().isEmpty()) {
+            throw new RdfProtoDeserializationError("The predicate column may only have IRIs.");
+        }
+        try {
+            return columnDecoder.cursor(column, rows, position.equals("graph"), position);
+        } catch (RdfProtoDeserializationError e) {
+            throw e;
+        } catch (Exception e) {
+            throw columnError(position, e);
+        }
+    }
+
+    private void fillChunk(ColumnDecoder<TNode, TDatatype>.Cursor cursor, Object[] out, int n, String position) {
+        try {
+            cursor.fill(out, 0, n);
+        } catch (RdfProtoDeserializationError e) {
+            throw e;
+        } catch (Exception e) {
+            throw columnError(position, e);
+        }
+    }
+
+    private static void finishColumn(ColumnDecoder<?, ?>.Cursor cursor, String position) {
+        try {
+            cursor.finish();
+        } catch (RdfProtoDeserializationError e) {
+            throw new RdfProtoDeserializationError("Error in the %s column: %s".formatted(position, e.getMessage()), e);
+        }
+    }
+
+    private static RdfProtoDeserializationError columnError(String position, Exception e) {
+        return new RdfProtoDeserializationError("Error while decoding the %s column: %s".formatted(position, e), e);
+    }
+
+    /**
+     * The default graph node of the RDF library, created once.
+     */
+    protected final TNode defaultGraphNode() {
+        if (defaultGraphNode == null) {
+            defaultGraphNode = converter.makeDefaultGraphNode();
+        }
+        return defaultGraphNode;
+    }
+
+    /**
+     * Handles one statement of a column batch.
+     *
+     * @param subject the subject
+     * @param predicate the predicate
+     * @param object the object
+     * @param graph the graph, or null for the default graph (always null in TRIPLES streams)
+     */
+    protected void handleColumnRow(Object subject, Object predicate, Object object, Object graph) {
+        throw new RdfProtoDeserializationError("Unexpected statement in stream.");
+    }
+
     protected void handleTriple(RdfTriple triple) {
         throw new RdfProtoDeserializationError("Unexpected triple row in stream.");
     }
@@ -215,12 +477,23 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
         }
 
         @Override
+        protected void ingestColumns(RdfColumnBatch columns) {
+            ingestColumnsInternal(columns);
+        }
+
+        @Override
         protected void handleTriple(RdfTriple triple) {
             protoHandler.handleTriple(
                 convertSubjectTermWrapped(triple),
                 convertPredicateTermWrapped(triple),
                 convertObjectTermWrapped(triple)
             );
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        protected void handleColumnRow(Object subject, Object predicate, Object object, Object graph) {
+            protoHandler.handleTriple((TNode) subject, (TNode) predicate, (TNode) object);
         }
     }
 
@@ -257,12 +530,28 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
         }
 
         @Override
+        protected void ingestColumns(RdfColumnBatch columns) {
+            ingestColumnsInternal(columns);
+        }
+
+        @Override
         protected void handleQuad(RdfQuad quad) {
             protoHandler.handleQuad(
                 convertSubjectTermWrapped(quad),
                 convertPredicateTermWrapped(quad),
                 convertObjectTermWrapped(quad),
                 convertGraphTermWrapped(quad)
+            );
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        protected void handleColumnRow(Object subject, Object predicate, Object object, Object graph) {
+            protoHandler.handleQuad(
+                (TNode) subject,
+                (TNode) predicate,
+                (TNode) object,
+                graph == null ? defaultGraphNode() : (TNode) graph
             );
         }
     }
@@ -432,6 +721,14 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
         }
 
         @Override
+        protected void ingestColumns(RdfColumnBatch columns) {
+            if (delegateDecoder == this) {
+                throw new RdfProtoDeserializationError("Stream options are not set.");
+            }
+            delegateDecoder.ingestColumnsInternal(columns);
+        }
+
+        @Override
         protected void handleOptions(RdfStreamOptions options) {
             // Reset the logical type to UNSPECIFIED to ignore checking if it's supported by the inner decoder
             final var newSupportedOptions = supportedOptions.clone().setLogicalType(LogicalStreamType.UNSPECIFIED);
@@ -442,9 +739,13 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
             }
 
             switch (options.getPhysicalType()) {
-                case TRIPLES -> delegateDecoder = new TriplesDecoder<>(converter, protoHandler, options);
-                case QUADS -> delegateDecoder = new QuadsDecoder<>(converter, protoHandler, options);
-                case GRAPHS -> delegateDecoder = new GraphsAsQuadsDecoder<>(converter, protoHandler, options);
+                case TRIPLES -> delegateDecoder = new TriplesDecoder<>(converter, protoHandler, newSupportedOptions);
+                case QUADS -> delegateDecoder = new QuadsDecoder<>(converter, protoHandler, newSupportedOptions);
+                case GRAPHS -> delegateDecoder = new GraphsAsQuadsDecoder<>(
+                    converter,
+                    protoHandler,
+                    newSupportedOptions
+                );
                 default -> throw new RdfProtoDeserializationError("Incoming physical stream type is not recognized.");
             }
             // Replay the options row to the new decoder

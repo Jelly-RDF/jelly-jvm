@@ -32,6 +32,11 @@ public final class BaseJellyOptions {
     public static final int MIN_NAME_TABLE_SIZE = 8;
 
     /**
+     * Minimum size of the name table in the column layout (Jelly-RDF 1.2), according to the spec.
+     */
+    public static final int MIN_COLUMN_NAME_TABLE_SIZE = 128;
+
+    /**
      * Check if the requested options are compatible with the supported options and the system.
      *
      * @param requestedOptions requested options

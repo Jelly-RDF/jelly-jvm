@@ -95,7 +95,7 @@ public abstract class DecoderBase<TNode, TDatatype> {
      */
     protected final TNode convertTerm(Object term) {
         if (term == null) {
-            throw new RdfProtoDeserializationError("Term value is not set inside a quoted triple.");
+            throw new RdfProtoDeserializationError("Term value is not set inside a triple term.");
         }
         try {
             // Optimization: do instanceof check against the final class for better performance.

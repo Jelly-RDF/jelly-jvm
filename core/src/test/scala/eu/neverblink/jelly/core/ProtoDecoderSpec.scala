@@ -339,7 +339,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
         decoder.ingestRow(data(1))
       }
 
-      error.getMessage should include("Term value is not set inside a quoted triple")
+      error.getMessage should include("Term value is not set inside a triple term")
     }
 
     "throw exception on unset row kind" in {
@@ -695,7 +695,7 @@ class ProtoDecoderSpec extends AnyWordSpec, Matchers:
 
         val opts = JellyOptions.SMALL_GENERALIZED.clone
           .setPhysicalType(streamType)
-          .setVersion(JellyConstants.PROTO_VERSION)
+          .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
 
         val decoder = MockConverterFactory.anyStatementDecoder(
           collector,

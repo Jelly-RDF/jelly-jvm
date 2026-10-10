@@ -2,7 +2,7 @@ package eu.neverblink.jelly.integration_tests.rdf.io
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.helpers.RdfAdapter.*
-import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.core.{JellyConstants, JellyOptions}
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.integration_tests.util.Measure
 import org.apache.pekko.actor.ActorSystem
@@ -86,17 +86,31 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
   )
   private val bytesGraphs = frameAsDelimited(frameGraphs)
 
+  // Generalized statements can only be written in Jelly-RDF 1.1
+  private val rowLayout =
+    Some(JellyOptions.SMALL_GENERALIZED.clone.setVersion(JellyConstants.PROTO_VERSION_1_1_X))
+
   def roundTripTests[TModel: Measure, TDataset: Measure](
       impl: NativeSerDes[TModel, TDataset],
   ): Unit =
     val mm = summon[Measure[TModel]]
     val md = summon[Measure[TDataset]]
 
+    if impl.writesColumnLayout(None) then
+      "refuse to write generalized triples in Jelly-RDF 1.2" in {
+        val triples = impl.readTriplesJelly(ByteArrayInputStream(bytesTriples), None)
+        val e = intercept[Throwable] {
+          impl.writeTriplesJelly(new ByteArrayOutputStream(), triples, None, 100)
+        }
+        Iterator.iterate(e)(_.getCause).takeWhile(_ != null).map(_.getMessage).mkString should
+          include("can only be written in Jelly-RDF 1.1")
+      }
+
     "round-trip triples" in {
       val triples = impl.readTriplesJelly(ByteArrayInputStream(bytesTriples), None)
       mm.size(triples) should be(1)
       val os = new ByteArrayOutputStream()
-      impl.writeTriplesJelly(os, triples, None, 100)
+      impl.writeTriplesJelly(os, triples, rowLayout, 100)
       os.size() should be > 10
       val triples2 = impl.readTriplesJelly(ByteArrayInputStream(os.toByteArray), None)
       mm.size(triples2) should be(1)
@@ -106,7 +120,7 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
       val quads = impl.readQuadsJelly(ByteArrayInputStream(bytesQuads), None)
       md.size(quads) should be(1)
       val os = new ByteArrayOutputStream()
-      impl.writeQuadsJelly(os, quads, None, 100)
+      impl.writeQuadsJelly(os, quads, rowLayout, 100)
       os.size() should be > 10
       val quads2 = impl.readQuadsJelly(ByteArrayInputStream(os.toByteArray), None)
       md.size(quads2) should be(1)
@@ -116,7 +130,7 @@ class GeneralizedRdfSpec extends AnyWordSpec, Matchers, JenaTest:
       val graphs = impl.readQuadsJelly(ByteArrayInputStream(bytesGraphs), None)
       md.size(graphs) should be(1)
       val os = new ByteArrayOutputStream()
-      impl.writeQuadsJelly(os, graphs, None, 100)
+      impl.writeQuadsJelly(os, graphs, rowLayout, 100)
       os.size() should be > 10
       val graphs2 = impl.readQuadsJelly(ByteArrayInputStream(os.toByteArray), None)
       md.size(graphs2) should be(1)

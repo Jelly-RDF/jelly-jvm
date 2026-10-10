@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.jmh.caches;
 
 /**
- * Stand-in for NodeEncoderImpl.DependentNode, which is package-private and therefore not reachable
+ * Stand-in for LookupEncoder.IriIds, which is package-private and therefore not reachable
  * from here. Only the field layout matters – the caches under test never look inside it, but its
  * allocation size shows up in the GC profile.
  */

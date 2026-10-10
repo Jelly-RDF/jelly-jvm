@@ -21,7 +21,7 @@ import java.util.Collection;
  */
 public abstract class PatchEncoder<TNode>
     extends EncoderBase<TNode>
-    implements PatchHandler.AnyPatchHandler<TNode>, RdfBufferAppender<TNode>
+    implements PatchHandler.AnyPatchHandler<TNode>, RdfBufferAppender
 {
 
     /**

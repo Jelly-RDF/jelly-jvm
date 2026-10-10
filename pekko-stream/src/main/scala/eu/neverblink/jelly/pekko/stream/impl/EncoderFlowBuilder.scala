@@ -15,6 +15,7 @@ import eu.neverblink.jelly.pekko.stream.SizeLimiter
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.{Flow, Source}
 
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters.*
 
 /** Base trait for building a flow that encodes RDF data into a stream of [[RdfStreamFrame]].
@@ -51,6 +52,9 @@ sealed trait EncoderFlowBuilder[TIn, TChild]:
   * @tparam TNode
   *   Type of RDF nodes in the RDF library.
   */
+// The encoder flows still write Jelly-RDF 1.1 with the deprecated ProtoEncoder, until they are
+// ported to Jelly-RDF 1.2 (RdfEncoder).
+@nowarn("cat=deprecation")
 final class EncoderFlowBuilderImpl[TNode](using
     converterFactory: JellyConverterFactory[TNode, ?, ?, ?],
 ):

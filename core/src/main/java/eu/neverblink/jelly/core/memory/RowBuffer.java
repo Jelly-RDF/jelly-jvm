@@ -37,7 +37,10 @@ public interface RowBuffer extends MessageCollection<RdfStreamRow, RdfStreamRow.
      * for each frame (after clear() is called).
      * @param initialCapacity initial capacity of the buffer
      * @return a new ReusableRowBuffer for encoding
+     * @deprecated only useful with the Jelly-RDF 1.1 encoder (ProtoEncoder), which will be removed
+     * in Jelly-JVM 5.0.0.
      */
+    @Deprecated(forRemoval = true)
     static ReusableRowBuffer newReusableForEncoder(int initialCapacity) {
         return new ReusableRowBuffer(initialCapacity, ReusableRowBuffer.ENCODER_CLEAR_POLICY);
     }

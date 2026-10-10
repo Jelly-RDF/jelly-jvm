@@ -22,6 +22,11 @@ object MakeBackCompatTestCases:
   @main
   def runMakeBackCompatTestCases(): Unit =
     val version = JellyConstants.PROTO_SEMANTIC_VERSION.replace(".", "_")
+    // Works from the repository root and from the module directory
+    val outDir =
+      if Files.isDirectory(Path.of("integration-tests")) then
+        "integration-tests/src/test/resources/backcompat"
+      else "src/test/resources/backcompat"
     for (fileName, description, versions) <- testCases do
       val jenaDg = DatasetGraphFactory.create()
       RDFDataMgr.read(
@@ -45,7 +50,7 @@ object MakeBackCompatTestCases:
       // This was added in Jelly-RDF 1.1.1
       val fileOs = Files.newOutputStream(
         Path.of(
-          s"integration-tests/src/test/resources/backcompat/${fileName}_v$version.jelly",
+          s"$outDir/${fileName}_v$version.jelly",
         ),
       )
       val bufferIs = ByteArrayInputStream(bufferOs.toByteArray)

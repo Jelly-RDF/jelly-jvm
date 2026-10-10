@@ -19,7 +19,7 @@ import scala.jdk.CollectionConverters.*
 class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
   given ActorSystem = ActorSystem("test")
 
-  val presets: Seq[(Option[RdfStreamOptions], Int, String)] = Seq(
+  private val basePresets: Seq[(Option[RdfStreamOptions], Int, String)] = Seq(
     (Some(JellyOptions.SMALL_GENERALIZED), 1, "small generalized"),
     (Some(JellyOptions.SMALL_RDF_STAR), 1_000_000, "small RDF-star"),
     (Some(JellyOptions.SMALL_STRICT), 30, "small strict"),
@@ -31,7 +31,16 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     (None, 10, "no options"),
   )
 
-  val presetsUnsupported: Seq[(RdfStreamOptions, RdfStreamOptions, String)] = Seq(
+  private def rowLayout(opt: RdfStreamOptions): RdfStreamOptions =
+    opt.clone.setVersion(JellyConstants.PROTO_VERSION_1_1_X)
+
+  /** Every preset as it is (Jelly-RDF 1.2 by default), and asking for Jelly-RDF 1.1. */
+  val presets: Seq[(Option[RdfStreamOptions], Int, String)] = basePresets ++
+    basePresets.collect { case (Some(opt), size, name) =>
+      (Some(rowLayout(opt)), size, s"$name (Jelly-RDF 1.1)")
+    }
+
+  private val basePresetsUnsupported: Seq[(RdfStreamOptions, RdfStreamOptions, String)] = Seq(
     (
       JellyOptions.SMALL_GENERALIZED,
       JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setGeneralizedStatements(false),
@@ -63,37 +72,63 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       ),
       "supported datatype table size too small",
     ),
-    (
-      JellyOptions.SMALL_STRICT,
-      JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setVersion(
-        JellyOptions.SMALL_STRICT.getVersion - 1,
-      ),
-      "unsupported version",
-    ),
   )
+
+  /** Cases of options that the decoder refuses, for the stream written with given options. */
+  private def presetsUnsupported(ser: NativeSerDes[?, ?]) =
+    val withLayouts = basePresetsUnsupported ++ basePresetsUnsupported.map((enc, dec, name) =>
+      (rowLayout(enc), dec, s"$name (Jelly-RDF 1.1)"),
+    )
+    withLayouts.filter((enc, _, _) =>
+      // Jelly-RDF 1.2 has no generalized statements and RDF-star flags to refuse
+      !ser.writesColumnLayout(Some(enc)) || !(enc.getGeneralizedStatements || enc.getRdfStar),
+    ) ++ Seq(
+      (
+        JellyOptions.SMALL_STRICT,
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setVersion(JellyConstants.PROTO_VERSION_1_1_X),
+        "unsupported version",
+      ),
+    ).filter((enc, _, _) => ser.writesColumnLayout(Some(enc))) ++ Seq(
+      (
+        // Written in version 1, as namespace declarations are off
+        rowLayout(JellyOptions.SMALL_STRICT),
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS.clone.setVersion(0),
+        "unsupported version (Jelly-RDF 1.1)",
+      ),
+    )
 
   private def checkStreamOptions(
       bytes: Array[Byte],
       expectedType: String,
       expectedOpt: Option[RdfStreamOptions],
+      columnLayout: Boolean,
   ) =
     val expOpt = expectedOpt.getOrElse(JellyOptions.BIG_ALL_FEATURES)
     val frame = RdfStreamFrame.parseDelimitedFrom(new ByteArrayInputStream(bytes))
     frame.getRows.asScala.size should be > 0
     frame.getRows.asScala.head.hasOptions should be(true)
     val options = frame.getRows.asScala.head.getOptions
-    if expectedType == "triples" then
-      options.getPhysicalType should be(PhysicalStreamType.TRIPLES)
-      options.getLogicalType should be(LogicalStreamType.FLAT_TRIPLES)
-    else if expectedType == "quads" then
-      options.getPhysicalType should be(PhysicalStreamType.QUADS)
-      options.getLogicalType should be(LogicalStreamType.FLAT_QUADS)
-    options.getGeneralizedStatements should be(expOpt.getGeneralizedStatements)
-    options.getRdfStar should be(expOpt.getRdfStar)
+    if expectedType == "triples" then options.getPhysicalType should be(PhysicalStreamType.TRIPLES)
+    else if expectedType == "quads" then options.getPhysicalType should be(PhysicalStreamType.QUADS)
+    if columnLayout then
+      // The fields of the row layout are not used in Jelly-RDF 1.2
+      options.getLogicalType should be(LogicalStreamType.UNSPECIFIED)
+      options.getGeneralizedStatements should be(false)
+      options.getRdfStar should be(false)
+      options.getVersion should be(JellyConstants.PROTO_VERSION_1_2_X)
+      frame.getColumns should not be null
+    else
+      if expectedType == "triples" then
+        options.getLogicalType should be(LogicalStreamType.FLAT_TRIPLES)
+      else if expectedType == "quads" then
+        options.getLogicalType should be(LogicalStreamType.FLAT_QUADS)
+      options.getGeneralizedStatements should be(expOpt.getGeneralizedStatements)
+      options.getRdfStar should be(expOpt.getRdfStar)
+      options.getVersion should be(JellyConstants.PROTO_VERSION_1_0_X)
+      frame.getColumns should be(null)
     options.getMaxNameTableSize should be(expOpt.getMaxNameTableSize)
     options.getMaxPrefixTableSize should be(expOpt.getMaxPrefixTableSize)
     options.getMaxDatatypeTableSize should be(expOpt.getMaxDatatypeTableSize)
-    options.getVersion should be(JellyConstants.PROTO_VERSION_1_0_X)
 
   /** Check if a given Jelly implementation supports the given options (RDF-star and gen.
     * statements).
@@ -154,7 +189,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
       des: NativeSerDes[TMDes, TDDes],
   ) =
     f"${ser.name} serializer + ${des.name} deserializer" should {
-      for (encOptions, decOptions, presetName) <- presetsUnsupported.filter(p =>
+      for (encOptions, decOptions, presetName) <- presetsUnsupported(ser).filter(p =>
           checkImplOptSupport(ser, Some(p._1)),
         )
       do
@@ -202,7 +237,12 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             // triples or quads, so it's going to default to quads.
             // Titanium just always does quads.
             val mayBeQuads = ser.name == "RDF4J" && preset.isEmpty || ser.name == "Titanium"
-            checkStreamOptions(data, if mayBeQuads then "quads" else "triples", preset)
+            checkStreamOptions(
+              data,
+              if mayBeQuads then "quads" else "triples",
+              preset,
+              ser.writesColumnLayout(preset),
+            )
 
             // Do not test this if we are encoding with RDF4J with default settings with the streaming Jena parser,
             // because the parser will just discard any quads completely.
@@ -231,7 +271,7 @@ class IoSerDesSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
             os.close()
             val data = os.toByteArray
             data.size should be > 0
-            checkStreamOptions(data, "quads", preset)
+            checkStreamOptions(data, "quads", preset, ser.writesColumnLayout(preset))
 
             val ds2 = des.readQuadsJelly(ByteArrayInputStream(data), None)
             val deserializedSize = summon[Measure[TDDes]].size(ds2)
