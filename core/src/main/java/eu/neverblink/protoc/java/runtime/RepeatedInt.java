@@ -2,6 +2,7 @@ package eu.neverblink.protoc.java.runtime;
 
 import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.InternalApi;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -11,6 +12,10 @@ import java.util.Arrays;
 public final class RepeatedInt {
 
     private static final int[] EMPTY_ARRAY = new int[0];
+    private static final byte[] EMPTY_BYTES = new byte[0];
+    // The most bytes a uint32 varint takes
+    private static final int MAX_VARINT_SIZE = 5;
+    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
     private static final int DEFAULT_CAPACITY = 8;
 
     // Package-private for ProtobufUtil.readPackedUInt32, which fills the array directly
@@ -20,6 +25,9 @@ public final class RepeatedInt {
     // The size of the values as packed uint32 varints, and how many values that was for.
     private int uint32Size;
     private int uint32SizeCount = -1;
+    // The varints themselves, the first uint32Size bytes, made while measuring them. Writing them
+    // is then one copy. Kept between measurements to be reused.
+    private byte[] packed = EMPTY_BYTES;
 
     private RepeatedInt() {}
 
@@ -59,19 +67,40 @@ public final class RepeatedInt {
     }
 
     /**
-     * The size of the values as uint32 varints, without a tag or a length. Kept for
-     * {@link #uint32SizeNoTag()}.
+     * The size of the values as uint32 varints, without a tag or a length. Encodes the varints on
+     * the way, for {@link #writePackedNoTag}.
      */
     @InternalApi
     public int computeUInt32SizeNoTag() {
         final int[] array = values;
         final int size = this.size;
+        byte[] out = packed;
+        final long worstCase = (long) MAX_VARINT_SIZE * size;
+        if (out.length < worstCase) {
+            out = packed = new byte[worstCase <= MAX_ARRAY_SIZE ? Math.max((int) worstCase, 64) : exactUInt32Size()];
+        }
+        // A local position, so that it stays in a register: CodedOutputStream keeps its position
+        // in a field, which costs a load and a store for every byte.
+        int pos = 0;
+        for (int i = 0; i < size; i++) {
+            int value = array[i];
+            while ((value & ~0x7F) != 0) {
+                out[pos++] = (byte) (value | 0x80);
+                value >>>= 7;
+            }
+            out[pos++] = (byte) value;
+        }
+        uint32Size = pos;
+        uint32SizeCount = size;
+        return pos;
+    }
+
+    // Too many values to make room for the largest varints: measure them first
+    private int exactUInt32Size() {
         int dataSize = 0;
         for (int i = 0; i < size; i++) {
-            dataSize += CodedOutputStream.computeUInt32SizeNoTag(array[i]);
+            dataSize += CodedOutputStream.computeUInt32SizeNoTag(values[i]);
         }
-        uint32Size = dataSize;
-        uint32SizeCount = size;
         return dataSize;
     }
 
@@ -81,11 +110,21 @@ public final class RepeatedInt {
     }
 
     /**
+     * Writes the values as a packed field without its tag: the length, then the varints, as
+     * {@link #computeUInt32SizeNoTag()} encoded them (encoded again only if values were added).
+     */
+    void writePackedNoTag(CodedOutputStream output) throws IOException {
+        final int length = uint32SizeNoTag();
+        output.writeUInt32NoTag(length);
+        output.writeRawBytes(packed, 0, length);
+    }
+
+    /**
      * Returns the backing array. It may be longer than {@link #size()}; the values past the
      * current size are undefined. The returned array is invalidated by the next {@code add} call.
      * <p>
-     * Values changed through it after the message was measured are written with the packed size
-     * measured before, as the message itself is written with its cached size.
+     * Values changed through it after the message was measured are not written: the values are
+     * encoded when measured, as the message itself is written with its cached size.
      *
      * @return the backing array
      */

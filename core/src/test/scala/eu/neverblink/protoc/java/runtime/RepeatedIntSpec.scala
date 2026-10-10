@@ -55,6 +55,20 @@ class RepeatedIntSpec extends AnyWordSpec, Matchers:
       writtenBack(r) shouldBe Seq(300, 300, 300)
     }
 
+    "write values it never measured" in {
+      val values = Seq(0, 127, 128, Int.MaxValue, -1)
+      writtenBack(repeated(values)) shouldBe values
+    }
+
+    "write the values again after they were cleared and refilled" in {
+      val r = repeated((0 until 100).map(_ * 100_000))
+      r.computeUInt32SizeNoTag()
+      r.clear()
+      Seq(5, 6).foreach(r.add)
+      r.computeUInt32SizeNoTag() shouldBe 2
+      writtenBack(r) shouldBe Seq(5, 6)
+    }
+
     "write packed values with the size that was measured" in {
       val values = (0 until 1000).map(i => i * 997)
       val r = repeated(values)
