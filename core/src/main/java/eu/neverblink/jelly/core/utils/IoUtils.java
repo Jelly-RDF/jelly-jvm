@@ -1,18 +1,16 @@
 package eu.neverblink.jelly.core.utils;
 
-import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.InvalidProtocolBufferException;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
+import eu.neverblink.protoc.java.runtime.DelimitedMessageReader;
 import eu.neverblink.protoc.java.runtime.MessageFactory;
 import eu.neverblink.protoc.java.runtime.ProtoMessage;
 import java.io.*;
 import java.util.function.Consumer;
 
 public final class IoUtils {
-
-    private static final int DEFAULT_INPUT_STREAM_BUFFER_SIZE = 8192;
 
     private IoUtils() {}
 
@@ -175,8 +173,8 @@ public final class IoUtils {
      * Reads a stream of delimited protobuf messages (frames) from an input stream. Each frame
      * is passed to the provided consumer for processing.
      * <p>
-     * This method reads frames in a delimited format, where each frame is preceded by its size as a varint.
-     * Internally, it uses a single `CodedInputStream` to read the frames efficiently.
+     * Each frame is read into a buffer that is reused, and parsed from there (see
+     * {@link DelimitedMessageReader}): parsing from an array is faster than parsing from a stream.
      *
      * @param inputStream the input stream to read from
      * @param messageFactory the factory to create new frames
@@ -189,20 +187,9 @@ public final class IoUtils {
         MessageFactory<TFrame> messageFactory,
         Consumer<TFrame> frameConsumer
     ) throws IOException {
-        final var codedInput = CodedInputStream.newInstance(inputStream, DEFAULT_INPUT_STREAM_BUFFER_SIZE);
-        while (!codedInput.isAtEnd()) {
-            final int frameSize = codedInput.readRawVarint32();
-            if (frameSize < 0) {
-                throw new InvalidProtocolBufferException("Invalid frame size: " + frameSize);
-            }
-            // Discard the current limit (it's always Integer.MAX_VALUE) and set a new one for the frame size
-            codedInput.pushLimit(frameSize);
-            final var frame = messageFactory.create();
-            frame.mergeFrom(codedInput, ProtoMessage.DEFAULT_MAX_RECURSION_DEPTH);
-            // Reset the size counter to avoid integer overflows
-            codedInput.resetSizeCounter();
-            // Pop the limit to be able to read the next frame's size
-            codedInput.popLimit(Integer.MAX_VALUE);
+        final var frames = new DelimitedMessageReader<>(inputStream, messageFactory);
+        TFrame frame;
+        while ((frame = frames.read()) != null) {
             frameConsumer.accept(frame);
         }
     }
