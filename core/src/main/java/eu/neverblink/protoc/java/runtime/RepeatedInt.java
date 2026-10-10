@@ -97,16 +97,30 @@ public final class RepeatedInt {
         if (out.length < worstCase) {
             out = packed = new byte[worstCase <= MAX_ARRAY_SIZE ? Math.max((int) worstCase, 64) : exactUInt32Size()];
         }
-        // A local position, so that it stays in a register: CodedOutputStream keeps its position
-        // in a field, which costs a load and a store for every byte.
-        int pos = 0;
+        // Often every value is below 128, one byte each (most lists of lookup ids, layouts and
+        // literal kinds): then the bytes are the values, in two simple loops that need no
+        // position and can be vectorized.
+        int all = 0;
         for (int i = 0; i < size; i++) {
-            int value = array[i];
-            while ((value & ~0x7F) != 0) {
-                out[pos++] = (byte) (value | 0x80);
-                value >>>= 7;
+            all |= array[i];
+        }
+        int pos = 0;
+        if ((all & ~0x7F) == 0) {
+            for (int i = 0; i < size; i++) {
+                out[i] = (byte) array[i];
             }
-            out[pos++] = (byte) value;
+            pos = size;
+        } else {
+            // A local position, so that it stays in a register: CodedOutputStream keeps its
+            // position in a field, which costs a load and a store for every byte.
+            for (int i = 0; i < size; i++) {
+                int value = array[i];
+                while ((value & ~0x7F) != 0) {
+                    out[pos++] = (byte) (value | 0x80);
+                    value >>>= 7;
+                }
+                out[pos++] = (byte) value;
+            }
         }
         uint32Size = pos;
         uint32SizeCount = size;
