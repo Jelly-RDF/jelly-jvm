@@ -312,15 +312,8 @@ class FieldGenerator(val info: FieldInfo):
         m,
       )
     else if (info.isRepeated && info.isString)
-      // The UTF-8 bytes that computeSerializedSize made (see RepeatedString.utf8)
-      method.addNamedCode(
-        "" +
-          "for (int _i = 0; _i < $field:N.size(); _i++) {$>\n" +
-          "$writeTagToOutput:L" +
-          "output.writeByteArrayNoTag($field:N.utf8(_i));\n" +
-          "$<}\n",
-        m,
-      )
+      // The tags, lengths and bytes that computeSerializedSize encoded (see RepeatedString.encoded)
+      method.addCode("$N.writeWithTag(output, $L);\n", info.fieldName, info.tag)
     else if (info.isRepeated)
       // Non-packable repeated field (e.g., repeated bytes)
       method.addNamedCode(
@@ -389,6 +382,8 @@ class FieldGenerator(val info: FieldInfo):
           "size += $bytesPerTag:L + $abstractMessage:T.computeDelimitedSize(dataSize);\n",
         m,
       )
+    else if (info.isRepeated && info.isString) // also encodes the values for writeTo
+      method.addCode("size += $N.computeStringSizeWithTag($L);\n", info.fieldName, info.tag)
     else if (info.isRepeated) { // non packed
       method.addNamedCode(
         "" +

@@ -2,6 +2,7 @@ package eu.neverblink.protoc.java.runtime;
 
 import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.InternalApi;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -13,17 +14,22 @@ import java.util.NoSuchElementException;
 public final class RepeatedString implements Iterable<String> {
 
     private static final String[] EMPTY_ARRAY = new String[0];
+    private static final byte[] EMPTY_BYTES = new byte[0];
     private static final int DEFAULT_CAPACITY = 8;
+    private static final int MAX_VARINT_SIZE = 5;
 
     private String[] values = EMPTY_ARRAY;
     private int size = 0;
 
     /**
-     * The values in UTF-8, as {@link #computeStringSizeNoTag} made them for {@link #utf8}: measuring a
-     * string and writing it then take one vectorised {@link String#getBytes} instead of two or
-     * three passes over its characters. Null where a value was added since.
+     * The values as a field of the wire format, as {@link #computeStringSizeWithTag} encoded them
+     * for {@link #writeWithTag}: the tag, the length and the UTF-8 bytes of each value, one after
+     * another. Written with one copy instead of three calls into the output per value.
+     * {@code encodedLength} is -1 where values were added or removed since.
      */
-    private byte[][] utf8 = null;
+    private byte[] encoded = EMPTY_BYTES;
+    private int encodedLength = -1;
+    private int encodedTag;
 
     private RepeatedString() {}
 
@@ -48,16 +54,13 @@ public final class RepeatedString implements Iterable<String> {
 
     public void add(CharSequence value) {
         reserve(1);
-        final byte[][] utf8 = this.utf8;
-        if (utf8 != null && size < utf8.length) {
-            utf8[size] = null;
-        }
+        encodedLength = -1;
         values[size++] = value.toString();
     }
 
     public void addAll(RepeatedString other) {
         reserve(other.size);
-        forgetUtf8(size, size + other.size);
+        encodedLength = -1;
         System.arraycopy(other.values, 0, values, size, other.size);
         size += other.size;
     }
@@ -65,44 +68,86 @@ public final class RepeatedString implements Iterable<String> {
     public void clear() {
         // Null out the references to allow garbage collection
         Arrays.fill(values, 0, size, null);
-        forgetUtf8(0, size);
+        encodedLength = -1;
         size = 0;
     }
 
     /**
      * The size of the values in the wire format, without their tags: each one's length and its
-     * UTF-8 bytes. Keeps the bytes for {@link #utf8}.
+     * UTF-8 bytes.
      */
     @InternalApi
     public int computeStringSizeNoTag() {
-        if (utf8 == null || utf8.length < size) {
-            utf8 = new byte[values.length][];
-        }
         int dataSize = 0;
         for (int i = 0; i < size; i++) {
-            final byte[] bytes = values[i].getBytes(StandardCharsets.UTF_8);
-            utf8[i] = bytes;
-            dataSize += CodedOutputStream.computeUInt32SizeNoTag(bytes.length) + bytes.length;
+            dataSize += CodedOutputStream.computeStringSizeNoTag(values[i]);
         }
         return dataSize;
     }
 
     /**
-     * A value in UTF-8, the same bytes as {@link CodedOutputStream#writeStringNoTag} writes. Taken
-     * from the last {@link #computeStringSizeNoTag} if it covered this value.
+     * The size of the values as a non-packed field with the given tag: the tag, the length and the
+     * UTF-8 bytes of each value. Encodes them on the way, for {@link #writeWithTag}.
+     *
+     * @param tag the field's tag, with its wire type
      */
-    public byte[] utf8(int index) {
-        if (index >= size) {
-            throw new IndexOutOfBoundsException("Index %d out of bounds for size %d".formatted(index, size));
+    @InternalApi
+    public int computeStringSizeWithTag(int tag) {
+        final int tagSize = CodedOutputStream.computeUInt32SizeNoTag(tag);
+        final String[] array = values;
+        final int size = this.size;
+        byte[] out = encoded;
+        // A local position, so that it stays in a register
+        int pos = 0;
+        for (int i = 0; i < size; i++) {
+            // String.getBytes is a vectorised copy for the common Latin-1 strings, and also writes
+            // unpaired surrogates as '?', as protobuf does
+            final byte[] bytes = array[i].getBytes(StandardCharsets.UTF_8);
+            final int length = bytes.length;
+            final int needed = pos + tagSize + MAX_VARINT_SIZE + length;
+            if (needed > out.length) {
+                out = Arrays.copyOf(out, Math.max(needed, Math.min(out.length * 2, Integer.MAX_VALUE - 8)));
+            }
+            pos = writeVarint(out, pos, tag);
+            pos = writeVarint(out, pos, length);
+            System.arraycopy(bytes, 0, out, pos, length);
+            pos += length;
         }
-        final byte[] bytes = utf8 == null || index >= utf8.length ? null : utf8[index];
-        return bytes != null ? bytes : values[index].getBytes(StandardCharsets.UTF_8);
+        encoded = out;
+        encodedTag = tag;
+        encodedLength = pos;
+        return pos;
     }
 
-    private void forgetUtf8(int from, int to) {
-        if (utf8 != null && from < utf8.length) {
-            Arrays.fill(utf8, from, Math.min(to, utf8.length), null);
+    /**
+     * Writes the values as a non-packed field with the given tag, as
+     * {@link #computeStringSizeWithTag} encoded them (encoded again if values were changed).
+     *
+     * @param output the output to write to
+     * @param tag the field's tag, with its wire type
+     * @throws IOException if an error occurred writing to {@code output}
+     */
+    @InternalApi
+    public void writeWithTag(CodedOutputStream output, int tag) throws IOException {
+        final byte[] out = encoded;
+        final int length = encodedLength;
+        if (length >= 0 && encodedTag == tag && length <= out.length) {
+            output.writeRawBytes(out, 0, length);
+            return;
         }
+        for (int i = 0; i < size; i++) {
+            output.writeUInt32NoTag(tag);
+            output.writeStringNoTag(values[i]);
+        }
+    }
+
+    private static int writeVarint(byte[] out, int pos, int value) {
+        while ((value & ~0x7F) != 0) {
+            out[pos++] = (byte) (value | 0x80);
+            value >>>= 7;
+        }
+        out[pos++] = (byte) value;
+        return pos;
     }
 
     private void reserve(int count) {

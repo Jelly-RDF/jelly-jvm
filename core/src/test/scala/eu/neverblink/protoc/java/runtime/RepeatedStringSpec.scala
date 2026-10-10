@@ -1,6 +1,6 @@
 package eu.neverblink.protoc.java.runtime
 
-import com.google.protobuf.{CodedInputStream, CodedOutputStream}
+import com.google.protobuf.CodedOutputStream
 import eu.neverblink.jelly.core.proto.v1.RdfLookupEntryPacked
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -25,13 +25,22 @@ class RepeatedStringSpec extends AnyWordSpec, Matchers:
     "\uDC00",
   )
 
-  /** What protobuf writes for a string, without the length. */
-  private def protobufBytes(s: String): Array[Byte] =
+  private val tag = 18 // field 2, length-delimited
+
+  /** What protobuf writes for the strings as a repeated field. */
+  private def protobufBytes(values: Seq[String]): Array[Byte] =
     val out = ByteArrayOutputStream()
     val coded = CodedOutputStream.newInstance(out)
-    coded.writeStringNoTag(s)
+    values.foreach(coded.writeString(2, _))
     coded.flush()
-    CodedInputStream.newInstance(out.toByteArray).readByteArray()
+    out.toByteArray
+
+  private def written(r: RepeatedString): Array[Byte] =
+    val out = ByteArrayOutputStream()
+    val coded = CodedOutputStream.newInstance(out)
+    r.writeWithTag(coded, tag)
+    coded.flush()
+    out.toByteArray
 
   private def repeated(values: Seq[String]): RepeatedString =
     val r = RepeatedString.newEmptyInstance()
@@ -39,37 +48,42 @@ class RepeatedStringSpec extends AnyWordSpec, Matchers:
     r
 
   "RepeatedString" should {
-    "give the bytes that protobuf writes for each value" in {
-      val r = repeated(strings)
-      for (s, i) <- strings.zipWithIndex do
-        withClue(s"value $i: ") {
-          val expected = protobufBytes(s)
-          // Before and after the size has been computed
-          r.utf8(i) shouldBe expected
-          r.computeStringSizeNoTag()
-          r.utf8(i) shouldBe expected
+    "write the bytes that protobuf writes, measured or not" in {
+      for s <- strings do
+        withClue(s"value ${s.take(20)}: ") {
+          val r = repeated(Seq(s))
+          written(r) shouldBe protobufBytes(Seq(s))
+          r.computeStringSizeWithTag(tag)
+          written(r) shouldBe protobufBytes(Seq(s))
         }
+      val r = repeated(strings)
+      r.computeStringSizeWithTag(tag)
+      written(r) shouldBe protobufBytes(strings)
     }
 
     "compute the same size as protobuf" in {
       val r = repeated(strings)
       r.computeStringSizeNoTag() shouldBe strings.map(CodedOutputStream.computeStringSizeNoTag).sum
+      r.computeStringSizeWithTag(tag) shouldBe strings.map(CodedOutputStream.computeStringSize(2, _)).sum
     }
 
-    "not give the bytes of a value that is no longer there" in {
+    "not write values that are no longer there, and write values added since it was measured" in {
       val r = repeated(Seq("first", "second"))
-      r.computeStringSizeNoTag()
+      r.computeStringSizeWithTag(tag)
       r.clear()
       r.add("other")
-      r.utf8(0) shouldBe "other".getBytes("UTF-8")
-      // Values added after the size was computed, also beyond what it covered
-      r.computeStringSizeNoTag()
-      for i <- 1 to 20 do r.add(s"v$i")
-      for i <- 1 to 20 do r.utf8(i) shouldBe s"v$i".getBytes("UTF-8")
+      written(r) shouldBe protobufBytes(Seq("other"))
+      r.computeStringSizeWithTag(tag)
+      val added = (1 to 20).map(i => s"v$i")
+      added.foreach(r.add)
+      written(r) shouldBe protobufBytes("other" +: added)
       val copy = RepeatedString.newEmptyInstance()
+      copy.computeStringSizeWithTag(tag)
       copy.addAll(r)
-      copy.utf8(0) shouldBe "other".getBytes("UTF-8")
-      an[IndexOutOfBoundsException] should be thrownBy r.utf8(21)
+      written(copy) shouldBe protobufBytes("other" +: added)
+      // Measured with another tag: written with the one asked for
+      copy.computeStringSizeWithTag(10)
+      written(copy) shouldBe protobufBytes("other" +: added)
     }
 
     "be written by generated messages as protobuf would write them" in {
