@@ -140,7 +140,11 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
     }
 
     "decode triple terms encoded as IRIs, in any variable and from the frame they come up in" in {
-      val triple = vf.createTripleTerm(vf.createIRI(exNs + "a"), vf.createIRI(exNs + "b"), vf.createLiteral("c"))
+      val triple = vf.createTripleTerm(
+        vf.createIRI(exNs + "a"),
+        vf.createIRI(exNs + "b"),
+        vf.createLiteral("c"),
+      )
       // An IRI, though typed as what was encoded
       val encoded = TripleTermUtil.toRDFEncodedValue(triple: Value)
       val vars = Seq("x", "y")
@@ -153,7 +157,9 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
       val bytes = write(
         vars,
         rows,
-        JellySparqlWriterSettings.empty().setJellyOptions(JellySparqlOptions.SMALL).setMaxValuesPerFrame(4),
+        JellySparqlWriterSettings.empty().setJellyOptions(
+          JellySparqlOptions.SMALL,
+        ).setMaxValuesPerFrame(4),
       )
       for decode <- Seq(true, false) do
         val collector = QueryResultCollector()
@@ -161,7 +167,9 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
         parser.getParserConfig.set(BasicParserSettings.PROCESS_ENCODED_TRIPLE_TERMS, decode)
         parser.setQueryResultHandler(collector)
         parser.parseQueryResult(ByteArrayInputStream(bytes))
-        val got = collector.getBindingSets.asScala.map(bs => bs.asScala.map(b => b.getName -> b.getValue).toMap).toSeq
+        val got = collector.getBindingSets.asScala.map(bs =>
+          bs.asScala.map(b => b.getName -> b.getValue).toMap,
+        ).toSeq
         val want = rows.map(_.map(v => if decode && v == encoded then triple else v))
         got shouldBe expected(vars, want)
     }

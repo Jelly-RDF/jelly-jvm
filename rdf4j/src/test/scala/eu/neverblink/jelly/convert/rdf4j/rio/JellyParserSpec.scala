@@ -7,7 +7,12 @@ import org.eclipse.rdf4j.model.{IRI, Literal, Value}
 import org.eclipse.rdf4j.model.base.{AbstractValueFactory, CoreDatatype}
 import org.eclipse.rdf4j.model.impl.{SimpleLiteral, SimpleValueFactory}
 import org.eclipse.rdf4j.rio.{RDFFormat, RDFParseException, Rio}
-import org.eclipse.rdf4j.rio.helpers.{AbstractRDFParser, BasicParserSettings, StatementCollector, TripleTermUtil}
+import org.eclipse.rdf4j.rio.helpers.{
+  AbstractRDFParser,
+  BasicParserSettings,
+  StatementCollector,
+  TripleTermUtil,
+}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

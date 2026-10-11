@@ -7,8 +7,6 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.ArrayBuffer
 
 class LookupEncoderSpec extends AnyWordSpec, Matchers:
 
@@ -20,7 +18,8 @@ class LookupEncoderSpec extends AnyWordSpec, Matchers:
     override def appendNameEntry(entry: RdfNameEntry): Unit =
       names += ((entry.getId, entry.getValue))
       iriParts += (("n", entry.getValue))
-    override def appendPrefixEntry(entry: RdfPrefixEntry): Unit = iriParts += (("p", entry.getValue))
+    override def appendPrefixEntry(entry: RdfPrefixEntry): Unit =
+      iriParts += (("p", entry.getValue))
     override def appendDatatypeEntry(entry: RdfDatatypeEntry): Unit =
       datatypes += ((entry.getId, entry.getValue))
 

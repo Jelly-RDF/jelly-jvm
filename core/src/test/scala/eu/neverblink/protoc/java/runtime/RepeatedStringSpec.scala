@@ -73,7 +73,9 @@ class RepeatedStringSpec extends AnyWordSpec, Matchers:
     "compute the same size as protobuf" in {
       val r = repeated(strings)
       r.computeStringSizeNoTag() shouldBe strings.map(CodedOutputStream.computeStringSizeNoTag).sum
-      r.computeStringSizeWithTag(tag) shouldBe strings.map(CodedOutputStream.computeStringSize(2, _)).sum
+      r.computeStringSizeWithTag(tag) shouldBe strings.map(
+        CodedOutputStream.computeStringSize(2, _),
+      ).sum
     }
 
     "not write values that are no longer there, and write values added since it was measured" in {
@@ -98,7 +100,8 @@ class RepeatedStringSpec extends AnyWordSpec, Matchers:
     "round-trip random strings (fuzzing)" in {
       val random = scala.util.Random(42)
       // Code points of 1, 2, 3 and 4 bytes in UTF-8 (the last as surrogate pairs in Java)
-      val ranges = Seq((0x00, 0x7f), (0x80, 0x7ff), (0x800, 0xd7ff), (0xe000, 0xffff), (0x10000, 0x10ffff))
+      val ranges =
+        Seq((0x00, 0x7f), (0x80, 0x7ff), (0x800, 0xd7ff), (0xe000, 0xffff), (0x10000, 0x10ffff))
       def randomString(ascii: Boolean): String =
         // Mostly short, sometimes long enough for a 2- or 3-byte length
         val length = if random.nextInt(10) == 0 then random.nextInt(5000) else random.nextInt(40)
@@ -113,7 +116,9 @@ class RepeatedStringSpec extends AnyWordSpec, Matchers:
         withClue(s"round $round, ${values.size} values: ") {
           val r = repeated(values)
           if round % 2 == 0 then
-            r.computeStringSizeWithTag(tag) shouldBe values.map(CodedOutputStream.computeStringSize(2, _)).sum
+            r.computeStringSizeWithTag(tag) shouldBe values.map(
+              CodedOutputStream.computeStringSize(2, _),
+            ).sum
           readBack(written(r)) shouldBe values
         }
     }

@@ -31,8 +31,6 @@ import org.eclipse.rdf4j.query.resultio.AbstractQueryResultParser;
 import org.eclipse.rdf4j.query.resultio.QueryResultParseException;
 import org.eclipse.rdf4j.query.resultio.QueryResultParser;
 import org.eclipse.rdf4j.rio.RioSetting;
-import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
-import org.eclipse.rdf4j.rio.helpers.TripleTermUtil;
 
 /**
  * Shared implementation of the Jelly-SPARQL query result parsers.
@@ -56,8 +54,9 @@ import org.eclipse.rdf4j.rio.helpers.TripleTermUtil;
  */
 public abstract class AbstractJellySparqlParser extends AbstractQueryResultParser {
 
-    // Whether triple terms encoded as IRIs are decoded (see setQueryResultHandler)
-    private boolean decodeTriples = false;
+    // RDF4J's wrapper of the handler that decodes triple terms encoded as IRIs, if it made one
+    // (see setQueryResultHandler)
+    private QueryResultHandler decodingHandler = null;
 
     protected AbstractJellySparqlParser() {
         this(SimpleValueFactory.getInstance());
@@ -82,15 +81,18 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
     }
 
     /**
-     * Sets the handler, as it is. With {@link BasicParserSettings#PROCESS_ENCODED_TRIPLE_TERMS} on
-     * (the default), RDF4J wraps the handler to decode triple terms encoded as IRIs in every
-     * solution: one more object per solution, a mapping on every value read, and solutions that
-     * cannot be serialized. This parser decodes them itself, and only once such an IRI has come up
-     * in the stream (see {@link TripleNotingConverter}). The setting is read here, as RDF4J does.
+     * Sets the handler. With the setting for it on (PROCESS_ENCODED_TRIPLE_TERMS in RDF4J 6,
+     * PROCESS_ENCODED_RDF_STAR in RDF4J 5; on by default), RDF4J wraps the handler to decode
+     * triple terms encoded as IRIs in every solution: one more object per solution, a mapping on
+     * every value read, and solutions that cannot be serialized. This parser passes the solutions
+     * to RDF4J's wrapper only once such an IRI has come up in the stream (see
+     * {@link TripleNotingConverter}), and to the handler as it is before that. The setting and
+     * RDF4J's classes for this are not referred to by name, as they differ between versions.
      */
     @Override
     public QueryResultParser setQueryResultHandler(QueryResultHandler handler) {
-        this.decodeTriples = getParserConfig().get(BasicParserSettings.PROCESS_ENCODED_TRIPLE_TERMS);
+        super.setQueryResultHandler(handler);
+        this.decodingHandler = this.handler != handler ? this.handler : null;
         this.handler = handler;
         return this;
     }
@@ -107,7 +109,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             throw new IllegalArgumentException("Input stream must not be null");
         }
         final var resultsHandler = new ResultsHandler();
-        final var converter = new TripleNotingConverter(valueFactory, decodeTriples);
+        final var converter = new TripleNotingConverter(valueFactory, decodingHandler != null);
         resultsHandler.converter = converter;
         final int maxRows = getParserConfig().get(JellySparqlParserSettings.MAX_ROWS_PER_FRAME);
         // As JellySparqlConverterFactory.decoder makes it, with the converter of this parser
@@ -202,6 +204,10 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
      */
     private static final class TripleNotingConverter extends Rdf4jDecoderConverter {
 
+        // What the IRIs of encoded triple terms start with: "urn:rdf4j:tripleTerm:" in RDF4J 6,
+        // "urn:rdf4j:triple:" in RDF4J 5.
+        private static final String ENCODED_TRIPLE_PREFIX = "urn:rdf4j:triple";
+
         private final boolean decodeTriples;
         boolean encodedTripleSeen = false;
 
@@ -212,7 +218,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
 
         @Override
         public Value makeIriNode(String iri) {
-            if (decodeTriples && iri.startsWith(TripleTermUtil.TRIPLE_PREFIX)) {
+            if (decodeTriples && iri.startsWith(ENCODED_TRIPLE_PREFIX)) {
                 encodedTripleSeen = true;
             }
             return super.makeIriNode(iri);
@@ -271,6 +277,11 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             }
         }
 
+        /** The handler of the solutions: RDF4J's decoding wrapper once it is needed. */
+        private QueryResultHandler solutionHandler() {
+            return converter.encodedTripleSeen ? decodingHandler : handler;
+        }
+
         @Override
         public Value[] createRowBuffer(int size) {
             return new Value[size];
@@ -280,13 +291,7 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         public void handleRow(Value[] row) {
             if (handler != null) {
                 // The decoder reuses the array between rows, so the binding set gets its own copy
-                final Value[] values = row.clone();
-                if (converter.encodedTripleSeen) {
-                    for (int i = 0; i < values.length; i++) {
-                        values[i] = TripleTermUtil.fromRDFEncodedValue(values[i]);
-                    }
-                }
-                handler.handleSolution(new ListBindingSet(variables, values));
+                solutionHandler().handleSolution(new ListBindingSet(variables, row.clone()));
             }
         }
 
@@ -295,17 +300,9 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
             if (handler == null) {
                 return;
             }
-            if (converter.encodedTripleSeen && rowCount > 0) {
-                // The columns of this frame are the binding sets' own (keepsColumns), so the
-                // values are decoded in place, once
-                for (final Object[] column : columns) {
-                    for (int r = 0; r < rowCount; r++) {
-                        column[r] = TripleTermUtil.fromRDFEncodedValue((Value) column[r]);
-                    }
-                }
-            }
+            final QueryResultHandler target = solutionHandler();
             for (int r = 0; r < rowCount; r++) {
-                handler.handleSolution(new ColumnBindingSet(variables, variableSet, columns, r));
+                target.handleSolution(new ColumnBindingSet(variables, variableSet, columns, r));
             }
         }
 

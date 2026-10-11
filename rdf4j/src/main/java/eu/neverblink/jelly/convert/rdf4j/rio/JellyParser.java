@@ -25,16 +25,14 @@ import org.eclipse.rdf4j.rio.RioSetting;
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFParser;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
-import org.eclipse.rdf4j.rio.helpers.TripleTermUtil;
 
 public final class JellyParser extends AbstractRDFParser {
 
     private BaseRdf4jDecoderConverter decoderConverter;
 
     /**
-     * The value factory last set, as it was set. AbstractRDFParser replaces its own one with a
-     * wrapper that decodes triple terms encoded as IRIs, which the non-checking converter does more
-     * cheaply itself (see {@link PlainDecoderConverter}).
+     * The value factory last set, as it was set. AbstractRDFParser.clear() may replace its own one
+     * with a wrapper that decodes triple terms encoded as IRIs (see {@link PlainDecoderConverter}).
      */
     private ValueFactory plainValueFactory;
 
@@ -158,22 +156,25 @@ public final class JellyParser extends AbstractRDFParser {
 
         readCheckingSetting();
         final BaseRdf4jDecoderConverter converter;
-        // Set when the stream may have triple terms encoded as IRIs, which are then decoded
+        // Set for the parser's own non-checking converter, which notes encoded triple terms
         final PlainDecoderConverter plain;
+        // RDF4J's value factory that decodes triple terms encoded as IRIs, if clear() set one
+        // (see PlainDecoderConverter), for the statements once such an IRI has come up
+        final BaseRdf4jDecoderConverter decoding;
         if (!this.checking && !converterFromFactory) {
-            plain = new PlainDecoderConverter(
-                decoderConverter.getValueFactory(),
-                !preserveBNodeIDs(),
-                config.get(BasicParserSettings.PROCESS_ENCODED_TRIPLE_TERMS)
-            );
+            final boolean decodeTriples = valueFactory != plainValueFactory;
+            plain = new PlainDecoderConverter(decoderConverter.getValueFactory(), !preserveBNodeIDs(), decodeTriples);
             converter = plain;
+            decoding = decodeTriples ? new Rdf4jDecoderConverter(valueFactory) : null;
         } else if (!this.checking && !preserveBNodeIDs()) {
             // Give blank nodes fresh IDs, unique to this parse, like RDF4J's own parsers do
             plain = null;
             converter = new Rdf4jFreshBNodeDecoderConverter(decoderConverter.getValueFactory());
+            decoding = null;
         } else {
             plain = null;
             converter = decoderConverter;
+            decoding = null;
         }
 
         final var handler = new RdfHandler.AnyStatementHandler<Value>() {
@@ -184,17 +185,17 @@ public final class JellyParser extends AbstractRDFParser {
 
             @Override
             public void handleQuad(Value subject, Value predicate, Value object, Value graph) {
-                rdfHandler.handleStatement(converter.makeQuad(subject, predicate, decode(object), graph));
+                rdfHandler.handleStatement(statements().makeQuad(subject, predicate, object, graph));
             }
 
             @Override
             public void handleTriple(Value subject, Value predicate, Value object) {
-                rdfHandler.handleStatement(converter.makeTriple(subject, predicate, decode(object)));
+                rdfHandler.handleStatement(statements().makeTriple(subject, predicate, object));
             }
 
-            /** The object, decoded if it is a triple term encoded as an IRI. */
-            private Value decode(Value object) {
-                return plain != null && plain.encodedTripleSeen ? TripleTermUtil.fromRDFEncodedValue(object) : object;
+            /** The converter that makes the statements: RDF4J's decoding one once it is needed. */
+            private BaseRdf4jDecoderConverter statements() {
+                return plain != null && plain.encodedTripleSeen ? decoding : converter;
             }
         };
 
@@ -249,6 +250,10 @@ public final class JellyParser extends AbstractRDFParser {
      */
     private final class PlainDecoderConverter extends Rdf4jDecoderConverter {
 
+        // What the IRIs of encoded triple terms start with: "urn:rdf4j:tripleTerm:" in RDF4J 6,
+        // "urn:rdf4j:triple:" in RDF4J 5.
+        private static final String ENCODED_TRIPLE_PREFIX = "urn:rdf4j:triple";
+
         private final boolean freshBNodes;
         private final boolean decodeTriples;
         // Whether an IRI that encodes a triple term was made
@@ -262,7 +267,7 @@ public final class JellyParser extends AbstractRDFParser {
 
         @Override
         public Value makeIriNode(String iri) {
-            if (decodeTriples && iri.startsWith(TripleTermUtil.TRIPLE_PREFIX)) {
+            if (decodeTriples && iri.startsWith(ENCODED_TRIPLE_PREFIX)) {
                 encodedTripleSeen = true;
             }
             return super.makeIriNode(iri);
