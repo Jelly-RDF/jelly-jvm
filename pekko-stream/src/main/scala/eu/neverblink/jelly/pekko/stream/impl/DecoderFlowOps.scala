@@ -85,11 +85,9 @@ trait DecoderFlowOps:
       decoder: ProtoDecoder[?, ?],
   ): Flow[RdfStreamFrame, TOut, NotUsed] =
     Flow[RdfStreamFrame]
-      .mapConcat(frame => frame.getRows.asScala)
-      // We use the null-safe ingestRow here to play nice with Pekko Streams
-      // The alternative would be a custom flow stage... but that's a bit overkill
-      .mapConcat(row => {
-        decoder.ingestRow(row)
+      // A whole frame at a time: in Jelly-RDF 1.2, the statements are in its column batch
+      .mapConcat(frame => {
+        decoder.ingestFrame(frame)
         val output = buffer.asScala.toList
         buffer.clear()
         output
@@ -101,9 +99,7 @@ trait DecoderFlowOps:
   ): Flow[RdfStreamFrame, Seq[TOut], NotUsed] =
     Flow[RdfStreamFrame]
       .map(frame => {
-        frame.getRows.asScala.foreach(row => {
-          decoder.ingestRow(row)
-        })
+        decoder.ingestFrame(frame)
         val output = buffer.asScala.toList
         buffer.clear()
         output

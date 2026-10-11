@@ -18,6 +18,7 @@ public final class TitaniumNode {
         BLANK,
         SIMPLE_LITERAL,
         LANG_LITERAL,
+        DIR_LANG_LITERAL,
         DT_LITERAL,
     }
 
@@ -43,6 +44,10 @@ public final class TitaniumNode {
 
     public static TitaniumLiteral.LangLiteral langLiteralOf(Object node) {
         return (TitaniumLiteral.LangLiteral) node;
+    }
+
+    public static TitaniumLiteral.DirLangLiteral dirLangLiteralOf(Object node) {
+        return (TitaniumLiteral.DirLangLiteral) node;
     }
 
     public static TitaniumLiteral.DtLiteral dtLiteralOf(Object node) {

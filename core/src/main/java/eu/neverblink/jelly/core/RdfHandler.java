@@ -16,6 +16,17 @@ public interface RdfHandler<TNode> {
     }
 
     /**
+     * Handle the end of a message in a stream of RDF Messages (Jelly-RDF 1.2 streams of type
+     * MESSAGES). The statements since the end of the previous message (or the start of the
+     * stream) make up one message.
+     * <p>
+     * The end of the stream also ends the last message, without a call to this method.
+     */
+    default void handleMessageEnd() {
+        // No-op
+    }
+
+    /**
      * Extension of the ProtoHandler interface to handle triples.
      * @param <TNode> The type of the nodes in the RDF data structure, as bound by library.
      */

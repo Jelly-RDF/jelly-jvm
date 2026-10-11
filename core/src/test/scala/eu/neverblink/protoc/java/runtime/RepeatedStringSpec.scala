@@ -25,13 +25,31 @@ class RepeatedStringSpec extends AnyWordSpec, Matchers:
     "\uDC00",
   )
 
-  /** What protobuf writes for a string, without the length. */
-  private def protobufBytes(s: String): Array[Byte] =
+  private val tag = 18 // field 2, length-delimited
+
+  /** What protobuf writes for the strings as a repeated field. */
+  private def protobufBytes(values: Seq[String]): Array[Byte] =
     val out = ByteArrayOutputStream()
     val coded = CodedOutputStream.newInstance(out)
-    coded.writeStringNoTag(s)
+    values.foreach(coded.writeString(2, _))
     coded.flush()
-    CodedInputStream.newInstance(out.toByteArray).readByteArray()
+    out.toByteArray
+
+  private def written(r: RepeatedString): Array[Byte] =
+    val out = ByteArrayOutputStream()
+    val coded = CodedOutputStream.newInstance(out)
+    r.writeWithTag(coded, tag)
+    coded.flush()
+    out.toByteArray
+
+  /** The strings of a repeated field, read back with protobuf's own reader. */
+  private def readBack(bytes: Array[Byte]): Seq[String] =
+    val in = CodedInputStream.newInstance(bytes)
+    val values = Seq.newBuilder[String]
+    while !in.isAtEnd do
+      in.readTag() shouldBe tag
+      values += in.readString()
+    values.result()
 
   private def repeated(values: Seq[String]): RepeatedString =
     val r = RepeatedString.newEmptyInstance()
@@ -39,37 +57,70 @@ class RepeatedStringSpec extends AnyWordSpec, Matchers:
     r
 
   "RepeatedString" should {
-    "give the bytes that protobuf writes for each value" in {
-      val r = repeated(strings)
-      for (s, i) <- strings.zipWithIndex do
-        withClue(s"value $i: ") {
-          val expected = protobufBytes(s)
-          // Before and after the size has been computed
-          r.utf8(i) shouldBe expected
-          r.computeStringSizeNoTag()
-          r.utf8(i) shouldBe expected
+    "write the bytes that protobuf writes, measured or not" in {
+      for s <- strings do
+        withClue(s"value ${s.take(20)}: ") {
+          val r = repeated(Seq(s))
+          written(r) shouldBe protobufBytes(Seq(s))
+          r.computeStringSizeWithTag(tag)
+          written(r) shouldBe protobufBytes(Seq(s))
         }
+      val r = repeated(strings)
+      r.computeStringSizeWithTag(tag)
+      written(r) shouldBe protobufBytes(strings)
     }
 
     "compute the same size as protobuf" in {
       val r = repeated(strings)
       r.computeStringSizeNoTag() shouldBe strings.map(CodedOutputStream.computeStringSizeNoTag).sum
+      r.computeStringSizeWithTag(tag) shouldBe strings.map(
+        CodedOutputStream.computeStringSize(2, _),
+      ).sum
     }
 
-    "not give the bytes of a value that is no longer there" in {
+    "not write values that are no longer there, and write values added since it was measured" in {
       val r = repeated(Seq("first", "second"))
-      r.computeStringSizeNoTag()
+      r.computeStringSizeWithTag(tag)
       r.clear()
       r.add("other")
-      r.utf8(0) shouldBe "other".getBytes("UTF-8")
-      // Values added after the size was computed, also beyond what it covered
-      r.computeStringSizeNoTag()
-      for i <- 1 to 20 do r.add(s"v$i")
-      for i <- 1 to 20 do r.utf8(i) shouldBe s"v$i".getBytes("UTF-8")
+      written(r) shouldBe protobufBytes(Seq("other"))
+      r.computeStringSizeWithTag(tag)
+      val added = (1 to 20).map(i => s"v$i")
+      added.foreach(r.add)
+      written(r) shouldBe protobufBytes("other" +: added)
       val copy = RepeatedString.newEmptyInstance()
+      copy.computeStringSizeWithTag(tag)
       copy.addAll(r)
-      copy.utf8(0) shouldBe "other".getBytes("UTF-8")
-      an[IndexOutOfBoundsException] should be thrownBy r.utf8(21)
+      written(copy) shouldBe protobufBytes("other" +: added)
+      // Measured with another tag: written with the one asked for
+      copy.computeStringSizeWithTag(10)
+      written(copy) shouldBe protobufBytes("other" +: added)
+    }
+
+    "round-trip random strings (fuzzing)" in {
+      val random = scala.util.Random(42)
+      // Code points of 1, 2, 3 and 4 bytes in UTF-8 (the last as surrogate pairs in Java)
+      val ranges =
+        Seq((0x00, 0x7f), (0x80, 0x7ff), (0x800, 0xd7ff), (0xe000, 0xffff), (0x10000, 0x10ffff))
+      def randomString(ascii: Boolean): String =
+        // Mostly short, sometimes long enough for a 2- or 3-byte length
+        val length = if random.nextInt(10) == 0 then random.nextInt(5000) else random.nextInt(40)
+        val sb = java.lang.StringBuilder()
+        for _ <- 0 until length do
+          val (from, to) = if ascii then ranges.head else ranges(random.nextInt(ranges.size))
+          sb.appendCodePoint(from + random.nextInt(to - from + 1))
+        sb.toString
+      for round <- 1 to 1000 do
+        val ascii = round % 3 == 0
+        val values = Seq.fill(random.nextInt(30))(randomString(ascii))
+        withClue(s"round $round, ${values.size} values: ") {
+          val r = repeated(values)
+          if round % 2 == 0 then
+            r.computeStringSizeWithTag(tag) shouldBe values.map(
+              CodedOutputStream.computeStringSize(2, _),
+            ).sum
+          readBack(written(r)) shouldBe values
+        }
     }
 
     "be written by generated messages as protobuf would write them" in {

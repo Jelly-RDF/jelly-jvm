@@ -1,6 +1,7 @@
 package eu.neverblink.jelly.core.sparql;
 
 import eu.neverblink.jelly.core.RdfProtoDeserializationError;
+import eu.neverblink.jelly.core.internal.BaseJellyOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsOptions;
@@ -21,9 +22,10 @@ public final class JellySparqlOptions {
 
     /**
      * Smallest name table a Jelly-SPARQL stream may declare. There is no such floor for the
-     * prefix and datatype tables – those may be disabled outright, with a size of 0.
+     * prefix and datatype tables – those may be disabled outright, with a size of 0. The same floor
+     * as for Jelly-RDF 1.2 streams: both use the column layout.
      */
-    public static final int MIN_NAME_TABLE_SIZE = 128;
+    public static final int MIN_NAME_TABLE_SIZE = BaseJellyOptions.MIN_COLUMN_NAME_TABLE_SIZE;
 
     public static final int SMALL_NAME_TABLE_SIZE = 256;
     /**

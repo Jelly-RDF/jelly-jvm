@@ -22,7 +22,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
 
   /** An encoder whose converter does whatever the test tells it to. */
   private def customEncoder(
-      f: (eu.neverblink.jelly.core.NodeEncoder[Node], Node) => Object,
+      f: (eu.neverblink.jelly.core.NodeEncoder[Node], Node) => Unit,
       options: SparqlResultsOptions = JellySparqlOptions.SMALL,
   ) =
     SparqlEncoderImpl[Node](CustomEncoderConverter(f), SparqlEncoder.Params.of(options))
@@ -55,20 +55,6 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       // The row is taken once the frame has been ended
       e.endFrame().getRowCount shouldBe (1 << 27) - 1
       e.appendRow(Array[Node](Iri("https://test.org/a"))) shouldBe true
-    }
-
-    "reject quoted triples appended as a buffer appender" in {
-      // Not reachable through the converter API (the node encoder rejects them first), but the
-      // encoder implements RdfBufferAppender, so the method is part of its surface.
-      val e = encoder()
-      val error = intercept[RdfProtoSerializationError] {
-        e.appendQuotedTriple(
-          Iri("https://test.org/a"),
-          Iri("https://test.org/b"),
-          Iri("https://test.org/c"),
-        )
-      }
-      error.getMessage should include("quoted triples are not supported")
     }
 
   }
@@ -423,73 +409,13 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.endFrame().getColumns.asScala.head.getPrefixIds.get(0) shouldBe 1
     }
 
-    "expose uncompressed IRIs to converters that ask for them" in {
-      val e = customEncoder((enc, node) =>
-        node match
-          case Iri(iri) => enc.makeIriRaw(iri)
-          case other => throw RuntimeException(s"unexpected $other"),
-      )
-      e.setVariables(Seq("x").asJava)
-      e.appendRow(Array[Node](Iri("https://a.org/x1")))
-      e.appendRow(Array[Node](Iri("https://a.org/x2")))
-      val column = e.endFrame().getColumns.asScala.head
-      // Raw IRIs always carry their real name ids – no "next one" compression
-      (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(1, 2)
-      (0 until column.getPrefixIds.size).map(column.getPrefixIds.get) shouldBe Seq(1)
-    }
-
-    "expose uncompressed IRIs with the prefix lookup disabled" in {
-      val noPrefixes = SparqlResultsOptions
-        .newInstance()
-        .setMaxNameTableSize(JellySparqlOptions.MIN_NAME_TABLE_SIZE)
-        .setMaxPrefixTableSize(0)
-        .setMaxDatatypeTableSize(8)
-      val e = customEncoder(
-        (enc, node) =>
-          node match
-            case Iri(iri) => enc.makeIriRaw(iri)
-            case other => throw RuntimeException(s"unexpected $other"),
-        noPrefixes,
-      )
-      e.setVariables(Seq("x").asJava)
-      e.appendRow(Array[Node](Iri("https://a.org/x1")))
-      e.appendRow(Array[Node](Iri("https://a.org/x2")))
-      val column = e.endFrame().getColumns.asScala.head
-      // The whole IRI goes in the name table, so there is no prefix id to track
-      (0 until column.getNameIds.size).map(column.getNameIds.get) shouldBe Seq(1, 2)
-      column.getPrefixIds.size shouldBe 0
-    }
-
     "reject the default graph as a binding" in {
-      val e = customEncoder((enc, _) => enc.makeDefaultGraph())
+      val e = customEncoder((enc, _) => enc.defaultGraph())
       e.setVariables(Seq("x").asJava)
       val error = intercept[RdfProtoSerializationError] {
         e.appendRow(Array[Node](DefaultGraphNode()))
       }
       error.getMessage should include("default graph is not a valid SPARQL result binding")
-    }
-
-    "reject unsupported term types" in {
-      val e = customEncoder((_, _) => Integer.valueOf(42))
-      e.setVariables(Seq("x").asJava)
-      val error = intercept[RdfProtoSerializationError] {
-        e.appendRow(Array[Node](Iri("https://test.org/a")))
-      }
-      // The converter did not encode the node as any term, so the node itself is reported
-      error.getMessage should include(
-        "Unsupported term type in SPARQL results: Iri(https://test.org/a)",
-      )
-    }
-
-    "reject a converter that encodes nothing" in {
-      val e = customEncoder((_, _) => null)
-      e.setVariables(Seq("x").asJava)
-      val error = intercept[RdfProtoSerializationError] {
-        e.appendRow(Array[Node](Iri("https://test.org/a")))
-      }
-      error.getMessage should include(
-        "Unsupported term type in SPARQL results: Iri(https://test.org/a)",
-      )
     }
   }
 

@@ -2,7 +2,7 @@ package eu.neverblink.jelly.convert.jena;
 
 import eu.neverblink.jelly.core.NodeEncoder;
 import eu.neverblink.jelly.core.ProtoEncoderConverter;
-import eu.neverblink.jelly.core.RdfBufferAppender;
+import eu.neverblink.jelly.core.RdfProtoSerializationError;
 import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.utils.QuadExtractor;
 import eu.neverblink.jelly.core.utils.TripleExtractor;
@@ -17,76 +17,71 @@ public final class JenaEncoderConverter
 {
 
     @Override
-    public Object nodeToProto(NodeEncoder<Node> encoder, Node node) {
-        // URI/IRI
+    public void encodeIri(NodeEncoder<Node> encoder, Node node) {
         if (node.isURI()) {
-            return encoder.makeIri(node.getURI());
+            encoder.iri(node.getURI());
+        } else {
+            encodeAny(encoder, node);
+        }
+    }
+
+    @Override
+    public void encodeResource(NodeEncoder<Node> encoder, Node node) {
+        if (node.isURI()) {
+            encoder.iri(node.getURI());
         } else if (node.isBlank()) {
-            // Blank node
-            return encoder.makeBlankNode(node.getBlankNodeLabel());
+            encoder.blankNode(node.getBlankNodeLabel());
+        } else {
+            encodeAny(encoder, node);
+        }
+    }
+
+    @Override
+    public void encodeGraph(NodeEncoder<Node> encoder, Node node) {
+        if (node == null || Quad.isDefaultGraph(node)) {
+            encoder.defaultGraph();
+        } else {
+            encodeResource(encoder, node);
+        }
+    }
+
+    @Override
+    public void encodeAny(NodeEncoder<Node> encoder, Node node) {
+        if (node.isURI()) {
+            encoder.iri(node.getURI());
+        } else if (node.isBlank()) {
+            encoder.blankNode(node.getBlankNodeLabel());
         } else if (node.isLiteral()) {
-            // Literal
-            final var lang = node.getLiteralLanguage();
-            if (lang.isEmpty()) {
-                // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
-                // We compare by reference, because the datatype is a singleton.
-                if (node.getLiteralDatatype() == XSDDatatype.XSDstring) {
-                    return encoder.makeSimpleLiteral(node.getLiteralLexicalForm());
-                } else {
-                    return encoder.makeDtLiteral(node, node.getLiteralLexicalForm(), node.getLiteralDatatypeURI());
-                }
+            encodeLiteral(encoder, node);
+        } else if (node.isTripleTerm()) {
+            final var t = node.getTriple();
+            encoder.tripleTerm(t.getSubject(), t.getPredicate(), t.getObject());
+        } else {
+            throw new RdfProtoSerializationError("Cannot encode node: " + node);
+        }
+    }
+
+    private static void encodeLiteral(NodeEncoder<Node> encoder, Node node) {
+        final var lang = node.getLiteralLanguage();
+        if (lang.isEmpty()) {
+            // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
+            // We compare by reference, because the datatype is a singleton.
+            if (node.getLiteralDatatype() == XSDDatatype.XSDstring) {
+                encoder.simpleLiteral(node.getLiteralLexicalForm());
             } else {
-                final TextDirection direction = node.getLiteralBaseDirection();
-                if (direction == null) {
-                    return encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
-                }
-                return encoder.makeDirLangLiteral(
-                    node,
+                encoder.dtLiteral(node.getLiteralLexicalForm(), node.getLiteralDatatypeURI());
+            }
+        } else {
+            final TextDirection direction = node.getLiteralBaseDirection();
+            if (direction == null) {
+                encoder.langLiteral(node.getLiteralLexicalForm(), lang);
+            } else {
+                encoder.dirLangLiteral(
                     node.getLiteralLexicalForm(),
                     lang,
                     direction == TextDirection.LTR ? RdfBaseDirection.LTR : RdfBaseDirection.RTL
                 );
             }
-        } else if (node.isTripleTerm()) {
-            // RDF-star node
-            final var t = node.getTriple();
-            return encoder.makeQuotedTriple(t.getSubject(), t.getPredicate(), t.getObject());
-        } else {
-            throw new IllegalArgumentException("Cannot encode node: " + node);
-        }
-    }
-
-    @Override
-    public Object graphNodeToProto(NodeEncoder<Node> encoder, Node node) {
-        // Default graph
-        if (node == null) {
-            return encoder.makeDefaultGraph();
-        } else if (node.isURI()) {
-            // URI/IRI
-            if (Quad.isDefaultGraph(node)) {
-                return encoder.makeDefaultGraph();
-            } else {
-                return encoder.makeIri(node.getURI());
-            }
-        } else if (node.isBlank()) {
-            // Blank node
-            return encoder.makeBlankNode(node.getBlankNodeLabel());
-        } else if (node.isLiteral()) {
-            // Literal
-            final var lang = node.getLiteralLanguage();
-            if (lang.isEmpty()) {
-                // RDF 1.1 spec: language tag MUST be non-empty. So, this is a plain or datatype literal.
-                // We compare by reference, because the datatype is a singleton.
-                if (node.getLiteralDatatype() == XSDDatatype.XSDstring) {
-                    return encoder.makeSimpleLiteral(node.getLiteralLexicalForm());
-                } else {
-                    return encoder.makeDtLiteral(node, node.getLiteralLexicalForm(), node.getLiteralDatatypeURI());
-                }
-            } else {
-                return encoder.makeLangLiteral(node, node.getLiteralLexicalForm(), lang);
-            }
-        } else {
-            throw new IllegalArgumentException("Cannot encode graph node: " + node);
         }
     }
 

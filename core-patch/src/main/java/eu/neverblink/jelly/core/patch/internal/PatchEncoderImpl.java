@@ -133,8 +133,7 @@ public final class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         final var namespace = RdfPatchNamespace.newInstance().setName(name);
         getNodeEncoder().newEpoch();
         if (iriValue != null) {
-            final var encoded = converter.nodeToProto(getNodeEncoder(), iriValue);
-            namespace.setValue((RdfIri) encoded);
+            namespace.setValue((RdfIri) getNodeEncoder().encodeIri(iriValue));
         }
         if (graph != null) {
             this.graphNodeToProtoWrapped(namespace, graph);
@@ -147,8 +146,7 @@ public final class PatchEncoderImpl<TNode> extends PatchEncoder<TNode> {
         emitOptions();
         final var header = RdfPatchHeader.newInstance().setKey(key);
         getNodeEncoder().newEpoch();
-        final var encoded = converter.nodeToProto(getNodeEncoder(), value);
-        header.setValue(encoded);
+        header.setValue(getNodeEncoder().encodeAny(value));
         rowBuffer.appendMessage().setHeader(header).getSerializedSize();
     }
 

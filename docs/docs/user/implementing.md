@@ -6,7 +6,9 @@ Currently converters for the two most popular RDF JVM libraries are implemented 
 To do this, you will need to implement three interfaces from the `jelly-core` module: `ProtoEncoderConverter`, `ProtoDecoderConverter`, and `JellyConverterFactory`.
 
 - **ProtoEncoderConverter (serialization)**
-    - `nodeToProto` and `graphToProto` should translate into Jelly's representation all possible variations of RDF terms in the SPO and G positions, respectively.
+    - Each method must call exactly one method of the `NodeEncoder` it is given: `iri`, `blankNode`, `simpleLiteral`, `langLiteral`, `dirLangLiteral`, `dtLiteral`, `tripleTerm` or `defaultGraph`.
+    - `encodeAny` must handle every kind of term your library has.
+    - Do not reject terms in the wrong place yourself (e.g., a literal as the subject): pass them on to `encodeAny`, and the encoder will report the error, or write them if the stream allows generalized statements.
     - Example implementation for Jena: [JenaEncoderConverter]({{ git_link('jena/src/main/java/eu/neverblink/jelly/convert/jena/JenaEncoderConverter.java') }})
     - You can skip implementing this interface if you don't need serialization.
     - You can also skip implementing some methods (make them throw an exception or return null) if, for example, you don't want to work with quads.
@@ -15,7 +17,7 @@ To do this, you will need to implement three interfaces from the `jelly-core` mo
     - The `make*` methods should construct new RDF terms and statements.
     - Example implementation for Jena: [JenaDecoderConverter]({{ git_link('jena/src/main/java/eu/neverblink/jelly/convert/jena/JenaDecoderConverter.java') }})
     - You can skip implementing this interface if you don't need deserialization.
-    - You can also skip implementing some methods (make them throw an exception or return null) if, for example, you don't want to work with quads or RDF-star.
+    - You can also skip implementing some methods (make them throw an exception or return null) if, for example, you don't want to work with quads or triple terms.
 
 - **JellyConverterFactory** – wrapper that allows other modules to use your converter.
     - The methods should just return new instances (or singletons, if appropriate for your use case) of your `ProtoEncoderConverter` and `ProtoDecoderConverter` implementations.

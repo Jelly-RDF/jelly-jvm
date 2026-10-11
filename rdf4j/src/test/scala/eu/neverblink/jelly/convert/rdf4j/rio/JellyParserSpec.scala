@@ -3,15 +3,20 @@ package eu.neverblink.jelly.convert.rdf4j.rio
 import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.{JellyConstants, JellyOptions}
-import org.eclipse.rdf4j.model.Literal
+import org.eclipse.rdf4j.model.{IRI, Literal, Value}
 import org.eclipse.rdf4j.model.base.{AbstractValueFactory, CoreDatatype}
-import org.eclipse.rdf4j.model.impl.SimpleLiteral
-import org.eclipse.rdf4j.rio.{RDFFormat, RDFParseException}
-import org.eclipse.rdf4j.rio.helpers.{AbstractRDFParser, BasicParserSettings, StatementCollector}
+import org.eclipse.rdf4j.model.impl.{SimpleLiteral, SimpleValueFactory}
+import org.eclipse.rdf4j.rio.{RDFFormat, RDFParseException, Rio}
+import org.eclipse.rdf4j.rio.helpers.{
+  AbstractRDFParser,
+  BasicParserSettings,
+  StatementCollector,
+  TripleTermUtil,
+}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.{ByteArrayInputStream, InputStream, Reader}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, Reader}
 import scala.jdk.CollectionConverters.*
 
 class JellyParserSpec extends AnyWordSpec, Matchers:
@@ -19,7 +24,7 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
     JellyOptions.SMALL_STRICT.clone()
       .setPhysicalType(PhysicalStreamType.TRIPLES)
       .setMaxPrefixTableSize(0)
-      .setVersion(JellyConstants.PROTO_VERSION),
+      .setVersion(JellyConstants.PROTO_VERSION_1_1_X),
   )
   private val row2 = RdfStreamRow.newInstance().setName(
     RdfNameEntry.newInstance().setValue("http://example.org/s"),
@@ -182,6 +187,31 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       val st = collector.getStatements.asScala.head
       st.getSubject.isBNode shouldBe true
       st.getSubject.stringValue() shouldEqual "b1234"
+    }
+
+    "decode objects that are triple terms encoded as IRIs, as RDF4J's own parsers do" in {
+      val vf = SimpleValueFactory.getInstance()
+      val ex = (n: String) => vf.createIRI(s"http://example.org/$n")
+      val triple = vf.createTripleTerm(ex("a"), ex("b"), vf.createLiteral("c"))
+      // An IRI, though typed as what was encoded
+      val encoded = TripleTermUtil.toRDFEncodedValue(triple: Value).asInstanceOf[IRI]
+      val statements = Seq(
+        vf.createStatement(ex("s"), ex("p"), ex("o")),
+        vf.createStatement(ex("s"), ex("p"), encoded),
+        // RDF4J only decodes objects
+        vf.createStatement(encoded, ex("p"), ex("o")),
+      )
+      val out = ByteArrayOutputStream()
+      Rio.write(statements.asJava, out, JellyFormat.JELLY)
+      for decode <- Seq(true, false) do
+        val parser = JellyParserFactory().getParser()
+        parser.set(BasicParserSettings.PROCESS_ENCODED_TRIPLE_TERMS, decode)
+        val collector = new StatementCollector()
+        parser.setRDFHandler(collector)
+        parser.parse(ByteArrayInputStream(out.toByteArray), "")
+        val objects = collector.getStatements.asScala.map(_.getObject).toSeq
+        objects shouldBe Seq(ex("o"), if decode then triple else encoded, ex("o"))
+        collector.getStatements.asScala.last.getSubject shouldBe encoded
     }
 
     "switch to checking mode when CHECKING=true" in {

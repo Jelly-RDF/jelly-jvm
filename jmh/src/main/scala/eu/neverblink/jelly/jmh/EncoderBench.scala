@@ -11,6 +11,7 @@ import org.openjdk.jmh.infra.Blackhole
 
 import scala.collection.mutable
 import scala.compiletime.uninitialized
+import scala.annotation.nowarn
 
 /** Number of triples the benchmark encodes per invocation.
   */
@@ -18,6 +19,8 @@ inline val encoderTriples = 100_000
 
 /** Throughput of the RDF encoder (Jena nodes in, RdfStreamRows out), in triples per second.
   */
+// Covers the deprecated Jelly-RDF 1.1 (row layout) encoder
+@nowarn("cat=deprecation")
 object EncoderBench:
   @State(Scope.Benchmark)
   class BenchInput:
@@ -69,6 +72,7 @@ object EncoderBench:
   /** Frame size used by the Jena stream writer by default. */
   private inline val frameSize = 256
 
+@nowarn("cat=deprecation")
 class EncoderBench extends CommonParams:
   import EncoderBench.*
 

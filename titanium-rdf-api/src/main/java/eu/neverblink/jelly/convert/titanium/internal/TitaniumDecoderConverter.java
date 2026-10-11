@@ -2,6 +2,7 @@ package eu.neverblink.jelly.convert.titanium.internal;
 
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.ProtoDecoderConverter;
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 
 /**
  * A Jelly decoder converter for the titanium-rdf-api.
@@ -17,6 +18,11 @@ public final class TitaniumDecoderConverter implements ProtoDecoderConverter<Obj
     @Override
     public Object makeLangLiteral(String lex, String lang) {
         return new TitaniumLiteral.LangLiteral(lex, lang);
+    }
+
+    @Override
+    public Object makeDirLangLiteral(String lex, String lang, RdfBaseDirection direction) {
+        return new TitaniumLiteral.DirLangLiteral(lex, lang, direction == RdfBaseDirection.LTR ? "ltr" : "rtl");
     }
 
     @Override
@@ -42,7 +48,7 @@ public final class TitaniumDecoderConverter implements ProtoDecoderConverter<Obj
     @Override
     public Object makeTripleNode(Object s, Object p, Object o) {
         throw new UnsupportedOperationException(
-            "The titanium-rdf-api implementation of Jelly does not support quoted triples."
+            "The titanium-rdf-api implementation of Jelly does not support triple terms."
         );
     }
 

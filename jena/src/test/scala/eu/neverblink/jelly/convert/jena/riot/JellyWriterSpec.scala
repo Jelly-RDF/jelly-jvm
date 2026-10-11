@@ -3,15 +3,22 @@ package eu.neverblink.jelly.convert.jena.riot
 import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.utils.IoUtils
-import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamRow}
+import eu.neverblink.jelly.core.JellyConstants
+import eu.neverblink.jelly.core.proto.v1.{
+  LogicalStreamType,
+  PhysicalStreamType,
+  RdfStreamFrame,
+  RdfVersion,
+}
 import org.apache.commons.io.output.{ByteArrayOutputStream, NullWriter}
 import org.apache.jena.graph.{NodeFactory, Triple}
-import org.apache.jena.riot.RiotException
+import org.apache.jena.riot.{RDFParser, RiotException}
 import org.apache.jena.sparql.core.Quad
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, OutputStream}
+import scala.jdk.CollectionConverters.*
 
 /** Tests covering rare edge cases in the Jelly writer. The main tests are done in the
   * integration-tests module.
@@ -38,6 +45,76 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
     NodeFactory.createURI("http://example.com/p"),
     NodeFactory.createURI("http://example.com/o"),
   )
+
+  /** A Jelly-RDF 1.1 (row layout) variant of the default format. */
+  private def rowLayoutVariant(delimited: Boolean, frameSize: Int, names: Int = 4000) =
+    JellyFormatVariant.builder
+      .options(
+        JellyFormatVariant.DEFAULT_OPTIONS.clone()
+          .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
+          .setPhysicalType(PhysicalStreamType.TRIPLES)
+          .setLogicalType(LogicalStreamType.FLAT_TRIPLES)
+          .setMaxNameTableSize(names),
+      )
+      .isDelimited(delimited)
+      .enableNamespaceDeclarations(false)
+      .frameSize(frameSize)
+      .build()
+
+  private def tripleRows(frame: RdfStreamFrame): Int = frame.getRows.asScala.count(_.hasTriple)
+
+  for (writerName, writerFactory) <- streamWriters do
+    f"$writerName (Jelly-RDF 1.1)" should {
+      "split the stream into multiple frames if it's delimited" in {
+        val out = new ByteArrayOutputStream()
+        val writer = writerFactory(rowLayoutVariant(delimited = true, frameSize = 1), out)
+        writer.start()
+        for _ <- 1 to 100 do writer.triple(testTriple)
+        writer.finish()
+        val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(out.toByteArray))
+        response.isDelimited should be(true)
+        val in = response.newInput()
+        for _ <- 0 until 100 do
+          val f = RdfStreamFrame.parseDelimitedFrom(in)
+          f should not be null
+          f.getColumns should be(null)
+          tripleRows(f) should be(1)
+        RdfStreamFrame.parseDelimitedFrom(in) should be(null)
+      }
+
+      "not split the stream into multiple frames if it's non-delimited" in {
+        val out = new ByteArrayOutputStream()
+        val writer = writerFactory(rowLayoutVariant(delimited = false, frameSize = 256), out)
+        writer.start()
+        for _ <- 1 to 10_000 do writer.triple(testTriple)
+        writer.finish()
+        val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(out.toByteArray))
+        response.isDelimited should be(false)
+        tripleRows(RdfStreamFrame.parseFrom(response.newInput())) should be(10_000)
+      }
+
+      "write a non-delimited frame with more names than the name table holds" in {
+        // Unlike Jelly-RDF 1.2, the row layout can replace lookup entries within a frame
+        val out = new ByteArrayOutputStream()
+        val writer =
+          writerFactory(rowLayoutVariant(delimited = false, frameSize = 256, names = 128), out)
+        writer.start()
+        val triples = (1 to 1000).map(i =>
+          Triple.create(
+            NodeFactory.createURI(s"http://example.com/s$i"),
+            testTriple.getPredicate,
+            testTriple.getObject,
+          ),
+        )
+        triples.foreach(writer.triple)
+        writer.finish()
+        val graph = RDFParser.source(ByteArrayInputStream(out.toByteArray))
+          .lang(JellyLanguage.JELLY)
+          .toGraph
+        graph.size should be(1000)
+        triples.forall(graph.contains) should be(true)
+      }
+    }
 
   for (writerName, writerFactory) <- streamWriters do
     f"$writerName" should {
@@ -85,7 +162,8 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
         val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
         response.isDelimited should be(false)
         val parsed = RdfStreamFrame.parseFrom(bytes)
-        parsed.getRows.size should be(6) // 1 options + 1 prefix + 3 names + 1 triple
+        parsed.getRows.size should be(1) // options
+        parsed.getColumns.getRowCount should be(1)
       }
 
       "split stream in multiple frames if it's delimited" in {
@@ -104,10 +182,11 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
         val bytes = out.toByteArray
         val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
         response.isDelimited should be(true)
+        val in = response.newInput()
         for i <- 0 until 100 do
-          val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
+          val f = RdfStreamFrame.parseDelimitedFrom(in)
           f should not be null
-          f.getRows.size should be > 0
+          f.getColumns.getRowCount should be(1)
       }
 
       "not split stream into multiple frames if it's non-delimited" in {
@@ -127,7 +206,58 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
         val response = IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
         response.isDelimited should be(false)
         val f = RdfStreamFrame.parseFrom(response.newInput())
-        f.getRows.size should be > 10_000
+        f.getColumns.getRowCount should be(10_000)
+      }
+
+      "refuse to write a non-delimited file that does not fit in one frame" in {
+        val writer = writerFactory(
+          JellyFormatVariant.builder
+            .isDelimited(false)
+            .options(JellyFormatVariant.DEFAULT_OPTIONS.clone().setMaxNameTableSize(128))
+            .build(),
+          new ByteArrayOutputStream(),
+        )
+        writer.start()
+        intercept[RiotException] {
+          for i <- 1 to 1000 do
+            writer.triple(
+              Triple.create(
+                NodeFactory.createURI(s"http://example.com/s$i"),
+                testTriple.getPredicate,
+                testTriple.getObject,
+              ),
+            )
+          writer.finish()
+        }.getMessage should include("does not fit in a single Jelly frame")
+      }
+
+      "write the RDF version passed to version()" in {
+        val out = new ByteArrayOutputStream()
+        val writer = writerFactory(JellyFormatVariant.getDefault, out)
+        writer.start()
+        writer match
+          case w: JellyStreamWriter => w.version("1.2")
+          case w: JellyStreamWriterAutodetectType => w.version("1.2")
+        writer.triple(testTriple)
+        // A version announced later restates the options
+        writer match
+          case w: JellyStreamWriter => w.version("1.2-basic")
+          case w: JellyStreamWriterAutodetectType => w.version("1.2-basic")
+        writer.triple(testTriple)
+        // Unknown versions are ignored
+        writer match
+          case w: JellyStreamWriter => w.version("2.0")
+          case w: JellyStreamWriterAutodetectType => w.version("2.0")
+        writer.triple(testTriple)
+        writer.finish()
+        val in = ByteArrayInputStream(out.toByteArray)
+        val f1 = RdfStreamFrame.parseDelimitedFrom(in)
+        f1.getRows.asScala.head.getOptions.getRdfVersion should be(RdfVersion.RDF_VERSION_1_2)
+        f1.getColumns.getRowCount should be(1)
+        val f2 = RdfStreamFrame.parseDelimitedFrom(in)
+        f2.getRows.asScala.head.getOptions.getRdfVersion should be(RdfVersion.RDF_VERSION_1_2_BASIC)
+        f2.getColumns.getRowCount should be(2)
+        RdfStreamFrame.parseDelimitedFrom(in) should be(null)
       }
     }
 
@@ -154,10 +284,10 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
       response.isDelimited should be(true)
       val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
       f should not be null
-      f.getRows.size should be(7)
-      val rows = f.getRows.toArray
-      rows(5).asInstanceOf[RdfStreamRow].hasQuad should be(true)
-      rows(6).asInstanceOf[RdfStreamRow].hasQuad should be(true)
+      f.getRows.asScala.head.getOptions.getPhysicalType should be(PhysicalStreamType.QUADS)
+      f.getColumns.getRowCount should be(2)
+      // Both statements are in the default graph
+      f.getColumns.getGraphs should be(null)
     }
 
     "allow writing triples" in {
@@ -172,9 +302,8 @@ class JellyWriterSpec extends AnyWordSpec, Matchers, JenaTest:
       response.isDelimited should be(true)
       val f = RdfStreamFrame.parseDelimitedFrom(response.newInput())
       f should not be null
-      f.getRows.size should be(6)
-      val rows = f.getRows.toArray
-      rows(5).asInstanceOf[RdfStreamRow].hasTriple should be(true)
+      f.getRows.asScala.head.getOptions.getPhysicalType should be(PhysicalStreamType.TRIPLES)
+      f.getColumns.getRowCount should be(1)
     }
 
     "disallow first writing triples, then quads" in {

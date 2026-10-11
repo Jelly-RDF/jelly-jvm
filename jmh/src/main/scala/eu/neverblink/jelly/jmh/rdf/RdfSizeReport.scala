@@ -104,7 +104,7 @@ object RdfSizeReport:
         case Some(config) =>
           // Reject a mistyped name before spending time loading anything
           val unknownDatasets = config.datasets.filterNot(RdfBenchData.datasetNames.contains)
-          val unknownMethods = config.methods.filterNot(RdfMethods.all.map(_.name).contains)
+          val unknownMethods = config.methods.filter(m => Try(RdfMethods(m)).isFailure)
           if unknownDatasets.nonEmpty then
             Console.err.println(s"Unknown dataset(s): ${unknownDatasets.mkString(", ")}")
             Console.err.println(usage)
@@ -122,8 +122,21 @@ object RdfSizeReport:
       println(s"Writing serialized files to ${dir.toAbsolutePath}")
     }
 
-    val header = Seq("dataset", "method", "bytes", "gzip", "zstd", "B/st", "gzip B/st", "zstd B/st")
-    val widths = Seq(28, 20, 14, 12, 12, 8, 12, 12)
+    // A term is a subject, predicate, object or graph: 3 per triple, 4 per quad
+    val header = Seq(
+      "dataset",
+      "method",
+      "bytes",
+      "gzip",
+      "zstd",
+      "B/st",
+      "gzip B/st",
+      "zstd B/st",
+      "B/term",
+      "gzip B/term",
+      "zstd B/term",
+    )
+    val widths = Seq(28, 24, 14, 12, 12, 8, 12, 12, 8, 12, 12)
     def printRow(cells: Seq[String]): Unit =
       println(cells.zip(widths).map((c, w) => s"%${w}s".format(c)).mkString(" "))
 
@@ -142,6 +155,7 @@ object RdfSizeReport:
             val gzipped = gzippedSize(bytes)
             val zstd = zstdSize(bytes)
             val statements = config.rows.toDouble
+            val terms = statements * (if data.quads then 4 else 3)
             printRow(
               Seq(
                 name,
@@ -152,6 +166,9 @@ object RdfSizeReport:
                 f"${bytes.length / statements}%.2f",
                 f"${gzipped / statements}%.3f",
                 f"${zstd / statements}%.3f",
+                f"${bytes.length / terms}%.2f",
+                f"${gzipped / terms}%.3f",
+                f"${zstd / terms}%.3f",
               ),
             )
             config.dumpDir.foreach(dir => Files.write(dir.resolve(s"$name.${method.name}"), bytes))

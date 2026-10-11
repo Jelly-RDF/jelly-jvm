@@ -31,9 +31,11 @@ final class TitaniumJellyDecoderImpl implements TitaniumJellyDecoder {
 
     @Override
     public void ingestFrame(RdfQuadConsumer consumer, RdfStreamFrame frame) {
-        for (final var row : frame.getRows()) {
-            ingestRow(consumer, row);
-        }
+        decoder.ingestFrame(frame);
+    }
+
+    void endParsedFrame(RdfStreamFrame.Mutable frame) {
+        decoder.endParsedFrame(frame);
     }
 
     @Override

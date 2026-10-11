@@ -19,20 +19,22 @@ import java.util.concurrent.TimeUnit
 import scala.collection.mutable
 import scala.compiletime.uninitialized
 
-/** Compares candidate implementations of the node caches in NodeEncoderImpl.
+/** Compares candidate implementations of the node caches in LookupEncoder and RowNodeEncoder.
   *
   * IRIs are based on the assist-iot-weather dataset.
   */
 object NodeCacheBench:
   @State(Scope.Benchmark)
   class BenchInput:
-    /** Full IRIs, in encoder order. Keys of NodeEncoderImpl.iriNodeCache. */
+    /** Full IRIs, in encoder order. Keys of LookupEncoder.iriCache. */
     var iriKeys: Array[String] = uninitialized
 
-    /** Datatype literal nodes, in encoder order. Keys of NodeEncoderImpl.dtLiteralNodeCache. */
+    /** Datatype literal nodes, in encoder order. Keys of RowNodeEncoder.dtLiteralCache. */
     var dtLiteralKeys: Array[AnyRef] = uninitialized
 
-    /** Capacities as computed by NodeEncoderImpl.create for this dataset's stream options. */
+    /** Capacities as computed by LookupEncoder.create and RowNodeEncoder for this dataset's stream
+      * options.
+      */
     var iriCacheSize: Int = 0
     var dtLiteralCacheSize: Int = 0
 
@@ -42,7 +44,7 @@ object NodeCacheBench:
       val dtLiterals = mutable.ArrayBuilder.make[AnyRef]
       val otherLiterals = mutable.ArrayBuilder.make[AnyRef]
 
-      // Mirrors JenaEncoderConverter.nodeToProto – every branch there feeds a different cache.
+      // Mirrors JenaEncoderConverter.encodeAny – every branch there feeds a different cache.
       def classify(node: Node): Unit =
         if node == null then ()
         else if node.isURI then iris += node.getURI

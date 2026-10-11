@@ -1,4 +1,4 @@
-package eu.neverblink.jelly.core.sparql.internal;
+package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 import eu.neverblink.jelly.core.proto.v1.RdfTripleTerm;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * The rarely used parts of a column of the SPARQL encoder: language tags, triple terms, and the
+ * The rarely used parts of a column of the column encoder: language tags, triple terms, and the
  * kinds of a column that mixes term types. Separated from the column state and created lazily,
  * so that most columns never allocate any of this, and the column state stays small.
  */
@@ -77,12 +77,13 @@ final class ColumnExtras {
     void setKind(int index, int term) {
         ensureKinds(index + 1);
         final int shift = (index & 3) << 1;
-        if (shift == 0) {
-            // The first value of a new byte, which may still hold the bits of an earlier frame
-            kinds[index >> 2] = (byte) term;
-        } else {
-            kinds[index >> 2] |= (byte) (term << shift);
-        }
+        final int i = index >> 2;
+        // Keeps only the bits of the values before this one in the byte: the first value of a byte
+        // clears it, as it may still hold the bits of an earlier frame. Branchless, because
+        // with branches we get 25% branch misprediction here.
+        // Equivalent to: if (shift == 0) { kinds[index >> 2] = (byte) term; }
+        // else { kinds[index >> 2] |= (byte) (term << shift); }
+        kinds[i] = (byte) ((kinds[i] & ((1 << shift) - 1)) | (term << shift));
     }
 
     private void ensureKinds(int values) {

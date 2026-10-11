@@ -1,55 +1,82 @@
 package eu.neverblink.jelly.convert.titanium.internal;
 
+import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.core.*;
+import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
 
 /**
  * Converter for translating between Titanium RDF API nodes/terms and Jelly proto objects.
+ * <p>
+ * IRIs and blank nodes are both strings, blank nodes with the "_:" prefix. Literals are
+ * {@link TitaniumLiteral}s.
  */
 @InternalApi
 public final class TitaniumEncoderConverter implements ProtoEncoderConverter<Object> {
 
     @Override
-    public Object nodeToProto(NodeEncoder<Object> encoder, Object titaniumNode) {
-        try {
-            return switch (TitaniumNode.typeOf(titaniumNode)) {
-                case IRI -> encoder.makeIri(TitaniumNode.iriLikeOf(titaniumNode));
-                // remove "_:"
-                case BLANK -> encoder.makeBlankNode(TitaniumNode.iriLikeOf(titaniumNode).substring(2));
-                case SIMPLE_LITERAL -> encoder.makeSimpleLiteral(TitaniumNode.simpleLiteralOf(titaniumNode).lex());
-                case LANG_LITERAL -> encoder.makeLangLiteral(
-                    titaniumNode,
-                    TitaniumNode.langLiteralOf(titaniumNode).lex(),
-                    TitaniumNode.langLiteralOf(titaniumNode).lang()
-                );
-                case DT_LITERAL -> encoder.makeDtLiteral(
-                    titaniumNode,
-                    TitaniumNode.dtLiteralOf(titaniumNode).lex(),
-                    TitaniumNode.dtLiteralOf(titaniumNode).dt()
-                );
-                default -> throw new IllegalStateException("Cannot encode null as S/P/O term.");
-            };
-        } catch (Exception e) {
-            throw new RdfProtoSerializationError(e.getMessage(), e);
+    public void encodeIri(NodeEncoder<Object> encoder, Object node) {
+        // The check for an IRI is the same as for a resource
+        encodeResource(encoder, node);
+    }
+
+    @Override
+    public void encodeResource(NodeEncoder<Object> encoder, Object node) {
+        if (node instanceof String iriLike) {
+            encodeIriLike(encoder, iriLike);
+        } else {
+            encodeAny(encoder, node);
         }
     }
 
     @Override
-    public Object graphNodeToProto(NodeEncoder<Object> encoder, Object titaniumNode) {
-        try {
-            if (titaniumNode == null) {
-                return encoder.makeDefaultGraph();
-            }
-
-            return switch (TitaniumNode.typeOf(titaniumNode)) {
-                case IRI -> encoder.makeIri(TitaniumNode.iriLikeOf(titaniumNode));
-                // remove "_:"
-                case BLANK -> encoder.makeBlankNode(TitaniumNode.iriLikeOf(titaniumNode).substring(2));
-                default -> throw new RdfProtoSerializationError(
-                    "Cannot encode null as graph node: %s".formatted(titaniumNode)
-                );
-            };
-        } catch (Exception e) {
-            throw new RdfProtoSerializationError(e.getMessage(), e);
+    public void encodeGraph(NodeEncoder<Object> encoder, Object node) {
+        if (node == null) {
+            encoder.defaultGraph();
+        } else {
+            encodeResource(encoder, node);
         }
+    }
+
+    @Override
+    public void encodeAny(NodeEncoder<Object> encoder, Object node) {
+        if (node instanceof String iriLike) {
+            encodeIriLike(encoder, iriLike);
+        } else if (node instanceof TitaniumLiteral literal) {
+            encodeLiteral(encoder, literal);
+        } else {
+            throw new RdfProtoSerializationError("Cannot encode node: %s".formatted(node));
+        }
+    }
+
+    private static void encodeIriLike(NodeEncoder<Object> encoder, String iriLike) {
+        if (RdfQuadConsumer.isBlank(iriLike)) {
+            // remove "_:"
+            encoder.blankNode(iriLike.substring(2));
+        } else {
+            encoder.iri(iriLike);
+        }
+    }
+
+    private static void encodeLiteral(NodeEncoder<Object> encoder, TitaniumLiteral literal) {
+        switch (literal) {
+            case TitaniumLiteral.SimpleLiteral l -> encoder.simpleLiteral(l.lex());
+            case TitaniumLiteral.LangLiteral l -> encoder.langLiteral(l.lex(), l.lang());
+            case TitaniumLiteral.DirLangLiteral l -> encoder.dirLangLiteral(
+                l.lex(),
+                l.lang(),
+                baseDirection(l.direction())
+            );
+            case TitaniumLiteral.DtLiteral l -> encoder.dtLiteral(l.lex(), l.dt());
+        }
+    }
+
+    private static RdfBaseDirection baseDirection(String direction) {
+        return switch (direction) {
+            case "ltr" -> RdfBaseDirection.LTR;
+            case "rtl" -> RdfBaseDirection.RTL;
+            default -> throw new RdfProtoSerializationError(
+                "Unknown base direction: '%s'. Expected 'ltr' or 'rtl'.".formatted(direction)
+            );
+        };
     }
 }

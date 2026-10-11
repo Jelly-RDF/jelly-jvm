@@ -2,7 +2,8 @@ package eu.neverblink.jelly.integration_tests.sparql
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.proto.v1.sparql.{SparqlResultsFrame, SparqlResultsOptions}
-import eu.neverblink.jelly.core.sparql.{JellySparqlConstants, JellySparqlIoUtils}
+import eu.neverblink.jelly.core.sparql.JellySparqlConstants
+import eu.neverblink.jelly.core.utils.IoUtils
 import eu.neverblink.jelly.core.sparql.gen.TermSpec
 import eu.neverblink.jelly.integration_tests.rdf.TestCases
 import eu.neverblink.jelly.integration_tests.util.ProtocolTestVocabulary.*
@@ -146,7 +147,7 @@ class SparqlConformanceSpec extends AnyWordSpec, Matchers, JenaTest:
   /** The options from a `stream_options.jellys` file: one frame with only the options set. */
   private def readStreamOptions(optionsFile: File): SparqlResultsOptions =
     Using.resource(FileInputStream(optionsFile)) { in =>
-      val response = JellySparqlIoUtils.autodetectDelimiting(in)
+      val response = IoUtils.autodetectDelimiting(in, SparqlResultsFrame.getDescriptor)
       val frame =
         if response.isDelimited then SparqlResultsFrame.parseDelimitedFrom(response.newInput())
         else SparqlResultsFrame.parseFrom(response.newInput())

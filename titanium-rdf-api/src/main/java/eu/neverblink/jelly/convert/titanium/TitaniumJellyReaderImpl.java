@@ -23,7 +23,7 @@ final class TitaniumJellyReaderImpl implements TitaniumJellyReader {
     private final RdfStreamOptions supportedOptions;
 
     private final TitaniumAnyStatementHandler handler = new TitaniumAnyStatementHandler();
-    private final TitaniumJellyDecoder decoder;
+    private final TitaniumJellyDecoderImpl decoder;
 
     TitaniumJellyReaderImpl(RdfStreamOptions supportedOptions) {
         this.supportedOptions = supportedOptions;
@@ -57,7 +57,7 @@ final class TitaniumJellyReaderImpl implements TitaniumJellyReader {
             // File contains a single frame
             var newIn = delimitingResponse.newInput();
             ProtoMessage.parseFrom(newIn, getReusableFrame);
-            buffer.clear();
+            decoder.endParsedFrame(reusableFrame);
             return;
         }
 
@@ -66,11 +66,11 @@ final class TitaniumJellyReaderImpl implements TitaniumJellyReader {
             // May contain multiple frames, but we only want one
             var newIn = delimitingResponse.newInput();
             ProtoMessage.parseDelimitedFrom(newIn, getReusableFrame);
-            buffer.clear();
+            decoder.endParsedFrame(reusableFrame);
             return;
         }
 
         // May contain multiple frames
-        readStream(delimitingResponse.newInput(), getReusableFrame, frame -> buffer.clear());
+        readStream(delimitingResponse.newInput(), getReusableFrame, frame -> decoder.endParsedFrame(reusableFrame));
     }
 }

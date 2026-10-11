@@ -85,11 +85,15 @@ object RdfFormatBench:
         "jena-protobuf",
         "jena-jelly-small",
         "jena-jelly-big",
+        "jena-jelly11-small",
+        "jena-jelly11-big",
         "rdf4j-nt",
         "rdf4j-ttl",
         "rdf4j-binary",
         "rdf4j-jelly-small",
         "rdf4j-jelly-big",
+        "rdf4j-jelly11-small",
+        "rdf4j-jelly11-big",
       ),
     )
     var method: String = uninitialized
@@ -137,11 +141,15 @@ object RdfFormatBench:
         "jena-protobuf",
         "jena-jelly-small",
         "jena-jelly-big",
+        "jena-jelly11-small",
+        "jena-jelly11-big",
         "rdf4j-nt",
         "rdf4j-ttl",
         "rdf4j-binary",
         "rdf4j-jelly-small",
         "rdf4j-jelly-big",
+        "rdf4j-jelly11-small",
+        "rdf4j-jelly11-big",
       ),
     )
     var method: String = uninitialized

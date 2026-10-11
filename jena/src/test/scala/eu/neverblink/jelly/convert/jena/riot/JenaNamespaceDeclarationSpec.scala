@@ -1,7 +1,7 @@
 package eu.neverblink.jelly.convert.jena.riot
 
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
-import eu.neverblink.jelly.core.proto.v1.{RdfStreamFrame, RdfStreamRow}
+import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame
 import org.apache.jena.graph.NodeFactory
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.riot.system.StreamRDFWriter
@@ -36,13 +36,14 @@ class JenaNamespaceDeclarationSpec extends AnyWordSpec, Matchers, JenaTest:
   ds.prefixes().putAll(m.getNsPrefixMap)
 
   private def checkDeclarations(out: ByteArrayOutputStream, shouldBeThere: Boolean) =
-    val rows: Seq[RdfStreamRow] =
-      RdfStreamFrame.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray))
-        .getRows
-        .asScala
-        .toSeq
-
-    val nsDecls = rows.filter(_.hasNamespace).map(_.getNamespace)
+    val in = ByteArrayInputStream(out.toByteArray)
+    val frames =
+      Iterator.continually(RdfStreamFrame.parseDelimitedFrom(in)).takeWhile(_ != null).toSeq
+    // Jelly-RDF 1.1 has the declarations in rows, Jelly-RDF 1.2 in the column batch
+    val nsDecls = frames.flatMap(f =>
+      f.getRows.asScala.filter(_.hasNamespace).map(_.getNamespace) ++
+        Option(f.getColumns).toSeq.flatMap(_.getNamespaces.asScala),
+    )
     if shouldBeThere then
       nsDecls.size should be(2)
       nsDecls.map(_.getName) should contain allOf ("ex", "ex2")

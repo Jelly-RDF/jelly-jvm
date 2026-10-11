@@ -3,7 +3,8 @@ package eu.neverblink.jelly.convert.jena.sparql
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.RdfProtoDeserializationError
 import eu.neverblink.jelly.core.proto.v1.sparql.SparqlResultsFrame
-import eu.neverblink.jelly.core.sparql.{JellySparqlIoUtils, JellySparqlOptions}
+import eu.neverblink.jelly.core.sparql.JellySparqlOptions
+import eu.neverblink.jelly.core.utils.IoUtils
 import org.apache.jena.graph.{Node, NodeFactory}
 import org.apache.jena.riot.RiotException
 import org.apache.jena.sparql.core.Var
@@ -136,8 +137,8 @@ class JenaSparqlContextSpec extends AnyWordSpec, Matchers, JenaTest:
     "turn off delimited output based on Context settings" in {
       val context = Context().set(JellySparqlLanguage.SYMBOL_DELIMITED_OUTPUT, false)
       val bytes = write(rowSetOf(Seq("x"), oneVarRows), context)
-      JellySparqlIoUtils
-        .autodetectDelimiting(ByteArrayInputStream(bytes))
+      IoUtils
+        .autodetectDelimiting(ByteArrayInputStream(bytes), SparqlResultsFrame.getDescriptor)
         .isDelimited should be(false)
       read(bytes, null).asScala.size should be(oneVarRows.size)
     }

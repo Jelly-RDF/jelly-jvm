@@ -10,12 +10,15 @@ import org.apache.jena.graph.{Node, Triple}
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 import scala.collection.mutable
+import scala.annotation.nowarn
 
 /** Prints a digest of the encoder's output, so that a change to the encoder can be checked for
   * being byte-for-byte output-preserving.
   *
   * Run with: `sbt "jmh/runMain eu.neverblink.jelly.jmh.EncoderDigest"`
   */
+// Covers the deprecated Jelly-RDF 1.1 (row layout) encoder
+@nowarn("cat=deprecation")
 object EncoderDigest:
 
   private def load(): Array[Triple] =

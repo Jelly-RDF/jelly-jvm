@@ -9,9 +9,12 @@ import org.apache.jena.graph.NodeFactory
 import org.apache.jena.sparql.core.Quad
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import scala.annotation.nowarn
 
 /** Test the handling of the many ways to represent the default graph in Jena.
   */
+// Covers the deprecated Jelly-RDF 1.1 (row layout) encoder
+@nowarn("cat=deprecation")
 class JenaProtoEncoderSpec extends AnyWordSpec, Matchers, JenaTest:
 
   private val encodedDefaultGraph = RdfStreamRow.newInstance

@@ -9,10 +9,10 @@ import eu.neverblink.jelly.core.proto.v1.*;
  * @param <TNode> type of RDF nodes in the library
  */
 @InternalApi
-public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
+public abstract class EncoderBase<TNode> implements RdfBufferAppender {
 
     protected final ProtoEncoderConverter<TNode> converter;
-    private NodeEncoder<TNode> nodeEncoder;
+    private RowNodeEncoder<TNode> nodeEncoder;
 
     protected TNode lastSubject = null;
     protected TNode lastPredicate = null;
@@ -25,9 +25,10 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
         this.converter = converter;
     }
 
-    protected final NodeEncoder<TNode> getNodeEncoder() {
+    protected final RowNodeEncoder<TNode> getNodeEncoder() {
         if (nodeEncoder == null) {
-            nodeEncoder = NodeEncoderImpl.create(
+            nodeEncoder = new RowNodeEncoder<>(
+                converter,
                 this,
                 getPrefixTableSize(),
                 getNameTableSize(),
@@ -94,32 +95,28 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
     protected final RdfGraphStart graphStartToProto(TNode graph) {
         getNodeEncoder().newEpoch();
         final RdfGraphStart.Mutable graphStart = RdfGraphStart.newInstance();
-        final var encoded = converter.graphNodeToProto(getNodeEncoder(), graph);
-        graphStart.setGraph(encoded);
+        graphStart.setGraph(getNodeEncoder().encodeGraph(graph));
         return graphStart;
     }
 
     private void subjectNodeToProtoWrapped(SpoBase.Setters target, TNode node) {
         if (!node.equals(lastSubject)) {
             lastSubject = node;
-            final var encoded = converter.nodeToProto(getNodeEncoder(), node);
-            target.setSubject(encoded);
+            target.setSubject(getNodeEncoder().encodeResource(node));
         }
     }
 
     private void predicateNodeToProtoWrapped(SpoBase.Setters target, TNode node) {
         if (!node.equals(lastPredicate)) {
             lastPredicate = node;
-            final var encoded = converter.nodeToProto(getNodeEncoder(), node);
-            target.setPredicate(encoded);
+            target.setPredicate(getNodeEncoder().encodeIri(node));
         }
     }
 
     private void objectNodeToProtoWrapped(SpoBase.Setters target, TNode node) {
         if (!node.equals(lastObject)) {
             lastObject = node;
-            final var encoded = converter.nodeToProto(getNodeEncoder(), node);
-            target.setObject(encoded);
+            target.setObject(getNodeEncoder().encodeAny(node));
         }
     }
 
@@ -131,21 +128,6 @@ public abstract class EncoderBase<TNode> implements RdfBufferAppender<TNode> {
 
         lastGraphSet = true;
         lastGraph = node;
-        final var encoded = converter.graphNodeToProto(getNodeEncoder(), node);
-        target.setGraph(encoded);
-    }
-
-    @Override
-    public RdfTriple appendQuotedTriple(TNode subject, TNode predicate, TNode object) {
-        // Encode the quoted triple
-        final RdfTriple.Mutable quotedTriple = RdfTriple.newInstance();
-        final var nodeEncoder = getNodeEncoder();
-        final var s = converter.nodeToProto(nodeEncoder, subject);
-        quotedTriple.setSubject(s);
-        final var p = converter.nodeToProto(nodeEncoder, predicate);
-        quotedTriple.setPredicate(p);
-        final var o = converter.nodeToProto(nodeEncoder, object);
-        quotedTriple.setObject(o);
-        return quotedTriple;
+        target.setGraph(getNodeEncoder().encodeGraph(node));
     }
 }

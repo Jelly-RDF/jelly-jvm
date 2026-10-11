@@ -1,8 +1,8 @@
 package eu.neverblink.jelly.jmh.rdf
 
-import eu.neverblink.jelly.convert.jena.riot.{JellyFormat, JellyLanguage}
+import eu.neverblink.jelly.convert.jena.riot.{JellyFormat, JellyFormatVariant, JellyLanguage}
 import eu.neverblink.jelly.convert.rdf4j.rio.{JellyFormat as Rdf4jJellyFormat, JellyWriterSettings}
-import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.core.{JellyConstants, JellyOptions}
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.jmh.UnsyncByteArrayInputStream
 import org.apache.jena.graph.Triple
@@ -182,6 +182,20 @@ object RdfMethods:
     // Jelly takes triples and quads alike, and RIOT picks the stream type from the first statement
     JenaMethod(s"jena-jelly-$preset", format, format)
 
+  /** The same as [[jenaJelly]], but writing Jelly-RDF 1.1 (row layout), for comparison. */
+  private def jenaJelly11(preset: String, options: RdfStreamOptions): Method =
+    val format = RDFFormat(
+      JellyLanguage.JELLY,
+      JellyFormatVariant.builder().options(rowLayout(options)).build(),
+    )
+    JenaMethod(s"jena-jelly11-$preset", format, format)
+
+  /** The options asking for Jelly-RDF 1.1 output. Without namespace declarations, the stream is
+    * written with protocol version 1, which has the same row layout.
+    */
+  private def rowLayout(options: RdfStreamOptions): RdfStreamOptions =
+    options.clone().setVersion(JellyConstants.PROTO_VERSION_1_1_X)
+
   private def rdf4j(
       format: String,
       triples: Rdf4jFormat,
@@ -190,9 +204,13 @@ object RdfMethods:
   ): Method =
     Rdf4jMethod(s"rdf4j-$format", triples, quads, _ => config)
 
-  private def rdf4jJelly(preset: String, options: RdfStreamOptions): Method =
+  private def rdf4jJelly(
+      preset: String,
+      options: RdfStreamOptions,
+      name: String = "jelly",
+  ): Method =
     Rdf4jMethod(
-      s"rdf4j-jelly-$preset",
+      s"rdf4j-$name-$preset",
       Rdf4jJellyFormat.JELLY,
       Rdf4jJellyFormat.JELLY,
       // Unlike Jena, RDF4J's writer does not pick the stream type itself, it writes quads unless
@@ -217,6 +235,8 @@ object RdfMethods:
     jena("protobuf", RDFFormat.RDF_PROTO, RDFFormat.RDF_PROTO),
     jenaJelly("small", JellyFormat.JELLY_SMALL_STRICT),
     jenaJelly("big", JellyFormat.JELLY_BIG_STRICT),
+    jenaJelly11("small", JellyOptions.SMALL_STRICT),
+    jenaJelly11("big", JellyOptions.BIG_STRICT),
     rdf4j("nt", Rdf4jFormat.NTRIPLES, Rdf4jFormat.NQUADS),
     // Pretty printing buffers the statements and groups them by subject, so the writer no longer
     // streams, and it changes the order and drops duplicates. Off, it streams like Jena's blocks.
@@ -229,14 +249,62 @@ object RdfMethods:
     rdf4j("binary", Rdf4jFormat.BINARY, Rdf4jFormat.BINARY),
     rdf4jJelly("small", JellyOptions.SMALL_STRICT),
     rdf4jJelly("big", JellyOptions.BIG_STRICT),
+    rdf4jJelly("small", rowLayout(JellyOptions.SMALL_STRICT), "jelly11"),
+    rdf4jJelly("big", rowLayout(JellyOptions.BIG_STRICT), "jelly11"),
   )
 
   private val byName: Map[String, Method] = all.map(m => m.name -> m).toMap
 
+  /** Jelly methods with any preset and frame size, named
+    * `<jena|rdf4j>-<jelly|jelly11>-<small|big|sbig>-f<frame size>`, e.g. `jena-jelly-sbig-f1024`.
+    * `sbig` is the BIG preset of Jelly-SPARQL (8192 names, 1024 prefixes, 64 datatypes).
+    */
+  private val tunedJelly = "(jena|rdf4j)-(jelly|jelly11)-(small|big|sbig)-f([0-9]+)".r
+
+  private def presetOptions(preset: String): RdfStreamOptions = preset match
+    case "small" => JellyOptions.SMALL_STRICT
+    case "big" => JellyOptions.BIG_STRICT
+    case _ =>
+      JellyOptions.BIG_STRICT.clone()
+        .setMaxNameTableSize(8192)
+        .setMaxPrefixTableSize(1024)
+        .setMaxDatatypeTableSize(64)
+
+  private def tuned(name: String, library: String, layout: String, preset: String, frameSize: Int) =
+    val base = presetOptions(preset)
+    val options = if layout == "jelly11" then rowLayout(base) else base
+    if library == "jena" then
+      val format = RDFFormat(
+        JellyLanguage.JELLY,
+        JellyFormatVariant.builder().options(options).frameSize(frameSize).build(),
+      )
+      JenaMethod(name, format, format)
+    else
+      Rdf4jMethod(
+        name,
+        Rdf4jJellyFormat.JELLY,
+        Rdf4jJellyFormat.JELLY,
+        quads =>
+          Some(
+            JellyWriterSettings.empty()
+              .setJellyOptions(
+                options.clone().setPhysicalType(
+                  if quads then PhysicalStreamType.QUADS else PhysicalStreamType.TRIPLES,
+                ),
+              )
+              .setFrameSize(frameSize),
+          ),
+      )
+
   def apply(name: String): Method =
-    byName.getOrElse(
-      name,
-      throw IllegalArgumentException(
-        s"Unknown method '$name'. Available: ${all.map(_.name).mkString(", ")}",
-      ),
-    )
+    byName.get(name) match
+      case Some(method) => method
+      case None =>
+        name match
+          case tunedJelly(library, layout, preset, frameSize) =>
+            tuned(name, library, layout, preset, frameSize.toInt)
+          case _ =>
+            throw IllegalArgumentException(
+              s"Unknown method '$name'. Available: ${all.map(_.name).mkString(", ")}, " +
+                "or <jena|rdf4j>-<jelly|jelly11>-<small|big|sbig>-f<frame size>",
+            )

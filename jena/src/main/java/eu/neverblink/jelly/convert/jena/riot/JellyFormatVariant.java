@@ -14,8 +14,8 @@ import org.apache.jena.sparql.util.Context;
  */
 public final class JellyFormatVariant extends RDFFormatVariant {
 
-    public static final RdfStreamOptions DEFAULT_OPTIONS = JellyOptions.BIG_ALL_FEATURES;
-    public static final int DEFAULT_FRAME_SIZE = 256;
+    public static final RdfStreamOptions DEFAULT_OPTIONS = JellyOptions.BIG_STRICT;
+    public static final int DEFAULT_FRAME_SIZE = 1024;
     public static final boolean DEFAULT_ENABLE_NAMESPACE_DECLARATIONS = false;
     public static final boolean DEFAULT_DELIMITED = true;
     // Constant name for all variants of the Jelly format, as all writers can handle all variants.
@@ -82,8 +82,8 @@ public final class JellyFormatVariant extends RDFFormatVariant {
         }
 
         /**
-         * Set the size of each RdfStreamFrame, in rows.
-         * @param frameSize size of each RdfStreamFrame, in rows
+         * Set the target size of each RdfStreamFrame: statements in Jelly-RDF 1.2, rows in Jelly-RDF 1.1.
+         * @param frameSize target size of each RdfStreamFrame
          * @return this
          */
         public Builder frameSize(int frameSize) {
@@ -100,7 +100,7 @@ public final class JellyFormatVariant extends RDFFormatVariant {
      * Constructor for JellyFormatVariant.
      *
      * @param options Jelly options
-     * @param frameSize size of each RdfStreamFrame, in rows
+     * @param frameSize target size of each RdfStreamFrame: statements in Jelly-RDF 1.2, rows in Jelly-RDF 1.1
      * @param enableNamespaceDeclarations whether to include namespace declarations in the output
      * @param isDelimited whether to write the output as delimited frames. Note: files saved to disk are
      *                    recommended to be delimited, for better interoperability with other implementations.

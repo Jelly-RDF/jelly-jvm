@@ -36,6 +36,18 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
       maxRowsPerFrame,
     )
 
+  private def newDecoder(
+      handler: SparqlResultsHandler[Node],
+      maxRowsPerFrame: Int,
+      maxValuesPerFrame: Int,
+  ) =
+    MockSparqlConverterFactory.decoder(
+      handler,
+      JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS,
+      maxRowsPerFrame,
+      maxValuesPerFrame,
+    )
+
   private def newStrictDecoder(handler: SparqlResultsHandler[Node] = ResultsCollector()) =
     StrictMockSparqlConverterFactory.decoder(handler, JellySparqlOptions.DEFAULT_SUPPORTED_OPTIONS)
 
@@ -119,6 +131,42 @@ class SparqlDecoderHardeningSpec extends AnyWordSpec, Matchers:
       expectRejected(decoder.ingestFrame(frameWithRowCount(5))).getMessage should include(
         "more than the 4 this reader accepts",
       )
+    }
+  }
+
+  "frame value count (rows × variables)" should {
+    "be rejected above the default limit, before any column is allocated" in {
+      // A few kilobytes of empty columns, which would need gigabytes of buffers: 1000 variables
+      // of 2^20 rows each, all within the row limit
+      val frame = frameWithRowCount(JellySparqlConstants.DEFAULT_MAX_ROWS_PER_FRAME)
+      for i <- 1 to 1000 do frame.addVariables(s"v$i").addColumns(RdfColumn.newInstance())
+      expectRejected(newDecoder().ingestFrame(frame)).getMessage should include(
+        s"more than the ${JellySparqlConstants.DEFAULT_MAX_VALUES_PER_FRAME_READ} this reader accepts",
+      )
+    }
+
+    "be accepted up to the configured limit, and rejected one row above it" in {
+      def frame(rows: Int) =
+        frameWithRowCount(rows)
+          .addVariables("x")
+          .addVariables("y")
+          .addColumns(RdfColumn.newInstance())
+          .addColumns(RdfColumn.newInstance())
+      val collector = ResultsCollector()
+      newDecoder(collector, maxRowsPerFrame = 100, maxValuesPerFrame = 10).ingestFrame(frame(5))
+      collector.rows should have size 5
+      expectRejected(
+        newDecoder(ResultsCollector(), maxRowsPerFrame = 100, maxValuesPerFrame = 10)
+          .ingestFrame(frame(6)),
+      ).getMessage should include("6 rows of 2 variables, 12 values, more than the 10")
+    }
+
+    "by default, be raised to the row limit, so that it never rejects a single-variable frame" in {
+      // 2^24 + 1 empty cells in one column: over the default values limit, within the row limit
+      val rows = JellySparqlConstants.DEFAULT_MAX_VALUES_PER_FRAME_READ + 1
+      val handler = BoundedHandler(limit = rows)
+      newDecoder(handler, maxRowsPerFrame = rows)
+        .ingestFrame(oneVariableFrame(rows).addColumns(RdfColumn.newInstance()))
     }
   }
 

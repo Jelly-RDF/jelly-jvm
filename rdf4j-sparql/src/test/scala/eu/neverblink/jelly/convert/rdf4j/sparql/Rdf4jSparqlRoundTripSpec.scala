@@ -20,7 +20,7 @@ import org.eclipse.rdf4j.query.resultio.{
   TupleQueryResultWriterRegistry,
 }
 import org.eclipse.rdf4j.rio.WriterConfig
-import org.eclipse.rdf4j.rio.helpers.BasicParserSettings
+import org.eclipse.rdf4j.rio.helpers.{BasicParserSettings, TripleTermUtil}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -139,6 +139,41 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
       gotRows shouldBe expected(vars, rows)
     }
 
+    "decode triple terms encoded as IRIs, in any variable and from the frame they come up in" in {
+      val triple = vf.createTripleTerm(
+        vf.createIRI(exNs + "a"),
+        vf.createIRI(exNs + "b"),
+        vf.createLiteral("c"),
+      )
+      // An IRI, though typed as what was encoded
+      val encoded = TripleTermUtil.toRDFEncodedValue(triple: Value)
+      val vars = Seq("x", "y")
+      val rows = (1 to 12).map(i =>
+        if i < 6 then Seq[Value | Null](iri(s"n$i"), null)
+        else if i % 2 == 0 then Seq[Value | Null](encoded, iri(s"n$i"))
+        else Seq[Value | Null](null, encoded),
+      )
+      // Two variables, so 4 values per frame is 2 rows per frame
+      val bytes = write(
+        vars,
+        rows,
+        JellySparqlWriterSettings.empty().setJellyOptions(
+          JellySparqlOptions.SMALL,
+        ).setMaxValuesPerFrame(4),
+      )
+      for decode <- Seq(true, false) do
+        val collector = QueryResultCollector()
+        val parser = JellySparqlTupleParser()
+        parser.getParserConfig.set(BasicParserSettings.PROCESS_ENCODED_TRIPLE_TERMS, decode)
+        parser.setQueryResultHandler(collector)
+        parser.parseQueryResult(ByteArrayInputStream(bytes))
+        val got = collector.getBindingSets.asScala.map(bs =>
+          bs.asScala.map(b => b.getName -> b.getValue).toMap,
+        ).toSeq
+        val want = rows.map(_.map(v => if decode && v == encoded then triple else v))
+        got shouldBe expected(vars, want)
+    }
+
     "parse binding sets that can be serialized with Java serialization" in {
       val vars = Seq("s", "label")
       def rows(n: Int) = (1 to n).map { i =>
@@ -146,9 +181,9 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
       }
       def parse(n: Int): Seq[BindingSet] =
         val collector = QueryResultCollector()
+        // With the default settings: RDF4J would wrap each binding set in one that cannot be
+        // serialized, but this parser decodes encoded triple terms itself
         val parser = JellySparqlTupleParser()
-        // Otherwise RDF4J wraps each binding set in one that cannot be serialized
-        parser.getParserConfig.set(BasicParserSettings.PROCESS_ENCODED_TRIPLE_TERMS, false)
         parser.setQueryResultHandler(collector)
         parser.parseQueryResult(ByteArrayInputStream(write(vars, rows(n))))
         collector.getBindingSets.asScala.toSeq

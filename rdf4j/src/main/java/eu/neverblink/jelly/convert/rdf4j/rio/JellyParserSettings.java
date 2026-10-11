@@ -43,7 +43,7 @@ public final class JellyParserSettings {
 
     public static final BooleanRioSetting ALLOW_RDF_STAR = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.rio.allowRdfStar",
-        "Allow decoding RDF-star statements",
+        "Allow decoding RDF-star statements in Jelly-RDF 1.0 and 1.1 streams",
         DEFAULT_SUPPORTED_OPTIONS.getRdfStar()
     );
 

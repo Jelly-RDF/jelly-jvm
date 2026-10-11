@@ -1,98 +1,73 @@
 package eu.neverblink.jelly.core;
 
 import eu.neverblink.jelly.core.proto.v1.RdfBaseDirection;
-import eu.neverblink.jelly.core.proto.v1.RdfDefaultGraph;
-import eu.neverblink.jelly.core.proto.v1.RdfIri;
-import eu.neverblink.jelly.core.proto.v1.RdfLiteral;
-import eu.neverblink.jelly.core.proto.v1.RdfTriple;
 
 /**
- * Interface exposed to RDF library interop modules for encoding RDF terms.
+ * What a {@link ProtoEncoderConverter} tells the encoder about one RDF term. The converter calls
+ * exactly one of these methods for each term it is given, and the encoder takes it from there.
+ * <p>
+ * Implemented by the encoders in jelly-core. RDF library modules only call it.
+ *
  * @param <TNode> The type of RDF nodes used by the RDF library.
  */
 public interface NodeEncoder<TNode> {
     /**
-     * Encode an IRI node.
-     * @param iri The IRI to encode.
+     * The term is an IRI.
+     * @param iri The IRI.
      */
-    RdfIri makeIri(String iri);
+    void iri(String iri);
 
     /**
-     * Encode an IRI node WITHOUT applying the same-prefix / next-name inference
-     * (the prefix_id = 0 / name_id = 0 compression). The returned RdfIri always carries the
-     * actual lookup table identifiers. Lookup table entries are still emitted as needed, exactly
-     * like in {@link #makeIri(String)}.
-     * <p>
-     * This is used by extensions that define their own ordering of the IRI inference state
-     * (e.g., the columnar Jelly-SPARQL encoding) and apply the compression themselves.
-     * <p>
-     * The returned instance may be shared and reused by the encoder – do not mutate it.
-     *
-     * @param iri The IRI to encode.
-     */
-    RdfIri makeIriRaw(String iri);
-
-    /**
-     * Encode a blank node.
+     * The term is a blank node.
      * @param label The label of the blank node.
      */
-    String makeBlankNode(String label);
+    void blankNode(String label);
 
     /**
-     * Encode a simple literal (of type xsd:string).
+     * The term is a simple literal (of type xsd:string).
      * @param lex The lexical form of the literal.
      */
-    RdfLiteral makeSimpleLiteral(String lex);
+    void simpleLiteral(String lex);
 
     /**
-     * Encode a language-tagged literal.
-     * @param lit The literal node. This is used for caching and deduplication.
+     * The term is a language-tagged literal, without a base direction.
      * @param lex The lexical form of the literal.
      * @param lang The language tag.
      */
-    RdfLiteral makeLangLiteral(TNode lit, String lex, String lang);
+    void langLiteral(String lex, String lang);
 
     /**
-     * Encode a directional language-tagged literal (RDF 1.2, rdf:dirLangString).
+     * The term is a language-tagged literal with a base direction (RDF 1.2, rdf:dirLangString).
      * <p>
-     * The default ignores the direction and encodes an ordinary language-tagged literal, as
-     * formats without base directions (Jelly-RDF) do. Encoders that can include the direction
-     * override this.
+     * Jelly-RDF 1.0 and 1.1 streams have no base directions, so there the direction is dropped.
      *
-     * @param lit The literal node. This is used for caching and deduplication.
      * @param lex The lexical form of the literal.
      * @param lang The language tag.
      * @param direction The base direction – LTR or RTL, never UNSPECIFIED.
      */
-    default RdfLiteral makeDirLangLiteral(TNode lit, String lex, String lang, RdfBaseDirection direction) {
-        return makeLangLiteral(lit, lex, lang);
-    }
+    void dirLangLiteral(String lex, String lang, RdfBaseDirection direction);
 
     /**
-     * Encode a datatype literal (not xsd:string and not language-tagged).
-     * @param lit The literal node. This is used for caching and deduplication.
+     * The term is a literal with a datatype other than xsd:string, and without a language tag.
      * @param lex The lexical form of the literal.
-     * @param dt The datatype IRI.
+     * @param datatype The datatype IRI.
      */
-    RdfLiteral makeDtLiteral(TNode lit, String lex, String dt);
+    void dtLiteral(String lex, String datatype);
 
     /**
-     * Encode a quoted triple node (RDF-star).
+     * The term is a triple term (RDF 1.2). In Jelly-RDF 1.0 and 1.1 streams, this is also how
+     * RDF-star quoted triples are encoded, in any position.
+     * <p>
+     * The encoder encodes the three nodes with the same converter.
      *
      * @param s The subject of the triple.
      * @param p The predicate of the triple.
      * @param o The object of the triple.
      */
-    RdfTriple makeQuotedTriple(TNode s, TNode p, TNode o);
+    void tripleTerm(TNode s, TNode p, TNode o);
 
     /**
-     * Encode a default graph node.
+     * The term is the default graph. Only used for graph names.
      */
-    RdfDefaultGraph makeDefaultGraph();
-
-    /**
-     * Signal that a new RDF statement (or other stream row) or SPARQL results frame starts.
-     * Until the next call, the lookup entries it uses are not evicted.
-     */
-    default void newEpoch() {}
+    void defaultGraph();
 }

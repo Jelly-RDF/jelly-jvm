@@ -9,7 +9,10 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.jdk.CollectionConverters.*
+import scala.annotation.nowarn
 
+// Covers the deprecated Jelly-RDF 1.1 (row layout) encoder
+@nowarn("cat=deprecation")
 class ProtoEncoderSpec extends AnyWordSpec, Matchers:
   import ProtoTestCases.*
   import eu.neverblink.jelly.core.ProtoEncoder.Params as Pep
@@ -48,7 +51,7 @@ class ProtoEncoderSpec extends AnyWordSpec, Matchers:
       val buffer = RowBuffer.newLazyImmutable()
       val options = JellyOptions.SMALL_GENERALIZED.clone
         .setPhysicalType(PhysicalStreamType.TRIPLES)
-        .setVersion(JellyConstants.PROTO_VERSION)
+        .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
 
       val encoder = MockConverterFactory.encoder(
         Pep(

@@ -2,6 +2,7 @@ package eu.neverblink.jelly.core.sparql
 
 import eu.neverblink.jelly.core.helpers.Mrl.*
 import eu.neverblink.jelly.core.proto.v1.sparql.{SparqlResultsFrame, SparqlResultsOptions}
+import eu.neverblink.jelly.core.utils.IoUtils
 import eu.neverblink.jelly.core.sparql.helpers.{MockSparqlConverterFactory, ResultsCollector}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -9,7 +10,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import scala.jdk.CollectionConverters.*
 
-class JellySparqlIoUtilsSpec extends AnyWordSpec, Matchers:
+class SparqlAutodetectDelimitingSpec extends AnyWordSpec, Matchers:
 
   private def frameFor(options: SparqlResultsOptions): SparqlResultsFrame =
     val encoder = MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(options))
@@ -28,13 +29,17 @@ class JellySparqlIoUtilsSpec extends AnyWordSpec, Matchers:
     out.toByteArray
 
   private def isDelimited(bytes: Array[Byte]): Boolean =
-    JellySparqlIoUtils.autodetectDelimiting(ByteArrayInputStream(bytes)).isDelimited
+    IoUtils.autodetectDelimiting(
+      ByteArrayInputStream(bytes),
+      SparqlResultsFrame.getDescriptor,
+    ).isDelimited
 
   /** Reads the stream back the way the readers do, to prove the detection is actually usable. */
   private def readBack(bytes: Array[Byte]): Seq[Seq[Node]] =
     val collector = ResultsCollector()
     val decoder = MockSparqlConverterFactory.decoder(collector, JellySparqlOptions.MAX)
-    val response = JellySparqlIoUtils.autodetectDelimiting(ByteArrayInputStream(bytes))
+    val response =
+      IoUtils.autodetectDelimiting(ByteArrayInputStream(bytes), SparqlResultsFrame.getDescriptor)
     val in = response.newInput
     if response.isDelimited then
       var frame = SparqlResultsFrame.parseDelimitedFrom(in)
@@ -55,7 +60,7 @@ class JellySparqlIoUtilsSpec extends AnyWordSpec, Matchers:
       .setMaxPrefixTableSize(prefixTableSize)
       .setMaxDatatypeTableSize(64)
 
-  "JellySparqlIoUtils.autodetectDelimiting" should {
+  "IoUtils.autodetectDelimiting with Jelly-SPARQL frames" should {
     "cover the options size that collides with the options tag" in {
       // A 10-byte options message makes a non-delimited frame start with 0A 0A, which is also how
       // a delimited stream whose first frame is 10 bytes long starts. Make sure we cover this case.

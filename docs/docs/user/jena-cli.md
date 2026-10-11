@@ -14,23 +14,14 @@ You can use Jelly as an output format for Jena's CLI utilities by specifying the
     ./riot --stream=jelly data.ttl > data.jelly
     ```
 
-By default Jena will use the "big, all features" Jelly preset (name table: 4000 entries, prefix table: 128, datatype table: 32, RDF-star enabled, generalized RDF enabled). There are a few reasons why you might want to change these serialization options:
-
-- **Performance** – you may want to tweak the settings to better fit your data.
-- **Compatibility** – if your data does not include RDF-star or generalized RDF, you can mark these features as disabled. Later, parsers will know accurately what to expect in your data.
+By default Jena will use the "big, strict" Jelly preset (name table: 4000 entries, prefix table: 150, datatype table: 32). You may want to change it to better fit your data, for example to use less memory with small files.
 
 The following presets are available:
 
-- Small: 128 name table entries, 16 prefix table entries, 16 datatype table entries
-    - `SMALL_STRICT` – RDF-star and generalized RDF disabled
-    - `SMALL_GENERALIZED` – RDF-star disabled, generalized RDF enabled
-    - `SMALL_RDF_STAR` – RDF-star enabled, generalized RDF disabled
-    - `SMALL_ALL_FEATURES` – RDF-star and generalized RDF enabled
-- Big: 4000 name table entries, 150 prefix table entries, 32 datatype table entries **(recommended for larger files)**
-    - `BIG_STRICT`
-    - `BIG_GENERALIZED`
-    - `BIG_RDF_STAR`
-    - `BIG_ALL_FEATURES` **(default)**
+- `SMALL_STRICT` – 128 name table entries, 16 prefix table entries, 16 datatype table entries
+- `BIG_STRICT` **(default)** – 4000 name table entries, 150 prefix table entries, 32 datatype table entries (recommended for larger files)
+
+The presets `SMALL_GENERALIZED`, `SMALL_RDF_STAR`, `SMALL_ALL_FEATURES`, `BIG_GENERALIZED`, `BIG_RDF_STAR` and `BIG_ALL_FEATURES` still work, but are deprecated and will be removed in Jelly-JVM 5.0.0. Their RDF-star and generalized RDF flags only apply to Jelly-RDF 1.0 and 1.1 output. Jelly-RDF 1.2, which Jena writes, never has generalized statements and always allows triple terms as objects, so for it they are the same as `SMALL_STRICT` and `BIG_STRICT`.
 
 To use one of these presets, use the `--set` CLI option with the `https://neverblink.eu/jelly/riot/symbols#preset` symbol:
 
@@ -42,11 +33,11 @@ To use one of these presets, use the `--set` CLI option with the `https://neverb
         data.ttl > data.jelly
     ```
 
-!!! example "Example: dumping a TDB2 database to Jelly with a big preset (all features)"
+!!! example "Example: dumping a TDB2 database to Jelly with a small preset"
 
     ```shell
     ./tdb2.tdbdump --tdb=path/to/assembler.ttl \
-        --set="https://neverblink.eu/jelly/riot/symbols#preset=BIG_ALL_FEATURES" \
+        --set="https://neverblink.eu/jelly/riot/symbols#preset=SMALL_STRICT" \
         --stream=jelly > mydb.jelly
     ```
 
