@@ -117,6 +117,18 @@ class NameDecoderSpec extends AnyWordSpec, Matchers:
         made should be(2)
       }
 
+      "decode a name used with and without a prefix in turn, making each IRI once" in {
+        var made = 0
+        val dec = NameDecoderImpl[String](8, 16, iri => { made += 1; iri })
+        dec.updatePrefixes(rdfPrefixEntry(1, "https://a.org/"))
+        dec.updateNames(rdfNameEntry(1, "x"))
+        for _ <- 1 to 3 do
+          dec.decodeRaw(1, 1) should be("https://a.org/x")
+          dec.decodeRaw(0, 1) should be("x")
+        made should be(2)
+        an[RdfProtoDeserializationError] should be thrownBy dec.decodeRaw(2, 1)
+      }
+
       "decode a name used with three prefixes in turn" in {
         val dec = makeDecoder(smallOptions)
         for (p, i) <- Seq("https://a.org/", "https://b.org/", "https://c.org/").zipWithIndex do

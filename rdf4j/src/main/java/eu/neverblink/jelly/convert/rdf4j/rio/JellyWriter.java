@@ -14,24 +14,19 @@ import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamFrame;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
-import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import eu.neverblink.protoc.java.runtime.DelimitedMessageWriter;
 import eu.neverblink.protoc.java.runtime.ProtobufUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashSet;
-import org.eclipse.rdf4j.model.Literal;
-import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.TripleTerm;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RioSetting;
 import org.eclipse.rdf4j.rio.helpers.AbstractRDFWriter;
-import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 
 /**
  * RDF4J Rio writer for Jelly RDF format.
@@ -39,9 +34,7 @@ import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
  * If no physical stream type is set, it will default to quads, because we really have no way of knowing in RDF4J.
  * If you want your stream to be really of type TRIPLES, set the PHYSICAL_TYPE setting yourself.
  * <p>
- * By default, the writer writes Jelly-RDF 1.2. Like RDF4J's own writers, it announces RDF 1.2 in
- * the stream (here: by restating the stream options) when the first triple term or literal with a
- * base direction comes up, unless {@link BasicWriterSettings#ANNOUNCE_RDF12_VERSION} is off.
+ * By default, the writer writes Jelly-RDF 1.2.
  * <p>
  * If the PROTO_VERSION setting is 1 or 2, it writes Jelly-RDF 1.0 or 1.1 instead, and automatically
  * sets the logical stream type based on the physical stream type. This is deprecated and will be
@@ -96,7 +89,6 @@ public final class JellyWriter extends AbstractRDFWriter {
         settings.add(JellyWriterSettings.FRAME_SIZE);
         settings.add(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS);
         settings.add(JellyWriterSettings.DELIMITED_OUTPUT);
-        settings.add(BasicWriterSettings.ANNOUNCE_RDF12_VERSION);
         return settings;
     }
 
@@ -192,40 +184,10 @@ public final class JellyWriter extends AbstractRDFWriter {
             rowOutput.consumeStatement(st);
             return;
         }
-        final Resource subject = st.getSubject();
-        final Value object = st.getObject();
-        // noteRdf12Feature takes varargs (an array per statement) and checks every literal's
-        // datatype, so it is only called once a statement turns out to use RDF 1.2.
-        if (!isRdf12FeatureDetected() && (isRdf12Object(object) || subject.isTripleTerm())) {
-            noteRdf12Feature(subject, object);
-            ensureVersionAnnouncement();
-        }
         if (triples) {
-            encoder.handleTriple(subject, st.getPredicate(), object);
+            encoder.handleTriple(st.getSubject(), st.getPredicate(), st.getObject());
         } else {
-            encoder.handleQuad(subject, st.getPredicate(), object, st.getContext());
-        }
-    }
-
-    /** Whether the object of a statement is a term of RDF 1.2: a triple term or a directional literal. */
-    private static boolean isRdf12Object(Value object) {
-        if (object instanceof Literal literal) {
-            return literal.getBaseDirection() != Literal.BaseDirection.NONE;
-        }
-        return object instanceof TripleTerm;
-    }
-
-    @Override
-    protected boolean requiresVersionAnnouncement() {
-        // Only Jelly-RDF 1.2 has a field for the RDF version
-        return encoder != null;
-    }
-
-    @Override
-    protected void writeVersionAnnouncement() throws RDFHandlerException {
-        final RdfStreamOptions current = encoder.getOptions();
-        if (current.getRdfVersion() == RdfVersion.RDF_VERSION_UNSPECIFIED) {
-            encoder.restateOptions(current.clone().setRdfVersion(RdfVersion.RDF_VERSION_1_2));
+            encoder.handleQuad(st.getSubject(), st.getPredicate(), st.getObject(), st.getContext());
         }
     }
 

@@ -56,13 +56,7 @@ public final class ProtobufUtil {
      * @throws IOException if an error occurred writing to {@code output}
      */
     public static void writePackedUInt32(CodedOutputStream output, RepeatedInt values) throws IOException {
-        final int[] array = values.array();
-        final int size = values.size();
-        // Measured by computeSerializedSize already, as a rule
-        output.writeUInt32NoTag(values.uint32SizeNoTag());
-        for (int i = 0; i < size; i++) {
-            output.writeUInt32NoTag(array[i]);
-        }
+        values.writePackedNoTag(output);
     }
 
     /**

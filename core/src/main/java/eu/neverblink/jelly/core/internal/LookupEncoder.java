@@ -9,6 +9,7 @@ import eu.neverblink.jelly.core.proto.v1.RdfDatatypeEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfIri;
 import eu.neverblink.jelly.core.proto.v1.RdfNameEntry;
 import eu.neverblink.jelly.core.proto.v1.RdfPrefixEntry;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -44,6 +45,10 @@ public final class LookupEncoder {
         // The row layout's RdfIri with both ids, built on first use. It depends only on the ids,
         // so it is valid as long as they are.
         RdfIri rowIri;
+        // The lookups' epoch in which the ids were last checked and their entries counted against
+        // its budget, or 0 if none. Entries used in the current epoch cannot be replaced, so in
+        // that epoch the ids need neither again.
+        int epoch;
     }
 
     /** Rounds up to a power of two, so the caches can mask instead of divide. */
@@ -89,6 +94,11 @@ public final class LookupEncoder {
             if (holds(first, key, hash)) {
                 return first;
             }
+            return getSecond(key, hash, slot, first);
+        }
+
+        /** The rest of get(), when the key is not in the first line. */
+        private IriIds getSecond(Object key, int hash, int slot, IriIds first) {
             // The item is not in the first cache line.
             // Whatever is in the first line is moved to the second line, and the key we
             // are looking for takes the first – either promoted from the second line, or reusing the
@@ -101,15 +111,30 @@ public final class LookupEncoder {
             } else {
                 node = other == null ? new IriIds() : other;
                 node.filled = false;
+                node.epoch = 0;
                 node.key = key;
                 node.keyHash = hash;
             }
             nodes[slot + 1] = first;
             return (nodes[slot] = node);
         }
+
+        /** Clears the epochs of all entries, before the epoch counter starts over. */
+        void clearEpochs() {
+            for (final IriIds node : nodes) {
+                if (node != null) {
+                    node.epoch = 0;
+                }
+            }
+        }
     }
 
     private final int maxPrefixTableSize;
+    // The current epoch of the lookups, counted from 1 (see IriIds.epoch).
+    private int epoch = -1;
+    // The epoch stamp that we use for makring new IRI cache entries.
+    // Before the first epoch, nothing is pinned, so the stamp (0) never matches the epoch (-1).
+    private int epochStamp = 0;
     // Lookup id of the prefix of the previous IRI.
     private int lastPrefixId;
 
@@ -121,6 +146,15 @@ public final class LookupEncoder {
 
     // Only with a prefix table: without one, the name lookup alone is as fast as this cache
     private final IriIdsCache iriCache;
+
+    // Datatype ids used in the current epoch, by the identity of the datatype's name.
+    // The name is usually the same String object every time, so a repeat
+    // skips the table's search and its comparison of the whole name. The epochs work as in
+    // IriIds.epoch.
+    private static final int DATATYPE_MEMO_SIZE = 8;
+    private final String[] datatypeMemoKeys = new String[DATATYPE_MEMO_SIZE];
+    private final int[] datatypeMemoIds = new int[DATATYPE_MEMO_SIZE];
+    private final int[] datatypeMemoEpochs = new int[DATATYPE_MEMO_SIZE];
 
     /**
      * Creates a new LookupEncoder.
@@ -212,7 +246,16 @@ public final class LookupEncoder {
      * @return the cached ids, valid until the next call
      */
     IriIds makeIriIdsEntry(String iri) {
-        return encodeIriWithPrefix(iri);
+        // In the row layout an epoch is one statement, which rarely has an IRI twice, so the
+        // same-epoch check of encodeIriWithPrefix would only cost a call into checkIriIds for
+        // nearly every IRI. The serial check is done here instead, inline.
+        final var cached = iriCache.get(iri);
+        if (hasValidIds(cached)) {
+            nameLookup.onAccess(cached.nameId);
+            prefixLookup.onAccess(cached.prefixId);
+            return cached;
+        }
+        return checkIriIds(iri, cached);
     }
 
     /** Whether the encoder has a prefix table. */
@@ -239,16 +282,32 @@ public final class LookupEncoder {
      * @return the cached ids, valid until the next call
      */
     private IriIds encodeIriWithPrefix(String iri) {
+        // This method is kept small, so that it is inlined where IRIs are encoded.
+        final var cached = iriCache.get(iri);
+        if (cached.epoch == epoch) {
+            // Already used in this epoch, so its entries are pinned: still valid, and already
+            // counted against the epoch's budget.
+            nameLookup.onRepeatAccess(cached.nameId);
+            prefixLookup.onRepeatAccess(cached.prefixId);
+            return cached;
+        }
+        // Slow path, not inlined
+        return checkIriIds(iri, cached);
+    }
+
+    /**
+     * The rest of {@link #encodeIriWithPrefix}: checks the cached ids of an IRI not used in this
+     * epoch yet, or finds them in the lookups.
+     * @param iri The IRI to encode
+     * @param cached its entry in the IRI cache
+     * @return the cached ids, valid until the next call
+     */
+    private IriIds checkIriIds(String iri, IriIds cached) {
         final var prefixLookup = Objects.requireNonNull(this.prefixLookup);
-        // Slow path, with splitting out the prefix
-        final var cached = Objects.requireNonNull(iriCache).get(iri);
-        if (
-            cached.filled &&
-            cached.nameSerial == nameLookup.serial(cached.nameId) &&
-            cached.prefixSerial == prefixLookup.serial(cached.prefixId)
-        ) {
+        if (hasValidIds(cached)) {
             nameLookup.onAccess(cached.nameId);
             prefixLookup.onAccess(cached.prefixId);
+            cached.epoch = epochStamp;
             return cached;
         }
 
@@ -305,7 +364,17 @@ public final class LookupEncoder {
         cached.prefixSerial = prefixLookup.serial(prefixId);
         cached.rowIri = null;
         cached.filled = true;
+        cached.epoch = epochStamp;
         return cached;
+    }
+
+    /** Whether a cache entry has ids, and their entries were not replaced since. */
+    private boolean hasValidIds(IriIds cached) {
+        return (
+            cached.filled &&
+            cached.nameSerial == nameLookup.serial(cached.nameId) &&
+            cached.prefixSerial == prefixLookup.serial(cached.prefixId)
+        );
     }
 
     /**
@@ -314,6 +383,21 @@ public final class LookupEncoder {
      * @param datatypeName The name of the datatype
      */
     public int makeDatatypeId(String datatypeName) {
+        final int slot = datatypeName.hashCode() & (DATATYPE_MEMO_SIZE - 1);
+        if (datatypeMemoKeys[slot] == datatypeName && datatypeMemoEpochs[slot] == epoch) {
+            // Used in this epoch already: pinned, and counted against the budget
+            final int id = datatypeMemoIds[slot];
+            datatypeLookup.onRepeatAccess(id);
+            return id;
+        }
+        final int id = lookUpDatatype(datatypeName);
+        datatypeMemoKeys[slot] = datatypeName;
+        datatypeMemoIds[slot] = id;
+        datatypeMemoEpochs[slot] = epochStamp;
+        return id;
+    }
+
+    private int lookUpDatatype(String datatypeName) {
         if (datatypeLookup.size == 0) {
             throw new RdfProtoSerializationError(
                 "Datatype literals cannot be " +
@@ -354,5 +438,55 @@ public final class LookupEncoder {
             prefixLookup.newEpoch();
         }
         datatypeLookup.newEpoch();
+        nextEpoch();
+    }
+
+    private void nextEpoch() {
+        if (epoch == Integer.MAX_VALUE || epoch < 0) {
+            // Starting over: an entry stamped this many epochs ago would look current again
+            if (iriCache != null) {
+                iriCache.clearEpochs();
+            }
+            Arrays.fill(datatypeMemoEpochs, 0);
+            epoch = 0;
+        }
+        epoch++;
+        epochStamp = epoch;
+    }
+
+    /**
+     * Starts a new epoch, as {@link #newEpoch()}, in which each table may use at most a budget of
+     * ids: see {@link #hasRoom()}. A table with no entries has no budget to keep.
+     *
+     * @param nameBudget ids of the name table
+     * @param prefixBudget ids of the prefix table
+     * @param datatypeBudget ids of the datatype table
+     */
+    public void newEpoch(int nameBudget, int prefixBudget, int datatypeBudget) {
+        nameLookup.newEpoch(nameBudget);
+        if (prefixLookup != null) {
+            prefixLookup.newEpoch(prefixBudget);
+        }
+        datatypeLookup.newEpoch(datatypeLookup.size == 0 ? Integer.MAX_VALUE : datatypeBudget);
+        nextEpoch();
+    }
+
+    /** Whether no table has used more ids in this epoch than its budget. */
+    public boolean hasRoom() {
+        final int prefixes = prefixLookup == null ? 0 : prefixLookup.remaining;
+        return (nameLookup.remaining | prefixes | datatypeLookup.remaining) >= 0;
+    }
+
+    /**
+     * Reserves ids in the budgets of the name and prefix tables in this epoch, for IRIs that may
+     * come later.
+     *
+     * @param count how many ids of each
+     */
+    public void reserveIriIds(int count) {
+        nameLookup.remaining -= count;
+        if (prefixLookup != null) {
+            prefixLookup.remaining -= count;
+        }
     }
 }

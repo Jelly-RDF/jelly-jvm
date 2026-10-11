@@ -161,6 +161,42 @@ class EncoderLookupSpec extends AnyWordSpec, Matchers:
       error.getMessage should include("too small to encode a single row")
     }
 
+    "count each entry used in an epoch once against the epoch's budget" in {
+      val lookup = EncoderLookup(8, true)
+      for i <- 1 to 6 do lookup.getOrAddEntry(s"v$i")
+      lookup.newEpoch(3)
+      // Old entries, used again and again
+      for _ <- 1 to 5; i <- Seq(1, 2) do lookup.getOrAddEntry(s"v$i")
+      lookup.remaining should be(1)
+      // A new entry, and one replacing an old one
+      lookup.getOrAddEntry("v7")
+      lookup.remaining should be(0)
+      lookup.getOrAddEntry("v8")
+      lookup.getOrAddEntry("w1").newEntry should be(true)
+      lookup.remaining should be(-2)
+      lookup.newEpoch(3)
+      lookup.getOrAddEntry("w1")
+      lookup.remaining should be(2)
+    }
+
+    "keep the epoch's budget when the use counter is moved back" in {
+      val lookup = EncoderLookup(8, true)
+      for i <- 1 to 8 do lookup.getOrAddEntry(s"v$i")
+      lookup.newEpoch(4)
+      lookup.getOrAddEntry("v3")
+      var uses = 9
+      while uses < EncoderLookup.REBASE_AT do
+        lookup.onAccess(1)
+        uses += 1
+      lookup.remaining should be(2)
+      // v1 and v3 are still counted, v2 is not yet
+      lookup.getOrAddEntry("v1")
+      lookup.getOrAddEntry("v3")
+      lookup.remaining should be(2)
+      lookup.getOrAddEntry("v2")
+      lookup.remaining should be(1)
+    }
+
     "keep which entries are cold and which are pinned when the use counter is moved back" in {
       val lookup = EncoderLookup(8, true)
       for i <- 1 to 8 do lookup.getOrAddEntry(s"v$i")

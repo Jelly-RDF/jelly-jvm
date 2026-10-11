@@ -124,6 +124,15 @@ final class EncoderLookup {
     /** {@link #epochStart} until the first epoch starts: nothing is pinned. */
     private static final int NO_EPOCH = Integer.MAX_VALUE;
 
+    /**
+     * How many more entries the current epoch may use for the first time: its budget (see
+     * {@link #newEpoch(int)}), minus one for every entry used for the first time in the epoch.
+     * Negative once the epoch went over its budget. Entries used again do not count, and neither
+     * can an entry be replaced in the epoch that used it (it is pinned), so this counts every id
+     * the epoch refers to exactly once.
+     */
+    int remaining = Integer.MAX_VALUE;
+
     /** When {@link #now} gets here, all the times are moved back by {@link #REBASE_BY}. */
     static final int REBASE_AT = 1 << 30;
 
@@ -362,6 +371,25 @@ final class EncoderLookup {
     public void onAccess(int id) {
         final int t = now + 1;
         now = t;
+        final int i = id * STRIDE + LAST_USE;
+        // Used for the first time in this epoch if last <= epochStart. Branchless, because
+        // branches would be hard to predict here. Cannot overflow: last is at most REBASE_AT,
+        // and with NO_EPOCH, last - NO_EPOCH - 1 is negative.
+        remaining -= (entries[i] - epochStart - 1) >>> 31;
+        entries[i] = t;
+        if (t == REBASE_AT) {
+            rebase();
+        }
+    }
+
+    /**
+     * The same as {@link #onAccess}, for an entry already used in the current epoch: it is not
+     * counted against the epoch's budget again.
+     * @param id The ID of the entry that was accessed.
+     */
+    void onRepeatAccess(int id) {
+        final int t = now + 1;
+        now = t;
         entries[id * STRIDE + LAST_USE] = t;
         if (t == REBASE_AT) {
             rebase();
@@ -374,7 +402,16 @@ final class EncoderLookup {
      * SPARQL results frame.
      */
     public void newEpoch() {
+        newEpoch(Integer.MAX_VALUE);
+    }
+
+    /**
+     * Starts a new epoch, as {@link #newEpoch()}, in which at most budget entries may be used
+     * before {@link #remaining} goes negative.
+     */
+    public void newEpoch(int budget) {
         epochStart = now;
+        remaining = budget;
     }
 
     /**
