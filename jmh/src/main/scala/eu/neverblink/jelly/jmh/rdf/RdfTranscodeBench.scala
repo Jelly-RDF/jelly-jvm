@@ -16,8 +16,8 @@ import scala.collection.mutable.ArrayBuffer
   *
   *   - `single`: one input stream, with the same options as the output. The lookup ids stay the
   *     same.
-  *   - `merge`: the same statements across multiple input streams, merged into
-  *     one. The ids of all but the first stream have to be mapped.
+  *   - `merge`: the same statements across multiple input streams, merged into one. The ids of all
+  *     but the first stream have to be mapped.
   *   - `decode`: for reference, decoding the frames of `single` into Jena terms – the first half of
   *     the decode-and-encode-again that the transcoder replaces.
   */
