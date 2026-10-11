@@ -303,8 +303,6 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
         this.maxNameTableSize = maxNameTableSize;
         this.maxPrefixTableSize = maxPrefixTableSize;
         this.maxDatatypeTableSize = maxDatatypeTableSize;
-        // Safe to pass `this` here: the lookup encoder only stores it as the receiver of the
-        // lookup entries it emits later, during encoding.
         this.lookupEncoder = LookupEncoder.create(this, maxPrefixTableSize, maxNameTableSize, maxDatatypeTableSize);
     }
 
