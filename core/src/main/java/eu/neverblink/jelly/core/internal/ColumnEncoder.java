@@ -198,8 +198,6 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
             return valueCount == 0;
         }
 
-        // *** NodeEncoder – the converter describes the value of a new run ***
-
         @Override
         public void iri(String iri) {
             final long ids = encoder.lookupEncoder.makeIriIds(iri);
@@ -230,8 +228,6 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
 
         @Override
         public void simpleLiteral(String lex) {
-            // No lookup table involved, and no cache: literals rarely repeat in a column apart
-            // from runs, which the layout handles anyway.
             addLiteral(lex, 0);
         }
 
@@ -277,21 +273,6 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
     private final int maxNameTableSize;
     private final int maxPrefixTableSize;
     private final int maxDatatypeTableSize;
-
-    /*
-     * A frame's lookup entries are all applied before any of its columns, so an entry that the
-     * frame overwrites while still referring to the old value cannot be represented. Each frame is
-     * an epoch of the lookups (see resetUsedIds), which never evict an entry used in the current
-     * epoch, and count the ids it uses against a budget. The frame stays safe exactly as long as
-     * it has not touched every id of a table: the budget is set so that one more row of fresh ids
-     * still fits, the table size minus one potential id per column, floored at zero.
-     *
-     * A triple term can need an IRI id for each of its IRIs, so a column that held triple terms
-     * reserves as many IRI ids per row as its largest triple term had (see resetUsedIds and
-     * addTripleTerm). This cannot help the first triple term of a column, if it comes in the
-     * last few rows of an almost full frame: such a row can still fail with the "too small to
-     * encode a single row" error.
-     */
 
     // Lookup entries collected for the current frame, packed into runs of consecutive ids
     private final PackedEntries nameEntries = new PackedEntries();
@@ -342,8 +323,7 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
     // *** Frame management ***
 
     /**
-     * Discards the state of the previous frame and starts a new one: the columns are emptied,
-     * the lookup entries cleared, and the lookup budget reset.
+     * Discards the state of the previous frame and starts a new one.
      *
      * @param columns all columns of the frame
      * @param datatypeColumns how many of the columns can hold literals
@@ -361,8 +341,7 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
     }
 
     /**
-     * Starts a new lookup epoch: clears the used-ids bits and puts each remaining-budget counter
-     * back at its budget. Unlike {@link #resetFrame}, this leaves the columns and the lookup
+     * Starts a new lookup epoch. Unlike {@link #resetFrame}, this leaves the columns and the lookup
      * entries of the previous frame alone.
      *
      * @param columns all columns of the next frame
