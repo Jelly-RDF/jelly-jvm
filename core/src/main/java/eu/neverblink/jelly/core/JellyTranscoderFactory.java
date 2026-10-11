@@ -5,6 +5,8 @@ import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
 
 /**
  * Factory for creating ProtoTranscoder instances.
+ * <p>
+ * The transcoders read and write Jelly-RDF 1.2 streams (column layout) only.
  */
 public final class JellyTranscoderFactory {
 

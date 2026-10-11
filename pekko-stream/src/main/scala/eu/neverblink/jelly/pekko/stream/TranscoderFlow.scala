@@ -5,8 +5,6 @@ import eu.neverblink.jelly.core.proto.v1.*
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.*
 
-import scala.jdk.CollectionConverters.*
-
 /** Factory of transcoder flows for Jelly streams. See:
   * [[eu.neverblink.jelly.core.ProtoTranscoder]].
   *
@@ -55,32 +53,3 @@ object TranscoderFlow:
       */
     def frameToFrame: Flow[RdfStreamFrame, RdfStreamFrame, NotUsed] =
       Flow[RdfStreamFrame].map(transcoder.ingestFrame)
-
-    /** Do the transcoding on a row-by-row basis.
-      *
-      * 1 row in -> 0 or more rows out.
-      *
-      * @return
-      *   Pekko Streams flow
-      */
-    def rowToRow: Flow[RdfStreamRow, RdfStreamRow, NotUsed] =
-      Flow[RdfStreamRow].mapConcat(transcoder.ingestRow.andThen(_.asScala))
-
-    /** Do the transcoding on a row-by-row basis and then group the rows into frames. The size of
-      * the frames is limited by the provided limiter.
-      *
-      * N rows in -> 1 frame out.
-      *
-      * @param limiter
-      *   size limiter for the stream frames
-      * @return
-      *   Pekko Streams flow
-      */
-    def rowToFrame(limiter: SizeLimiter): Flow[RdfStreamRow, RdfStreamFrame, NotUsed] =
-      rowToRow
-        .via(limiter.flow)
-        .map(rows => {
-          val frame = RdfStreamFrame.newInstance
-          rows.foreach(frame.addRows)
-          frame
-        })
