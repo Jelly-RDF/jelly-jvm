@@ -401,7 +401,8 @@ class EncoderFlowColumnSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
     "have a default for other limiters" in {
       val limiter = new SizeLimiter:
-        override def flow = Flow[RdfStreamRow].grouped(10)
+        override def flow: Flow[RdfStreamRow, Seq[RdfStreamRow], NotUsed] =
+          Flow[RdfStreamRow].grouped(10)
       limiter.statementLimit(None) should be(SizeLimiter.DefaultStatementLimit)
     }
   }
