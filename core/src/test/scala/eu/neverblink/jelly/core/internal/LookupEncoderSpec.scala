@@ -6,14 +6,17 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ArrayBuffer
 
 class LookupEncoderSpec extends AnyWordSpec, Matchers:
 
   private class Entries extends RdfBufferAppender:
-    val datatypes = mutable.ArrayBuffer.empty[(Int, String)]
-    val names = mutable.ArrayBuffer.empty[(Int, String)]
+    val datatypes: ArrayBuffer[(Int, String)] = mutable.ArrayBuffer.empty[(Int, String)]
+    val names: ArrayBuffer[(Int, String)] = mutable.ArrayBuffer.empty[(Int, String)]
     // New prefix ("p") and name ("n") entries, in order
-    val iriParts = mutable.ArrayBuffer.empty[(String, String)]
+    val iriParts: ArrayBuffer[(String, String)] = mutable.ArrayBuffer.empty[(String, String)]
     override def appendNameEntry(entry: RdfNameEntry): Unit =
       names += ((entry.getId, entry.getValue))
       iriParts += (("n", entry.getValue))

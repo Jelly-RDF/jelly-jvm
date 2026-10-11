@@ -230,9 +230,9 @@ public final class NameDecoderImpl<TIri> implements NameDecoder<TIri> {
                     prefixId == 0
                         ? "Encountered an invalid IRI reference. No prefix, Name ID: %d".formatted(originalNameId)
                         : "Encountered an invalid IRI reference. Prefix ID: %d, Name ID: %d".formatted(
-                            originalPrefixId,
-                            originalNameId
-                        )
+                              originalPrefixId,
+                              originalNameId
+                          )
                 );
             }
             iri = iriFactory.apply(prefixId == 0 ? name : prefix.concat(name));

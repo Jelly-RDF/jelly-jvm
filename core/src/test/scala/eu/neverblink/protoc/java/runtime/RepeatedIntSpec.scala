@@ -80,6 +80,26 @@ class RepeatedIntSpec extends AnyWordSpec, Matchers:
       an[IndexOutOfBoundsException] should be thrownBy r.wrap(Array(1), 2)
     }
 
+    "round-trip random values (fuzzing)" in {
+      val random = scala.util.Random(42)
+      // Values below 128 (one byte each, the copy path), of any varint length, or a mix
+      val kinds: Seq[() => Int] = Seq(
+        () => random.nextInt(128),
+        () => random.nextInt(),
+        () => if random.nextInt(10) == 0 then random.nextInt() else random.nextInt(128),
+        () => 1 << random.nextInt(32),
+      )
+      for round <- 1 to 2000 do
+        val next = kinds(round % kinds.size)
+        val values = Seq.fill(random.nextInt(70))(next())
+        withClue(s"round $round, values $values: ") {
+          val r = repeated(values)
+          if round % 2 == 0 then r.computeUInt32SizeNoTag() shouldBe varintSize(values)
+          r.uint32SizeNoTag() shouldBe varintSize(values)
+          writtenBack(r) shouldBe values
+        }
+    }
+
     "write packed values with the size that was measured" in {
       val values = (0 until 1000).map(i => i * 997)
       val r = repeated(values)

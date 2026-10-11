@@ -62,12 +62,12 @@ public final class RepeatedInt {
     }
 
     /**
-     * Makes the list hold the first size values of an array, without copying them. The array
+     * Wrap the first `size` values of an array as a RepeatedInt, without copying them. The array
      * becomes the list's own until it is cleared: whoever filled it must not change it while the
      * list is in use.
      *
      * @param values the array
-     * @param size how many of its values the list holds
+     * @param size how many of its values the list contains
      */
     @InternalApi
     public void wrap(int[] values, int size) {

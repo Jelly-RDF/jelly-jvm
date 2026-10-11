@@ -82,7 +82,7 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
         final RepeatedInt layout = RepeatedInt.newEmptyInstance();
         // IRIs: name ids with the next-name inference already applied (0 means "previous + 1"),
         // and the raw prefix ids, compressed at frame end. Filled together, so they share one
-        // count and one capacity check, and handed to the lists below when the frame ends.
+        // count and one capacity check, and passed on the lists below when the frame ends.
         int[] iriNameIds = EMPTY_IDS;
         int[] iriPrefixIds = EMPTY_IDS;
         int iriCount = 0;

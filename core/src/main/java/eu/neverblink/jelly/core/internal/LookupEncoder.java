@@ -130,10 +130,10 @@ public final class LookupEncoder {
     }
 
     private final int maxPrefixTableSize;
-    // The current epoch of the lookups, counted from 1 (see IriIds.epoch), and what the IRI
-    // cache entries checked in it are stamped with. Before the first epoch, nothing is pinned, so
-    // the stamp (0) never matches the epoch (-1).
+    // The current epoch of the lookups, counted from 1 (see IriIds.epoch).
     private int epoch = -1;
+    // The epoch stamp that we use for makring new IRI cache entries.
+    // Before the first epoch, nothing is pinned, so the stamp (0) never matches the epoch (-1).
     private int epochStamp = 0;
     // Lookup id of the prefix of the previous IRI.
     private int lastPrefixId;
@@ -147,8 +147,8 @@ public final class LookupEncoder {
     // Only with a prefix table: without one, the name lookup alone is as fast as this cache
     private final IriIdsCache iriCache;
 
-    // Datatype ids used in the current epoch, by the identity of the datatype's name: a
-    // direct-mapped memo. The name is usually the same String object every time, so a repeat
+    // Datatype ids used in the current epoch, by the identity of the datatype's name.
+    // The name is usually the same String object every time, so a repeat
     // skips the table's search and its comparison of the whole name. The epochs work as in
     // IriIds.epoch.
     private static final int DATATYPE_MEMO_SIZE = 8;
@@ -282,15 +282,16 @@ public final class LookupEncoder {
      * @return the cached ids, valid until the next call
      */
     private IriIds encodeIriWithPrefix(String iri) {
-        // Kept small, so that it is inlined where IRIs are encoded: most IRIs end here.
+        // This method is kept small, so that it is inlined where IRIs are encoded.
         final var cached = iriCache.get(iri);
         if (cached.epoch == epoch) {
             // Already used in this epoch, so its entries are pinned: still valid, and already
-            // counted against the epoch's budget. Only their last use moves on.
+            // counted against the epoch's budget.
             nameLookup.onRepeatAccess(cached.nameId);
             prefixLookup.onRepeatAccess(cached.prefixId);
             return cached;
         }
+        // Slow path, not inlined
         return checkIriIds(iri, cached);
     }
 
@@ -477,7 +478,7 @@ public final class LookupEncoder {
     }
 
     /**
-     * Takes ids off the budgets of the name and prefix tables in this epoch, for IRIs that may
+     * Reserves ids in the budgets of the name and prefix tables in this epoch, for IRIs that may
      * come later.
      *
      * @param count how many ids of each

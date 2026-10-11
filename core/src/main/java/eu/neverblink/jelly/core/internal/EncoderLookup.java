@@ -372,9 +372,9 @@ final class EncoderLookup {
         final int t = now + 1;
         now = t;
         final int i = id * STRIDE + LAST_USE;
-        // Used for the first time in this epoch if last <= epochStart: without a branch, which
-        // would be hard to predict. Cannot overflow: last is at most REBASE_AT, and with
-        // NO_EPOCH, last - NO_EPOCH - 1 is negative.
+        // Used for the first time in this epoch if last <= epochStart. Branchless, because
+        // branches would be hard to predict here. Cannot overflow: last is at most REBASE_AT,
+        // and with NO_EPOCH, last - NO_EPOCH - 1 is negative.
         remaining -= (entries[i] - epochStart - 1) >>> 31;
         entries[i] = t;
         if (t == REBASE_AT) {
