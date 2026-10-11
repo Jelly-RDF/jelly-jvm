@@ -4,7 +4,7 @@ import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.core.JellyOptions
 import eu.neverblink.jelly.examples.shared.ScalaExample
 import eu.neverblink.jelly.pekko.stream.*
-import org.apache.jena.graph.{Node, Triple}
+import org.apache.jena.graph.Triple
 import org.apache.jena.query.Dataset
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.sparql.core.Quad
@@ -47,7 +47,8 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     // We have four seqences of byte arrays, with each byte array corresponding to one encoded stream frame:
     // - encodedQuads: a flat RDF quad stream, physical type: QUADS
     // - encodedTriples: a flat RDF triple stream, physical type: TRIPLES
-    // - encodedGraphs: a flat RDF quad stream, physical type: GRAPHS
+    // - encodedGraphs: an RDF named graph stream, physical type: QUADS, stream type: MESSAGES
+    //   (one graph in each RDF message)
     val (encodedQuads, encodedTriples, encodedGraphs) = getEncodedData(dataset)
 
     // Now we can decode the encoded data back into something useful.
@@ -59,8 +60,8 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
       // And then decode the frame into Jena quads.
       // We use "decodeQuads" because the physical stream type is QUADS.
       // And then we want to treat it as a flat RDF quad stream, so we call "asFlatQuadStreamStrict".
-      // We use the "Strict" method to tell the decoder to check if the incoming logical stream type is the same
-      // as we are expecting: flat RDF quad stream.
+      // We use the "Strict" method to tell the decoder to check if the incoming stream type is the same
+      // as we are expecting: flat RDF quad stream (stream type FLAT).
       .via(DecoderFlow.decodeQuads.asFlatQuadStreamStrict)
       .runWith(Sink.seq)
 
@@ -73,7 +74,7 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     val decodedDatasetFuture = Source(encodedQuads)
       .via(JellyIo.fromBytes)
       // Note that we cannot use the strict variant (asDatasetStreamOfQuadsStrict) here, because the stream says its
-      // logical type is flat RDF quad stream.
+      // stream type is FLAT, not MESSAGES (a stream of RDF Messages).
       .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuads)
       .runWith(Sink.seq)
 
@@ -84,16 +85,15 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     )
 
     // If we tried that with the strict variant, we would get an exception:
-    println("\n\nDecoding quads as an RDF dataset stream with strict logical type handling...")
+    println("\n\nDecoding quads as an RDF dataset stream with strict stream type handling...")
     val future = Source(encodedQuads)
       .via(JellyIo.fromBytes)
       .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuadsStrict)
       .runWith(Sink.seq)
     Await.result(
       future.recover {
-        // eu.neverblink.jelly.core.JellyExceptions$RdfProtoDeserializationError:
-        // Expected logical stream type LOGICAL_STREAM_TYPE_DATASETS, got LOGICAL_STREAM_TYPE_FLAT_QUADS.
-        // LOGICAL_STREAM_TYPE_FLAT_QUADS is not a subtype of LOGICAL_STREAM_TYPE_DATASETS.
+        // eu.neverblink.jelly.core.RdfProtoDeserializationError:
+        // Expected a Jelly-RDF 1.2 stream of type MESSAGES, but the stream is of type FLAT.
         case e: Exception => println(e.getCause)
       },
       10.seconds,
@@ -129,17 +129,15 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     val decodedTriples: Seq[Triple] = Await.result(decodedTriplesFuture, 10.seconds)
     println(s"Decoded ${decodedTriples.size} triples.")
 
-    // We can interpret the GRAPHS stream in a few ways, see
-    // [[eu.neverblink.jelly.stream.DecoderFlow.GraphsIngestFlowOps]] for more details.
-    // Here we will treat it as an RDF named graph stream.
+    // The named graph stream is a QUADS stream, with each graph in its own RDF message.
+    // The grouped decoder returns one sequence of quads for each RDF message – here, for each graph.
     println("\n\nDecoding graphs as an RDF named graph stream...")
     val decodedGraphsFuture = Source(encodedGraphs)
       .via(JellyIo.fromBytes)
-      // Non-strict because the original logical stream type is flat RDF quad stream.
-      .via(DecoderFlow.decodeGraphs.asNamedGraphStream)
+      .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuadsStrict)
       .runWith(Sink.seq)
 
-    val decodedGraphs: Seq[(Node, Iterable[Triple])] = Await.result(decodedGraphsFuture, 10.seconds)
+    val decodedGraphs: Seq[Seq[Quad]] = Await.result(decodedGraphsFuture, 10.seconds)
     println(s"Decoded ${decodedGraphs.size} graphs.")
 
     // If we tried using a decoder for a physical stream type that does not match the type of the stream,
@@ -192,10 +190,10 @@ object PekkoStreamsDecoderFlow extends ScalaExample:
     val streamOptionsIndented =
       s"""
         |   streamName: ${streamOptions.get.getStreamName}
+        |   version: ${streamOptions.get.getVersion}
         |   physicalType: ${streamOptions.get.getPhysicalType}
-        |   logicalType: ${streamOptions.get.getLogicalType}
-        |   generalizedStatements: ${streamOptions.get.getGeneralizedStatements}
-        |   rdfStar: ${streamOptions.get.getRdfStar}
+        |   streamType: ${streamOptions.get.getStreamType}
+        |   rdfVersion: ${streamOptions.get.getRdfVersion}
         |   maxNameTableSize: ${streamOptions.get.getMaxNameTableSize}
         |   maxPrefixTableSize: ${streamOptions.get.getMaxPrefixTableSize}
         |   maxDatatypeTableSize: ${streamOptions.get.getMaxDatatypeTableSize}

@@ -226,12 +226,13 @@ Now, let's say we have a stream of RDF graphs – for example each graph corresp
 import eu.neverblink.jelly.convert.jena.{JenaAdapters, JenaConverterFactory}
 import eu.neverblink.jelly.convert.jena.riot.*
 import eu.neverblink.jelly.core.JellyOptions
-import eu.neverblink.jelly.stream.*
+import eu.neverblink.jelly.pekko.stream.*
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.*
 
 import scala.concurrent.ExecutionContext
+import scala.jdk.CollectionConverters.*
 
 // We will need a Pekko actor system to run the streams
 given actorSystem: ActorSystem = ActorSystem()
@@ -254,14 +255,12 @@ val model = RDFDataMgr.loadModel(
 
 Source.repeat(model) // Create a stream of the same model over and over
   .take(10) // Take only the first 10 elements in the stream
-  .flatMap(model => RdfSource.builder // Convert each model to a source of triples
-    .graphAsTriples(model) 
-    .source
+  .map(model => model.getGraph.find.asScala.toList) // Turn each model into a list of triples
+  .via(EncoderFlow.builder
+    // Encode each list to a Jelly stream frame. 1 RDF graph = 1 RDF Message.
+    .graphs(JellyOptions.SMALL_STRICT) // Jelly compression settings preset
+    .flow
   )
-  .via(EncoderFlow.graphStream( // Encode each iterable to a Jelly stream frame
-    maybeLimiter = None, // 1 RDF graph = 1 message
-    JellyOptions.smallStrict, // Jelly compression settings preset
-  ))
   .via(JellyIo.toBytes) // Convert the stream frames to a byte arrays
   .runForeach { bytes =>
     // Just print the length of each byte array in the stream.

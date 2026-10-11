@@ -4,8 +4,16 @@ import eu.neverblink.jelly.core.JellyConverterFactory
 import eu.neverblink.jelly.pekko.stream.impl.EncoderFlowBuilderImpl
 
 /** Factory of encoder flows for Jelly streams. When using these methods, you don't have to set the
-  * physicalType and logicalType properties of [[RdfStreamOptions]]. They will be set automatically.
-  * You can set the logical stream type manually, though.
+  * physicalType, streamType, and logicalType properties of [[RdfStreamOptions]]. They will be set
+  * automatically.
+  *
+  * By default, the flows write Jelly-RDF 1.2 (column layout). If the protocol version in the
+  * options is set to 1 or 2, they write Jelly-RDF 1.0 or 1.1 (row layout) instead. Writing
+  * Jelly-RDF 1.0/1.1 is deprecated and will be removed in Jelly-JVM 5.0.0.
+  *
+  * In Jelly-RDF 1.2 streams, flows of single statements and of flat groups of statements write
+  * streams of type FLAT, and flows of RDF graphs and datasets write streams of RDF Messages (type
+  * MESSAGES).
   *
   * These methods will also ensure that the produced stream is more-or-less valid (that it adheres
   * to the appropriate physical and logical stream type).

@@ -151,6 +151,9 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
     ("stream row count: 200", StreamRowCountLimiter(200)),
   )
 
+  private def rowLayout(opt: RdfStreamOptions): RdfStreamOptions =
+    opt.clone().setVersion(JellyConstants.PROTO_VERSION_1_1_X)
+
   // 2. Construct the test cases
 
   final case class TestCase(
@@ -176,7 +179,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val sourceGraph = TripleTests.graphs(caseName)
       val is = new FileInputStream(sourceFile)
       val os = new ByteArrayOutputStream()
-      val frames: Seq[RdfStreamFrame] = encFlow.tripleSource(is, limiter, jOpt)
+      val frames: Seq[RdfStreamFrame] = encFlow.tripleSource(is, limiter, rowLayout(jOpt))
         .runWith(Sink.seq)
         .futureValue
       val statements = decodeToStatements(frames)
@@ -192,7 +195,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val sourceDataset = QuadTests.datasets(caseName)
       val is = new FileInputStream(sourceFile)
       val os = new ByteArrayOutputStream()
-      val frames: Seq[RdfStreamFrame] = encFlow.quadSource(is, limiter, jOpt)
+      val frames: Seq[RdfStreamFrame] = encFlow.quadSource(is, limiter, rowLayout(jOpt))
         .runWith(Sink.seq)
         .futureValue
       val statements = decodeToStatements(frames)
@@ -208,7 +211,7 @@ class CrossTranscodingSpec extends AnyWordSpec, Matchers, ScalaFutures:
       val sourceDataset = QuadTests.datasets(caseName)
       val is = new FileInputStream(sourceFile)
       val os = new ByteArrayOutputStream()
-      val frames: Seq[RdfStreamFrame] = encFlow.graphSource(is, limiter, jOpt)
+      val frames: Seq[RdfStreamFrame] = encFlow.graphSource(is, limiter, rowLayout(jOpt))
         .runWith(Sink.seq)
         .futureValue
       val statements = decodeToStatements(frames)

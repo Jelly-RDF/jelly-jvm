@@ -22,13 +22,18 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
   given MockConverterFactory.type = MockConverterFactory
 
+  // These tests cover Jelly-RDF 1.0 and 1.1 output (row layout), which is deprecated. Jelly-RDF
+  // 1.2 output is tested in EncoderFlowColumnSpec.
+  private val opt11 = JellyOptions.SMALL_GENERALIZED.clone()
+    .setVersion(JellyConstants.PROTO_VERSION_1_1_X)
+
   "flatTripleStream" should {
     "encode triples" in {
       val encoded: Seq[RdfStreamFrame] = Source(Triples1.mrl)
         .via(
           EncoderFlow.builder
             .withLimiter(StreamRowCountLimiter(1000))
-            .flatTriples[Mrl.Triple](JellyOptions.SMALL_GENERALIZED)
+            .flatTriples[Mrl.Triple](opt11)
             .flow,
         )
         .toMat(Sink.seq)(Keep.right)
@@ -51,7 +56,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .via(
           EncoderFlow.builder
             .withLimiter(ByteSizeLimiter(80))
-            .flatTriples(JellyOptions.SMALL_GENERALIZED)
+            .flatTriples(opt11)
             .flow,
         )
         .toMat(Sink.seq)(Keep.right)
@@ -74,7 +79,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .via(
           EncoderFlow.builder
             .withLimiter(StreamRowCountLimiter(4))
-            .flatTriples(JellyOptions.SMALL_GENERALIZED)
+            .flatTriples(opt11)
             .flow,
         )
         .toMat(Sink.seq)(Keep.right)
@@ -97,7 +102,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .via(
           EncoderFlow.builder
             .withLimiter(StreamRowCountLimiter(4))
-            .flatTriples(JellyOptions.SMALL_GENERALIZED)
+            .flatTriples(opt11)
             .withNamespaceDeclarations
             .flow,
         )
@@ -123,7 +128,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .grouped(2)
         .via(
           EncoderFlow.builder
-            .flatTriplesGrouped(JellyOptions.SMALL_GENERALIZED)
+            .flatTriplesGrouped(opt11)
             .flow,
         )
         .toMat(Sink.seq)(Keep.right)
@@ -149,7 +154,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .via(
           EncoderFlow.builder
             .withLimiter(StreamRowCountLimiter(4))
-            .flatTriplesGrouped(JellyOptions.SMALL_GENERALIZED)
+            .flatTriplesGrouped(opt11)
             .flow,
         )
         .toMat(Sink.seq)(Keep.right)
@@ -179,7 +184,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .grouped(2)
         .via(
           EncoderFlow.builder
-            .graphs(JellyOptions.SMALL_GENERALIZED)
+            .graphs(opt11)
             .flow,
         )
         .toMat(Sink.seq)(Keep.right)
@@ -206,7 +211,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .via(
           EncoderFlow.builder
             .withLimiter(StreamRowCountLimiter(1000))
-            .flatQuads(JellyOptions.SMALL_GENERALIZED)
+            .flatQuads(opt11)
             .flow,
         )
         .toMat(Sink.seq)(Keep.right)
@@ -231,7 +236,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .grouped(2)
         .via(
           EncoderFlow.builder
-            .flatQuadsGrouped(JellyOptions.SMALL_GENERALIZED)
+            .flatQuadsGrouped(opt11)
             .flow,
         )
         .toMat(Sink.seq)(Keep.right)
@@ -258,7 +263,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         .grouped(2)
         .via(
           EncoderFlow.builder
-            .datasetsFromQuads(JellyOptions.SMALL_GENERALIZED)
+            .datasetsFromQuads(opt11)
             .flow,
         )
         .toMat(Sink.seq)(Keep.right)
@@ -285,7 +290,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
         Source(Graphs1.mrl.map(e => GraphHolder(e._1, e._2.asJava)))
           .via(
             EncoderFlow.builder
-              .namedGraphs(JellyOptions.SMALL_GENERALIZED)
+              .namedGraphs(opt11)
               .flow,
           )
           .toMat(Sink.seq)(Keep.right)
@@ -309,7 +314,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .via(
             EncoderFlow.builder
               .withLimiter(StreamRowCountLimiter(4))
-              .namedGraphs(JellyOptions.SMALL_GENERALIZED)
+              .namedGraphs(opt11)
               .flow,
           )
           .toMat(Sink.seq)(Keep.right)
@@ -336,7 +341,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .grouped(2)
           .via(
             EncoderFlow.builder
-              .datasets(JellyOptions.SMALL_GENERALIZED)
+              .datasets(opt11)
               .flow,
           )
           .toMat(Sink.seq)(Keep.right)
@@ -361,7 +366,7 @@ class EncoderFlowSpec extends AnyWordSpec, Matchers, ScalaFutures:
           .via(
             EncoderFlow.builder
               .withLimiter(StreamRowCountLimiter(4))
-              .datasets(JellyOptions.SMALL_GENERALIZED)
+              .datasets(opt11)
               .flow,
           )
           .toMat(Sink.seq)(Keep.right)

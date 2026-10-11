@@ -25,9 +25,6 @@ class JenaReactiveSerDes(implicit mat: Materializer)
 
   val name = "Reactive writes (Apache Jena)"
 
-  // The reactive encoder flows still write Jelly-RDF 1.1
-  override def writesColumnLayout(opt: Option[RdfStreamOptions]): Boolean = false
-
   override def supportsRdf12: Boolean = true
 
   // Jena dropped RDF-star in 5.4.0, in favor of RDF 1.2.
