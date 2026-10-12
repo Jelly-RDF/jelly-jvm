@@ -2,322 +2,399 @@ package eu.neverblink.jelly.core.internal;
 
 import eu.neverblink.jelly.core.*;
 import eu.neverblink.jelly.core.proto.v1.*;
-import java.util.ArrayList;
-import java.util.List;
+import eu.neverblink.jelly.core.utils.RdfVersionUtils;
+import eu.neverblink.protoc.java.runtime.MessageCollection;
+import eu.neverblink.protoc.java.runtime.RepeatedInt;
 
 /**
- * Fast implementation of the ProtoTranscoder interface.
- * <p>
- * It does not in perfect compression (like you would get with full decoding and re-encoding), but it should be
- * good enough for the vast majority of cases.
- * <p>
- * Only supports Jelly-RDF 1.0 and 1.1 streams (row layout), and writes Jelly-RDF 1.1.
+ * Transcoder for Jelly-RDF 1.2 streams. Copies the columns, only remapping lookup ids.
  */
 @InternalApi
 public final class ProtoTranscoderImpl implements ProtoTranscoder {
 
     private final RdfStreamOptions supportedInputOptions;
     private final RdfStreamOptions outputOptions;
+    private final boolean messages;
+    private final int outputRdfVersion;
 
-    private final TranscoderLookup prefixLookup;
-    private final TranscoderLookup nameLookup;
-    private final TranscoderLookup datatypeLookup;
+    private final TranscoderLookup names;
+    private final TranscoderLookup prefixes;
+    private final TranscoderLookup datatypes;
 
-    private final List<RdfStreamRow> rowBuffer = new ArrayList<>();
-
-    private RdfStreamOptions inputOptions = null;
-    private boolean inputUsesPrefixes = false;
-    private boolean hasChangedTerms = false;
-    private boolean hasEmittedOptions = false;
+    private boolean seenOptions = false;
+    private boolean emittedOptions = false;
+    // Rows since the last message boundary (MESSAGES streams)
+    private long rowsInMessage = 0;
 
     /**
-     * Constructor for the ProtoTranscoderImpl class.
-     *
      * @param supportedInputOptions maximum allowable options for the input streams (optional)
      * @param outputOptions options for the output stream. This MUST have the physical stream type set.
      */
     public ProtoTranscoderImpl(RdfStreamOptions supportedInputOptions, RdfStreamOptions outputOptions) {
+        if (JellyConstants.requestsRowLayout(outputOptions.getVersion())) {
+            throw new IllegalArgumentException(
+                "The transcoder only writes Jelly-RDF 1.2 streams, but the output options ask for protocol version %d.".formatted(
+                    outputOptions.getVersion()
+                )
+            );
+        }
+        final PhysicalStreamType physicalType = outputOptions.getPhysicalType();
+        if (physicalType != PhysicalStreamType.TRIPLES && physicalType != PhysicalStreamType.QUADS) {
+            throw new IllegalArgumentException(
+                "The physical type of the output stream must be TRIPLES or QUADS, got: %s".formatted(physicalType)
+            );
+        }
         this.supportedInputOptions = supportedInputOptions;
-        this.outputOptions = outputOptions;
-        prefixLookup = new TranscoderLookup(false, outputOptions.getMaxPrefixTableSize());
-        nameLookup = new TranscoderLookup(true, outputOptions.getMaxNameTableSize());
-        datatypeLookup = new TranscoderLookup(false, outputOptions.getMaxDatatypeTableSize());
-    }
-
-    @Override
-    public Iterable<RdfStreamRow> ingestRow(RdfStreamRow row) {
-        rowBuffer.clear();
-        processRow(row);
-        return rowBuffer;
+        this.outputOptions = outputOptions
+            .clone()
+            .setVersion(JellyConstants.PROTO_VERSION_1_2_X)
+            .setGeneralizedStatements(false)
+            .setRdfStar(false)
+            .setLogicalType(LogicalStreamType.UNSPECIFIED);
+        this.messages = outputOptions.getStreamTypeValue() == RdfStreamType.MESSAGES_VALUE;
+        this.outputRdfVersion = outputOptions.getRdfVersionValue();
+        names = new TranscoderLookup("name", outputOptions.getMaxNameTableSize());
+        prefixes = new TranscoderLookup("prefix", outputOptions.getMaxPrefixTableSize());
+        datatypes = new TranscoderLookup("datatype", outputOptions.getMaxDatatypeTableSize());
     }
 
     @Override
     public RdfStreamFrame ingestFrame(RdfStreamFrame frame) {
-        rowBuffer.clear();
-        if (frame.getColumns() != null) {
-            throw unsupportedColumnLayout();
+        final RdfStreamFrame.Mutable out = RdfStreamFrame.newInstance();
+        boolean endMessage = false;
+        final var rows = frame.getRows();
+        if (!rows.isEmpty()) {
+            final RdfStreamRow row = rows.iterator().next();
+            if (rows.size() > 1 || row.getRowFieldNumber() != RdfStreamRow.OPTIONS) {
+                throw new RdfProtoTranscodingError(
+                    "The transcoder only supports Jelly-RDF 1.2 streams (column layout), whose frames have " +
+                        "no rows other than the stream options."
+                );
+            }
+            endMessage = handleOptions(row.getOptions());
+            if (!emittedOptions) {
+                emittedOptions = true;
+                out.addRows(RdfStreamRow.newInstance().setOptions(outputOptions));
+            }
         }
-        for (final var row : frame.getRows()) {
-            processRow(row);
+        final RdfColumnBatch batch = frame.getColumns();
+        if (batch != null) {
+            if (!seenOptions) {
+                throw new RdfProtoTranscodingError("The input stream has no stream options before its first batch.");
+            }
+            out.setColumns(transcodeBatch(batch, endMessage));
+        } else if (endMessage) {
+            out.setColumns(RdfColumnBatch.newInstance().addMessageLengths(0));
         }
-        final var outFrame = RdfStreamFrame.newInstance();
-        outFrame.getRows().addAll(rowBuffer);
-        outFrame.getMetadata().addAll(frame.getMetadata());
-        return outFrame;
+        out.getMetadata().addAll(frame.getMetadata());
+        return out;
     }
 
-    private void processRow(RdfStreamRow row) {
-        switch (row.getRowFieldNumber()) {
-            case RdfStreamRow.OPTIONS -> handleOptions(row.getOptions());
-            case RdfStreamRow.TRIPLE -> handleTriple(row);
-            case RdfStreamRow.QUAD -> handleQuad(row);
-            case RdfStreamRow.GRAPH_START -> handleGraphStart(row);
-            case RdfStreamRow.GRAPH_END -> handleIdentity(row);
-            case RdfStreamRow.NAMESPACE -> handleNamespaceDeclaration(row);
-            case RdfStreamRow.NAME -> handleName(row);
-            case RdfStreamRow.PREFIX -> handlePrefix(row);
-            case RdfStreamRow.DATATYPE -> handleDatatype(row);
-            default -> throw new RdfProtoTranscodingError("Row kind is not set");
+    /** @return whether the current output message must end here */
+    private boolean handleOptions(RdfStreamOptions options) {
+        if (JellyConstants.isRowLayout(options.getVersion())) {
+            throw new RdfProtoTranscodingError(
+                "The transcoder only supports Jelly-RDF 1.2 streams (column layout), not Jelly-RDF 1.0 or 1.1."
+            );
+        }
+        if (supportedInputOptions != null) {
+            JellyOptions.checkCompatibility(options, supportedInputOptions);
+        }
+        if (options.getPhysicalTypeValue() != outputOptions.getPhysicalTypeValue()) {
+            throw new RdfProtoTranscodingError(
+                "Input stream has a different physical type than the output. Input: %s output: %s".formatted(
+                    options.getPhysicalType(),
+                    outputOptions.getPhysicalType()
+                )
+            );
+        }
+        if (options.getStreamTypeValue() != outputOptions.getStreamTypeValue()) {
+            throw new RdfProtoTranscodingError(
+                "Input stream has a different stream type than the output. Input: %s output: %s".formatted(
+                    options.getStreamType(),
+                    outputOptions.getStreamType()
+                )
+            );
+        }
+        checkTableSize(names, options.getMaxNameTableSize());
+        checkTableSize(prefixes, options.getMaxPrefixTableSize());
+        checkTableSize(datatypes, options.getMaxDatatypeTableSize());
+        names.newInputStream(options.getMaxNameTableSize());
+        prefixes.newInputStream(options.getMaxPrefixTableSize());
+        datatypes.newInputStream(options.getMaxDatatypeTableSize());
+        seenOptions = true;
+        // New options end the input's message
+        if (messages && rowsInMessage > 0) {
+            rowsInMessage = 0;
+            return true;
+        }
+        return false;
+    }
+
+    private static void checkTableSize(TranscoderLookup lookup, int inputSize) {
+        if (inputSize > lookup.outputSize || inputSize < 0) {
+            throw new RdfProtoTranscodingError(
+                "The input stream's lookup tables must not be larger than the output's, but its %s table has size %s and the output's %d.".formatted(
+                    lookup.tableName,
+                    Integer.toUnsignedString(inputSize),
+                    lookup.outputSize
+                )
+            );
         }
     }
 
-    private void handleName(RdfStreamRow row) {
-        final var name = row.getName();
-        final var entry = nameLookup.addEntry(name.getId(), name.getValue());
-        if (!entry.newEntry) {
-            return;
+    private RdfColumnBatch transcodeBatch(RdfColumnBatch in, boolean endMessage) {
+        final RdfColumnBatch.Mutable out = RdfColumnBatch.newInstance();
+        final int rows = in.getRowCount();
+        out.setRowCount(rows);
+
+        names.startBatch(out.getNames());
+        prefixes.startBatch(out.getPrefixes());
+        datatypes.startBatch(out.getDatatypes());
+        names.addInputEntries(in.getNames());
+        prefixes.addInputEntries(in.getPrefixes());
+        datatypes.addInputEntries(in.getDatatypes());
+
+        if (!in.getNamespaces().isEmpty()) {
+            final IriState iris = new IriState();
+            for (final RdfNamespaceDeclaration ns : in.getNamespaces()) {
+                if (ns.getValue() == null) {
+                    throw new RdfProtoTranscodingError(
+                        "Namespace declaration '%s' has no IRI.".formatted(ns.getName())
+                    );
+                }
+                out.addNamespaces(
+                    RdfNamespaceDeclaration.newInstance().setName(ns.getName()).setValue(iris.remap(ns.getValue()))
+                );
+            }
         }
 
-        if (entry.setId == name.getId()) {
-            rowBuffer.add(row);
-            return;
+        out.setSubjects(transcodeColumn(in.getSubjects()));
+        out.setPredicates(transcodeColumn(in.getPredicates()));
+        out.setObjects(transcodeColumn(in.getObjects()));
+        out.setGraphs(transcodeColumn(in.getGraphs()));
+
+        final RepeatedInt lengths = in.getMessageLengths();
+        if (!messages) {
+            if (!lengths.isEmpty()) {
+                throw new RdfProtoTranscodingError("Message boundaries are only valid in streams of type MESSAGES.");
+            }
+            return out;
         }
-
-        final var newName = RdfNameEntry.newInstance().setId(entry.setId).setValue(name.getValue());
-        rowBuffer.add(RdfStreamRow.newInstance().setName(newName));
-    }
-
-    private void handlePrefix(RdfStreamRow row) {
-        final var prefix = row.getPrefix();
-        final var entry = prefixLookup.addEntry(prefix.getId(), prefix.getValue());
-        if (!entry.newEntry) {
-            return;
-        }
-
-        if (entry.setId == prefix.getId()) {
-            rowBuffer.add(row);
-            return;
-        }
-
-        final var newPrefix = RdfPrefixEntry.newInstance().setId(entry.setId).setValue(prefix.getValue());
-        rowBuffer.add(RdfStreamRow.newInstance().setPrefix(newPrefix));
-    }
-
-    private void handleDatatype(RdfStreamRow row) {
-        final var datatype = row.getDatatype();
-        final var entry = datatypeLookup.addEntry(datatype.getId(), datatype.getValue());
-        if (!entry.newEntry) {
-            return;
-        }
-
-        if (entry.setId == datatype.getId()) {
-            rowBuffer.add(row);
-            return;
-        }
-
-        final var newDatatype = RdfDatatypeEntry.newInstance().setId(entry.setId).setValue(datatype.getValue());
-        rowBuffer.add(RdfStreamRow.newInstance().setDatatype(newDatatype));
-    }
-
-    private void handleIdentity(RdfStreamRow row) {
-        // No changes needed, just add the row to the buffer
-        rowBuffer.add(row);
-    }
-
-    private void handleTriple(RdfStreamRow row) {
-        this.hasChangedTerms = false;
-        final var triple = row.getTriple();
-
-        final var s1 = handleSpoTerm(triple.getSubject());
-        final var p1 = handleSpoTerm(triple.getPredicate());
-        final var o1 = handleSpoTerm(triple.getObject());
-
-        if (!hasChangedTerms) {
-            rowBuffer.add(row);
-            return;
-        }
-
-        final var newTriple = RdfTriple.newInstance().setSubject(s1).setPredicate(p1).setObject(o1);
-        rowBuffer.add(RdfStreamRow.newInstance().setTriple(newTriple));
-    }
-
-    private void handleQuad(RdfStreamRow row) {
-        this.hasChangedTerms = false;
-        final var quad = row.getQuad();
-
-        final var s1 = handleSpoTerm(quad.getSubject());
-        final var p1 = handleSpoTerm(quad.getPredicate());
-        final var o1 = handleSpoTerm(quad.getObject());
-        final var g1 = handleGraphTerm(quad.getGraph());
-
-        if (!hasChangedTerms) {
-            rowBuffer.add(row);
-            return;
-        }
-
-        final var newQuad = RdfQuad.newInstance().setSubject(s1).setPredicate(p1).setObject(o1).setGraph(g1);
-        rowBuffer.add(RdfStreamRow.newInstance().setQuad(newQuad));
-    }
-
-    private void handleGraphStart(RdfStreamRow row) {
-        this.hasChangedTerms = false;
-        final var graphStart = row.getGraphStart();
-
-        final var g1 = handleGraphTerm(graphStart.getGraph());
-        if (!hasChangedTerms) {
-            rowBuffer.add(row);
-            return;
-        }
-
-        final var newGraphStart = RdfGraphStart.newInstance();
-        newGraphStart.setGraph(g1);
-        rowBuffer.add(RdfStreamRow.newInstance().setGraphStart(newGraphStart));
-    }
-
-    private void handleNamespaceDeclaration(RdfStreamRow row) {
-        this.hasChangedTerms = false;
-        var nsRow = row.getNamespace();
-        var iriValue = handleIri(nsRow.getValue());
-
-        if (!hasChangedTerms) {
-            rowBuffer.add(row);
-            return;
-        }
-
-        var namespace = RdfNamespaceDeclaration.newInstance().setName(nsRow.getName()).setValue(iriValue);
-
-        rowBuffer.add(RdfStreamRow.newInstance().setNamespace(namespace));
-    }
-
-    private Object handleSpoTerm(Object term) {
-        if (term == null) {
-            return null;
-        } else if (term instanceof RdfIri.Mutable iri) {
-            return handleIri(iri);
-        } else if (term instanceof String blankNode) {
-            return blankNode;
-        } else if (term instanceof RdfLiteral.Mutable literal) {
-            return handleLiteral(literal);
-        } else if (term instanceof RdfTriple.Mutable triple) {
-            return handleTripleTerm(triple);
+        if (endMessage) {
+            out.addMessageLengths(0);
+            out.getMessageLengths().addAll(lengths);
         } else {
-            throw new RdfProtoTranscodingError("Unknown term type");
+            out.setMessageLengths(lengths);
         }
-    }
-
-    private Object handleGraphTerm(Object graph) {
-        if (graph == null) {
-            return null;
-        } else if (graph instanceof RdfIri.Mutable iri) {
-            return handleIri(iri);
-        } else if (graph instanceof String blankNode) {
-            return blankNode; // blank node
-        } else if (graph instanceof RdfDefaultGraph.Mutable) {
-            return graph; // default graph
-        } else if (graph instanceof RdfLiteral.Mutable literal) {
-            return handleLiteral(literal);
+        if (lengths.isEmpty()) {
+            rowsInMessage += rows;
         } else {
-            throw new RdfProtoTranscodingError("Unknown graph term type");
+            long sum = 0;
+            for (int i = 0; i < lengths.size(); i++) {
+                sum += Integer.toUnsignedLong(lengths.get(i));
+            }
+            rowsInMessage = Integer.toUnsignedLong(rows) - sum;
         }
+        return out;
     }
 
-    private RdfIri handleIri(RdfIri iri) {
-        var prefix = iri.getPrefixId();
-        var name = iri.getNameId();
-        var prefix1 = inputUsesPrefixes ? prefixLookup.remap(prefix) : 0;
-        var name1 = nameLookup.remap(name);
-        if (prefix1 != prefix || name1 != name) {
-            hasChangedTerms = true;
-            return RdfIri.newInstance().setPrefixId(prefix1).setNameId(name1);
+    /** Shares everything with the input column except the remapped ids. */
+    private RdfColumn transcodeColumn(RdfColumn in) {
+        if (in == null) {
+            return null;
         }
-        return iri;
+        final RdfColumn.Mutable out = RdfColumn.newInstance()
+            .setKinds(in.getKinds())
+            .setLayouts(in.getLayouts())
+            .setLexValues(in.getLexValues())
+            .setLangtags(in.getLangtags())
+            .setLangtagDirections(in.getLangtagDirections())
+            .setBnodes(in.getBnodes());
+
+        final RepeatedInt nameIds = in.getNameIds();
+        if (!nameIds.isEmpty()) {
+            out.setNameIds(remapNameIds(nameIds));
+            out.setPrefixIds(remapPrefixIds(in.getPrefixIds(), nameIds.size()));
+        } else if (!in.getPrefixIds().isEmpty()) {
+            throw new RdfProtoTranscodingError("Corrupt column: prefix ids without name ids.");
+        }
+        final RepeatedInt literalKinds = in.getLiteralKinds();
+        if (!literalKinds.isEmpty()) {
+            out.setLiteralKinds(remapLiteralKinds(literalKinds));
+        }
+        if (outputRdfVersion == RdfVersion.RDF_VERSION_1_1_VALUE) {
+            final RepeatedInt directions = in.getLangtagDirections();
+            for (int i = 0; i < directions.size(); i++) {
+                if (directions.get(i) != RdfBaseDirection.UNSPECIFIED_VALUE) {
+                    throw notInOutputVersion("base directions");
+                }
+            }
+        }
+        final MessageCollection<RdfTripleTerm, RdfTripleTerm.Mutable> tripleTerms = in.getTripleTerms();
+        if (!tripleTerms.isEmpty()) {
+            if (
+                outputRdfVersion != RdfVersion.RDF_VERSION_UNSPECIFIED_VALUE &&
+                outputRdfVersion < RdfVersion.RDF_VERSION_1_2_VALUE
+            ) {
+                throw notInOutputVersion("triple terms");
+            }
+            final IriState iris = new IriState();
+            final MessageCollection<RdfTripleTerm, RdfTripleTerm.Mutable> outTerms = out.getTripleTerms();
+            for (final RdfTripleTerm term : tripleTerms) {
+                outTerms.add(remapTripleTerm(term, iris));
+            }
+        }
+        return out;
     }
 
-    private RdfLiteral handleLiteral(RdfLiteral literal) {
-        if (!literal.hasDatatype()) {
-            return literal;
-        }
-
-        var dt = literal.getDatatype();
-        var dt1 = datatypeLookup.remap(dt);
-        if (dt1 != dt) {
-            hasChangedTerms = true;
-            return RdfLiteral.newInstance().setLex(literal.getLex()).setDatatype(dt1);
-        }
-
-        return literal;
-    }
-
-    private RdfTriple handleTripleTerm(RdfTriple triple) {
-        var s1 = handleSpoTerm(triple.getSubject());
-        var p1 = handleSpoTerm(triple.getPredicate());
-        var o1 = handleSpoTerm(triple.getObject());
-        // Reference comparison is fine here, as the term objects should be reused directly if possible.
-        if (s1 != triple.getSubject() || p1 != triple.getPredicate() || o1 != triple.getObject()) {
-            hasChangedTerms = true;
-            return RdfTriple.newInstance().setSubject(s1).setPredicate(p1).setObject(o1);
-        }
-        return triple;
-    }
-
-    private static RdfProtoTranscodingError unsupportedColumnLayout() {
+    private RdfProtoTranscodingError notInOutputVersion(String what) {
         return new RdfProtoTranscodingError(
-            "The transcoder only supports Jelly-RDF 1.0 and 1.1 streams (row layout), not Jelly-RDF 1.2."
+            "The input stream contains %s, but the output stream declares %s.".formatted(
+                what,
+                RdfVersionUtils.rdfVersionName(outputRdfVersion)
+            )
         );
     }
 
-    private void handleOptions(RdfStreamOptions options) {
-        if (!JellyConstants.isRowLayout(options.getVersion())) {
-            throw unsupportedColumnLayout();
+    // 0 = previous id + 1
+    private RepeatedInt remapNameIds(RepeatedInt in) {
+        final int n = in.size();
+        final int[] values = in.array();
+        final int[] out = new int[n];
+        int lastIn = 0;
+        int lastOut = 0;
+        for (int i = 0; i < n; i++) {
+            final int v = values[i];
+            final int id = v == 0 ? lastIn + 1 : v;
+            lastIn = id;
+            final int o = names.remap(id);
+            out[i] = o == lastOut + 1 ? 0 : o;
+            lastOut = o;
         }
-        if (supportedInputOptions != null) {
-            if (outputOptions.getPhysicalType() != options.getPhysicalType()) {
-                throw new RdfProtoTranscodingError(
-                    "Input stream has a different physical type than the output. Input: %s output: %s".formatted(
-                        options.getPhysicalType(),
-                        outputOptions.getPhysicalType()
-                    )
-                );
+        final RepeatedInt result = RepeatedInt.newEmptyInstance();
+        result.wrap(out, n);
+        return result;
+    }
+
+    // 0, 1 or one per IRI; 0 = same prefix as before
+    private RepeatedInt remapPrefixIds(RepeatedInt in, int iriCount) {
+        final int n = in.size();
+        if (n == 0) {
+            return in;
+        }
+        if (n != 1 && n != iriCount) {
+            throw new RdfProtoTranscodingError(
+                "Corrupt column: %d prefix ids for %d name ids, expected 0, 1 or %d.".formatted(n, iriCount, iriCount)
+            );
+        }
+        final int[] values = in.array();
+        final int[] out = new int[n];
+        int lastIn = 0;
+        int lastOut = 0;
+        for (int i = 0; i < n; i++) {
+            final int v = values[i];
+            if (v == 0 || v == lastIn) {
+                out[i] = 0;
+                continue;
             }
-            JellyOptions.checkCompatibility(options, supportedInputOptions);
+            lastIn = v;
+            final int o = prefixes.remap(v);
+            out[i] = o == lastOut ? 0 : o;
+            lastOut = o;
         }
+        final RepeatedInt result = RepeatedInt.newEmptyInstance();
+        result.wrap(out, n);
+        return result;
+    }
 
-        this.inputUsesPrefixes = options.getMaxPrefixTableSize() > 0;
-
-        if (inputUsesPrefixes) {
-            prefixLookup.newInputStream(options.getMaxPrefixTableSize());
-        } else if (outputOptions.getMaxPrefixTableSize() > 0) {
-            throw new RdfProtoTranscodingError("Output stream uses prefixes, but the input stream does not.");
+    // Odd kind v = datatype (v + 1) / 2
+    private RepeatedInt remapLiteralKinds(RepeatedInt in) {
+        final int n = in.size();
+        final int[] values = in.array();
+        final int[] out = new int[n];
+        int lastIn = 0;
+        int lastOut = 0;
+        for (int i = 0; i < n; i++) {
+            final int v = values[i];
+            if ((v & 1) == 0) {
+                out[i] = v;
+            } else if (v == lastIn) {
+                out[i] = lastOut;
+            } else {
+                lastIn = v;
+                lastOut = datatypes.remap((v >>> 1) + 1) * 2 - 1;
+                out[i] = lastOut;
+            }
         }
+        final RepeatedInt result = RepeatedInt.newEmptyInstance();
+        result.wrap(out, n);
+        return result;
+    }
 
-        nameLookup.newInputStream(options.getMaxNameTableSize());
-        datatypeLookup.newInputStream(options.getMaxDatatypeTableSize());
-
-        // Set the input options
-        inputOptions = options;
-
-        // Update the input options
-        if (hasEmittedOptions) {
-            return;
+    private RdfTripleTerm remapTripleTerm(RdfTripleTerm in, IriState iris) {
+        final RdfTripleTerm.Mutable out = RdfTripleTerm.newInstance();
+        switch (in.getSubjectFieldNumber()) {
+            case RdfTripleTerm.S_IRI -> out.setSIri(iris.remap(in.getSIri()));
+            case RdfTripleTerm.S_BNODE -> out.setSBnode(in.getSBnode());
+            default -> throw new RdfProtoTranscodingError("A triple term has no subject.");
         }
+        if (in.getPIri() == null) {
+            throw new RdfProtoTranscodingError("A triple term has no predicate.");
+        }
+        out.setPIri(iris.remap(in.getPIri()));
+        switch (in.getObjectFieldNumber()) {
+            case RdfTripleTerm.O_IRI -> out.setOIri(iris.remap(in.getOIri()));
+            case RdfTripleTerm.O_BNODE -> out.setOBnode(in.getOBnode());
+            case RdfTripleTerm.O_LITERAL -> out.setOLiteral(remapLiteral(in.getOLiteral()));
+            case RdfTripleTerm.O_TRIPLE_TERM -> out.setOTripleTerm(remapTripleTerm(in.getOTripleTerm(), iris));
+            default -> throw new RdfProtoTranscodingError("A triple term has no object.");
+        }
+        return out;
+    }
 
-        hasEmittedOptions = true;
-        var version =
-            inputOptions.getVersion() == JellyConstants.PROTO_VERSION_1_0_X
-                ? JellyConstants.PROTO_VERSION_1_0_X
-                : JellyConstants.PROTO_VERSION_1_1_X;
+    private RdfLiteral remapLiteral(RdfLiteral in) {
+        if (
+            outputRdfVersion == RdfVersion.RDF_VERSION_1_1_VALUE &&
+            in.getDirectionValue() != RdfBaseDirection.UNSPECIFIED_VALUE
+        ) {
+            throw notInOutputVersion("base directions");
+        }
+        if (!in.hasDatatype()) {
+            return in;
+        }
+        return RdfLiteral.newInstance()
+            .setLex(in.getLex())
+            .setDatatype(datatypes.remap(in.getDatatype()))
+            .setDirectionValue(in.getDirectionValue());
+    }
 
-        var newOptions = outputOptions.clone().setVersion(version);
-        rowBuffer.add(RdfStreamRow.newInstance().setOptions(newOptions));
+    /** Remaps RdfIri messages (namespaces, triple terms), keeping their 0-id inference. */
+    private final class IriState {
+
+        private int lastInPrefix = 0;
+        private int lastInName = 0;
+        private int lastOutPrefix = 0;
+        private int lastOutName = 0;
+
+        RdfIri remap(RdfIri in) {
+            final int p = in.getPrefixId();
+            final int prefixOut;
+            if (p == 0 || p == lastInPrefix) {
+                prefixOut = 0;
+            } else {
+                lastInPrefix = p;
+                final int o = prefixes.remap(p);
+                prefixOut = o == lastOutPrefix ? 0 : o;
+                lastOutPrefix = o;
+            }
+            final int n = in.getNameId();
+            final int name = n == 0 ? lastInName + 1 : n;
+            lastInName = name;
+            final int nameOut = names.remap(name);
+            final int written = nameOut == lastOutName + 1 ? 0 : nameOut;
+            lastOutName = nameOut;
+            return RdfIri.newInstance().setPrefixId(prefixOut).setNameId(written);
+        }
     }
 }
