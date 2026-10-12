@@ -3,6 +3,7 @@ package eu.neverblink.jelly.pekko.stream.impl
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{QuadMaker, TripleMaker}
 import eu.neverblink.jelly.core.{
+  JellyConstants,
   JellyConverterFactory,
   JellyOptions,
   ProtoDecoder,
@@ -12,13 +13,16 @@ import eu.neverblink.jelly.core.{
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.*
 
-import java.util
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 
 /** Flow operations for decoding Jelly streams. Factored out into a trait to allow other libraries
   * to implement their own nice Jelly parsing API.
+  *
+  * The flows read all versions of Jelly-RDF. In Jelly-RDF 1.2 a stream of RDF Messages (stream type
+  * MESSAGES), the grouped flows return one group for each RDF message, even if the message spans
+  * several frames. In all other streams, they return one group for each frame.
   */
 trait DecoderFlowOps:
 
@@ -43,7 +47,8 @@ trait DecoderFlowOps:
     DecoderIngestFlowOps.QuadsIngestFlowOps
 
   /** Decode the incoming [[RdfStreamFrame]]s as a Jelly stream of physical type GRAPHS. If the
-    * stream is not a GRAPHS stream, the decoding will fail.
+    * stream is not a GRAPHS stream, the decoding will fail. GRAPHS streams only exist in Jelly-RDF
+    * 1.0 and 1.1.
     *
     * @return
     *   intermediate builder object for further configuration
@@ -80,30 +85,70 @@ trait DecoderFlowOps:
 
   // *** Private API ***
 
+  /** Decoded elements of one materialization of a flow, split into RDF messages.
+    */
+  private final class Decoded[T]:
+    val current: ListBuffer[T] = ListBuffer()
+    // Finished RDF messages, not taken yet
+    val messages: ListBuffer[Seq[T]] = ListBuffer()
+    // Whether the stream is a Jelly-RDF 1.2 stream of RDF Messages
+    var messageStream = false
+
+    def add(element: T): Unit = current += element
+
+    def endMessage(): Unit =
+      messages += current.toList
+      current.clear()
+
   private def flatStream[TOut](
-      buffer: util.Collection[TOut],
-      decoder: ProtoDecoder[?, ?],
+      newDecoder: Decoded[TOut] => ProtoDecoder[?, ?],
   ): Flow[RdfStreamFrame, TOut, NotUsed] =
     Flow[RdfStreamFrame]
-      // A whole frame at a time: in Jelly-RDF 1.2, the statements are in its column batch
-      .mapConcat(frame => {
-        decoder.ingestFrame(frame)
-        val output = buffer.asScala.toList
-        buffer.clear()
-        output
-      })
+      .statefulMap(() =>
+        val decoded = Decoded[TOut]()
+        (decoded, newDecoder(decoded)),
+      )(
+        (state, frame) => {
+          val (decoded, decoder) = state
+          decoder.ingestFrame(frame)
+          val output = decoded.messages.flatten.toList ++ decoded.current
+          decoded.messages.clear()
+          decoded.current.clear()
+          (state, output)
+        },
+        _ => None,
+      )
+      .mapConcat(identity)
 
   private def groupedStream[TOut](
-      buffer: util.Collection[TOut],
-      decoder: ProtoDecoder[?, ?],
+      newDecoder: Decoded[TOut] => ProtoDecoder[?, ?],
   ): Flow[RdfStreamFrame, Seq[TOut], NotUsed] =
     Flow[RdfStreamFrame]
-      .map(frame => {
-        decoder.ingestFrame(frame)
-        val output = buffer.asScala.toList
-        buffer.clear()
-        output
-      })
+      .statefulMap(() =>
+        val decoded = Decoded[TOut]()
+        (decoded, newDecoder(decoded)),
+      )(
+        (state, frame) => {
+          val (decoded, decoder) = state
+          frame.getRows.forEach(row =>
+            if row.hasOptions then
+              val options = row.getOptions
+              decoded.messageStream = !JellyConstants.isRowLayout(options.getVersion) &&
+                options.getStreamType == RdfStreamType.MESSAGES,
+          )
+          decoder.ingestFrame(frame)
+          // Other than in a stream of RDF Messages, each frame is one group
+          if !decoded.messageStream then decoded.endMessage()
+          val output = decoded.messages.toList
+          decoded.messages.clear()
+          (state, output)
+        },
+        // The end of the stream also ends the last RDF message
+        state =>
+          val decoded = state._1
+          if decoded.current.isEmpty then None else Some(decoded.current.toList :: Nil),
+      )
+      .mapConcat(identity)
 
   private sealed trait DecoderIngestFlowOps:
     protected final inline def s(
@@ -133,14 +178,15 @@ trait DecoderFlowOps:
       ): Flow[RdfStreamFrame, TTriple, NotUsed] = {
         val tripleMaker = converterFactory.decoderConverter()
 
-        val buffer = ListBuffer[TTriple]().asJava
-        val handler = new RdfHandler.TripleHandler[TNode] {
-          override def handleTriple(subject: TNode, predicate: TNode, obj: TNode): Unit = {
-            buffer.add(tripleMaker.makeTriple(subject, predicate, obj))
+        flatStream[TTriple](decoded => {
+          val handler = new RdfHandler.TripleHandler[TNode] {
+            override def handleTriple(subject: TNode, predicate: TNode, obj: TNode): Unit = {
+              decoded.add(tripleMaker.makeTriple(subject, predicate, obj))
+            }
           }
-        }
 
-        flatStream(buffer, converterFactory.triplesDecoder(handler, supportedOptions))
+          converterFactory.triplesDecoder(handler, supportedOptions)
+        })
       }
 
       /** @inheritdoc */
@@ -155,14 +201,17 @@ trait DecoderFlowOps:
       ): Flow[RdfStreamFrame, Seq[TTriple], NotUsed] = {
         val tripleMaker = converterFactory.decoderConverter()
 
-        val buffer = ListBuffer[TTriple]().asJava
-        val handler = new RdfHandler.TripleHandler[TNode] {
-          override def handleTriple(subject: TNode, predicate: TNode, obj: TNode): Unit = {
-            buffer.add(tripleMaker.makeTriple(subject, predicate, obj))
-          }
-        }
+        groupedStream[TTriple](decoded => {
+          val handler = new RdfHandler.TripleHandler[TNode] {
+            override def handleTriple(subject: TNode, predicate: TNode, obj: TNode): Unit = {
+              decoded.add(tripleMaker.makeTriple(subject, predicate, obj))
+            }
 
-        groupedStream(buffer, converterFactory.triplesDecoder(handler, supportedOptions))
+            override def handleMessageEnd(): Unit = decoded.endMessage()
+          }
+
+          converterFactory.triplesDecoder(handler, supportedOptions)
+        })
       }
 
     end TriplesIngestFlowOps
@@ -186,19 +235,20 @@ trait DecoderFlowOps:
       ): Flow[RdfStreamFrame, TQuad, NotUsed] = {
         val quadsMaker = converterFactory.decoderConverter()
 
-        val buffer = ListBuffer[TQuad]().asJava
-        val handler = new RdfHandler.QuadHandler[TNode] {
-          override def handleQuad(
-              subject: TNode,
-              predicate: TNode,
-              obj: TNode,
-              graph: TNode,
-          ): Unit = {
-            buffer.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
+        flatStream[TQuad](decoded => {
+          val handler = new RdfHandler.QuadHandler[TNode] {
+            override def handleQuad(
+                subject: TNode,
+                predicate: TNode,
+                obj: TNode,
+                graph: TNode,
+            ): Unit = {
+              decoded.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
+            }
           }
-        }
 
-        flatStream(buffer, converterFactory.quadsDecoder(handler, supportedOptions))
+          converterFactory.quadsDecoder(handler, supportedOptions)
+        })
       }
 
       /** @inheritdoc */
@@ -214,19 +264,22 @@ trait DecoderFlowOps:
       ): Flow[RdfStreamFrame, Seq[TQuad], NotUsed] = {
         val quadsMaker = converterFactory.decoderConverter()
 
-        val buffer = ListBuffer[TQuad]().asJava
-        val handler = new RdfHandler.QuadHandler[TNode] {
-          override def handleQuad(
-              subject: TNode,
-              predicate: TNode,
-              obj: TNode,
-              graph: TNode,
-          ): Unit = {
-            buffer.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
-          }
-        }
+        groupedStream[TQuad](decoded => {
+          val handler = new RdfHandler.QuadHandler[TNode] {
+            override def handleQuad(
+                subject: TNode,
+                predicate: TNode,
+                obj: TNode,
+                graph: TNode,
+            ): Unit = {
+              decoded.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
+            }
 
-        groupedStream(buffer, converterFactory.quadsDecoder(handler, supportedOptions))
+            override def handleMessageEnd(): Unit = decoded.endMessage()
+          }
+
+          converterFactory.quadsDecoder(handler, supportedOptions)
+        })
       }
 
     end QuadsIngestFlowOps
@@ -251,19 +304,20 @@ trait DecoderFlowOps:
       ): Flow[RdfStreamFrame, TQuad, NotUsed] = {
         val quadsMaker = converterFactory.decoderConverter()
 
-        val buffer = ListBuffer[TQuad]().asJava
-        val handler = new RdfHandler.QuadHandler[TNode] {
-          override def handleQuad(
-              subject: TNode,
-              predicate: TNode,
-              obj: TNode,
-              graph: TNode,
-          ): Unit = {
-            buffer.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
+        flatStream[TQuad](decoded => {
+          val handler = new RdfHandler.QuadHandler[TNode] {
+            override def handleQuad(
+                subject: TNode,
+                predicate: TNode,
+                obj: TNode,
+                graph: TNode,
+            ): Unit = {
+              decoded.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
+            }
           }
-        }
 
-        flatStream(buffer, converterFactory.graphsAsQuadsDecoder(handler, supportedOptions))
+          converterFactory.graphsAsQuadsDecoder(handler, supportedOptions)
+        })
       }
 
       /** @inheritdoc */
@@ -279,19 +333,20 @@ trait DecoderFlowOps:
       ): Flow[RdfStreamFrame, Seq[TQuad], NotUsed] = {
         val quadsMaker = converterFactory.decoderConverter()
 
-        val buffer = ListBuffer[TQuad]().asJava
-        val handler = new RdfHandler.QuadHandler[TNode] {
-          override def handleQuad(
-              subject: TNode,
-              predicate: TNode,
-              obj: TNode,
-              graph: TNode,
-          ): Unit = {
-            buffer.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
+        groupedStream[TQuad](decoded => {
+          val handler = new RdfHandler.QuadHandler[TNode] {
+            override def handleQuad(
+                subject: TNode,
+                predicate: TNode,
+                obj: TNode,
+                graph: TNode,
+            ): Unit = {
+              decoded.add(quadsMaker.makeQuad(subject, predicate, obj, graph))
+            }
           }
-        }
 
-        groupedStream(buffer, converterFactory.graphsAsQuadsDecoder(handler, supportedOptions))
+          converterFactory.graphsAsQuadsDecoder(handler, supportedOptions)
+        })
       }
 
       /** @inheritdoc */
@@ -306,38 +361,39 @@ trait DecoderFlowOps:
       ): Flow[RdfStreamFrame, Seq[(TNode, Iterable[TTriple])], NotUsed] = {
         val triplesMaker = converterFactory.decoderConverter()
 
-        val buffer = ListBuffer[(TNode, Iterable[TTriple])]().asJava
-        val handler = new RdfHandler.GraphHandler[TNode] {
-          private var currentGraph: Option[TNode] = None
-          private val currentTriples = ListBuffer[TTriple]()
+        groupedStream[(TNode, Iterable[TTriple])](decoded => {
+          val handler = new RdfHandler.GraphHandler[TNode] {
+            private var currentGraph: Option[TNode] = None
+            private val currentTriples = ListBuffer[TTriple]()
 
-          override def handleGraphStart(graph: TNode): Unit = {
-            currentGraph = Some(graph)
-            currentTriples.clear()
-          }
+            override def handleGraphStart(graph: TNode): Unit = {
+              currentGraph = Some(graph)
+              currentTriples.clear()
+            }
 
-          override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
-            currentGraph match {
-              case Some(graph) =>
-                currentTriples += triplesMaker.makeTriple(subject, predicate, `object`)
-              case None =>
-                throw new IllegalStateException("No graph started")
+            override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
+              currentGraph match {
+                case Some(graph) =>
+                  currentTriples += triplesMaker.makeTriple(subject, predicate, `object`)
+                case None =>
+                  throw new IllegalStateException("No graph started")
+              }
+            }
+
+            override def handleGraphEnd(): Unit = {
+              currentGraph match {
+                case Some(graph) =>
+                  decoded.add((graph, currentTriples.toList))
+                  currentGraph = None
+                  currentTriples.clear()
+                case None =>
+                  throw new IllegalStateException("No graph started")
+              }
             }
           }
 
-          override def handleGraphEnd(): Unit = {
-            currentGraph match {
-              case Some(graph) =>
-                buffer.add((graph, currentTriples.toList))
-                currentGraph = None
-                currentTriples.clear()
-              case None =>
-                throw new IllegalStateException("No graph started")
-            }
-          }
-        }
-
-        groupedStream(buffer, converterFactory.graphsDecoder(handler, supportedOptions))
+          converterFactory.graphsDecoder(handler, supportedOptions)
+        })
       }
 
       /** @inheritdoc */
@@ -353,38 +409,39 @@ trait DecoderFlowOps:
       ): Flow[RdfStreamFrame, (TNode, Iterable[TTriple]), NotUsed] = {
         val triplesMaker = converterFactory.decoderConverter()
 
-        val buffer = ListBuffer[(TNode, Iterable[TTriple])]().asJava
-        val handler = new RdfHandler.GraphHandler[TNode] {
-          private var currentGraph: Option[TNode] = None
-          private val currentTriples = ListBuffer[TTriple]()
+        flatStream[(TNode, Iterable[TTriple])](decoded => {
+          val handler = new RdfHandler.GraphHandler[TNode] {
+            private var currentGraph: Option[TNode] = None
+            private val currentTriples = ListBuffer[TTriple]()
 
-          override def handleGraphStart(graph: TNode): Unit = {
-            currentGraph = Some(graph)
-            currentTriples.clear()
-          }
+            override def handleGraphStart(graph: TNode): Unit = {
+              currentGraph = Some(graph)
+              currentTriples.clear()
+            }
 
-          override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
-            currentGraph match {
-              case Some(graph) =>
-                currentTriples += triplesMaker.makeTriple(subject, predicate, `object`)
-              case None =>
-                throw new IllegalStateException("No graph started")
+            override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
+              currentGraph match {
+                case Some(graph) =>
+                  currentTriples += triplesMaker.makeTriple(subject, predicate, `object`)
+                case None =>
+                  throw new IllegalStateException("No graph started")
+              }
+            }
+
+            override def handleGraphEnd(): Unit = {
+              currentGraph match {
+                case Some(graph) =>
+                  decoded.add((graph, currentTriples.toList))
+                  currentGraph = None
+                  currentTriples.clear()
+                case None =>
+                  throw new IllegalStateException("No graph started")
+              }
             }
           }
 
-          override def handleGraphEnd(): Unit = {
-            currentGraph match {
-              case Some(graph) =>
-                buffer.add((graph, currentTriples.toList))
-                currentGraph = None
-                currentTriples.clear()
-              case None =>
-                throw new IllegalStateException("No graph started")
-            }
-          }
-        }
-
-        flatStream(buffer, converterFactory.graphsDecoder(handler, supportedOptions))
+          converterFactory.graphsDecoder(handler, supportedOptions)
+        })
       }
 
     end GraphsIngestFlowOps
@@ -405,25 +462,28 @@ trait DecoderFlowOps:
               QuadMaker[TNode, TQuad],
           ],
       ): Flow[RdfStreamFrame, Seq[TTriple | TQuad], NotUsed] = {
-        val buffer = ListBuffer[TTriple | TQuad]().asJava
-        val handler = new RdfHandler.AnyStatementHandler[TNode] {
-          private val maker = converterFactory.decoderConverter()
+        groupedStream[TTriple | TQuad](decoded => {
+          val handler = new RdfHandler.AnyStatementHandler[TNode] {
+            private val maker = converterFactory.decoderConverter()
 
-          override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
-            buffer.add(maker.makeTriple(subject, predicate, `object`))
+            override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
+              decoded.add(maker.makeTriple(subject, predicate, `object`))
+            }
+
+            override def handleQuad(
+                subject: TNode,
+                predicate: TNode,
+                `object`: TNode,
+                graph: TNode,
+            ): Unit = {
+              decoded.add(maker.makeQuad(subject, predicate, `object`, graph))
+            }
+
+            override def handleMessageEnd(): Unit = decoded.endMessage()
           }
 
-          override def handleQuad(
-              subject: TNode,
-              predicate: TNode,
-              `object`: TNode,
-              graph: TNode,
-          ): Unit = {
-            buffer.add(maker.makeQuad(subject, predicate, `object`, graph))
-          }
-        }
-
-        groupedStream(buffer, converterFactory.anyStatementDecoder(handler, supportedOptions))
+          converterFactory.anyStatementDecoder(handler, supportedOptions)
+        })
       }
 
       /** @inheritdoc */
@@ -438,25 +498,26 @@ trait DecoderFlowOps:
               QuadMaker[TNode, TQuad],
           ],
       ): Flow[RdfStreamFrame, TTriple | TQuad, NotUsed] = {
-        val buffer = ListBuffer[TTriple | TQuad]().asJava
-        val handler = new RdfHandler.AnyStatementHandler[TNode] {
-          private val maker = converterFactory.decoderConverter()
+        flatStream[TTriple | TQuad](decoded => {
+          val handler = new RdfHandler.AnyStatementHandler[TNode] {
+            private val maker = converterFactory.decoderConverter()
 
-          override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
-            buffer.add(maker.makeTriple(subject, predicate, `object`))
+            override def handleTriple(subject: TNode, predicate: TNode, `object`: TNode): Unit = {
+              decoded.add(maker.makeTriple(subject, predicate, `object`))
+            }
+
+            override def handleQuad(
+                subject: TNode,
+                predicate: TNode,
+                `object`: TNode,
+                graph: TNode,
+            ): Unit = {
+              decoded.add(maker.makeQuad(subject, predicate, `object`, graph))
+            }
           }
 
-          override def handleQuad(
-              subject: TNode,
-              predicate: TNode,
-              `object`: TNode,
-              graph: TNode,
-          ): Unit = {
-            buffer.add(maker.makeQuad(subject, predicate, `object`, graph))
-          }
-        }
-
-        flatStream(buffer, converterFactory.anyStatementDecoder(handler, supportedOptions))
+          converterFactory.anyStatementDecoder(handler, supportedOptions)
+        })
       }
 
   private object InterpretableAs:

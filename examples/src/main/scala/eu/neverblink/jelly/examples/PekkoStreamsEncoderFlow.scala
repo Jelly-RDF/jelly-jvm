@@ -72,7 +72,9 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
       )
       .runWith(
         Sink.foreach(frame =>
-          println(s"Frame with ${frame.getRows.size} rows, ${frame.getSerializedSize} bytes"),
+          println(
+            s"Frame with ${frame.getColumns.getRowCount} statements, ${frame.getSerializedSize} bytes",
+          ),
         ),
       )
 
@@ -96,7 +98,9 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
       )
       .runWith(
         Sink.foreach(frame =>
-          println(s"Frame with ${frame.getRows.size} rows, ${frame.getSerializedSize} bytes"),
+          println(
+            s"Frame with ${frame.getColumns.getRowCount} statements, ${frame.getSerializedSize} bytes",
+          ),
         ),
       )
 
@@ -119,15 +123,17 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
       )
       .runWith(
         Sink.foreach(frame =>
-          println(s"Frame with ${frame.getRows.size} rows, ${frame.getSerializedSize} bytes"),
+          println(
+            s"Frame with ${frame.getColumns.getRowCount} statements, ${frame.getSerializedSize} bytes",
+          ),
         ),
       )
 
     Await.ready(groupedQuadsFuture, 10.seconds)
 
-    // Now, let's try grouped streams. Let's say we want to stream all graphs in a dataset, but put exactly one
-    // graph in each frame (message). This is very common in (for example) IoT systems.
-    // https://w3id.org/stax/ontology#namedGraphStream
+    // Now, let's try an RDF Message Stream. Let's say we want to stream all graphs in a dataset,
+    // but put exactly one graph in each RDF message. This is very common in (for example) IoT systems.
+    // https://w3c-cg.github.io/rsp/spec/messages
 
     // We will use RdfSource to transform the dataset into a stream of named graphs
     val graphs = RdfSource.builder()
@@ -145,15 +151,17 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
       // Note that we will see exactly as many frames as there are graphs in the dataset
       .runWith(
         Sink.foreach(frame =>
-          println(s"Frame with ${frame.getRows.size} rows, ${frame.getSerializedSize} bytes"),
+          println(
+            s"Frame with ${frame.getColumns.getRowCount} statements, ${frame.getSerializedSize} bytes",
+          ),
         ),
       )
 
     Await.ready(namedGraphsFuture, 10.seconds)
 
     // As a last example, we will stream a series of RDF graphs. In our case this will be just the default graph
-    // repeated a few times. This type of stream is also pretty common in practical applications.
-    // https://w3id.org/stax/ontology#graphStream
+    // repeated a few times. This is also an RDF Message Stream, with one graph per message.
+    // https://w3c-cg.github.io/rsp/spec/messages
     println("\n\nEncoding 5 RDF graphs as a graph stream")
     val graphsFuture = Source
       .repeat(
@@ -172,7 +180,9 @@ object PekkoStreamsEncoderFlow extends ScalaExample:
       // Note that we will see exactly 5 frames – the number of graphs we streamed
       .runWith(
         Sink.foreach(frame =>
-          println(s"Frame with ${frame.getRows.size} rows, ${frame.getSerializedSize} bytes"),
+          println(
+            s"Frame with ${frame.getColumns.getRowCount} statements, ${frame.getSerializedSize} bytes",
+          ),
         ),
       )
 

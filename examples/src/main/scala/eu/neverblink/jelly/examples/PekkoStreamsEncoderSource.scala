@@ -59,9 +59,15 @@ object PekkoStreamsEncoderSource extends ScalaExample:
           .flow,
       )
       // wireTap: print the size of the frames
-      // Notice in the output that the frames are slightly bigger than 2000 bytes.
+      // Notice in the output that the frames are smaller than 2000 bytes. The size of a frame is only
+      // known once it is complete, so the number of statements in a frame is estimated from the
+      // average size of the statements written so far. Also, a frame ends early when the lookup
+      // tables fill up, and they are small in the SMALL_STRICT preset.
       .wireTap(frame =>
-        println(s"Frame with ${frame.getRows.size} rows, ${frame.getSerializedSize} bytes on wire"),
+        println(
+          s"Frame with ${frame.getColumns.getRowCount} statements, " +
+            s"${frame.getSerializedSize} bytes on wire",
+        ),
       )
       // Convert each stream frame to bytes
       .via(JellyIo.toBytes)
@@ -79,7 +85,7 @@ object PekkoStreamsEncoderSource extends ScalaExample:
     println("\n")
 
     // -------------------------------------------------------------------
-    // Second example: try encoding an RDF dataset as a GRAPHS stream
+    // Second example: try encoding an RDF dataset as a stream of named graphs
     // This time we will also preserve the namespace/prefix declarations (@prefix in Turtle) as a cosmetic feature
     val dataset = RDFDataMgr.loadDataset(
       File(getClass.getResource("/weather-graphs.trig").toURI).toURI.toString,
@@ -87,15 +93,14 @@ object PekkoStreamsEncoderSource extends ScalaExample:
     println(s"Loaded dataset with ${dataset.asDatasetGraph.size} named graphs")
     println("Streaming the dataset to memory...")
 
-    // Here we stream this is as a GRAPHS stream (physical type)
-    // You can also use .datasetAsQuads to stream as QUADS
+    // Here we stream this as a stream of named graphs, with each named graph being an RDF Message.
     val encodedDatasetFuture = RdfSource.builder[Model, Dataset, Node, Triple, Quad]()
       .datasetAsGraphs(dataset)
       .withNamespaceDeclarations // Include namespace declarations in the stream
       .source
       .via(
         EncoderFlow.builder
-          // This time we limit the number of rows in each frame to 30
+          // This time we limit the number of statements in each frame to 30
           // Note that for this particular encoder, we can skip the limiter entirely – but this can lead to huge frames!
           // So, be careful with that, or may get an out-of-memory error.
           .withLimiter(StreamRowCountLimiter(30))
@@ -108,7 +113,10 @@ object PekkoStreamsEncoderSource extends ScalaExample:
       // Note that some frames smaller than the limit – this is because this encoder will always split frames
       // on graph boundaries.
       .wireTap(frame =>
-        println(s"Frame with ${frame.getRows.size} rows, ${frame.getSerializedSize} bytes on wire"),
+        println(
+          s"Frame with ${frame.getColumns.getRowCount} statements, " +
+            s"${frame.getSerializedSize} bytes on wire",
+        ),
       )
       // Convert each stream frame to bytes
       .via(JellyIo.toBytes)

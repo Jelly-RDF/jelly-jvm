@@ -2,7 +2,8 @@ package eu.neverblink.jelly.grpc
 
 import com.typesafe.config.{Config, ConfigFactory}
 import eu.neverblink.jelly.core.proto.v1.*
-import eu.neverblink.jelly.core.{JellyOptions, ProtoTestCases}
+import eu.neverblink.jelly.core.helpers.{MockConverterFactory, Mrl}
+import eu.neverblink.jelly.core.{JellyOptions, ProtoTestCases, RdfEncoder}
 import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.testkit.typed.scaladsl.ActorTestKit
 import org.apache.pekko.actor.typed.ActorSystem
@@ -66,6 +67,28 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
     override def subscribeRdf(in: RdfStreamSubscribe): Source[RdfStreamFrame, NotUsed] =
       Source(storedData(in.getTopic))
 
+  /** Encodes statements as a Jelly-RDF 1.2 stream (column layout), in frames of `frameSize`
+    * statements. In a stream of RDF Messages, each frame ends a message.
+    */
+  private def encodeColumns(
+      opt: RdfStreamOptions,
+      statements: Seq[Mrl.Statement],
+      frameSize: Int,
+  ): Seq[RdfStreamFrame] =
+    val frames = ListBuffer[RdfStreamFrame]()
+    val encoder = MockConverterFactory.encoder(
+      RdfEncoder.Params.of(opt, frameSize, f => frames += RdfStreamFrame.parseFrom(f.toByteArray)),
+    )
+    for group <- statements.grouped(frameSize) do
+      group.foreach {
+        case t: Mrl.Triple => encoder.handleTriple(t.s, t.p, t.o)
+        case q: Mrl.Quad => encoder.handleQuad(q.s, q.p, q.o, q.g)
+        case g: Mrl.Graph => fail(s"Unexpected $g")
+      }
+      if opt.getStreamType == RdfStreamType.MESSAGES then encoder.handleMessageEnd()
+      encoder.flush()
+    frames.toList
+
   val data: Map[String, Seq[RdfStreamFrame]] = Map(
     "triples" -> Triples1.encodedFull(
       JellyOptions.SMALL_GENERALIZED.clone()
@@ -90,6 +113,22 @@ class GrpcSpec extends AnyWordSpec, Matchers, ScalaFutures, BeforeAndAfterAll:
         .setStreamName("graphs")
         .setPhysicalType(PhysicalStreamType.GRAPHS),
       1,
+    ),
+    // Jelly-RDF 1.2 (column layout)
+    "triples_1_2" -> encodeColumns(
+      JellyOptions.SMALL_STRICT.clone()
+        .setStreamName("triples_1_2")
+        .setPhysicalType(PhysicalStreamType.TRIPLES),
+      Triples1.mrl,
+      1,
+    ),
+    "quads_messages_1_2" -> encodeColumns(
+      JellyOptions.SMALL_STRICT.clone()
+        .setStreamName("quads_messages_1_2")
+        .setPhysicalType(PhysicalStreamType.QUADS)
+        .setStreamType(RdfStreamType.MESSAGES),
+      Graphs1.mrlQuads,
+      2,
     ),
   )
 

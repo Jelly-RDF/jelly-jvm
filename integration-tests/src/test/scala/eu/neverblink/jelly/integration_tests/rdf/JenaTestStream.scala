@@ -84,5 +84,7 @@ case object JenaTestStream extends TestStream:
       ExecutionContext,
   ): Sink[RdfStreamFrame, Future[Done]] =
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.decodeGraphs.asDatasetStreamOfQuads)
+      // The graph source writes GRAPHS streams in Jelly-RDF 1.1, and QUADS streams in Jelly-RDF 1.2
+      .via(DecoderFlow.decodeAny.asGroupedStream)
+      .map(_.collect { case q: Quad => q })
       .toMat(Sink.foreach(quads => RDFDataMgr.writeQuads(os, quads.iterator.asJava)))(Keep.right)

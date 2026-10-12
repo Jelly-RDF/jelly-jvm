@@ -47,13 +47,25 @@ class CrossStreamingSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaTest:
     )
 
   private val jellyOptions: Seq[(String, RdfStreamOptions)] = Seq(
-    ("small default", JellyOptions.SMALL_GENERALIZED),
-    ("small, no prefix table", JellyOptions.SMALL_GENERALIZED.clone().setMaxPrefixTableSize(0)),
+    ("small default", JellyOptions.SMALL_STRICT),
+    ("small, no prefix table", JellyOptions.SMALL_STRICT.clone().setMaxPrefixTableSize(0)),
     (
-      "tiny name table, no prefix table",
-      JellyOptions.SMALL_GENERALIZED.clone().setMaxPrefixTableSize(0).setMaxNameTableSize(16),
+      "tiny prefix and datatype tables",
+      JellyOptions.SMALL_STRICT.clone().setMaxPrefixTableSize(8).setMaxDatatypeTableSize(4),
     ),
-    ("big default", JellyOptions.BIG_GENERALIZED),
+    ("big default", JellyOptions.BIG_STRICT),
+    // Jelly-RDF 1.1 (deprecated)
+    (
+      "Jelly-RDF 1.1, small default",
+      JellyOptions.SMALL_GENERALIZED.clone().setVersion(JellyConstants.PROTO_VERSION_1_1_X),
+    ),
+    (
+      "Jelly-RDF 1.1, tiny name table, no prefix table",
+      JellyOptions.SMALL_GENERALIZED.clone()
+        .setMaxPrefixTableSize(0)
+        .setMaxNameTableSize(16)
+        .setVersion(JellyConstants.PROTO_VERSION_1_1_X),
+    ),
   )
 
   private val sizeLimiters: Seq[(String, SizeLimiter)] = Seq(
