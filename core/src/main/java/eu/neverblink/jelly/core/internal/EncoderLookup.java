@@ -588,9 +588,9 @@ final class EncoderLookup {
 
     /**
      * A variant of getOrAddEntry that is used for transcoders.
-     * This method does not update the serial number of the entry because serials are not used by transcoders.
      * @param key The key of the entry.
-     * @param evictHint A hint for the entry to evict. If 0, the lookup picks one itself.
+     * @param evictHint A hint for the entry to evict when the table is full. If 0, or if the entry
+     *                  is pinned (used in the current epoch), the lookup picks one itself.
      * @return The entry.
      */
     public LookupEntry getOrAddEntryTranscoder(String key, int evictHint) {
@@ -612,16 +612,17 @@ final class EncoderLookup {
             }
             addEntrySequential(key, id, spread);
         } else {
-            // The table is full
-            if (evictHint != 0) {
-                // We have a hint for the entry to evict
+            // The table is full: evict the hinted entry, unless the current epoch still uses it
+            if (evictHint != 0 && entries[evictHint * STRIDE + LAST_USE] <= epochStart) {
                 id = evictHint;
             } else {
                 id = victim();
             }
             addEntryEvicting(key, id, spread);
         }
-        // Serials are not used for transcoders
+        if (this.useSerials) {
+            ++entries[id * STRIDE + SERIAL];
+        }
         entry.getId = id;
         entry.newEntry = true;
         return entry;
