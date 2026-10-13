@@ -8,14 +8,14 @@ import java.nio.charset.StandardCharsets.{US_ASCII, UTF_8}
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.zip.GZIPInputStream
 
-/** Downloads the RiverBench datasets used by the benchmarks in the jmh module, see `riverbenchFetch`
-  * in build.sbt.
+/** Downloads the RiverBench datasets used by the benchmarks in the jmh module, see
+  * `riverbenchFetch` in build.sbt.
   */
 object RiverBench {
 
   /** Downloads the 100K Jelly distributions, and the prefixes of each dataset, that are not cached
-    * yet. Files already in the cache are never re-downloaded – delete the cache directory to refresh
-    * it.
+    * yet. Files already in the cache are never re-downloaded – delete the cache directory to
+    * refresh it.
     */
   def fetch(targetDir: File, version: String, datasets: Seq[String], log: Logger): Seq[File] = {
     IO.createDirectory(targetDir)

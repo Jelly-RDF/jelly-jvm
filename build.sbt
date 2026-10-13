@@ -643,7 +643,12 @@ lazy val jmh = (project in file("jmh"))
     // downloads
     riverbenchDir := baseDirectory.value / "data" / "riverbench",
     riverbenchFetch := Def.uncached {
-      RiverBench.fetch(riverbenchDir.value, riverbenchVersion, riverbenchDatasets, streams.value.log)
+      RiverBench.fetch(
+        riverbenchDir.value,
+        riverbenchVersion,
+        riverbenchDatasets,
+        streams.value.log,
+      )
     },
     riverbenchProperties := Def.uncached {
       val file = (Compile / resourceManaged).value / "riverbench.properties"
