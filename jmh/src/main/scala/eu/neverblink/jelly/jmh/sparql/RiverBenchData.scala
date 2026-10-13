@@ -41,6 +41,25 @@ object RiverBenchData:
     .setMaxNameTableSize(1 << 16)
     .setMaxPrefixTableSize(1 << 16)
 
+  private val prefixLine = """(?i)\s*@?prefix\s+([^\s:]*):\s*<([^>]*)>\s*\.?\s*""".r
+
+  /** The prefixes declared at the start of the first element of the dataset's RiverBench stream
+    * distribution, as (prefix, namespace) pairs. Fetched with `sbt jmh/riverbenchFetch` into
+    * `prefixes/<dataset>.ttl`.
+    */
+  def prefixes(dataset: String): Seq[(String, String)] =
+    val file = cacheDir.resolve("prefixes").resolve(s"$dataset.ttl")
+    if !Files.isRegularFile(file) then
+      throw IllegalStateException(
+        s"Prefixes of RiverBench dataset '$dataset' are not cached at $file. " +
+          "Run `sbt jmh/riverbenchFetch` first.",
+      )
+    Files.readAllLines(file).toArray(Array.empty[String]).toSeq.flatMap {
+      case prefixLine(prefix, namespace) => Some(prefix -> namespace)
+      case line if line.isBlank => None
+      case line => throw IllegalStateException(s"Not a prefix declaration in $file: $line")
+    }
+
   def variables(quads: Boolean): Seq[String] =
     if quads then Seq("s", "p", "o", "g") else Seq("s", "p", "o")
 

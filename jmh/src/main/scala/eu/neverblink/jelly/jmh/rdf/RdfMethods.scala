@@ -4,13 +4,14 @@ import eu.neverblink.jelly.convert.jena.riot.{JellyFormat, JellyFormatVariant, J
 import eu.neverblink.jelly.convert.rdf4j.rio.{JellyFormat as Rdf4jJellyFormat, JellyWriterSettings}
 import eu.neverblink.jelly.core.{JellyConstants, JellyOptions}
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
-import eu.neverblink.jelly.jmh.UnsyncByteArrayInputStream
+import eu.neverblink.jelly.jmh.{FairSettings, UnsyncByteArrayInputStream}
 import org.apache.jena.graph.Triple
 import org.apache.jena.riot.system.{StreamRDFBase, StreamRDFWriter}
-import org.apache.jena.riot.{RDFFormat, RDFParser}
-import org.apache.jena.sparql.core.Quad
+import org.apache.jena.riot.{RDFFormat, RDFParser, RDFWriter}
+import org.apache.jena.sparql.core.{DatasetGraphFactory, Quad}
+import org.apache.jena.sparql.graph.GraphFactory
 import org.eclipse.rdf4j.model.Statement
-import org.eclipse.rdf4j.rio.helpers.{AbstractRDFHandler, BasicParserSettings, BasicWriterSettings}
+import org.eclipse.rdf4j.rio.helpers.{AbstractRDFHandler, BasicWriterSettings}
 import org.eclipse.rdf4j.rio.{Rio, WriterConfig, RDFFormat as Rdf4jFormat}
 import org.openjdk.jmh.infra.Blackhole
 
@@ -23,11 +24,19 @@ import scala.collection.mutable
   *
   * A method is named `<library>-<format>`, e.g. `jena-nt` or `rdf4j-jelly-big`. The format of a
   * dataset made of quads is the quads version of the named one: N-Quads for `nt`, TriG for `ttl`.
+  *
+  * Every writer except Jelly's is given the dataset's prefixes, before the first statement. Parsers
+  * and writers use [[FairSettings]].
   */
 object RdfMethods:
 
   sealed trait Method:
     def name: String
+
+    /** Whether the writer collects all the statements before writing them, in an order of its own
+      * and without duplicates. The round-trip check then compares the statements as sets.
+      */
+    def buffers: Boolean
 
     /** Makes the library's statements, so that the benchmark does not measure that. */
     def prepare(data: RdfBenchData.Data): Unit
@@ -61,18 +70,52 @@ object RdfMethods:
       write(data, out)
       out.toByteArray
 
+  /** @param quadsFormat
+    *   null if the format cannot hold quads
+    * @param jelly
+    *   whether the format is Jelly, which is not given prefixes
+    */
   private final class JenaMethod(
       val name: String,
       triplesFormat: RDFFormat,
-      quadsFormat: RDFFormat,
+      quadsFormat: RDFFormat | Null,
+      jelly: Boolean,
   ) extends Method:
+    // Jena writes some formats only from a whole graph or dataset
+    override val buffers: Boolean = !StreamRDFWriter.registered(triplesFormat)
+
+    private def format(quads: Boolean): RDFFormat =
+      if !quads then triplesFormat
+      else if quadsFormat == null then
+        throw UnsupportedOperationException(s"'$name' cannot write quads")
+      else quadsFormat
+
     override def prepare(data: RdfBenchData.Data): Unit =
       val _ = if data.quads then data.jenaQuads else data.jenaTriples
 
     override def write(data: RdfBenchData.Data, out: OutputStream): Unit =
-      val writer =
-        StreamRDFWriter.getWriterStream(out, if data.quads then quadsFormat else triplesFormat)
+      if buffers then writeBuffered(data, out) else writeStream(data, out)
+
+    /** Collects the statements into a graph or dataset, which is timed: RDF4J's buffering writers
+      * do the same inside the writer.
+      */
+    private def writeBuffered(data: RdfBenchData.Data, out: OutputStream): Unit =
+      val f = format(data.quads)
+      if data.quads then
+        val dataset = DatasetGraphFactory.create()
+        if !jelly then data.prefixes.foreach((p, ns) => dataset.prefixes().add(p, ns))
+        data.jenaQuads.foreach(dataset.add)
+        FairSettings.jenaWriter(RDFWriter.source(dataset).format(f)).output(out)
+      else
+        val graph = GraphFactory.createDefaultGraph()
+        if !jelly then data.prefixes.foreach((p, ns) => graph.getPrefixMapping.setNsPrefix(p, ns))
+        data.jenaTriples.foreach(graph.add)
+        FairSettings.jenaWriter(RDFWriter.source(graph).format(f)).output(out)
+
+    private def writeStream(data: RdfBenchData.Data, out: OutputStream): Unit =
+      val writer = StreamRDFWriter.getWriterStream(out, format(data.quads))
       writer.start()
+      if !jelly then data.prefixes.foreach((p, ns) => writer.prefix(p, ns))
       var i = 0
       if data.quads then
         val quads = data.jenaQuads
@@ -100,9 +143,12 @@ object RdfMethods:
         inline sink: AnyRef => Unit,
     ): Int =
       var statements = 0
-      RDFParser
-        .source(UnsyncByteArrayInputStream(bytes))
-        .lang((if quads then quadsFormat else triplesFormat).getLang)
+      FairSettings
+        .jenaParser(
+          RDFParser
+            .source(UnsyncByteArrayInputStream(bytes))
+            .lang(format(quads).getLang),
+        )
         .parse(new StreamRDFBase:
           override def triple(triple: Triple): Unit =
             sink(triple)
@@ -125,19 +171,35 @@ object RdfMethods:
           if Quad.isDefaultGraph(q.getGraph) then null else q.getGraph,
         )
 
+  /** @param quadsFormat
+    *   null if the format cannot hold quads (or only in an extension of RDF4J's own)
+    * @param writerConfig
+    *   the writer settings for triples (false) or quads (true), before [[FairSettings]]
+    * @param jelly
+    *   whether the format is Jelly, which is not given prefixes
+    */
   private final class Rdf4jMethod(
       val name: String,
       triplesFormat: Rdf4jFormat,
-      quadsFormat: Rdf4jFormat,
-      writerConfig: Boolean => Option[WriterConfig],
+      quadsFormat: Rdf4jFormat | Null,
+      writerConfig: Boolean => WriterConfig,
+      jelly: Boolean,
+      val buffers: Boolean,
   ) extends Method:
+    private def format(quads: Boolean): Rdf4jFormat =
+      if !quads then triplesFormat
+      else if quadsFormat == null then
+        throw UnsupportedOperationException(s"'$name' cannot write quads")
+      else quadsFormat
+
     override def prepare(data: RdfBenchData.Data): Unit =
       val _ = data.rdf4j
 
     override def write(data: RdfBenchData.Data, out: OutputStream): Unit =
-      val writer = Rio.createWriter(if data.quads then quadsFormat else triplesFormat, out)
-      writerConfig(data.quads).foreach(writer.setWriterConfig)
+      val writer = Rio.createWriter(format(data.quads), out)
+      writer.setWriterConfig(FairSettings.rdf4jWriter(writerConfig(data.quads)))
       writer.startRDF()
+      if !jelly then data.prefixes.foreach((p, ns) => writer.handleNamespace(p, ns))
       val statements = data.rdf4j
       var i = 0
       while i < statements.length do
@@ -159,9 +221,8 @@ object RdfMethods:
         inline sink: AnyRef => Unit,
     ): Int =
       var statements = 0
-      val parser = Rio.createParser(if quads then quadsFormat else triplesFormat)
-      // Keep blank node labels as they are, so that no parser spends time making fresh ones
-      parser.set(BasicParserSettings.PRESERVE_BNODE_IDS, true)
+      val parser = Rio.createParser(format(quads))
+      FairSettings.rdf4jParser(parser)
       parser.setRDFHandler(new AbstractRDFHandler:
         override def handleStatement(st: Statement): Unit =
           sink(st)
@@ -175,12 +236,12 @@ object RdfMethods:
       val st = statement.asInstanceOf[Statement]
       Array(st.getSubject, st.getPredicate, st.getObject, st.getContext)
 
-  private def jena(format: String, triples: RDFFormat, quads: RDFFormat): Method =
-    JenaMethod(s"jena-$format", triples, quads)
+  private def jena(format: String, triples: RDFFormat, quads: RDFFormat | Null): Method =
+    JenaMethod(s"jena-$format", triples, quads, jelly = false)
 
   private def jenaJelly(preset: String, format: RDFFormat): Method =
     // Jelly takes triples and quads alike, and RIOT picks the stream type from the first statement
-    JenaMethod(s"jena-jelly-$preset", format, format)
+    JenaMethod(s"jena-jelly-$preset", format, format, jelly = true)
 
   /** The same as [[jenaJelly]], but writing Jelly-RDF 1.1 (row layout), for comparison. */
   private def jenaJelly11(preset: String, options: RdfStreamOptions): Method =
@@ -188,7 +249,7 @@ object RdfMethods:
       JellyLanguage.JELLY,
       JellyFormatVariant.builder().options(rowLayout(options)).build(),
     )
-    JenaMethod(s"jena-jelly11-$preset", format, format)
+    JenaMethod(s"jena-jelly11-$preset", format, format, jelly = true)
 
   /** The options asking for Jelly-RDF 1.1 output. Without namespace declarations, the stream is
     * written with protocol version 1, which has the same row layout.
@@ -199,10 +260,11 @@ object RdfMethods:
   private def rdf4j(
       format: String,
       triples: Rdf4jFormat,
-      quads: Rdf4jFormat,
-      config: Option[WriterConfig] = None,
+      quads: Rdf4jFormat | Null,
+      config: => WriterConfig = WriterConfig(),
+      buffers: Boolean = false,
   ): Method =
-    Rdf4jMethod(s"rdf4j-$format", triples, quads, _ => config)
+    Rdf4jMethod(s"rdf4j-$format", triples, quads, _ => config, jelly = false, buffers)
 
   private def rdf4jJelly(
       preset: String,
@@ -216,21 +278,26 @@ object RdfMethods:
       // Unlike Jena, RDF4J's writer does not pick the stream type itself, it writes quads unless
       // told otherwise
       quads =>
-        Some(
-          JellyWriterSettings.empty().setJellyOptions(
-            options.clone().setPhysicalType(
-              if quads then PhysicalStreamType.QUADS else PhysicalStreamType.TRIPLES,
-            ),
+        JellyWriterSettings.empty().setJellyOptions(
+          options.clone().setPhysicalType(
+            if quads then PhysicalStreamType.QUADS else PhysicalStreamType.TRIPLES,
           ),
         ),
+      jelly = true,
+      buffers = false,
     )
 
   // Jelly's own RIOT language must be registered before RDFParser looks it up
+  FairSettings.initJena()
   JellyLanguage.register()
 
   val all: IndexedSeq[Method] = IndexedSeq(
     jena("nt", RDFFormat.NTRIPLES, RDFFormat.NQUADS),
     jena("ttl", RDFFormat.TURTLE_BLOCKS, RDFFormat.TRIG_BLOCKS),
+    jena("rdfxml", RDFFormat.RDFXML_PLAIN, null),
+    // Expanded JSON-LD (no @context, so prefixes are not used)
+    jena("jsonld", RDFFormat.JSONLD11_FLAT, RDFFormat.JSONLD11_FLAT),
+    jena("rdfjson", RDFFormat.RDFJSON, null),
     jena("thrift", RDFFormat.RDF_THRIFT, RDFFormat.RDF_THRIFT),
     jena("protobuf", RDFFormat.RDF_PROTO, RDFFormat.RDF_PROTO),
     jenaJelly("small", JellyFormat.JELLY_SMALL_STRICT),
@@ -244,8 +311,14 @@ object RdfMethods:
       "ttl",
       Rdf4jFormat.TURTLE,
       Rdf4jFormat.TRIG,
-      Some(WriterConfig().set(BasicWriterSettings.PRETTY_PRINT, false)),
+      WriterConfig().set(BasicWriterSettings.PRETTY_PRINT, false),
     ),
+    // Streams, grouping only consecutive statements with the same subject
+    rdf4j("rdfxml", Rdf4jFormat.RDFXML, null),
+    // Expanded JSON-LD, its default. Both collect all statements in a model before writing.
+    rdf4j("jsonld", Rdf4jFormat.JSONLD, Rdf4jFormat.JSONLD, buffers = true),
+    // RDF4J's RDF/JSON can hold quads, but that is RDF4J's own extension of the format
+    rdf4j("rdfjson", Rdf4jFormat.RDFJSON, null, buffers = true),
     rdf4j("binary", Rdf4jFormat.BINARY, Rdf4jFormat.BINARY),
     rdf4jJelly("small", JellyOptions.SMALL_STRICT),
     rdf4jJelly("big", JellyOptions.BIG_STRICT),
@@ -278,22 +351,22 @@ object RdfMethods:
         JellyLanguage.JELLY,
         JellyFormatVariant.builder().options(options).frameSize(frameSize).build(),
       )
-      JenaMethod(name, format, format)
+      JenaMethod(name, format, format, jelly = true)
     else
       Rdf4jMethod(
         name,
         Rdf4jJellyFormat.JELLY,
         Rdf4jJellyFormat.JELLY,
         quads =>
-          Some(
-            JellyWriterSettings.empty()
-              .setJellyOptions(
-                options.clone().setPhysicalType(
-                  if quads then PhysicalStreamType.QUADS else PhysicalStreamType.TRIPLES,
-                ),
-              )
-              .setFrameSize(frameSize),
-          ),
+          JellyWriterSettings.empty()
+            .setJellyOptions(
+              options.clone().setPhysicalType(
+                if quads then PhysicalStreamType.QUADS else PhysicalStreamType.TRIPLES,
+              ),
+            )
+            .setFrameSize(frameSize),
+        jelly = true,
+        buffers = false,
       )
 
   def apply(name: String): Method =

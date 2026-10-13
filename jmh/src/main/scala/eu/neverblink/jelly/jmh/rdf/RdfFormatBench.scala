@@ -81,6 +81,9 @@ object RdfFormatBench:
       Array(
         "jena-nt",
         "jena-ttl",
+        "jena-rdfxml",
+        "jena-jsonld",
+        "jena-rdfjson",
         "jena-thrift",
         "jena-protobuf",
         "jena-jelly-small",
@@ -89,6 +92,9 @@ object RdfFormatBench:
         "jena-jelly11-big",
         "rdf4j-nt",
         "rdf4j-ttl",
+        "rdf4j-rdfxml",
+        "rdf4j-jsonld",
+        "rdf4j-rdfjson",
         "rdf4j-binary",
         "rdf4j-jelly-small",
         "rdf4j-jelly-big",
@@ -137,6 +143,9 @@ object RdfFormatBench:
       Array(
         "jena-nt",
         "jena-ttl",
+        "jena-rdfxml",
+        "jena-jsonld",
+        "jena-rdfjson",
         "jena-thrift",
         "jena-protobuf",
         "jena-jelly-small",
@@ -145,6 +154,9 @@ object RdfFormatBench:
         "jena-jelly11-big",
         "rdf4j-nt",
         "rdf4j-ttl",
+        "rdf4j-rdfxml",
+        "rdf4j-jsonld",
+        "rdf4j-rdfjson",
         "rdf4j-binary",
         "rdf4j-jelly-small",
         "rdf4j-jelly-big",
@@ -167,12 +179,15 @@ object RdfFormatBench:
       verify(data, impl, failOnError = true)
       quads = data.quads
       bytes = impl.writeToBytes(data)
-      statements = data.size
+      // What is in the bytes: fewer than the dataset if the writer dropped duplicates
+      statements = impl.readAll(bytes, quads).size
 
 class RdfFormatBench extends CommonParams:
   import RdfFormatBench.*
 
-  /** Statements -> bytes. */
+  /** Statements -> bytes. Counts every statement given to the writer, also the duplicates that
+    * buffering writers drop (see [[RdfMethods.Method.buffers]]).
+    */
   @Benchmark
   def serialize(input: WriteInput, counter: CellCounter): Unit =
     input.impl.write(input.data, OutputStream.nullOutputStream())

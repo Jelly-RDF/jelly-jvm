@@ -250,40 +250,6 @@ lazy val riverbenchProperties = taskKey[File](
   "Writes the location of the RiverBench cache for the benchmarks to read at runtime",
 )
 
-/** Downloads the 100K Jelly distributions that are not cached yet. Files already in the cache are
-  * never re-downloaded – delete the cache directory to refresh it.
-  */
-def doFetchRiverBench(targetDir: File, log: sbt.util.Logger): Seq[File] = {
-  import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-  import java.nio.file.{Files, StandardCopyOption}
-
-  IO.createDirectory(targetDir)
-  val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
-  riverbenchDatasets.map { dataset =>
-    val targetFile = targetDir / s"$dataset.jelly.gz"
-    if (targetFile.exists() && targetFile.length() > 0) {
-      log.info(s"RiverBench $dataset: cached")
-    } else {
-      val url = s"https://w3id.org/riverbench/datasets/$dataset/$riverbenchVersion/files/" +
-        "jelly_100K.jelly.gz"
-      log.info(s"RiverBench $dataset: downloading $url")
-      // Download to a temporary file first, so an interrupted download does not look cached
-      val tmpFile = targetDir / s"$dataset.jelly.gz.part"
-      val response = client.send(
-        HttpRequest.newBuilder(java.net.URI.create(url)).build(),
-        HttpResponse.BodyHandlers.ofFile(tmpFile.toPath),
-      )
-      if (response.statusCode() != 200) {
-        IO.delete(tmpFile)
-        throw new RuntimeException(s"Failed to download $url: HTTP ${response.statusCode()}")
-      }
-      Files.move(tmpFile.toPath, targetFile.toPath, StandardCopyOption.ATOMIC_MOVE)
-      log.info(f"RiverBench $dataset: ${targetFile.length() / 1e6}%.1f MB")
-    }
-    targetFile
-  }
-}
-
 // sbt 2.x's `Test / definedTestDigests` hashes every entry on the test classpath. sbt-jacoco puts
 // its instrumented-classes directory on that classpath, but only creates the directory when the
 // project actually has classes to instrument. For class-less projects (the proto-only project and
@@ -662,6 +628,9 @@ lazy val jmh = (project in file("jmh"))
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlxlsx" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlods" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-binary" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-jsonld" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-rdfjson" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-rdfxml" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-ntriples" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-trig" % rdf4jV,
@@ -673,7 +642,9 @@ lazy val jmh = (project in file("jmh"))
     // The cache lives outside target/, so that `clean` does not throw away half a gigabyte of
     // downloads
     riverbenchDir := baseDirectory.value / "data" / "riverbench",
-    riverbenchFetch := Def.uncached { doFetchRiverBench(riverbenchDir.value, streams.value.log) },
+    riverbenchFetch := Def.uncached {
+      RiverBench.fetch(riverbenchDir.value, riverbenchVersion, riverbenchDatasets, streams.value.log)
+    },
     riverbenchProperties := Def.uncached {
       val file = (Compile / resourceManaged).value / "riverbench.properties"
       IO.write(
