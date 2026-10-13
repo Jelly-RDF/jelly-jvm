@@ -29,6 +29,9 @@ Test / logBuffered := false
 lazy val pekkoV = "1.7.1"
 lazy val pekkoGrpcV = "1.2.0"
 lazy val jenaV = "6.2.0"
+// The benchmarks always run on the newest Jena, whatever jenaV is set to (CI also builds against
+// older Jena versions, which the benchmark code does not have to support)
+lazy val jenaBenchV = "6.2.0"
 // RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
 // targets Java 21 (see javacOptions), but jelly-rdf4j can only *run* on Java 25+, as RDF4J 6 does.
 lazy val rdf4jV = "6.1.0"
@@ -249,40 +252,6 @@ lazy val riverbenchFetch = taskKey[Seq[File]](
 lazy val riverbenchProperties = taskKey[File](
   "Writes the location of the RiverBench cache for the benchmarks to read at runtime",
 )
-
-/** Downloads the 100K Jelly distributions that are not cached yet. Files already in the cache are
-  * never re-downloaded – delete the cache directory to refresh it.
-  */
-def doFetchRiverBench(targetDir: File, log: sbt.util.Logger): Seq[File] = {
-  import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-  import java.nio.file.{Files, StandardCopyOption}
-
-  IO.createDirectory(targetDir)
-  val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
-  riverbenchDatasets.map { dataset =>
-    val targetFile = targetDir / s"$dataset.jelly.gz"
-    if (targetFile.exists() && targetFile.length() > 0) {
-      log.info(s"RiverBench $dataset: cached")
-    } else {
-      val url = s"https://w3id.org/riverbench/datasets/$dataset/$riverbenchVersion/files/" +
-        "jelly_100K.jelly.gz"
-      log.info(s"RiverBench $dataset: downloading $url")
-      // Download to a temporary file first, so an interrupted download does not look cached
-      val tmpFile = targetDir / s"$dataset.jelly.gz.part"
-      val response = client.send(
-        HttpRequest.newBuilder(java.net.URI.create(url)).build(),
-        HttpResponse.BodyHandlers.ofFile(tmpFile.toPath),
-      )
-      if (response.statusCode() != 200) {
-        IO.delete(tmpFile)
-        throw new RuntimeException(s"Failed to download $url: HTTP ${response.statusCode()}")
-      }
-      Files.move(tmpFile.toPath, targetFile.toPath, StandardCopyOption.ATOMIC_MOVE)
-      log.info(f"RiverBench $dataset: ${targetFile.length() / 1e6}%.1f MB")
-    }
-    targetFile
-  }
-}
 
 // sbt 2.x's `Test / definedTestDigests` hashes every entry on the test classpath. sbt-jacoco puts
 // its instrumented-classes directory on that classpath, but only creates the directory when the
@@ -662,18 +631,30 @@ lazy val jmh = (project in file("jmh"))
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlxlsx" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqlods" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-binary" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-jsonld" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-rdfjson" % rdf4jV,
+      "org.eclipse.rdf4j" % "rdf4j-rio-rdfxml" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-nquads" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-ntriples" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-trig" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
       "com.github.luben" % "zstd-jni" % "1.5.7-23",
       // The library modules only have Jena and RDF4J as provided dependencies
-    ) ++ jenaDeps ++ rdf4jDeps ++ rdf4jSparqlDeps,
+      "org.apache.jena" % "jena-core" % jenaBenchV,
+      "org.apache.jena" % "jena-arq" % jenaBenchV,
+    ) ++ rdf4jDeps ++ rdf4jSparqlDeps,
     excludeDependencies += ExclusionRule("org.apache.jena", "jena-fuseki-main"),
     // The cache lives outside target/, so that `clean` does not throw away half a gigabyte of
     // downloads
     riverbenchDir := baseDirectory.value / "data" / "riverbench",
-    riverbenchFetch := Def.uncached { doFetchRiverBench(riverbenchDir.value, streams.value.log) },
+    riverbenchFetch := Def.uncached {
+      RiverBench.fetch(
+        riverbenchDir.value,
+        riverbenchVersion,
+        riverbenchDatasets,
+        streams.value.log,
+      )
+    },
     riverbenchProperties := Def.uncached {
       val file = (Compile / resourceManaged).value / "riverbench.properties"
       IO.write(

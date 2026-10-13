@@ -51,7 +51,7 @@ import org.eclipse.rdf4j.query.{AbstractTupleQueryResultHandler, BindingSet}
 import org.eclipse.rdf4j.rio.WriterConfig
 import org.openjdk.jmh.infra.Blackhole
 
-import eu.neverblink.jelly.jmh.UnsyncByteArrayInputStream
+import eu.neverblink.jelly.jmh.{FairSettings, UnsyncByteArrayInputStream}
 
 import java.io.{ByteArrayOutputStream, OutputStream}
 import scala.annotation.nowarn
@@ -104,10 +104,13 @@ object SparqlMethods:
       val _ = data.jena
 
     override def write(data: SparqlBenchData.Data, out: OutputStream): Unit =
-      newWriter().write(out, data.jena.rowSet(), null)
+      newWriter().write(out, data.jena.rowSet(), FairSettings.jenaRowSetContext)
 
     override def read(bytes: Array[Byte], blackhole: Blackhole): Int =
-      readInto(bytes)(blackhole.consume)
+      // Every value, as a reader that decodes values on demand only does its work then
+      readInto(bytes)(row =>
+        row.asInstanceOf[Binding].forEach((_, node) => blackhole.consume(node)),
+      )
 
     override def readAll(bytes: Array[Byte]): collection.IndexedSeq[AnyRef] =
       val rows = mutable.ArrayBuffer.empty[AnyRef]
@@ -117,7 +120,7 @@ object SparqlMethods:
     // Inlined, so that read and readAll each have their own copy of the loop
     private inline def readInto(bytes: Array[Byte])(inline sink: AnyRef => Unit): Int =
       val reader = newReader.getOrElse(throw UnsupportedOperationException(s"$name cannot read"))
-      val rowSet = reader().read(UnsyncByteArrayInputStream(bytes), null)
+      val rowSet = reader().read(UnsyncByteArrayInputStream(bytes), FairSettings.jenaRowSetContext)
       var rows = 0
       while rowSet.hasNext do
         sink(rowSet.next())
@@ -167,6 +170,7 @@ object SparqlMethods:
     override def write(data: SparqlBenchData.Data, out: OutputStream): Unit =
       val writer = writerFactory.getWriter(out)
       writerConfig.foreach(writer.setWriterConfig)
+      FairSettings.rdf4jResultWriter(writer)
       // This is what QueryResultIO.writeTuple does with a TupleQueryResult, minus the iteration.
       // Most writers start the document on their own, but the ODS one does not.
       writer.startDocument()
@@ -180,7 +184,10 @@ object SparqlMethods:
       writer.endQueryResult()
 
     override def read(bytes: Array[Byte], blackhole: Blackhole): Int =
-      readInto(bytes)(blackhole.consume)
+      // Every value, as a reader that decodes values on demand only does its work then
+      readInto(bytes)(row =>
+        row.asInstanceOf[BindingSet].forEach(binding => blackhole.consume(binding.getValue)),
+      )
 
     override def readAll(bytes: Array[Byte]): collection.IndexedSeq[AnyRef] =
       val rows = mutable.ArrayBuffer.empty[AnyRef]
@@ -193,6 +200,8 @@ object SparqlMethods:
       val factory =
         parserFactory.getOrElse(throw UnsupportedOperationException(s"$name cannot read"))
       val parser = factory.getParser
+      // Before the handler is set, see FairSettings
+      FairSettings.rdf4jResultParser(parser)
       var rows = 0
       parser.setQueryResultHandler(new AbstractTupleQueryResultHandler:
         override def handleSolution(bindingSet: BindingSet): Unit =
@@ -221,6 +230,8 @@ object SparqlMethods:
       Some(JellySparqlWriterSettings.empty().setJellyOptions(options)),
       Some(JellySparqlTupleParserFactory()),
     )
+
+  FairSettings.initJena()
 
   val all: IndexedSeq[Method] = IndexedSeq(
     jena("srx", ResultSetLang.RS_XML),
