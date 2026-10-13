@@ -1,233 +1,128 @@
 package eu.neverblink.jelly.core.internal
 
 import eu.neverblink.jelly.core.RdfProtoTranscodingError
+import eu.neverblink.jelly.core.proto.v1.{RdfColumnBatch, RdfLookupEntryPacked}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-/** Unit tests for the TranscoderLookup class.
-  */
+import scala.jdk.CollectionConverters.*
+
+/** Unit tests for the TranscoderLookup class. */
 class TranscoderLookupSpec extends AnyWordSpec, Matchers:
 
+  private def packed(id: Int, values: String*): RdfLookupEntryPacked =
+    val e = RdfLookupEntryPacked.newInstance().setId(id)
+    values.foreach(e.addValues)
+    e
+
+  /** Starts a batch, and returns the output entries it gets, as (id, value) with the ids resolved.
+    */
+  private final class Batch(tl: TranscoderLookup, lastId: Int = 0):
+    private val batch = RdfColumnBatch.newInstance()
+    tl.startBatch(batch.getNames)
+    def entries: Seq[(Int, String)] =
+      var last = lastId
+      batch.getNames.asScala.toSeq.flatMap { e =>
+        val first = if e.getId == 0 then last + 1 else e.getId
+        val values = e.getValues.asScala.toSeq.zipWithIndex.map((v, i) => (first + i, v))
+        last = first + values.size - 1
+        values
+      }
+
   "TranscoderLookup" should {
-    "throw an exception when trying to set input lookup size greater than the output" in {
-      val tl = TranscoderLookup(false, 100)
-      val ex = intercept[RdfProtoTranscodingError] {
-        tl.newInputStream(120)
-      }
-      ex.getMessage should include(
-        "Input lookup size cannot be greater than the output lookup size",
-      )
-    }
-
-    "remap IDs" when {
-      "it's a prefix lookup" in {
-        val tl = TranscoderLookup(false, 120)
-        tl.newInputStream(100)
-        tl.addEntry(80, "s80").getId shouldBe 1
-        tl.addEntry(81, "s81").getId shouldBe 2
-
-        tl.remap(80) shouldBe 1
-        tl.remap(0) shouldBe 0
-        tl.remap(0) shouldBe 0
-        tl.remap(81) shouldBe 2
-        tl.remap(80) shouldBe 1
-        tl.remap(81) shouldBe 2
-        tl.remap(0) shouldBe 0
-      }
-
-      "it's a name lookup" in {
-        val tl = TranscoderLookup(true, 100)
-        tl.newInputStream(100)
-        tl.addEntry(80, "s80").getId shouldBe 1
-        tl.addEntry(81, "s81").getId shouldBe 2
-        tl.addEntry(82, "s82").getId shouldBe 3
-        tl.addEntry(83, "s83").getId shouldBe 4
-
-        tl.remap(80) shouldBe 0
-        tl.remap(80) shouldBe 1
-        tl.remap(80) shouldBe 1
-        tl.remap(81) shouldBe 0
-        tl.remap(82) shouldBe 0
-        tl.remap(82) shouldBe 3
-        tl.remap(83) shouldBe 0
-
-        // and with 0 in the input
-        tl.remap(80) shouldBe 1
-        tl.remap(0) shouldBe 0
-        tl.remap(0) shouldBe 0
-        tl.remap(80) shouldBe 1
-      }
-    }
-
-    "remap IDs evicting old entries" when {
-      "it's a prefix lookup" in {
-        val tl = TranscoderLookup(false, 10)
-        tl.newInputStream(5)
-        for i <- 0 to 4 do
-          tl.addEntry(i + 1, s"s$i").getId shouldBe i + 1
-          tl.remap(i + 1) shouldBe i + 1
-        for i <- 5 to 50 do
-          // Later all ids will be remapped to 6–10 because the transcoder will evict the same entry as the input.
-          tl.addEntry((i % 5) + 1, s"s$i").getId shouldBe (i % 5) + 6
-          tl.remap((i % 5) + 1) shouldBe (i % 5) + 6
-      }
-
-      "it's a name lookup" in {
-        val tl = TranscoderLookup(true, 10)
-        tl.newInputStream(5)
-        for i <- 0 to 50 do
-          val getId = tl.addEntry((i % 5) + 1, s"s$i").getId
-          if i < 5 then getId shouldBe i + 1
-          else getId shouldBe (i % 5) + 6
-          if (i % 5) != 0 || i < 10 then tl.remap((i % 5) + 1) shouldBe 0
-          else tl.remap((i % 5) + 1) shouldBe (i % 5) + 6
-      }
-    }
-
-    "decode 0-encoding in lookup entries in the input stream" when {
-      "it's a prefix lookup" in {
-        val tl = TranscoderLookup(false, 10)
-        tl.newInputStream(5)
-        tl.addEntry(0, "s1_1")
-        tl.addEntry(0, "s2_1")
-        tl.addEntry(0, "s3_1")
-        tl.remap(1) shouldBe 1
-
-        tl.addEntry(1, "s1_2")
-        tl.remap(1) shouldBe 4
-        tl.remap(2) shouldBe 2
-        tl.remap(3) shouldBe 3
-        tl.remap(0) shouldBe 0
-
-        // Recover an entry
-        tl.addEntry(5, "s1_1")
-        tl.remap(5) shouldBe 1
-        tl.remap(0) shouldBe 0
-      }
-
-      "it's a name lookup" in {
-        val tl = TranscoderLookup(true, 10)
-        tl.newInputStream(5)
-        tl.addEntry(0, "s1_1")
-        tl.addEntry(0, "s2_1")
-        tl.addEntry(0, "s3_1")
-        tl.remap(1) shouldBe 0
-
-        tl.addEntry(1, "s1_2")
-        tl.remap(1) shouldBe 4
-        tl.remap(0) shouldBe 2
-        tl.remap(0) shouldBe 0
-
-        // Recover an entry
-        tl.addEntry(5, "s1_1")
-        tl.remap(5) shouldBe 1
-        tl.remap(2) shouldBe 0
-      }
-    }
-
-    "handle multiple input streams" when {
-      "it's a prefix lookup" in {
-        val tl = TranscoderLookup(false, 10)
-        tl.newInputStream(5)
-        tl.addEntry(0, "s1_1")
-        tl.addEntry(0, "s2_1")
-        tl.addEntry(0, "s3_1")
-        tl.remap(2) shouldBe 2
-
-        tl.newInputStream(5)
-        tl.addEntry(0, "s1_2")
-        tl.addEntry(0, "s2_2")
-        tl.addEntry(0, "s3_2")
-        tl.remap(1) shouldBe 4
-        tl.remap(2) shouldBe 5
-        tl.remap(3) shouldBe 6
-
-        tl.newInputStream(5)
-        tl.addEntry(0, "s1_3")
-        tl.addEntry(0, "s2_3")
-        tl.addEntry(0, "s3_3")
-        tl.remap(1) shouldBe 7
-        tl.remap(2) shouldBe 8
-        tl.remap(3) shouldBe 9
-
-        tl.newInputStream(5)
-        tl.addEntry(0, "s1_1")
-        tl.addEntry(0, "s2_2")
-        tl.addEntry(0, "s3_3")
-        tl.remap(1) shouldBe 1
-        tl.remap(2) shouldBe 5
-        tl.remap(3) shouldBe 9
-      }
-
-      "it's a name lookup" in {
-        val tl = TranscoderLookup(true, 10)
-        tl.newInputStream(5)
-        tl.addEntry(0, "s1_1")
-        tl.addEntry(0, "s2_1")
-        tl.addEntry(0, "s3_1")
-        tl.remap(2) shouldBe 2
-        tl.remap(0) shouldBe 0
-
-        tl.newInputStream(5)
-        tl.addEntry(0, "s1_1")
-        tl.addEntry(0, "s2_1")
-        tl.addEntry(0, "s3_1")
-        tl.remap(0) shouldBe 1
-        tl.remap(0) shouldBe 0
-        tl.remap(0) shouldBe 0
-
-        tl.newInputStream(5)
-        tl.addEntry(0, "s1_2")
-        tl.addEntry(0, "s2_2")
-        tl.addEntry(0, "s3_2")
-        tl.remap(0) shouldBe 0 // last was 3, this is 4, so it's 0
-        tl.remap(3) shouldBe 6
-        tl.remap(1) shouldBe 4
-        tl.remap(0) shouldBe 0
-        tl.remap(0) shouldBe 0
-      }
-    }
-
-    "not evict an entry the current input stream uses, to make room for one it adds" in {
-      val tl = TranscoderLookup(false, 4)
+    "keep the ids of the input while they fit" in {
+      val tl = TranscoderLookup("name", 4)
       tl.newInputStream(4)
-      for v <- Seq("a", "b", "c", "d") do tl.addEntry(0, v)
+      val b = Batch(tl)
+      tl.addInputEntries(Seq(packed(0, "a", "b"), packed(4, "d"), packed(3, "c")).asJava)
+      b.entries shouldBe Seq(1 -> "a", 2 -> "b", 3 -> "d", 4 -> "c")
+      // The output assigns ids in order, so 4 and 3 swap
+      (1 to 4).map(tl.remap) shouldBe Seq(1, 2, 4, 3)
+    }
 
-      // The output table is full. This stream uses "c", then adds entries of its own, which evict
-      // those of the first stream – but not "c", although it is no longer among the latest used.
+    "reuse the entries of an earlier input stream" in {
+      val tl = TranscoderLookup("name", 4)
       tl.newInputStream(4)
-      tl.addEntry(0, "c").getId shouldBe 3
-      val added = Seq("x1", "x2", "x3").map(tl.addEntry(0, _).getId)
-      added should not contain 3
-      added.distinct.size shouldBe 3
+      Batch(tl)
+      tl.addInputEntries(Seq(packed(0, "a", "b", "c")).asJava)
+      tl.newInputStream(2)
+      val b = Batch(tl, lastId = 3)
+      tl.addInputEntries(Seq(packed(0, "c", "x")).asJava)
+      b.entries shouldBe Seq(4 -> "x")
       tl.remap(1) shouldBe 3
+      tl.remap(2) shouldBe 4
     }
 
-    "resize the internal remapping table" in {
-      val tl = TranscoderLookup(false, 100)
-
-      for i <- 1 to 10 do
-        val size = i * 4
-        tl.newInputStream(size)
-        for j <- 1 to size do
-          tl.addEntry(j, s"s$j").getId shouldBe j
-          tl.remap(j)
+    "evict the entry that the input evicted" in {
+      val tl = TranscoderLookup("name", 3)
+      tl.newInputStream(3)
+      Batch(tl)
+      tl.addInputEntries(Seq(packed(0, "a", "b", "c")).asJava)
+      val b = Batch(tl, lastId = 3)
+      tl.addInputEntries(Seq(packed(2, "x")).asJava)
+      b.entries shouldBe Seq(2 -> "x")
+      tl.remap(1) shouldBe 1
+      tl.remap(2) shouldBe 2
+      tl.remap(3) shouldBe 3
     }
 
-    "evict the corresponding element if the input stream is evicting something" in {
-      val tl = TranscoderLookup(false, 3)
+    "not evict an entry that the current batch uses" in {
+      val tl = TranscoderLookup("name", 3)
       tl.newInputStream(3)
-      tl.addEntry(0, "s1_1")
-      tl.addEntry(0, "s2_1")
-      tl.addEntry(0, "s3_1")
+      Batch(tl)
+      tl.addInputEntries(Seq(packed(0, "a", "b", "c")).asJava)
+      // The next batch sets id 3 to "b", which is output entry 2, and then sets id 2 to "z". The
+      // input evicted its old value "b" from id 2, but output entry 2 is still in use through id 3.
+      val b = Batch(tl, lastId = 3)
+      tl.addInputEntries(Seq(packed(3, "b"), packed(2, "z")).asJava)
+      tl.remap(3) shouldBe 2
+      tl.remap(2) should not be 2
+      b.entries.map(_._2) shouldBe Seq("z")
+    }
 
-      tl.newInputStream(3)
-      tl.addEntry(0, "s1_1").newEntry should be(false)
+    "add a value again when its output entry was evicted" in {
+      val tl = TranscoderLookup("name", 2)
+      tl.newInputStream(2)
+      Batch(tl)
+      tl.addInputEntries(Seq(packed(0, "a", "b")).asJava)
+      // Another input stream fills the output with its own values
+      tl.newInputStream(2)
+      Batch(tl, lastId = 2)
+      tl.addInputEntries(Seq(packed(0, "x", "y")).asJava)
+      // Back to the first one: its values were evicted, and come back on their next use
+      tl.newInputStream(2)
+      val b1 = Batch(tl, lastId = 2)
+      tl.addInputEntries(Seq(packed(0, "a")).asJava)
+      tl.remap(1)
+      val b2 = Batch(tl, lastId = 1)
+      tl.addInputEntries(Seq(packed(2, "b")).asJava)
+      val bId = tl.remap(2)
+      b2.entries.map(_._2) shouldBe Seq("b")
+      // The previous batch's "a" may be evicted for "b", and then it is written again
+      val aId = tl.remap(1)
+      aId should not be bId
+      b2.entries.map(_._2) should (equal(Seq("b")) or equal(Seq("b", "a")))
+    }
 
-      // Even though this entry was just used, we are evicting it because our input stream does that
-      val e = tl.addEntry(1, "something else")
-      e.newEntry should be(true)
-      e.setId should be(1)
-      e.getId should be(1)
+    "refuse ids outside of the input table, or that were never set" in {
+      val tl = TranscoderLookup("prefix", 4)
+      tl.newInputStream(2)
+      Batch(tl)
+      tl.addInputEntries(Seq(packed(0, "a")).asJava)
+      intercept[RdfProtoTranscodingError](tl.addInputEntries(Seq(packed(3, "x")).asJava))
+        .getMessage should include("outside of its table")
+      intercept[RdfProtoTranscodingError](tl.remap(2)).getMessage should include("did not set")
+      intercept[RdfProtoTranscodingError](tl.remap(3)).getMessage should include("did not set")
+      intercept[RdfProtoTranscodingError](tl.remap(0)).getMessage should include("did not set")
+    }
+
+    "fail when a batch needs more entries than the output table has" in {
+      val tl = TranscoderLookup("name", 2)
+      tl.newInputStream(2)
+      Batch(tl)
+      tl.addInputEntries(Seq(packed(1, "a", "b")).asJava)
+      // The same id set twice in one batch: "a" and "b" are both pinned
+      intercept[RdfProtoTranscodingError](tl.addInputEntries(Seq(packed(1, "c")).asJava))
+        .getMessage should include("too small")
     }
   }

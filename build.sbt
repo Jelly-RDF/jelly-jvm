@@ -635,7 +635,7 @@ lazy val jmh = (project in file("jmh"))
       "org.eclipse.rdf4j" % "rdf4j-rio-ntriples" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-trig" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
-      "com.github.luben" % "zstd-jni" % "1.5.7-22",
+      "com.github.luben" % "zstd-jni" % "1.5.7-23",
       // The library modules only have Jena and RDF4J as provided dependencies
     ) ++ jenaDeps ++ rdf4jDeps ++ rdf4jSparqlDeps,
     excludeDependencies += ExclusionRule("org.apache.jena", "jena-fuseki-main"),

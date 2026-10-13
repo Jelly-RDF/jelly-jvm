@@ -101,7 +101,8 @@ case object Rdf4jTestStream extends TestStream:
     val writer = Rio.createWriter(RDFFormat.NQUADS, os)
     writer.startRDF()
     Flow[RdfStreamFrame]
-      .via(DecoderFlow.decodeGraphs.asFlatQuadStream)
+      // The graph source writes GRAPHS streams in Jelly-RDF 1.1, and QUADS streams in Jelly-RDF 1.2
+      .via(DecoderFlow.decodeAny.asFlatStream)
       .toMat(Sink.foreach(st => writer.handleStatement(st)))(Keep.right)
       .mapMaterializedValue(f =>
         f.map(_ => {

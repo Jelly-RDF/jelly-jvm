@@ -1,10 +1,10 @@
 package eu.neverblink.jelly.pekko.stream.impl
 
-import eu.neverblink.jelly.core.ProtoEncoder.Params
 import eu.neverblink.jelly.core.memory.RowBuffer
 import eu.neverblink.jelly.core.proto.v1.*
 import eu.neverblink.jelly.core.utils.{GraphHolder, QuadExtractor, TripleExtractor}
 import eu.neverblink.jelly.core.{
+  JellyConstants,
   JellyConverterFactory,
   NamespaceDeclaration,
   ProtoDecoderConverter,
@@ -18,6 +18,26 @@ import org.apache.pekko.stream.scaladsl.{Flow, Source}
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters.*
 
+/** Settings of an encoder flow, gathered from all stages of the builder.
+  *
+  * @param options
+  *   stream options, with the physical type and the logical type or stream type set
+  * @param namespaceDeclarations
+  *   whether the flow encodes namespace declarations
+  */
+private[stream] final case class EncoderSettings(
+    options: RdfStreamOptions,
+    namespaceDeclarations: Boolean,
+):
+  def withOptions(options: RdfStreamOptions): EncoderSettings = copy(options = options)
+  def withNamespaceDeclarations(enabled: Boolean): EncoderSettings =
+    copy(namespaceDeclarations = enabled)
+
+  /** Whether the flow writes Jelly-RDF 1.0 or 1.1 (row layout, deprecated) instead of Jelly-RDF 1.2
+    * (column layout).
+    */
+  def rowLayout: Boolean = JellyConstants.requestsRowLayout(options.getVersion)
+
 /** Base trait for building a flow that encodes RDF data into a stream of [[RdfStreamFrame]].
   * @tparam TIn
   *   Type of the input elements to the flow in this stage.
@@ -29,16 +49,16 @@ sealed trait EncoderFlowBuilder[TIn, TChild]:
   /** Next stage in the chain of builders */
   protected val child: Option[EncoderFlowBuilder[TChild, ?]]
 
-  /** Mutates encoder parameters, adding whatever is needed for this stage.
+  /** Mutates encoder settings, adding whatever is needed for this stage.
     */
-  protected def paramMutator(p: Params): Params = p
+  protected def paramMutator(p: EncoderSettings): EncoderSettings = p
 
-  /** Recursively mutates encoder parameters for all stages in the chain.
+  /** Recursively mutates encoder settings for all stages in the chain.
     * @param p
-    *   Parameters to mutate
+    *   Settings to mutate
     * @return
     */
-  protected final def paramMutatorRec(p: Params): Params =
+  protected final def paramMutatorRec(p: EncoderSettings): EncoderSettings =
     child match
       case Some(c) => paramMutator(c.paramMutatorRec(p))
       case None => paramMutator(p)
@@ -52,16 +72,16 @@ sealed trait EncoderFlowBuilder[TIn, TChild]:
   * @tparam TNode
   *   Type of RDF nodes in the RDF library.
   */
-// The encoder flows still write Jelly-RDF 1.1 with the deprecated ProtoEncoder, until they are
-// ported to Jelly-RDF 1.2 (RdfEncoder).
+// Jelly-RDF 1.0 and 1.1 output (row layout) uses the deprecated ProtoEncoder
 @nowarn("cat=deprecation")
 final class EncoderFlowBuilderImpl[TNode](using
     converterFactory: JellyConverterFactory[TNode, ?, ?, ?],
 ):
 
   private type TEncoder = ProtoEncoder[TNode]
+  private type TWriter = ColumnFrameWriter[TNode]
 
-  private val emptyParams = Params.of(null, false, null)
+  private val emptySettings = EncoderSettings(null, false)
 
   /** Create a new root builder.
     *
@@ -77,11 +97,13 @@ final class EncoderFlowBuilderImpl[TNode](using
   sealed trait MaybeLimiterBuilder(maybeLimiter: Option[SizeLimiter]):
 
     /** Convert a stream of iterables with triple statements into a stream of [[RdfStreamFrame]]s.
-      * Physical stream type: TRIPLES. Logical stream type (RDF-STaX): flat RDF triple stream
-      * (FLAT_TRIPLES).
+      * Physical stream type: TRIPLES. Jelly-RDF 1.2 stream type: FLAT. Logical stream type
+      * (RDF-STaX, Jelly-RDF 1.0 and 1.1 only): flat RDF triple stream (FLAT_TRIPLES).
       *
       * After this flow finishes processing an iterable in the input stream, it is guaranteed to
-      * output an [[RdfStreamFrame]], which allows to maintain low latency.
+      * output an [[RdfStreamFrame]], which allows to maintain low latency. In Jelly-RDF 1.2
+      * streams, an iterable with no statements (and no namespace declarations before it) gives no
+      * frame.
       *
       * @param opt
       *   Options for the RDF stream.
@@ -98,11 +120,15 @@ final class EncoderFlowBuilderImpl[TNode](using
       new GroupedTriplesBuilder(opt, maybeLimiter, LogicalStreamType.FLAT_TRIPLES)
 
     /** Convert a stream of graphs (iterables with triple statements) into a stream of
-      * [[RdfStreamFrame]]s. Physical stream type: TRIPLES. Logical stream type (RDF-STaX): RDF
-      * graph stream (GRAPHS).
+      * [[RdfStreamFrame]]s. Physical stream type: TRIPLES. Jelly-RDF 1.2 stream type: MESSAGES.
+      * Logical stream type (RDF-STaX, Jelly-RDF 1.0 and 1.1 only): RDF graph stream (GRAPHS).
       *
-      * Each graph (iterable of triples) in the input stream is guaranteed to correspond to exactly
-      * one [[RdfStreamFrame]] in the output stream IF no frame size limiter is applied.
+      * In Jelly-RDF 1.2 streams, each graph in the input stream is one RDF Message, and the last
+      * frame of each graph ends with it.
+      *
+      * In Jelly-RDF 1.0 and 1.1 streams, each graph (iterable of triples) in the input stream is
+      * guaranteed to correspond to exactly one [[RdfStreamFrame]] in the output stream IF no frame
+      * size limiter is applied.
       *
       * @param opt
       *   Options for the RDF stream.
@@ -121,11 +147,13 @@ final class EncoderFlowBuilderImpl[TNode](using
       new GroupedTriplesBuilder(opt, maybeLimiter, LogicalStreamType.GRAPHS)
 
     /** Convert a stream of iterables with quad statements into a stream of [[RdfStreamFrame]]s.
-      * Physical stream type: QUADS. Logical stream type (RDF-STaX): flat RDF quad stream
-      * (FLAT_QUADS).
+      * Physical stream type: QUADS. Jelly-RDF 1.2 stream type: FLAT. Logical stream type (RDF-STaX,
+      * Jelly-RDF 1.0 and 1.1 only): flat RDF quad stream (FLAT_QUADS).
       *
       * After this flow finishes processing an iterable in the input stream, it is guaranteed to
-      * output an [[RdfStreamFrame]], which allows to maintain low latency.
+      * output an [[RdfStreamFrame]], which allows to maintain low latency. In Jelly-RDF 1.2
+      * streams, an iterable with no statements (and no namespace declarations before it) gives no
+      * frame.
       *
       * @param opt
       *   Options for the RDF stream.
@@ -144,11 +172,15 @@ final class EncoderFlowBuilderImpl[TNode](using
       new GroupedQuadsBuilder(opt, maybeLimiter, LogicalStreamType.FLAT_QUADS)
 
     /** Convert a stream of datasets (iterables with quad statements) into a stream of
-      * [[RdfStreamFrame]]s. Physical stream type: QUADS. Logical stream type (RDF-STaX): RDF
-      * dataset stream (DATASETS).
+      * [[RdfStreamFrame]]s. Physical stream type: QUADS. Jelly-RDF 1.2 stream type: MESSAGES.
+      * Logical stream type (RDF-STaX, Jelly-RDF 1.0 and 1.1 only): RDF dataset stream (DATASETS).
       *
-      * Each dataset (iterable of quads) in the input stream is guaranteed to correspond to exactly
-      * one [[RdfStreamFrame]] in the output stream IF no frame size limiter is applied.
+      * In Jelly-RDF 1.2 streams, each dataset in the input stream is one RDF Message, and the last
+      * frame of each dataset ends with it.
+      *
+      * In Jelly-RDF 1.0 and 1.1 streams, each dataset (iterable of quads) in the input stream is
+      * guaranteed to correspond to exactly one [[RdfStreamFrame]] in the output stream IF no frame
+      * size limiter is applied.
       *
       * @param opt
       *   Options for the RDF stream.
@@ -169,11 +201,19 @@ final class EncoderFlowBuilderImpl[TNode](using
     /** Convert a stream of named or unnamed graphs (node as graph name + iterable of triple
       * statements) into a stream of [[RdfStreamFrame]]s. Each element in the output stream may
       * contain one graph or a part of a graph (if the frame size limiter is used). Two different
-      * graphs will never occur in the same frame. Physical stream type: GRAPHS. Logical stream type
-      * (RDF-STaX): RDF named graph stream (NAMED_GRAPHS).
+      * graphs will never occur in the same frame.
+      *
+      * Jelly-RDF 1.2 (the default): physical stream type QUADS, stream type MESSAGES. There are no
+      * GRAPHS streams in Jelly-RDF 1.2, so the triples are written as quads, with the graph name.
+      * Each graph in the input stream is one RDF Message. A graph with no triples gives an empty
+      * message, which does not say the graph name.
+      *
+      * Jelly-RDF 1.0 and 1.1: physical stream type GRAPHS. Logical stream type (RDF-STaX): RDF
+      * named graph stream (NAMED_GRAPHS).
       *
       * Each graph in the input stream is guaranteed to correspond to exactly one [[RdfStreamFrame]]
-      * in the output stream IF no frame size limiter is applied.
+      * in the output stream IF no frame size limiter is applied, and (in Jelly-RDF 1.2) the lookup
+      * tables do not fill up.
       *
       * @param opt
       *   Options for the RDF stream.
@@ -194,11 +234,18 @@ final class EncoderFlowBuilderImpl[TNode](using
     /** Convert a stream of datasets (iterables with named or unnamed graphs: node as graph name +
       * iterable of triple statements) into a stream of [[RdfStreamFrame]]s. Each element in the
       * output stream may contain multiple graphs, a single graph, or a part of a graph (if the
-      * frame size limiter is used). Physical stream type: GRAPHS. Logical stream type (RDF-STaX):
-      * RDF dataset stream (DATASETS).
+      * frame size limiter is used).
+      *
+      * Jelly-RDF 1.2 (the default): physical stream type QUADS, stream type MESSAGES. There are no
+      * GRAPHS streams in Jelly-RDF 1.2, so the triples are written as quads, with the graph name.
+      * Each dataset in the input stream is one RDF Message. Graphs with no triples are not written.
+      *
+      * Jelly-RDF 1.0 and 1.1: physical stream type GRAPHS. Logical stream type (RDF-STaX): RDF
+      * dataset stream (DATASETS).
       *
       * Each dataset in the input stream is guaranteed to correspond to exactly one
-      * [[RdfStreamFrame]] in the output stream IF no frame size limiter is applied.
+      * [[RdfStreamFrame]] in the output stream IF no frame size limiter is applied, and (in
+      * Jelly-RDF 1.2) the lookup tables do not fill up.
       *
       * @param opt
       *   Options for the RDF stream.
@@ -232,7 +279,22 @@ final class EncoderFlowBuilderImpl[TNode](using
   /** Base trait for FlowableBuilder without type parameters to avoid inheritance shenanigans.
     */
   sealed trait BaseFlowableBuilder:
-    protected[EncoderFlowBuilderImpl] def buildEncoder(p: Params): TEncoder
+    /** Builds the encoder of Jelly-RDF 1.0 and 1.1 streams (row layout).
+      */
+    protected[EncoderFlowBuilderImpl] def buildEncoder(p: EncoderSettings): TEncoder
+
+    /** Builds the flow writing Jelly-RDF 1.2 (column layout). Each materialization of the flow gets
+      * its own [[ColumnFrameWriter]].
+      *
+      * @param options
+      *   stream options
+      * @param element
+      *   handler of the elements of the flow, for a given writer
+      */
+    protected[EncoderFlowBuilderImpl] def columnFlow[T](
+        options: RdfStreamOptions,
+        element: TWriter => T => Unit,
+    ): Flow[T, RdfStreamFrame, NotUsed]
 
   /** Trait for all builders that can immediately be materialized into a flow using the .flow
     * method.
@@ -250,12 +312,14 @@ final class EncoderFlowBuilderImpl[TNode](using
       *   Flow that encodes RDF data into a stream of [[RdfStreamFrame]]s.
       */
     final def flow: Flow[TIn, RdfStreamFrame, NotUsed] =
-      // 1. Traverse the chain of builders to gather all the parameters
-      val params = paramMutatorRec(emptyParams)
-      // 2. Traverse the chain again finding the builder stage that will actually build the encoder
-      val encoder = buildEncoder(params)
-      // 3. Build the flow
-      flowInternal(encoder)
+      // 1. Traverse the chain of builders to gather all the settings
+      val settings = paramMutatorRec(emptySettings)
+      if settings.rowLayout then
+        // 2. Traverse the chain again finding the builder stage that will actually build the encoder
+        val encoder = buildEncoder(settings)
+        // 3. Build the flow
+        flowInternal(encoder)
+      else columnFlow(settings.options, columnElement)
 
     /** Extends the flow with the capability to encode namespace declarations. The input type of the
       * flow will be changed to [[NamespaceDeclaration]] | TIn.
@@ -288,8 +352,20 @@ final class EncoderFlowBuilderImpl[TNode](using
             }
             .via(_child.flowInternal(encoder))
 
-        override protected def paramMutator(p: Params): Params =
-          p.withEnableNamespaceDeclarations(true)
+        override protected[EncoderFlowBuilderImpl] def columnElement(
+            writer: TWriter,
+        ): NamespaceDeclaration | TIn => Unit =
+          val childElement = _child.columnElement(writer)
+          {
+            // The declarations are written in the frame of the next statements, or in the last
+            // frame of the stream.
+            case ns: NamespaceDeclaration =>
+              writer.namespace(ns.prefix, decoderConverter.makeIriNode(ns.iri))
+            case other => childElement(other.asInstanceOf[TIn])
+          }
+
+        override protected def paramMutator(p: EncoderSettings): EncoderSettings =
+          p.withNamespaceDeclarations(true)
       }
 
     /** Internal method returning the actual flow implementation at this stage.
@@ -306,6 +382,18 @@ final class EncoderFlowBuilderImpl[TNode](using
         encoder: TEncoder,
     ): Flow[TIn, RdfStreamFrame, NotUsed]
 
+    /** Internal method returning the handler of the elements of the flow at this stage, writing
+      * Jelly-RDF 1.2.
+      *
+      * Implementations MUST take into account any child stages themselves.
+      *
+      * @param writer
+      *   writer of the frames
+      * @return
+      *   handler of one element of the flow
+      */
+    protected[EncoderFlowBuilderImpl] def columnElement(writer: TWriter): TIn => Unit
+
   end FlowableBuilder
 
   /** Builder stage at which a size limiter is known. Here we can construct encoders that strictly
@@ -319,7 +407,8 @@ final class EncoderFlowBuilderImpl[TNode](using
     override protected val child: Option[EncoderFlowBuilder[Nothing, ?]] = None
 
     /** Convert a flat stream of triple statements into a stream of [[RdfStreamFrame]]s. Physical
-      * stream type: TRIPLES. Logical stream type (RDF-STaX): flat RDF triple stream (FLAT_TRIPLES).
+      * stream type: TRIPLES. Jelly-RDF 1.2 stream type: FLAT. Logical stream type (RDF-STaX,
+      * Jelly-RDF 1.0 and 1.1 only): flat RDF triple stream (FLAT_TRIPLES).
       *
       * This flow will wait for enough items to fill the whole gRPC message, which increases
       * latency. To mitigate that, use the [[flatTriplesGrouped]] method instead.
@@ -341,7 +430,8 @@ final class EncoderFlowBuilderImpl[TNode](using
       new FlatTriplesBuilder(limiter, opt)
 
     /** Convert a flat stream of quad statements into a stream of [[RdfStreamFrame]]s. Physical
-      * stream type: QUADS. Logical stream type (RDF-STaX): flat RDF quad stream (FLAT_QUADS).
+      * stream type: QUADS. Jelly-RDF 1.2 stream type: FLAT. Logical stream type (RDF-STaX,
+      * Jelly-RDF 1.0 and 1.1 only): flat RDF quad stream (FLAT_QUADS).
       *
       * This flow will wait for enough items to fill the whole gRPC message, which increases
       * latency. To mitigate that, use the [[flatQuadsGrouped]] method instead.
@@ -376,26 +466,55 @@ final class EncoderFlowBuilderImpl[TNode](using
         BaseFlowableBuilder:
     override protected val child: Option[EncoderFlowBuilder[TOut, ?]] = Some(_child)
 
-    override final protected[EncoderFlowBuilderImpl] def buildEncoder(p: Params): TEncoder =
+    override final protected[EncoderFlowBuilderImpl] def buildEncoder(
+        p: EncoderSettings,
+    ): TEncoder =
       _child.buildEncoder(p)
+
+    override final protected[EncoderFlowBuilderImpl] def columnFlow[T](
+        options: RdfStreamOptions,
+        element: TWriter => T => Unit,
+    ): Flow[T, RdfStreamFrame, NotUsed] =
+      _child.columnFlow(options, element)
 
   end ExtensionBuilder
 
   /** Builder stage that defines the actual statement encoding pipeline. It is responsible for
-    * building the ProtoEncoder and constructing the last stage of the flow. This stage may have
+    * building the encoder and constructing the last stage of the flow. This stage may have
     * children, but they are not flowable builders.
     *
+    * @param maybeLimiter
+    *   Size limiter, if any.
     * @tparam TIn
     *   Type of the input elements to the flow in this stage.
     */
-  private sealed trait EncoderBuilder[TIn](opt: RdfStreamOptions)
+  private sealed trait EncoderBuilder[TIn](maybeLimiter: Option[SizeLimiter])
       extends FlowableBuilder[TIn, Nothing]:
 
     override final protected val child: Option[EncoderFlowBuilder[Nothing, ?]] = None
 
-    override final protected[EncoderFlowBuilderImpl] def buildEncoder(p: Params): TEncoder =
+    override final protected[EncoderFlowBuilderImpl] def buildEncoder(
+        p: EncoderSettings,
+    ): TEncoder =
       val buffer = RowBuffer.newLazyImmutable(16)
-      converterFactory.encoder(p.withRowBuffer(buffer))
+      converterFactory.encoder(
+        ProtoEncoder.Params.of(p.options, p.namespaceDeclarations, buffer),
+      )
+
+    override final protected[EncoderFlowBuilderImpl] def columnFlow[T](
+        options: RdfStreamOptions,
+        element: TWriter => T => Unit,
+    ): Flow[T, RdfStreamFrame, NotUsed] =
+      Flow[T]
+        .statefulMap(() =>
+          val writer = new ColumnFrameWriter[TNode](options, maybeLimiter)
+          (writer, element(writer)),
+        )(
+          (state, e) => (state, state._1.write(state._2(e))),
+          // Whatever is left at the end of the stream
+          state => Some(state._1.finish()),
+        )
+        .mapConcat(identity)
 
   end EncoderBuilder
 
@@ -406,7 +525,7 @@ final class EncoderFlowBuilderImpl[TNode](using
       converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[
         TNode,
       ] & TripleExtractor[TNode, TTriple], ?],
-  ) extends EncoderBuilder[TTriple](opt):
+  ) extends EncoderBuilder[TTriple](Some(limiter)):
 
     private val tripleExtractor = converterFactory.encoderConverter()
 
@@ -424,7 +543,12 @@ final class EncoderFlowBuilderImpl[TNode](using
         encoder,
       )
 
-    override protected def paramMutator(p: Params): Params =
+    override protected[EncoderFlowBuilderImpl] def columnElement(
+        writer: TWriter,
+    ): TTriple => Unit =
+      writeTriple(writer, tripleExtractor)
+
+    override protected def paramMutator(p: EncoderSettings): EncoderSettings =
       p.withOptions(makeOptions(opt, PhysicalStreamType.TRIPLES, LogicalStreamType.FLAT_TRIPLES))
 
   // Grouped triples
@@ -436,7 +560,7 @@ final class EncoderFlowBuilderImpl[TNode](using
       converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[
         TNode,
       ] & TripleExtractor[TNode, TTriple], ?],
-  ) extends EncoderBuilder[IterableOnce[TTriple]](opt):
+  ) extends EncoderBuilder[IterableOnce[TTriple]](maybeLimiter):
 
     private val tripleExtractor = converterFactory.encoderConverter()
 
@@ -454,7 +578,12 @@ final class EncoderFlowBuilderImpl[TNode](using
         encoder,
       )
 
-    override protected def paramMutator(p: Params): Params =
+    override protected[EncoderFlowBuilderImpl] def columnElement(
+        writer: TWriter,
+    ): IterableOnce[TTriple] => Unit =
+      writeGroup(writer, writeTriple(writer, tripleExtractor))
+
+    override protected def paramMutator(p: EncoderSettings): EncoderSettings =
       p.withOptions(makeOptions(opt, PhysicalStreamType.TRIPLES, lst))
 
   // Flat quads
@@ -462,7 +591,7 @@ final class EncoderFlowBuilderImpl[TNode](using
       converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[
         TNode,
       ] & QuadExtractor[TNode, TQuad], ?],
-  ) extends EncoderBuilder[TQuad](opt):
+  ) extends EncoderBuilder[TQuad](Some(limiter)):
 
     private val quadExtractor = converterFactory.encoderConverter()
 
@@ -481,7 +610,10 @@ final class EncoderFlowBuilderImpl[TNode](using
         encoder,
       )
 
-    override protected def paramMutator(p: Params): Params =
+    override protected[EncoderFlowBuilderImpl] def columnElement(writer: TWriter): TQuad => Unit =
+      writeQuad(writer, quadExtractor)
+
+    override protected def paramMutator(p: EncoderSettings): EncoderSettings =
       p.withOptions(makeOptions(opt, PhysicalStreamType.QUADS, LogicalStreamType.FLAT_QUADS))
 
   // Grouped quads
@@ -493,7 +625,7 @@ final class EncoderFlowBuilderImpl[TNode](using
       converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[
         TNode,
       ] & QuadExtractor[TNode, TQuad], ?],
-  ) extends EncoderBuilder[IterableOnce[TQuad]](opt):
+  ) extends EncoderBuilder[IterableOnce[TQuad]](maybeLimiter):
 
     private val quadExtractor = converterFactory.encoderConverter()
 
@@ -512,7 +644,12 @@ final class EncoderFlowBuilderImpl[TNode](using
         encoder,
       )
 
-    override protected def paramMutator(p: Params): Params =
+    override protected[EncoderFlowBuilderImpl] def columnElement(
+        writer: TWriter,
+    ): IterableOnce[TQuad] => Unit =
+      writeGroup(writer, writeQuad(writer, quadExtractor))
+
+    override protected def paramMutator(p: EncoderSettings): EncoderSettings =
       p.withOptions(makeOptions(opt, PhysicalStreamType.QUADS, lst))
 
   // Named graphs
@@ -523,7 +660,7 @@ final class EncoderFlowBuilderImpl[TNode](using
       converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[
         TNode,
       ] & TripleExtractor[TNode, TTriple], ?],
-  ) extends EncoderBuilder[GraphHolder[TNode, TTriple]](opt):
+  ) extends EncoderBuilder[GraphHolder[TNode, TTriple]](maybeLimiter):
 
     private val tripleExtractor = converterFactory.encoderConverter()
 
@@ -541,7 +678,16 @@ final class EncoderFlowBuilderImpl[TNode](using
           ),
         )
 
-    override protected def paramMutator(p: Params): Params =
+    override protected[EncoderFlowBuilderImpl] def columnElement(
+        writer: TWriter,
+    ): GraphHolder[TNode, TTriple] => Unit =
+      val writeOne = writeGraph(writer, tripleExtractor)
+      graph => {
+        writeOne(graph)
+        writer.endGroup()
+      }
+
+    override protected def paramMutator(p: EncoderSettings): EncoderSettings =
       p.withOptions(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.NAMED_GRAPHS))
 
   // Datasets
@@ -552,7 +698,7 @@ final class EncoderFlowBuilderImpl[TNode](using
       converterFactory: JellyConverterFactory[TNode, ?, ? <: ProtoEncoderConverter[
         TNode,
       ] & TripleExtractor[TNode, TTriple], ?],
-  ) extends EncoderBuilder[IterableOnce[GraphHolder[TNode, TTriple]]](opt):
+  ) extends EncoderBuilder[IterableOnce[GraphHolder[TNode, TTriple]]](maybeLimiter):
 
     private val tripleExtractor = converterFactory.encoderConverter()
 
@@ -561,23 +707,88 @@ final class EncoderFlowBuilderImpl[TNode](using
     ): Flow[IterableOnce[GraphHolder[TNode, TTriple]], RdfStreamFrame, NotUsed] =
       groupedFlow(consumeGraph(encoder)(using tripleExtractor), maybeLimiter, encoder)
 
-    override protected def paramMutator(p: Params): Params =
+    override protected[EncoderFlowBuilderImpl] def columnElement(
+        writer: TWriter,
+    ): IterableOnce[GraphHolder[TNode, TTriple]] => Unit =
+      writeGroup(writer, writeGraph(writer, tripleExtractor))
+
+    override protected def paramMutator(p: EncoderSettings): EncoderSettings =
       p.withOptions(makeOptions(opt, PhysicalStreamType.GRAPHS, LogicalStreamType.DATASETS))
 
   /// *** HELPER METHODS *** ///
 
-  /** Make Jelly options while preserving the user-set logical stream type.
-    */
+  /** Make Jelly options for the given stream type. */
   private def makeOptions(
       opt: RdfStreamOptions,
       pst: PhysicalStreamType,
       lst: LogicalStreamType,
   ): RdfStreamOptions =
-    opt.clone
-      .setPhysicalType(pst)
-      .setLogicalType(
-        if opt.getLogicalType == LogicalStreamType.UNSPECIFIED then lst else opt.getLogicalType,
+    if JellyConstants.requestsRowLayout(opt.getVersion) then
+      opt.clone
+        .setPhysicalType(pst)
+        .setLogicalType(
+          if opt.getLogicalType == LogicalStreamType.UNSPECIFIED then lst
+          else opt.getLogicalType,
+        )
+    else
+      opt.clone
+        .setPhysicalType(
+          if pst == PhysicalStreamType.GRAPHS then PhysicalStreamType.QUADS else pst,
+        )
+        .setStreamType(
+          if lst == LogicalStreamType.FLAT_TRIPLES || lst == LogicalStreamType.FLAT_QUADS then
+            RdfStreamType.FLAT
+          else RdfStreamType.MESSAGES,
+        )
+
+  private def writeTriple[TTriple](
+      writer: TWriter,
+      tripleExtractor: TripleExtractor[TNode, TTriple],
+  ): TTriple => Unit =
+    triple =>
+      writer.triple(
+        tripleExtractor.getTripleSubject(triple),
+        tripleExtractor.getTriplePredicate(triple),
+        tripleExtractor.getTripleObject(triple),
       )
+
+  private def writeQuad[TQuad](
+      writer: TWriter,
+      quadExtractor: QuadExtractor[TNode, TQuad],
+  ): TQuad => Unit =
+    quad =>
+      writer.quad(
+        quadExtractor.getQuadSubject(quad),
+        quadExtractor.getQuadPredicate(quad),
+        quadExtractor.getQuadObject(quad),
+        quadExtractor.getQuadGraph(quad),
+      )
+
+  /** Writes the triples of a graph as quads (Jelly-RDF 1.2).
+    */
+  private def writeGraph[TTriple](
+      writer: TWriter,
+      tripleExtractor: TripleExtractor[TNode, TTriple],
+  ): GraphHolder[TNode, TTriple] => Unit =
+    graph => {
+      val name = graph.name()
+      graph.triples().forEach(triple =>
+        writer.quad(
+          tripleExtractor.getTripleSubject(triple),
+          tripleExtractor.getTriplePredicate(triple),
+          tripleExtractor.getTripleObject(triple),
+          name,
+        ),
+      )
+    }
+
+  /** Writes a group of elements, and ends the group (Jelly-RDF 1.2).
+    */
+  private def writeGroup[T](writer: TWriter, writeOne: T => Unit): IterableOnce[T] => Unit =
+    group => {
+      group.iterator.foreach(writeOne)
+      writer.endGroup()
+    }
 
   private def consumeGraph[TEncoder <: ProtoEncoder[TNode], TTriple](
       encoder: TEncoder,

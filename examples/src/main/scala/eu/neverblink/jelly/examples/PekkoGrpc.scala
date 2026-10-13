@@ -140,7 +140,8 @@ object PekkoGrpc extends shared.ScalaExample:
     }
     Await.ready(quadsFuture, 10.seconds)
 
-    // Let's try the same, with a GRAPHS stream
+    // Let's try the same, with a stream of named graphs. Jelly-RDF 1.2 has no GRAPHS streams, so the
+    // server sends a QUADS stream with each graph in its own RDF message.
     println("\n\n[CLIENT] Subscribing to GRAPHS data from the server...")
     val graphsFuture = client
       .subscribeRdf(
@@ -151,7 +152,7 @@ object PekkoGrpc extends shared.ScalaExample:
           ),
       )
       // Decode the response and transform it into a stream of quads
-      .via(DecoderFlow.decodeGraphs.asDatasetStreamOfQuads)
+      .via(DecoderFlow.decodeQuads.asDatasetStreamOfQuads)
       .mapConcat(identity)
       .runFold(0L)((acc, _) => acc + 1)
       // Process the result of the stream (Future[Long])
@@ -258,6 +259,7 @@ object PekkoGrpc extends shared.ScalaExample:
                 .flow,
             )
         case PhysicalStreamType.GRAPHS =>
+          // In Jelly-RDF 1.2, this is a QUADS stream of RDF Messages, one per graph
           RdfSource.builder().datasetAsGraphs(dataset).source
             .via(
               EncoderFlow.builder
