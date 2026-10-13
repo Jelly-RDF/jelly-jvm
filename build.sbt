@@ -29,6 +29,9 @@ Test / logBuffered := false
 lazy val pekkoV = "1.7.1"
 lazy val pekkoGrpcV = "1.2.0"
 lazy val jenaV = "6.2.0"
+// The benchmarks always run on the newest Jena, whatever jenaV is set to (CI also builds against
+// older Jena versions, which the benchmark code does not have to support)
+lazy val jenaBenchV = "6.2.0"
 // RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
 // targets Java 21 (see javacOptions), but jelly-rdf4j can only *run* on Java 25+, as RDF4J 6 does.
 lazy val rdf4jV = "6.1.0"
@@ -637,7 +640,9 @@ lazy val jmh = (project in file("jmh"))
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
       "com.github.luben" % "zstd-jni" % "1.5.7-23",
       // The library modules only have Jena and RDF4J as provided dependencies
-    ) ++ jenaDeps ++ rdf4jDeps ++ rdf4jSparqlDeps,
+      "org.apache.jena" % "jena-core" % jenaBenchV,
+      "org.apache.jena" % "jena-arq" % jenaBenchV,
+    ) ++ rdf4jDeps ++ rdf4jSparqlDeps,
     excludeDependencies += ExclusionRule("org.apache.jena", "jena-fuseki-main"),
     // The cache lives outside target/, so that `clean` does not throw away half a gigabyte of
     // downloads
