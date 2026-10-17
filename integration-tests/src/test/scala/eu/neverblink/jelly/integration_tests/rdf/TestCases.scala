@@ -31,8 +31,6 @@ object TestCases:
     ),
   )
 
-  val protocolVocabulary: File = File(getClass.getResource("/protocol/vocabulary.ttl").toURI)
-
   val sparqlCollections: Seq[(String, File)] = Seq(
     "sparql/from_jelly",
     "sparql/to_jelly",
@@ -43,9 +41,21 @@ object TestCases:
     ),
   )
 
+  /** Jelly-RDF 1.0 and 1.1 test cases (row layout). */
   val protocolCollections: Seq[(String, File)] = Seq(
-    "rdf/from_jelly",
-    "rdf/to_jelly",
+    "rdf/v1_1/from_jelly",
+    "rdf/v1_1/to_jelly",
+  ).map(name =>
+    (
+      name,
+      File(getClass.getResource("/protocol/" + name + "/manifest.ttl").toURI),
+    ),
+  )
+
+  /** Jelly-RDF 1.2 test cases (column layout). */
+  val protocol12Collections: Seq[(String, File)] = Seq(
+    "rdf/v1_2/from_jelly",
+    "rdf/v1_2/to_jelly",
   ).map(name =>
     (
       name,

@@ -609,6 +609,37 @@ class RdfColumnLayoutSpec extends AnyWordSpec, Matchers:
       decodeError(frame) should include("may only have the stream options in their rows")
     }
 
+    "reject a frame with two stream options rows" in {
+      val frame = RdfStreamFrame.newInstance()
+        .addRows(RdfStreamRow.newInstance().setOptions(options().setVersion(3)))
+        .addRows(RdfStreamRow.newInstance().setOptions(options().setVersion(3)))
+      decodeError(frame) should include("may have at most one row")
+    }
+
+    "accept stream options in consecutive frames without column batches" in {
+      val decoder = MockConverterFactory.anyStatementDecoder(
+        EventCollector(),
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
+      )
+      for _ <- 1 to 3 do
+        decoder.ingestFrame(
+          RdfStreamFrame.newInstance()
+            .addRows(RdfStreamRow.newInstance().setOptions(options().setVersion(3))),
+        )
+    }
+
+    "accept a frame with two stream options rows in a Jelly-RDF 1.1 stream" in {
+      val decoder = MockConverterFactory.anyStatementDecoder(
+        EventCollector(),
+        JellyOptions.DEFAULT_SUPPORTED_OPTIONS,
+      )
+      decoder.ingestFrame(
+        RdfStreamFrame.newInstance()
+          .addRows(RdfStreamRow.newInstance().setOptions(options().setVersion(2)))
+          .addRows(RdfStreamRow.newInstance().setOptions(options().setVersion(2))),
+      )
+    }
+
     "reject a column batch in a Jelly-RDF 1.1 stream" in {
       val frame = RdfStreamFrame.newInstance()
         .addRows(RdfStreamRow.newInstance().setOptions(options().setVersion(2)))

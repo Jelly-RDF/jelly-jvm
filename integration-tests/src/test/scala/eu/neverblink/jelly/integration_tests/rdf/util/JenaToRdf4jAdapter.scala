@@ -1,9 +1,9 @@
 package eu.neverblink.jelly.integration_tests.rdf.util
 
-import org.apache.jena.graph.{Node, Triple}
+import org.apache.jena.graph.{Node, TextDirection, Triple}
 import org.apache.jena.riot.system.StreamRDFBase
 import org.apache.jena.sparql.core.Quad
-import org.eclipse.rdf4j.model.{IRI, Resource, Value}
+import org.eclipse.rdf4j.model.{IRI, Literal, Resource, Value}
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.rio.RDFHandler
 
@@ -32,7 +32,12 @@ class JenaToRdf4jAdapter(delegate: RDFHandler) extends StreamRDFBase {
   def makeValue(n: Node): Value = {
     if n.isLiteral then {
       val lit = n.getLiteral
-      if lit.language() != "" then vf.createLiteral(lit.getValue.toString, lit.language())
+      if n.getLiteralBaseDirection != null then
+        val dir =
+          if n.getLiteralBaseDirection == TextDirection.LTR then Literal.BaseDirection.LTR
+          else Literal.BaseDirection.RTL
+        vf.createLiteral(lit.getLexicalForm, lit.language(), dir)
+      else if lit.language() != "" then vf.createLiteral(lit.getValue.toString, lit.language())
       else if lit.getDatatype != null then
         vf.createLiteral(lit.getLexicalForm, vf.createIRI(lit.getDatatypeURI))
       else vf.createLiteral(lit.getValue.toString)

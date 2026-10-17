@@ -24,6 +24,11 @@ object ProtocolTestVocabulary:
   val testEntryTestRdfFromJellyProperty: Property =
     ResourceFactory.createProperty(testEntryPrefix, "TestRdfFromJelly")
 
+  val testEntryTestRdf12ToJellyProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "TestRdf12ToJelly")
+  val testEntryTestRdf12FromJellyProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "TestRdf12FromJelly")
+
   val testEntryTestSparqlToJellyProperty: Property =
     ResourceFactory.createProperty(testEntryPrefix, "TestSparqlToJelly")
   val testEntryTestSparqlFromJellyProperty: Property =
@@ -35,6 +40,8 @@ object ProtocolTestVocabulary:
     ResourceFactory.createProperty(testEntryPrefix, "requirementRdf12")
   val testEntryRequirementPunctuatedProperty: Property =
     ResourceFactory.createProperty(testEntryPrefix, "requirementPunctuated")
+  val testEntryRequirementMessagesProperty: Property =
+    ResourceFactory.createProperty(testEntryPrefix, "requirementMessages")
 
   val testEntryNotableProperty: Property = ResourceFactory.createProperty(manifestPrefix, "notable")
   val testEntryFeatureShouldLevelProperty: Property =
@@ -100,6 +107,12 @@ object ProtocolTestVocabulary:
     def isTestRdfFromJelly: Boolean =
       resource.hasProperty(RDF.`type`, testEntryTestRdfFromJellyProperty)
 
+    def isTestRdf12ToJelly: Boolean =
+      resource.hasProperty(RDF.`type`, testEntryTestRdf12ToJellyProperty)
+
+    def isTestRdf12FromJelly: Boolean =
+      resource.hasProperty(RDF.`type`, testEntryTestRdf12FromJellyProperty)
+
     def isTestSparqlToJelly: Boolean =
       resource.hasProperty(RDF.`type`, testEntryTestSparqlToJellyProperty)
 
@@ -127,6 +140,15 @@ object ProtocolTestVocabulary:
 
     def hasRdfStarRequirement: Boolean =
       resource.hasProperty(testEntryRequiresProperty, testEntryRequirementRdfStarProperty)
+
+    /** RDF 1.2 terms: base directions (RDF 1.2 Basic) or triple terms (full RDF 1.2). */
+    def hasRdf12Requirement: Boolean =
+      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementRdf12BasicProperty)
+        || resource.hasProperty(testEntryRequiresProperty, testEntryRequirementRdf12Property)
+
+    /** A Jelly-RDF 1.2 stream of RDF Messages (stream type MESSAGES). */
+    def hasMessagesRequirement: Boolean =
+      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementMessagesProperty)
 
     def hasGeneralizedStatementsRequirement: Boolean =
       resource.hasProperty(
