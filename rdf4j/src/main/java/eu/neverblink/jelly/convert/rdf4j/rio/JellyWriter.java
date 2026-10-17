@@ -142,6 +142,7 @@ public final class JellyWriter extends AbstractRDFWriter {
             rowOutput = new RowOutput(frameSize);
             encoder = null;
         } else {
+            options.setRdfVersion(config.get(JellyWriterSettings.RDF_VERSION));
             this.options = options;
             rowOutput = null;
             encoder = converterFactory.encoder(

@@ -69,6 +69,7 @@ public abstract class ProtoDecoder<TNode, TDatatype> extends DecoderBase<TNode, 
             ingestColumns(columns);
         }
         frame.clear();
+        endFrame();
     }
 
     /**
@@ -84,5 +85,11 @@ public abstract class ProtoDecoder<TNode, TDatatype> extends DecoderBase<TNode, 
         if (columns != null) {
             ingestColumns(columns);
         }
+        endFrame();
     }
+
+    /**
+     * Called at the end of each frame, by {@link #ingestFrame} and {@link #endParsedFrame}.
+     */
+    protected void endFrame() {}
 }
