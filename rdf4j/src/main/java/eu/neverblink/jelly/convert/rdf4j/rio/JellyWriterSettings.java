@@ -4,6 +4,7 @@ import eu.neverblink.jelly.core.internal.BaseJellyOptions;
 import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.PhysicalStreamType;
 import eu.neverblink.jelly.core.proto.v1.RdfStreamOptions;
+import eu.neverblink.jelly.core.proto.v1.RdfVersion;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.*;
 
@@ -31,7 +32,7 @@ public final class JellyWriterSettings extends WriterConfig {
     }
 
     /**
-     * Sets the stream name, the stream type and the lookup table sizes from the options. The protocol
+     * Sets the stream name, the stream type, the RDF version and the lookup table sizes from the options. The protocol
      * version, the logical stream type and the RDF-star flag are copied too, but only matter for
      * Jelly-RDF 1.0 and 1.1 output, which is deprecated.
      *
@@ -42,6 +43,7 @@ public final class JellyWriterSettings extends WriterConfig {
         this.set(PROTO_VERSION, options.getVersion());
         this.set(STREAM_NAME, options.getStreamName());
         this.set(PHYSICAL_TYPE, options.getPhysicalType());
+        this.set(RDF_VERSION, options.getRdfVersion());
         this.set(LOGICAL_TYPE, options.getLogicalType());
         this.set(ALLOW_RDF_STAR, options.getRdfStar());
         this.set(MAX_NAME_TABLE_SIZE, options.getMaxNameTableSize());
@@ -104,6 +106,13 @@ public final class JellyWriterSettings extends WriterConfig {
         "eu.neverblink.jelly.convert.rdf4j.rio.physicalType",
         "Physical stream type",
         PhysicalStreamType.QUADS
+    );
+
+    public static final ClassRioSetting<RdfVersion> RDF_VERSION = new ClassRioSetting<>(
+        "eu.neverblink.jelly.convert.rdf4j.rio.rdfVersion",
+        "Version of RDF whose terms may occur in the stream. Unspecified (the default) announces no version. " +
+            "Only used in Jelly-RDF 1.2 output.",
+        RdfVersion.RDF_VERSION_UNSPECIFIED
     );
 
     /**

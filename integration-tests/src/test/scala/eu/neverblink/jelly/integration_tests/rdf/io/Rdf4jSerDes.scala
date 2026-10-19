@@ -1,6 +1,8 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
+import eu.neverblink.jelly.convert.rdf4j.Rdf4jConverterFactory
 import eu.neverblink.jelly.convert.rdf4j.rio.{JellyFormat, JellyParserSettings, JellyWriterSettings}
+import eu.neverblink.jelly.core.RdfEncoder
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.rdf.util.JenaToRdf4jAdapter
 import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
@@ -8,7 +10,7 @@ import eu.neverblink.jelly.integration_tests.util.Measure
 import org.apache.jena.riot.RDFParser
 import org.apache.jena.riot.lang.LabelToNode
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
-import org.eclipse.rdf4j.model.{Statement, TripleTerm, Value}
+import org.eclipse.rdf4j.model.{IRI, Resource, Statement, TripleTerm, Value}
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 
@@ -32,6 +34,26 @@ object Rdf4jSerDes
   override def supportsRdfStar: Boolean = false
 
   override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
+
+  override val messages: Option[MessagesSerDes[Statement, Statement]] = Some(
+    new CoreMessagesSerDes[Value, Statement, Statement](Rdf4jConverterFactory.getInstance()) {
+      private val vf = SimpleValueFactory.getInstance
+
+      override protected def makeTriple(s: Value, p: Value, o: Value): Statement =
+        vf.createStatement(s.asInstanceOf[Resource], p.asInstanceOf[IRI], o)
+      override protected def makeQuad(s: Value, p: Value, o: Value, g: Value): Statement =
+        vf.createStatement(
+          s.asInstanceOf[Resource],
+          p.asInstanceOf[IRI],
+          o,
+          g.asInstanceOf[Resource],
+        )
+      override protected def writeTriple(encoder: RdfEncoder[Value], st: Statement): Unit =
+        encoder.handleTriple(st.getSubject, st.getPredicate, st.getObject)
+      override protected def writeQuad(encoder: RdfEncoder[Value], st: Statement): Unit =
+        encoder.handleQuad(st.getSubject, st.getPredicate, st.getObject, st.getContext)
+    },
+  )
 
   private def read(
       streams: Seq[InputStream],

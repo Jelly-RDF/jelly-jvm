@@ -3,6 +3,7 @@ package eu.neverblink.jelly.integration_tests.rdf
 import eu.neverblink.jelly.convert.jena.traits.JenaTest
 import eu.neverblink.jelly.core.helpers.TestIoUtil.withSilencedOutput
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamFrame, RdfStreamOptions}
+import eu.neverblink.jelly.core.utils.IoUtils
 import eu.neverblink.jelly.integration_tests.rdf.io.*
 import eu.neverblink.jelly.integration_tests.util.JellyCli
 import eu.neverblink.jelly.integration_tests.util.OrderedRdfCompare
@@ -15,8 +16,10 @@ import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{File, FileInputStream}
 import java.util.UUID.randomUUID
+import scala.util.{Failure, Success, Try, Using}
 
-/** Test the implementation with protocol test cases.
+/** Test the implementation with protocol test cases: the Jelly-RDF 1.0/1.1 suite (row layout) and
+  * the Jelly-RDF 1.2 suite (column layout).
   *
   * To generate conformance reports, use the following command, which will limit the test scope to
   * this file only and use a special reporter:
@@ -28,6 +31,8 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
   given ActorSystem = ActorSystem("test")
 
   val frameSize = 10
+
+  private val allCollections = TestCases.protocolCollections ++ TestCases.protocol12Collections
 
   runRdfToJellyTests(JenaStreamSerDes)
   runRdfToJellyTests(Rdf4jSerDes)
@@ -45,11 +50,11 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
       ser: ProtocolSerDes[TNSer, TTSer, TQSer],
   ): Unit =
     s"Serializer ${ser.name}" when {
-      for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
+      for (testCollectionName, manifestFile) <- allCollections do
         val manifestModel = ModelFactory.createDefaultModel()
         manifestModel.read(manifestFile.toURI.toString)
         val testEntries = manifestModel.extractTestEntries
-          .filter(_.isTestRdfToJelly)
+          .filter(e => e.isTestRdfToJelly || e.isTestRdf12ToJelly)
 
         for testEntry <- testEntries do
           s"Protocol test ${testEntry.extractTestUri} – ${testEntry.extractTestName}" in {
@@ -57,7 +62,8 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
               isTestEntryRelevantByFeatures(testEntry, ser),
               "Test entry not relevant to implementation",
             )
-            singleRdfToJellyTest(testEntry, ser)
+            if testEntry.isTestRdf12ToJelly then singleRdf12ToJellyTest(testEntry, ser)
+            else singleRdfToJellyTest(testEntry, ser)
           }
     }
 
@@ -129,11 +135,11 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
       des: ProtocolSerDes[TNDes, TTDes, TQDes],
   ): Unit =
     s"Deserializer ${des.name}" when {
-      for (testCollectionName, manifestFile) <- TestCases.protocolCollections do
+      for (testCollectionName, manifestFile) <- allCollections do
         val manifestModel = ModelFactory.createDefaultModel()
         manifestModel.read(manifestFile.toURI.toString)
         val testEntries = manifestModel.extractTestEntries
-          .filter(_.isTestRdfFromJelly)
+          .filter(e => e.isTestRdfFromJelly || e.isTestRdf12FromJelly)
 
         for testEntry <- testEntries do
           s"Protocol test ${testEntry.extractTestUri} – ${testEntry.extractTestName}" in {
@@ -141,7 +147,8 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
               isTestEntryRelevantByFeatures(testEntry, des),
               "Test entry not relevant to implementation",
             )
-            singleRdfFromJellyTest(testEntry, des)
+            if testEntry.isTestRdf12FromJelly then singleRdf12FromJellyTest(testEntry, des)
+            else singleRdfFromJellyTest(testEntry, des)
           }
     }
 
@@ -199,6 +206,152 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
         throw exception.get // Rethrow exception if test is positive
   }
 
+  /** Jelly-RDF 1.2: write the input, check the stream options of the output, read it back, and
+    * compare to the input.
+    */
+  private def singleRdf12ToJellyTest[TNSer, TTSer, TQSer](
+      testEntry: Resource,
+      ser: ProtocolSerDes[TNSer, TTSer, TQSer],
+  ): Unit = withSilencedOutput {
+    val testActionFiles = testEntry.extractTestActions.map(TestCases.getProtocolTestActionFile)
+    val streamOptions = extractStreamOptions(testActionFiles.head)
+    val inputFiles = testActionFiles.tail
+    val outFile = File.createTempFile(s"test-rdf12-$randomUUID", ".jelly")
+    val triples = testEntry.hasPhysicalTypeTriplesRequirement
+
+    val steps: (() => Unit, () => Seq[Seq[TTSer | TQSer]], Seq[Seq[TTSer | TQSer]]) =
+      if testEntry.hasMessagesRequirement then
+        // In a stream of RDF Messages, each message has its own file, with its own blank node
+        // scope.
+        val m = ser.messages.get
+        if triples then
+          val in = inputFiles.map(f => ser.readTriplesW3C(Seq(f)))
+          (
+            () => m.writeTriplesMessagesJelly(outFile, in, streamOptions, frameSize),
+            () => m.readTriplesMessagesJelly(outFile),
+            in,
+          )
+        else
+          val in = inputFiles.map(f => ser.readQuadsW3C(Seq(f)))
+          (
+            () => m.writeQuadsMessagesJelly(outFile, in, streamOptions, frameSize),
+            () => m.readQuadsMessagesJelly(outFile),
+            in,
+          )
+      else if triples then
+        val in = ser.readTriplesW3C(inputFiles)
+        (
+          () => ser.writeTriplesJelly(outFile, in, Some(streamOptions), frameSize),
+          () => Seq(ser.readTriplesJelly(outFile, None)),
+          Seq(in),
+        )
+      else
+        val in = ser.readQuadsW3C(inputFiles)
+        (
+          () => ser.writeQuadsJelly(outFile, in, Some(streamOptions), frameSize),
+          () => Seq(ser.readQuadsOrGraphsJelly(outFile, None)),
+          Seq(in),
+        )
+
+    val (write, readBack, expected) = steps
+    val writeResult = Try(write())
+    if testEntry.isTestNegative then writeResult.isFailure shouldBe true
+    else
+      writeResult.get
+      firstStreamOptions(outFile) match
+        case Some(written) =>
+          if written != streamOptions then
+            fail(
+              s"Stream options do not match. Expected: ${describe(streamOptions)}. " +
+                s"Actual: ${describe(written)}.",
+            )
+        case None =>
+          // An output without any non-empty frame is valid only if there is nothing to write
+          expected.flatten shouldBe empty
+      compareMessages(ser, expected, readBack())
+  }
+
+  /** Jelly-RDF 1.2: read the input and compare to the expected statements. */
+  private def singleRdf12FromJellyTest[TNDes, TTDes, TQDes](
+      testEntry: Resource,
+      des: ProtocolSerDes[TNDes, TTDes, TQDes],
+  ): Unit = withSilencedOutput {
+    val inFile = testEntry.extractTestActions.map(TestCases.getProtocolTestActionFile).head
+    val testResultFiles = testEntry.extractTestResults.map(TestCases.getProtocolTestActionFile)
+    val triples = testEntry.hasPhysicalTypeTriplesRequirement
+
+    val result = Try {
+      if testEntry.hasMessagesRequirement then
+        val m = des.messages.get
+        if triples then
+          val actual = m.readTriplesMessagesJelly(inFile)
+          if testEntry.isTestPositive then
+            compareMessages(des, testResultFiles.map(f => des.readTriplesW3C(Seq(f))), actual)
+        else
+          val actual = m.readQuadsMessagesJelly(inFile)
+          if testEntry.isTestPositive then
+            compareMessages(des, testResultFiles.map(f => des.readQuadsW3C(Seq(f))), actual)
+      else if triples then
+        val actual = des.readTriplesJelly(inFile, None)
+        if testEntry.isTestPositive then
+          OrderedRdfCompare.compare(des, des.readTriplesW3C(testResultFiles), actual)
+      else
+        val actual = des.readQuadsOrGraphsJelly(inFile, None)
+        if testEntry.isTestPositive then
+          OrderedRdfCompare.compare(des, des.readQuadsW3C(testResultFiles), actual)
+    }
+
+    result match
+      case Failure(e) =>
+        e.printStackTrace(Console.err)
+        if testEntry.isTestPositive then throw e
+      case Success(_) =>
+        if testEntry.isTestNegative then
+          fail("Expected the decoder to report an error, but it did not")
+  }
+
+  /** Compares the messages one by one, each with its own blank node mapping. */
+  private def compareMessages[TN, TT, TQ](
+      serDes: ProtocolSerDes[TN, TT, TQ],
+      expected: Seq[Seq[TT | TQ]],
+      actual: Seq[Seq[TT | TQ]],
+  ): Unit =
+    actual.size shouldBe expected.size
+    expected.zip(actual).foreach((e, a) => OrderedRdfCompare.compare(serDes, e, a))
+
+  /** The stream options of the first non-empty frame, if there is one. */
+  private def firstStreamOptions(file: File): Option[RdfStreamOptions] =
+    var options: Option[RdfStreamOptions] = None
+    Using.resource(FileInputStream(file)) { is =>
+      IoUtils.readStream(
+        is,
+        RdfStreamFrame.getFactory,
+        (frame: RdfStreamFrame) =>
+          if options.isEmpty && (!frame.getRows.isEmpty || frame.getColumns != null) then
+            options = Some(
+              if frame.getRows.isEmpty then RdfStreamOptions.newInstance()
+              else frame.getRows.iterator.next.getOptions.clone(),
+            ),
+      )
+    }
+    options
+
+  /** The fields of the stream options, for readable test failures. */
+  private def describe(o: RdfStreamOptions): String =
+    Seq(
+      s"stream_name=\"${o.getStreamName}\"",
+      s"physical_type=${o.getPhysicalType}",
+      s"generalized_statements=${o.getGeneralizedStatements}",
+      s"rdf_star=${o.getRdfStar}",
+      s"stream_type=${o.getStreamType}",
+      s"rdf_version=${o.getRdfVersion}",
+      s"max_name_table_size=${o.getMaxNameTableSize}",
+      s"max_prefix_table_size=${o.getMaxPrefixTableSize}",
+      s"max_datatype_table_size=${o.getMaxDatatypeTableSize}",
+      s"logical_type=${o.getLogicalType}",
+      s"version=${o.getVersion}",
+    ).mkString(", ")
+
   private def extractStreamOptions(streamOptionsFile: File): RdfStreamOptions = {
     val inputStream = FileInputStream(streamOptionsFile)
     val frame = RdfStreamFrame.parseDelimitedFrom(inputStream)
@@ -210,6 +363,9 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
       entry: Resource,
       serDes: ProtocolSerDes[TN, TT, TQ],
   ): Boolean = {
+    val isFromJelly = entry.isTestRdfFromJelly || entry.isTestRdf12FromJelly
+    val isToJelly = entry.isTestRdfToJelly || entry.isTestRdf12ToJelly
+
     val rdfStarCompatible = !entry.hasRdfStarRequirement
       || entry.hasRdfStarRequirement && entry.hasPhysicalTypeTriplesRequirement && serDes.supportsRdfStar(
         PhysicalStreamType.TRIPLES,
@@ -228,13 +384,13 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
 
     val readingTriplesCompatible = {
       val readingTriplesRequirement =
-        entry.hasPhysicalTypeTriplesRequirement && entry.isTestRdfFromJelly
+        entry.hasPhysicalTypeTriplesRequirement && isFromJelly
       !readingTriplesRequirement || readingTriplesRequirement && serDes.supportsReadingTriples
     }
 
     val writingTriplesCompatible = {
       val writingTriplesRequirement =
-        entry.hasPhysicalTypeTriplesRequirement && entry.isTestRdfToJelly
+        entry.hasPhysicalTypeTriplesRequirement && isToJelly
       !writingTriplesRequirement || writingTriplesRequirement && serDes.supportsWritingTriples
     }
 
@@ -255,6 +411,10 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
       !writingGraphsRequirement || writingGraphsRequirement && serDes.supportsWritingGraphs
     }
 
+    val rdf12Compatible = !entry.hasRdf12Requirement || serDes.supportsRdf12
+
+    val messagesCompatible = !entry.hasMessagesRequirement || serDes.messages.isDefined
+
     val testNotRejected = !entry.isTestRejected
 
     rdfStarCompatible
@@ -264,5 +424,7 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
     && physicalQuadsCompatible
     && readingGraphsCompatible
     && writingGraphsCompatible
+    && rdf12Compatible
+    && messagesCompatible
     && testNotRejected
   }

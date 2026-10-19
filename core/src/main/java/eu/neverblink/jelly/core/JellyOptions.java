@@ -104,7 +104,8 @@ public final class JellyOptions {
      * Default maximum supported options for Jelly decoders.
      * <p>
      * This means that by default Jelly-JVM will refuse to read streams that exceed these limits (e.g., with a
-     * name lookup table larger than 4096 entries).
+     * name lookup table larger than 16384 entries). The limits are the defaults recommended by the Jelly-RDF
+     * specification: 16384 names, 4096 prefixes, and 256 datatypes.
      * <p>
      * To change these defaults, you should pass a different RdfStreamOptions object to the decoder.
      * You should use this method to get the default options and then modify them as needed.
@@ -126,8 +127,8 @@ public final class JellyOptions {
         .setVersion(JellyConstants.PROTO_VERSION)
         .setGeneralizedStatements(true)
         .setRdfStar(true)
-        .setMaxNameTableSize(4096)
-        .setMaxPrefixTableSize(1024)
+        .setMaxNameTableSize(16384)
+        .setMaxPrefixTableSize(4096)
         .setMaxDatatypeTableSize(256);
 
     /**

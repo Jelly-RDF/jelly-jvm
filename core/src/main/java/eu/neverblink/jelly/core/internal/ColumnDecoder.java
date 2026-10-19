@@ -41,6 +41,9 @@ public final class ColumnDecoder<TNode, TDatatype> {
     private int declaredRdfVersion = RdfVersion.RDF_VERSION_UNSPECIFIED_VALUE;
     private int supportedRdfVersion = RdfVersion.RDF_VERSION_UNSPECIFIED_VALUE;
 
+    // Whether the current frame had a stream options row
+    private boolean optionsInFrame = false;
+
     /**
      * @param base the decoder whose lookups and converter are used
      */
@@ -58,6 +61,27 @@ public final class ColumnDecoder<TNode, TDatatype> {
     public void setRdfVersions(int declared, int supported) {
         this.declaredRdfVersion = declared;
         this.supportedRdfVersion = supported;
+    }
+
+    /**
+     * Records a stream options row in the current frame. A frame may have at most one.
+     *
+     * @throws RdfProtoDeserializationError if the current frame already had one
+     */
+    public void onOptionsRow() {
+        if (optionsInFrame) {
+            throw new RdfProtoDeserializationError(
+                "A frame of a Jelly-RDF 1.2 stream may have at most one row with the stream options."
+            );
+        }
+        optionsInFrame = true;
+    }
+
+    /**
+     * Called at the end of each frame.
+     */
+    public void onFrameEnd() {
+        optionsInFrame = false;
     }
 
     /**

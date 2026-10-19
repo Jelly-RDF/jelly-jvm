@@ -112,6 +112,12 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
     private void setStreamOptions(RdfStreamOptions options) {
         if (currentOptions == null) {
             this.currentOptions = options;
+            if (isColumnLayout()) {
+                // Created here, not with the first column batch, as a frame may have only the options
+                columnDecoder = new ColumnDecoder<>(this);
+                columnDecoder.setRdfVersions(options.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
+                columnDecoder.onOptionsRow();
+            }
             return;
         }
         if (JellyConstants.isRowLayout(currentOptions.getVersion())) {
@@ -119,6 +125,7 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
             return;
         }
         // Column layout: restated options, as in a concatenated stream
+        columnDecoder.onOptionsRow();
         if (
             options.getVersion() != currentOptions.getVersion() ||
             options.getPhysicalTypeValue() != currentOptions.getPhysicalTypeValue() ||
@@ -136,9 +143,7 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
         this.currentOptions = options;
         // Recreated on next use, with the new table sizes
         resetLookups();
-        if (columnDecoder != null) {
-            columnDecoder.setRdfVersions(options.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
-        }
+        columnDecoder.setRdfVersions(options.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
     }
 
     /** Whether the stream uses the column layout (Jelly-RDF 1.2). Only valid once the options are known. */
@@ -172,6 +177,20 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
             case RdfStreamRow.GRAPH_START -> handleGraphStart(row.getGraphStart());
             case RdfStreamRow.GRAPH_END -> handleGraphEnd();
             default -> throw new RdfProtoDeserializationError("Row kind is not set or unknown.");
+        }
+    }
+
+    @Override
+    protected void endFrame() {
+        endFrameInternal();
+    }
+
+    /**
+     * Internal implementation of endFrame that does not allow overriding.
+     */
+    protected final void endFrameInternal() {
+        if (columnDecoder != null) {
+            columnDecoder.onFrameEnd();
         }
     }
 
@@ -230,10 +249,6 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
             throw new RdfProtoDeserializationError(
                 "Jelly-RDF 1.0 and 1.1 streams (row layout) cannot have column batches."
             );
-        }
-        if (columnDecoder == null) {
-            columnDecoder = new ColumnDecoder<>(this);
-            columnDecoder.setRdfVersions(currentOptions.getRdfVersionValue(), supportedOptions.getRdfVersionValue());
         }
         final int rows = batch.getRowCount();
         if (rows < 0 || rows > ColumnLayout.MAX_ROWS) {
@@ -726,6 +741,11 @@ public abstract sealed class ProtoDecoderImpl<TNode, TDatatype> extends ProtoDec
                 throw new RdfProtoDeserializationError("Stream options are not set.");
             }
             delegateDecoder.ingestColumnsInternal(columns);
+        }
+
+        @Override
+        protected void endFrame() {
+            delegateDecoder.endFrameInternal();
         }
 
         @Override

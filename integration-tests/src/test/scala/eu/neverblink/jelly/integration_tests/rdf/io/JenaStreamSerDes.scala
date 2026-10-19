@@ -1,7 +1,8 @@
 package eu.neverblink.jelly.integration_tests.rdf.io
 
+import eu.neverblink.jelly.convert.jena.JenaConverterFactory
 import eu.neverblink.jelly.convert.jena.riot.JellyLanguage
-import eu.neverblink.jelly.core.JellyOptions
+import eu.neverblink.jelly.core.{JellyOptions, RdfEncoder}
 import eu.neverblink.jelly.core.proto.v1.{PhysicalStreamType, RdfStreamOptions}
 import eu.neverblink.jelly.integration_tests.rdf.util.riot.TestRiot
 import eu.neverblink.jelly.integration_tests.util.Measure
@@ -32,6 +33,18 @@ object JenaStreamSerDes
   override def supportsRdfStar: Boolean = false
 
   override def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = false
+
+  override val messages: Option[MessagesSerDes[Triple, Quad]] = Some(
+    new CoreMessagesSerDes[Node, Triple, Quad](JenaConverterFactory.getInstance()) {
+      override protected def makeTriple(s: Node, p: Node, o: Node): Triple = Triple.create(s, p, o)
+      override protected def makeQuad(s: Node, p: Node, o: Node, g: Node): Quad =
+        Quad.create(g, s, p, o)
+      override protected def writeTriple(encoder: RdfEncoder[Node], t: Triple): Unit =
+        encoder.handleTriple(t.getSubject, t.getPredicate, t.getObject)
+      override protected def writeQuad(encoder: RdfEncoder[Node], q: Quad): Unit =
+        encoder.handleQuad(q.getSubject, q.getPredicate, q.getObject, q.getGraph)
+    },
+  )
 
   override def readTriplesW3C(is: InputStream): Seq[Triple] =
     val sink = SinkSeq[Triple]()
