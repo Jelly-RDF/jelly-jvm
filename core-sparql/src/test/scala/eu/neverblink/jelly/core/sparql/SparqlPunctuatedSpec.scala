@@ -149,6 +149,15 @@ class SparqlPunctuatedSpec extends AnyWordSpec, Matchers:
       e.getMessage should include("must not be empty")
     }
 
+    "reject a variable declared twice" in {
+      val encoder =
+        MockSparqlConverterFactory.encoder(SparqlEncoder.Params.of(JellySparqlOptions.SMALL))
+      val e = intercept[RdfProtoSerializationError] {
+        encoder.setVariables(Seq("x", "y", "x").asJava)
+      }
+      e.getMessage should include("declared only once")
+    }
+
     "reject an unknown stream type" in {
       val options = JellySparqlOptions.SMALL.clone().setStreamTypeValue(7)
       val e = intercept[RdfProtoSerializationError] {

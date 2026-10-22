@@ -188,7 +188,7 @@ In this way, you can simply convert between Jelly, [JSON-LD](https://github.com/
 
 ## RDF Pekko Streams
 
-Now, the real power of Jelly lies in its streaming capabilities. Not only can it stream individual RDF triples/quads (this is called [_flat streaming_](https://w3id.org/stax/dev/taxonomy/#flat-rdf-stream)), but it can also very effectively handle streams of RDF graphs or datasets. To work with streams, you need to use the `jelly-pekko-stream` module, which is based on the [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html) library. So, let's update our dependencies:
+Now, the real power of Jelly lies in its streaming capabilities. Not only can it stream individual RDF triples/quads (this is called [_flat streaming_]({{ proto_link('user-guide#stream-types') }})), but it can also very effectively handle streams of RDF graphs or datasets. To work with streams, you need to use the `jelly-pekko-stream` module, which is based on the [Apache Pekko Streams](https://pekko.apache.org/docs/pekko/current/stream/index.html) library. So, let's update our dependencies:
 
 === "Maven"
 
@@ -278,7 +278,7 @@ Jelly will compress this stream on-the-fly, so if the data is repetitive, it wil
 
 These _streams_ are very powerful, because they are reactive and asynchronous – in short, this means you can hook this up to any data source and any data sink – and you can scale it up as much as you want. If you are unfamiliar with the concept of reactive streams, we recommend you start with [this Apache Pekko Streams guide](https://pekko.apache.org/docs/pekko/current/stream/stream-flows-and-basics.html).
 
-Jelly-JVM supports streaming serialization and deserialization of all types of streams in the [RDF Stream Taxonomy](https://w3id.org/stax/dev/taxonomy/). You can read more about the theory of this and all available stream types in the [Jelly protocol documentation]({{ proto_link('user-guide') }}).
+Jelly-JVM supports streaming serialization and deserialization of both flat streams and streams of RDF Messages. You can read more about the theory of this and all available stream types in the [Jelly protocol documentation]({{ proto_link('user-guide') }}).
 
 [:octicons-arrow-right-24: Learn more about reactive streaming with Jelly-JVM](user/reactive.md)
 

@@ -23,14 +23,15 @@ jobs:
       matrix:
         include:
           # RDF4J 6 ships Java 25 bytecode, so JDK 25 (LTS) is the build baseline; we also test on
-          # the latest release (26). build.sbt defaults to the newest Jena and RDF4J (kept up to
+          # the latest release. build.sbt defaults to the newest Jena and RDF4J (kept up to
           # date by Scala Steward), and one job pins the oldest supported versions.
           - os: ubuntu-latest
             java: 25
             # Jena 5.4.0 is the oldest supported version - it introduced the RDF 1.2 triple term
             # API that we use, replacing the RDF-star API of 5.3.x and older.
             jena_version: "5.4.0"
-            rdf4j_version: "6.1.0"
+            # RDF4J 6.0.0 is the oldest supported version - the first release of RDF4J 6.
+            rdf4j_version: "6.0.0"
           - os: ubuntu-latest
             java: 25
             jena_version: ""
@@ -137,6 +138,10 @@ jobs:
   # Test building assemblies
   test-assembly:
     runs-on: ubuntu-latest
+    env:
+      # Versions of the applications the plugin JARs are tested with.
+      jena_version: 6.2.0
+      rdf4j_version: 6.1.0
 
     steps:
     - name: Checkout
@@ -164,13 +169,13 @@ jobs:
       uses: actions/cache@v6
       with:
         path: jena-dir
-        key: jena
+        key: jena-${{ env.jena_version }}
 
     - name: Download Jena
       if: steps.cache-jena.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        wget --progress=dot:mega -O jena.tar.gz https://archive.apache.org/dist/jena/binaries/apache-jena-5.6.0.tar.gz
+        wget --progress=dot:mega -O jena.tar.gz https://archive.apache.org/dist/jena/binaries/apache-jena-${{ env.jena_version }}.tar.gz
         mkdir -p jena-dir
         tar -xzf jena.tar.gz -C jena-dir --strip-components=1
 
@@ -179,42 +184,42 @@ jobs:
       uses: actions/cache/save@v6
       with:
         path: jena-dir
-        key: jena
+        key: jena-${{ env.jena_version }}
 
     - name: Cache RDF4J SDK
       id: cache-rdf4j
       uses: actions/cache@v6
       with:
         path: rdf4j-dir
-        key: rdf4j
+        key: rdf4j-${{ env.rdf4j_version }}
 
     - name: Download RDF4J
       if: steps.cache-rdf4j.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        wget --progress=dot:mega -O rdf4j.zip https://mirrors.xmission.com/eclipse/rdf4j/eclipse-rdf4j-5.2.2-sdk.zip
+        wget --progress=dot:mega -O rdf4j.zip https://mirrors.xmission.com/eclipse/rdf4j/eclipse-rdf4j-${{ env.rdf4j_version }}-sdk.zip
         unzip -q rdf4j.zip
-        mv eclipse-rdf4j-5.2.2 rdf4j-dir
+        mv eclipse-rdf4j-${{ env.rdf4j_version }} rdf4j-dir
         
     - name: Save RDF4J cache
       if: steps.cache-rdf4j.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: rdf4j-dir
-        key: rdf4j
+        key: rdf4j-${{ env.rdf4j_version }}
 
     - name: Cache Fuseki
       id: cache-fuseki
       uses: actions/cache@v6
       with:
         path: fuseki-dir
-        key: fuseki
+        key: fuseki-${{ env.jena_version }}
 
     - name: Download Fuseki
       if: steps.cache-fuseki.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        wget --progress=dot:mega -O fuseki.tar.gz https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-5.6.0.tar.gz
+        wget --progress=dot:mega -O fuseki.tar.gz https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-${{ env.jena_version }}.tar.gz
         mkdir -p fuseki-dir
         tar -xzf fuseki.tar.gz -C fuseki-dir --strip-components=1
 
@@ -223,7 +228,7 @@ jobs:
       uses: actions/cache/save@v6
       with:
         path: fuseki-dir
-        key: fuseki
+        key: fuseki-${{ env.jena_version }}
 
     - name: Test plugins
       shell: bash
@@ -251,10 +256,12 @@ jobs:
 
         cp -f jena-plugin/target/jelly-jena-plugin.jar jena-dir/lib
         ./jena-dir/bin/riot --stream=nt test.jelly > jena.nt
-        [ -s jena.nt ] && echo Jena reading Jelly OK
+        [ -s jena.nt ] || { echo "Jena reading Jelly failed"; exit 1; }
+        echo Jena reading Jelly OK
 
         ./jena-dir/bin/riot --stream=jelly test.nt > jena.jelly
-        [ -s jena.jelly ] && echo Jena writing Jelly OK
+        [ -s jena.jelly ] || { echo "Jena writing Jelly failed"; exit 1; }
+        echo Jena writing Jelly OK
 
         # The RDF4J plugin JAR must not carry a second copy of RDF4J, but it does have to bundle
         # protobuf-java, which RDF4J does not provide.
@@ -262,7 +269,9 @@ jobs:
           echo "RDF4J plugin JAR bundles classes that RDF4J already provides"
           exit 1
         fi
-        if ! unzip -l rdf4j-plugin/target/jelly-rdf4j-plugin.jar | grep -q "com/google/protobuf/"; then
+        # Not grep -q: it stops at the first match, and with pipefail, unzip writing to the
+        # closed pipe would then fail the check
+        if ! unzip -l rdf4j-plugin/target/jelly-rdf4j-plugin.jar | grep "com/google/protobuf/" > /dev/null; then
           echo "RDF4J plugin JAR does not bundle protobuf-java"
           exit 1
         fi
@@ -281,11 +290,12 @@ jobs:
 
         cp -f rdf4j-plugin/target/jelly-rdf4j-plugin.jar rdf4j-dir/lib
         echo "convert test.jelly rdf4j.nt" | ./rdf4j-dir/bin/console.sh
-        [ -s rdf4j.nt ] && echo RDF4J reading Jelly OK
+        [ -s rdf4j.nt ] || { echo "RDF4J reading Jelly failed"; exit 1; }
+        echo RDF4J reading Jelly OK
 
-#        # Broken because of an upstream issue
-#        echo "convert test.nt rdf4j.jelly" | ./rdf4j-dir/bin/console.sh
-#        [ -s rdf4j.jelly ] && echo RDF4J writing Jelly OK
+        echo "convert test.nt rdf4j.jelly" | ./rdf4j-dir/bin/console.sh
+        [ -s rdf4j.jelly ] || { echo "RDF4J writing Jelly failed"; exit 1; }
+        echo RDF4J writing Jelly OK
 
     - name: Test Jelly-SPARQL in Fuseki
       shell: bash

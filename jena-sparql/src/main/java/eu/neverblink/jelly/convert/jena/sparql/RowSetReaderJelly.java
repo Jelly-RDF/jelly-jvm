@@ -14,15 +14,14 @@ import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.function.Consumer;
+import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.graph.Node;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.rowset.RowSetReader;
 import org.apache.jena.riot.rowset.RowSetReaderFactory;
 import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.binding.Binding;
-import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.exec.QueryExecResult;
 import org.apache.jena.sparql.exec.RowSet;
@@ -35,8 +34,9 @@ import org.apache.jena.sparql.util.Context;
  * read frame-by-frame, so the returned RowSet is streaming.
  * <p>
  * If the stream ends with a trailer containing an error, the RowSet returns all rows that were
- * received, and then throws a RiotException. A stream that ends without a trailer is accepted,
- * unless {@link Options#requireTrailer()} is set.
+ * received, and then throws a RiotException. A stream that ends without a trailer may have been
+ * cut off: its rows are returned, and a warning is logged, unless {@link Options#requireTrailer()}
+ * is set, which makes the reader throw instead.
  * <p>
  * To read a PUNCTUATED stream, with a sequence of result sets, use
  * {@link #readAll(InputStream, Context, Consumer)}.
@@ -289,7 +289,7 @@ public final class RowSetReaderJelly implements RowSetReader {
 
     /**
      * Reads the frames of the stream one by one, and checks at the end of the stream that it was
-     * ended with a trailer, if one is required.
+     * ended with a trailer.
      */
     private static final class FrameReader {
 
@@ -299,6 +299,8 @@ public final class RowSetReaderJelly implements RowSetReader {
         private final DelimitedMessageReader<SparqlResultsFrame> frames;
         private final SparqlDecoder decoder;
         private final boolean requireTrailer;
+        private static final String MISSING_TRAILER =
+            "The Jelly-SPARQL stream ended without a trailer, so the result set may be incomplete.";
         private boolean finished = false;
         private boolean lastFrameHadTrailer = false;
 
@@ -333,10 +335,11 @@ public final class RowSetReaderJelly implements RowSetReader {
                 decoder.ingestFrame(frame);
                 lastFrameHadTrailer = frame.getTrailer() != null;
             }
-            if (finished && requireTrailer && !lastFrameHadTrailer) {
-                throw new RiotException(
-                    "The Jelly-SPARQL stream ended without a trailer, so the result set may be incomplete."
-                );
+            if (finished && !lastFrameHadTrailer) {
+                if (requireTrailer) {
+                    throw new RiotException(MISSING_TRAILER);
+                }
+                Log.warn(RowSetReaderJelly.class, MISSING_TRAILER);
             }
             return frame != null;
         }
@@ -345,7 +348,8 @@ public final class RowSetReaderJelly implements RowSetReader {
     private static final class RowCollector implements SparqlResultsHandler<Node> {
 
         private List<Var> vars = null;
-        private Var[] distinctVars = null;
+        // The same as vars, which the decoder checks are all different
+        private Var[] varArray = null;
         private Boolean askResult = null;
         private String error = null;
         // The frames decoded but not read yet: their columns and row counts. Bindings are made
@@ -367,7 +371,7 @@ public final class RowSetReaderJelly implements RowSetReader {
         /** Forgets the previous result set. Its rows must all be read by now. */
         void startResultSet() {
             vars = null;
-            distinctVars = null;
+            varArray = null;
             askResult = null;
         }
 
@@ -380,7 +384,7 @@ public final class RowSetReaderJelly implements RowSetReader {
         @Override
         public void handleVariables(List<String> variables) {
             vars = variables.stream().map(Var::alloc).toList();
-            distinctVars = Set.copyOf(vars).size() == vars.size() ? vars.toArray(new Var[0]) : null;
+            varArray = vars.toArray(new Var[0]);
         }
 
         @Override
@@ -427,19 +431,7 @@ public final class RowSetReaderJelly implements RowSetReader {
 
         /** The next row, if {@link #hasRow()}. Straight from the columns: nothing is copied. */
         Binding nextRow() {
-            final int r = next++;
-            final Var[] distinct = distinctVars;
-            if (distinct != null) {
-                return new JellyBinding(BindingFactory.noParent, distinct, current, r);
-            }
-            final BindingBuilder builder = BindingFactory.builder();
-            for (int v = 0; v < current.length; v++) {
-                final Node node = (Node) current[v][r];
-                if (node != null) {
-                    builder.add(vars.get(v), node);
-                }
-            }
-            return builder.build();
+            return new JellyBinding(BindingFactory.noParent, varArray, current, next++);
         }
 
         @Override

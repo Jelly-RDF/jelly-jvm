@@ -36,7 +36,7 @@ The `GENERALIZED`, `RDF_STAR` and `ALL_FEATURES` presets differ from the `STRICT
 
 !!! warning 
     
-    These presets **do not** specify the physical or logical stream type. In most cases, the Jelly library will take care of this for you and set these types automatically later. However, if you use the [low-level API](low-level.md), you need to set the stream types manually. For example:
+    These presets **do not** specify the physical type or the stream type. In most cases, the Jelly library will take care of this for you and set these types automatically later. However, if you use the [low-level API](low-level.md), you need to set the stream types manually. For example:
 
     === "Java"
 
@@ -47,7 +47,7 @@ The `GENERALIZED`, `RDF_STAR` and `ALL_FEATURES` presets differ from the `STRICT
         JellyOptions.SMALL_STRICT
           .clone()
           .setPhysicalType(PhysicalStreamType.QUADS)
-          .setLogicalType(LogicalStreamType.DATASETS);
+          .setStreamType(RdfStreamType.MESSAGES);
         ```
 
     === "Scala"
@@ -59,7 +59,7 @@ The `GENERALIZED`, `RDF_STAR` and `ALL_FEATURES` presets differ from the `STRICT
         JellyOptions.SMALL_STRICT
           .clone()
           .setPhysicalType(PhysicalStreamType.QUADS)
-          .setLogicalType(LogicalStreamType.DATASETS)
+          .setStreamType(RdfStreamType.MESSAGES)
         ```
 
 ## Checking supported options
@@ -73,153 +73,6 @@ If you want to do this kind of check in some other context (e.g., in a [gRPC ser
 ## Useful constants
 
 The {{ javadoc_link_pretty('core', 'JellyConstants') }} object defines some useful constants, such as the file extension for Jelly, its content type, and the version of the Jelly protocol.
-
-## RDF Stream Taxonomy (RDF-STaX) stream type utilities
-
-Jelly uses [RDF-STaX](https://w3id.org/stax) to define the logical stream types (more details [here]({{ proto_link('user-guide#stream-types') }})). Jelly-JVM defines each of these types as a enum in {{ javadoc_link_pretty('core', 'proto.v1.LogicalStreamType') }}.
-
-There are have a few useful methods for working with the [RDF-STaX ontology](https://w3id.org/stax/ontology):
-
-=== "Java"
-
-    ```java title="Java example"
-    import eu.neverblink.jelly.core.*;
-    import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils;
-    import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
-    
-    // Get the RDF-STaX IRI of a stream type
-    // returns "https://w3id.org/stax/ontology#flatTripleStream"
-    LogicalStreamTypeUtils.getRdfStaxType(LogicalStreamType.TRIPLES);
-    ```
-
-=== "Scala"
-
-    ```scala title="Scala example"
-    import eu.neverblink.jelly.core.*
-    import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils
-    import eu.neverblink.jelly.core.proto.v1.LogicalStreamType
-    
-    // Get the RDF-STaX IRI of a stream type
-    // returns "https://w3id.org/stax/ontology#flatTripleStream"
-    LogicalStreamTypeUtils.getRdfStaxType(TRIPLES)
-    ```
-
-You can also obtain a [full RDF-STaX annotation](https://w3id.org/stax/dev/use-it) for your stream if you also import an RDF library interop module (e.g., `jelly-jena` or `jelly-rdf4j`):
-
-=== "Java"
-
-    ```java title="Java example"
-    import eu.neverblink.jelly.convert.jena.*;
-    import eu.neverblink.jelly.core.*;
-    import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
-    import org.apache.jena.graph.NodeFactory;
-    import org.apache.jena.datatypes.RDFDatatype;
-    import org.apache.jena.graph.Node;
-    import org.apache.jena.graph.Triple;
-    
-    JenaConverterFactory factory = JenaConverterFactory.getInstance(); // Jena converter factory
-    Node subjectNode = NodeFactory.createURI("http://example.org/subject");
-    Seq<Triple> triples = LogicalStreamTypeUtils.getRdfStaxAnnotation<>(factory, LogicalStreamType.QUADS, subjectNode);
-    // Returns a Seq of three triples that would look like this in Turtle:
-    // <http://example.org/subject> stax:hasStreamTypeUsage [
-    //   a stax:RdfStreamTypeUsage ;
-    //   stax:hasStreamType stax:flatQuadStream
-    // ] .
-    ```
-
-=== "Scala"
-
-    ```scala title="Scala example"
-    import eu.neverblink.jelly.convert.jena.*
-    import eu.neverblink.jelly.core.*
-    import eu.neverblink.jelly.core.proto.v1.LogicalStreamType
-    import org.apache.jena.graph.NodeFactory
-    
-    val factory = JenaConverterFactory.getInstance() // Jena converter factory
-    
-    val subjectNode: Node = NodeFactory.createURI("http://example.org/subject")
-    val triples: Seq[Triple] = LogicalStreamTypeUtils.getRdfStaxAnnotation(factory, QUADS, subjectNode)
-    // Returns a Seq of three triples that would look like this in Turtle:
-    // <http://example.org/subject> stax:hasStreamTypeUsage [
-    //   a stax:RdfStreamTypeUsage ;
-    //   stax:hasStreamType stax:flatQuadStream
-    // ] .
-    ```
-
-You can then take this annotation and expose as semantic metadata of your stream.
-
-You can also do the opposite and construct an instance of `LogicalStreamType` from an RDF-STaX IRI:
-
-=== "Java"
-
-    ```java title="Java example"
-    import eu.neverblink.jelly.core.LogicalStreamTypeUtils;
-    import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
-    
-    String iri = "https://w3id.org/stax/ontology#flatQuadStream";
-    // returns LogicalStreamType.QUADS
-    LogicalStreamType streamType = LogicalStreamTypeUtils.fromOntologyIri(iri);
-    ```
-
-=== "Scala"
-
-    ```scala title="Scala example"
-    import eu.neverblink.jelly.core.LogicalStreamTypeUtils
-    
-    val iri = "https://w3id.org/stax/ontology#flatQuadStream"
-    // returns LogicalStreamType.QUADS
-    val streamType = LogicalStreamTypeUtils.fromOntologyIri(iri)
-    ```
-
-Finally, there are also stream type checking and manipulation utilities:
-
-=== "Java"
-
-    ```java title="Java example"
-    import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils;
-    import eu.neverblink.jelly.core.proto.v1.LogicalStreamType;
-    
-    // Check if this type is equal or a subtype of another type.
-    // This is useful for performing compatibility checks.
-    // Returns false
-    LogicalStreamTypeUtils.isEqualOrSubtypeOf(LogicalStreamType.TRIPLES, LogicalStreamType.DATASETS);
-    // Returns true
-    LogicalStreamTypeUtils.isEqualOrSubtypeOf(LogicalStreamType.NAMED_GRAPHS, LogicalStreamType.DATASETS);
-    
-    // Get the "base" type of a stream type. Base types are concrete stream types
-    // that have no parent types.
-    // There are only 4 base types: GRAPHS, DATASETS, TRIPLES, QUADS.
-    // Returns LogicalStreamType.TRIPLES
-    LogicalStreamTypeUtils.toBaseType(LogicalStreamType.TRIPLES);
-    // Returns LogicalStreamType.DATASETS
-    LogicalStreamTypeUtils.toBaseType(LogicalStreamType.NAMED_GRAPHS);
-    // Returns LogicalStreamType.DATASETS
-    LogicalStreamTypeUtils.toBaseType(LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS);
-    ```
-
-=== "Scala"
-
-    ```scala title="Scala example"
-    import eu.neverblink.jelly.core.utils.LogicalStreamTypeUtils
-    import eu.neverblink.jelly.core.proto.v1.LogicalStreamType
-    
-    // Check if this type is equal or a subtype of another type.
-    // This is useful for performing compatibility checks.
-    // Returns false
-    LogicalStreamTypeUtils.isEqualOrSubtypeOf(LogicalStreamType.TRIPLES, LogicalStreamType.DATASETS)
-    // Returns true
-    LogicalStreamTypeUtils.isEqualOrSubtypeOf(LogicalStreamType.NAMED_GRAPHS, LogicalStreamType.DATASETS)
-    
-    // Get the "base" type of a stream type. Base types are concrete stream types 
-    // that have no parent types. 
-    // There are only 4 base types: GRAPHS, DATASETS, TRIPLES, QUADS.
-    // Returns LogicalStreamType.TRIPLES
-    LogicalStreamTypeUtils.toBaseType(LogicalStreamType.TRIPLES)
-    // Returns LogicalStreamType.DATASETS
-    LogicalStreamTypeUtils.toBaseType(LogicalStreamType.NAMED_GRAPHS)
-    // Returns LogicalStreamType.DATASETS
-    LogicalStreamTypeUtils.toBaseType(LogicalStreamType.TIMESTAMPED_NAMED_GRAPHS)
-    ```
 
 ## Jelly configuration from Typesafe config
 

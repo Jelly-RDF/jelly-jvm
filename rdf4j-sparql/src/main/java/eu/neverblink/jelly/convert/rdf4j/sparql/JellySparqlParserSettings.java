@@ -74,8 +74,10 @@ public final class JellySparqlParserSettings {
 
     /**
      * Without a trailer, a result set that was cut off at a frame boundary looks complete.
-     * Producers should always write one, but they are not required to. A trailer that reports
-     * an error always makes the parser throw, whatever this is set to.
+     * Producers should always write one, but may fail to (e.g., when they crash). With this
+     * disabled, the parser passes on the solutions of such a stream and reports a warning to the
+     * ParseErrorListener (or logs it, if there is none). A trailer that reports an error always
+     * makes the parser throw, whatever this is set to.
      */
     public static final BooleanRioSetting REQUIRE_TRAILER = new BooleanRioSetting(
         "eu.neverblink.jelly.convert.rdf4j.sparql.requireTrailer",

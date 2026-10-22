@@ -64,7 +64,7 @@ public abstract class SparqlEncoder<TNode> {
      * Must be called exactly once per result set, before the first row is appended.
      *
      * @param variables names of the result variables, without the leading "?" or "$". The names
-     *                  must not be empty.
+     *                  must not be empty, and must not repeat.
      */
     public abstract void setVariables(List<String> variables);
 

@@ -7,7 +7,9 @@ import eu.neverblink.jelly.core.internal.ColumnEncoder;
 import eu.neverblink.jelly.core.internal.ColumnEncoder.Column;
 import eu.neverblink.jelly.core.proto.v1.sparql.*;
 import eu.neverblink.jelly.core.sparql.JellySparqlConstants;
+import eu.neverblink.jelly.core.sparql.JellySparqlOptions;
 import eu.neverblink.jelly.core.sparql.SparqlEncoder;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -58,6 +60,15 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
         if (options.getStreamType() == null) {
             throw new RdfProtoSerializationError("Unknown stream type: %d".formatted(options.getStreamTypeValue()));
         }
+        // Readers refuse anything smaller
+        if (options.getMaxNameTableSize() < JellySparqlOptions.MIN_NAME_TABLE_SIZE) {
+            throw new RdfProtoSerializationError(
+                "Requested name table size of %d is too small. The minimum is %d.".formatted(
+                    options.getMaxNameTableSize(),
+                    JellySparqlOptions.MIN_NAME_TABLE_SIZE
+                )
+            );
+        }
         columnEncoder = new ColumnEncoder<>(
             converter,
             options.getMaxNameTableSize(),
@@ -81,6 +92,9 @@ public final class SparqlEncoderImpl<TNode> extends SparqlEncoder<TNode> {
             if (name == null || name.isEmpty()) {
                 throw new RdfProtoSerializationError("Variable names must not be empty.");
             }
+        }
+        if (new HashSet<>(variables).size() != names.length) {
+            throw new RdfProtoSerializationError("Each variable must be declared only once.");
         }
         variableNames = names;
         columns = new Column[variableNames.length];

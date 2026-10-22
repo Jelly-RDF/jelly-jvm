@@ -106,6 +106,17 @@ class SparqlDecoderSpec extends AnyWordSpec, Matchers:
       e.getMessage should include("Variable names must not be empty")
     }
 
+    "reject a variable declared twice" in {
+      val frame = SparqlResultsFrame
+        .newInstance()
+        .setOptions(JellySparqlOptions.SMALL)
+        .addVariables("x")
+        .addVariables("y")
+        .addVariables("x")
+      val e = intercept[RdfProtoDeserializationError] { newDecoder().ingestFrame(frame) }
+      e.getMessage should include("declares a variable more than once")
+    }
+
     "reject a header in a later frame of the result set" in {
       val decoder = newDecoder()
       decoder.ingestFrame(frameWithOneVariable(0).addColumns(emptyColumn))

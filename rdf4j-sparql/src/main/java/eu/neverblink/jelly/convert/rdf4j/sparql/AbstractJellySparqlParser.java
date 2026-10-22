@@ -30,7 +30,10 @@ import org.eclipse.rdf4j.query.impl.ListBindingSet;
 import org.eclipse.rdf4j.query.resultio.AbstractQueryResultParser;
 import org.eclipse.rdf4j.query.resultio.QueryResultParseException;
 import org.eclipse.rdf4j.query.resultio.QueryResultParser;
+import org.eclipse.rdf4j.rio.ParseErrorListener;
 import org.eclipse.rdf4j.rio.RioSetting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Shared implementation of the Jelly-SPARQL query result parsers.
@@ -41,8 +44,10 @@ import org.eclipse.rdf4j.rio.RioSetting;
  * <p>
  * If the stream ends with a trailer carrying an error, the parser throws a
  * {@link QueryResultParseException} after passing on all solutions received before it, and does
- * not call endQueryResult(). A stream that ends without a trailer is accepted, unless
- * {@link JellySparqlParserSettings#REQUIRE_TRAILER} is set.
+ * not call endQueryResult(). A stream that ends without a trailer may have been cut off: its
+ * solutions are passed on, and a warning is reported to the
+ * {@link org.eclipse.rdf4j.rio.ParseErrorListener} (or logged, if there is none), unless
+ * {@link JellySparqlParserSettings#REQUIRE_TRAILER} is set, which makes the parser throw instead.
  * <p>
  * Links under the "link" metadata key of the first frame are passed to handleLinks(), before
  * anything else. Producers should set them only there, so links in later frames are ignored.
@@ -53,6 +58,11 @@ import org.eclipse.rdf4j.rio.RioSetting;
  * that ends with an error makes the parser throw, and the result sets after it are not read.
  */
 public abstract class AbstractJellySparqlParser extends AbstractQueryResultParser {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractJellySparqlParser.class);
+
+    private static final String MISSING_TRAILER =
+        "The Jelly-SPARQL stream ended without a trailer, so the result set may be incomplete.";
 
     // RDF4J's wrapper of the handler that decodes triple terms encoded as IRIs, if it made one
     // (see setQueryResultHandler)
@@ -143,10 +153,16 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
         } catch (RdfProtoDeserializationError e) {
             throw new QueryResultParseException(e.getMessage(), e.getCause());
         }
-        if (!lastFrameHadTrailer && getParserConfig().get(JellySparqlParserSettings.REQUIRE_TRAILER)) {
-            throw new QueryResultParseException(
-                "The Jelly-SPARQL stream ended without a trailer, so the result set may be incomplete."
-            );
+        if (!lastFrameHadTrailer) {
+            if (getParserConfig().get(JellySparqlParserSettings.REQUIRE_TRAILER)) {
+                throw new QueryResultParseException(MISSING_TRAILER);
+            }
+            final ParseErrorListener listener = getParseErrorListener();
+            if (listener != null) {
+                listener.warning(MISSING_TRAILER, -1, -1);
+            } else {
+                LOGGER.warn(MISSING_TRAILER);
+            }
         }
 
         if (resultsHandler.isPunctuated()) {

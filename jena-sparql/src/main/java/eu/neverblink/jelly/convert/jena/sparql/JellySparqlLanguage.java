@@ -123,8 +123,9 @@ public final class JellySparqlLanguage {
      * default)
      * <p>
      * Without a trailer, a result set that was cut off at a frame boundary looks complete.
-     * Producers should always write one, but they are not required to. A trailer that reports
-     * an error is always turned into an exception, whatever this is set to.
+     * Producers should always write one, but may fail to (e.g., when they crash). With this
+     * disabled, the reader returns the rows of such a stream and logs a warning. A trailer that
+     * reports an error is always turned into an exception, whatever this is set to.
      * <p>
      * Set this in Jena's Context to a boolean value.
      */
