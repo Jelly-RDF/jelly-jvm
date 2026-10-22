@@ -4,7 +4,7 @@
 
 Implementation of [Jelly](https://w3id.org/jelly), a super-fast RDF serialization format and streaming protocol, for Apache Jena, Eclipse RDF4J, Titanium RDF API, and Neo4j (Neo4j only up to Jelly-JVM 3.7.x).
 
-Jelly-JVM also implements [Jelly-SPARQL](https://w3id.org/jelly/dev/specification/sparql/), a binary format for SPARQL query results, for Jena and RDF4J.
+Jelly-JVM also implements [Jelly-SPARQL](https://w3id.org/jelly/1.2.0/specification/sparql/), a binary format for SPARQL query results, for Jena and RDF4J.
 
 You can use Jelly-JVM simply as a "plain old" RDF file serializer/parser, just a very fast one.
 
@@ -36,7 +36,7 @@ But, this library also gives you the full stack of utilities for scalable RDF st
 - [`jelly-titanium-rdf-api`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/titanium-rdf-api/src) – integration with the minimalistic [Titanium RDF API](https://github.com/filip26/titanium-rdf-api).
   - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-titanium-rdf-api)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-titanium-rdf-api) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-titanium-rdf-api/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-titanium-rdf-api)
 
-- [`jelly-core-sparql`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/core-sparql/src) – core generic code for serializing/deserializing [Jelly-SPARQL](https://w3id.org/jelly/dev/specification/sparql/) data (SPARQL query results). You need an additional module (like `jelly-jena-sparql`) to integrate it with a specific RDF library.
+- [`jelly-core-sparql`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/core-sparql/src) – core generic code for serializing/deserializing [Jelly-SPARQL](https://w3id.org/jelly/1.2.0/specification/sparql/) data (SPARQL query results). You need an additional module (like `jelly-jena-sparql`) to integrate it with a specific RDF library.
   - [![Maven Central Version](https://img.shields.io/maven-central/v/eu.neverblink.jelly/jelly-core-sparql)](https://central.sonatype.com/artifact/eu.neverblink.jelly/jelly-core-sparql) [![javadoc](https://javadoc.io/badge2/eu.neverblink.jelly/jelly-core-sparql/javadoc.svg)](https://javadoc.io/doc/eu.neverblink.jelly/jelly-core-sparql)
 
 - [`jelly-jena-sparql`](https://github.com/Jelly-RDF/jelly-jvm/tree/main/jena-sparql/src) – Jelly-SPARQL for [Apache Jena](https://jena.apache.org/): result set readers and writers, and content negotiation in Fuseki.

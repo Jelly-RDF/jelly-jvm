@@ -49,6 +49,6 @@ public final class JellySparqlConstants {
     public static final int PROTO_VERSION_1_0_X = 1;
     public static final int PROTO_VERSION = PROTO_VERSION_1_0_X;
 
-    public static final String PROTO_SEMANTIC_VERSION_1_0_0 = "1.0.0"; // First protocol version (proposal)
+    public static final String PROTO_SEMANTIC_VERSION_1_0_0 = "1.0.0"; // First protocol version
     public static final String PROTO_SEMANTIC_VERSION = PROTO_SEMANTIC_VERSION_1_0_0;
 }

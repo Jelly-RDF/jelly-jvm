@@ -161,7 +161,7 @@ public final class JellyOptions {
      * - stream name (we don't care about it)
      * <p>
      * See also the stream options handling table in the gRPC spec:
-     * <a href="https://w3id.org/jelly/dev/specification/streaming/#stream-options-handling">link</a>
+     * <a href="https://w3id.org/jelly/1.2.0/specification/streaming/#stream-options-handling">link</a>
      * This is not exactly what we are doing here (the table is about client-server interactions), but it's a good
      * reference for the logic used here.
      *
