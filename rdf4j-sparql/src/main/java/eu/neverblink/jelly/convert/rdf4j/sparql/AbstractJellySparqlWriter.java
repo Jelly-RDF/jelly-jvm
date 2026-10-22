@@ -229,7 +229,7 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
 
     @Override
     public void handleNamespace(String prefix, String uri) {
-        // TODO: add namespace declarations?
+        // Jelly-SPARQL has no namespace declarations
     }
 
     @Override
