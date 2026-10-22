@@ -355,7 +355,10 @@ public final class ColumnEncoder<TNode> implements RdfBufferAppender {
         lookupEncoder.newEpoch(
             usedIdsBudget(maxNameTableSize, iris),
             usedIdsBudget(maxPrefixTableSize, iris),
-            usedIdsBudget(maxDatatypeTableSize, datatypeColumns)
+            // Unlike IRIs, a row with a new datatype in every column practically never happens.
+            // Keeping room for one would end the frame after every row once there are as
+            // many columns as datatype slots. So, we keep at most half of the table free.
+            usedIdsBudget(maxDatatypeTableSize, Math.min(datatypeColumns, (maxDatatypeTableSize + 1) / 2))
         );
     }
 

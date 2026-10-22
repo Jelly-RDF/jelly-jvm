@@ -13,6 +13,7 @@ import eu.neverblink.jelly.core.sparql.SparqlDecoder;
 import eu.neverblink.jelly.core.sparql.SparqlResultsHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -326,6 +327,9 @@ public final class SparqlDecoderImpl<TNode, TDatatype> extends DecoderBase<TNode
             }
         }
         if (variableNames == null) {
+            if (new HashSet<>(list).size() != names.length) {
+                throw new RdfProtoDeserializationError("The result set header declares a variable more than once.");
+            }
             variableNames = names;
             rowBuffer = handler.createRowBuffer(names.length);
             if (rowBuffer == null || rowBuffer.length != names.length) {

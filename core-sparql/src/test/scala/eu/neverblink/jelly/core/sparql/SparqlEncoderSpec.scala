@@ -28,6 +28,13 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
     SparqlEncoderImpl[Node](CustomEncoderConverter(f), SparqlEncoder.Params.of(options))
 
   "SparqlEncoder" should {
+    "reject a name table that readers would refuse" in {
+      val size = JellySparqlOptions.MIN_NAME_TABLE_SIZE - 1
+      intercept[RdfProtoSerializationError] {
+        encoder(JellySparqlOptions.SMALL.clone().setMaxNameTableSize(size))
+      }.getMessage should include(s"name table size of $size is too small")
+    }
+
     "reject setting the variables twice" in {
       val e = encoder()
       e.setVariables(Seq("x").asJava)
@@ -366,7 +373,7 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
     "omit the prefix ids when they are all zero" in {
       val noPrefixes = SparqlResultsOptions
         .newInstance()
-        .setMaxNameTableSize(64)
+        .setMaxNameTableSize(JellySparqlOptions.MIN_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(0)
         .setMaxDatatypeTableSize(8)
       val e = encoder(noPrefixes)
@@ -436,18 +443,19 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
     }
 
     "start a new message when the identifiers are not consecutive" in {
+      val n = JellySparqlOptions.MIN_NAME_TABLE_SIZE
       val options = SparqlResultsOptions
         .newInstance()
-        .setMaxNameTableSize(8)
+        .setMaxNameTableSize(n)
         .setMaxPrefixTableSize(8)
         .setMaxDatatypeTableSize(8)
       val e = encoder(options)
       e.setVariables(Seq("x").asJava)
-      // Fills ids 1-6 of the name table
-      for i <- 1 to 6 do e.appendRow(Array[Node](Iri(s"https://a.org/x$i")))
+      // Fills ids 1 to n-2 of the name table
+      for i <- 1 to n - 2 do e.appendRow(Array[Node](Iri(s"https://a.org/x$i")))
       e.endFrame()
-      // Takes 7 and 8, then wraps around to the start of the table
-      for i <- 7 to 10 do e.appendRow(Array[Node](Iri(s"https://a.org/x$i")))
+      // Takes the last two ids, then wraps around to the start of the table
+      for i <- n - 1 to n + 2 do e.appendRow(Array[Node](Iri(s"https://a.org/x$i")))
       val entries = e.endFrame().getNames.asScala.toSeq
       entries.map(_.getValues.size).sum shouldBe 4
       entries.size shouldBe 2
@@ -472,19 +480,20 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
 
   "the lookup table guard" should {
     "end a frame whose names would not fit the name table" in {
+      val n = JellySparqlOptions.MIN_NAME_TABLE_SIZE
       val options = SparqlResultsOptions
         .newInstance()
-        .setMaxNameTableSize(8)
+        .setMaxNameTableSize(n)
         .setMaxPrefixTableSize(16)
         .setMaxDatatypeTableSize(8)
       val e = encoder(options)
       e.setVariables(Seq("x").asJava)
-      // 8 names fit; the 9th would have to overwrite one that this frame still refers to
-      for i <- 1 to 8 do
+      // n names fit; the next one would have to overwrite one that this frame still refers to
+      for i <- 1 to n do
         withClue(s"row $i: ") {
           e.appendRow(Array[Node](Iri(s"https://a.org/thing$i"))) shouldBe true
         }
-      e.appendRow(Array[Node](Iri("https://a.org/thing9"))) shouldBe false
+      e.appendRow(Array[Node](Iri(s"https://a.org/thing${n + 1}"))) shouldBe false
     }
 
     "end a frame whose prefixes would not fit the prefix table" in {
@@ -546,17 +555,50 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
       e.endFrame().getRowCount shouldBe 10
     }
 
-    "throw for a single row that cannot fit in the lookup tables at all" in {
-      // No framing decision can help here: one row needs more names than the table has
+    "not end the frame after every row when there are more variables than datatype slots" in {
+      val e = encoder(JellySparqlOptions.BIG)
+      val vars = (1 to 100).map(i => s"v$i")
+      e.setVariables(vars.asJava)
+      for row <- 1 to 10 do
+        withClue(s"row $row: ") {
+          e.appendRow(
+            (DtLiteral(row.toString, Datatype("https://test.org/int")) +:
+              vars.indices.tail.map(i => Iri(s"https://a.org/r${row}c$i"))).toArray[Node],
+          ) shouldBe true
+        }
+      e.endFrame().getRowCount shouldBe 10
+    }
+
+    "keep half of the datatype table free for the next row when there are many variables" in {
       val options = SparqlResultsOptions
         .newInstance()
-        .setMaxNameTableSize(8)
+        .setMaxNameTableSize(JellySparqlOptions.MIN_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(16)
         .setMaxDatatypeTableSize(8)
       val e = encoder(options)
       e.setVariables((1 to 10).map(i => s"v$i").asJava)
+      def row(dts: Range) =
+        (dts.map(i => DtLiteral("v", Datatype(s"https://test.org/dt$i"))) ++
+          Seq.fill(10 - dts.size)(SimpleLiteral("v"))).toArray[Node]
+      // 4 of the 8 slots are kept free: the second row may still bring 4 new datatypes
+      e.appendRow(row(1 to 4)) shouldBe true
+      e.appendRow(row(5 to 8)) shouldBe true
+      e.appendRow(row(9 to 9)) shouldBe false
+      e.endFrame().getRowCount shouldBe 2
+    }
+
+    "throw for a single row that cannot fit in the lookup tables at all" in {
+      // No framing decision can help here: one row needs more names than the table has
+      val n = JellySparqlOptions.MIN_NAME_TABLE_SIZE + 2
+      val options = SparqlResultsOptions
+        .newInstance()
+        .setMaxNameTableSize(JellySparqlOptions.MIN_NAME_TABLE_SIZE)
+        .setMaxPrefixTableSize(16)
+        .setMaxDatatypeTableSize(8)
+      val e = encoder(options)
+      e.setVariables((1 to n).map(i => s"v$i").asJava)
       val error = intercept[RdfProtoSerializationError] {
-        e.appendRow((1 to 10).map(i => Iri(s"https://a.org/thing$i")).toArray[Node])
+        e.appendRow((1 to n).map(i => Iri(s"https://a.org/thing$i")).toArray[Node])
       }
       error.getMessage should include("too small to encode a single row")
     }
@@ -564,13 +606,13 @@ class SparqlEncoderSpec extends AnyWordSpec, Matchers:
     "allow reusing the same lookup entries in the next frame" in {
       val options = SparqlResultsOptions
         .newInstance()
-        .setMaxNameTableSize(8)
+        .setMaxNameTableSize(JellySparqlOptions.MIN_NAME_TABLE_SIZE)
         .setMaxPrefixTableSize(2)
         .setMaxDatatypeTableSize(2)
       val e = encoder(options)
       e.setVariables(Seq("x").asJava)
       // Each frame stays within the table size, so evictions across frames are fine
-      for i <- 1 to 20 do
+      for i <- 1 to 3 * JellySparqlOptions.MIN_NAME_TABLE_SIZE do
         e.appendRow(Array[Node](Iri(s"https://test.org/thing$i")))
         e.endFrame().getRowCount shouldBe 1
     }

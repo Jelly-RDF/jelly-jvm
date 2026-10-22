@@ -7,7 +7,7 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import org.eclipse.rdf4j.query.resultio.QueryResultParseException
 import org.eclipse.rdf4j.query.{BindingSet, TupleQueryResultHandler}
-import org.eclipse.rdf4j.rio.ParserConfig
+import org.eclipse.rdf4j.rio.{ParseErrorListener, ParserConfig}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -56,10 +56,22 @@ class Rdf4jSparqlTrailerSpec extends AnyWordSpec, Matchers:
     override def endQueryResult(): Unit = events += "end"
     override def handleSolution(bindingSet: BindingSet): Unit = events += "solution"
 
-  private def parse(bytes: Array[Byte], config: ParserConfig = ParserConfig()): EventCollector =
+  /** Records the warnings the parser reports. */
+  private final class WarningCollector extends ParseErrorListener:
+    val warnings: ListBuffer[String] = ListBuffer()
+    override def warning(msg: String, lineNo: Long, colNo: Long): Unit = warnings += msg
+    override def error(msg: String, lineNo: Long, colNo: Long): Unit = ()
+    override def fatalError(msg: String, lineNo: Long, colNo: Long): Unit = ()
+
+  private def parse(
+      bytes: Array[Byte],
+      config: ParserConfig = ParserConfig(),
+      listener: ParseErrorListener = null,
+  ): EventCollector =
     val collector = EventCollector()
     val parser = JellySparqlTupleParser()
     parser.setParserConfig(config)
+    parser.setParseErrorListener(listener)
     parser.setQueryResultHandler(collector)
     parser.parseQueryResult(ByteArrayInputStream(bytes))
     collector
@@ -130,6 +142,19 @@ class Rdf4jSparqlTrailerSpec extends AnyWordSpec, Matchers:
         "solution",
         "end",
       )
+    }
+
+    "report a stream without a trailer as a warning" in {
+      val listener = WarningCollector()
+      parse(streamWithoutTrailer(2), listener = listener).events.last shouldBe "end"
+      listener.warnings.toSeq should have size 1
+      listener.warnings.head should include("ended without a trailer")
+    }
+
+    "not warn about a stream with a trailer" in {
+      val listener = WarningCollector()
+      parse(write(2)(_.endQueryResult()), listener = listener)
+      listener.warnings shouldBe empty
     }
 
     "reject a stream without a trailer if told to" in {

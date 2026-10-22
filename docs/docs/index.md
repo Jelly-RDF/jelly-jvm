@@ -1,6 +1,6 @@
 # Jelly-JVM
 
-**Jelly-JVM** is an implementation of the [Jelly serialization format and gRPC streaming protocol]({{ proto_link() }}) for the Java Virtual Machine (JVM). It supports [Apache Jena](user/jena.md), [Eclipse RDF4J](user/rdf4j.md), the [Titanium RDF API](user/titanium.md), and [Neo4j](getting-started-neo4j.md).
+**Jelly-JVM** is an implementation of the [Jelly RDF and SPARQL serialization formats]({{ proto_link() }}) for the Java Virtual Machine (JVM). It supports [Apache Jena](user/jena.md), [Eclipse RDF4J](user/rdf4j.md), the [Titanium RDF API](user/titanium.md), and [Neo4j](getting-started-neo4j.md).
 
 Jelly-JVM provides a **full stack** of utilities for fast and scalable RDF streaming with [Jelly]({{ proto_link( 'specification' ) }}). Oh, and [**it's *blazing-fast***]({{ proto_link('performance') }}), too!
 
@@ -43,6 +43,17 @@ The implementation is split into a few modules that can be used separately:
 - `jelly-pekko-grpc` – implementation of a gRPC client and server for the [Jelly gRPC streaming protocol]({{ proto_link( 'specification/streaming' ) }}). **[:octicons-arrow-right-24: Learn more](user/grpc.md)**
     - {{ scala_module_badges('pekko-grpc') }}
 
+### Jelly-SPARQL
+
+[Jelly-SPARQL]({{ proto_link('specification/sparql') }}) is an efficient columnar format for SPARQL query results (solution sequences and boolean ASK results). Jelly-JVM implements Jelly-SPARQL:
+
+- `jelly-core-sparql` – core generic code for serializing/deserializing Jelly-SPARQL data. You need an additional module (like `jelly-jena-sparql`) to integrate it with a specific RDF library.
+    - {{ java_module_badges('core-sparql') }}
+- `jelly-jena-sparql` – integration with [Apache Jena](https://jena.apache.org/), including registration in Jena's result set readers and writers, and Fuseki's content negotiation.
+    - {{ java_module_badges('jena-sparql') }}
+- `jelly-rdf4j-sparql` – integration with [Eclipse RDF4J](https://rdf4j.org/), including registration in RDF4J's tuple and boolean query result parsers and writers.
+    - {{ java_module_badges('rdf4j-sparql') }}
+
 ### Jelly-Patch
 
 [Jelly-Patch]({{ proto_link('specification/patch') }}) is an efficient format for recording changes to RDF datasets. Jelly-JVM implements Jelly-Patch:
@@ -53,17 +64,6 @@ The implementation is split into a few modules that can be used separately:
     - {{ java_module_badges('jena-patch') }}
 - `jelly-rdf4j-patch` – partial integration with [Eclipse RDF4J](https://rdf4j.org/). RDF4J does not support RDF Patch, so this module only provides low-level Jelly-Patch support.
     - {{ java_module_badges('rdf4j-patch') }}
-
-### Jelly-SPARQL
-
-Jelly-SPARQL is an efficient columnar format for SPARQL query results (solution sequences and boolean ASK results). Jelly-JVM implements Jelly-SPARQL:
-
-- `jelly-core-sparql` – core generic code for serializing/deserializing Jelly-SPARQL data. You need an additional module (like `jelly-jena-sparql`) to integrate it with a specific RDF library.
-    - {{ java_module_badges('core-sparql') }}
-- `jelly-jena-sparql` – integration with [Apache Jena](https://jena.apache.org/), including registration in Jena's result set readers and writers, and Fuseki's content negotiation.
-    - {{ java_module_badges('jena-sparql') }}
-- `jelly-rdf4j-sparql` – integration with [Eclipse RDF4J](https://rdf4j.org/), including registration in RDF4J's tuple and boolean query result parsers and writers.
-    - {{ java_module_badges('rdf4j-sparql') }}
 
 ## Plugin JARs
 
