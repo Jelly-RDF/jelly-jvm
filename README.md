@@ -2,7 +2,7 @@
 
 # Jelly-JVM
 
-Implementation of [Jelly](https://w3id.org/jelly), a super-fast RDF serialization format and streaming protocol, for Apache Jena, Eclipse RDF4J, Titanium RDF API, and Neo4j (Neo4j only up to Jelly-JVM 3.7.x).
+Implementation of [Jelly](https://w3id.org/jelly), super-fast RDF and SPARQL serialization formats, for Apache Jena, Eclipse RDF4J, Titanium RDF API, and Neo4j (Neo4j only up to Jelly-JVM 3.7.x).
 
 Jelly-JVM also implements [Jelly-SPARQL](https://w3id.org/jelly/1.2.0/specification/sparql/), a binary format for SPARQL query results, for Jena and RDF4J.
 
