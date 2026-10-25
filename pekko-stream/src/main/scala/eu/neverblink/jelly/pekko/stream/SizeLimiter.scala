@@ -32,14 +32,16 @@ trait SizeLimiter:
 
   /** The largest number of statements in the next frame, used for Jelly-RDF 1.2 output.
     *
-    * The encoder asks again after each frame it ends.
+    * The encoder asks again after each frame it ends. It lets the limit grow at most 2× from one
+    * frame to the next, in case the statements so far were smaller than the ones that follow.
     *
     * The default implementation returns [[SizeLimiter.DefaultStatementLimit]]. Override it in your
     * own limiters.
     *
     * @param bytesPerStatement
-    *   average serialized size of a statement in the frames written so far, in bytes, including the
-    *   lookup entries and other contents of the frames. None if no statement was written yet.
+    *   average serialized size of a statement in the last frame that had statements, in bytes,
+    *   including the lookup entries and other contents of the frame. None if no statement was
+    *   written yet.
     * @return
     *   at least 1
     * @since 4.0.0
@@ -59,9 +61,11 @@ object SizeLimiter:
   *   - In Jelly-RDF 1.0 and 1.1 streams, the frames will in general be slightly larger than the
   *     target size, by as much as one stream row.
   *   - In Jelly-RDF 1.2 streams, the size of a frame is only known once it is complete. The number
-  *     of statements in a frame is estimated from the average size of a statement in the frames
-  *     written so far (or from [[ByteSizeLimiter.InitialBytesPerStatement]] for the first frame),
-  *     so the frames may be larger or smaller than the target size.
+  *     of statements in a frame is estimated from the average size of a statement in the last
+  *     frame, so the frames may be larger or smaller than the target size. The first frame has at
+  *     most 64 statements, and the limit grows at most 2× from one frame to the next. If the
+  *     statements get much larger in the middle of a frame, that frame can be much larger than the
+  *     target size.
   *
   * @param targetSize
   *   target byte size of stream frames
@@ -71,17 +75,22 @@ final class ByteSizeLimiter(targetSize: Long) extends SizeLimiter:
     Flow[RdfStreamRow].groupedWeighted(targetSize)(row => row.getSerializedSize)
 
   override def statementLimit(bytesPerStatement: Option[Double]): Int =
-    val perStatement = bytesPerStatement.filter(_ > 0).getOrElse(
-      ByteSizeLimiter.InitialBytesPerStatement,
-    )
-    (targetSize / perStatement).toLong.max(1).min(RdfEncoder.MAX_FRAME_SIZE).toInt
+    bytesPerStatement.filter(_ > 0) match
+      case Some(perStatement) =>
+        (targetSize / perStatement).toLong.max(1).min(RdfEncoder.MAX_FRAME_SIZE).toInt
+      case None =>
+        (targetSize / ByteSizeLimiter.InitialBytesPerStatement).toLong.max(1)
+          .min(ByteSizeLimiter.FirstFrameStatementLimit).toInt
 
 object ByteSizeLimiter:
   /** Assumed size of a statement in bytes, before any frame was written (Jelly-RDF 1.2 only). It is
-    * on the larger side, as the first frames also carry most of the lookup entries.
+    * on the larger side, as the first frames also carry most of the lookup entries. The first frame
+    * also has at most 64 statements.
     * @since 4.0.0
     */
   val InitialBytesPerStatement: Double = 32
+
+  private val FirstFrameStatementLimit = 64
 
 /** Stream frame size limiter that maintains a maximum number of rows in stream frames.
   *

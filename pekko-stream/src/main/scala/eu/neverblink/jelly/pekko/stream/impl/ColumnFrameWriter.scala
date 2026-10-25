@@ -24,10 +24,10 @@ private[stream] final class ColumnFrameWriter[TNode](
 
   // Statements in the frame under construction
   private var statementsInFrame = 0
-  // Totals over the frames written so far, for ByteSizeLimiter
-  private var bytesWritten = 0L
-  private var statementsWritten = 0L
-  private var statementLimit = nextStatementLimit()
+  // Size of the last frame that had statements, for ByteSizeLimiter
+  private var lastFrameBytes = 0L
+  private var lastFrameStatements = 0
+  private var statementLimit = maybeLimiter.fold(Int.MaxValue)(_.statementLimit(None).max(1))
   // Set when writing an element fails. The encoder cannot be used after that.
   private var failed = false
 
@@ -91,15 +91,17 @@ private[stream] final class ColumnFrameWriter[TNode](
   private def nextStatementLimit(): Int = maybeLimiter match
     case Some(limiter) =>
       val bytesPerStatement =
-        if statementsWritten == 0 then None
-        else Some(bytesWritten.toDouble / statementsWritten)
-      limiter.statementLimit(bytesPerStatement).max(1)
+        if lastFrameStatements == 0 then None
+        else Some(lastFrameBytes.toDouble / lastFrameStatements)
+      limiter.statementLimit(bytesPerStatement).toLong.max(1).min(statementLimit * 2L).toInt
     case None => Int.MaxValue
 
   private def onFrame(frame: RdfStreamFrame): Unit =
-    // The encoder has computed the size already
-    bytesWritten += frame.getSerializedSize
-    if frame.getColumns != null then statementsWritten += frame.getColumns.getRowCount
+    val statements = if frame.getColumns != null then frame.getColumns.getRowCount else 0
+    if statements > 0 then
+      // The encoder has computed the size already
+      lastFrameBytes = frame.getSerializedSize
+      lastFrameStatements = statements
     frames += ColumnFrameWriter.copyFrame(frame)
     statementsInFrame = 0
     statementLimit = nextStatementLimit()
