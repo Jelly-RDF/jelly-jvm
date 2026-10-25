@@ -59,6 +59,10 @@ lazy val rdf4jSparqlDeps = Seq("org.eclipse.rdf4j" % "rdf4j-queryresultio-api" %
 
 lazy val wErrorIfCI = if (sys.env.contains("CI")) Seq("-Werror") else Seq()
 
+// Since JDK 23, javadoc puts ~4 MB of web fonts in every javadoc jar.
+lazy val javadocNoFonts =
+  if (sys.props("java.specification.version").toInt >= 23) Seq("--no-fonts") else Seq()
+
 addCommandAlias("fixAll", "scalafixAll; scalafmtAll")
 // See jmh/README.md for documentation of these commands.
 addCommandAlias("sparqlSizes", "jmh/runMain eu.neverblink.jelly.jmh.sparql.SparqlSizeReport")
@@ -88,7 +92,8 @@ lazy val commonSettings = Seq(
   ) ++ wErrorIfCI,
   // Explicitly specify the options for javadoc, otherwise sbt will pass all javacOptions to it
   // which will cause an error.
-  Compile / doc / javacOptions := Seq("-source", "21"),
+  // Uncached, as the options depend on the JDK that sbt runs on, which is not part of the cache key.
+  Compile / doc / javacOptions := Def.uncached(Seq("-source", "21") ++ javadocNoFonts),
   assemblyJarName := s"${name.value}.jar",
   assemblyMergeStrategy := {
     case x if x.endsWith("module-info.class") => MergeStrategy.concat
