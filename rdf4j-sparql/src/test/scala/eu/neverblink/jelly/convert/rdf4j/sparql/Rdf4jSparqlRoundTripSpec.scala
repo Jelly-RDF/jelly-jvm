@@ -8,7 +8,7 @@ import org.eclipse.rdf4j.model.{IRI, Value}
 import org.eclipse.rdf4j.model.base.AbstractValueFactory
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.model.vocabulary.XSD
-import org.eclipse.rdf4j.query.BindingSet
+import org.eclipse.rdf4j.query.{BindingSet, QueryResultHandlerException}
 import org.eclipse.rdf4j.query.impl.MapBindingSet
 import org.eclipse.rdf4j.query.resultio.helpers.QueryResultCollector
 import org.eclipse.rdf4j.query.resultio.{
@@ -25,6 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters.*
 
 class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
@@ -313,6 +314,53 @@ class Rdf4jSparqlRoundTripSpec extends AnyWordSpec, Matchers:
           ByteArrayInputStream(out.toByteArray),
           JellySparqlFormat.JELLY_SPARQL_BOOLEAN,
         ) shouldBe value
+    }
+
+    "refuse a boolean result in the tuple parser's parse()" in {
+      val out = ByteArrayOutputStream()
+      JellySparqlBooleanWriter(Rdf4jSparqlConverterFactory.getInstance(), out).write(true)
+      val parser = JellySparqlTupleParser()
+      intercept[QueryResultParseException] {
+        parser.parse(ByteArrayInputStream(out.toByteArray)): @nowarn("msg=deprecated")
+      }.getMessage should include("boolean")
+    }
+
+    "refuse a solution sequence in the boolean parser's parse()" in {
+      for rows <- Seq(Seq.empty, Seq(Seq[Value | Null](iri("a")))) do
+        val parser = JellySparqlBooleanParser()
+        intercept[QueryResultParseException] {
+          parser.parse(ByteArrayInputStream(write(Seq("x"), rows))): @nowarn("msg=deprecated")
+        }.getMessage should include("solution sequence")
+    }
+
+    "accept both kinds of results in parseQueryResult()" in {
+      val out = ByteArrayOutputStream()
+      JellySparqlBooleanWriter(Rdf4jSparqlConverterFactory.getInstance(), out).write(true)
+      val booleanCollector = QueryResultCollector()
+      val tupleParser = JellySparqlTupleParser()
+      tupleParser.setQueryResultHandler(booleanCollector)
+      tupleParser.parseQueryResult(ByteArrayInputStream(out.toByteArray))
+      booleanCollector.getBoolean shouldBe true
+
+      val tupleCollector = QueryResultCollector()
+      val booleanParser = JellySparqlBooleanParser()
+      booleanParser.setQueryResultHandler(tupleCollector)
+      booleanParser.parseQueryResult(ByteArrayInputStream(write(Seq("x"), Seq(Seq(iri("a"))))))
+      tupleCollector.getBindingNames.asScala.toSeq shouldBe Seq("x")
+      tupleCollector.getBindingSets.size shouldBe 1
+    }
+
+    "refuse a boolean result after startQueryResult() in a non-punctuated stream" in {
+      for delimited <- Seq(true, false) do
+        val writer = JellySparqlBooleanWriter(
+          Rdf4jSparqlConverterFactory.getInstance(),
+          ByteArrayOutputStream(),
+        )
+        writer.getWriterConfig.set(JellySparqlWriterSettings.DELIMITED_OUTPUT, delimited)
+        writer.startQueryResult(Seq("foo").asJava)
+        intercept[QueryResultHandlerException] {
+          writer.handleBoolean(true)
+        }.getMessage should include("PUNCTUATED")
     }
 
     "report the Jelly settings as supported" in {

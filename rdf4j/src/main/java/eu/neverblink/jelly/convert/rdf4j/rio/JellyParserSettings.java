@@ -25,7 +25,9 @@ public final class JellyParserSettings {
         "eu.neverblink.jelly.convert.rdf4j.rio.checking",
         "Use RDF4J's checking stack (validating IRIs, language tags, and datatypes). " +
             "False by default, for maximum performance. Enable this only if you really need to " +
-            "validate the file, as it slows down the parser by ~2–4x.",
+            "validate the file, as it slows down the parser by ~2–4x. " +
+            "When this is not set, the parser uses the default of its factory, which can be changed " +
+            "with JellyParserFactory.setChecking or a JellyParserDefaults implementation.",
         false
     );
 

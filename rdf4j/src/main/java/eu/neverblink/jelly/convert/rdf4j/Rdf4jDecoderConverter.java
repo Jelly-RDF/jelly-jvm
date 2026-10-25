@@ -44,6 +44,11 @@ public class Rdf4jDecoderConverter extends BaseRdf4jDecoderConverter {
     public Rdf4jDatatype makeDatatype(String dt) {
         var iri = vf.createIRI(dt);
         final var coreDatatype = CoreDatatype.from(iri);
+        if (coreDatatype == CoreDatatype.RDF.LANGSTRING || coreDatatype == CoreDatatype.RDF.DIRLANGSTRING) {
+            // Jelly stores language-tagged literals separately, so a literal with this datatype has no language
+            // tag. RDF4J does not allow that, so make it a plain string, like RDF4J's own parsers do by default.
+            return new Rdf4jDatatype(CoreDatatype.XSD.STRING.getIri(), CoreDatatype.XSD.STRING);
+        }
         if (coreDatatype != CoreDatatype.NONE) {
             // If it's a core datatype, use the core IRI to allow for reference equality checks.
             iri = coreDatatype.getIri();

@@ -160,6 +160,7 @@ class JellyWriterSpec extends AnyWordSpec, Matchers:
         JellyWriterSettings.FRAME_SIZE,
         JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS,
         JellyWriterSettings.DELIMITED_OUTPUT,
+        JellyWriterSettings.RDF_VERSION,
       )
 
       settings should contain theSameElementsAs (expectedBase ++ expectedJelly)

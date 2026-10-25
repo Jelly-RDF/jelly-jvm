@@ -9,7 +9,7 @@ import org.eclipse.rdf4j.rio.RDFParserFactory;
 
 public final class JellyParserFactory implements RDFParserFactory {
 
-    private boolean checking = false;
+    private boolean checking = JellyParser.defaultChecking();
 
     @Override
     public RDFFormat getRDFFormat() {
@@ -18,7 +18,8 @@ public final class JellyParserFactory implements RDFParserFactory {
 
     /**
      * Creates a new JellyParser instance that will either use RDF4J's full parsing stack or not,
-     * depending on the value of {@link #isChecking()}. The default is false, so the parser will NOT
+     * depending on the value of {@link #isChecking()}. The default is false (unless a
+     * {@link JellyParserDefaults} implementation turns checking on), so the parser will NOT
      * respect BasicParserSettings, as it does not use RDF4J's parsing stack. It will never validate
      * IRIs, language tags, or datatypes.
      * <p>
@@ -26,15 +27,14 @@ public final class JellyParserFactory implements RDFParserFactory {
      * including literal, datatype, IRI, and language tag validation.
      * <p>
      * This can be later overridden on the parser instance itself by changing the {@link JellyParserSettings#CHECKING}
-     * setting.
+     * setting. If that setting is cleared (for example, with ParserConfig.useDefaults()), the parser goes back to
+     * the value of {@link #isChecking()}.
      *
      * @return a new JellyParser instance
      */
     @Override
     public RDFParser getParser() {
-        final var parser = new JellyParser();
-        parser.set(JellyParserSettings.CHECKING, checking);
-        return parser;
+        return new JellyParser(checking);
     }
 
     /**
@@ -64,7 +64,8 @@ public final class JellyParserFactory implements RDFParserFactory {
 
     /**
      * Whether the parser created by {@link #getParser()} will use RDF4J's full parsing stack,
-     * including literal, datatype, IRI, and language tag validation.
+     * including literal, datatype, IRI, and language tag validation. False by default, unless a
+     * {@link JellyParserDefaults} implementation turns checking on.
      * @return true if the parser will use RDF4J's checking stack, false to use a faster non-checking parser.
      */
     public boolean isChecking() {

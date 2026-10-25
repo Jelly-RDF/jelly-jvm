@@ -6,6 +6,7 @@ import eu.neverblink.jelly.core.{JellyConstants, JellyOptions}
 import org.eclipse.rdf4j.model.{IRI, Literal, Value}
 import org.eclipse.rdf4j.model.base.{AbstractValueFactory, CoreDatatype}
 import org.eclipse.rdf4j.model.impl.{SimpleLiteral, SimpleValueFactory}
+import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.eclipse.rdf4j.rio.{RDFFormat, RDFParseException, Rio}
 import org.eclipse.rdf4j.rio.helpers.{
   AbstractRDFParser,
@@ -17,6 +18,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream, Reader}
+import java.net.URLClassLoader
+import java.nio.file.Files
 import scala.jdk.CollectionConverters.*
 
 class JellyParserSpec extends AnyWordSpec, Matchers:
@@ -78,6 +81,27 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
           .setSubject("b1234")
           .setPredicate(RdfIri.newInstance().setNameId(1))
           .setObject(RdfLiteral.newInstance().setLex("test").setLangtag("invalid lang tag!")),
+      ),
+    )
+    frame.toByteArrayDelimited
+  }
+
+  // A literal with the rdf:langString datatype, but no language tag
+  private val langStringNoTag = {
+    val frame = RdfStreamFrame.newInstance()
+    frame.addRows(row1)
+    frame.addRows(row2)
+    frame.addRows(
+      RdfStreamRow.newInstance().setDatatype(
+        RdfDatatypeEntry.newInstance().setValue(RDF.LANGSTRING.stringValue()),
+      ),
+    )
+    frame.addRows(
+      RdfStreamRow.newInstance().setTriple(
+        RdfTriple.newInstance()
+          .setSubject("b1234")
+          .setPredicate(RdfIri.newInstance().setNameId(1))
+          .setObject(RdfLiteral.newInstance().setLex("test").setDatatype(1)),
       ),
     )
     frame.toByteArrayDelimited
@@ -214,6 +238,33 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
         collector.getStatements.asScala.last.getSubject shouldBe encoded
     }
 
+    "stay non-checking after ParserConfig.useDefaults()" in {
+      val parser = JellyParserFactory().getParser()
+      parser.set(JellyParserSettings.CHECKING, true)
+      parser.getParserConfig.useDefaults()
+      parser.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true)
+      parseOne(parser, invalidLanguage).getObject.isLiteral shouldBe true
+    }
+
+    "keep the converter factory after ParserConfig.useDefaults()" in {
+      val parser = JellyParserFactory().getParser(Rdf4jConverterFactory.getInstance(customFactory))
+      parser.getParserConfig.useDefaults()
+      val st = parseOne(parser, validData)
+      st.getObject.asInstanceOf[Literal].getLabel shouldEqual "TEST LITERAL IMPLEMENTATION"
+    }
+
+    "make an rdf:langString literal with no language tag a plain string" in {
+      val vf = SimpleValueFactory.getInstance()
+      parseOne(
+        JellyParserFactory().getParser(),
+        langStringNoTag,
+      ).getObject shouldBe vf.createLiteral("test")
+      parseOne(
+        JellyParserFactory().getParser(Rdf4jConverterFactory.getInstance()),
+        langStringNoTag,
+      ).getObject shouldBe vf.createLiteral("test")
+    }
+
     "switch to checking mode when CHECKING=true" in {
       val parser = JellyParserFactory().getParser()
       parser.set(JellyParserSettings.CHECKING, true)
@@ -268,6 +319,25 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       val parser = JellyParserFactory().setChecking(true).getParser()
       parser.set(BasicParserSettings.PRESERVE_BNODE_IDS, true)
       parseOne(parser, validData).getSubject.stringValue() shouldEqual "b1234"
+    }
+
+    "stay checking after ParserConfig.useDefaults()" in {
+      val parser = JellyParserFactory().setChecking(true).getParser()
+      parser.set(JellyParserSettings.CHECKING, false)
+      parser.getParserConfig.useDefaults()
+      parser.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true)
+      parser.setRDFHandler(new StatementCollector())
+      intercept[RDFParseException] {
+        parser.parse(ByteArrayInputStream(invalidLanguage), "")
+      }
+    }
+
+    "make an rdf:langString literal with no language tag a plain string" in {
+      val parser = JellyParserFactory().setChecking(true).getParser()
+      parseOne(
+        parser,
+        langStringNoTag,
+      ).getObject shouldBe SimpleValueFactory.getInstance().createLiteral("test")
     }
 
     "switch to non-checking mode when CHECKING=false" in {
@@ -357,3 +427,47 @@ class JellyParserSpec extends AnyWordSpec, Matchers:
       JellyParserFactory().getRDFFormat shouldBe JellyFormat.JELLY
     }
   }
+
+  "JellyParserDefaults" should {
+    // Makes a class loader that sees the given lines in the JellyParserDefaults service file
+    def loaderWith(providers: String*): ClassLoader =
+      val dir = Files.createTempDirectory("jelly-parser-defaults")
+      val services = dir.resolve("META-INF/services")
+      Files.createDirectories(services)
+      Files.writeString(
+        services.resolve(classOf[JellyParserDefaults].getName),
+        providers.mkString("\n"),
+      )
+      URLClassLoader(Array(dir.toUri.toURL), getClass.getClassLoader)
+
+    "not turn checking on when no implementation is registered" in {
+      JellyParser.defaultChecking() shouldBe false
+      JellyParser.loadDefaultChecking(loaderWith()) shouldBe false
+    }
+
+    "turn checking on when an implementation says so" in {
+      JellyParser.loadDefaultChecking(loaderWith(classOf[CheckingOnDefaults].getName)) shouldBe true
+    }
+
+    "not turn checking on when the implementation says not to" in {
+      JellyParser.loadDefaultChecking(
+        loaderWith(classOf[CheckingOffDefaults].getName),
+      ) shouldBe false
+    }
+
+    "turn checking on when any of the implementations says so" in {
+      val loader =
+        loaderWith(classOf[CheckingOffDefaults].getName, classOf[CheckingOnDefaults].getName)
+      JellyParser.loadDefaultChecking(loader) shouldBe true
+    }
+
+    "fall back to no checking when the service file is broken" in {
+      JellyParser.loadDefaultChecking(loaderWith("com.example.DoesNotExist")) shouldBe false
+    }
+  }
+
+class CheckingOnDefaults extends JellyParserDefaults:
+  override def checking(): Boolean = true
+
+class CheckingOffDefaults extends JellyParserDefaults:
+  override def checking(): Boolean = false
