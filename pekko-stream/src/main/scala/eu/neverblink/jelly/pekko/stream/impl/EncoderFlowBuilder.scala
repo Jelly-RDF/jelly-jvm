@@ -511,8 +511,11 @@ final class EncoderFlowBuilderImpl[TNode](using
           (writer, element(writer)),
         )(
           (state, e) => (state, state._1.write(state._2(e))),
-          // Whatever is left at the end of the stream
-          state => Some(state._1.finish()),
+          // Whatever is left at the end of the stream. Return None if there is nothing, so the flow
+          // can complete without waiting for more demand.
+          state =>
+            val rest = state._1.finish()
+            Option.when(rest.nonEmpty)(rest),
         )
         .mapConcat(identity)
 

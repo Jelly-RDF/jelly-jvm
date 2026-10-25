@@ -105,6 +105,53 @@ class EncoderFlowColumnSpec extends AnyWordSpec, Matchers, ScalaFutures:
       assertDecoded(decode(frames, DecoderFlow.decodeTriples.asFlatTripleStream), Triples1.mrl)
     }
 
+    "keep frames near the target byte size with large literals" in {
+      val triples = (1 to 2000).map(i =>
+        Triple(
+          Iri(s"https://example.org/s$i"),
+          Iri("https://example.org/p"),
+          SimpleLiteral(i.toString + "x" * 1000),
+        ),
+      )
+      val frames = encode(
+        triples,
+        EncoderFlow.builder.withLimiter(ByteSizeLimiter(64 * 1024)).flatTriples(opt).flow,
+      )
+      frames.size should be > 20
+      all(frames.map(_.getSerializedSize)) should be <= (64 * 1024 * 11 / 10)
+      rowCounts(frames).sum should be(2000)
+      assertDecoded(decode(frames, DecoderFlow.decodeTriples.asFlatTripleStream), triples)
+    }
+
+    "start with a small frame and grow the frames at most 2× at a time" in {
+      val triples = (1 to 3000).map(i =>
+        Triple(Iri("https://example.org/s"), Iri("https://example.org/p"), SimpleLiteral(s"l$i")),
+      )
+      val frames = encode(
+        triples,
+        EncoderFlow.builder.withLimiter(ByteSizeLimiter(1 << 20)).flatTriples(opt).flow,
+      )
+      val counts = rowCounts(frames)
+      counts should be(Seq(64, 128, 256, 512, 1024, 1016))
+      assertDecoded(decode(frames, DecoderFlow.decodeTriples.asFlatTripleStream), triples)
+    }
+
+    "complete without waiting for more demand" in {
+      // Request exactly as many frames as the flow writes, then wait for completion. Every group
+      // ends a frame, so nothing is left to write at the end of the stream.
+      val done = scala.concurrent.Promise[Seq[RdfStreamFrame]]()
+      val subscriber = new org.reactivestreams.Subscriber[RdfStreamFrame]:
+        private val frames = Seq.newBuilder[RdfStreamFrame]
+        override def onSubscribe(s: org.reactivestreams.Subscription): Unit = s.request(2)
+        override def onNext(frame: RdfStreamFrame): Unit = frames += frame
+        override def onError(t: Throwable): Unit = done.failure(t)
+        override def onComplete(): Unit = done.success(frames.result())
+      Source(Triples1.mrl.grouped(2).toSeq)
+        .via(EncoderFlow.builder.flatTriplesGrouped(opt).flow)
+        .runWith(Sink.fromSubscriber(subscriber))
+      rowCounts(done.future.futureValue) should be(Seq(2, 2))
+    }
+
     "encode triples with namespace declarations" in {
       val frames = encode(
         Triples2NsDecl.mrl,
@@ -394,6 +441,7 @@ class EncoderFlowColumnSpec extends AnyWordSpec, Matchers, ScalaFutures:
 
     "follow the average statement size for ByteSizeLimiter" in {
       ByteSizeLimiter(320).statementLimit(None) should be(10)
+      ByteSizeLimiter(1 << 20).statementLimit(None) should be(64)
       ByteSizeLimiter(320).statementLimit(Some(4)) should be(80)
       ByteSizeLimiter(320).statementLimit(Some(1000)) should be(1)
       ByteSizeLimiter(Long.MaxValue).statementLimit(Some(1)) should be(RdfEncoder.MAX_FRAME_SIZE)
