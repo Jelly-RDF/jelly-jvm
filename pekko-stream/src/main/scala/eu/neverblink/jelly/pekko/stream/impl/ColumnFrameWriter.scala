@@ -93,7 +93,6 @@ private[stream] final class ColumnFrameWriter[TNode](
       val bytesPerStatement =
         if lastFrameStatements == 0 then None
         else Some(lastFrameBytes.toDouble / lastFrameStatements)
-      // Grow at most 2× per frame, in case the statements so far were smaller than the next ones
       limiter.statementLimit(bytesPerStatement).toLong.max(1).min(statementLimit * 2L).toInt
     case None => Int.MaxValue
 
