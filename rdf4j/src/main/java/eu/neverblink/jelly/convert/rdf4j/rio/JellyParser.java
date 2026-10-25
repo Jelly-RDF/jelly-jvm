@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Collection;
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -45,15 +47,36 @@ public final class JellyParser extends AbstractRDFParser {
     private boolean checking;
 
     /**
-     * Parameterless constructor that uses RDF4J's full parsing stack, including literal, datatype,
-     * IRI, and language tag validation.
+     * Whether to use the full RDF4J checking stack when the CHECKING setting is not set.
+     */
+    private final boolean defaultChecking;
+
+    /**
+     * Creates a new JellyParser instance. Whether it uses RDF4J's full parsing stack (literal, datatype,
+     * IRI, and language tag validation) is decided by the {@link JellyParserSettings#CHECKING} setting.
+     * When that setting is not set, the parser does not check, unless a {@link JellyParserDefaults}
+     * implementation turns checking on.
      * <p>
      * If you want to use a slightly faster non-checking parser, use the constructor that takes a
      * {@link Rdf4jConverterFactory} and pass in {@link Rdf4jConverterFactory#getInstance()}.
      */
     public JellyParser() {
-        this.decoderConverter = new Rdf4jRioDecoderConverter();
-        this.checking = true;
+        this(defaultChecking());
+    }
+
+    /**
+     * Creates a new JellyParser instance.
+     *
+     * @param defaultChecking
+     *   Whether to use RDF4J's full parsing stack when the {@link JellyParserSettings#CHECKING} setting is not set.
+     */
+    JellyParser(boolean defaultChecking) {
+        this.defaultChecking = defaultChecking;
+        this.checking = defaultChecking;
+        // plainValueFactory was set by AbstractRDFParser's constructor, through setValueFactory
+        this.decoderConverter = defaultChecking
+            ? new Rdf4jRioDecoderConverter()
+            : new Rdf4jDecoderConverter(plainValueFactory);
     }
 
     /**
@@ -72,7 +95,37 @@ public final class JellyParser extends AbstractRDFParser {
         this.converterFromFactory = true;
         this.valueFactory = this.decoderConverter.getValueFactory();
         this.checking = false;
-        this.set(JellyParserSettings.CHECKING, false);
+        this.defaultChecking = false;
+    }
+
+    /**
+     * Whether parsers check by default, which is when a {@link JellyParserDefaults} implementation
+     * turns checking on.
+     */
+    static boolean defaultChecking() {
+        return DefaultsHolder.CHECKING;
+    }
+
+    /**
+     * Whether any {@link JellyParserDefaults} implementation found by the class loader turns checking on.
+     */
+    static boolean loadDefaultChecking(ClassLoader classLoader) {
+        try {
+            return ServiceLoader.load(JellyParserDefaults.class, classLoader)
+                .stream()
+                .anyMatch(provider -> provider.get().checking());
+        } catch (ServiceConfigurationError e) {
+            // A broken service file should not break parsing, so fall back to the fast parser
+            return false;
+        }
+    }
+
+    /**
+     * Loads the {@link JellyParserDefaults} implementations once, the first time they are needed.
+     */
+    private static final class DefaultsHolder {
+
+        private static final boolean CHECKING = loadDefaultChecking(JellyParserDefaults.class.getClassLoader());
     }
 
     @Override
@@ -116,9 +169,13 @@ public final class JellyParser extends AbstractRDFParser {
 
     /**
      * Reads the CHECKING setting and updates the decoderConverter if it has changed.
+     * If the setting is not set (for example, after ParserConfig.useDefaults()), the parser's own default is used.
      */
     private void readCheckingSetting() {
-        final boolean newChecking = getParserConfig().get(JellyParserSettings.CHECKING);
+        final var config = getParserConfig();
+        final boolean newChecking = config.isSet(JellyParserSettings.CHECKING)
+            ? config.get(JellyParserSettings.CHECKING)
+            : defaultChecking;
         if (newChecking != this.checking) {
             this.checking = newChecking;
             this.converterFromFactory = false;
