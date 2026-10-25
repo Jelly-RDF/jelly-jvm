@@ -37,9 +37,13 @@ public final class JellySparqlBooleanParser extends AbstractJellySparqlParser im
         parseInternal(in);
     }
 
+    /**
+     * Parses a boolean result. Unlike {@link #parseQueryResult(InputStream)}, this throws a
+     * {@link QueryResultParseException} if the stream contains a solution sequence.
+     */
     @Override
     @Deprecated
     public boolean parse(InputStream in) throws IOException, QueryResultParseException {
-        return parseInternal(in);
+        return parseInternal(in, true, false);
     }
 }

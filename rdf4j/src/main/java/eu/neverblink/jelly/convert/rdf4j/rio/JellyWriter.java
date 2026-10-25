@@ -89,6 +89,7 @@ public final class JellyWriter extends AbstractRDFWriter {
         settings.add(JellyWriterSettings.FRAME_SIZE);
         settings.add(JellyWriterSettings.ENABLE_NAMESPACE_DECLARATIONS);
         settings.add(JellyWriterSettings.DELIMITED_OUTPUT);
+        settings.add(JellyWriterSettings.RDF_VERSION);
         return settings;
     }
 

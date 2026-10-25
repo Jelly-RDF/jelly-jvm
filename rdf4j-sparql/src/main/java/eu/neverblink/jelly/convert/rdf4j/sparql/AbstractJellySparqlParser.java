@@ -108,17 +108,32 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
     }
 
     /**
-     * Reads the whole stream, pushing what it finds to the configured handler.
+     * Reads the whole stream, pushing what it finds to the configured handler. Accepts both
+     * boolean results and solution sequences.
      *
      * @param in the stream to read
      * @return the boolean result if the stream carried one, false otherwise
      */
     protected boolean parseInternal(InputStream in)
         throws IOException, QueryResultParseException, QueryResultHandlerException {
+        return parseInternal(in, true, true);
+    }
+
+    /**
+     * Reads the whole stream, pushing what it finds to the configured handler.
+     *
+     * @param in the stream to read
+     * @param allowBoolean whether the stream may carry boolean results
+     * @param allowTuple whether the stream may carry solution sequences
+     * @return the boolean result if the stream carried one, false otherwise
+     * @throws QueryResultParseException if the stream carries a kind of result that is not allowed
+     */
+    protected boolean parseInternal(InputStream in, boolean allowBoolean, boolean allowTuple)
+        throws IOException, QueryResultParseException, QueryResultHandlerException {
         if (in == null) {
             throw new IllegalArgumentException("Input stream must not be null");
         }
-        final var resultsHandler = new ResultsHandler();
+        final var resultsHandler = new ResultsHandler(allowBoolean, allowTuple);
         final var converter = new TripleNotingConverter(valueFactory, decodingHandler != null);
         resultsHandler.converter = converter;
         final int maxRows = getParserConfig().get(JellySparqlParserSettings.MAX_ROWS_PER_FRAME);
@@ -243,12 +258,19 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
 
     private final class ResultsHandler implements SparqlResultsHandler<Value> {
 
+        private final boolean allowBoolean;
+        private final boolean allowTuple;
         private SparqlDecoder decoder;
         private TripleNotingConverter converter;
         private List<String> variables = null;
         // The same, as the set that every binding set returns from getBindingNames()
         private Set<String> variableSet = null;
         private Boolean askResult = null;
+
+        ResultsHandler(boolean allowBoolean, boolean allowTuple) {
+            this.allowBoolean = allowBoolean;
+            this.allowTuple = allowTuple;
+        }
 
         @Override
         public void handleTrailer(String error) {
@@ -278,6 +300,11 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
 
         @Override
         public void handleVariables(List<String> variables) {
+            if (!allowTuple) {
+                throw new QueryResultParseException(
+                    "Found a solution sequence (SELECT results) when parsing a boolean result."
+                );
+            }
             this.variables = variables;
             this.variableSet = Collections.unmodifiableSet(new LinkedHashSet<>(variables));
             if (handler != null) {
@@ -287,6 +314,9 @@ public abstract class AbstractJellySparqlParser extends AbstractQueryResultParse
 
         @Override
         public void handleAskResult(boolean value) {
+            if (!allowBoolean) {
+                throw new QueryResultParseException("Found a boolean (ASK) result when parsing a solution sequence.");
+            }
             askResult = value;
             if (handler != null) {
                 handler.handleBoolean(value);

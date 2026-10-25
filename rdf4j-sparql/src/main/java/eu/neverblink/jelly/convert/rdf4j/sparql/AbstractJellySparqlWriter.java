@@ -178,6 +178,11 @@ public abstract class AbstractJellySparqlWriter extends AbstractQueryResultWrite
     @Override
     public void handleBoolean(boolean value) throws QueryResultHandlerException {
         final SparqlResultsFrame frame;
+        if (encoder != null && !punctuated) {
+            throw new QueryResultHandlerException(
+                "A boolean result cannot be written after startQueryResult(), unless the stream is PUNCTUATED."
+            );
+        }
         if (getWriterConfig().get(JellySparqlWriterSettings.PUNCTUATED)) {
             if (encoder == null) {
                 startEncoder();
