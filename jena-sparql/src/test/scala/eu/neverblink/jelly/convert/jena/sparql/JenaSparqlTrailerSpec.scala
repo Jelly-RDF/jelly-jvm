@@ -82,6 +82,11 @@ class JenaSparqlTrailerSpec extends AnyWordSpec, Matchers, JenaTest:
     end(encoder).writeDelimitedTo(out)
     out.toByteArray
 
+  /** The text Fuseki writes after the results when a query is cancelled. */
+  private val fusekiCancelText =
+    ("\n##  Query cancelled due to timeout during execution   ##\n" +
+      "##  ****          Incomplete results           ****   ##\n").getBytes("UTF-8")
+
   /** Reads the rows one by one, returning those read before the exception, and the exception. */
   private def readUntilError(rowSet: RowSet): (Int, RiotException) =
     var count = 0
@@ -169,6 +174,23 @@ class JenaSparqlTrailerSpec extends AnyWordSpec, Matchers, JenaTest:
       val (count, e) = readUntilError(reader.read(ByteArrayInputStream(bytes), null))
       count should be(3)
       e.getMessage should include("query timed out")
+    }
+
+    "stop at an error trailer, without reading what follows it" in {
+      // Fuseki appends this text when the writer rethrows QueryCancelledException
+      val bytes = writeFailing(5, "org.apache.jena.query.QueryCancelledException") ++
+        fusekiCancelText
+      val (count, e) = readUntilError(reader.read(ByteArrayInputStream(bytes), null))
+      count should be(5)
+      e.getMessage should include("could not complete the result set")
+      e.getMessage should include("QueryCancelledException")
+    }
+
+    "reject junk after a trailer without an error" in {
+      val bytes = stream(3)(_.endStream()) ++ fusekiCancelText
+      val (count, e) = readUntilError(reader.read(ByteArrayInputStream(bytes), null))
+      count should be(3)
+      e.getMessage should not include "could not complete the result set"
     }
 
     "accept a stream without a trailer by default" in {

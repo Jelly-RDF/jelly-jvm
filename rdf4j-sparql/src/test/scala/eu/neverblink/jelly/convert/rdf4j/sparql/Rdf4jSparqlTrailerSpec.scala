@@ -93,6 +93,11 @@ class Rdf4jSparqlTrailerSpec extends AnyWordSpec, Matchers:
       encoder.endFrame().writeDelimitedTo(out)
     out.toByteArray
 
+  /** The text Fuseki writes after the results when a query is cancelled. */
+  private val fusekiCancelText =
+    ("\n##  Query cancelled due to timeout during execution   ##\n" +
+      "##  ****          Incomplete results           ****   ##\n").getBytes("UTF-8")
+
   "the Jelly-SPARQL writer" should {
     "end the stream with an empty trailer" in {
       val written = frames(write(3)(_.endQueryResult()))
@@ -132,6 +137,32 @@ class Rdf4jSparqlTrailerSpec extends AnyWordSpec, Matchers:
         )
       }
       e.getMessage should include("could not complete the result set: query timed out")
+      collector.events.toSeq shouldBe Seq("start", "solution", "solution", "solution")
+    }
+
+    "stop at an error trailer, without reading what follows it" in {
+      // Fuseki appends this text when its writer reports a cancelled query
+      val bytes = write(3)(_.endQueryResultWithError("query timed out")) ++ fusekiCancelText
+      val collector = EventCollector()
+      val parser = JellySparqlTupleParser()
+      parser.setQueryResultHandler(collector)
+      val e = intercept[QueryResultParseException] {
+        parser.parseQueryResult(ByteArrayInputStream(bytes))
+      }
+      e.getMessage should include("could not complete the result set: query timed out")
+      collector.events.toSeq shouldBe Seq("start", "solution", "solution", "solution")
+    }
+
+    "reject junk after a trailer without an error" in {
+      val collector = EventCollector()
+      val parser = JellySparqlTupleParser()
+      parser.setQueryResultHandler(collector)
+      val e = intercept[Exception] {
+        parser.parseQueryResult(
+          ByteArrayInputStream(write(3)(_.endQueryResult()) ++ fusekiCancelText),
+        )
+      }
+      e.getMessage should not include "could not complete the result set"
       collector.events.toSeq shouldBe Seq("start", "solution", "solution", "solution")
     }
 
