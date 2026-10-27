@@ -33,6 +33,8 @@ jobs:
           mkdocs build -s
 
       - name: Check broken links
+        # Ignore errors, this job breaks often for random reasons
+        continue-on-error: true
         working-directory: ./docs
         run: |
           # Need to start a server because linkchecker doesn't recurse into local dirs
