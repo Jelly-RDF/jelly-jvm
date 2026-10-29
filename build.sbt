@@ -643,7 +643,7 @@ lazy val jmh = (project in file("jmh"))
       "org.eclipse.rdf4j" % "rdf4j-rio-ntriples" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-trig" % rdf4jV,
       "org.eclipse.rdf4j" % "rdf4j-rio-turtle" % rdf4jV,
-      "com.github.luben" % "zstd-jni" % "1.5.7-24",
+      "com.github.luben" % "zstd-jni" % "1.5.7-25",
       // The library modules only have Jena and RDF4J as provided dependencies
       "org.apache.jena" % "jena-core" % jenaBenchV,
       "org.apache.jena" % "jena-arq" % jenaBenchV,
