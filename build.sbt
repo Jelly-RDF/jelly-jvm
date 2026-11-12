@@ -26,7 +26,7 @@ ThisBuild / exportJars := false
 // Allow scalatest to control the logging output
 Test / logBuffered := false
 
-lazy val pekkoV = "1.7.1"
+lazy val pekkoV = "2.0.0"
 lazy val pekkoGrpcV = "1.2.0"
 lazy val jenaV = "6.2.0"
 // The benchmarks always run on the newest Jena, whatever jenaV is set to (CI also builds against
