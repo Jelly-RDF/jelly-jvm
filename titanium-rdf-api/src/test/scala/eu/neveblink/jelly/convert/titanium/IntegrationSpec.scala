@@ -56,9 +56,8 @@ class IntegrationSpec extends AnyWordSpec, Matchers:
         language: String,
         direction: String,
         graph: String,
-    ): RdfQuadConsumer =
+    ): Unit =
       quads = quads :+ (subject, predicate, `object`, datatype, language, direction, graph)
-      this
 
   "TitaniumJellyReader" should {
     "parse a single non-delimited frame" in {

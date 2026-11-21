@@ -1,7 +1,5 @@
 package eu.neverblink.jelly.convert.titanium;
 
-import com.apicatalog.rdf.api.RdfConsumerException;
-import com.apicatalog.rdf.api.RdfQuadConsumer;
 import com.google.protobuf.CodedOutputStream;
 import eu.neverblink.jelly.core.InternalApi;
 import eu.neverblink.jelly.core.JellyConstants;
@@ -71,7 +69,7 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
     }
 
     @Override
-    public RdfQuadConsumer quad(
+    public void quad(
         String subject,
         String predicate,
         String object,
@@ -79,21 +77,15 @@ final class TitaniumJellyWriterImpl implements TitaniumJellyWriter, Closeable {
         String language,
         String direction,
         String graph
-    ) throws RdfConsumerException {
-        try {
-            encoder.quad(subject, predicate, object, datatype, language, direction, graph);
-        } catch (UncheckedIOException e) {
-            throw new RdfConsumerException(e.getCause());
-        }
+    ) {
+        encoder.quad(subject, predicate, object, datatype, language, direction, graph);
         if (rowLayout && rowCount() >= frameSize) {
             try {
                 writeRows();
             } catch (IOException e) {
-                throw new RdfConsumerException(e);
+                throw new UncheckedIOException(e);
             }
         }
-
-        return this;
     }
 
     @SuppressWarnings("removal")

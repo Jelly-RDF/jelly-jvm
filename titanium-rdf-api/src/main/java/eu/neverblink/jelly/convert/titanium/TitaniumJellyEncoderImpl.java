@@ -1,7 +1,5 @@
 package eu.neverblink.jelly.convert.titanium;
 
-import com.apicatalog.rdf.api.RdfConsumerException;
-import com.apicatalog.rdf.api.RdfQuadConsumer;
 import eu.neverblink.jelly.convert.titanium.internal.TitaniumConverterFactory;
 import eu.neverblink.jelly.convert.titanium.internal.TitaniumLiteral;
 import eu.neverblink.jelly.core.InternalApi;
@@ -72,7 +70,7 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
     }
 
     @Override
-    public RdfQuadConsumer quad(
+    public void quad(
         String subject,
         String predicate,
         String object,
@@ -80,7 +78,7 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
         String language,
         String direction,
         String graph
-    ) throws RdfConsumerException {
+    ) {
         // For literals, we must allocate intermediate objects.
         try {
             encoder.handleQuad(
@@ -90,9 +88,7 @@ final class TitaniumJellyEncoderImpl implements TitaniumJellyEncoder {
                 graph
             );
         } catch (RdfProtoSerializationError e) {
-            throw new RdfConsumerException(e.getMessage(), e);
+            throw new IllegalArgumentException(e.getMessage(), e);
         }
-
-        return this;
     }
 }

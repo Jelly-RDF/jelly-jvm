@@ -15,9 +15,9 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import io.grpc.ManagedChannelBuilder
-import io.grpc.reflection.v1alpha.ServerReflectionGrpc
-import io.grpc.reflection.v1alpha.ServerReflectionRequest
-import io.grpc.reflection.v1alpha.ServerReflectionResponse
+import io.grpc.reflection.v1.ServerReflectionGrpc
+import io.grpc.reflection.v1.ServerReflectionRequest
+import io.grpc.reflection.v1.ServerReflectionResponse
 import io.grpc.stub.StreamObserver
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}
