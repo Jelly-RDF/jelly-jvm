@@ -43,6 +43,8 @@ object TitaniumSerDes
 
   override def supportsGeneralizedStatements: Boolean = false
 
+  override def supportsRdf12Basic: Boolean = true
+
   override def readTriplesW3C(is: InputStream): Seq[TitaniumQuad] =
     val reader = NQuadsReader(InputStreamReader(is))
     val sink = QuadCollector()
