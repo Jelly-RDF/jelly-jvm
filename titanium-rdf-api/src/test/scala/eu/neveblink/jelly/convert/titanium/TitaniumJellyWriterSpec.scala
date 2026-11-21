@@ -95,7 +95,7 @@ class TitaniumJellyWriterSpec extends AnyWordSpec, Matchers:
         TitaniumJellyReader.factory().parseAll(
           (s, p, o, dt, lang, dir, g) => {
             read += Seq(s, p, o, dt, lang, dir, g)
-            null
+            ()
           },
           java.io.ByteArrayInputStream(os.toByteArray),
         )
