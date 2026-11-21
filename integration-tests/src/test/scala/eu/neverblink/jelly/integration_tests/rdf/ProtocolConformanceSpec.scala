@@ -411,7 +411,9 @@ class ProtocolConformanceSpec extends AnyWordSpec, Matchers, ScalaFutures, JenaT
       !writingGraphsRequirement || writingGraphsRequirement && serDes.supportsWritingGraphs
     }
 
-    val rdf12Compatible = !entry.hasRdf12Requirement || serDes.supportsRdf12
+    val rdf12Compatible = !entry.hasRdf12Requirement
+      || serDes.supportsRdf12
+      || serDes.supportsRdf12Basic && entry.hasRdf12BasicRequirement
 
     val messagesCompatible = !entry.hasMessagesRequirement || serDes.messages.isDefined
 

@@ -143,8 +143,12 @@ object ProtocolTestVocabulary:
 
     /** RDF 1.2 terms: base directions (RDF 1.2 Basic) or triple terms (full RDF 1.2). */
     def hasRdf12Requirement: Boolean =
-      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementRdf12BasicProperty)
+      hasRdf12BasicRequirement
         || resource.hasProperty(testEntryRequiresProperty, testEntryRequirementRdf12Property)
+
+    /** Base directions only (RDF 1.2 Basic). */
+    def hasRdf12BasicRequirement: Boolean =
+      resource.hasProperty(testEntryRequiresProperty, testEntryRequirementRdf12BasicProperty)
 
     /** A Jelly-RDF 1.2 stream of RDF Messages (stream type MESSAGES). */
     def hasMessagesRequirement: Boolean =

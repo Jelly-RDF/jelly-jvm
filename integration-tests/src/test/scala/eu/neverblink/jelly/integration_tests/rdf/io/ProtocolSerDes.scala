@@ -36,4 +36,6 @@ trait ProtocolSerDes[TNode, TTriple, TQuad] extends RdfCompareHydrator[TNode, TT
   def supportsRdfStar(physicalStreamType: PhysicalStreamType): Boolean = true
   def supportsGeneralizedStatements: Boolean
   def supportsRdf12: Boolean
+  // Base directions (RDF 1.2 Basic), without triple terms
+  def supportsRdf12Basic: Boolean = supportsRdf12
   def messages: Option[MessagesSerDes[TTriple, TQuad]] = None
