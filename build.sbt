@@ -26,8 +26,8 @@ ThisBuild / exportJars := false
 // Allow scalatest to control the logging output
 Test / logBuffered := false
 
-lazy val pekkoV = "1.7.1"
-lazy val pekkoGrpcV = "1.2.0"
+lazy val pekkoV = "2.0.0"
+lazy val pekkoGrpcV = "2.0.0"
 lazy val jenaV = "6.2.0"
 // The benchmarks always run on the newest Jena, whatever jenaV is set to (CI also builds against
 // older Jena versions, which the benchmark code does not have to support)
@@ -35,8 +35,8 @@ lazy val jenaBenchV = "6.2.0"
 // RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
 // targets Java 21 (see javacOptions), but jelly-rdf4j can only *run* on Java 25+, as RDF4J 6 does.
 lazy val rdf4jV = "6.1.0"
-lazy val titaniumApiV = "1.0.0"
-lazy val titaniumNqV = "1.0.2"
+lazy val titaniumApiV = "2.0.1"
+lazy val titaniumNqV = "2.0.1"
 lazy val neo4jV = "5.26.0"
 lazy val protobufV = "4.36.2"
 lazy val javapoetV = "0.23.0"
@@ -564,8 +564,6 @@ lazy val integrationTests = (project in file("integration-tests"))
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-sparqljson" % rdf4jV % Test,
       "org.eclipse.rdf4j" % "rdf4j-queryresultio-text" % rdf4jV % Test,
       "com.apicatalog" % "titanium-rdf-n-quads" % titaniumNqV % Test,
-      "com.apicatalog" % "titanium-json-ld" % "1.7.0" % Test,
-      "com.apicatalog" % "titanium-rdf-primitives" % "1.0.3" % Test,
     ),
     libraryDependencies ++= Seq("com.google.protobuf" % "protobuf-java" % protobufV),
     Compile / compile := Def.uncached(
