@@ -1,6 +1,6 @@
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.12.1")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.5.0")
-addSbtPlugin("com.github.sbt" % "sbt-protobuf" % "0.8.4")
+addSbtPlugin("com.github.sbt" % "sbt-protobuf" % "0.9.0")
 addSbtPlugin("com.github.sbt" % "sbt-jmh" % "0.4.9")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.4")
 addSbtPlugin("com.github.sbt" % "sbt-jacoco" % "3.8.0")
