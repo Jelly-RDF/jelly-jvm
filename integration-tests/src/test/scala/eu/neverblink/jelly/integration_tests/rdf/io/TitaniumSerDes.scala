@@ -48,7 +48,7 @@ object TitaniumSerDes
   override def readTriplesW3C(is: InputStream): Seq[TitaniumQuad] =
     val reader = NQuadsReader(InputStreamReader(is))
     val sink = QuadCollector()
-    reader.provide(sink)
+    reader.read(sink)
     sink.toSeq
 
   override def readTriplesW3C(streams: Seq[File]): Seq[TitaniumQuad] =
@@ -56,7 +56,7 @@ object TitaniumSerDes
     for stream <- streams do
       val is = FileInputStream(stream)
       val reader = NQuadsReader(InputStreamReader(is))
-      reader.provide(sink)
+      reader.read(sink)
       is.close()
     sink.toSeq
 

@@ -1,15 +1,39 @@
 package eu.neverblink.jelly.integration_tests.rdf.util.riot
 
 import org.apache.jena.graph.{Node, NodeFactory, Triple}
-import org.apache.jena.riot.lang.LangNTuple
+import org.apache.jena.riot.lang.{LangEngine, LangRIOT}
 import org.apache.jena.riot.system.{ParserProfile, StreamRDF}
 import org.apache.jena.riot.tokens.{StringType, Token, TokenType, Tokenizer}
 
 /** Base class for parsing N-Triples and N-Quads. Heavily inspired by the Jena Riot code:
   * https://github.com/apache/jena/blob/bd97ad4cf731ade857926787dd2df735644a354b/jena-arq/src/main/java/org/apache/jena/riot/lang/LangNTuple.java
+  *
+  * This extends LangEngine rather than LangNTuple or LangBase, because the constructors and
+  * abstract methods of those two changed in Jena 6.3, and we need to compile against all supported
+  * Jena versions. The few bits we used from them are copied below.
   */
 abstract class LangNTupleGeneralized[T](tokens: Tokenizer, profile: ParserProfile, dest: StreamRDF)
-    extends LangNTuple[T](tokens, profile, dest):
+    extends LangEngine(tokens, profile, profile.getErrorHandler)
+    with LangRIOT:
+
+  override def parse(): Unit =
+    dest.start()
+    try runParser()
+    finally
+      dest.finish()
+      tokens.close()
+
+  /** Run the parser, sending each parsed tuple to dest. */
+  protected def runParser(): Unit
+
+  /** Parse one tuple – return the object to be sent to the sink. */
+  protected def parseOne: T
+
+  protected def tokenAsNode(token: Token): Node
+
+  protected final def hasNext: Boolean = moreTokens()
+
+  private def isStrictMode: Boolean = profile.isStrictMode
 
   /** Consumes an RDF 1.2 version directive if one is next in the stream.
     *
