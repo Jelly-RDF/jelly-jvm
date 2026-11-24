@@ -45,7 +45,7 @@ public class TitaniumRdfApi implements Example {
             var jellyWriter = TitaniumJellyWriter.factory(fos)
         ) {
             // Parse the entire N-Quads file and immediately write the Jelly to the output file
-            new NQuadsReader(fis).provide(jellyWriter);
+            new NQuadsReader(fis).read(jellyWriter);
         }
 
         System.out.println("Conversion complete, Jelly file saved.");
