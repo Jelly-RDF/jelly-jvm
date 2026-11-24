@@ -28,10 +28,10 @@ Test / logBuffered := false
 
 lazy val pekkoV = "2.0.0"
 lazy val pekkoGrpcV = "2.0.0"
-lazy val jenaV = "6.2.0"
+lazy val jenaV = "6.3.0"
 // The benchmarks always run on the newest Jena, whatever jenaV is set to (CI also builds against
 // older Jena versions, which the benchmark code does not have to support)
-lazy val jenaBenchV = "6.2.0"
+lazy val jenaBenchV = "6.3.0"
 // RDF4J 6 ships Java 25 bytecode, so building the rdf4j modules requires JDK 25+. The output still
 // targets Java 21 (see javacOptions), but jelly-rdf4j can only *run* on Java 25+, as RDF4J 6 does.
 lazy val rdf4jV = "6.1.0"

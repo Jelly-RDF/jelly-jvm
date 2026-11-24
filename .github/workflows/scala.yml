@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Versions of the applications the plugin JARs are tested with.
-      jena_version: 6.2.0
+      jena_version: 6.3.0
       rdf4j_version: 6.1.0
 
     steps:
